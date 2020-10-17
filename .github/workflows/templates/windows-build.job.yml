@@ -1,0 +1,23 @@
+jobs:
+  windows-build:
+    strategy:
+      matrix:
+        rust:
+          - stable
+          #- nightly
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: -v --release
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -v --release

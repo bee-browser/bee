@@ -1,0 +1,30 @@
+- Start:
+    width: 1000.0
+    height: 500.0
+- FillRect:
+    rect:
+      origin: [20.0, 20.0]
+      size: [140.0, 140.0]
+    color: [0, 0, 255, 255]
+- DrawBorder:
+    rect:
+      origin: [20.0, 20.0]
+      size: [140.0, 140.0]
+    border:
+      top:
+        style: solid
+        width: 10.0
+        color: [255, 0, 0, 255]
+      right:
+        style: solid
+        width: 10.0
+        color: [255, 0, 0, 255]
+      bottom:
+        style: solid
+        width: 10.0
+        color: [255, 0, 0, 255]
+      left:
+        style: solid
+        width: 10.0
+        color: [255, 0, 0, 255]
+- End

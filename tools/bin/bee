@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+
+program
+  .description(
+    'Tools for developers')
+  .command(
+    'lms', 'Layout message source')
+  .command(
+    'codegen', 'Generate code using a template with variables')
+  .parse(process.argv);

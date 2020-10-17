@@ -1,0 +1,23 @@
+{% extends '_absolutely_positioned_box.html.njk' %}
+
+{% block description %}
+The constraints are solved for the CSS `bottom` and `right` properties.
+{% endblock %}
+
+{% block style %}
+{{ super() }}
+
+.abs {
+  width: 100px;
+  height: 100px;
+  padding: 10px;
+  border: solid 10px red;
+  margin: 10px;
+  top: 10px;
+  left: 10px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="abs blue"></div>
+{% endblock %}

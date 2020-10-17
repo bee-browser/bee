@@ -1,0 +1,21 @@
+{% extends '_containing_block.html.njk' %}
+
+{% block description %}
+The containing block of an absolutely positioned box is the padding box of the nearest ancestor
+positioned box.
+{% endblock %}
+
+{% block style %}
+{{ super() }}
+
+.containing-block {
+  padding: 50px;
+  border: solid 10px transparent;
+}
+{% endblock %}
+
+{% block content %}
+<div class="abs containing-block">
+  <div class="abs blue" style="width: 80%; height: 80%;"></div>
+</div>
+{% endblock %}

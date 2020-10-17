@@ -1,0 +1,48 @@
+#!/usr/bin/env node
+
+// Copyright 2018 BEE project contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+'use strict';
+
+const program = require('commander');
+const { run } = require('../lib/msg-sink/pusher');
+
+const HELP = `
+  Environment Variables:
+
+    Environment variables listed below have to be defined:
+
+    BEE_TOOLS_MSG_SINK_PUSHER_APP_ID:
+      Pusher app_id
+
+    BEE_TOOLS_MSG_SINK_PUSHER_KEY:
+      Pusher key
+
+    BEE_TOOLS_MSG_SINK_PUSHER_SECRET:
+      Pusher secret
+
+    BEE_TOOLS_MSG_SINK_PUSHER_CLUSTER
+      Pusher cluster
+`;
+
+program
+  .description(
+    'Forward JSON message to remote clients via Pusher')
+  .option(
+    '-c, --channel <channel>',
+    'Name of a channel used for forwarding messages')
+  .on('--help', () => console.log(HELP))
+  .action(run)
+  .parse(process.argv);

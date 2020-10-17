@@ -1,0 +1,23 @@
+{
+  "name": "bee-devcontainer",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devenv",
+  "workspaceFolder": "/workspaces",
+
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "lldb.executable": "/usr/bin/lldb"
+  },
+
+  "remoteEnv": {
+    "PATH": "/workspaces/tools/bin:${containerEnv:PATH}",
+    "BEE_DEV_RUSTC_COMMIT_HASH": "${localEnv:BEE_DEV_CONTAINER_RUSTC_COMMIT_HASH}",
+    "BEE_DEV_RUST_TOOLCHAIN_PATH": "${localEnv:BEE_DEV_CONTAINER_RUST_TOOLCHAIN_PATH}"
+  },
+
+  "extensions": [
+    "rust-lang.rust",
+    "bungcip.better-toml",
+    "vadimcn.vscode-lldb"
+  ]
+}

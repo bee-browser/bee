@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Run tests",
+      "cargo": {
+        "args": ["test", "--no-run"],
+        "filter": {
+          "name": "layout_test",
+          "kind": "test"
+        }
+      },
+      "args": ["--test-threads", "1"],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

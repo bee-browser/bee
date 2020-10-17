@@ -1,0 +1,9 @@
+- Start:
+    width: 1000.0
+    height: 500.0
+- FillRect:
+    rect:
+      origin: [0.0, 0.0]
+      size: [800.0, 400.0]
+    color: [0, 0, 255, 255]
+- End

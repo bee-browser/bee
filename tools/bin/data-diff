@@ -1,0 +1,132 @@
+#!/usr/bin/env node
+
+// Copyright 2018 BEE project contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+'use strict';
+
+const program = require('commander');
+const fs = require('fs');
+const yaml = require('js-yaml');
+const { diff } = require('deep-diff');
+const streamToString = require('stream-to-string');
+
+const SUPPORTED_TYPES = [
+  'json', 'jsonl', 'yaml'
+];
+
+const HELP = `
+  Supported Data Formats:
+
+    json, jsonl, yaml
+
+  Examples:
+
+    Compare JSON files:
+
+      $ {{name}} lhs.json rhs.json
+
+    Compare a JSON file with a YAML data comes from STDIN:
+
+      $ cat lhs.yaml | {{name}} -f yaml:json rhs.json
+
+    Compare a YAML data with a JSONL stream comes from STDIN:
+
+      $ echo '["a"]' | {{name}} -f jsonl:yaml --direct -- "- a"
+`;
+
+class FormatOption {
+  constructor(lhs, rhs) {
+    this.lhs = lhs;
+    this.rhs = rhs;
+  }
+
+  toString() {
+    return `${this.lhs}:${this.rhs}`;
+  }
+
+  static parse(str) {
+    const [lhs, rhs] = str.split(':');
+    if (!SUPPORTED_TYPES.includes(lhs)) {
+      throw new Error(`not supported: ${lhs}`);
+    }
+    if (!SUPPORTED_TYPES.includes(rhs)) {
+      throw new Error(`not supported: ${rhs}`);
+    }
+    return new FormatOption(lhs, rhs);
+  }
+}
+
+async function load(filepath, direct) {
+  if (filepath === undefined) {
+    return await streamToString(process.stdin);
+  }
+  if (direct) {
+    return filepath;
+  }
+  return fs.readFileSync(filepath, { encoding: 'utf8' });
+}
+
+async function parse(filepath, format, direct) {
+  const data = await load(filepath, direct);
+  switch (format) {
+  case 'json':
+    return JSON.parse(data);
+  case 'jsonl':
+    return data.trim().split('\n').map((l) => JSON.parse(l));
+  case 'yaml':
+    return yaml.safeLoad(data);
+  default:
+    throw new Error('never reach here');
+  }
+}
+
+async function struct_diff(data1, data2, options) {
+  let lhs, rhs;
+  if (data2 === undefined) {
+    lhs = await parse(undefined, options.format.lhs, options.direct);
+    rhs = await parse(data1, options.format.rhs, options.direct);
+  } else {
+    lhs = await parse(data1, options.format.lhs, options.direct);
+    rhs = await parse(data2, options.format.rhs, options.direct);
+  }
+  return diff(lhs, rhs);
+}
+
+program
+  .description('Structural diff for JSON-like data formats')
+  .option(
+    '-f, --format <lhs>:<rhs>',
+    'Formats of data to be compared',
+    FormatOption.parse, new FormatOption('json', 'json'))
+  .option(
+    '--direct',
+    'Directly pass data as arguments')
+  .arguments('<data1> [data2]')
+  .action(async (data1, data2, options) => {
+    try {
+      const results = await struct_diff(data1, data2, options);
+      if (results) {
+        // TODO: print formatted results for readability
+        console.error(results);
+        process.exit(1);
+      }
+      process.exit(0);
+    } catch (e) {
+      console.error(e);
+      process.exit(2);
+    }
+  })
+  .on('--help', () => console.log(HELP.replace(/{{name}}/g, program._name)))
+  .parse(process.argv);
