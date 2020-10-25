@@ -107,11 +107,11 @@ $(bee-deepmerge --format yaml \
     $TEMPLATES_DIR/coverage.job.yml)
 EOF
 
-cat <<EOF >$WORKFLOWS_DIR/release.yml
-$HEADER
-$(bee-deepmerge --format yaml \
-    $TEMPLATES_DIR/release.workflow.yml)
-EOF
+# cat <<EOF >$WORKFLOWS_DIR/release.yml
+# $HEADER
+# $(bee-deepmerge --format yaml \
+#     $TEMPLATES_DIR/release.workflow.yml)
+# EOF
 
 cat <<EOF >$WORKFLOWS_DIR/pull-request.yml
 $HEADER
