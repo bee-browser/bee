@@ -103,6 +103,7 @@ $(bee-deepmerge --format yaml \
     $TEMPLATES_DIR/ci.workflow.yml \
     $TEMPLATES_DIR/linux-build.job.yml \
     $TEMPLATES_DIR/macos-build.job.yml \
+    $TEMPLATES_DIR/windows-build.job.yml \
     $TEMPLATES_DIR/arm-linux-build.job.yml \
     $TEMPLATES_DIR/coverage.job.yml)
 EOF
@@ -119,6 +120,7 @@ $(bee-deepmerge --format yaml \
     $TEMPLATES_DIR/pull-request.workflow.yml \
     $TEMPLATES_DIR/linux-build.job.yml \
     $TEMPLATES_DIR/macos-build.job.yml \
+    $TEMPLATES_DIR/windows-build.job.yml \
     $TEMPLATES_DIR/arm-linux-build.job.yml \
     $TEMPLATES_DIR/coverage.job.yml \
     $TEMPLATES_DIR/auto-merge.job.yml)
