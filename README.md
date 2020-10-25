@@ -2,8 +2,8 @@
 
 > Browser Engine for Embedding
 
-[![ci-status](https://github.com/bee-project/prototype/workflows/CI/badge.svg)](https://github.com/bee-project/prototype/actions?workflow=CI)
-[![coverage](https://coveralls.io/repos/github/bee-project/prototype/badge.svg?branch=master)](https://coveralls.io/github/bee-project/prototype?branch=master)
+[![ci-status](https://github.com/bee-browser/prototype/workflows/CI/badge.svg)](https://github.com/bee-browser/prototype/actions?workflow=CI)
+[![coverage](https://coveralls.io/repos/github/bee-browser/prototype/badge.svg?branch=master)](https://coveralls.io/github/bee-browser/prototype?branch=master)
 [![Built with cargo-make](https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg)](https://sagiegurari.github.io/cargo-make)
 
 ## What's BEE?
