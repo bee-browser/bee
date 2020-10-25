@@ -8,11 +8,7 @@ on:
 jobs:
   linux-build:
   macos-build:
-  windows-build:
-  arm-linux-build:
   coverage:
     needs:
       - linux-build
       - macos-build
-      - windows-build
-      - arm-linux-build
