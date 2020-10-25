@@ -85,8 +85,8 @@ jobs:
         working-directory: ./tools
       - name: Update PATH
         run: |
-          echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
+          echo "$GITHUB_WORKSPACE\\tools\\bin" >>$GITHUB_PATH
+          echo "$GITHUB_WORKSPACE\\tools\\node_modules\\.bin" >>$GITHUB_PATH
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -145,6 +145,14 @@ jobs:
         with:
           toolchain: nightly
           override: true
+      - uses: actions/setup-node@v2-beta
+      - name: Install npm packages
+        run: npm install
+        working-directory: ./tools
+      - name: Update PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
+          echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
       - name: Generate coverage data
         uses: actions-rs/cargo@v1
         with:
