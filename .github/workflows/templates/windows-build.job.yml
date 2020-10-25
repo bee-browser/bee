@@ -18,8 +18,8 @@ jobs:
         working-directory: ./tools
       - name: Update PATH
         run: |
-            echo "$GITHUB_WORKSPACE\\tools\\bin" >>$GITHUB_PATH
-            echo "$GITHUB_WORKSPACE\\tools\\node_modules\\.bin" >>$GITHUB_PATH
+            echo "%GITHUB_WORKSPACE%\tools\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
+            echo "%GITHUB_WORKSPACE%\tools\node_modules\.bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
       - name: Build
         uses: actions-rs/cargo@v1
         with:
