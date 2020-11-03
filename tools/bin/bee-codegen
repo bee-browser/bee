@@ -64,6 +64,7 @@ async function render(template, searchPaths, context) {
   env.addFilter('modulePath', (s) => require.resolve(s));
   env.addFilter('fileUrl', (s) => fileUrl(s));
   env.addFilter('load', (s) => fs.readFileSync(s, { encoding: 'utf8' }));
+  env.addFilter('split', (s, sep, limit) => s.split(sep, limit));
   return env.renderString(template, context);
 }
 

@@ -15,7 +15,6 @@ fn layout_test(scenario_path: &str, expected_path: &str) {
 }
 
 fn interpret(scenario_path: &str) -> TestResult {
-    let mut service = LayoutService::new();
     let mut node_map = HashMap::new();
 
     let msgs = load_scenario(scenario_path);
@@ -38,7 +37,7 @@ fn interpret(scenario_path: &str) -> TestResult {
             }
             LayoutMessage::Visualize { width, height } => {
                 let root = node_map.get(&NodeId(0)).unwrap();
-                let visual_tree = service.build_visual_tree(root.clone(), width, height);
+                let visual_tree = build_visual_tree(root.clone(), width, height);
                 let mut renderer = TestRenderer::new();
                 visual_tree.render(&mut renderer);
                 results.push(TestResult {
@@ -198,4 +197,4 @@ impl<T: Copy> BoxEdge<T> {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/layout_test.codegen.rs"));
+include!(concat!(env!("CARGO_TARGET_DIR"), "/codegen/libs/layout/layout_test.rs"));

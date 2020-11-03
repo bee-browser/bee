@@ -1,6 +1,8 @@
 use std::ops::Add;
 
 use euclid::num::Zero;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::Number;
@@ -9,8 +11,8 @@ use crate::SideOffset2D;
 use crate::MAX_LENGTH;
 
 #[derive(Default)]
-#[derive(Deserialize, Serialize)]
-#[serde(default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
 pub struct Style {
     pub schema: SchemaStyle,
     pub box_model: BoxModelStyle,
@@ -18,7 +20,7 @@ pub struct Style {
     pub layer: LayerStyle,
 }
 
-#[derive(Deserialize, Serialize)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct SchemaStyle {
     pub node: VisualNodeType,
     pub container: VisualContainerType,
@@ -35,8 +37,8 @@ impl Default for SchemaStyle {
     }
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum VisualNodeType {
     None,
     Inline,
@@ -52,8 +54,8 @@ pub enum VisualNodeType {
     TableCell,
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum VisualContainerType {
     None,
     Flow,
@@ -66,8 +68,8 @@ pub enum VisualContainerType {
     Grid,
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum PositioningScheme {
     Static,
     Relative,
@@ -83,8 +85,8 @@ impl Default for PositioningScheme {
 }
 
 #[derive(Default)]
-#[derive(Deserialize, Serialize)]
-#[serde(default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
 pub struct BoxModelStyle {
     pub box_sizing: BoxSizing,
     pub width: ContentSize,
@@ -98,8 +100,8 @@ pub struct BoxModelStyle {
     pub margin: BoxQuad<Margin>,
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BoxSizing {
     ContentBox,
     BorderBox,
@@ -113,8 +115,8 @@ impl Default for BoxSizing {
 }
 
 #[derive(Clone, Copy)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentSize {
     Auto,
     Pixel(Length),
@@ -139,8 +141,8 @@ impl Default for ContentSize {
 }
 
 #[derive(Clone, Copy)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentMinSize {
     Pixel(Length),
     Scale(Number),
@@ -164,8 +166,8 @@ impl Default for ContentMinSize {
 }
 
 #[derive(Clone, Copy)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentMaxSize {
     None,
     Pixel(Length),
@@ -190,8 +192,8 @@ impl Default for ContentMaxSize {
 }
 
 #[derive(Clone, Copy)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Padding {
     Pixel(Length),
     Scale(Number),
@@ -215,8 +217,8 @@ impl Default for Padding {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BorderStyle {
     None,
     Hidden,
@@ -264,7 +266,7 @@ impl std::fmt::Display for BorderStyle {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-#[derive(Deserialize, Serialize)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Border {
     pub style: BorderStyle,
     pub width: Length,
@@ -306,7 +308,7 @@ impl std::fmt::Display for Border {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[derive(Deserialize, Serialize)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Color(u8, u8, u8, u8);
 
 impl Color {
@@ -356,8 +358,8 @@ impl std::fmt::Display for Color {
 }
 
 #[derive(Clone, Copy)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Margin {
     Auto,
     Pixel(Length),
@@ -382,7 +384,7 @@ impl Default for Margin {
 }
 
 #[derive(Clone, Default, PartialEq)]
-#[derive(Deserialize, Serialize)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct BoxQuad<T>([T; 4]);
 
 impl<T> BoxQuad<T>
@@ -537,23 +539,23 @@ impl BoxQuad<LayerOffset> {
 }
 
 #[derive(Default)]
-#[derive(Deserialize, Serialize)]
-#[serde(default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
 pub struct BackgroundStyle {
     pub color: Color,
 }
 
 #[derive(Default)]
-#[derive(Deserialize, Serialize)]
-#[serde(default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
 pub struct LayerStyle {
     pub offset: BoxQuad<LayerOffset>,
     pub z_index: LayerZIndex,
 }
 
 #[derive(Clone, Copy)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum LayerOffset {
     Auto,
     Pixel(Length),
@@ -578,8 +580,8 @@ impl Default for LayerOffset {
 }
 
 #[derive(Clone, Copy)]
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum LayerZIndex {
     Auto,
     Index(i32),
@@ -597,6 +599,7 @@ pub struct AvailableSize {
     pub height: Option<Length>,
 }
 
+#[cfg(feature = "serde")]
 #[cfg(test)]
 mod tests {
     use super::*;

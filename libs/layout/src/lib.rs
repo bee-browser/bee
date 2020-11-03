@@ -1,5 +1,8 @@
 mod style;
 
+#[cfg(feature = "service")]
+pub mod service;
+
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -35,6 +38,29 @@ pub fn new_element(
 pub fn new_text(text: String, label: String) -> LayoutNodeHandle {
     LayoutNodeHandle(LayoutNodeRef::Text(
         Arc::new(LayoutText::new(text, label))))
+}
+
+pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: usize) -> VisualRoot {
+    if let LayoutNodeRef::Element(ref element) = layout_root.0 {
+        let width = Length::new(width as f32);
+        let height = Length::new(height as f32);
+
+        let box_model = VisualBoxModel {
+            style: element.style.clone(),
+            border_box: Box2D::from_size(Size2D::from_lengths(width, height)),
+        };
+
+        let avail = AvailableSize {
+            width: Some(width),
+            height: Some(height),
+        };
+
+        let layers = element.build_top_level_layers_for_children(&avail, &avail).into_vec();
+
+        VisualRoot { width, height, box_model, layers, }
+    } else {
+        unreachable!();  //<coverage:exclude/>
+    }
 }
 
 #[derive(Clone)]
@@ -471,38 +497,6 @@ impl VisualLayer {
 impl std::fmt::Display for VisualLayer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "layer: {:?}, stack_level={}", self.box_model, self.stack_level)
-    }
-}
-
-pub struct LayoutService {
-}
-
-impl LayoutService {
-    pub fn new() -> Self {
-        LayoutService {}
-    }
-
-    pub fn build_visual_tree(&mut self, layout_root: LayoutNodeHandle, width: usize, height: usize) -> VisualRoot {
-        if let LayoutNodeRef::Element(ref element) = layout_root.0 {
-            let width = Length::new(width as f32);
-            let height = Length::new(height as f32);
-
-            let box_model = VisualBoxModel {
-                style: element.style.clone(),
-                border_box: Box2D::from_size(Size2D::from_lengths(width, height)),
-            };
-
-            let avail = AvailableSize {
-                width: Some(width),
-                height: Some(height),
-            };
-
-            let layers = element.build_top_level_layers_for_children(&avail, &avail).into_vec();
-
-            VisualRoot { width, height, box_model, layers, }
-        } else {
-            unreachable!();  //<coverage:exclude/>
-        }
     }
 }
 

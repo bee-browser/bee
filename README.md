@@ -4,7 +4,6 @@
 
 [![ci-status](https://github.com/bee-browser/prototype/workflows/CI/badge.svg)](https://github.com/bee-browser/prototype/actions?workflow=CI)
 [![coverage](https://coveralls.io/repos/github/bee-browser/prototype/badge.svg?branch=master)](https://coveralls.io/github/bee-browser/prototype?branch=master)
-[![Built with cargo-make](https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg)](https://sagiegurari.github.io/cargo-make)
 
 ## What's BEE?
 
@@ -12,31 +11,19 @@ BEE is a web browser engine intended to be embedded into other applications.
 
 ## Development
 
-Install `cargo-make`.  Other tools required will be installed automatically when running
-`cargo make <task>`.
-
 ```shell
 # Build the debug binary.
-cargo make build
-
-# Build the release binary.
-cargo make build-release
+make build
 
 # Run tests.
-cargo make test
+make test
 
 # Run coverage tests using grcov.
-cargo make coverage-grcov
-
-# Launch VSCode.
-# The Linux build using a remote container is supported.
-cargo make launch-vscode
+make coverage
 
 # Update workflows for GitHub Actions.
-cargo make update-github-workflows
+make github-workflows
 ```
-
-You can see all steps by running `cargo make --list-all-steps`.
 
 ## License
 
