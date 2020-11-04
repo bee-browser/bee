@@ -21,12 +21,10 @@ jobs:
             echo "%GITHUB_WORKSPACE%\tools\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
             echo "%GITHUB_WORKSPACE%\tools\node_modules\.bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: -v --release
+        run: make
+        env:
+          CARGO_TERM_VERBOSE: true
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -v --release
+        run: make test
+        env:
+          CARGO_TERM_VERBOSE: true

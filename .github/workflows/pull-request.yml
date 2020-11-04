@@ -28,15 +28,13 @@ jobs:
           echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
           echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: '-v --release'
+        run: make
+        env:
+          CARGO_TERM_VERBOSE: true
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: '-v --release'
+        run: make test
+        env:
+          CARGO_TERM_VERBOSE: true
   macos-build:
     strategy:
       matrix:
@@ -58,15 +56,13 @@ jobs:
           echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
           echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: '-v --release'
+        run: make
+        env:
+          CARGO_TERM_VERBOSE: true
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: '-v --release'
+        run: make test
+        env:
+          CARGO_TERM_VERBOSE: true
   coverage:
     needs:
       - linux-build
@@ -87,14 +83,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
           echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
       - name: Generate coverage data
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: '--all-features --no-fail-fast'
-        env:
-          CARGO_INCREMENTAL: '0'
-          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
-          RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
+        run: make coverage
       - uses: actions-rs/grcov@v0.1
         id: coverage
       - name: Upload coverage data to Coveralls
