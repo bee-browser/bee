@@ -16,16 +16,22 @@ COVERAGE_ENV_VARS = \
   RUSTDOCFLAGS="-Cpanic=abort"
 
 build:
-	cargo build
+	cargo build --release
 
 test: $(CODEGEN_DIR)/layout_test.rs $(LAYOUT_TEST_SCENARIO_FILES)
-	cargo test --all-features
+	cargo test --release --all-features
 
 coverage: $(CODEGEN_DIR)/layout_test.rs $(LAYOUT_TEST_SCENARIO_FILES)
 	env $(COVERAGE_ENV_VARS) cargo +nightly test --all-features
 	grcov $(TARGET_DIR)/debug -s $(abspath .) -t html --llvm --branch --ignore-not-existing \
 	  -o $(TARGET_DIR)/coverage --excl-line "//<coverage:exclude/>" \
 	  --excl-start "//<coverage:exclude>" --excl-stop "//</coverage:exclude>"
+
+debug-build:
+	cargo build
+
+debug-test: $(CODEGEN_DIR)/layout_test.rs $(LAYOUT_TEST_SCENARIO_FILES)
+	cargo test --all-features
 
 clean:
 	cargo clean

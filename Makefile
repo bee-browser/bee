@@ -27,8 +27,10 @@ export BEE_DEV_RUST_TOOLCHAIN_PATH := $(shell rustup toolchain list -v | grep '(
 #BEE_DEV_CONTAINER_RUSTC_COMMIT_HASH=$(docker run --rm mcr.microsoft.com/vscode/devcontainers/rust rustc -vV | grep 'commit-hash' | cut -d ' ' -f 2)
 #BEE_DEV_CONTAINER_RUST_TOOLCHAIN_PATH=$(docker run --rm mcr.microsoft.com/vscode/devcontainers/rust rustup toolchain list -v | grep '(default)' | cut -f 2)
 
-TARGETS=build test coverage clean
+TARGETS=build test coverage debug-build debug-test clean
 SUBDIRS=$(wildcard libs/*)
+
+all: build
 
 $(TARGETS): $(SUBDIRS)
 

@@ -12,13 +12,15 @@ BEE is a web browser engine intended to be embedded into other applications.
 ## Development
 
 ```shell
-# Build the debug binary.
+# The release build.
 make build
-
-# Run tests.
 make test
 
-# Run coverage tests using grcov.
+# The debug build
+make debug-build
+make debug-test
+
+# Measure test coverages using grcov.
 make coverage
 
 # Update workflows for GitHub Actions.
