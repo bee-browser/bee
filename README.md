@@ -20,8 +20,9 @@ make test
 make debug-build
 make debug-test
 
-# Measure test coverages using grcov.
-make coverage
+# Coverage.
+make cov
+make cov-html
 
 # Update workflows for GitHub Actions.
 make github-workflows

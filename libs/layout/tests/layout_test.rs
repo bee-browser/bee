@@ -197,4 +197,4 @@ impl<T: Copy> BoxEdge<T> {
     }
 }
 
-include!(concat!(env!("CARGO_TARGET_DIR"), "/codegen/libs/layout/layout_test.rs"));
+include!(concat!(env!("BEE_CARGO_CODEGEN_DIR"), "/libs/layout/tests/layout_test.rs"));
