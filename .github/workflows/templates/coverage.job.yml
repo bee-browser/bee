@@ -19,8 +19,8 @@ jobs:
         run: make coverage
       - uses: actions-rs/grcov@v0.1
         id: coverage
-      - name: Upload coverage data to Coveralls
-        uses: coverallsapp/github-action@master
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ${{ steps.coverage.outputs.report }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ${{ steps.coverage.outputs.report }}
