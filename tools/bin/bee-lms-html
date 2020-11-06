@@ -33,6 +33,8 @@ program
     '--viewport <width>x<height>', 'Viewport size',
     Size.parse, new Size(1280, 720))
   .option(
+    '--json', 'Output JSON instead of JSONL')
+  .option(
     '--logging', 'Enable logging')
   .arguments(
     '[url-or-path]')

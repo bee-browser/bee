@@ -1,0 +1,11 @@
+[package]
+name = "bee-lmp"
+version = "0.1.0"
+authors = ["BEE project contributors"]
+edition = "2018"
+publish = false
+
+[dependencies]
+anyhow = "1.0"
+bee-layout = { path = "../../libs/layout", features = ["service"] }
+structopt = "0.3"

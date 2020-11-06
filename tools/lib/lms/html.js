@@ -25,7 +25,11 @@ async function run(url, options) {
       const func = new Function('options', script);
       return func(options);
     }, script, {});
-    console.log(JSON.stringify(messages));
+    if (options.json) {
+      console.log(JSON.stringify(messages));
+    } else {
+      messages.forEach((msg) => console.log(JSON.stringify(msg)));
+    }
   } catch(e) {
     console.error(e);
   } finally {

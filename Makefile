@@ -28,7 +28,7 @@ export BEE_DEV_RUST_TOOLCHAIN_PATH := $(shell rustup toolchain list -v | grep '(
 #BEE_DEV_CONTAINER_RUST_TOOLCHAIN_PATH=$(docker run --rm mcr.microsoft.com/vscode/devcontainers/rust rustup toolchain list -v | grep '(default)' | cut -f 2)
 
 SUBDIR_TARGETS=testgen
-SUBDIRS=$(wildcard libs/*)
+SUBDIRS=$(wildcard apps/* libs/*)
 
 COVERAGE_ENV_VARS = \
   CARGO_INCREMENTAL=0 \
@@ -84,4 +84,4 @@ $(SUBDIR_TARGETS): $(SUBDIRS)
 
 .PHONY: $(SUBDIRS)
 $(SUBDIRS):
-	@make -C $@ $(MAKECMDGOALS)
+	-@make -C $@ $(MAKECMDGOALS)

@@ -8,14 +8,12 @@ use crate::*;
 
 pub struct MessageInterpreter {
     node_map: HashMap<NodeId, LayoutNodeHandle>,
-    visual_tree: Option<VisualRoot>,
 }
 
 impl MessageInterpreter {
     pub fn new() -> Self {
         MessageInterpreter {
             node_map: HashMap::new(),
-            visual_tree: None,
         }
     }
 
@@ -78,8 +76,7 @@ impl Painter {
     }
 
     fn println(&self, msg: PaintMessage) {
-        serde_json::to_writer(std::io::stdout().lock(), &msg)
-            .expect("Failed to write");
+        println!("{}", serde_json::to_string(&msg).expect("Failed to write"));
     }
 }
 

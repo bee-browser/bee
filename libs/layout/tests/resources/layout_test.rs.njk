@@ -7,6 +7,9 @@
 {% for name in names | split(" ") %}
 #[test]
 fn {{ name }}_layout_test() {
-    layout_test("{{ codegen_dir }}/{{ name }}.scenario.json", "{{ resources_dir }}/{{ name }}.expected.yml");
+    layout_test(
+        "{{ codegen_dir }}/{{ name }}.scenario.jsonl",
+        "{{ resources_dir }}/{{ name }}.expected.yml",
+    );
 }
 {% endfor %}

@@ -1,7 +1,7 @@
 [package]
 name = "bee-layout"
 version = "0.1.0"
-authors = ["masnagam <masnagam@gmail.com>"]
+authors = ["BEE project contributors"]
 edition = "2018"
 publish = false
 

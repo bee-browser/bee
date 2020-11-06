@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufRead, BufReader};
 use std::sync::Arc;
 
 use assert_json_diff::assert_json_eq_no_panic;
@@ -72,9 +72,11 @@ fn load_scenario(path: &str) -> Vec<LayoutMessage> {
     let file = File::open(path).unwrap_or_else(|err| {
         panic!("{}: {}", path, err);  //<coverage:exclude/>
     });
-    serde_json::from_reader(BufReader::new(file)).unwrap_or_else(|err| {
-        panic!("{}: {}", path, err);  //<coverage:exclude/>
-    })
+    BufReader::new(file).lines().map(|jsonl| {
+        serde_json::from_str(jsonl.unwrap().as_str()).unwrap_or_else(|err| {
+            panic!("{}: {}", path, err);  //<coverage:exclude/>
+        })
+    }).collect()
 }
 
 fn load_expected(path: &str) -> serde_json::Value {
