@@ -8,4 +8,5 @@ publish = false
 [dependencies]
 anyhow = "1.0"
 bee-layout = { path = "../../libs/layout", features = ["service"] }
+serde_json = "1.0"
 structopt = "0.3"

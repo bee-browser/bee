@@ -291,7 +291,7 @@ async function scanPseudoElement(result, element, pseudo) {
   }
   const id = getNextNodeId();
   result.push({
-    CreateElement: {
+    'bee.layout.create_element': {
       id,
       style,
       label: makeElementLabel(element, id, pseudo),
@@ -475,7 +475,7 @@ async function scanElement(result, element) {
   const label = makeElementLabel(element, id);
 
   result.push({
-    CreateElement: { id, style, children, label, },
+    'bee.layout.create_element': { id, style, children, label, },
   });
 
   // switch (element.tagName) {
@@ -511,7 +511,7 @@ async function scanElement(result, element) {
 function scanText(result, textNode) {
   const id = getNextNodeId();
   result.push({
-    CreateText: {
+    'bee.layout.create_text': {
       id,
       text: textNode.nodeValue,
       label: `text-${id}`,
@@ -535,7 +535,7 @@ async function scanNode(result, node) {
 // Scan nodes in the post-order traversal.
 async function scanDocument(result, document) {
   result.push({
-    CreateElement: {
+    'bee.layout.create_element': {
       id: 0,
       style: {
         schema: {
@@ -566,7 +566,7 @@ async function scan() {
   // TODO: frames in the window
   await scanDocument(result, window.document);
   result.push({
-    Visualize: {
+    'bee.layout.visualize': {
       width: window.innerWidth,
       height: window.innerHeight,
     },

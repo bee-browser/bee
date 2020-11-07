@@ -1,12 +1,12 @@
-- Start:
+- bee.paint.start:
     width: 1000.0
     height: 500.0
-- FillRect:
+- bee.paint.fill_rect:
     rect:
       origin: [840.0, 340.0]
       size: [140.0, 140.0]
     color: [0, 0, 255, 255]
-- DrawBorder:
+- bee.paint.draw_border:
     rect:
       origin: [840.0, 340.0]
       size: [140.0, 140.0]
@@ -27,4 +27,4 @@
         style: solid
         width: 10.0
         color: [255, 0, 0, 255]
-- End
+- bee.paint.end

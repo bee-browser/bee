@@ -6,13 +6,18 @@ use serde_json;
 
 use crate::*;
 
-pub struct MessageInterpreter {
+pub struct MessageInterpreter<T> {
+    sink: T,
     node_map: HashMap<NodeId, LayoutNodeHandle>,
 }
 
-impl MessageInterpreter {
-    pub fn new() -> Self {
+impl<T> MessageInterpreter<T>
+where
+    T: JsonSink,
+{
+    pub fn new(sink: T) -> Self {
         MessageInterpreter {
+            sink,
             node_map: HashMap::new(),
         }
     }
@@ -34,7 +39,7 @@ impl MessageInterpreter {
             LayoutMessage::Visualize { width, height } => {
                 let root = self.node_map.get(&NodeId(0)).unwrap();
                 let visual_tree = build_visual_tree(root.clone(), width, height);
-                let mut painter = Painter::new();
+                let mut painter = Painter::new(&mut self.sink);
                 visual_tree.render(&mut painter);
             }
         }
@@ -47,46 +52,61 @@ struct NodeId(usize);
 
 #[derive(Deserialize)]
 enum LayoutMessage {
+    #[serde(rename = "bee.layout.create_element")]
     CreateElement {
         id: NodeId,
         style: Arc<Style>,
         children: Vec<NodeId>,
         label: String,
     },
+    #[serde(rename = "bee.layout.create_text")]
     CreateText {
         id: NodeId,
         text: String,
         label: String,
     },
+    #[serde(rename = "bee.layout.visualize")]
     Visualize {
         width: usize,
         height: usize,
     },
 }
 
-struct Painter {
+pub trait JsonSink {
+    fn consume(&mut self, json: serde_json::Value);
+}
+
+struct Painter<'a, T> {
+    sink: &'a mut T,
     transform: Transform2D,
 }
 
-impl Painter {
-    fn new() -> Self {
+impl<'a, T> Painter<'a, T>
+where
+    T: JsonSink
+{
+    fn new(sink: &'a mut T) -> Self {
         Painter {
+            sink,
             transform: Default::default(),
         }
     }
 
-    fn println(&self, msg: PaintMessage) {
-        println!("{}", serde_json::to_string(&msg).expect("Failed to write"));
+    fn send(&mut self, msg: PaintMessage) {
+        self.sink.consume(serde_json::to_value(&msg).unwrap());
     }
 }
 
-impl VisualRenderer for Painter {
+impl<'a, T> VisualRenderer for Painter<'a, T>
+where
+    T: JsonSink
+{
     fn start_render(&mut self, width: Length, height: Length) {
-        self.println(PaintMessage::Start { width, height });
+        self.send(PaintMessage::Start { width, height });
     }
 
     fn end_render(&mut self) {
-        self.println(PaintMessage::End);
+        self.send(PaintMessage::End);
     }
 
     fn render_box(&mut self, model: &VisualBoxModel) {
@@ -95,13 +115,13 @@ impl VisualRenderer for Painter {
             return;
         }
         if !model.background_color().is_transparent() {
-            self.println(PaintMessage::FillRect {
+            self.send(PaintMessage::FillRect {
                 rect,
                 color: model.background_color(),
             });
         }
         if model.border().is_visible() {
-            self.println(PaintMessage::DrawBorder {
+            self.send(PaintMessage::DrawBorder {
                 rect,
                 border: BoxEdge::new(model.border()),
             });
@@ -115,15 +135,19 @@ impl VisualRenderer for Painter {
 
 #[derive(Serialize)]
 enum PaintMessage {
+    #[serde(rename = "bee.paint.start")]
     Start {
         width: Length,
         height: Length,
     },
+    #[serde(rename = "bee.paint.end")]
     End,
+    #[serde(rename = "bee.paint.fill_rect")]
     FillRect {
         rect: Rect,
         color: Color,
     },
+    #[serde(rename = "bee.paint.draw_border")]
     DrawBorder {
         rect: Rect,
         border: BoxEdge<Border>,
