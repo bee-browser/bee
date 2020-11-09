@@ -15,9 +15,12 @@ jobs:
           target: ${{ matrix.target }}
           override: true
       - uses: actions/setup-node@v2-beta
-      - name: Install npm packages
+      - name: Install packages for tools
         run: npm install
         working-directory: ./tools
+      - name: Install packages for webui
+        run: npm install
+        working-directory: ./webui
       - name: Update PATH
         run: |
             echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
