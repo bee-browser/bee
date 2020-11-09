@@ -1,0 +1,7 @@
+/.nyc_output
+/assets
+/coverage
+node_modules/
+.DS_Store
+.envrc
+npm-debug.log*

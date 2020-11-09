@@ -15,7 +15,7 @@ struct Opt {
 }
 
 fn main() -> Result<()> {
-    let _opt = Opt::from_args();
+    let opt = Opt::from_args();
 
     let mut interp = MessageInterpreter::new(JsonPrinter);
 
@@ -24,6 +24,10 @@ fn main() -> Result<()> {
             Ok(line) => interp.interpret(&line)?,
             Err(_) => break,
         }
+    }
+
+    if opt.debug {
+        interp.inspect(&mut std::io::stderr())?;
     }
 
     Ok(())

@@ -1,14 +1,17 @@
-- bee.paint.start:
+- type: paint.start
+  data:
     width: 1000.0
     height: 500.0
-- bee.paint.fill_rect:
+- type: paint.fill_rect
+  data:
     rect:
       origin: [0.0, 0.0]
       size: [100.0, 100.0]
     color: [255, 0, 0, 255]
-- bee.paint.fill_rect:
+- type: paint.fill_rect
+  data:
     rect:
       origin: [0.0, 0.0]
       size: [100.0, 100.0]
     color: [0, 0, 255, 255]
-- bee.paint.end
+- type: paint.end

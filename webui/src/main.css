@@ -1,0 +1,287 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-gap: 1px;
+  background-color: silver;  /* works as grid border */
+}
+
+.grid > * {
+  background-color: white;
+}
+
+.hide {
+  display: none;
+}
+
+/* debug-console */
+
+#debug-console {
+  grid-template-rows: 51px calc(50vh - 21px) calc(50vh - 32px);
+  grid-template-columns: 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+#multi-view-container {
+  grid-row: 3;
+  grid-column: 1;
+  background-color: silver;
+}
+
+#multi-view-container > .tab-bar {
+  margin-bottom: 1px;
+}
+
+#multi-view-content {
+  width: 100%;
+  height: calc(100% - 35px);
+}
+
+#multi-view-content > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* navigation-bar */
+
+#navigation-bar {
+  display: flex;
+  padding: 1em;
+  background-color: #f5f5f5;
+}
+
+#address-bar {
+  flex: auto;
+}
+
+#rsf-button {
+  flex: none;
+  margin-left: 1em;
+}
+
+#rsf-button.enable {
+  background-color: #32cd32;
+}
+
+#address-bar > input {
+  width: 100%;
+}
+
+/* paint view */
+
+#paint-view {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+#paint-view > .grid {
+  grid-template-rows: 1fr;
+  grid-template-columns: 4fr 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+#surface-container {
+  position: relative;
+  overflow: auto;
+}
+
+/* surface */
+
+.surface {
+  position: relative;
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.paint-box {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+/* paint box */
+
+@keyframes blink {
+  50% { opacity: .5 }
+}
+
+.paint-box.selected {
+  animation: blink 1s ease infinite;
+}
+
+/* paint box overlay */
+
+.paint-box-overlay {
+  position: absolute;
+  z-index: 1;
+  top: 0px;
+  left: 0px;
+  opacity: .7;
+  pointer-events: none;
+}
+
+.margin-box-outline {
+  position: absolute;
+  background-color: #FFFF00;
+}
+
+.border-box-outline {
+  position: absolute;
+  background-color: #C0C0C0C0;
+}
+
+.padding-box-outline {
+  position: absolute;
+  background-color: #87CEFA;
+}
+
+.content-box-outline {
+  position: absolute;
+  background-color: #90EE90;
+}
+
+/* paint prop view */
+
+.sticky-overlay {
+  position: sticky;
+  z-index: 2;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 0px;
+}
+
+.box-outline-tip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: solid 2px black;
+  background-color: white;
+}
+
+/* log list view */
+
+.log-list-view {
+  background-color: white;
+  overflow: auto;
+}
+
+.log-list-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.log-list-header th {
+  position: sticky;
+  top: 0;
+  background-color: #F1F1F1;
+}
+
+.log-table {
+  width: 100%;
+}
+
+.log-type {
+}
+
+.log-tags {
+}
+
+.log-message {
+}
+
+/* layout view */
+
+#layout-view {
+}
+
+#layout-view > .grid {
+  grid-template-rows: 1fr;
+  grid-template-columns: 2fr 2fr 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+#layout-object-tree {
+  grid-row: 1;
+  grid-column: 1;
+  overflow: auto;
+}
+
+#layout-layer-tree {
+  grid-row: 1;
+  grid-column: 2;
+  overflow: auto;
+}
+
+/* layout prop view */
+
+#layout-prop-view {
+  grid-row: 1;
+  grid-column: 3;
+  overflow: auto;
+}
+
+#layout-prop-view .tab-bar {
+  position: sticky;
+  top: 0;
+}
+
+/* tab bar */
+
+.tab-bar {
+  background-color: #F5F5F5
+}
+
+.tab-label {
+  display: inline-block;
+  padding: 0.5em;
+}
+
+.tab-label:hover {
+  background-color: #CCCCFF;
+}
+
+.tab-label.selected, .tab-label.selected:hover {
+  background-color: #FFCCCC;
+}
+
+/* tree view */
+
+.tree-node > .tree-node-content > .tree-node-label:before {
+  content: '\25BE';
+  padding-right: 3px;
+}
+
+.tree-node.collapsed > .tree-node-content > .tree-node-label:before {
+  content: '\25B8';
+  padding-right: 3px;
+}
+
+.tree-node > .tree-node-container {
+  display: block;
+}
+
+.tree-node.collapsed > .tree-node-container {
+  display: none;
+}
+
+.tree-node-content.selected {
+  background-color: #ffcccc;
+}
+
+.tree-node-content.targeted {
+  background-color: #ccccff;
+}

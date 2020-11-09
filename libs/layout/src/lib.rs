@@ -68,8 +68,11 @@ pub struct LayoutNodeHandle(LayoutNodeRef);  // opaque
 
 impl LayoutNodeHandle {
     //<coverage:exclude>
-    pub fn inspect(&self) {
-        self.0.inspect(0);
+    pub fn inspect<T>(&self, write: &mut T) -> std::io::Result<()>
+    where
+        T: std::io::Write + ?Sized,
+    {
+        self.0.inspect(write, 0)
     }
     //</coverage:exclude>
 }
@@ -89,10 +92,13 @@ impl LayoutNodeRef {
     }
 
     //<coverage:exclude>
-    fn inspect(&self, depth: usize) {
+    fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    where
+        T: std::io::Write + ?Sized,
+    {
         match *self {
-            LayoutNodeRef::Element(ref element) => element.inspect(depth),
-            LayoutNodeRef::Text(ref text) => text.inspect(depth),
+            LayoutNodeRef::Element(ref element) => element.inspect(write, depth),
+            LayoutNodeRef::Text(ref text) => text.inspect(write, depth),
         }
     }
     //</coverage:exclude>
@@ -361,11 +367,15 @@ impl LayoutElement {
     }
 
     //<coverage:exclude>
-    fn inspect(&self, depth: usize) {
-        println!("{:indent$}{}", "", self, indent=depth);
+    fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    where
+        T: std::io::Write + ?Sized,
+    {
+        write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
         for node_ref in self.children.iter() {
-            node_ref.inspect(depth + 1);
+            node_ref.inspect(write, depth + 1)?;
         }
+        Ok(())
     }
     //</coverage:exclude>
 }
@@ -386,8 +396,11 @@ impl LayoutText {
         LayoutText { text, label }
     }
 
-    fn inspect(&self, depth: usize) {
-        println!("{:indent$}{}", "", self, indent=depth);
+    fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    where
+        T: std::io::Write + ?Sized,
+    {
+        write!(write, "{:indent$}{}\n", "", self, indent=depth)
     }
 }
 
@@ -408,11 +421,15 @@ pub struct VisualRoot {
 }
 
 impl VisualRoot {
-    pub fn inspect(&self) {
-        println!("root: {:?}", self.box_model);
+    pub fn inspect<T>(&self, write: &mut T) -> std::io::Result<()>
+    where
+        T: std::io::Write + ?Sized,
+    {
+        write!(write, "root: {:?}\n", self.box_model)?;
         for layer_ref in self.layers.iter() {
-            layer_ref.0.inspect(1);
+            layer_ref.0.inspect(write, 1)?;
         }
+        Ok(())
     }
 
     pub fn render<T: VisualRenderer>(&self, renderer: &mut T) {
@@ -475,17 +492,20 @@ struct VisualLayer {
 }
 
 impl VisualLayer {
-    fn inspect(&self, depth: usize) {
-        println!("{:indent$}{}", "", self, indent=depth);
+    fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    where
+        T: std::io::Write + ?Sized,
+    {
+        write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
         for layer_ref in self.child_layers.iter() {
-            layer_ref.0.inspect(depth + 1);
+            layer_ref.0.inspect(write, depth + 1)?;
         }
+        Ok(())
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
         renderer.render_box(&self.box_model);
-        let v = Vector2D::from_lengths(
-            self.box_model.border().left().resolve(), self.box_model.border().top().resolve());
+        let v = self.box_model.padding_box().min.to_vector();
         renderer.translate_coord(v);
         for layer_ref in self.child_layers.iter() {
             layer_ref.0.render(renderer);

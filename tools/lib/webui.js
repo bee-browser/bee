@@ -1,17 +1,3 @@
-// Copyright 2018 BEE project contributors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 'use strict';
 
 const connect = require('connect');
@@ -98,8 +84,11 @@ function daemon(options) {
   for (const middleware of options.middlewares) {
     args.push('-m', middleware.toString());
   }
+  if (options.debugBuild) {
+    args.push('--debug-build');
+  }
   const logging = options.logging ? 'inherit' : 'ignore'
-  const proc = spawn('server-run', args, {
+  const proc = spawn('bee-webui-serve', args, {
     detached: true,
     stdio: ['ignore', logging, logging]
   });
@@ -107,6 +96,13 @@ function daemon(options) {
 }
 
 function run(options) {
+  process.env.PATH = `${consts.BINDIR}:${process.env.PATH}`;
+  if (options.debugBuild) {
+    process.env.PATH = `${consts.DEBUG_BUILD_DIR}:${process.env.PATH}`;
+  } else {
+    process.env.PATH = `${consts.RELEASE_BUILD_DIR}:${process.env.PATH}`;
+  }
+
   const app = connect();
 
   app.use('/api/check', (req, res) => {
@@ -131,7 +127,7 @@ function run(options) {
   }
 
   app.use((req, res) => handler(req, res, {
-    public: consts.OUTPUT_DIR,
+    public: consts.WEBUI_ASSETS_DIR,
     cleanUrls: false,
     headers: [{
       source: '**/*',
@@ -202,27 +198,20 @@ function handleNavigationGo(ws, { uri, viewport, remotes }) {
     remotes = {};
   }
 
+  console.log(process.env.PATH);
   let lms = null;
   if (uri.startsWith('text:')) {
-    lms = spawn('lms-text', ['--surface', `${width}x${height}`, uri.slice(5)]);
+    lms = spawn('bee-lms-text', ['--viewport', `${width}x${height}`, uri.slice(5)]);
   } else {
-    lms = spawn('lms-html', ['--viewport', `${width}x${height}`, uri]);
+    lms = spawn('bee-lms-html', ['--viewport', `${width}x${height}`, uri]);
   }
 
-  const lmp = spawn('lmp', ['-m']);
+  const lmp = spawn('bee-lmp', ['-d']);
   lms.stdout.pipe(lmp.stdin);
-
-  const sinks = Object
-    .keys(remotes)
-    .filter((remote) => ['pusher'].includes(remote))
-    .map((remote) => spawn(`msg-sink-${remote}`, remotes[remote]));
 
   readline
     .createInterface({ input: lmp.stdout })
-    .on('line', (line) => {
-      ws.send(line);
-      sinks.forEach((sink) => sink.stdin.write(line + '\n'));
-    });
+    .on('line', (line) => ws.send(line.trim()));
 
   readline
     .createInterface({ input: lmp.stderr })

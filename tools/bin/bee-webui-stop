@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+const webui = require('../lib/webui');
+
+program
+  .description(
+    'Stop Web UI server')
+  .option(
+    '-p, --port <port>',
+    'Port',
+    parseInt, 3000)
+  .action(async (options) => {
+    try {
+      await webui.stop(options.port);
+    } catch (e) {}
+  })
+  .parse(process.argv);

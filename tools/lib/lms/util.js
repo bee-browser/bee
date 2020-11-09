@@ -3,17 +3,6 @@
 const colors = require('color-name');
 
 class Color {
-  constructor(r, g, b, a) {
-    this.r = r;
-    this.g = g;
-    this.b = b;
-    this.a = a;
-  }
-
-  toString() {
-    return JSON.stringify(this);
-  }
-
   static parse(str) {
     if (typeof str !== 'string') {
       // Error.message will be ignored in Command._validateArgs.
@@ -21,20 +10,20 @@ class Color {
     }
     if (colors[str] !== undefined) {
       const c = colors[str];
-      return new Color(c[0], c[1], c[2], 255);
+      return [c[0], c[1], c[2], 255];
     }
     if (str.match(/^rgb\((\d+),(\d+),(\d+)\)/)) {
       const r = parseInt(RegExp.$1);
       const g = parseInt(RegExp.$2);
       const b = parseInt(RegExt.$3);
-      return new Color(r, g, b, 255);
+      return [r, g, b, 255];
     }
     if (str.match(/^rgba\((\d+),(\d+),(\d+),(\d+)\)/)) {
       const r = parseInt(RegExp.$1);
       const g = parseInt(RegExp.$2);
       const b = parseInt(RegExt.$3);
       const a = parseInt(RegExt.$4);
-      return new Color(r, g, b, a);
+      return [r, g, b, a];
     }
     // Error.message will be ignored in Command._validateArgs.
     throw new Error(`Invalid format.`);

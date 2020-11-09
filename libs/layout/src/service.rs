@@ -9,6 +9,7 @@ use crate::*;
 pub struct MessageInterpreter<T> {
     sink: T,
     node_map: HashMap<NodeId, LayoutNodeHandle>,
+    snapshots: Vec<(LayoutNodeHandle, VisualRoot)>,
 }
 
 impl<T> MessageInterpreter<T>
@@ -19,6 +20,7 @@ where
         MessageInterpreter {
             sink,
             node_map: HashMap::new(),
+            snapshots: Vec::new(),
         }
     }
 
@@ -41,7 +43,21 @@ where
                 let visual_tree = build_visual_tree(root.clone(), width, height);
                 let mut painter = Painter::new(&mut self.sink);
                 visual_tree.render(&mut painter);
+                self.snapshots.push((root.clone(), visual_tree));
             }
+        }
+        Ok(())
+    }
+
+    pub fn inspect<W>(&self, write: &mut W) -> std::io::Result<()>
+    where
+        W: std::io::Write + ?Sized,
+    {
+        for (ref layout, ref visual) in self.snapshots.iter() {
+            write!(write, "----- layout tree\n")?;
+            layout.inspect(write)?;
+            write!(write, "----- visual tree\n")?;
+            visual.inspect(write)?;
         }
         Ok(())
     }
@@ -51,21 +67,22 @@ where
 struct NodeId(usize);
 
 #[derive(Deserialize)]
+#[serde(tag = "type", content = "data")]
 enum LayoutMessage {
-    #[serde(rename = "bee.layout.create_element")]
+    #[serde(rename = "layout.create_element")]
     CreateElement {
         id: NodeId,
         style: Arc<Style>,
         children: Vec<NodeId>,
         label: String,
     },
-    #[serde(rename = "bee.layout.create_text")]
+    #[serde(rename = "layout.create_text")]
     CreateText {
         id: NodeId,
         text: String,
         label: String,
     },
-    #[serde(rename = "bee.layout.visualize")]
+    #[serde(rename = "layout.visualize")]
     Visualize {
         width: usize,
         height: usize,
@@ -134,20 +151,21 @@ where
 }
 
 #[derive(Serialize)]
+#[serde(tag = "type", content = "data")]
 enum PaintMessage {
-    #[serde(rename = "bee.paint.start")]
+    #[serde(rename = "paint.start")]
     Start {
         width: Length,
         height: Length,
     },
-    #[serde(rename = "bee.paint.end")]
+    #[serde(rename = "paint.end")]
     End,
-    #[serde(rename = "bee.paint.fill_rect")]
+    #[serde(rename = "paint.fill_rect")]
     FillRect {
         rect: Rect,
         color: Color,
     },
-    #[serde(rename = "bee.paint.draw_border")]
+    #[serde(rename = "paint.draw_border")]
     DrawBorder {
         rect: Rect,
         border: BoxEdge<Border>,

@@ -27,8 +27,17 @@ export BEE_DEV_RUST_TOOLCHAIN_PATH := $(shell rustup toolchain list -v | grep '(
 #BEE_DEV_CONTAINER_RUSTC_COMMIT_HASH=$(docker run --rm mcr.microsoft.com/vscode/devcontainers/rust rustc -vV | grep 'commit-hash' | cut -d ' ' -f 2)
 #BEE_DEV_CONTAINER_RUST_TOOLCHAIN_PATH=$(docker run --rm mcr.microsoft.com/vscode/devcontainers/rust rustup toolchain list -v | grep '(default)' | cut -f 2)
 
-SUBDIR_TARGETS=testgen
-SUBDIRS=$(wildcard apps/* libs/*)
+BUILD_TARGETS = $(addprefix build-,\
+  webui \
+)
+
+CLEAN_TARGETS = $(addprefix clean-,\
+  webui \
+)
+
+TESTGEN_TARGETS = $(addprefix testgen-,\
+  libs/layout \
+)
 
 COVERAGE_ENV_VARS = \
   CARGO_INCREMENTAL=0 \
@@ -38,30 +47,28 @@ COVERAGE_ENV_VARS = \
 .PHONY: all
 all: build
 
-$(TARGETS): $(SUBDIRS)
-
 .PHONY: build
-build:
+build: $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: run-testgen
+test: testgen
 	cargo test --release --all-features
 
 .PHONY: clean
-clean:
+clean: $(CLEAN_TARGETS)
 	cargo clean
 
 .PHONY: debug-build
-debug-build:
+debug-build: $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: debug-test
-debug-test: run-testgen
+debug-test: testgen
 	cargo test --all-features
 
 .PHONY: coverage
-coverage: run-testgen
+coverage: testgen
 	env $(COVERAGE_ENV_VARS) cargo +nightly test --all-features
 
 .PHONY: coverage-html
@@ -71,17 +78,21 @@ coverage-html: coverage
 	  --excl-start "//<coverage:exclude>" --excl-stop "//</coverage:exclude>" \
 	  $(PROJDIR)/target/debug
 
+.PHONE: testgen
+testgen: $(TESTGEN_TARGETS)
+
 .PHONY: github-workflows
 github-workflows:
 	@sh .github/workflows/update.sh
 
-.PHONE: run-testgen
-run-testgen:
-	@make testgen
+.PHONY: $(BUILD_TARGETS)
+$(BUILD_TARGETS):
+	@make -C $(subst build-,,$@) build
 
-.PHONY: $(SUBDIR_TARGETS)
-$(SUBDIR_TARGETS): $(SUBDIRS)
+.PHONY: $(TESTGEN_TARGETS)
+$(TESTGEN_TARGETS):
+	@make -C $(subst testgen-,,$@) testgen
 
-.PHONY: $(SUBDIRS)
-$(SUBDIRS):
-	-@make -C $@ $(MAKECMDGOALS)
+.PHONY: $(CLEAN_TARGETS)
+$(CLEAN_TARGETS):
+	@make -C $(subst clean-,,$@) clean

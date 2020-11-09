@@ -1,16 +1,4 @@
-// Copyright 2018 BEE project contributors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+'use strict';
 
 const path = require('path');
 
@@ -25,7 +13,13 @@ const STUDIES_LAYOUT_DIR = path.join(STUDIES_DIR, 'layout');
 const TESTS_DIR = path.join(PROJ_DIR, 'tests');
 const TESTS_LAYOUT_DIR = path.join(TESTS_DIR, 'layout');
 const TOOLS_DIR = path.join(PROJ_DIR, 'tools');
+const BINDIR = path.join(TOOLS_DIR, 'bin');
 const RCDIR= path.join(TOOLS_DIR, 'rc');
+const TARGET_DIR = path.join(PROJ_DIR, 'target');
+const DEBUG_BUILD_DIR = path.join(TARGET_DIR, 'debug');
+const RELEASE_BUILD_DIR = path.join(TARGET_DIR, 'release');
+const WEBUI_DIR = path.join(PROJ_DIR, 'webui');
+const WEBUI_ASSETS_DIR = path.join(WEBUI_DIR, 'assets');
 
 // exports
 
@@ -40,4 +34,8 @@ module.exports.STUDIES_LAYOUT_DIR = STUDIES_LAYOUT_DIR
 module.exports.TESTS_DIR = TESTS_DIR
 module.exports.TESTS_LAYOUT_DIR = TESTS_LAYOUT_DIR
 module.exports.TOOLS_DIR = TOOLS_DIR;
+module.exports.BINDIR = BINDIR;
 module.exports.RCDIR = RCDIR;
+module.exports.DEBUG_BUILD_DIR = DEBUG_BUILD_DIR;
+module.exports.RELEASE_BUILD_DIR = RELEASE_BUILD_DIR;
+module.exports.WEBUI_ASSETS_DIR = WEBUI_ASSETS_DIR;

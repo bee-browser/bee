@@ -11,4 +11,6 @@ program
     'lms', 'Layout message source')
   .command(
     'codegen', 'Generate code using a template with variables')
+  .command(
+    'webui', 'Web UI for testing')
   .parse(process.argv);

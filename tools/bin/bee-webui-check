@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+const webui = require('../lib/webui');
+
+program
+  .description(
+    'Healthcheck')
+  .option(
+    '-p, --port <port>',
+    'Port',
+    parseInt, 3000)
+  .action(async (options) => {
+    try {
+      console.log(await webui.check(options.port))
+    } catch (e) {
+      if (e.code === 'ECONNREFUSED') {
+        console.log('not running');
+      } else {
+        console.log(e.message);
+      }
+      process.exit(1);
+    }
+  })
+  .parse(process.argv);

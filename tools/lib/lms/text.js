@@ -42,7 +42,8 @@ function renderByPositionedBoxes(context, font, index) {
   left += index * context.box.width;  // letter space
 
   output({
-    create_element: {
+    type: 'layout.create_element',
+    data: {
       id,
       style: {
         schema: {
@@ -84,7 +85,8 @@ function renderDotByPositionedBox(context, glyphId, top, dot, index) {
   const left = index * context.box.width;
   const id = getNextNodeId();
   output({
-    create_element: {
+    type: 'layout.create_element',
+    data: {
       id,
       style: {
         schema: {
@@ -221,7 +223,8 @@ const RENDERERS = {
 
 function render(text, renderer, context) {
   output({
-    create_element: {
+    type: 'layout.create_element',
+    data: {
       id: 0,
       style: {
         schema: {
@@ -248,7 +251,8 @@ function render(text, renderer, context) {
   });
 
   output({
-    visualize: {
+    type: 'layout.visualize',
+    data: {
       width: context.viewport.width,
       height: context.viewport.height,
     },

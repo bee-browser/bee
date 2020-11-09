@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+
+program
+  .description(
+    'Web UI for testing')
+  .command(
+    'serve', 'Run Web UI server')
+  .command(
+    'stop', 'Stop Web UI server')
+  .command(
+    'check', 'Helthcheck')
+  .parse(process.argv);

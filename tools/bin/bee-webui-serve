@@ -1,0 +1,38 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const program = require('commander');
+const webui = require('../lib/webui');
+
+program
+  .description(
+    'Start Web UI server')
+  .option(
+    '-p, --port <port>',
+    'Port to be listened',
+    // When a default value is specified, parseInt() is called with an argument
+    // value and the defualt value if you pass parseInt directly.
+    (v) => parseInt(v), 3000)
+  .option(
+    '-m, --middlewares <mount-point>=<middleware-path>',
+    'Path to a middleware to be installed',
+    webui.MiddlewareList.collect, new webui.MiddlewareList)
+  .option(
+    '-x, --extensions <extension-path>',
+    'Path to an extension to be installed',
+    webui.ExtensionList.collect, new webui.ExtensionList)
+  .option(
+    '--daemon', 'Start to run as a background job')
+  .option(
+    '--logging', 'Enable logging')
+  .option(
+    '--debug-build', 'Use debug debug binaries')
+  .action((options) => {
+    if (options.daemon) {
+      webui.daemon(options);
+    } else {
+      webui.run(options);
+    }
+  })
+  .parse(process.argv);
