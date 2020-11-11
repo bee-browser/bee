@@ -185,10 +185,10 @@ struct BoxEdge<T> {
 impl<T: Copy> BoxEdge<T> {
     fn new(quad: &BoxQuad<T>) -> Self {
         BoxEdge {
-            top: quad.top(),
-            right: quad.right(),
-            bottom: quad.bottom(),
-            left: quad.left(),
+            top: quad.get_top(),
+            right: quad.get_right(),
+            bottom: quad.get_bottom(),
+            left: quad.get_left(),
         }
     }
 }

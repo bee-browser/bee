@@ -387,18 +387,10 @@ impl Default for Margin {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct BoxQuad<T>([T; 4]);
 
-impl<T> BoxQuad<T>
-where
-    T: Copy,
-{
+impl<T> BoxQuad<T> {
     #[inline]
-    pub fn new(v: T) -> Self {
-        BoxQuad([v; 4])
-    }
-
-    #[inline]
-    pub fn top(&self) -> T {
-        self.0[0]
+    pub fn top(&self) -> &T {
+        &self.0[0]
     }
 
     #[inline]
@@ -412,8 +404,8 @@ where
     }
 
     #[inline]
-    pub fn right(&self) -> T {
-        self.0[1]
+    pub fn right(&self) -> &T {
+        &self.0[1]
     }
 
     #[inline]
@@ -427,8 +419,8 @@ where
     }
 
     #[inline]
-    pub fn bottom(&self) -> T {
-        self.0[2]
+    pub fn bottom(&self) -> &T {
+        &self.0[2]
     }
 
     #[inline]
@@ -442,8 +434,8 @@ where
     }
 
     #[inline]
-    pub fn left(&self) -> T {
-        self.0[3]
+    pub fn left(&self) -> &T {
+        &self.0[3]
     }
 
     #[inline]
@@ -459,16 +451,46 @@ where
 
 impl<T> BoxQuad<T>
 where
+    T: Copy
+{
+    #[inline]
+    pub fn new(v: T) -> Self {
+        BoxQuad([v; 4])
+    }
+
+    #[inline]
+    pub fn get_top(&self) -> T {
+        self.0[0]
+    }
+
+    #[inline]
+    pub fn get_right(&self) -> T {
+        self.0[1]
+    }
+
+    #[inline]
+    pub fn get_bottom(&self) -> T {
+        self.0[2]
+    }
+
+    #[inline]
+    pub fn get_left(&self) -> T {
+        self.0[3]
+    }
+}
+
+impl<T> BoxQuad<T>
+where
     T: Copy + Add<Output = T>
 {
     #[inline]
     pub fn dw(&self) -> T {
-        self.left() + self.right()
+        self.get_left() + self.get_right()
     }
 
     #[inline]
     pub fn dh(&self) -> T {
-        self.top() + self.bottom()
+        self.get_top() + self.get_bottom()
     }
 }
 

@@ -633,11 +633,11 @@ impl BoxConstraintSolver {
     }
 
     fn solve_horizontal_constraints(&mut self, avail_width: Length) {
-        match (self.geom.width.value, self.geom.offset.left(), self.geom.offset.right()) {
+        match (self.geom.width.value, self.geom.offset.get_left(), self.geom.offset.get_right()) {
             // none of the three is 'auto'
             (Some(width), Some(left), Some(right)) => {
                 let remaining = avail_width - width - left - right;
-                match (self.geom.margin.left(), self.geom.margin.right()) {
+                match (self.geom.margin.get_left(), self.geom.margin.get_right()) {
                     (None, None) => {
                         if remaining < Length::zero() {
                             // TODO: RTL
@@ -720,11 +720,11 @@ impl BoxConstraintSolver {
     }
 
     fn solve_vertical_constraints(&mut self, avail_height: Length) {
-        match (self.geom.height.value, self.geom.offset.top(), self.geom.offset.bottom()) {
+        match (self.geom.height.value, self.geom.offset.get_top(), self.geom.offset.get_bottom()) {
             // none of the three is 'auto'
             (Some(height), Some(top), Some(bottom)) => {
                 let remaining = avail_height - height - top - bottom;
-                match (self.geom.margin.top(), self.geom.margin.bottom()) {
+                match (self.geom.margin.get_top(), self.geom.margin.get_bottom()) {
                     (None, None) => {
                         if remaining < Length::zero() {
                             self.geom.margin.set_top(Some(Length::zero()));
