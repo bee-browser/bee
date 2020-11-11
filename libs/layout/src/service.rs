@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -25,7 +25,9 @@ where
     }
 
     pub fn interpret(&mut self, json: &str) -> Result<()> {
-        match serde_json::from_str(json)? {
+        let msg = serde_json::from_str(json)
+            .with_context(|| format!("Failed to parse: {}", json))?;
+        match msg {
             LayoutMessage::CreateElement { id, style, children, label } => {
                 let children = children.iter()
                     .map(|id| self.node_map.get(id).unwrap())
@@ -45,7 +47,7 @@ where
                 visual_tree.render(&mut painter);
                 self.snapshots.push((root.clone(), visual_tree));
             }
-        }
+        };
         Ok(())
     }
 

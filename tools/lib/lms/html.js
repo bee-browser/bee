@@ -6,12 +6,12 @@ const puppeteer = require('puppeteer');
 const consts = require('../consts');
 
 async function run(url, options) {
-  let opt = { headless: options.headless };
+  let opt = {
+    devtools: options.debug,
+    dumpio: options.logging,
+  };
   if (!options.sandbox) {
     opt.args = ['--no-sandbox', '--disable-setuid-sandbox'];
-  }
-  if (options.logging) {
-    opt.dumpio = true;
   }
   const browser = await puppeteer.launch(opt);
   try {
@@ -22,9 +22,9 @@ async function run(url, options) {
       path.resolve(consts.RCDIR, 'lms', 'html.puppeteer.js'),
       { encoding: 'utf8' });
     const messages = await page.evaluate((script, options) => {
-      const func = new Function('options', script);
+      const func = new Function('$OPTIONS', script);
       return func(options);
-    }, script, {});
+    }, script, { debug: options.debug });
     if (options.json) {
       console.log(JSON.stringify(messages));
     } else {

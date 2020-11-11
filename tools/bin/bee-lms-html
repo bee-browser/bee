@@ -26,7 +26,7 @@ program
   .description(
     'Generate layout messages from a HTML document')
   .option(
-    '--no-headless', 'Run Chromium in the window mode for debugging')
+    '--debug', 'Run Chromium without the headless mode and auto-open devtools for debugging')
   .option(
     '--no-sandbox', 'Run Chromium without the sandbox')
   .option(

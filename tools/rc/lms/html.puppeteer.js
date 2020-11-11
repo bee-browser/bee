@@ -1,5 +1,9 @@
 'use strict';
 
+if ($OPTIONS.debug) {
+  debugger;
+}
+
 let nextNodeId = 1;
 
 function getNextNodeId() {
@@ -101,22 +105,31 @@ function scanCSSKeywordValue(value) {
   return snakeCase(value.value);
 }
 
-function scanCSSLengthValue(value) {
+function scanCSSUnitValue(value) {
   if (value.unit == 'px' || value.unit == 'number') {
-    return { pixel: toNumber(value.value) };
+      return { pixel: toNumber(value.value) };
   }
   if (value.unit == 'percent') {
     return { scale: toNumber(value.value / 100.0) };
   }
-  if (value.unit) {
-    return {
-      not_supported: {
-        unit: value.unit,
-        value: value.value,
-      },
-    };
+  return { not_supported: value.toString() };
+}
+
+function scanCSSMathValue(value) {
+  return { calc: value.toString().slice(5, -1) }
+}
+
+function scanCSSLengthValue(value) {
+  if (value instanceof CSSKeywordValue) {
+    return scanCSSKeywordValue(value);
   }
-  return snakeCase(value.value);
+  if (value instanceof CSSUnitValue) {
+    return scanCSSUnitValue(value);
+  }
+  if (value instanceof CSSMathValue) {
+    return scanCSSMathValue(value);
+  }
+  return { not_supported: value.toString() };
 }
 
 function scanBoxQuad(styles, name, scan) {
