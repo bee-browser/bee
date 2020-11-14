@@ -11,8 +11,11 @@ export default class NavigationBar extends Widget {
   render() {
     this.elem_ =
       h('div', { id: 'navigation-bar' },
+        h('div', { id: 'loading-icon' }, t(' ')),
         h('form', { id: 'address-bar' }, h('input')),
         h('button', { id: 'rsf-button' }, t('Remote Surface')));
+
+    this.loadingIcon_ = this.elem_.querySelector('#loading-icon');
 
     this.addressBar_ = this.elem_.querySelector('#address-bar');
     this.addressBar_.addEventListener(
@@ -31,6 +34,7 @@ export default class NavigationBar extends Widget {
 
   setUri(uri) {
     this.addressBar_.querySelector('input').value = uri;
+    this.navigate(uri);
   }
 
   handleAddressBarSubmit_(event) {
@@ -39,12 +43,27 @@ export default class NavigationBar extends Widget {
     const input = this.elem_.querySelector('input');
     const uri = input.value;
     if (uri.length > 0) {
-      this.emit('debcon.navigation.go', uri);
+      this.navigate(uri);
     }
+  }
+
+  navigate(uri) {
+    this.emit('debcon.navigation.go', uri);
   }
 
   toggleRemoteSurface_(event) {
     const enable = this.rsfButton_.classList.toggle('enable');
     this.emit('debcon.remoteSurface', enable);
+  }
+
+  handleMessage(msg) {
+    switch (msg.type) {
+    case 'navigation.start':
+      this.loadingIcon_.innerText = '*';
+      break;
+    case 'navigation.end':
+      this.loadingIcon_.innerText = ' ';
+      break;
+    }
   }
 }

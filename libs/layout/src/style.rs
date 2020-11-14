@@ -117,18 +117,30 @@ impl Default for BoxSizing {
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-pub enum ContentSize {
-    Auto,
+pub enum NumericSize {
     Pixel(Length),
     Scale(Number),
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum ContentSize {
+    Auto,
+    MaxContent,
+    MinContent,
+    FitContent(NumericSize),
+    Pixel(Length),
+    Scale(Number),
+    Calc(String),  // TODO: Fn
 }
 
 impl ContentSize {
     #[inline]
     pub fn resolve(&self, base: &Option<Length>) -> Option<Length> {
-        match (*self, *base) {
-            (ContentSize::Pixel(px), _) => Some(px),
-            (ContentSize::Scale(scale), Some(base)) => Some(base * scale),
+        match (self, *base) {
+            (ContentSize::Pixel(px), _) => Some(*px),
+            (ContentSize::Scale(scale), Some(base)) => Some(base * *scale),
             _ => None,
         }
     }
@@ -140,20 +152,26 @@ impl Default for ContentSize {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentMinSize {
+    None,
+    Auto,
+    MaxContent,
+    MinContent,
+    FitContent(NumericSize),
     Pixel(Length),
     Scale(Number),
+    Calc(String),  // TODO: Fn
 }
 
 impl ContentMinSize {
     #[inline]
     pub fn resolve(&self, base: &Option<Length>) -> Length {
-        match (*self, *base) {
-            (ContentMinSize::Pixel(px), _) => px,
-            (ContentMinSize::Scale(scale), Some(base)) => base * scale,
+        match (self, *base) {
+            (ContentMinSize::Pixel(px), _) => *px,
+            (ContentMinSize::Scale(scale), Some(base)) => base * *scale,
             _ => Length::zero(),
         }
     }
@@ -165,21 +183,22 @@ impl Default for ContentMinSize {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentMaxSize {
     None,
     Pixel(Length),
     Scale(Number),
+    Calc(String),  // TODO: Fn
 }
 
 impl ContentMaxSize {
     #[inline]
     pub fn resolve(&self, base: &Option<Length>) -> Length {
-        match (*self, *base) {
-            (ContentMaxSize::Pixel(px), _) => px,
-            (ContentMaxSize::Scale(scale), Some(base)) => base * scale,
+        match (self, *base) {
+            (ContentMaxSize::Pixel(px), _) => *px,
+            (ContentMaxSize::Scale(scale), Some(base)) => base * *scale,
             _ => MAX_LENGTH,
         }
     }
@@ -191,20 +210,21 @@ impl Default for ContentMaxSize {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Padding {
     Pixel(Length),
     Scale(Number),
+    Calc(String),  // TODO: Fn
 }
 
 impl Padding {
     #[inline]
     pub fn resolve(&self, base: &Option<Length>) -> Length {
-        match (*self, *base) {
-            (Padding::Pixel(px), _) => px,
-            (Padding::Scale(scale), Some(base)) => base * scale,
+        match (self, *base) {
+            (Padding::Pixel(px), _) => *px,
+            (Padding::Scale(scale), Some(base)) => base * *scale,
             _ => Length::zero(),
         }
     }
@@ -357,21 +377,22 @@ impl std::fmt::Display for Color {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Margin {
     Auto,
     Pixel(Length),
     Scale(Number),
+    Calc(String),  // TODO: Fn
 }
 
 impl Margin {
     #[inline]
     pub fn resolve(&self, base: &Option<Length>) -> Option<Length> {
-        match (*self, *base) {
-            (Margin::Pixel(px), _) => Some(px),
-            (Margin::Scale(scale), Some(base)) => Some(base * scale),
+        match (self, *base) {
+            (Margin::Pixel(px), _) => Some(*px),
+            (Margin::Scale(scale), Some(base)) => Some(base * *scale),
             _ => None,
         }
     }
@@ -575,21 +596,22 @@ pub struct LayerStyle {
     pub z_index: LayerZIndex,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum LayerOffset {
     Auto,
     Pixel(Length),
     Scale(Number),
+    Calc(String),  // TODO: Fn
 }
 
 impl LayerOffset {
     #[inline]
     pub fn resolve(&self, base: &Option<Length>) -> Option<Length> {
-        match (*self, *base) {
-            (LayerOffset::Pixel(value), _) => Some(value),
-            (LayerOffset::Scale(scale), Some(base)) => Some(base * scale),
+        match (self, *base) {
+            (LayerOffset::Pixel(px), _) => Some(*px),
+            (LayerOffset::Scale(scale), Some(base)) => Some(base * *scale),
             _ => None,
         }
     }

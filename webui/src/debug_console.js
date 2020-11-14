@@ -15,6 +15,7 @@ export default class DebugConsole extends Widget {
     const navBar = new NavigationBar();
     navBar.on('debcon.navigation.go', this.handleNavigationGo_.bind(this));
     navBar.on('debcon.remoteSurface', this.handleRemoteSurface_.bind(this));
+    this.on('message', navBar.handleMessage.bind(navBar));
     this.navBar_ = navBar;
 
     const paintView = new PaintView();
@@ -87,7 +88,6 @@ export default class DebugConsole extends Widget {
 
   load(uri) {
     this.navBar_.setUri(uri);
-    this.handleNavigationGo_(uri);
   }
 
   selectObject(layoutId) {
@@ -113,7 +113,7 @@ export default class DebugConsole extends Widget {
         pusher: ['-c', 'demo']
       };
     }
-    this.ws_.send(JSON.stringify({ type: 'bee.navigation.go', data }));
+    this.ws_.send(JSON.stringify({ type: 'navigation.go', data }));
   }
 
   handleRemoteSurface_(enable) {

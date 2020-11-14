@@ -172,7 +172,7 @@ function stop(port) {
 
 function handleMessage(ws, msg) {
   switch (msg.type) {
-  case 'bee.navigation.go':
+  case 'navigation.go':
     handleNavigationGo(ws, msg.data);
     break;
   }
@@ -198,7 +198,6 @@ function handleNavigationGo(ws, { uri, viewport, remotes }) {
     remotes = {};
   }
 
-  console.log(process.env.PATH);
   let lms = null;
   if (uri.startsWith('text:')) {
     lms = spawn('bee-lms-text', ['--viewport', `${width}x${height}`, uri.slice(5)]);
@@ -206,7 +205,7 @@ function handleNavigationGo(ws, { uri, viewport, remotes }) {
     lms = spawn('bee-lms-html', ['--viewport', `${width}x${height}`, uri]);
   }
 
-  const lmp = spawn('bee-lmp', ['-d']);
+  const lmp = spawn('bee-lmp', ['-']);
   lms.stdout.pipe(lmp.stdin);
 
   readline
@@ -216,6 +215,10 @@ function handleNavigationGo(ws, { uri, viewport, remotes }) {
   readline
     .createInterface({ input: lmp.stderr })
     .on('line', (line) => ws.send(line.trim()));
+
+  lmp.on('exit', (code, signal) => ws.send(JSON.stringify({ type: 'navigation.end' })));
+
+  ws.send(JSON.stringify({ type: 'navigation.start' }));
 }
 
 module.exports.MiddlewareList = MiddlewareList;

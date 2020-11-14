@@ -125,11 +125,15 @@ impl LayoutElement {
         avail: &AvailableSize,
     ) -> VisualLayersMap {
         match self.style.schema.positioning {
-            PositioningScheme::Static => self.build_top_level_layers_for_children(
-                initial_avail, avail),
-            PositioningScheme::Fixed => self.build_top_level_layers_for_fixed(
-                initial_avail),
-            _ => self.build_top_level_layers_for_other(initial_avail, avail),
+            PositioningScheme::Static =>
+                self.build_top_level_layers_for_children(initial_avail, avail),
+            PositioningScheme::Fixed =>
+                self.build_top_level_layers_for_fixed(initial_avail),
+            PositioningScheme::Absolute |
+            PositioningScheme::Sticky =>  // TODO
+                self.build_top_level_layers_for_other(initial_avail, avail),
+            PositioningScheme::Relative =>
+                self.build_top_level_layers_for_children(initial_avail, avail),  // TODO
         }
     }
 
@@ -257,8 +261,11 @@ impl LayoutElement {
                 self.build_layers_for_children(initial_avail, avail),
             PositioningScheme::Fixed =>
                 self.build_layers_for_fixed(initial_avail),
-            _ =>
+            PositioningScheme::Absolute |
+            PositioningScheme::Sticky =>  // TODO
                 self.build_layers_for_other(initial_avail, avail),
+            PositioningScheme::Relative =>
+                self.build_layers_for_children(initial_avail, avail),  // TODO
         }
     }
 
@@ -712,7 +719,7 @@ impl BoxConstraintSolver {
                 // TODO: shrink-to-fit
                 let width = *self.geom.width.value.get_or_insert(Length::zero());
                 // TODO: static-position, rtl
-                let left = *self.geom.margin.left_mut().get_or_insert(Length::zero());
+                let left = *self.geom.offset.left_mut().get_or_insert(Length::zero());
                 self.geom.offset.set_right(
                     Some(avail_width - width - left - left_margin - right_margin));
             }
@@ -796,7 +803,7 @@ impl BoxConstraintSolver {
                 // TODO: shrink-to-fit
                 let height = *self.geom.height.value.get_or_insert(Length::zero());
                 // TODO: static-position
-                let top = *self.geom.margin.top_mut().get_or_insert(Length::zero());
+                let top = *self.geom.offset.top_mut().get_or_insert(Length::zero());
                 self.geom.offset.set_bottom(
                     Some(avail_height - height - top - top_margin - bottom_margin));
             }

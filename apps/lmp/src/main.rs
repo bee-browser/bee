@@ -1,4 +1,5 @@
-use std::io::BufRead;
+use std::io::{BufRead, BufReader};
+use std::fs::File;
 
 use anyhow::Result;
 use structopt::StructOpt;
@@ -11,15 +12,27 @@ use bee_layout::service::{JsonSink, MessageInterpreter};
 struct Opt {
     /// Enable the debug mode.
     #[structopt(short, long)]
-    debug: bool
+    debug: bool,
+
+    /// Input file
+    #[structopt(name = "FILE")]
+    input: String,
 }
 
 fn main() -> Result<()> {
     let opt = Opt::from_args();
 
+    if opt.input == "-" {
+        interpret(&opt, std::io::stdin().lock())
+    } else {
+        interpret(&opt, BufReader::new(File::open(&opt.input)?))
+    }
+}
+
+fn interpret<T: BufRead>(opt: &Opt, read: T) -> Result<()> {
     let mut interp = MessageInterpreter::new(JsonPrinter);
 
-    for line in std::io::stdin().lock().lines() {
+    for line in read.lines() {
         match line {
             Ok(line) => interp.interpret(&line)?,
             Err(_) => break,
