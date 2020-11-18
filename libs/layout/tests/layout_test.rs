@@ -42,7 +42,9 @@ impl JsonValidator {
 
 impl Drop for JsonValidator {
     fn drop(&mut self) {
-        assert_json_eq!(&self.actual, &self.expected);
+        if !std::thread::panicking() {
+            assert_json_eq!(&self.actual, &self.expected);
+        }
     }
 }
 
