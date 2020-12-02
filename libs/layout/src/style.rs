@@ -14,36 +14,35 @@ use crate::MAX_LENGTH;
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 pub struct Style {
-    pub schema: SchemaStyle,
+    pub display: DisplayStyle,
+    pub positioning: PositioningScheme,
     pub box_model: BoxModelStyle,
     pub background: BackgroundStyle,
     pub layer: LayerStyle,
 }
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-pub struct SchemaStyle {
-    pub node: VisualNodeType,
-    pub container: VisualContainerType,
-    pub positioning: PositioningScheme,
+pub struct DisplayStyle {
+    pub outside: DisplayOutside,
+    pub inside: DisplayInside,
 }
 
-impl Default for SchemaStyle {
+impl Default for DisplayStyle {
     fn default() -> Self {
-        SchemaStyle {
-            node: VisualNodeType::None,
-            container: VisualContainerType::None,
-            positioning: Default::default(),
+        DisplayStyle {
+            outside: DisplayOutside::None,
+            inside: DisplayInside::None,
         }
     }
 }
 
+#[repr(u8)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-pub enum VisualNodeType {
+pub enum DisplayOutside {
     None,
     Inline,
     Block,
-    ListItem,
     TableCaption,
     TableHeaderGroup,
     TableFooterGroup,
@@ -54,9 +53,10 @@ pub enum VisualNodeType {
     TableCell,
 }
 
+#[repr(u8)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-pub enum VisualContainerType {
+pub enum DisplayInside {
     None,
     Flow,
     FlowRoot,
@@ -66,8 +66,11 @@ pub enum VisualContainerType {
     Widget,
     Flex,
     Grid,
+    Ruby,
 }
 
+#[repr(u8)]
+#[derive(Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum PositioningScheme {

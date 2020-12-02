@@ -124,7 +124,7 @@ impl LayoutElement {
         initial_avail: &AvailableSize,
         avail: &AvailableSize,
     ) -> VisualLayersMap {
-        match self.style.schema.positioning {
+        match self.style.positioning {
             PositioningScheme::Static =>
                 self.build_top_level_layers_for_children(initial_avail, avail),
             PositioningScheme::Fixed =>
@@ -256,7 +256,7 @@ impl LayoutElement {
         initial_avail: &AvailableSize,
         avail: &AvailableSize,
     ) -> (VisualLayersMap, VisualLayersMap) {
-        match self.style.schema.positioning {
+        match self.style.positioning {
             PositioningScheme::Static =>
                 self.build_layers_for_children(initial_avail, avail),
             PositioningScheme::Fixed =>

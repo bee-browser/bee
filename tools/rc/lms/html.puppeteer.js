@@ -26,72 +26,67 @@ function toNumber(n) {  // f32
   return n;
 }
 
-function scanDisplayStyle(value) {
-  const display = value.toString();
+function scanDisplayStyle(style) {
+  const display = style.get('display').toString();
 
   switch (display) {
   case 'none':
-    return { node: 'none', container: 'none' };
-  case 'contents':
-    return { node: 'none', container: 'none' };  // TODO
-  case 'list-item':
-    return { node: 'list_item', container: 'flow' };
-  case 'inline-block':
-    return { node: 'inline', container: 'flow_root' };
-  case 'inline-table':
-    return { node: 'inline', container: 'table' };
-  case 'inline-flex':
-    return { node: 'inline', container: 'flex' };
-  case 'inline-grid':
-    return { node: 'inline', container: 'grid' };
+    return { outside: 'none', inside: 'none' };
+  case 'table':
+    return { outside: 'block', inside: 'table' };
   case 'table-caption':
-    return { node: 'table_caption', container: 'flow_root' };
+    return { outside: 'table_caption', inside: 'flow_root' };
   case 'table-header-group':
-    return { node: 'table_header_group', container: 'table_row_group' };
+    return { outside: 'table_header_group', inside: 'table_row_group' };
   case 'table-footer-group':
-    return { node: 'table_footer_group', container: 'table_row_group' };
+    return { outside: 'table_footer_group', inside: 'table_row_group' };
   case 'table-row-group':
-    return { node: 'table_row_group', container: 'table_row_group' };
+    return { outside: 'table_row_group', inside: 'table_row_group' };
   case 'table-row':
-    return { node: 'table_row', container: 'table_row' };
+    return { outside: 'table_row', inside: 'table_row' };
   case 'table-column-group':
-    return { node: 'table_column_group', container: 'flow_column_group' };
+    return { outside: 'table_column_group', inside: 'flow_column_group' };
   case 'table-column':
-    return { node: 'table_column', container: 'none' };
+    return { outside: 'table_column', inside: 'none' };
   case 'table-cell':
-    return { node: 'table_cell', container: 'flow_root' };
+    return { outside: 'table_cell', inside: 'flow_root' };
+  case 'list-item':
+    return { outside: 'block', inside: 'flow' };  // TODO: marker + block
+  case 'inline-block':
+    return { outside: 'inline', inside: 'flow_root' };
+  case 'inline-table':
+    return { outside: 'inline', inside: 'table' };
+  case 'inline-flex':
+    return { outside: 'inline', inside: 'flex' };
+  case 'inline-grid':
+    return { outside: 'inline', inside: 'grid' };
+  case 'contents':
+    return { outside: 'none', inside: 'none' };  // TODO
   }
 
   const components = display.split(' ');
 
-  let node = 'inline';
+  let outside = 'inline';
   if (components.includes('block')) {
-    node = 'block';
+    outside = 'block';
   } else if (components.includes('inline')) {
-    node = 'inline';
+    outside = 'inline';
   }
 
-  let container = 'flow';
+  let inside = 'flow';
   if (components.includes('flow')) {
-    container = 'flow';
+    inside = 'flow';
   } else if (components.includes('flow-root')) {
-    container = 'flow_root';
+    inside = 'flow_root';
   } else if (components.includes('table')) {
-    container = 'table';
+    inside = 'table';
   } else if (components.includes('flex')) {
-    container = 'flex';
+    inside = 'flex';
   } else if (components.includes('grid')) {
-    container = 'grid';
+    inside = 'grid';
   }
 
-  return { node, container };
-}
-
-function scanSchemaStyle(styles) {
-  return {
-    ...scanDisplayStyle(styles.get('display')),
-    positioning: styles.get('position').value,
-  };
+  return { outside, inside };
 }
 
 function scanTableCellAttributes(tr, style) {
@@ -220,7 +215,8 @@ function scanLayerStyles(styles) {
 
 function scanStyleMap(styles) {
   return {
-    schema: scanSchemaStyle(styles),
+    display: scanDisplayStyle(styles),
+    positioning: styles.get('position').value,
     box_model: scanBoxModelStyles(styles),
     background: scanBackgroundStyles(styles),
     layer: scanLayerStyles(styles),
@@ -555,13 +551,13 @@ async function scanDocument(result, document) {
     data: {
       id: 0,
       style: {
-        schema: {
-          node: 'block',
-          container: 'flow_root',
-          positioning: 'absolute',
-          overflow_x: 'scroll',
-          overflow_y: 'scroll',
+        display: {
+          outside: 'block',
+          inside: 'flow_root',
         },
+        positioning: 'absolute',
+        overflow_x: 'scroll',
+        overflow_y: 'scroll',
         box_model: {
           width: { scale: toNumber(1), },
           height: { scale: toNumber(1), },

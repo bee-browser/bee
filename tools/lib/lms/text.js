@@ -46,11 +46,11 @@ function renderByPositionedBoxes(context, font, index) {
     data: {
       id,
       style: {
-        schema: {
-          node: 'block',
-          container: 'flow_root',
-          positioning: 'absolute',
+        display: {
+          outside: 'block',
+          inside: 'flow_root',
         },
+        positioning: 'absolute',
         box_model: {
           width: { pixel: toNumber(width) },
           height: { pixel: toNumber(height) },
@@ -89,11 +89,11 @@ function renderDotByPositionedBox(context, glyphId, top, dot, index) {
     data: {
       id,
       style: {
-        schema: {
-          node: 'block',
-          container: 'flow_root',
-          positioning: 'absolute',
+        display: {
+          outside: 'block',
+          inside: 'flow_root',
         },
+        positioning: 'absolute',
         box_model: {
           width: { pixel: toNumber(width) },
           height: { pixel: toNumber(height) },
@@ -227,13 +227,13 @@ function render(text, renderer, context) {
     data: {
       id: 0,
       style: {
-        schema: {
-          node: 'block',
-          container: 'flow_root',
-          positioning: 'absolute',
-          overflow_x: 'scroll',
-          overflow_y: 'scroll',
+        display: {
+          outside: 'block',
+          inside: 'flow_root',
         },
+        positioning: 'absolute',
+        overflow_x: 'scroll',
+        overflow_y: 'scroll',
         box_model: {
           width: { scale: toNumber(1), },
           height: { scale: toNumber(1), },
