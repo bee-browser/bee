@@ -1,0 +1,21 @@
+{% extends '_block_box_constraints.html.njk' %}
+
+{% block description %}
+The block box should have specified width and height.
+{% endblock %}
+
+{% block style %}
+{{ super() }}
+
+.block {
+  width: 100px;
+  height: 100px;
+  padding: 10px;
+  border: solid 20px red;
+  margin: 30px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="blue block"></div>
+{% endblock %}

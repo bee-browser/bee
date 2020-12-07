@@ -1,0 +1,33 @@
+- type: paint.start
+  data:
+    width: 1000.0
+    height: 500.0
+- type: paint.fill_rect
+  data:
+    rect:
+      origin: [30.0, 30.0]
+      size: [160.0, 160.0]
+    color: [0, 0, 255, 255]
+- type: paint.draw_border
+  data:
+    rect:
+      origin: [30.0, 30.0]
+      size: [160.0, 160.0]
+    border:
+      top:
+        style: solid
+        width: 20.0
+        color: [255, 0, 0, 255]
+      right:
+        style: solid
+        width: 20.0
+        color: [255, 0, 0, 255]
+      bottom:
+        style: solid
+        width: 20.0
+        color: [255, 0, 0, 255]
+      left:
+        style: solid
+        width: 20.0
+        color: [255, 0, 0, 255]
+- type: paint.end

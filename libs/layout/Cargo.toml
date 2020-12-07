@@ -13,6 +13,7 @@ anyhow = "1.0"
 euclid = "0.22"
 serde = { version = "1", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1", optional = true }
+tracing = "0.1.22"
 
 [build-dependencies]
 rayon = "1.4.1"

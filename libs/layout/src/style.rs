@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Number;
 use crate::Length;
-use crate::SideOffset2D;
+use crate::SideOffsets2D;
 use crate::MAX_LENGTH;
 
 #[derive(Default)]
@@ -317,9 +317,9 @@ impl BoxQuad<Border> {
     }
 }
 
-impl Into<SideOffset2D> for BoxQuad<Border> {
-    fn into(self) -> SideOffset2D {
-        SideOffset2D::from_lengths(
+impl Into<SideOffsets2D> for BoxQuad<Border> {
+    fn into(self) -> SideOffsets2D {
+        SideOffsets2D::from_lengths(
             self.top().width, self.right().width, self.bottom().width, self.left().width)
     }
 }
@@ -501,6 +501,13 @@ where
     pub fn get_left(&self) -> T {
         self.0[3]
     }
+
+    pub fn map<B, F>(self, f: F) -> BoxQuad<B>
+    where
+        F: Fn(T) -> B,
+    {
+        BoxQuad([f(self.0[0]), f(self.0[1]), f(self.0[2]), f(self.0[3])])
+    }
 }
 
 impl<T> BoxQuad<T>
@@ -515,6 +522,18 @@ where
     #[inline]
     pub fn dh(&self) -> T {
         self.get_top() + self.get_bottom()
+    }
+}
+
+impl Into<SideOffsets2D> for BoxQuad<Length> {
+    fn into(self) -> SideOffsets2D {
+        SideOffsets2D::from_lengths(self.0[0], self.0[1], self.0[2], self.0[3])
+    }
+}
+
+impl<T> From<[T; 4]> for BoxQuad<T> {
+    fn from(values: [T; 4]) -> Self {
+        BoxQuad(values)
     }
 }
 

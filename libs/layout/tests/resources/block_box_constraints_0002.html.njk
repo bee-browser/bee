@@ -1,0 +1,18 @@
+{% extends '_block_box_constraints.html.njk' %}
+
+{% block description %}
+Over-constrained: The right margin of the block box becomes -200px.
+{% endblock %}
+
+{% block style %}
+{{ super() }}
+
+.block {
+  width: 1200px;
+  height: 100px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="blue block"></div>
+{% endblock %}

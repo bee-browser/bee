@@ -12,11 +12,10 @@ LAYOUT_TEST_SCENARIO_FILES = \
 .PHONY: testgen
 testgen: $(TESTGEN_DIR)/layout_test.rs $(LAYOUT_TEST_SCENARIO_FILES)
 
-$(TESTGEN_DIR)/layout_test.rs: $(RESOURCES_DIR)/layout_test.rs.njk | $(TESTGEN_DIR)
+$(TESTGEN_DIR)/layout_test.rs: $(RESOURCES_DIR)/layout_test.rs.njk $(LAYOUT_TEST_SRC_FILES) | $(TESTGEN_DIR)
 	@echo Generating $@...
-	@bee-codegen $(RESOURCES_DIR)/layout_test.rs.njk \
-	  -v "names=$(LAYOUT_TEST_NAMES)" -v "resources_dir=$(RESOURCES_DIR)" \
-	  -v "codegen_dir=$(TESTGEN_DIR)" >$@
+	@bee-codegen -v "names=$(LAYOUT_TEST_NAMES)" -v "resources_dir=$(RESOURCES_DIR)" \
+	  -v "codegen_dir=$(TESTGEN_DIR)" $< >$@
 
 $(TESTGEN_DIR)/%.scenario.jsonl: $(TESTGEN_DIR)/%.html | $(TESTGEN_DIR)
 	@echo Generating $@...

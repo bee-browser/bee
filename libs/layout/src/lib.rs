@@ -1,3 +1,5 @@
+mod flow;
+mod spec;
 mod style;
 
 #[cfg(feature = "service")]
@@ -9,7 +11,9 @@ use std::sync::Arc;
 use euclid;
 use euclid::num::Zero;
 
+use crate::spec::*;
 pub use crate::style::*;
+use crate::flow::FlowContainer;
 
 pub type Number = f32;
 
@@ -26,7 +30,7 @@ pub type Box2D = euclid::Box2D<Number, units::Pixel>;
 pub type Rect = euclid::Rect<Number, units::Pixel>;
 pub type Vector2D = euclid::Vector2D<Number, units::Pixel>;
 pub type Transform2D = euclid::Transform2D<Number, units::Pixel, units::Pixel>;
-pub type SideOffset2D = euclid::SideOffsets2D<Number, units::Pixel>;
+pub type SideOffsets2D = euclid::SideOffsets2D<Number, units::Pixel>;
 
 pub fn new_element(
     style: Arc<Style>, children: Vec<LayoutNodeHandle>, label: String) -> LayoutNodeHandle {
@@ -44,10 +48,16 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
     if let LayoutNodeRef::Element(ref element) = layout_root.0 {
         let width = Length::new(width as f32);
         let height = Length::new(height as f32);
+        let content_box = Box2D::from_size(Size2D::from_lengths(width, height));
 
         let box_model = VisualBoxModel {
             style: element.style.clone(),
-            border_box: Box2D::from_size(Size2D::from_lengths(width, height)),
+            geometry: BoxGeometry {
+                margin_box: content_box.clone(),
+                border_box: content_box.clone(),
+                padding_box: content_box.clone(),
+                content_box: content_box.clone(),
+            },
         };
 
         let avail = AvailableSize {
@@ -55,9 +65,11 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
             height: Some(height),
         };
 
+        let flow = element.build_flow(&avail);
+
         let layers = element.build_top_level_layers_for_children(&avail, &avail).into_vec();
 
-        VisualRoot { width, height, box_model, layers, }
+        VisualRoot { width, height, box_model, flow, layers, }
     } else {
         unreachable!();  //<coverage:exclude/>
     }
@@ -105,6 +117,7 @@ impl LayoutNodeRef {
 }
 
 struct LayoutElement {
+    spec: Spec,
     style: Arc<Style>,
     children: Vec<LayoutNodeRef>,
     label: String,
@@ -113,6 +126,7 @@ struct LayoutElement {
 impl LayoutElement {
     fn new(style: Arc<Style>, children: Vec<LayoutNodeRef>, label: String) -> Self {
         LayoutElement {
+            spec: Spec::determine_from(&style),
             style,
             children,
             label,
@@ -153,13 +167,17 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(initial_avail);
 
         // TODO: layout in-flow child elements.
+        let flow = self.build_flow(&AvailableSize {
+            width: solved_geom.width.value.clone(),
+            height: solved_geom.height.value.clone(),
+        });
 
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
         let box_model = VisualBoxModel {
             style: self.style.clone(),
-            border_box: solved_geom.determine(),
+            geometry: solved_geom.determine(),
         };
 
         let new_avail = AvailableSize {
@@ -177,13 +195,14 @@ impl LayoutElement {
             LayerZIndex::Index(index) => index,
         };
 
-        let layer_ref = VisualLayerRef(Arc::new(VisualLayer {
+        let layer = Arc::new(VisualLayer {
             box_model,
             stack_level,
+            flow,
             child_layers: child_layers.into_vec(),
-        }));
+        });
 
-        top_level_layers.push_front(layer_ref);
+        top_level_layers.push_front(layer);
 
         top_level_layers
     }
@@ -196,13 +215,17 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(avail);
 
         // TODO: layout in-flow child elements.
+        let flow = self.build_flow(&AvailableSize {
+            width: solved_geom.width.value.clone(),
+            height: solved_geom.height.value.clone(),
+        });
 
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
         let box_model = VisualBoxModel {
             style: self.style.clone(),
-            border_box: solved_geom.determine(),
+            geometry: solved_geom.determine(),
         };
 
         let new_avail = AvailableSize {
@@ -214,23 +237,25 @@ impl LayoutElement {
             LayerZIndex::Auto => {
                 let mut top_level_layers = self.build_top_level_layers_for_children(
                     initial_avail, &new_avail);
-                let layer_ref = VisualLayerRef(Arc::new(VisualLayer {
+                let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level: 0,
+                    flow,
                     child_layers: vec![],
-                }));
-                top_level_layers.push_front(layer_ref);
+                });
+                top_level_layers.push_front(layer);
                 top_level_layers
             }
             LayerZIndex::Index(stack_level) => {
                 let (mut top_level_layers, child_layers) = self.build_layers_for_children(
                     initial_avail, &new_avail);
-                let layer_ref = VisualLayerRef(Arc::new(VisualLayer {
+                let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level,
+                    flow,
                     child_layers: child_layers.into_vec(),
-                }));
-                top_level_layers.push_front(layer_ref);
+                });
+                top_level_layers.push_front(layer);
                 top_level_layers
             }
         }
@@ -276,13 +301,17 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(initial_avail);
 
         // TODO: layout in-flow child elements.
+        let flow = self.build_flow(&AvailableSize {
+            width: solved_geom.width.value.clone(),
+            height: solved_geom.height.value.clone(),
+        });
 
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
         let box_model = VisualBoxModel {
             style: self.style.clone(),
-            border_box: solved_geom.determine(),
+            geometry: solved_geom.determine(),
         };
 
         let new_avail = AvailableSize {
@@ -298,13 +327,14 @@ impl LayoutElement {
             LayerZIndex::Index(index) => index,
         };
 
-        let layer_ref = VisualLayerRef(Arc::new(VisualLayer {
+        let layer = Arc::new(VisualLayer {
             box_model,
             stack_level,
+            flow,
             child_layers: child_layers.into_vec(),
-        }));
+        });
 
-        top_level_layers.push_front(layer_ref);
+        top_level_layers.push_front(layer);
         (top_level_layers, VisualLayersMap::new())
     }
 
@@ -316,13 +346,17 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(avail);
 
         // TODO: layout in-flow child elements.
+        let flow = self.build_flow(&AvailableSize {
+            width: solved_geom.width.value.clone(),
+            height: solved_geom.height.value.clone(),
+        });
 
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
         let box_model = VisualBoxModel {
             style: self.style.clone(),
-            border_box: solved_geom.determine(),
+            geometry: solved_geom.determine(),
         };
 
         let new_avail = AvailableSize {
@@ -334,24 +368,26 @@ impl LayoutElement {
             LayerZIndex::Auto => {
                 let (top_level_layers, mut child_layers) =
                     self.build_layers_for_children(initial_avail, &new_avail);
-                let layer_ref = VisualLayerRef(Arc::new(VisualLayer {
+                let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level: 0,
+                    flow,
                     child_layers: vec![],
-                }));
-                child_layers.push_front(layer_ref);
+                });
+                child_layers.push_front(layer);
                 (top_level_layers, child_layers)
             }
             LayerZIndex::Index(stack_level) => {
                 let (top_level_layers, child_layers) =
                     self.build_layers_for_children(initial_avail, &new_avail);
-                let layer_ref = VisualLayerRef(Arc::new(VisualLayer {
+                let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level,
+                    flow,
                     child_layers: child_layers.into_vec(),
-                }));
+                });
                 let mut child_layers = VisualLayersMap::new();
-                child_layers.push_back(layer_ref);
+                child_layers.push_back(layer);
                 (top_level_layers, child_layers)
             }
         }
@@ -389,7 +425,7 @@ impl LayoutElement {
 
 impl std::fmt::Display for LayoutElement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "element: label=\"{}\"", self.label)
+        write!(f, "element: spec={:?} label=\"{}\"", self.spec, self.label)
     }
 }
 
@@ -424,7 +460,8 @@ pub struct VisualRoot {
     height: Length,
     box_model: VisualBoxModel,
     // bounding box
-    layers: Vec<VisualLayerRef>,
+    flow: Arc<FlowContainer>,
+    layers: Vec<Arc<VisualLayer>>,
 }
 
 impl VisualRoot {
@@ -433,22 +470,48 @@ impl VisualRoot {
         T: std::io::Write + ?Sized,
     {
         write!(write, "root: {:?}\n", self.box_model)?;
-        for layer_ref in self.layers.iter() {
-            layer_ref.0.inspect(write, 1)?;
+
+        for layer in self.layers.iter().filter(|layer| layer.stack_level < 0) {
+            layer.inspect(write, 1)?;
         }
+
+        self.flow.inspect(write, 1)?;
+
+        for layer in self.layers.iter().filter(|layer| layer.stack_level >= 0) {
+            layer.inspect(write, 1)?;
+        }
+
         Ok(())
     }
 
     pub fn render<T: VisualRenderer>(&self, renderer: &mut T) {
         renderer.start_render(self.width, self.height);
+
+        // background and borders
         renderer.render_box(&self.box_model);
-        let v = Vector2D::from_lengths(
-            self.box_model.border().left().resolve(), self.box_model.border().top().resolve());
+
+        // negative layers
+        let v = self.box_model.padding_box().min.to_vector();
         renderer.translate_coord(v);
-        for layer_ref in self.layers.iter() {
-            layer_ref.0.render(renderer);
+        for layer in self.layers.iter().filter(|layer| layer.stack_level < 0) {
+            layer.render(renderer);
         }
         renderer.translate_coord(-v);
+
+        // in-flow boxes
+        let v = self.box_model.content_box().min.to_vector();
+        renderer.translate_coord(v);
+        self.flow.render(renderer);
+        renderer.translate_coord(-v);
+
+        // non-negative layers
+        let v = self.box_model.padding_box().min.to_vector();
+        renderer.translate_coord(v);
+        for layer in self.layers.iter().filter(|layer| layer.stack_level >= 0) {
+            layer.render(renderer);
+        }
+        renderer.translate_coord(-v);
+
         renderer.end_render();
     }
 }
@@ -462,16 +525,42 @@ pub trait VisualRenderer {
 
 pub struct VisualBoxModel {
     style: Arc<Style>,
+    geometry: BoxGeometry,
+}
+
+pub struct BoxGeometry {
+    margin_box: Box2D,
     border_box: Box2D,
+    padding_box: Box2D,
+    content_box: Box2D,
+}
+
+impl Default for BoxGeometry {
+    fn default() -> Self {
+        Self {
+            margin_box: Box2D::zero(),
+            border_box: Box2D::zero(),
+            padding_box: Box2D::zero(),
+            content_box: Box2D::zero(),
+        }
+    }
 }
 
 impl VisualBoxModel {
-    pub fn border_box(&self) -> &Box2D {
-        &self.border_box
+    pub fn margin_box(&self) -> &Box2D {
+        &self.geometry.margin_box
     }
 
-    pub fn padding_box(&self) -> Box2D {
-        self.border_box.inner_box(self.style.box_model.border.clone().into())
+    pub fn border_box(&self) -> &Box2D {
+        &self.geometry.border_box
+    }
+
+    pub fn padding_box(&self) -> &Box2D {
+        &self.geometry.padding_box
+    }
+
+    pub fn content_box(&self) -> &Box2D {
+        &self.geometry.content_box
     }
 
     pub fn background_color(&self) -> Color {
@@ -485,17 +574,15 @@ impl VisualBoxModel {
 
 impl std::fmt::Debug for VisualBoxModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.border_box.to_rect())
+        write!(f, "{:?}", self.border_box().to_rect())
     }
 }
-
-#[derive(Clone)]
-struct VisualLayerRef(Arc<VisualLayer>);
 
 struct VisualLayer {
     box_model: VisualBoxModel,
     stack_level: i32,
-    child_layers: Vec<VisualLayerRef>,
+    flow: Arc<FlowContainer>,
+    child_layers: Vec<Arc<VisualLayer>>,
 }
 
 impl VisualLayer {
@@ -504,18 +591,43 @@ impl VisualLayer {
         T: std::io::Write + ?Sized,
     {
         write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
-        for layer_ref in self.child_layers.iter() {
-            layer_ref.0.inspect(write, depth + 1)?;
+
+        for layer in self.child_layers.iter().filter(|layer| layer.stack_level < 0) {
+            layer.inspect(write, depth + 1)?;
         }
+
+        self.flow.inspect(write, depth + 1)?;
+
+        for layer in self.child_layers.iter().filter(|layer| layer.stack_level >= 0) {
+            layer.inspect(write, depth + 1)?;
+        }
+
         Ok(())
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
+        // background and borders
         renderer.render_box(&self.box_model);
+
+        // negative layers
         let v = self.box_model.padding_box().min.to_vector();
         renderer.translate_coord(v);
-        for layer_ref in self.child_layers.iter() {
-            layer_ref.0.render(renderer);
+        for layer in self.child_layers.iter().filter(|layer| layer.stack_level < 0) {
+            layer.render(renderer);
+        }
+        renderer.translate_coord(-v);
+
+        // in-flow boxes
+        let v = self.box_model.content_box().min.to_vector();
+        renderer.translate_coord(v);
+        self.flow.render(renderer);
+        renderer.translate_coord(-v);
+
+        // non-negative layers
+        let v = self.box_model.padding_box().min.to_vector();
+        renderer.translate_coord(v);
+        for layer in self.child_layers.iter().filter(|layer| layer.stack_level >= 0) {
+            layer.render(renderer);
         }
         renderer.translate_coord(-v);
     }
@@ -543,12 +655,21 @@ struct SolvedBoxGeometry {
 }
 
 impl SolvedBoxGeometry {
-    fn determine(self) -> Box2D {
-        let x = self.offset.left().unwrap() + self.margin.left().unwrap();
-        let y = self.offset.top().unwrap() + self.margin.top().unwrap();
-        let width = self.width.value.unwrap() + self.padding.dw() + self.border.dw();
-        let height = self.height.value.unwrap() + self.padding.dh() + self.border.dh();
-        Rect::new(Point2D::from_lengths(x, y), Size2D::from_lengths(width, height)).to_box2d()
+    fn determine(self) -> BoxGeometry {
+        let margin = self.margin.map(Option::unwrap);
+        let offset = self.offset.map(Option::unwrap);
+
+        let margin_min = Point2D::from_lengths(offset.get_left(), offset.get_top());
+        let margin_max = margin_min
+            + Size2D::from_lengths(
+                margin.dw() + self.border.dw() + self.padding.dw() + self.width.value.unwrap(),
+                margin.dh() + self.border.dh() + self.padding.dh() + self.height.value.unwrap());
+        let margin_box = Box2D::new(margin_min, margin_max);
+        let border_box = margin_box.inner_box(margin.into());
+        let padding_box = border_box.inner_box(self.border.into());
+        let content_box = padding_box.inner_box(self.padding.into());
+
+        BoxGeometry { margin_box, border_box, padding_box, content_box }
     }
 }
 
@@ -622,7 +743,12 @@ impl BoxConstraintSolver {
         self.geom.width.subtract(dw);
         self.geom.height.subtract(dh);
 
-        self.geom.offset = style.layer.offset.resolve(&self.avail);
+        self.geom.offset = match style.positioning {
+            PositioningScheme::Static | PositioningScheme::Relative => [
+                Some(Length::zero()), Some(Length::zero()), None, Some(Length::zero())
+            ].into(),
+            _ => style.layer.offset.resolve(&self.avail),
+        };
 
         self
     }
@@ -812,7 +938,7 @@ impl BoxConstraintSolver {
 }
 
 // TODO: Inefficient in the memory point of view.
-struct VisualLayersMap(BTreeMap<i32, Vec<VisualLayerRef>>);
+struct VisualLayersMap(BTreeMap<i32, Vec<Arc<VisualLayer>>>);
 
 impl VisualLayersMap {
     fn new() -> Self {
@@ -823,16 +949,16 @@ impl VisualLayersMap {
         self.0.is_empty()
     }
 
-    fn push_back(&mut self, layer: VisualLayerRef) {
+    fn push_back(&mut self, layer: Arc<VisualLayer>) {
         self.0
-            .entry(layer.0.stack_level)
+            .entry(layer.stack_level)
             .and_modify(|e| e.push(layer.clone()))
             .or_insert_with(|| vec![layer]);
     }
 
-    fn push_front(&mut self, layer: VisualLayerRef) {
+    fn push_front(&mut self, layer: Arc<VisualLayer>) {
         self.0
-            .entry(layer.0.stack_level)
+            .entry(layer.stack_level)
             .and_modify(|e| e.insert(0, layer.clone()))
             .or_insert_with(|| vec![layer]);
     }
@@ -849,7 +975,7 @@ impl VisualLayersMap {
         }
     }
 
-    fn into_vec(self) -> Vec<VisualLayerRef> {
+    fn into_vec(self) -> Vec<Arc<VisualLayer>> {
         // TODO: self.0.into_values().collect()
         let mut result = vec![];
         for (_, mut layers) in self.0.into_iter() {
