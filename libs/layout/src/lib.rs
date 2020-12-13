@@ -8,8 +8,8 @@ pub mod service;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use euclid;
-use euclid::num::Zero;
+use bee_geometry;
+use num_traits::Zero;
 
 use crate::spec::*;
 pub use crate::style::*;
@@ -18,19 +18,18 @@ use crate::flow::FlowContainer;
 pub type Number = f32;
 
 pub mod units {
+    #[derive(Debug)]
     pub struct Pixel;
 }
 
-pub type Length = euclid::Length<Number, units::Pixel>;
+pub type Length = bee_geometry::Length<Number, units::Pixel>;
 pub(crate) const MAX_LENGTH: Length = Length::new(f32::MAX);
 
-type Point2D = euclid::Point2D<Number, units::Pixel>;
-type Size2D = euclid::Size2D<Number, units::Pixel>;
-pub type Box2D = euclid::Box2D<Number, units::Pixel>;
-pub type Rect = euclid::Rect<Number, units::Pixel>;
-pub type Vector2D = euclid::Vector2D<Number, units::Pixel>;
-pub type Transform2D = euclid::Transform2D<Number, units::Pixel, units::Pixel>;
-pub type SideOffsets2D = euclid::SideOffsets2D<Number, units::Pixel>;
+type Point2D = bee_geometry::Point2D<Number, units::Pixel>;
+pub type Size2D = bee_geometry::Size2D<Number, units::Pixel>;
+pub type Box2D = bee_geometry::Box2D<Number, units::Pixel>;
+pub type Rect = bee_geometry::Rect<Number, units::Pixel>;
+pub type Vector2D = bee_geometry::Vector2D<Number, units::Pixel>;
 
 pub fn new_element(
     style: Arc<Style>, children: Vec<LayoutNodeHandle>, label: String) -> LayoutNodeHandle {
@@ -48,15 +47,15 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
     if let LayoutNodeRef::Element(ref element) = layout_root.0 {
         let width = Length::new(width as f32);
         let height = Length::new(height as f32);
-        let content_box = Box2D::from_size(Size2D::from_lengths(width, height));
+        let root_box: Box2D = (Length::zero(), Length::zero(), width, height).into();
 
         let box_model = VisualBoxModel {
             style: element.style.clone(),
             geometry: BoxGeometry {
-                margin_box: content_box.clone(),
-                border_box: content_box.clone(),
-                padding_box: content_box.clone(),
-                content_box: content_box.clone(),
+                margin_box: root_box.clone(),
+                border_box: root_box.clone(),
+                padding_box: root_box.clone(),
+                content_box: root_box.clone(),
             },
         };
 
@@ -69,7 +68,7 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
 
         let layers = element.build_top_level_layers_for_children(&avail, &avail).into_vec();
 
-        VisualRoot { width, height, box_model, flow, layers, }
+        VisualRoot { box_model, flow, layers, }
     } else {
         unreachable!();  //<coverage:exclude/>
     }
@@ -181,8 +180,8 @@ impl LayoutElement {
         };
 
         let new_avail = AvailableSize {
-            width: Some(Length::new(box_model.padding_box().width())),
-            height: Some(Length::new(box_model.padding_box().height())),
+            width: Some(box_model.padding_box().width()),
+            height: Some(box_model.padding_box().height()),
         };
 
         // The fixed layer always establishes a new stacking context.
@@ -229,8 +228,8 @@ impl LayoutElement {
         };
 
         let new_avail = AvailableSize {
-            width: Some(Length::new(box_model.padding_box().width())),
-            height: Some(Length::new(box_model.padding_box().height())),
+            width: Some(box_model.padding_box().width()),
+            height: Some(box_model.padding_box().height()),
         };
 
         match self.style.layer.z_index {
@@ -315,8 +314,8 @@ impl LayoutElement {
         };
 
         let new_avail = AvailableSize {
-            width: Some(Length::new(box_model.padding_box().width())),
-            height: Some(Length::new(box_model.padding_box().height())),
+            width: Some(box_model.padding_box().width()),
+            height: Some(box_model.padding_box().height()),
         };
 
         let (mut top_level_layers, child_layers) =
@@ -360,8 +359,8 @@ impl LayoutElement {
         };
 
         let new_avail = AvailableSize {
-            width: Some(Length::new(box_model.padding_box().width())),
-            height: Some(Length::new(box_model.padding_box().height())),
+            width: Some(box_model.padding_box().width()),
+            height: Some(box_model.padding_box().height()),
         };
 
         match self.style.layer.z_index {
@@ -456,8 +455,6 @@ impl std::fmt::Display for LayoutText {
 
 // context node
 pub struct VisualRoot {
-    width: Length,
-    height: Length,
     box_model: VisualBoxModel,
     // bounding box
     flow: Arc<FlowContainer>,
@@ -485,7 +482,7 @@ impl VisualRoot {
     }
 
     pub fn render<T: VisualRenderer>(&self, renderer: &mut T) {
-        renderer.start_render(self.width, self.height);
+        renderer.start_render(self.box_model.margin_box().size());
 
         // background and borders
         renderer.render_box(&self.box_model);
@@ -517,7 +514,7 @@ impl VisualRoot {
 }
 
 pub trait VisualRenderer {
-    fn start_render(&mut self, width: Length, height: Length);
+    fn start_render(&mut self, size: Size2D);
     fn end_render(&mut self);
     fn render_box(&mut self, model: &VisualBoxModel);
     fn translate_coord(&mut self, v: Vector2D);
@@ -538,10 +535,10 @@ pub struct BoxGeometry {
 impl Default for BoxGeometry {
     fn default() -> Self {
         Self {
-            margin_box: Box2D::zero(),
-            border_box: Box2D::zero(),
-            padding_box: Box2D::zero(),
-            content_box: Box2D::zero(),
+            margin_box: Box2D::empty(),
+            border_box: Box2D::empty(),
+            padding_box: Box2D::empty(),
+            content_box: Box2D::empty(),
         }
     }
 }
@@ -574,7 +571,7 @@ impl VisualBoxModel {
 
 impl std::fmt::Debug for VisualBoxModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.border_box().to_rect())
+        write!(f, "{:?}", self.border_box())
     }
 }
 
@@ -659,15 +656,20 @@ impl SolvedBoxGeometry {
         let margin = self.margin.map(Option::unwrap);
         let offset = self.offset.map(Option::unwrap);
 
-        let margin_min = Point2D::from_lengths(offset.get_left(), offset.get_top());
+        let margin_min = Point2D::new(offset.get_left(), offset.get_top());
         let margin_max = margin_min
-            + Size2D::from_lengths(
+            + Vector2D::new(
                 margin.dw() + self.border.dw() + self.padding.dw() + self.width.value.unwrap(),
                 margin.dh() + self.border.dh() + self.padding.dh() + self.height.value.unwrap());
         let margin_box = Box2D::new(margin_min, margin_max);
-        let border_box = margin_box.inner_box(margin.into());
-        let padding_box = border_box.inner_box(self.border.into());
-        let content_box = padding_box.inner_box(self.padding.into());
+        let border_box = margin_box.shrink_edges((
+            margin.get_left(), margin.get_top(), margin.get_right(), margin.get_bottom()));
+        let padding_box = border_box.shrink_edges((
+            self.border.get_left(), self.border.get_top(), self.border.get_right(),
+            self.border.get_bottom()));
+        let content_box = padding_box.shrink_edges((
+            self.padding.get_left(), self.padding.get_top(), self.padding.get_right(),
+            self.padding.get_bottom()));
 
         BoxGeometry { margin_box, border_box, padding_box, content_box }
     }

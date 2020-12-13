@@ -1,13 +1,12 @@
 use std::ops::Add;
 
-use euclid::num::Zero;
+use num_traits::Zero;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::Number;
 use crate::Length;
-use crate::SideOffsets2D;
 use crate::MAX_LENGTH;
 
 #[derive(Default)]
@@ -317,10 +316,9 @@ impl BoxQuad<Border> {
     }
 }
 
-impl Into<SideOffsets2D> for BoxQuad<Border> {
-    fn into(self) -> SideOffsets2D {
-        SideOffsets2D::from_lengths(
-            self.top().width, self.right().width, self.bottom().width, self.left().width)
+impl Into<(Length, Length, Length, Length)> for BoxQuad<Border> {
+    fn into(self) -> (Length, Length, Length, Length) {
+        (self.top().width, self.right().width, self.bottom().width, self.left().width)
     }
 }
 
@@ -525,9 +523,9 @@ where
     }
 }
 
-impl Into<SideOffsets2D> for BoxQuad<Length> {
-    fn into(self) -> SideOffsets2D {
-        SideOffsets2D::from_lengths(self.0[0], self.0[1], self.0[2], self.0[3])
+impl Into<(Length, Length, Length, Length)> for BoxQuad<Length> {
+    fn into(self) -> (Length, Length, Length, Length) {
+        (self.0[0], self.0[1], self.0[2], self.0[3])
     }
 }
 

@@ -98,7 +98,7 @@ pub trait JsonSink {
 
 struct Painter<'a, T> {
     sink: &'a mut T,
-    transform: Transform2D,
+    origin: Vector2D,
 }
 
 impl<'a, T> Painter<'a, T>
@@ -108,7 +108,7 @@ where
     fn new(sink: &'a mut T) -> Self {
         Painter {
             sink,
-            transform: Default::default(),
+            origin: Vector2D::zero(),
         }
     }
 
@@ -121,8 +121,8 @@ impl<'a, T> VisualRenderer for Painter<'a, T>
 where
     T: JsonSink
 {
-    fn start_render(&mut self, width: Length, height: Length) {
-        self.send(PaintMessage::Start { width, height });
+    fn start_render(&mut self, size: Size2D) {
+        self.send(PaintMessage::Start { size });
     }
 
     fn end_render(&mut self) {
@@ -130,26 +130,26 @@ where
     }
 
     fn render_box(&mut self, model: &VisualBoxModel) {
-        let rect = self.transform.outer_transformed_box(model.border_box()).to_rect();
+        let rect: Rect = model.border_box().translate(self.origin).into();
         if rect.is_empty() {
             return;
         }
         if !model.background_color().is_transparent() {
             self.send(PaintMessage::FillRect {
-                rect,
+                rect: rect.clone(),
                 color: model.background_color(),
             });
         }
         if model.border().is_visible() {
             self.send(PaintMessage::DrawBorder {
-                rect,
+                rect: rect.clone(),
                 border: BoxEdge::new(model.border()),
             });
         }
     }
 
     fn translate_coord(&mut self, v: Vector2D) {
-        self.transform = self.transform.then_translate(v);
+        self.origin += v;
     }
 }
 
@@ -158,8 +158,7 @@ where
 enum PaintMessage {
     #[serde(rename = "paint.start")]
     Start {
-        width: Length,
-        height: Length,
+        size: Size2D,
     },
     #[serde(rename = "paint.end")]
     End,

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use euclid::num::Zero;
+use num_traits::Zero;
 use tracing::{warn};
 
 use crate::BoxConstraintSolver;
@@ -30,8 +30,8 @@ impl LayoutElement {
         };
 
         let new_avail = AvailableSize {
-            width: Some(Length::new(box_model.content_box().width())),
-            height: Some(Length::new(box_model.content_box().height())),
+            width: Some(box_model.content_box().width()),
+            height: Some(box_model.content_box().height()),
         };
 
         let container = BlockContainer::new(&self.children, &new_avail);
@@ -155,7 +155,7 @@ impl<'a> BlockFlowBuilder<'a> {
         let block = element.build_block(&self.avail);
         let height = block.box_model.geometry.margin_box.height();
         self.flows.push(BlockFlow::new(self.advance, block));
-        self.advance += Length::new(height);
+        self.advance += height;
     }
 
     fn process_inline_element(&mut self, _element:  &LayoutElement) {
@@ -193,7 +193,7 @@ impl BlockFlow {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
-        let v = Vector2D::from_lengths(Length::zero(), self.advance);
+        let v = Vector2D::new(Length::zero(), self.advance);
         renderer.translate_coord(v);
         self.block.render(renderer);
         renderer.translate_coord(-v);
