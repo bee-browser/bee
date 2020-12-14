@@ -653,23 +653,21 @@ struct SolvedBoxGeometry {
 
 impl SolvedBoxGeometry {
     fn determine(self) -> BoxGeometry {
-        let margin = self.margin.map(Option::unwrap);
-        let offset = self.offset.map(Option::unwrap);
+        let margin = self.margin.apply(|v| v.unwrap());
+        let offset = self.offset.apply(|v| v.unwrap());
 
-        let margin_min = Point2D::new(offset.get_left(), offset.get_top());
+        let margin_min = Point2D::new(offset.left, offset.top);
         let margin_max = margin_min
             + Vector2D::new(
                 margin.dw() + self.border.dw() + self.padding.dw() + self.width.value.unwrap(),
                 margin.dh() + self.border.dh() + self.padding.dh() + self.height.value.unwrap());
         let margin_box = Box2D::new(margin_min, margin_max);
         let border_box = margin_box.shrink_edges((
-            margin.get_left(), margin.get_top(), margin.get_right(), margin.get_bottom()));
+            margin.left, margin.top, margin.right, margin.bottom));
         let padding_box = border_box.shrink_edges((
-            self.border.get_left(), self.border.get_top(), self.border.get_right(),
-            self.border.get_bottom()));
+            self.border.left, self.border.top, self.border.right, self.border.bottom));
         let content_box = padding_box.shrink_edges((
-            self.padding.get_left(), self.padding.get_top(), self.padding.get_right(),
-            self.padding.get_bottom()));
+            self.padding.left, self.padding.top, self.padding.right, self.padding.bottom));
 
         BoxGeometry { margin_box, border_box, padding_box, content_box }
     }
@@ -746,9 +744,8 @@ impl BoxConstraintSolver {
         self.geom.height.subtract(dh);
 
         self.geom.offset = match style.positioning {
-            PositioningScheme::Static | PositioningScheme::Relative => [
-                Some(Length::zero()), Some(Length::zero()), None, Some(Length::zero())
-            ].into(),
+            PositioningScheme::Static | PositioningScheme::Relative => box_quad!(
+                Some(Length::zero()), Some(Length::zero()), None, Some(Length::zero())),
             _ => style.layer.offset.resolve(&self.avail),
         };
 
@@ -768,172 +765,172 @@ impl BoxConstraintSolver {
     }
 
     fn solve_horizontal_constraints(&mut self, avail_width: Length) {
-        match (self.geom.width.value, self.geom.offset.get_left(), self.geom.offset.get_right()) {
+        match (self.geom.width.value, self.geom.offset.left, self.geom.offset.right) {
             // none of the three is 'auto'
             (Some(width), Some(left), Some(right)) => {
                 let remaining = avail_width - width - left - right;
-                match (self.geom.margin.get_left(), self.geom.margin.get_right()) {
+                match (self.geom.margin.left, self.geom.margin.right) {
                     (None, None) => {
                         if remaining < Length::zero() {
                             // TODO: RTL
-                            self.geom.margin.set_left(Some(Length::zero()));
-                            self.geom.margin.set_right(Some(remaining));
+                            self.geom.margin.left = Some(Length::zero());
+                            self.geom.margin.right = Some(remaining);
                         } else {
                             // TODO: RTL
                             let half = remaining / 2.0;
-                            self.geom.margin.set_left(Some(half));
-                            self.geom.margin.set_right(Some(remaining - half));
+                            self.geom.margin.left = Some(half);
+                            self.geom.margin.right = Some(remaining - half);
                         }
                     }
                     (None, Some(right_margin)) => {
-                        self.geom.margin.set_left(Some(remaining - right_margin));
+                        self.geom.margin.left = Some(remaining - right_margin);
                     }
                     (Some(left_margin), None) => {
-                        self.geom.margin.set_right(Some(remaining - left_margin));
+                        self.geom.margin.right = Some(remaining - left_margin);
                     }
                     (Some(left_margin), Some(right_margin)) => {
                         // over-constrained.
                         // TODO: RTL
-                        self.geom.offset.set_right(
-                            Some(right + remaining - left_margin - right_margin));
+                        self.geom.offset.right =
+                            Some(right + remaining - left_margin - right_margin);
                     }
                 }
             }
             (Some(width), Some(left), None) => {
-                let left_margin = *self.geom.margin.left_mut().get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_right(
-                    Some(avail_width - width - left - left_margin - right_margin));
+                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                self.geom.offset.right =
+                    Some(avail_width - width - left - left_margin - right_margin);
             }
             (Some(width), None, Some(right)) => {
-                let left_margin = *self.geom.margin.left_mut().get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_left(
-                    Some(avail_width - width - right - left_margin - right_margin));
+                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                self.geom.offset.left =
+                    Some(avail_width - width - right - left_margin - right_margin);
             }
             (Some(width), None, None) => {
-                let left_margin = *self.geom.margin.left_mut().get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right_mut().get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
                 // TODO: static-position, rtl
-                let left = *self.geom.offset.left_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_right(
-                    Some(avail_width - width - left - left_margin - right_margin));
+                let left = *self.geom.offset.left.get_or_insert(Length::zero());
+                self.geom.offset.right =
+                    Some(avail_width - width - left - left_margin - right_margin);
             }
             (None, Some(left), Some(right)) => {
-                let left_margin = *self.geom.margin.left_mut().get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right_mut().get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
                 self.geom.width.value =
                     Some(avail_width - left - right - left_margin - right_margin);
             }
             (None, Some(left), None) => {
-                let left_margin = *self.geom.margin.left_mut().get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right_mut().get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
                 // TODO: shrink-to-fit
                 let width = *self.geom.width.value.get_or_insert(Length::zero());
-                self.geom.offset.set_right(
-                    Some(avail_width - width - left - left_margin - right_margin));
+                self.geom.offset.right =
+                    Some(avail_width - width - left - left_margin - right_margin);
             }
             (None, None, Some(right)) => {
-                let left_margin = *self.geom.margin.left_mut().get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right_mut().get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
                 // TODO: shrink-to-fit
                 let width = *self.geom.width.value.get_or_insert(Length::zero());
-                self.geom.offset.set_left(
-                    Some(avail_width - width - right - left_margin - right_margin));
+                self.geom.offset.left =
+                    Some(avail_width - width - right - left_margin - right_margin);
             }
             (None, None, None) => {
-                let left_margin = *self.geom.margin.left_mut().get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right_mut().get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
                 // TODO: shrink-to-fit
                 let width = *self.geom.width.value.get_or_insert(Length::zero());
                 // TODO: static-position, rtl
-                let left = *self.geom.offset.left_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_right(
-                    Some(avail_width - width - left - left_margin - right_margin));
+                let left = *self.geom.offset.left.get_or_insert(Length::zero());
+                self.geom.offset.right =
+                    Some(avail_width - width - left - left_margin - right_margin);
             }
         }
     }
 
     fn solve_vertical_constraints(&mut self, avail_height: Length) {
-        match (self.geom.height.value, self.geom.offset.get_top(), self.geom.offset.get_bottom()) {
+        match (self.geom.height.value, self.geom.offset.top, self.geom.offset.bottom) {
             // none of the three is 'auto'
             (Some(height), Some(top), Some(bottom)) => {
                 let remaining = avail_height - height - top - bottom;
-                match (self.geom.margin.get_top(), self.geom.margin.get_bottom()) {
+                match (self.geom.margin.top, self.geom.margin.bottom) {
                     (None, None) => {
                         if remaining < Length::zero() {
-                            self.geom.margin.set_top(Some(Length::zero()));
-                            self.geom.margin.set_bottom(Some(remaining));
+                            self.geom.margin.top = Some(Length::zero());
+                            self.geom.margin.bottom = Some(remaining);
                         } else {
                             let half = remaining / 2.0;
-                            self.geom.margin.set_top(Some(half));
-                            self.geom.margin.set_bottom(Some(remaining - half));
+                            self.geom.margin.top = Some(half);
+                            self.geom.margin.bottom = Some(remaining - half);
                         }
                     }
                     (None, Some(bottom_margin)) => {
-                        self.geom.margin.set_top(Some(remaining - bottom_margin));
+                        self.geom.margin.top = Some(remaining - bottom_margin);
                     }
                     (Some(top_margin), None) => {
-                        self.geom.margin.set_bottom(Some(remaining - top_margin));
+                        self.geom.margin.bottom = Some(remaining - top_margin);
                     }
                     (Some(top_margin), Some(bottom_margin)) => {
                         // over-constrained.
-                        self.geom.offset.set_bottom(
-                            Some(bottom + remaining - top_margin - bottom_margin));
+                        self.geom.offset.bottom =
+                            Some(bottom + remaining - top_margin - bottom_margin);
                     }
                 }
             }
             (Some(height), Some(top), None) => {
-                let top_margin = *self.geom.margin.top_mut().get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_bottom(
-                    Some(avail_height - height - top - top_margin - bottom_margin));
+                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                self.geom.offset.bottom =
+                    Some(avail_height - height - top - top_margin - bottom_margin);
             }
             (Some(height), None, Some(bottom)) => {
-                let top_margin = *self.geom.margin.top_mut().get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_top(
-                    Some(avail_height - height - bottom - top_margin - bottom_margin));
+                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                self.geom.offset.top =
+                    Some(avail_height - height - bottom - top_margin - bottom_margin);
             }
             (Some(height), None, None) => {
-                let top_margin = *self.geom.margin.top_mut().get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom_mut().get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
                 // TODO: static-position
-                let top = *self.geom.offset.top_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_bottom(
-                    Some(avail_height - height - top - top_margin - bottom_margin));
+                let top = *self.geom.offset.top.get_or_insert(Length::zero());
+                self.geom.offset.bottom =
+                    Some(avail_height - height - top - top_margin - bottom_margin);
             }
             (None, Some(top), Some(bottom)) => {
-                let top_margin = *self.geom.margin.top_mut().get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom_mut().get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
                 self.geom.height.value =
                     Some(avail_height - top - bottom - top_margin - bottom_margin);
             }
             (None, Some(top), None) => {
-                let top_margin = *self.geom.margin.top_mut().get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom_mut().get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
                 // TODO: shrink-to-fit
                 let height = *self.geom.height.value.get_or_insert(Length::zero());
-                self.geom.offset.set_bottom(
-                    Some(avail_height - height - top - top_margin - bottom_margin));
+                self.geom.offset.bottom =
+                    Some(avail_height - height - top - top_margin - bottom_margin);
             }
             (None, None, Some(bottom)) => {
-                let top_margin = *self.geom.margin.top_mut().get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom_mut().get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
                 // TODO: shrink-to-fit
                 let height = *self.geom.height.value.get_or_insert(Length::zero());
-                self.geom.offset.set_top(
-                    Some(avail_height - height - bottom - top_margin - bottom_margin));
+                self.geom.offset.top =
+                    Some(avail_height - height - bottom - top_margin - bottom_margin);
             }
             (None, None, None) => {
-                let top_margin = *self.geom.margin.top_mut().get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom_mut().get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
                 // TODO: shrink-to-fit
                 let height = *self.geom.height.value.get_or_insert(Length::zero());
                 // TODO: static-position
-                let top = *self.geom.offset.top_mut().get_or_insert(Length::zero());
-                self.geom.offset.set_bottom(
-                    Some(avail_height - height - top - top_margin - bottom_margin));
+                let top = *self.geom.offset.top.get_or_insert(Length::zero());
+                self.geom.offset.bottom =
+                    Some(avail_height - height - top - top_margin - bottom_margin);
             }
         }
     }

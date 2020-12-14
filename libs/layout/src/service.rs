@@ -143,7 +143,7 @@ where
         if model.border().is_visible() {
             self.send(PaintMessage::DrawBorder {
                 rect: rect.clone(),
-                border: BoxEdge::new(model.border()),
+                border: model.border().clone(),
             });
         }
     }
@@ -170,25 +170,6 @@ enum PaintMessage {
     #[serde(rename = "paint.draw_border")]
     DrawBorder {
         rect: Rect,
-        border: BoxEdge<Border>,
+        border: BoxQuad<Border>,
     },
-}
-
-#[derive(Serialize)]
-struct BoxEdge<T> {
-    top: T,
-    right: T,
-    bottom: T,
-    left: T,
-}
-
-impl<T: Copy> BoxEdge<T> {
-    fn new(quad: &BoxQuad<T>) -> Self {
-        BoxEdge {
-            top: quad.get_top(),
-            right: quad.get_right(),
-            bottom: quad.get_bottom(),
-            left: quad.get_left(),
-        }
-    }
 }

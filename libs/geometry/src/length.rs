@@ -170,9 +170,21 @@ impl<T: PartialEq, U> PartialEq for Length<T, U> {
     }
 }
 
+impl<T: PartialEq, U> PartialEq<T> for Length<T, U> {
+    fn eq(&self, rhs: &T) -> bool {
+        self.0.eq(rhs)
+    }
+}
+
 impl<T: PartialOrd, U> PartialOrd for Length<T, U> {
     fn partial_cmp(&self, rhs: &Self) -> Option<Ordering> {
         self.0.partial_cmp(&rhs.0)
+    }
+}
+
+impl<T: PartialOrd, U> PartialOrd<T> for Length<T, U> {
+    fn partial_cmp(&self, rhs: &T) -> Option<Ordering> {
+        self.0.partial_cmp(rhs)
     }
 }
 

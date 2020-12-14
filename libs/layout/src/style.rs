@@ -312,13 +312,17 @@ impl Border {
 
 impl BoxQuad<Border> {
     pub fn is_visible(&self) -> bool {
-        self.0.iter().any(|style| style.is_visible())
+        self.any(|border| border.is_visible())
+    }
+
+    pub fn widths(&self) -> BoxQuad<Length> {
+        self.apply(|border| border.width)
     }
 }
 
 impl Into<(Length, Length, Length, Length)> for BoxQuad<Border> {
     fn into(self) -> (Length, Length, Length, Length) {
-        (self.top().width, self.right().width, self.bottom().width, self.left().width)
+        (self.top.width, self.right.width, self.bottom.width, self.left.width)
     }
 }
 
@@ -406,198 +410,113 @@ impl Default for Margin {
 }
 
 #[derive(Clone, Default, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-pub struct BoxQuad<T>([T; 4]);
+pub struct BoxQuad<T> {
+    pub top: T,
+    pub right: T,
+    pub bottom: T,
+    pub left: T,
+}
 
 impl<T> BoxQuad<T> {
-    #[inline]
-    pub fn top(&self) -> &T {
-        &self.0[0]
+    pub fn new(top: T, right: T, bottom: T, left: T) -> Self {
+        BoxQuad { top, right, bottom, left }
     }
 
-    #[inline]
-    pub fn top_mut(&mut self) -> &mut T {
-        &mut self.0[0]
-    }
-
-    #[inline]
-    pub fn set_top(&mut self, value: T) {
-        self.0[0] = value;
-    }
-
-    #[inline]
-    pub fn right(&self) -> &T {
-        &self.0[1]
-    }
-
-    #[inline]
-    pub fn right_mut(&mut self) -> &mut T {
-        &mut self.0[1]
-    }
-
-    #[inline]
-    pub fn set_right(&mut self, value: T) {
-        self.0[1] = value;
-    }
-
-    #[inline]
-    pub fn bottom(&self) -> &T {
-        &self.0[2]
-    }
-
-    #[inline]
-    pub fn bottom_mut(&mut self) -> &mut T {
-        &mut self.0[2]
-    }
-
-    #[inline]
-    pub fn set_bottom(&mut self, value: T) {
-        self.0[2] = value;
-    }
-
-    #[inline]
-    pub fn left(&self) -> &T {
-        &self.0[3]
-    }
-
-    #[inline]
-    pub fn left_mut(&mut self) -> &mut T {
-        &mut self.0[3]
-    }
-
-    #[inline]
-    pub fn set_left(&mut self, value: T) {
-        self.0[3] = value;
-    }
-}
-
-impl<T> BoxQuad<T>
-where
-    T: Copy
-{
-    #[inline]
-    pub fn new(v: T) -> Self {
-        BoxQuad([v; 4])
-    }
-
-    #[inline]
-    pub fn get_top(&self) -> T {
-        self.0[0]
-    }
-
-    #[inline]
-    pub fn get_right(&self) -> T {
-        self.0[1]
-    }
-
-    #[inline]
-    pub fn get_bottom(&self) -> T {
-        self.0[2]
-    }
-
-    #[inline]
-    pub fn get_left(&self) -> T {
-        self.0[3]
-    }
-
-    pub fn map<B, F>(self, f: F) -> BoxQuad<B>
+    pub fn any<F>(&self, f: F) -> bool
     where
-        F: Fn(T) -> B,
+        F: Fn(&T) -> bool
     {
-        BoxQuad([f(self.0[0]), f(self.0[1]), f(self.0[2]), f(self.0[3])])
+        f(&self.top) || f(&self.right) || f(&self.bottom) || f(&self.left)
+    }
+
+    pub fn all<F>(&self, f: F) -> bool
+    where
+        F: Fn(&T) -> bool
+    {
+        f(&self.top) && f(&self.right) && f(&self.bottom) && f(&self.left)
+    }
+
+    pub fn apply<B, F>(&self, f: F) -> BoxQuad<B>
+    where
+        F: Fn(&T) -> B,
+    {
+        BoxQuad::new(f(&self.top), f(&self.right), f(&self.bottom), f(&self.left))
     }
 }
 
-impl<T> BoxQuad<T>
-where
-    T: Copy + Add<Output = T>
-{
-    #[inline]
+impl<T: Clone> From<T> for BoxQuad<T> {
+    fn from(v: T) -> Self {
+        BoxQuad::new(v.clone(), v.clone(), v.clone(), v.clone())
+    }
+}
+
+impl<T> From<(T, T, T, T)> for BoxQuad<T> {
+    fn from(quad: (T, T, T, T)) -> Self {
+        BoxQuad::new(quad.0, quad.1, quad.2, quad.3)
+    }
+}
+
+impl<T: Copy + Add<Output = T>> BoxQuad<T> {
     pub fn dw(&self) -> T {
-        self.get_left() + self.get_right()
+        self.left + self.right
     }
 
-    #[inline]
     pub fn dh(&self) -> T {
-        self.get_top() + self.get_bottom()
+        self.top + self.bottom
     }
 }
 
-impl Into<(Length, Length, Length, Length)> for BoxQuad<Length> {
-    fn into(self) -> (Length, Length, Length, Length) {
-        (self.0[0], self.0[1], self.0[2], self.0[3])
-    }
-}
-
-impl<T> From<[T; 4]> for BoxQuad<T> {
-    fn from(values: [T; 4]) -> Self {
-        BoxQuad(values)
-    }
-}
-
-impl<T> std::fmt::Display for BoxQuad<T>
-where
-    T: std::fmt::Display
-{
+impl<T: std::fmt::Display> std::fmt::Display for BoxQuad<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}, {}, {}, {}]", self.0[0], self.0[1], self.0[2], self.0[3])
+        write!(f, "[{}, {}, {}, {}]", self.top, self.right, self.bottom, self.left)
     }
 }
 
-impl<T> std::fmt::Debug for BoxQuad<T>
-where
-    T: std::fmt::Debug
-{
+impl<T: std::fmt::Debug> std::fmt::Debug for BoxQuad<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{:?}, {:?}, {:?}, {:?}]", self.0[0], self.0[1], self.0[2], self.0[3])
+        write!(f, "[{:?}, {:?}, {:?}, {:?}]", self.top, self.right, self.bottom, self.left)
     }
+}
+
+#[macro_export]
+macro_rules! box_quad {
+    ($v:expr) => {
+        BoxQuad::new($v.clone(), $v.clone(), $v.clone(), $v.clone())
+    };
+    ($vert:expr, $hori:expr) => {
+        BoxQuad::new($vert.clone(), $hori.clone(), $vert.clone(), $hori.clone())
+    };
+    ($top:expr, $right:expr, $bottom:expr, $left:expr) => {
+        BoxQuad::new($top, $right, $bottom,  $left)
+    };
 }
 
 impl BoxQuad<Padding> {
-    #[inline]
     pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Length> {
-        BoxQuad([
-            self.0[0].resolve(&avail.width),
-            self.0[1].resolve(&avail.width),
-            self.0[2].resolve(&avail.width),
-            self.0[3].resolve(&avail.width),
-        ])
+        self.apply(|padding| padding.resolve(&avail.width))
     }
 }
 
 impl BoxQuad<Border> {
-    #[inline]
     pub fn resolve(&self) -> BoxQuad<Length> {
-        BoxQuad([
-            self.0[0].resolve(),
-            self.0[1].resolve(),
-            self.0[2].resolve(),
-            self.0[3].resolve(),
-        ])
+        self.apply(|border| border.resolve())
     }
 }
 
 impl BoxQuad<Margin> {
-    #[inline]
     pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Option<Length>> {
-        BoxQuad([
-            self.0[0].resolve(&avail.width),
-            self.0[1].resolve(&avail.width),
-            self.0[2].resolve(&avail.width),
-            self.0[3].resolve(&avail.width),
-        ])
+        self.apply(|margin| margin.resolve(&avail.width))
     }
 }
 
 impl BoxQuad<LayerOffset> {
-    #[inline]
     pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Option<Length>> {
-        BoxQuad([
-            self.0[0].resolve(&avail.height),
-            self.0[1].resolve(&avail.width),
-            self.0[2].resolve(&avail.height),
-            self.0[3].resolve(&avail.width),
-        ])
+        BoxQuad::new(
+            self.top.resolve(&avail.height),
+            self.right.resolve(&avail.width),
+            self.bottom.resolve(&avail.height),
+            self.left.resolve(&avail.width),
+        )
     }
 }
 
@@ -713,7 +632,7 @@ mod tests {
 
     #[test]
     fn test_border_quad_serde() {
-        let value = BoxQuad::new(Border {
+        let value = box_quad!(Border {
             style: BorderStyle::Solid,
             width: Length::new(10.0),
             color: Color(0, 0, 0, 0),
@@ -726,5 +645,43 @@ mod tests {
 
         let result: BoxQuad<Border> = assert_matches!(serde_json::from_str(&json), Ok(v) => v);
         assert_eq!(result, value);
+    }
+}
+
+#[cfg(feature = "serde")]
+mod serde_impl {
+    use super::*;
+
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde::ser::SerializeTuple;
+
+    impl<T> Serialize for BoxQuad<T>
+    where
+        T: Serialize,
+    {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            let mut tup = serializer.serialize_tuple(4)?;
+            tup.serialize_element(&self.top)?;
+            tup.serialize_element(&self.right)?;
+            tup.serialize_element(&self.bottom)?;
+            tup.serialize_element(&self.left)?;
+            tup.end()
+        }
+    }
+
+    impl<'de, T> Deserialize<'de> for BoxQuad<T>
+    where
+        T: Deserialize<'de>,
+    {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let quad: (T, T, T, T) = Deserialize::deserialize(deserializer)?;
+            Ok(quad.into())
+        }
     }
 }

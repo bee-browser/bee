@@ -9,20 +9,16 @@
   data:
     rect: [20.0, 20.0, 140.0, 140.0]
     border:
-      top:
-        style: solid
+      - style: solid
         width: 10.0
         color: [255, 0, 0, 255]
-      right:
-        style: solid
+      - style: solid
         width: 10.0
         color: [255, 0, 0, 255]
-      bottom:
-        style: solid
+      - style: solid
         width: 10.0
         color: [255, 0, 0, 255]
-      left:
-        style: solid
+      - style: solid
         width: 10.0
         color: [255, 0, 0, 255]
 - type: paint.end
