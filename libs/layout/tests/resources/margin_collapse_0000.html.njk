@@ -1,0 +1,19 @@
+{% extends '_margin_collapse.html.njk' %}
+
+{% block description %}
+Adjacent blocks with no margins.
+{% endblock %}
+
+{% block style %}
+{{ super() }}
+
+.block {
+  width: auto;
+  height: 50px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="green block"></div>
+<div class="blue block"></div>
+{% endblock %}
