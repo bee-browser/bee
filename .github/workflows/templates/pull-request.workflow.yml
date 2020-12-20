@@ -6,15 +6,11 @@ on:
       - master
 
 jobs:
-  linux-build:
-  macos-build:
+  build:
   coverage:
     needs:
-      - linux-build
-      - macos-build
+      - build
   auto-merge:
     if: github.actor == 'dependabot[bot]'
     needs:
-      - linux-build
-      - macos-build
-      - coverage
+      - build

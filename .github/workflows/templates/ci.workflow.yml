@@ -6,9 +6,7 @@ on:
       - master
 
 jobs:
-  linux-build:
-  macos-build:
+  build:
   coverage:
     needs:
-      - linux-build
-      - macos-build
+      - build

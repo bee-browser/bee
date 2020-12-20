@@ -7,43 +7,15 @@ name: Pull Request
     branches:
       - master
 jobs:
-  linux-build:
+  build:
     strategy:
       matrix:
+        runner:
+          - macOS-latest
+          - ubuntu-latest
         rust:
           - stable
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: '${{ matrix.rust }}'
-          override: true
-      - uses: actions/setup-node@v2-beta
-      - name: Install packages for tools
-        run: npm install
-        working-directory: ./tools
-      - name: Install packages for webui
-        run: npm install
-        working-directory: ./webui
-      - name: Update PATH
-        run: |
-          echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
-          echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
-      - name: Build
-        run: make
-        env:
-          CARGO_TERM_VERBOSE: true
-      - name: Run tests
-        run: make test
-        env:
-          CARGO_TERM_VERBOSE: true
-  macos-build:
-    strategy:
-      matrix:
-        rust:
-          - stable
-    runs-on: macOS-latest
+    runs-on: '${{ matrix.runner }}'
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -71,8 +43,7 @@ jobs:
           CARGO_TERM_VERBOSE: true
   coverage:
     needs:
-      - linux-build
-      - macos-build
+      - build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -100,9 +71,7 @@ jobs:
   auto-merge:
     if: 'github.actor == ''dependabot[bot]'''
     needs:
-      - linux-build
-      - macos-build
-      - coverage
+      - build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v2

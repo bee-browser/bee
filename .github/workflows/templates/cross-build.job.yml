@@ -1,16 +1,23 @@
 jobs:
-  linux-build:
+  cross-build:
     strategy:
       matrix:
+        runner:
+          - ubuntu-latest
+        target:
+          - arm-unknown-linux-gnueabi
+          - armv7-unknown-linux-gnueabihf
+          - aarch64-unknown-linux-gnu
         rust:
           - stable
           #- nightly
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
+          target: ${{ matrix.target }}
           override: true
       - uses: actions/setup-node@v2-beta
       - name: Install packages for tools
