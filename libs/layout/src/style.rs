@@ -35,7 +35,6 @@ impl Default for DisplayStyle {
     }
 }
 
-#[repr(u8)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum DisplayOutside {
@@ -52,7 +51,6 @@ pub enum DisplayOutside {
     TableCell,
 }
 
-#[repr(u8)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum DisplayInside {
@@ -68,7 +66,6 @@ pub enum DisplayInside {
     Ruby,
 }
 
-#[repr(u8)]
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
@@ -520,11 +517,143 @@ impl BoxQuad<LayerOffset> {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 pub struct BackgroundStyle {
     pub color: Color,
+    pub images: Vec<BackgroundImage>,
+}
+
+#[derive(Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
+pub struct BackgroundImage {
+    pub media: VisualMedia,
+    pub attachment: BackgroundAttachment,
+    pub clip: BackgroundClip,
+    pub origin: BackgroundOrigin,
+    pub position_x: BackgroundPosition,
+    pub position_y: BackgroundPosition,
+    pub repeat_x: BackgroundRepeat,
+    pub repeat_y: BackgroundRepeat,
+    pub width: BackgroundSize,
+    pub height: BackgroundSize,
+}
+
+#[derive(Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
+pub struct VisualMedia {
+    // TODO: id
+    pub size: VisualMediaSize,  // natural size is required for computing the box size
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum VisualMediaSize {
+    Pixel(Length, Length),
+    Ratio(Number, Number),
+}
+
+impl Default for VisualMediaSize {
+    fn default() -> Self {
+        VisualMediaSize::Pixel(Length::new(300.0), Length::new(150.0))
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum BackgroundAttachment {
+    Fixed,
+    Local,
+    Scroll,
+}
+
+impl Default for BackgroundAttachment {
+    fn default() -> Self {
+        BackgroundAttachment::Scroll
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum BackgroundClip {
+    BorderBox,
+    PaddingBox,
+    ContentBox,
+    Text,
+}
+
+impl Default for BackgroundClip {
+    fn default() -> Self {
+        BackgroundClip::BorderBox
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum BackgroundOrigin {
+    BorderBox,
+    PaddingBox,
+    ContentBox,
+}
+
+impl Default for BackgroundOrigin {
+    fn default() -> Self {
+        BackgroundOrigin::PaddingBox
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum BackgroundPosition {
+    Start(NumericSize),
+    End(NumericSize),
+}
+
+impl Default for BackgroundPosition {
+    fn default() -> Self {
+        BackgroundPosition::Start(NumericSize::Pixel(Default::default()))
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum BackgroundRepeat {
+    Repeat,
+    Space,
+    Round,
+    NoRepeat,
+}
+
+impl Default for BackgroundRepeat {
+    fn default() -> Self {
+        BackgroundRepeat::Repeat
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum BackgroundSize {
+    Auto,
+    Contain,
+    Cover,
+    Pixel(Length),
+    Scale(Number),
+}
+
+impl Default for BackgroundSize {
+    fn default() -> Self {
+        BackgroundSize::Auto
+    }
 }
 
 #[derive(Default)]

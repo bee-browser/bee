@@ -75,6 +75,7 @@ mod tests {
         assert_eq!(expected, expected.clone());
     }
 
+    #[test]
     fn test_from() {
         let expected: Size2D<i32, Px> = Size2D::new(1.into(), 2.into());
         assert_eq!(expected, (1, 2).into());

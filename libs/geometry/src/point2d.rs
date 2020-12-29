@@ -190,7 +190,6 @@ mod tests {
     #[derive(Debug)]  // TODO: remove
     struct Px;
 
-    type I32Length = Length<i32, Px>;
     type I32Point2D = Point2D<i32, Px>;
     type I32Vector2D = Vector2D<i32, Px>;
 

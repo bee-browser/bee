@@ -564,6 +564,10 @@ impl VisualBoxModel {
         self.style.background.color
     }
 
+    pub fn background_images(&self) -> &[BackgroundImage] {
+        &self.style.background.images
+    }
+
     pub fn border(&self) -> &BoxQuad<Border> {
         &self.style.box_model.border
     }

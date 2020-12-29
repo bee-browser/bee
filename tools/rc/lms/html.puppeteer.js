@@ -26,8 +26,8 @@ function toNumber(n) {  // f32
   return n;
 }
 
-function scanDisplayStyle(style) {
-  const display = style.get('display').toString();
+function scanDisplayStyle(styleMap) {
+  const display = styleMap.get('display').toString();
 
   switch (display) {
   case 'none':
@@ -127,16 +127,16 @@ function scanCSSLengthValue(value) {
   return { not_supported: value.toString() };
 }
 
-function scanBoxQuad(styles, name, scan) {
+function scanBoxQuad(styleMap, name, scan) {
   let prefix = `${name}-`;
   if (prefix === '-') {
     prefix = '';
   }
   return [
-    scan(styles.get(`${prefix}top`)),
-    scan(styles.get(`${prefix}right`)),
-    scan(styles.get(`${prefix}bottom`)),
-    scan(styles.get(`${prefix}left`)),
+    scan(styleMap.get(`${prefix}top`)),
+    scan(styleMap.get(`${prefix}right`)),
+    scan(styleMap.get(`${prefix}bottom`)),
+    scan(styleMap.get(`${prefix}left`)),
   ];
 }
 
@@ -163,42 +163,44 @@ function scanCSSColor(value) {
   return [0, 0, 0, 0];  // transparent, black
 }
 
-function scanBorderStyles(styles, edge) {
-  const style = scanCSSKeywordValue(styles.get(`border-${edge}-style`))
-  const width = toNumber(styles.get(`border-${edge}-width`).value);
-  const color = scanCSSColor(styles.get(`border-${edge}-color`));
+function scanBorderStyle(styleMap, edge) {
+  const style = scanCSSKeywordValue(styleMap.get(`border-${edge}-style`))
+  const width = toNumber(styleMap.get(`border-${edge}-width`).value);
+  const color = scanCSSColor(styleMap.get(`border-${edge}-color`));
   return { style, width, color };
 }
 
-function scanBorderQuad(styles) {
+function scanBorderQuad(styleMap) {
   return [
-    scanBorderStyles(styles, 'top'),
-    scanBorderStyles(styles, 'right'),
-    scanBorderStyles(styles, 'bottom'),
-    scanBorderStyles(styles, 'left'),
+    scanBorderStyle(styleMap, 'top'),
+    scanBorderStyle(styleMap, 'right'),
+    scanBorderStyle(styleMap, 'bottom'),
+    scanBorderStyle(styleMap, 'left'),
   ];
 }
 
-function scanBoxModelStyles(styles) {
+function scanBoxModelStyle(style, styleMap) {
   return {
-    box_sizing: scanCSSKeywordValue(styles.get('box-sizing')),
-    width: scanCSSLengthValue(styles.get('width')),
-    height: scanCSSLengthValue(styles.get('height')),
-    min_width: scanCSSLengthValue(styles.get('min-width')),
-    min_height: scanCSSLengthValue(styles.get('min-height')),
-    max_width: scanCSSLengthValue(styles.get('max-width')),
-    max_height: scanCSSLengthValue(styles.get('max-height')),
-    padding: scanBoxQuad(styles, 'padding', scanCSSLengthValue),
-    border: scanBorderQuad(styles),
-    margin: scanBoxQuad(styles, 'margin', scanCSSLengthValue),
+    box_sizing: scanCSSKeywordValue(styleMap.get('box-sizing')),
+    width: scanCSSLengthValue(styleMap.get('width')),
+    height: scanCSSLengthValue(styleMap.get('height')),
+    min_width: scanCSSLengthValue(styleMap.get('min-width')),
+    min_height: scanCSSLengthValue(styleMap.get('min-height')),
+    max_width: scanCSSLengthValue(styleMap.get('max-width')),
+    max_height: scanCSSLengthValue(styleMap.get('max-height')),
+    padding: scanBoxQuad(styleMap, 'padding', scanCSSLengthValue),
+    border: scanBorderQuad(styleMap),
+    margin: scanBoxQuad(styleMap, 'margin', scanCSSLengthValue),
   };
 }
 
-function scanBackgroundStyles(styles) {
+async function scanBackgroundStyle(style, styleMap) {
   return {
-    color: scanCSSColor(styles.get('background-color')),
+    color: scanCSSColor(styleMap.get('background-color')),
+    images: await scanBackgroundImages(style, styleMap),
   };
 }
+
 function scanZIndex(value) {
   if (value.value == 'auto') {
     return 'auto';
@@ -206,20 +208,20 @@ function scanZIndex(value) {
   return { index: value.value };
 }
 
-function scanLayerStyles(styles) {
+function scanLayerStyle(style, styleMap) {
   return {
-    z_index: scanZIndex(styles.get('z-index')),
-    offset: scanBoxQuad(styles, '', scanCSSLengthValue),
+    z_index: scanZIndex(styleMap.get('z-index')),
+    offset: scanBoxQuad(styleMap, '', scanCSSLengthValue),
   };
 }
 
-function scanStyleMap(styles) {
+async  function scanStyleMap(style, styleMap) {
   return {
-    display: scanDisplayStyle(styles),
-    positioning: styles.get('position').value,
-    box_model: scanBoxModelStyles(styles),
-    background: scanBackgroundStyles(styles),
-    layer: scanLayerStyles(styles),
+    display: scanDisplayStyle(styleMap),
+    positioning: styleMap.get('position').value,
+    box_model: scanBoxModelStyle(style, styleMap),
+    layer: scanLayerStyle(style, styleMap),
+    background: await scanBackgroundStyle(style, styleMap),
   };
 }
 
@@ -261,12 +263,13 @@ function scanStyle(style) {
   return result;
 }
 
-function scanElementStyle(element) {
-  const styles = element.computedStyleMap();
-  if (styles.get('display') == 'none') {
+async function scanElementStyle(element) {
+  const style = window.getComputedStyle(element, null);
+  const styleMap = element.computedStyleMap();
+  if (styleMap.get('display') == 'none') {
     return null;
   }
-  return scanStyleMap(styles);
+  return await scanStyleMap(style, styleMap);
 }
 
 function scanPseudoElementStyle(element, pseudo) {
@@ -350,14 +353,14 @@ async function scanImages(str) {
   return await Promise.all(promises);
 }
 
-async function scanBackgroundImages(style) {
-  if (style.backgorund_image === 'none') {
+async function scanBackgroundImages(style, styleMap) {
+  if (style.backgroundImage === 'none') {
     return [];
   }
-  const images = await scanImages(style.background_image);
-  const attachments = style.background_attachment.split(/\s*,\s*/g);
-  const clips = style.background_clip.split(/\s*,\s*/g);
-  const origins = style.background_origin.split(/\s*,\s*/g);
+  const images = await scanImages(style.backgroundImage);
+  const attachments = style.backgroundAttachment.split(/\s*,\s*/g).map(snakeCase);
+  const clips = style.backgroundClip.split(/\s*,\s*/g).map(snakeCase);
+  const origins = style.backgroundOrigin.split(/\s*,\s*/g).map(snakeCase);
   // TODO:
   // Simplify the code by using the backgroundPositionX and backgroundPostionY
   // properties.
@@ -367,16 +370,16 @@ async function scanBackgroundImages(style) {
   // <length-percentage> perts.  So, parsing the backgroundPosition property is
   // needed for getting the correct values.
   let positions_x = [], positions_y = [];
-  style.background_position.split(/\s*,\s*/g).map((pos) => {
+  style.backgroundPosition.split(/\s*,\s*/g).map((pos) => {
     let result = {
-      x: { edge: 'start', offset: '0%', },
-      y: { edge: 'start', offset: '0%', },
+      x: { edge: 'start', offset: { scale: 0.0 }, },
+      y: { edge: 'start', offset: { scale: 0.0 }, },
     };
     let prop = 'x';
     pos.split(/\s+/g).forEach((v) => {
       switch (v) {
       case 'center':
-        result[prop].offset = '50%';
+        result[prop].offset = { scale: 0.5 };
         prop = 'y'
         break;
       case 'top':
@@ -394,18 +397,22 @@ async function scanBackgroundImages(style) {
         prop = 'x';
         break;
       default:
-        result[prop].offset = v;
+        result[prop].offset = scanCSSUnitValue(CSSNumericValue.parse(v));
         prop = prop === 'x' ? 'y' : 'x';
         break;
       }
     });
     return result;
   }).reduce((a, v) => {
-    a.positions_x.push(v.x);
-    a.positions_y.push(v.y);
+    let x = {};
+    x[v.x.edge] = v.x.offset;
+    let y = {};
+    y[v.y.edge] = v.y.offset;
+    a.positions_x.push(x);
+    a.positions_y.push(y);
     return a;
   }, { positions_x, positions_y });
-  const repeats = style.background_repeat.split(/\s*,\s*/g);
+  const repeats = style.backgroundRepeat.split(/\s*,\s*/g);
   const repeats_x = repeats.map((repeat) => {
     const [repeat_x, repeat_y] = repeat.split(/\s+/g);
     switch (repeat_x) {
@@ -416,7 +423,7 @@ async function scanBackgroundImages(style) {
     default:
       return repeat_x;
     }
-  });
+  }).map(snakeCase);
   const repeats_y = repeats.map((repeat) => {
     const [repeat_x, repeat_y] = repeat.split(/\s+/g);
     if (repeat_y)
@@ -429,11 +436,15 @@ async function scanBackgroundImages(style) {
     default:
       return repeat_x;
     }
-  });
-  const sizes = style.background_size.split(/\s*,\s*/g);
+  }).map(snakeCase);
+  const sizes = style.backgroundSize.split(/\s*,\s*/g);
   const widths = sizes.map((size) => {
     const [width, height] = size.split(/\s+/g);
-    return width;
+    try {
+      return scanCSSLengthValue(CSSNumericValue.parse(width));
+    } catch (e) {
+      return snakeCase(width);
+    }
   });
   const heights = sizes.map((size) => {
     const [width, height] = size.split(/\s+/g);
@@ -446,28 +457,32 @@ async function scanBackgroundImages(style) {
     if (height === undefined) {
       return 'auto';
     }
-    return height;
+    try {
+      return scanCSSLengthValue(CSSNumericValue.parse(height));
+    } catch (e) {
+      return snakeCase(height);
+    }
   });
   return images.map((image, i) => {
     return {
-      image,
-      style: {
-        attachment: attachments[i],
-        clip: clips[i],
-        origin: origins[i],
-        position_x: positions_x[i],
-        position_y: positions_y[i],
-        repeat_x: repeats_x[i],
-        repeat_y: repeats_y[i],
-        width: widths[i],
-        height: heights[i],
+      media: {
+        size: { pixel: [image.natural_width, image.natural_height] }
       },
+      attachment: attachments[i],
+      clip: clips[i],
+      origin: origins[i],
+      position_x: positions_x[i],
+      position_y: positions_y[i],
+      repeat_x: repeats_x[i],
+      repeat_y: repeats_y[i],
+      width: widths[i],
+      height: heights[i],
     };
   });
 }
 
 async function scanElement(result, element) {
-  const style = scanElementStyle(element);
+  const style = await scanElementStyle(element);
   if (!style) {
     return null;
   }

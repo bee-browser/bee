@@ -140,6 +140,9 @@ where
                 color: model.background_color(),
             });
         }
+        for image in model.background_images().iter().rev() {
+            // TODO:
+        }
         if model.border().is_visible() {
             self.send(PaintMessage::DrawBorder {
                 rect: rect.clone(),
