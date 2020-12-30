@@ -81,6 +81,10 @@ coverage-html: coverage
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
 
+.PHONY: devenv
+devenv:
+	@make -C tools
+
 .PHONY: github-workflows
 github-workflows:
 	@sh .github/workflows/update.sh
