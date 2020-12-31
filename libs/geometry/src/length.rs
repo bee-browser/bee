@@ -4,7 +4,7 @@ use core::marker::PhantomData;
 use core::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use core::ops::{AddAssign, DivAssign, MulAssign, RemAssign, SubAssign};
 
-use num_traits::Zero;
+use num_traits::{Bounded, Zero};
 
 #[derive(Debug)]
 pub struct Length<T, U>(T, PhantomData<U>);
@@ -191,6 +191,16 @@ impl<T: PartialOrd, U> PartialOrd<T> for Length<T, U> {
 impl<T: Hash, U> Hash for Length<T, U> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
+    }
+}
+
+impl<T: Bounded, U> Bounded for Length<T, U> {
+    fn min_value() -> Self {
+        Length::new(T::min_value())
+    }
+
+    fn max_value() -> Self {
+        Length::new(T::max_value())
     }
 }
 

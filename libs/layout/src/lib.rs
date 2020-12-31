@@ -9,13 +9,15 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use bee_geometry;
-use num_traits::Zero;
+use num_traits::{Bounded, Zero};
 
 use crate::spec::*;
 pub use crate::style::*;
 use crate::flow::FlowContainer;
 
 pub type Number = f32;
+pub type Decimal = f32;
+pub type Integer = i32;
 
 pub mod units {
     #[derive(Debug)]
@@ -23,7 +25,6 @@ pub mod units {
 }
 
 pub type Length = bee_geometry::Length<Number, units::Pixel>;
-pub(crate) const MAX_LENGTH: Length = Length::new(f32::MAX);
 
 type Point2D = bee_geometry::Point2D<Number, units::Pixel>;
 pub type Size2D = bee_geometry::Size2D<Number, units::Pixel>;
@@ -701,7 +702,7 @@ impl LengthWithRange {
                 self.min = Length::zero();
             }
         }
-        if self.max != MAX_LENGTH {
+        if self.max != Length::max_value() {
             self.max -= delta;
             if self.max < Length::zero() {
                 self.max = Length::zero();

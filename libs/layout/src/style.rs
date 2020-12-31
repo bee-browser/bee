@@ -1,13 +1,12 @@
 use std::ops::Add;
 
-use num_traits::Zero;
+use num_traits::{Bounded, Zero};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::Number;
 use crate::Length;
-use crate::MAX_LENGTH;
 
 #[derive(Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -198,7 +197,7 @@ impl ContentMaxSize {
         match (self, *base) {
             (ContentMaxSize::Pixel(px), _) => *px,
             (ContentMaxSize::Scale(scale), Some(base)) => base * *scale,
-            _ => MAX_LENGTH,
+            _ => Length::max_value(),
         }
     }
 }
