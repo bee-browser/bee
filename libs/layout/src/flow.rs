@@ -4,13 +4,14 @@ use num_traits::Zero;
 use tracing::{warn};
 
 use crate::BoxConstraintSolver;
-use crate::Length;
+use crate::BoxModel;
+use crate::LayoutLength;
 use crate::LayoutNodeRef;
 use crate::LayoutElement;
 use crate::LayoutText;
 use crate::SolvedBoxGeometry;
-use crate::Vector2D;
-use crate::VisualBoxModel;
+use crate::ToVisual;
+use crate::LayoutVector2D;
 use crate::VisualRenderer;
 use crate::spec::*;
 use crate::style::*;
@@ -24,7 +25,7 @@ impl LayoutElement {
     fn build_block(&self, avail: &AvailableSize) -> VisualBlock {
         let solved_geom = self.solve_block_box_geometry(avail);
 
-        let box_model = VisualBoxModel {
+        let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
         };
@@ -122,7 +123,7 @@ impl BlockContainer {
 
 struct BlockFlowBuilder<'a> {
     avail: &'a AvailableSize,
-    advance: Length,
+    advance: LayoutLength,
     flows: Vec<BlockFlow>,
 }
 
@@ -130,7 +131,7 @@ impl<'a> BlockFlowBuilder<'a> {
     fn new(avail: &'a AvailableSize) -> Self {
         BlockFlowBuilder {
             avail,
-            advance: Length::zero(),
+            advance: LayoutLength::zero(),
             flows: vec![],
         }
     }
@@ -176,12 +177,12 @@ impl<'a> BlockFlowBuilder<'a> {
 }
 
 struct BlockFlow {
-    advance: Length,
+    advance: LayoutLength,
     block: VisualBlock,
 }
 
 impl BlockFlow {
-    fn new(advance: Length, block: VisualBlock) -> Self {
+    fn new(advance: LayoutLength, block: VisualBlock) -> Self {
         BlockFlow { advance, block }
     }
 
@@ -193,7 +194,7 @@ impl BlockFlow {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
-        let v = Vector2D::new(Length::zero(), self.advance);
+        let v = LayoutVector2D::new(LayoutLength::zero(), self.advance).to_visual();
         renderer.translate_coord(v);
         self.block.render(renderer);
         renderer.translate_coord(-v);
@@ -201,13 +202,13 @@ impl BlockFlow {
 }
 
 struct VisualBlock {
-    box_model: VisualBoxModel,
+    box_model: BoxModel,
     container: BlockContainer,
 }
 
 impl VisualBlock {
     #[inline]
-    fn new(box_model: VisualBoxModel, container: BlockContainer) -> Self {
+    fn new(box_model: BoxModel, container: BlockContainer) -> Self {
         VisualBlock { box_model, container }
     }
 
@@ -221,9 +222,9 @@ impl VisualBlock {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
-        renderer.render_box(&self.box_model);
+        renderer.render_box(self.box_model.to_visual());
 
-        let v = self.box_model.content_box().min.to_vector();
+        let v = self.box_model.content_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
         self.container.render_blocks(renderer);
         renderer.translate_coord(-v);

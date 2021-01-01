@@ -1,24 +1,24 @@
 - type: paint.start
   data:
-    size: [1000.0, 500.0]
+    size: [1000, 500]
 - type: paint.fill_rect
   data:
-    rect: [840.0, 340.0, 140.0, 140.0]
+    rect: [840, 340, 140, 140]
     color: [0, 0, 255, 255]
 - type: paint.draw_border
   data:
-    rect: [840.0, 340.0, 140.0, 140.0]
+    rect: [840, 340, 140, 140]
     border:
       - style: solid
-        width: 10.0
+        width: 10
         color: [255, 0, 0, 255]
       - style: solid
-        width: 10.0
+        width: 10
         color: [255, 0, 0, 255]
       - style: solid
-        width: 10.0
+        width: 10
         color: [255, 0, 0, 255]
       - style: solid
-        width: 10.0
+        width: 10
         color: [255, 0, 0, 255]
 - type: paint.end

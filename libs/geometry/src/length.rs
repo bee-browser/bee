@@ -15,6 +15,12 @@ impl<T, U> Length<T, U> {
     }
 }
 
+impl<T: Clone, U> Length<T, U> {
+    pub fn value(&self) -> T {
+        self.0.clone()
+    }
+}
+
 impl<T: Default, U> Default for Length<T, U> {
     fn default() -> Self {
         Length::new(Default::default())

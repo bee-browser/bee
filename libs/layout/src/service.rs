@@ -98,7 +98,7 @@ pub trait JsonSink {
 
 struct Painter<'a, T> {
     sink: &'a mut T,
-    origin: Vector2D,
+    origin: VisualVector2D,
 }
 
 impl<'a, T> Painter<'a, T>
@@ -108,7 +108,7 @@ where
     fn new(sink: &'a mut T) -> Self {
         Painter {
             sink,
-            origin: Vector2D::zero(),
+            origin: VisualVector2D::zero(),
         }
     }
 
@@ -121,37 +121,37 @@ impl<'a, T> VisualRenderer for Painter<'a, T>
 where
     T: JsonSink
 {
-    fn start_render(&mut self, size: Size2D) {
+    fn start(&mut self, size: VisualSize2D) {
         self.send(PaintMessage::Start { size });
     }
 
-    fn end_render(&mut self) {
+    fn end(&mut self) {
         self.send(PaintMessage::End);
     }
 
-    fn render_box(&mut self, model: &VisualBoxModel) {
-        let rect: Rect = model.border_box().translate(self.origin).into();
+    fn render_box(&mut self, model: VisualBoxModel) {
+        let rect: VisualRect = model.border_box.translate(self.origin).into();
         if rect.is_empty() {
             return;
         }
-        if !model.background_color().is_transparent() {
+        if !model.background.color.is_transparent() {
             self.send(PaintMessage::FillRect {
                 rect: rect.clone(),
-                color: model.background_color(),
+                color: model.background.color,
             });
         }
-        for image in model.background_images().iter().rev() {
+        for image in model.background.images.iter().rev() {
             // TODO:
         }
-        if model.border().is_visible() {
+        if model.border.is_visible() {
             self.send(PaintMessage::DrawBorder {
                 rect: rect.clone(),
-                border: model.border().clone(),
+                border: model.border.clone(),
             });
         }
     }
 
-    fn translate_coord(&mut self, v: Vector2D) {
+    fn translate_coord(&mut self, v: VisualVector2D) {
         self.origin += v;
     }
 }
@@ -161,18 +161,18 @@ where
 enum PaintMessage {
     #[serde(rename = "paint.start")]
     Start {
-        size: Size2D,
+        size: VisualSize2D,
     },
     #[serde(rename = "paint.end")]
     End,
     #[serde(rename = "paint.fill_rect")]
     FillRect {
-        rect: Rect,
+        rect: VisualRect,
         color: Color,
     },
     #[serde(rename = "paint.draw_border")]
     DrawBorder {
-        rect: Rect,
-        border: BoxQuad<Border>,
+        rect: VisualRect,
+        border: BoxQuad<VisualBorder>,
     },
 }

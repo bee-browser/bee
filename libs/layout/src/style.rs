@@ -5,8 +5,8 @@ use num_traits::{Bounded, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::Number;
-use crate::Length;
+use crate::Decimal;
+use crate::LayoutLength;
 
 #[derive(Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -116,8 +116,8 @@ impl Default for BoxSizing {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum NumericSize {
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
 }
 
 #[derive(Clone)]
@@ -128,14 +128,14 @@ pub enum ContentSize {
     MaxContent,
     MinContent,
     FitContent(NumericSize),
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
     Calc(String),  // TODO: Fn
 }
 
 impl ContentSize {
     #[inline]
-    pub fn resolve(&self, base: &Option<Length>) -> Option<Length> {
+    pub fn resolve(&self, base: &Option<LayoutLength>) -> Option<LayoutLength> {
         match (self, *base) {
             (ContentSize::Pixel(px), _) => Some(*px),
             (ContentSize::Scale(scale), Some(base)) => Some(base * *scale),
@@ -159,18 +159,18 @@ pub enum ContentMinSize {
     MaxContent,
     MinContent,
     FitContent(NumericSize),
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
     Calc(String),  // TODO: Fn
 }
 
 impl ContentMinSize {
     #[inline]
-    pub fn resolve(&self, base: &Option<Length>) -> Length {
+    pub fn resolve(&self, base: &Option<LayoutLength>) -> LayoutLength {
         match (self, *base) {
             (ContentMinSize::Pixel(px), _) => *px,
             (ContentMinSize::Scale(scale), Some(base)) => base * *scale,
-            _ => Length::zero(),
+            _ => LayoutLength::zero(),
         }
     }
 }
@@ -186,18 +186,18 @@ impl Default for ContentMinSize {
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentMaxSize {
     None,
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
     Calc(String),  // TODO: Fn
 }
 
 impl ContentMaxSize {
     #[inline]
-    pub fn resolve(&self, base: &Option<Length>) -> Length {
+    pub fn resolve(&self, base: &Option<LayoutLength>) -> LayoutLength {
         match (self, *base) {
             (ContentMaxSize::Pixel(px), _) => *px,
             (ContentMaxSize::Scale(scale), Some(base)) => base * *scale,
-            _ => Length::max_value(),
+            _ => LayoutLength::max_value(),
         }
     }
 }
@@ -212,18 +212,18 @@ impl Default for ContentMaxSize {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Padding {
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
     Calc(String),  // TODO: Fn
 }
 
 impl Padding {
     #[inline]
-    pub fn resolve(&self, base: &Option<Length>) -> Length {
+    pub fn resolve(&self, base: &Option<LayoutLength>) -> LayoutLength {
         match (self, *base) {
             (Padding::Pixel(px), _) => *px,
             (Padding::Scale(scale), Some(base)) => base * *scale,
-            _ => Length::zero(),
+            _ => LayoutLength::zero(),
         }
     }
 }
@@ -287,20 +287,20 @@ impl std::fmt::Display for BorderStyle {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Border {
     pub style: BorderStyle,
-    pub width: Length,
+    pub width: LayoutLength,
     pub color: Color,
 }
 
 impl Border {
     #[inline]
     pub fn is_visible(&self) -> bool {
-        self.style.is_visible() && self.width > Length::zero() && !self.color.is_transparent()
+        self.style.is_visible() && self.width > LayoutLength::zero() && !self.color.is_transparent()
     }
 
     #[inline]
-    pub fn resolve(&self) -> Length {
+    pub fn resolve(&self) -> LayoutLength {
         match self.style {
-            BorderStyle::None => Length::zero(),
+            BorderStyle::None => LayoutLength::zero(),
             _ => self.width,
         }
     }
@@ -311,13 +311,13 @@ impl BoxQuad<Border> {
         self.any(|border| border.is_visible())
     }
 
-    pub fn widths(&self) -> BoxQuad<Length> {
+    pub fn widths(&self) -> BoxQuad<LayoutLength> {
         self.apply(|border| border.width)
     }
 }
 
-impl Into<(Length, Length, Length, Length)> for BoxQuad<Border> {
-    fn into(self) -> (Length, Length, Length, Length) {
+impl Into<(LayoutLength, LayoutLength, LayoutLength, LayoutLength)> for BoxQuad<Border> {
+    fn into(self) -> (LayoutLength, LayoutLength, LayoutLength, LayoutLength) {
         (self.top.width, self.right.width, self.bottom.width, self.left.width)
     }
 }
@@ -383,14 +383,14 @@ impl std::fmt::Display for Color {
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Margin {
     Auto,
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
     Calc(String),  // TODO: Fn
 }
 
 impl Margin {
     #[inline]
-    pub fn resolve(&self, base: &Option<Length>) -> Option<Length> {
+    pub fn resolve(&self, base: &Option<LayoutLength>) -> Option<LayoutLength> {
         match (self, *base) {
             (Margin::Pixel(px), _) => Some(*px),
             (Margin::Scale(scale), Some(base)) => Some(base * *scale),
@@ -488,25 +488,25 @@ macro_rules! box_quad {
 }
 
 impl BoxQuad<Padding> {
-    pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Length> {
+    pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<LayoutLength> {
         self.apply(|padding| padding.resolve(&avail.width))
     }
 }
 
 impl BoxQuad<Border> {
-    pub fn resolve(&self) -> BoxQuad<Length> {
+    pub fn resolve(&self) -> BoxQuad<LayoutLength> {
         self.apply(|border| border.resolve())
     }
 }
 
 impl BoxQuad<Margin> {
-    pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Option<Length>> {
+    pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Option<LayoutLength>> {
         self.apply(|margin| margin.resolve(&avail.width))
     }
 }
 
 impl BoxQuad<LayerOffset> {
-    pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Option<Length>> {
+    pub fn resolve(&self, avail: &AvailableSize) -> BoxQuad<Option<LayoutLength>> {
         BoxQuad::new(
             self.top.resolve(&avail.height),
             self.right.resolve(&avail.width),
@@ -552,13 +552,13 @@ pub struct VisualMedia {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum VisualMediaSize {
-    Pixel(Length, Length),
-    Ratio(Number, Number),
+    Pixel(LayoutLength, LayoutLength),
+    Ratio(Decimal, Decimal),
 }
 
 impl Default for VisualMediaSize {
     fn default() -> Self {
-        VisualMediaSize::Pixel(Length::new(300.0), Length::new(150.0))
+        VisualMediaSize::Pixel(LayoutLength::new(300.0), LayoutLength::new(150.0))
     }
 }
 
@@ -645,8 +645,8 @@ pub enum BackgroundSize {
     Auto,
     Contain,
     Cover,
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
 }
 
 impl Default for BackgroundSize {
@@ -668,14 +668,14 @@ pub struct LayerStyle {
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum LayerOffset {
     Auto,
-    Pixel(Length),
-    Scale(Number),
+    Pixel(LayoutLength),
+    Scale(Decimal),
     Calc(String),  // TODO: Fn
 }
 
 impl LayerOffset {
     #[inline]
-    pub fn resolve(&self, base: &Option<Length>) -> Option<Length> {
+    pub fn resolve(&self, base: &Option<LayoutLength>) -> Option<LayoutLength> {
         match (self, *base) {
             (LayerOffset::Pixel(px), _) => Some(*px),
             (LayerOffset::Scale(scale), Some(base)) => Some(base * *scale),
@@ -706,8 +706,8 @@ impl Default for LayerZIndex {
 
 #[derive(Clone)]
 pub struct AvailableSize {
-    pub width: Option<Length>,
-    pub height: Option<Length>,
+    pub width: Option<LayoutLength>,
+    pub height: Option<LayoutLength>,
 }
 
 #[cfg(feature = "serde")]
@@ -745,7 +745,7 @@ mod tests {
     fn test_border_serde() {
         let border = Border {
             style: BorderStyle::Solid,
-            width: Length::new(10.0),
+            width: LayoutLength::new(10.0),
             color: Color(0, 0, 0, 0),
         };
 
@@ -762,7 +762,7 @@ mod tests {
     fn test_border_quad_serde() {
         let value = box_quad!(Border {
             style: BorderStyle::Solid,
-            width: Length::new(10.0),
+            width: LayoutLength::new(10.0),
             color: Color(0, 0, 0, 0),
         });
 

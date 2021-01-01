@@ -1,8 +1,8 @@
 - type: paint.start
   data:
-    size: [1000.0, 500.0]
+    size: [1000, 500]
 - type: paint.fill_rect
   data:
-    rect: [0.0, 0.0, 800.0, 400.0]
+    rect: [0, 0, 800, 400]
     color: [0, 0, 255, 255]
 - type: paint.end

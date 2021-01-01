@@ -10,12 +10,13 @@ use std::sync::Arc;
 
 use bee_geometry;
 use num_traits::{Bounded, Zero};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 use crate::spec::*;
 pub use crate::style::*;
 use crate::flow::FlowContainer;
 
-pub type Number = f32;
 pub type Decimal = f32;
 pub type Integer = i32;
 
@@ -24,13 +25,67 @@ pub mod units {
     pub struct Pixel;
 }
 
-pub type Length = bee_geometry::Length<Number, units::Pixel>;
+// Geometric types used in layout trees.
+pub type LayoutLength = bee_geometry::Length<Decimal, units::Pixel>;
+type LayoutPoint2D = bee_geometry::Point2D<Decimal, units::Pixel>;
+pub type LayoutSize2D = bee_geometry::Size2D<Decimal, units::Pixel>;
+pub type LayoutBox2D = bee_geometry::Box2D<Decimal, units::Pixel>;
+pub type LayoutRect = bee_geometry::Rect<Decimal, units::Pixel>;
+pub type LayoutVector2D = bee_geometry::Vector2D<Decimal, units::Pixel>;
 
-type Point2D = bee_geometry::Point2D<Number, units::Pixel>;
-pub type Size2D = bee_geometry::Size2D<Number, units::Pixel>;
-pub type Box2D = bee_geometry::Box2D<Number, units::Pixel>;
-pub type Rect = bee_geometry::Rect<Number, units::Pixel>;
-pub type Vector2D = bee_geometry::Vector2D<Number, units::Pixel>;
+// Geometric types used for rendering box models.
+pub type VisualLength = bee_geometry::Length<Integer, units::Pixel>;
+type VisualPoint2D = bee_geometry::Point2D<Integer, units::Pixel>;
+pub type VisualSize2D = bee_geometry::Size2D<Integer, units::Pixel>;
+pub type VisualBox2D = bee_geometry::Box2D<Integer, units::Pixel>;
+pub type VisualRect = bee_geometry::Rect<Integer, units::Pixel>;
+pub type VisualVector2D = bee_geometry::Vector2D<Integer, units::Pixel>;
+
+pub trait ToVisual {
+    type VisualType;
+
+    fn to_visual(&self) -> Self::VisualType;
+}
+
+impl ToVisual for LayoutLength {
+    type VisualType = VisualLength;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualLength::new(self.value().floor() as Integer)
+    }
+}
+
+impl ToVisual for LayoutPoint2D {
+    type VisualType = VisualPoint2D;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualPoint2D::new(self.x.to_visual(), self.y.to_visual())
+    }
+}
+
+impl ToVisual for LayoutSize2D {
+    type VisualType = VisualSize2D;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualSize2D::new(self.width.to_visual(), self.height.to_visual())
+    }
+}
+
+impl ToVisual for LayoutBox2D {
+    type VisualType = VisualBox2D;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualBox2D::new(self.min.to_visual(), self.max.to_visual())
+    }
+}
+
+impl ToVisual for LayoutVector2D {
+    type VisualType = VisualVector2D;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualVector2D::new(self.x.to_visual(), self.y.to_visual())
+    }
+}
 
 pub fn new_element(
     style: Arc<Style>, children: Vec<LayoutNodeHandle>, label: String) -> LayoutNodeHandle {
@@ -46,11 +101,11 @@ pub fn new_text(text: String, label: String) -> LayoutNodeHandle {
 
 pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: usize) -> VisualRoot {
     if let LayoutNodeRef::Element(ref element) = layout_root.0 {
-        let width = Length::new(width as f32);
-        let height = Length::new(height as f32);
-        let root_box: Box2D = (Length::zero(), Length::zero(), width, height).into();
+        let width = LayoutLength::new(width as f32);
+        let height = LayoutLength::new(height as f32);
+        let root_box: LayoutBox2D = (LayoutLength::zero(), LayoutLength::zero(), width, height).into();
 
-        let box_model = VisualBoxModel {
+        let box_model = BoxModel {
             style: element.style.clone(),
             geometry: BoxGeometry {
                 margin_box: root_box.clone(),
@@ -175,7 +230,7 @@ impl LayoutElement {
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
-        let box_model = VisualBoxModel {
+        let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
         };
@@ -223,7 +278,7 @@ impl LayoutElement {
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
-        let box_model = VisualBoxModel {
+        let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
         };
@@ -309,7 +364,7 @@ impl LayoutElement {
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
-        let box_model = VisualBoxModel {
+        let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
         };
@@ -354,7 +409,7 @@ impl LayoutElement {
         // TODO:
         // * update the position of the layer with the static position if it has not been solved.
         // * determine the height of the layer if it has not been solved.
-        let box_model = VisualBoxModel {
+        let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
         };
@@ -456,7 +511,7 @@ impl std::fmt::Display for LayoutText {
 
 // context node
 pub struct VisualRoot {
-    box_model: VisualBoxModel,
+    box_model: BoxModel,
     // bounding box
     flow: Arc<FlowContainer>,
     layers: Vec<Arc<VisualLayer>>,
@@ -483,13 +538,13 @@ impl VisualRoot {
     }
 
     pub fn render<T: VisualRenderer>(&self, renderer: &mut T) {
-        renderer.start_render(self.box_model.margin_box().size());
+        renderer.start(self.box_model.margin_box().size().to_visual());
 
         // background and borders
-        renderer.render_box(&self.box_model);
+        renderer.render_box(self.box_model.to_visual());
 
         // negative layers
-        let v = self.box_model.padding_box().min.to_vector();
+        let v = self.box_model.padding_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
         for layer in self.layers.iter().filter(|layer| layer.stack_level < 0) {
             layer.render(renderer);
@@ -497,67 +552,106 @@ impl VisualRoot {
         renderer.translate_coord(-v);
 
         // in-flow boxes
-        let v = self.box_model.content_box().min.to_vector();
+        let v = self.box_model.content_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
         self.flow.render(renderer);
         renderer.translate_coord(-v);
 
         // non-negative layers
-        let v = self.box_model.padding_box().min.to_vector();
+        let v = self.box_model.padding_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
         for layer in self.layers.iter().filter(|layer| layer.stack_level >= 0) {
             layer.render(renderer);
         }
         renderer.translate_coord(-v);
 
-        renderer.end_render();
+        renderer.end();
     }
 }
 
 pub trait VisualRenderer {
-    fn start_render(&mut self, size: Size2D);
-    fn end_render(&mut self);
-    fn render_box(&mut self, model: &VisualBoxModel);
-    fn translate_coord(&mut self, v: Vector2D);
+    fn start(&mut self, size: VisualSize2D);
+    fn end(&mut self);
+    fn render_box(&mut self, model: VisualBoxModel);
+    fn translate_coord(&mut self, v: VisualVector2D);
 }
 
 pub struct VisualBoxModel {
+    pub border_box: VisualBox2D,
+    pub content_box: VisualBox2D,
+    pub background: BackgroundStyle,
+    pub border: BoxQuad<VisualBorder>,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+pub struct VisualBorder {
+    pub style: BorderStyle,
+    pub width: VisualLength,
+    pub color: Color,
+}
+
+impl VisualBorder {
+    pub fn is_visible(&self) -> bool {
+        self.style.is_visible() && self.width > VisualLength::zero() && !self.color.is_transparent()
+    }
+}
+
+impl ToVisual for Border {
+    type VisualType = VisualBorder;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualBorder {
+            style: self.style.clone(),
+            width: self.width.to_visual(),
+            color: self.color.clone(),
+        }
+    }
+}
+
+impl BoxQuad<VisualBorder> {
+    pub fn is_visible(&self) -> bool {
+        self.any(|border| border.is_visible())
+    }
+}
+
+pub struct BoxModel {
     style: Arc<Style>,
     geometry: BoxGeometry,
 }
 
 pub struct BoxGeometry {
-    margin_box: Box2D,
-    border_box: Box2D,
-    padding_box: Box2D,
-    content_box: Box2D,
+    margin_box: LayoutBox2D,
+    border_box: LayoutBox2D,
+    padding_box: LayoutBox2D,
+    content_box: LayoutBox2D,
 }
 
 impl Default for BoxGeometry {
     fn default() -> Self {
         Self {
-            margin_box: Box2D::empty(),
-            border_box: Box2D::empty(),
-            padding_box: Box2D::empty(),
-            content_box: Box2D::empty(),
+            margin_box: LayoutBox2D::empty(),
+            border_box: LayoutBox2D::empty(),
+            padding_box: LayoutBox2D::empty(),
+            content_box: LayoutBox2D::empty(),
         }
     }
 }
 
-impl VisualBoxModel {
-    pub fn margin_box(&self) -> &Box2D {
+impl BoxModel {
+    pub fn margin_box(&self) -> &LayoutBox2D {
         &self.geometry.margin_box
     }
 
-    pub fn border_box(&self) -> &Box2D {
+    pub fn border_box(&self) -> &LayoutBox2D {
         &self.geometry.border_box
     }
 
-    pub fn padding_box(&self) -> &Box2D {
+    pub fn padding_box(&self) -> &LayoutBox2D {
         &self.geometry.padding_box
     }
 
-    pub fn content_box(&self) -> &Box2D {
+    pub fn content_box(&self) -> &LayoutBox2D {
         &self.geometry.content_box
     }
 
@@ -574,14 +668,27 @@ impl VisualBoxModel {
     }
 }
 
-impl std::fmt::Debug for VisualBoxModel {
+impl std::fmt::Debug for BoxModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.border_box())
     }
 }
 
+impl ToVisual for BoxModel {
+    type VisualType = VisualBoxModel;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualBoxModel {
+            border_box: self.border_box().to_visual(),
+            content_box: self.content_box().to_visual(),
+            background: self.style.background.clone(),
+            border: self.style.box_model.border.apply(Border::to_visual),
+        }
+    }
+}
+
 struct VisualLayer {
-    box_model: VisualBoxModel,
+    box_model: BoxModel,
     stack_level: i32,
     flow: Arc<FlowContainer>,
     child_layers: Vec<Arc<VisualLayer>>,
@@ -609,10 +716,10 @@ impl VisualLayer {
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
         // background and borders
-        renderer.render_box(&self.box_model);
+        renderer.render_box(self.box_model.to_visual());
 
         // negative layers
-        let v = self.box_model.padding_box().min.to_vector();
+        let v = self.box_model.padding_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
         for layer in self.child_layers.iter().filter(|layer| layer.stack_level < 0) {
             layer.render(renderer);
@@ -620,13 +727,13 @@ impl VisualLayer {
         renderer.translate_coord(-v);
 
         // in-flow boxes
-        let v = self.box_model.content_box().min.to_vector();
+        let v = self.box_model.content_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
         self.flow.render(renderer);
         renderer.translate_coord(-v);
 
         // non-negative layers
-        let v = self.box_model.padding_box().min.to_vector();
+        let v = self.box_model.padding_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
         for layer in self.child_layers.iter().filter(|layer| layer.stack_level >= 0) {
             layer.render(renderer);
@@ -648,12 +755,12 @@ struct BoxConstraintSolver {
 
 #[derive(Clone, Default)]
 struct SolvedBoxGeometry {
-    width: LengthWithRange,
-    height: LengthWithRange,
-    padding: BoxQuad<Length>,
-    border: BoxQuad<Length>,
-    margin: BoxQuad<Option<Length>>,
-    offset: BoxQuad<Option<Length>>,
+    width: LayoutLengthWithRange,
+    height: LayoutLengthWithRange,
+    padding: BoxQuad<LayoutLength>,
+    border: BoxQuad<LayoutLength>,
+    margin: BoxQuad<Option<LayoutLength>>,
+    offset: BoxQuad<Option<LayoutLength>>,
 }
 
 impl SolvedBoxGeometry {
@@ -661,12 +768,12 @@ impl SolvedBoxGeometry {
         let margin = self.margin.apply(|v| v.unwrap());
         let offset = self.offset.apply(|v| v.unwrap());
 
-        let margin_min = Point2D::new(offset.left, offset.top);
+        let margin_min = LayoutPoint2D::new(offset.left, offset.top);
         let margin_max = margin_min
-            + Vector2D::new(
+            + LayoutVector2D::new(
                 margin.dw() + self.border.dw() + self.padding.dw() + self.width.value.unwrap(),
                 margin.dh() + self.border.dh() + self.padding.dh() + self.height.value.unwrap());
-        let margin_box = Box2D::new(margin_min, margin_max);
+        let margin_box = LayoutBox2D::new(margin_min, margin_max);
         let border_box = margin_box.shrink_edges((
             margin.left, margin.top, margin.right, margin.bottom));
         let padding_box = border_box.shrink_edges((
@@ -679,33 +786,33 @@ impl SolvedBoxGeometry {
 }
 
 #[derive(Clone, Default)]
-struct LengthWithRange {
-    value: Option<Length>,
-    min: Length,
-    max: Length,
+struct LayoutLengthWithRange {
+    value: Option<LayoutLength>,
+    min: LayoutLength,
+    max: LayoutLength,
 }
 
-impl LengthWithRange {
-    fn subtract(&mut self, delta: Length) {
-        if delta == Length::zero() {
+impl LayoutLengthWithRange {
+    fn subtract(&mut self, delta: LayoutLength) {
+        if delta == LayoutLength::zero() {
             return;
         }
         if let Some(ref mut value) = self.value {
             *value -= delta;
-            if *value < Length::zero() {
-                *value = Length::zero();
+            if *value < LayoutLength::zero() {
+                *value = LayoutLength::zero();
             }
         }
-        if self.min != Length::zero() {
+        if self.min != LayoutLength::zero() {
             self.min -= delta;
-            if self.min < Length::zero() {
-                self.min = Length::zero();
+            if self.min < LayoutLength::zero() {
+                self.min = LayoutLength::zero();
             }
         }
-        if self.max != Length::max_value() {
+        if self.max != LayoutLength::max_value() {
             self.max -= delta;
-            if self.max < Length::zero() {
-                self.max = Length::zero();
+            if self.max < LayoutLength::zero() {
+                self.max = LayoutLength::zero();
             }
         }
     }
@@ -739,7 +846,7 @@ impl BoxConstraintSolver {
         self.geom.margin = style.box_model.margin.resolve(&self.avail);
 
         let (dw, dh) = match style.box_model.box_sizing {
-            BoxSizing::ContentBox => (Length::zero(), Length::zero()),
+            BoxSizing::ContentBox => (LayoutLength::zero(), LayoutLength::zero()),
             BoxSizing::PaddingBox => (self.geom.padding.dw(), self.geom.padding.dh()),
             BoxSizing::BorderBox => (self.geom.padding.dw() + self.geom.border.dw(),
                                      self.geom.padding.dh() + self.geom.border.dh()),
@@ -750,7 +857,7 @@ impl BoxConstraintSolver {
 
         self.geom.offset = match style.positioning {
             PositioningScheme::Static | PositioningScheme::Relative => box_quad!(
-                Some(Length::zero()), Some(Length::zero()), None, Some(Length::zero())),
+                Some(LayoutLength::zero()), Some(LayoutLength::zero()), None, Some(LayoutLength::zero())),
             _ => style.layer.offset.resolve(&self.avail),
         };
 
@@ -769,16 +876,16 @@ impl BoxConstraintSolver {
         self
     }
 
-    fn solve_horizontal_constraints(&mut self, avail_width: Length) {
+    fn solve_horizontal_constraints(&mut self, avail_width: LayoutLength) {
         match (self.geom.width.value, self.geom.offset.left, self.geom.offset.right) {
             // none of the three is 'auto'
             (Some(width), Some(left), Some(right)) => {
                 let remaining = avail_width - width - left - right;
                 match (self.geom.margin.left, self.geom.margin.right) {
                     (None, None) => {
-                        if remaining < Length::zero() {
+                        if remaining < LayoutLength::zero() {
                             // TODO: RTL
-                            self.geom.margin.left = Some(Length::zero());
+                            self.geom.margin.left = Some(LayoutLength::zero());
                             self.geom.margin.right = Some(remaining);
                         } else {
                             // TODO: RTL
@@ -802,69 +909,69 @@ impl BoxConstraintSolver {
                 }
             }
             (Some(width), Some(left), None) => {
-                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(LayoutLength::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(LayoutLength::zero());
                 self.geom.offset.right =
                     Some(avail_width - width - left - left_margin - right_margin);
             }
             (Some(width), None, Some(right)) => {
-                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(LayoutLength::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(LayoutLength::zero());
                 self.geom.offset.left =
                     Some(avail_width - width - right - left_margin - right_margin);
             }
             (Some(width), None, None) => {
-                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(LayoutLength::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(LayoutLength::zero());
                 // TODO: static-position, rtl
-                let left = *self.geom.offset.left.get_or_insert(Length::zero());
+                let left = *self.geom.offset.left.get_or_insert(LayoutLength::zero());
                 self.geom.offset.right =
                     Some(avail_width - width - left - left_margin - right_margin);
             }
             (None, Some(left), Some(right)) => {
-                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(LayoutLength::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(LayoutLength::zero());
                 self.geom.width.value =
                     Some(avail_width - left - right - left_margin - right_margin);
             }
             (None, Some(left), None) => {
-                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(LayoutLength::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(LayoutLength::zero());
                 // TODO: shrink-to-fit
-                let width = *self.geom.width.value.get_or_insert(Length::zero());
+                let width = *self.geom.width.value.get_or_insert(LayoutLength::zero());
                 self.geom.offset.right =
                     Some(avail_width - width - left - left_margin - right_margin);
             }
             (None, None, Some(right)) => {
-                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(LayoutLength::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(LayoutLength::zero());
                 // TODO: shrink-to-fit
-                let width = *self.geom.width.value.get_or_insert(Length::zero());
+                let width = *self.geom.width.value.get_or_insert(LayoutLength::zero());
                 self.geom.offset.left =
                     Some(avail_width - width - right - left_margin - right_margin);
             }
             (None, None, None) => {
-                let left_margin = *self.geom.margin.left.get_or_insert(Length::zero());
-                let right_margin = *self.geom.margin.right.get_or_insert(Length::zero());
+                let left_margin = *self.geom.margin.left.get_or_insert(LayoutLength::zero());
+                let right_margin = *self.geom.margin.right.get_or_insert(LayoutLength::zero());
                 // TODO: shrink-to-fit
-                let width = *self.geom.width.value.get_or_insert(Length::zero());
+                let width = *self.geom.width.value.get_or_insert(LayoutLength::zero());
                 // TODO: static-position, rtl
-                let left = *self.geom.offset.left.get_or_insert(Length::zero());
+                let left = *self.geom.offset.left.get_or_insert(LayoutLength::zero());
                 self.geom.offset.right =
                     Some(avail_width - width - left - left_margin - right_margin);
             }
         }
     }
 
-    fn solve_vertical_constraints(&mut self, avail_height: Length) {
+    fn solve_vertical_constraints(&mut self, avail_height: LayoutLength) {
         match (self.geom.height.value, self.geom.offset.top, self.geom.offset.bottom) {
             // none of the three is 'auto'
             (Some(height), Some(top), Some(bottom)) => {
                 let remaining = avail_height - height - top - bottom;
                 match (self.geom.margin.top, self.geom.margin.bottom) {
                     (None, None) => {
-                        if remaining < Length::zero() {
-                            self.geom.margin.top = Some(Length::zero());
+                        if remaining < LayoutLength::zero() {
+                            self.geom.margin.top = Some(LayoutLength::zero());
                             self.geom.margin.bottom = Some(remaining);
                         } else {
                             let half = remaining / 2.0;
@@ -886,54 +993,54 @@ impl BoxConstraintSolver {
                 }
             }
             (Some(height), Some(top), None) => {
-                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(LayoutLength::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(LayoutLength::zero());
                 self.geom.offset.bottom =
                     Some(avail_height - height - top - top_margin - bottom_margin);
             }
             (Some(height), None, Some(bottom)) => {
-                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(LayoutLength::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(LayoutLength::zero());
                 self.geom.offset.top =
                     Some(avail_height - height - bottom - top_margin - bottom_margin);
             }
             (Some(height), None, None) => {
-                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(LayoutLength::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(LayoutLength::zero());
                 // TODO: static-position
-                let top = *self.geom.offset.top.get_or_insert(Length::zero());
+                let top = *self.geom.offset.top.get_or_insert(LayoutLength::zero());
                 self.geom.offset.bottom =
                     Some(avail_height - height - top - top_margin - bottom_margin);
             }
             (None, Some(top), Some(bottom)) => {
-                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(LayoutLength::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(LayoutLength::zero());
                 self.geom.height.value =
                     Some(avail_height - top - bottom - top_margin - bottom_margin);
             }
             (None, Some(top), None) => {
-                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(LayoutLength::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(LayoutLength::zero());
                 // TODO: shrink-to-fit
-                let height = *self.geom.height.value.get_or_insert(Length::zero());
+                let height = *self.geom.height.value.get_or_insert(LayoutLength::zero());
                 self.geom.offset.bottom =
                     Some(avail_height - height - top - top_margin - bottom_margin);
             }
             (None, None, Some(bottom)) => {
-                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(LayoutLength::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(LayoutLength::zero());
                 // TODO: shrink-to-fit
-                let height = *self.geom.height.value.get_or_insert(Length::zero());
+                let height = *self.geom.height.value.get_or_insert(LayoutLength::zero());
                 self.geom.offset.top =
                     Some(avail_height - height - bottom - top_margin - bottom_margin);
             }
             (None, None, None) => {
-                let top_margin = *self.geom.margin.top.get_or_insert(Length::zero());
-                let bottom_margin = *self.geom.margin.bottom.get_or_insert(Length::zero());
+                let top_margin = *self.geom.margin.top.get_or_insert(LayoutLength::zero());
+                let bottom_margin = *self.geom.margin.bottom.get_or_insert(LayoutLength::zero());
                 // TODO: shrink-to-fit
-                let height = *self.geom.height.value.get_or_insert(Length::zero());
+                let height = *self.geom.height.value.get_or_insert(LayoutLength::zero());
                 // TODO: static-position
-                let top = *self.geom.offset.top.get_or_insert(Length::zero());
+                let top = *self.geom.offset.top.get_or_insert(LayoutLength::zero());
                 self.geom.offset.bottom =
                     Some(avail_height - height - top - top_margin - bottom_margin);
             }
