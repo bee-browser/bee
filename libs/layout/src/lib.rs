@@ -540,8 +540,11 @@ impl VisualRoot {
     pub fn render<T: VisualRenderer>(&self, renderer: &mut T) {
         renderer.start(self.box_model.margin_box().size().to_visual());
 
-        // background and borders
-        renderer.render_box(self.box_model.to_visual());
+        let box_model = self.box_model.to_visual();
+        if box_model.is_visible() {
+            // background and borders
+            renderer.render_box(box_model);
+        }
 
         // negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();
@@ -578,12 +581,39 @@ pub trait VisualRenderer {
 
 pub struct VisualBoxModel {
     pub border_box: VisualBox2D,
-    pub content_box: VisualBox2D,
-    pub background: BackgroundStyle,
-    pub border: BoxQuad<VisualBorder>,
+    pub background: VisualBackground,
+    pub border: BoxQuad<Option<VisualBorder>>,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+impl VisualBoxModel {
+    pub fn is_visible(&self) -> bool {
+        if self.border_box.is_empty() {
+            false
+        } else {
+            self.background.is_visible() || self.border.is_visible()
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+pub struct VisualBackground {
+    #[serde(skip_serializing_if = "Color::is_transparent")]
+    color: Color,
+    // TODO: images
+}
+
+impl VisualBackground {
+    pub fn is_visible(&self) -> bool {
+        !self.color.is_transparent()
+    }
+
+    pub fn is_transparent(&self) -> bool {
+        self.color.is_transparent()
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct VisualBorder {
     pub style: BorderStyle,
@@ -591,9 +621,19 @@ pub struct VisualBorder {
     pub color: Color,
 }
 
-impl VisualBorder {
+impl BoxQuad<Option<VisualBorder>> {
     pub fn is_visible(&self) -> bool {
-        self.style.is_visible() && self.width > VisualLength::zero() && !self.color.is_transparent()
+        self.any(Option::is_some)
+    }
+}
+
+impl ToVisual for BackgroundStyle {
+    type VisualType = VisualBackground;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualBackground {
+            color: self.color.clone(),
+        }
     }
 }
 
@@ -606,12 +646,6 @@ impl ToVisual for Border {
             width: self.width.to_visual(),
             color: self.color.clone(),
         }
-    }
-}
-
-impl BoxQuad<VisualBorder> {
-    pub fn is_visible(&self) -> bool {
-        self.any(|border| border.is_visible())
     }
 }
 
@@ -680,9 +714,14 @@ impl ToVisual for BoxModel {
     fn to_visual(&self) -> Self::VisualType {
         VisualBoxModel {
             border_box: self.border_box().to_visual(),
-            content_box: self.content_box().to_visual(),
-            background: self.style.background.clone(),
-            border: self.style.box_model.border.apply(Border::to_visual),
+            background: self.style.background.to_visual(),
+            border: self.style.box_model.border.apply(|border| {
+                if border.is_visible() {
+                    Some(border.to_visual())
+                } else {
+                    None
+                }
+            }),
         }
     }
 }
@@ -715,8 +754,12 @@ impl VisualLayer {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
-        // background and borders
-        renderer.render_box(self.box_model.to_visual());
+        let box_model = self.box_model.to_visual();
+
+        if box_model.is_visible() {
+            // background and borders
+            renderer.render_box(box_model);
+        }
 
         // negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();

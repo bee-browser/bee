@@ -1,12 +1,14 @@
-- type: paint.start
+- type: render.start
   data:
     size: [1000, 500]
-- type: paint.fill_rect
+- type: render.render_box
   data:
     rect: [0, 0, 1000, 50]
-    color: [0, 128, 0, 255]
-- type: paint.fill_rect
+    background:
+      color: [0, 128, 0, 255]
+- type: render.render_box
   data:
     rect: [0, 50, 1000, 50]
-    color: [0, 0, 255, 255]
-- type: paint.end
+    background:
+      color: [0, 0, 255, 255]
+- type: render.end

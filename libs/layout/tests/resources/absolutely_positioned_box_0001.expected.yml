@@ -1,13 +1,11 @@
-- type: paint.start
+- type: render.start
   data:
     size: [1000, 500]
-- type: paint.fill_rect
+- type: render.render_box
   data:
     rect: [840, 340, 140, 140]
-    color: [0, 0, 255, 255]
-- type: paint.draw_border
-  data:
-    rect: [840, 340, 140, 140]
+    background:
+      color: [0, 0, 255, 255]
     border:
       - style: solid
         width: 10
@@ -21,4 +19,4 @@
       - style: solid
         width: 10
         color: [255, 0, 0, 255]
-- type: paint.end
+- type: render.end

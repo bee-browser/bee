@@ -222,7 +222,11 @@ impl VisualBlock {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
-        renderer.render_box(self.box_model.to_visual());
+        let box_model = self.box_model.to_visual();
+
+        if box_model.is_visible() {
+            renderer.render_box(box_model);
+        }
 
         let v = self.box_model.content_box().min.to_visual().to_vector();
         renderer.translate_coord(v);

@@ -44,7 +44,7 @@ where
             LayoutMessage::Visualize { width, height } => {
                 let root = self.node_map.get(&NodeId(0)).unwrap();
                 let visual_tree = build_visual_tree(root.clone(), width, height);
-                let mut painter = Painter::new(&mut self.sink);
+                let mut painter = JsonRenderer::new(&mut self.sink);
                 visual_tree.render(&mut painter);
                 self.snapshots.push((root.clone(), visual_tree));
             }
@@ -96,59 +96,45 @@ pub trait JsonSink {
     fn consume(&mut self, json: serde_json::Value);
 }
 
-struct Painter<'a, T> {
+struct JsonRenderer<'a, T> {
     sink: &'a mut T,
     origin: VisualVector2D,
 }
 
-impl<'a, T> Painter<'a, T>
+impl<'a, T> JsonRenderer<'a, T>
 where
     T: JsonSink
 {
     fn new(sink: &'a mut T) -> Self {
-        Painter {
+        JsonRenderer {
             sink,
             origin: VisualVector2D::zero(),
         }
     }
 
-    fn send(&mut self, msg: PaintMessage) {
+    fn send(&mut self, msg: RenderMessage) {
         self.sink.consume(serde_json::to_value(&msg).unwrap());
     }
 }
 
-impl<'a, T> VisualRenderer for Painter<'a, T>
+impl<'a, T> VisualRenderer for JsonRenderer<'a, T>
 where
     T: JsonSink
 {
     fn start(&mut self, size: VisualSize2D) {
-        self.send(PaintMessage::Start { size });
+        self.send(RenderMessage::Start { size });
     }
 
     fn end(&mut self) {
-        self.send(PaintMessage::End);
+        self.send(RenderMessage::End);
     }
 
     fn render_box(&mut self, model: VisualBoxModel) {
-        let rect: VisualRect = model.border_box.translate(self.origin).into();
-        if rect.is_empty() {
-            return;
-        }
-        if !model.background.color.is_transparent() {
-            self.send(PaintMessage::FillRect {
-                rect: rect.clone(),
-                color: model.background.color,
-            });
-        }
-        for image in model.background.images.iter().rev() {
-            // TODO:
-        }
-        if model.border.is_visible() {
-            self.send(PaintMessage::DrawBorder {
-                rect: rect.clone(),
-                border: model.border.clone(),
-            });
-        }
+        self.send(RenderMessage::RenderBox {
+            rect: model.border_box.translate(self.origin).into(),
+            background: model.background,
+            border: model.border,
+        });
     }
 
     fn translate_coord(&mut self, v: VisualVector2D) {
@@ -158,21 +144,23 @@ where
 
 #[derive(Serialize)]
 #[serde(tag = "type", content = "data")]
-enum PaintMessage {
-    #[serde(rename = "paint.start")]
+enum RenderMessage {
+    #[serde(rename = "render.start")]
     Start {
         size: VisualSize2D,
     },
-    #[serde(rename = "paint.end")]
+    #[serde(rename = "render.end")]
     End,
-    #[serde(rename = "paint.fill_rect")]
-    FillRect {
+    #[serde(rename = "render.render_box")]
+    RenderBox {
         rect: VisualRect,
-        color: Color,
+        #[serde(skip_serializing_if = "VisualBackground::is_transparent")]
+        background: VisualBackground,
+        #[serde(skip_serializing_if = "has_no_visible_border")]
+        border: BoxQuad<Option<VisualBorder>>,
     },
-    #[serde(rename = "paint.draw_border")]
-    DrawBorder {
-        rect: VisualRect,
-        border: BoxQuad<VisualBorder>,
-    },
+}
+
+fn has_no_visible_border(border: &BoxQuad<Option<VisualBorder>>) -> bool {
+    border.all(Option::is_none)
 }
