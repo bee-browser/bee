@@ -22,24 +22,24 @@ pub type Integer = i32;
 
 pub mod units {
     #[derive(Debug)]
-    pub struct Pixel;
+    pub struct Px;
 }
 
 // Geometric types used in layout trees.
-pub type LayoutLength = bee_geometry::Length<Decimal, units::Pixel>;
-type LayoutPoint2D = bee_geometry::Point2D<Decimal, units::Pixel>;
-pub type LayoutSize2D = bee_geometry::Size2D<Decimal, units::Pixel>;
-pub type LayoutBox2D = bee_geometry::Box2D<Decimal, units::Pixel>;
-pub type LayoutRect = bee_geometry::Rect<Decimal, units::Pixel>;
-pub type LayoutVector2D = bee_geometry::Vector2D<Decimal, units::Pixel>;
+pub type LayoutLength = bee_geometry::Length<Decimal, units::Px>;
+type LayoutPoint2D = bee_geometry::Point2D<Decimal, units::Px>;
+pub type LayoutSize2D = bee_geometry::Size2D<Decimal, units::Px>;
+pub type LayoutBox2D = bee_geometry::Box2D<Decimal, units::Px>;
+pub type LayoutRect = bee_geometry::Rect<Decimal, units::Px>;
+pub type LayoutVector2D = bee_geometry::Vector2D<Decimal, units::Px>;
 
 // Geometric types used for rendering box models.
-pub type VisualLength = bee_geometry::Length<Integer, units::Pixel>;
-type VisualPoint2D = bee_geometry::Point2D<Integer, units::Pixel>;
-pub type VisualSize2D = bee_geometry::Size2D<Integer, units::Pixel>;
-pub type VisualBox2D = bee_geometry::Box2D<Integer, units::Pixel>;
-pub type VisualRect = bee_geometry::Rect<Integer, units::Pixel>;
-pub type VisualVector2D = bee_geometry::Vector2D<Integer, units::Pixel>;
+pub type VisualLength = bee_geometry::Length<Integer, units::Px>;
+type VisualPoint2D = bee_geometry::Point2D<Integer, units::Px>;
+pub type VisualSize2D = bee_geometry::Size2D<Integer, units::Px>;
+pub type VisualBox2D = bee_geometry::Box2D<Integer, units::Px>;
+pub type VisualRect = bee_geometry::Rect<Integer, units::Px>;
+pub type VisualVector2D = bee_geometry::Vector2D<Integer, units::Px>;
 
 pub trait ToVisual {
     type VisualType;
