@@ -598,7 +598,6 @@ impl VisualBoxModel {
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct VisualBackground {
-    #[serde(skip_serializing_if = "Color::is_transparent")]
     color: Color,
     // TODO: images
 }

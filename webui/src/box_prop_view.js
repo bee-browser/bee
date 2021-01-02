@@ -4,11 +4,11 @@ import { h, t, formatBeeRect } from './helper';
 import Widget from './widget';
 import TabBar from './tab_bar';
 
-export default class PaintPropView extends Widget {
+export default class BoxPropView extends Widget {
   constructor() {
     super();
 
-    this.rectsView_ = new PaintRectsPropView();
+    this.rectsView_ = new BoxRectsPropView();
 
     this.tabBar_ = new TabBar();
     this.tabBar_.appendTab({
@@ -24,7 +24,7 @@ export default class PaintPropView extends Widget {
 
   render() {
     this.elem_ =
-      h('div', { 'id': 'paint-prop-view' },
+      h('div', { 'id': 'box-prop-view' },
         this.tabBar_.render(),
         this.rectsView_.render());
     this.tabBar_.selectedTab.content.show();
@@ -34,7 +34,7 @@ export default class PaintPropView extends Widget {
   // Private
 }
 
-class PaintRectsPropView extends Widget {
+class BoxRectsPropView extends Widget {
   constructor() {
     super();
   }
@@ -49,14 +49,14 @@ class PaintRectsPropView extends Widget {
   // Widget
 
   render() {
-    this.elem_ = h('div', { 'class': 'paint-prop-rects hide' });
+    this.elem_ = h('div', { 'class': 'box-prop-rects hide' });
     return this.elem_;
   }
 
   // Private
 
   renderProp_(rects) {
-    const table = h('table', { 'class': 'paint-prop-table' });
+    const table = h('table', { 'class': 'box-prop-table' });
     for (const type of ['margin', 'border', 'padding', 'content']) {
       if (`${type}Rect` in rects) {
         table.appendChild(

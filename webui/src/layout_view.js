@@ -135,8 +135,8 @@ export default class LayoutView extends Widget {
     case 'layout.monitor.update-box-height':
       this.handleUpdateBoxHeightEvent_(msg.data);
       break;
-    case 'layout.monitor.paint-box':
-      this.handlePaintBoxEvent_(msg.data);
+    case 'layout.monitor.render_box':
+      this.handleRenderBoxEvent_(msg.data);
       break;
     }
   }
@@ -202,7 +202,7 @@ export default class LayoutView extends Widget {
     object.height = data.height;
   }
 
-  handlePaintBoxEvent_(data) {
+  handleRenderBoxEvent_(data) {
     const object = this.getObject_(data.object_id);
     object.boxes = data;
   }

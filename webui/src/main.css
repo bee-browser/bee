@@ -79,14 +79,14 @@ html, body {
   width: 100%;
 }
 
-/* paint view */
+/* box view */
 
-#paint-view {
+#box-view {
   grid-row: 2;
   grid-column: 1;
 }
 
-#paint-view > .grid {
+#box-view > .grid {
   grid-template-rows: 1fr;
   grid-template-columns: 4fr 1fr;
   width: 100%;
@@ -106,24 +106,24 @@ html, body {
   grid-column: 1;
 }
 
-.paint-box {
+/* box */
+
+.box {
   position: absolute;
   box-sizing: border-box;
 }
-
-/* paint box */
 
 @keyframes blink {
   50% { opacity: .5 }
 }
 
-.paint-box.selected {
+.box.selected {
   animation: blink 1s ease infinite;
 }
 
-/* paint box overlay */
+/* box overlay */
 
-.paint-box-overlay {
+.box-overlay {
   position: absolute;
   z-index: 1;
   top: 0px;
@@ -152,7 +152,7 @@ html, body {
   background-color: #90EE90;
 }
 
-/* paint prop view */
+/* box prop view */
 
 .sticky-overlay {
   position: sticky;

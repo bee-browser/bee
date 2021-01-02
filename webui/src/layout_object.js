@@ -18,7 +18,7 @@ export default class LayoutObject extends TreeNode {
     this.padding_ = [];
     this.border_ = [];
     this.margin_ = [];
-    this.paintInfo_ = {};
+    this.renderInfo_ = {};
   }
 
   get schema() {
@@ -84,15 +84,15 @@ export default class LayoutObject extends TreeNode {
     this.height_ = height;
   }
 
-  get paintInfo() {
-    return this.paintInfo_;
+  get renderInfo() {
+    return this.renderInfo_;
   }
 
   set boxes(boxes) {
-    this.paintInfo_.marginBox = boxes.margin_rect;
-    this.paintInfo_.borderBox = boxes.border_rect;
-    this.paintInfo_.paddingBox = boxes.padding_rect;
-    this.paintInfo_.contentBox = boxes.content_rect;
+    this.renderInfo_.marginBox = boxes.margin_rect;
+    this.renderInfo_.borderBox = boxes.border_rect;
+    this.renderInfo_.paddingBox = boxes.padding_rect;
+    this.renderInfo_.contentBox = boxes.content_rect;
   }
 
   inspect() {

@@ -3,21 +3,21 @@
 import { h } from './helper';
 import Widget from './widget';
 
-export default class PaintBoxOverlay extends Widget {
+export default class BoxOverlay extends Widget {
   constructor() {
     super();
 
-    this.marginBox_ = new PaintBoxOutline('margin');
-    this.borderBox_ = new PaintBoxOutline('border');
-    this.paddingBox_ = new PaintBoxOutline('padding');
-    this.contentBox_ = new PaintBoxOutline('content');
+    this.marginBox_ = new BoxOutline('margin');
+    this.borderBox_ = new BoxOutline('border');
+    this.paddingBox_ = new BoxOutline('padding');
+    this.contentBox_ = new BoxOutline('content');
   }
 
   // Widget
 
   render() {
     this.elem_ =
-      h('div', { 'class': 'paint-box-overlay' },
+      h('div', { 'class': 'box-overlay' },
         this.marginBox_.render(),
         this.borderBox_.render(),
         this.paddingBox_.render(),
@@ -49,7 +49,7 @@ const STYLE_RECT_PROP_MAP_ = {
   top: 'y', left: 'x', width: 'width', height: 'height'
 };
 
-class PaintBoxOutline extends Widget {
+class BoxOutline extends Widget {
   constructor(type) {
     super();
     this.type_ = type;

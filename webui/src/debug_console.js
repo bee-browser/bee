@@ -3,7 +3,7 @@
 import { h } from './helper';
 import Widget from './widget';
 import NavigationBar from './navigation_bar';
-import PaintView from './paint_view';
+import BoxView from './box_view';
 import TabBar from './tab_bar';
 import LogListView from './log_list_view';
 import LayoutView from './layout_view';
@@ -18,9 +18,9 @@ export default class DebugConsole extends Widget {
     this.on('message', navBar.handleMessage.bind(navBar));
     this.navBar_ = navBar;
 
-    const paintView = new PaintView();
-    this.on('message', paintView.handleMessage.bind(paintView));
-    this.paintView_ = paintView;
+    const boxView = new BoxView();
+    this.on('message', boxView.handleMessage.bind(boxView));
+    this.boxView_ = boxView;
 
     this.logListView_ = new LogListView();
     this.on('message', this.logListView_.handleMessage.bind(this.logListView_));
@@ -39,9 +39,9 @@ export default class DebugConsole extends Widget {
       id: 'layout', label: 'Layout', content: this.layoutView_
     });
 
-    paintView.on('select', this.selectObject.bind(this));
-    paintView.on('target', this.targetObject.bind(this));
-    paintView.on('untarget', this.untargetObject.bind(this));
+    boxView.on('select', this.selectObject.bind(this));
+    boxView.on('target', this.targetObject.bind(this));
+    boxView.on('untarget', this.untargetObject.bind(this));
 
     layoutView.on('select', this.selectObject.bind(this));
     layoutView.on('target', this.targetObject.bind(this));
@@ -52,7 +52,7 @@ export default class DebugConsole extends Widget {
     this.elem_ =
       h('div', { 'id': 'debug-console', 'class': 'grid'},
         this.navBar_.render(),
-        this.paintView_.render(),
+        this.boxView_.render(),
         h('div', { 'id': 'multi-view-container' },
           this.tabBar_.render(),
           h('div', { 'id': 'multi-view-content' },
@@ -65,7 +65,7 @@ export default class DebugConsole extends Widget {
   }
 
   clear() {
-    this.paintView_.clear();
+    this.boxView_.clear();
     this.logListView_.clear();
     this.layoutView_.clear();
   }
@@ -91,17 +91,17 @@ export default class DebugConsole extends Widget {
   }
 
   selectObject(layoutId) {
-    this.paintView_.selectObject(layoutId);
+    this.boxView_.selectObject(layoutId);
     this.layoutView_.selectObject(layoutId);
   }
 
   targetObject(layoutId) {
-    this.paintView_.targetObject(layoutId);
+    this.boxView_.targetObject(layoutId);
     this.layoutView_.targetObject(layoutId);
   }
 
   untargetObject(layoutId) {
-    this.paintView_.untargetObject(layoutId);
+    this.boxView_.untargetObject(layoutId);
     this.layoutView_.untargetObject(layoutId);
   }
 

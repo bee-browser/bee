@@ -2,20 +2,20 @@
 
 import { h, formatBeeRect } from './helper';
 import Widget from './widget';
-import PaintBoxOverlay from './paint_box_overlay';
+import BoxOverlay from './box_overlay';
 import Surface from './surface';
-import PaintPropView from './paint_prop_view';
+import BoxPropView from './box_prop_view';
 
 const BOX_OUTLINE_PROP_MAP = {
   top: 'y', left: 'x', width: 'width', height: 'height'
 };
 
-export default class PaintView extends Widget {
+export default class BoxView extends Widget {
   constructor() {
     super();
     this.props_ = {};
 
-    this.overlay_ = new PaintBoxOverlay();
+    this.overlay_ = new BoxOverlay();
 
     this.surface_ = new Surface();
     this.surface_.on('click', (event) => {
@@ -34,12 +34,12 @@ export default class PaintView extends Widget {
       this.emit('untarget', event.userdata.layoutId);
     });
 
-    this.propView_ = new PaintPropView();
+    this.propView_ = new BoxPropView();
   }
 
   render() {
     this.elem_ =
-      h('div', { id: 'paint-view' },
+      h('div', { id: 'box-view' },
         h('div', { 'class': 'grid' },
           h('div', { 'id': 'surface-container' },
             this.overlay_.render(),
@@ -79,25 +79,16 @@ export default class PaintView extends Widget {
 
   handleMessage(msg) {
     switch (msg.type) {
-    case 'paint.start':
+    case 'render.start':
       this.surface_.start(msg.data);
       break;
-    case 'paint.fill_rect':
-      this.surface_.fillRect(msg.data);
+    case 'render.render_box':
+      this.surface_.renderBox(msg.data);
       break;
-    case 'paint.draw_border':
-      this.surface_.drawBorder(msg.data);
-      break;
-    case 'paint.draw_widget':
-      this.surface_.drawWidget(msg.data);
-      break;
-    case 'paint.draw_tiles':
-      this.surface_.drawTiles(msg.data);
-      break;
-    case 'paint.end':
+    case 'render.end':
       this.surface_.end();
       break;
-    case 'layout.monitor.paint-box':
+    case 'layout.monitor.render_box':
       if (!(msg.data.object_id in this.props_)) {
         this.props_[msg.data.object_id] = {};
       }
