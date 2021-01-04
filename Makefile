@@ -40,17 +40,17 @@ TESTGEN_TARGETS = $(addprefix testgen-,\
 )
 
 COVERAGE_TEST_ENV_VARS = \
-  CARGO_INCREMENTAL='0' \
-  RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-  RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
+  CARGO_INCREMENTAL=0 \
+  RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort" \
+  RUSTDOCFLAGS="-Cpanic=abort"
 
 GRCOV_COMMON_ARGS = \
+  $(PROJDIR)/target/debug \
   --branch --llvm --ignore-not-existing -s $(PROJDIR) \
   --ignore '*/src/main.rs' \
   --excl-line '<coverage:exclude/>|unimplemented!|unreachable!' \
   --excl-start '<coverage:exclude>' \
-  --excl-stop '</coverage:exclude>' \
-  $(PROJDIR)/target/debug
+  --excl-stop '</coverage:exclude>'
 
 .PHONY: all
 all: build
@@ -76,16 +76,16 @@ debug-test: testgen
 	cargo test --all-features
 
 .PHONY: coverage-test
-coverage: testgen
+coverage-test: testgen
 	env $(COVERAGE_TEST_ENV_VARS) cargo +nightly test --all-features --no-fail-fast
 
 .PHONY: coverage-lcov
-coverage-lcov: coverage-test install-grcov
-	grcov -t lcov -o $(PROJDIR)/target/coverage/lcov.info $(GRCOV_COMMON_ARGS)
+coverage-lcov: coverage-test install-grcov | $(PROJDIR)/target/coverage
+	grcov $(GRCOV_COMMON_ARGS) -t lcov -o $(PROJDIR)/target/coverage/lcov.info
 
 .PHONY: coverage-html
-coverage-html: coverage-test install-grcov
-	grcov -t html -o $(PROJDIR)/target/coverage $(GRCOV_COMMON_ARGS)
+coverage-html: coverage-test install-grcov | $(PROJDIR)/target/coverage
+	grcov $(GRCOV_COMMON_ARGS) -t html -o $(PROJDIR)/target/coverage
 
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
@@ -119,3 +119,6 @@ $(TESTGEN_TARGETS):
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):
 	@make -C $(subst clean-,,$@) clean
+
+$(PROJDIR)/target/coverage:
+	@mkdir -p $@
