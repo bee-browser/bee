@@ -25,7 +25,7 @@ jobs:
             $CARGO_HOME/git
             target
           key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
-          restore: |
+          restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
       - uses: actions/setup-node@v2
       - name: Get npm cache directory
@@ -37,7 +37,7 @@ jobs:
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore: |
+          restore-keys: |
             ${{ runner.os }}-node-
       - name: Prepare GitHub CI
         run: |

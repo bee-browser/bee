@@ -80,11 +80,11 @@ coverage: testgen
 	env $(COVERAGE_TEST_ENV_VARS) cargo +nightly test --all-features --no-fail-fast
 
 .PHONY: coverage-lcov
-coverage-lcov: coverage-test
+coverage-lcov: coverage-test install-grcov
 	grcov -t lcov -o $(PROJDIR)/target/coverage/lcov.info $(GRCOV_COMMON_ARGS)
 
 .PHONY: coverage-html
-coverage-html: coverage-test
+coverage-html: coverage-test install-grcov
 	grcov -t html -o $(PROJDIR)/target/coverage $(GRCOV_COMMON_ARGS)
 
 .PHONE: testgen
@@ -92,9 +92,12 @@ testgen: $(TESTGEN_TARGETS)
 
 .PHONY: devenv
 devenv:
-	@cargo install grcov
 	@make -C tools prepare
 	@make -C webui prepare
+
+.PHONY: install-grcov
+install-grcov:
+	cargo install grcov
 
 .PHONY: github-ci
 github-ci: devenv

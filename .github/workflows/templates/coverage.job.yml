@@ -18,7 +18,7 @@ jobs:
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore: |
+          restore-keys: |
             ${{ runner.os }}-node-
       - name: Clean
         run: |
