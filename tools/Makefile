@@ -1,7 +1,7 @@
 NODE_MODULES = $(abspath node_modules)
 
 .PHONY: all
-all: prepare
+all:
 
 .PHONY: prepare
 prepare:

@@ -17,6 +17,10 @@ build: $(ASSETS_FILES)
 clean:
 	@rm -rf $(ASSETS_DIR)
 
+.PHONE: prepare
+prepare:
+	@npm install
+
 $(BUNDLE_JS): $(JS_FILES) | $(ASSETS_DIR)
 	npx rollup -c rollup.config.js -i src/main.js -o $@
 

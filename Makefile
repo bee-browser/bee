@@ -39,10 +39,18 @@ TESTGEN_TARGETS = $(addprefix testgen-,\
   libs/layout \
 )
 
-COVERAGE_ENV_VARS = \
-  CARGO_INCREMENTAL=0 \
-  RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort" \
-  RUSTDOCFLAGS="-Cpanic=abort"
+COVERAGE_TEST_ENV_VARS = \
+  CARGO_INCREMENTAL='0' \
+  RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
+  RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
+
+GRCOV_COMMON_ARGS = \
+  --branch --llvm --ignore-not-existing -s $(PROJDIR) \
+  --ignore '*/src/main.rs' \
+  --excl-line '<coverage:exclude/>|unimplemented!|unreachable!' \
+  --excl-start '<coverage:exclude>' \
+  --excl-stop '</coverage:exclude>' \
+  $(PROJDIR)/target/debug
 
 .PHONY: all
 all: build
@@ -67,23 +75,31 @@ debug-build: $(BUILD_TARGETS)
 debug-test: testgen
 	cargo test --all-features
 
-.PHONY: coverage
+.PHONY: coverage-test
 coverage: testgen
-	env $(COVERAGE_ENV_VARS) cargo +nightly test --all-features
+	env $(COVERAGE_TEST_ENV_VARS) cargo +nightly test --all-features --no-fail-fast
+
+.PHONY: coverage-lcov
+coverage-lcov: coverage-test
+	grcov -t lcov -o $(PROJDIR)/target/coverage/lcov.info $(GRCOV_COMMON_ARGS)
 
 .PHONY: coverage-html
-coverage-html: coverage
-	grcov --llvm --branch --ignore-not-existing \
-	  -s $(PROJDIR) -t html -o $(PROJDIR)/target/coverage --excl-line "//<coverage:exclude/>" \
-	  --excl-start "//<coverage:exclude>" --excl-stop "//</coverage:exclude>" \
-	  $(PROJDIR)/target/debug
+coverage-html: coverage-test
+	grcov -t html -o $(PROJDIR)/target/coverage $(GRCOV_COMMON_ARGS)
 
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
 
 .PHONY: devenv
 devenv:
-	@make -C tools
+	@cargo install grcov
+	@make -C tools prepare
+	@make -C webui prepare
+
+.PHONY: github-ci
+github-ci: devenv
+	@echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
+	@echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
 
 .PHONY: github-workflows
 github-workflows:

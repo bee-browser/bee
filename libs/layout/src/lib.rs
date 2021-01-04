@@ -126,7 +126,7 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
 
         VisualRoot { box_model, flow, layers, }
     } else {
-        unreachable!();  //<coverage:exclude/>
+        unreachable!();
     }
 }
 
