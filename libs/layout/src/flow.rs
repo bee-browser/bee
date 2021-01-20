@@ -5,6 +5,7 @@ use tracing::{warn};
 
 use crate::BoxConstraintSolver;
 use crate::BoxModel;
+use crate::BoxBackground;
 use crate::LayoutLength;
 use crate::LayoutNodeRef;
 use crate::LayoutElement;
@@ -28,6 +29,10 @@ impl LayoutElement {
         let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
+            background: BoxBackground {
+                color: self.style.background.color.clone(),
+                images: vec![],  // TODO
+            },
         };
 
         let new_avail = AvailableSize {

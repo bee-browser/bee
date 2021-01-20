@@ -130,6 +130,7 @@ where
     }
 
     fn render_box(&mut self, model: VisualBoxModel) {
+        debug_assert!(!model.border_box.is_empty());
         self.send(RenderMessage::RenderBox {
             rect: model.border_box.translate(self.origin).into(),
             background: model.background,

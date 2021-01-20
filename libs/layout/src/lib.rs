@@ -113,6 +113,10 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
                 padding_box: root_box.clone(),
                 content_box: root_box.clone(),
             },
+            background: BoxBackground {
+                color: element.style.background.color.clone(),
+                images: vec![],  // TODO
+            },
         };
 
         let avail = AvailableSize {
@@ -233,6 +237,10 @@ impl LayoutElement {
         let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
+            background: BoxBackground {
+                color: self.style.background.color.clone(),
+                images: vec![],  // TODO
+            },
         };
 
         let new_avail = AvailableSize {
@@ -281,6 +289,10 @@ impl LayoutElement {
         let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
+            background: BoxBackground {
+                color: self.style.background.color.clone(),
+                images: vec![],  // TODO
+            },
         };
 
         let new_avail = AvailableSize {
@@ -367,6 +379,10 @@ impl LayoutElement {
         let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
+            background: BoxBackground {
+                color: self.style.background.color.clone(),
+                images: vec![],  // TODO
+            },
         };
 
         let new_avail = AvailableSize {
@@ -412,6 +428,10 @@ impl LayoutElement {
         let box_model = BoxModel {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
+            background: BoxBackground {
+                color: self.style.background.color.clone(),
+                images: vec![],  // TODO
+            },
         };
 
         let new_avail = AvailableSize {
@@ -595,21 +615,34 @@ impl VisualBoxModel {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct VisualBackground {
-    color: Color,
-    // TODO: images
+    #[serde(skip_serializing_if = "Color::is_transparent")]
+    pub color: Color,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<VisualBackgroundImage>,
 }
 
 impl VisualBackground {
     pub fn is_visible(&self) -> bool {
-        !self.color.is_transparent()
+        !self.is_transparent()
     }
 
     pub fn is_transparent(&self) -> bool {
-        self.color.is_transparent()
+        self.color.is_transparent() && self.images.is_empty()
     }
+}
+
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+pub struct VisualBackgroundImage {
+    pub media: VisualMedia,
+    pub crop_area: VisualBox2D,
+    pub tile_size: VisualSize2D,
+    pub position: VisualPoint2D,
+    pub horizontal_spacing: VisualLength,
+    pub vertical_spacing: VisualLength,
+    pub horizontal_repeat: bool,
+    pub vertical_repeat: bool,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -632,6 +665,7 @@ impl ToVisual for BackgroundStyle {
     fn to_visual(&self) -> Self::VisualType {
         VisualBackground {
             color: self.color.clone(),
+            images: vec![],
         }
     }
 }
@@ -648,16 +682,33 @@ impl ToVisual for Border {
     }
 }
 
-pub struct BoxModel {
+struct BoxModel {
     style: Arc<Style>,
     geometry: BoxGeometry,
+    background: BoxBackground,
 }
 
-pub struct BoxGeometry {
+struct BoxGeometry {
     margin_box: LayoutBox2D,
     border_box: LayoutBox2D,
     padding_box: LayoutBox2D,
     content_box: LayoutBox2D,
+}
+
+struct BoxBackground {
+    color: Color,
+    images: Vec<BoxBackgroundImage>,
+}
+
+struct BoxBackgroundImage {
+    media: VisualMedia,
+    crop_area: LayoutBox2D,
+    tile_size: LayoutSize2D,
+    position: LayoutPoint2D,
+    horizontal_spacing: LayoutLength,
+    vertical_spacing: LayoutLength,
+    horizontal_repeat: bool,
+    vertical_repeat: bool,
 }
 
 impl Default for BoxGeometry {
@@ -667,6 +718,37 @@ impl Default for BoxGeometry {
             border_box: LayoutBox2D::empty(),
             padding_box: LayoutBox2D::empty(),
             content_box: LayoutBox2D::empty(),
+        }
+    }
+}
+
+impl ToVisual for BoxBackground {
+    type VisualType = VisualBackground;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualBackground {
+            color: self.color.clone(),
+            images: self.images
+                .iter()
+                .map(|image| image.to_visual())
+                .collect(),
+        }
+    }
+}
+
+impl ToVisual for BoxBackgroundImage {
+    type VisualType = VisualBackgroundImage;
+
+    fn to_visual(&self) -> Self::VisualType {
+        VisualBackgroundImage {
+            media: self.media.clone(),
+            crop_area: self.crop_area.to_visual(),
+            tile_size: self.tile_size.to_visual(),
+            position: self.position.to_visual(),
+            horizontal_spacing: self.horizontal_spacing.to_visual(),
+            vertical_spacing: self.vertical_spacing.to_visual(),
+            horizontal_repeat: self.horizontal_repeat,
+            vertical_repeat: self.vertical_repeat,
         }
     }
 }
@@ -687,18 +769,6 @@ impl BoxModel {
     pub fn content_box(&self) -> &LayoutBox2D {
         &self.geometry.content_box
     }
-
-    pub fn background_color(&self) -> Color {
-        self.style.background.color
-    }
-
-    pub fn background_images(&self) -> &[BackgroundImage] {
-        &self.style.background.images
-    }
-
-    pub fn border(&self) -> &BoxQuad<Border> {
-        &self.style.box_model.border
-    }
 }
 
 impl std::fmt::Debug for BoxModel {
@@ -712,8 +782,8 @@ impl ToVisual for BoxModel {
 
     fn to_visual(&self) -> Self::VisualType {
         VisualBoxModel {
-            border_box: self.border_box().to_visual(),
-            background: self.style.background.to_visual(),
+            border_box: self.geometry.border_box.to_visual(),
+            background: self.background.to_visual(),
             border: self.style.box_model.border.apply(|border| {
                 if border.is_visible() {
                     Some(border.to_visual())
