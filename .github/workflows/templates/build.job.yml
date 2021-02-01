@@ -31,6 +31,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.x
       - uses: actions/setup-node@v2
       - name: Get npm cache directory
         id: npm-cache

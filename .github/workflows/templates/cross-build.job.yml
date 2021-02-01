@@ -19,6 +19,9 @@ jobs:
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
           override: true
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.x
       - uses: actions/setup-node@v2-beta
       - name: Install packages for tools
         run: npm install
