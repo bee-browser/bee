@@ -11,6 +11,16 @@ BEE is a web browser engine intended to be embedded into other applications.
 
 ## Development
 
+Install the following software:
+
+* Rust
+  * stable
+  * nightly (used for generating a coverage report of tests)
+* deno 1.7.0
+* GNU make
+
+Then:
+
 ```shell
 # The release build.
 make build
@@ -27,6 +37,8 @@ make coverage-html
 # Update workflows for GitHub Actions.
 make github-workflows
 ```
+
+Worked only on Linux and macOS at this point.  Windows will be supported in the future.
 
 ## License
 
