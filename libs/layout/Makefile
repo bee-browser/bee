@@ -17,9 +17,13 @@ $(TESTGEN_DIR)/layout_test.rs: $(RESOURCES_DIR)/layout_test.rs.njk $(LAYOUT_TEST
 	@bee-codegen -v "names=$(LAYOUT_TEST_NAMES)" -v "resources_dir=$(RESOURCES_DIR)" \
 	  -v "codegen_dir=$(TESTGEN_DIR)" $< >$@
 
-$(TESTGEN_DIR)/%.scenario.jsonl: $(TESTGEN_DIR)/%.html | $(TESTGEN_DIR)
+$(TESTGEN_DIR)/%.scenario.jsonl: $(TESTGEN_DIR)/%.dom.json | $(TESTGEN_DIR)
 	@echo Generating $@...
-	@bee-lms-html --no-sandbox --viewport=$(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@
+	@bee-tools-layout-builder $< >$@
+
+$(TESTGEN_DIR)/%.dom.json: $(TESTGEN_DIR)/%.html | $(TESTGEN_DIR)
+	@echo Generating $@...
+	@bee-tools-dom-scraper --viewport=$(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@
 
 .PRECIOUS: $(TESTGEN_DIR)/%.html
 $(TESTGEN_DIR)/%.html: $(RESOURCES_DIR)/%.html.njk $(LAYOUT_TEST_COMMON_FILES) | $(TESTGEN_DIR)

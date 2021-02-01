@@ -1,0 +1,148 @@
+#!/usr/bin/env -S deno run -A --unstable
+
+'use strict';
+
+import {
+  changeCase,
+  docopt,
+  path,
+  puppeteer,
+} from '../vendor.js';
+
+import { parseCommand } from '../lib/cli.js';
+
+const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));
+
+const DEFAULT_VIEWPORT_SIZE = '1280x720';
+
+const DOC = `
+Scrape a DOM tree and resources from a web page using Puppeteer.
+
+Usage:
+  bee-tools-dom-scraper [options] <url>
+  bee-tools-dom-scraper -h | --help
+
+Options:
+  --debug
+    Run Chrome without the headless mode, and audo-open devtools for debugging.
+
+  --no-sandbox
+    Run Chrome without the sandbox.
+
+  --logging
+    Enable logging.
+
+  --viewport=<size>  [default: ${DEFAULT_VIEWPORT_SIZE}]
+    Viewport size in pixels in the form "<width>x<height>".
+
+  --cdp
+    Use Chrome devtools protocol for scraping (experimental).
+
+Arguments:
+  url
+    URL or path to a web page to be scraped.
+`.trim();
+
+const { options, args } = parseCommand({
+  doc: DOC,
+  conv: (name, value) => {
+    switch (name) {
+    case '--viewport':
+      const [width, height] = value.split('x', 2);
+      return { width: parseInt(width), height: parseInt(height) };
+    case '<url>':
+      try {
+        new URL(value);
+        return value;
+      } catch (err) {
+        return `file://${path.resolve(value)}`;
+      }
+    default:
+      return value;
+    }
+  },
+});
+
+Deno.exit(await run(args.url, options));
+
+async function run(url, options) {
+  let opts = {
+    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    devtools: options.debug,
+    dumpio: options.logging,
+  };
+
+  if (!options.sandbox) {
+    opts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
+  }
+
+  const browser = await puppeteer.launch(opts);
+  try {
+    const page = await browser.newPage();
+    await page.setViewport(options.viewport);
+    await page.goto(url);
+    const dom = await scrapeDom(page, options);
+    console.log(JSON.stringify(dom));
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await browser.close();
+  }
+}
+
+async function scrapeDom(page, options) {
+  if (options.cdp) {
+    return await scrapeDomUsingCdp(page, options);
+  }
+  return await scrapeDomUsingScript(page, options);
+}
+
+async function scrapeDomUsingScript(page, options) {
+  const script = Deno.readTextFileSync(
+    path.resolve(DIRNAME, '..', 'resources', 'dom_scraper.js'));
+  const dom = await page.evaluate((script, options) => {
+    const func = new Function('$OPTIONS', script);
+    return func(options);
+  }, script, { debug: options.debug });
+  return dom;
+}
+
+// NOTE
+// ----
+// CSS.getComputedStyleForNode returns used values for some style properties.
+//
+// Changing the 'display' to 'none' might work as well as the case of Window.getComputedStyle,
+// but we've never tried that yet.
+async function scrapeDomUsingCdp(page, options) {
+  const client = await page.target().createCDPSession();
+  await client.send('DOM.enable');
+  await client.send('CSS.enable');
+  let { root } = await client.send('DOM.getDocument', { depth: -1, pierce: false });
+  await collectStylesUsingCdp(client, root);
+  // TODO: collect resources like images as data URLs
+  // TODO: convert nodes into our data structures
+  return {
+    document: {
+      url: page.url(),
+      title: await page.title(),
+      root,
+    },
+    resources: {},  // TODO
+  };
+}
+
+// TODO
+// ----
+// The current implementation is very slow...
+// Sending a request for each node results a lot of overhead due to IPC communication costs.
+async function collectStylesUsingCdp(client, node) {
+  if (node.nodeType === 1) {  // ELEMENT_NODE
+    const { computedStyle } = await client.send(
+      'CSS.getComputedStyleForNode', { nodeId: node.nodeId });
+    node.computedStyle = computedStyle;
+  }
+  for (let i = 0; i < node.childNodeCount; ++i) {
+    let child = node.children[i];
+    await collectStylesUsingCdp(client, child);
+  }
+}
