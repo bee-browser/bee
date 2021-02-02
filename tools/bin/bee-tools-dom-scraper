@@ -20,9 +20,10 @@ const DEFAULT_WINDOWS_EXECUTABLE = path.join(
   '%ProgramFiles%', 'Google', 'Chrome', 'Application', 'chrome.exe');
 
 const DEFAULT_EXECUTABLE =
-  Deno.build.os === 'linux' ? DEFAULT_LINUX_EXECUTABLE :
-  Deno.build.os === 'darwin' ? DEFAULT_MACOS_EXECUTABLE :
-  Deno.build.os === 'windows' ? DEFAULT_WINDOWS_EXECUTABLE :
+  Deno.env.get('BEE_TOOLS_DOM_SCRAPER_DEFAULT_EXECUTABLE') ||
+  (Deno.build.os === 'linux' && DEFAULT_LINUX_EXECUTABLE) ||
+  (Deno.build.os === 'darwin' && DEFAULT_MACOS_EXECUTABLE) ||
+  (Deno.build.os === 'windows' && DEFAULT_WINDOWS_EXECUTABLE) ||
   testing.unreachable();
 
 const DEFAULT_VIEWPORT_SIZE = '1280x720';
@@ -56,6 +57,10 @@ Options:
 Arguments:
   url
     URL or path to a web page to be scraped.
+
+Environment Variables:
+  BEE_TOOLS_DOM_SCRAPER_DEFAULT_EXECUTABLE
+    Path to an executable of Chrome.
 `.trim();
 
 const { options, args } = parseCommand({
