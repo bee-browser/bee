@@ -30,7 +30,8 @@ jobs:
             $CARGO_HOME/registry
             $CARGO_HOME/git
             target
-          key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles("**/Cargo.lock") }}
+          key: |
+            ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
       - uses: denolib/setup-deno@v2
@@ -39,8 +40,10 @@ jobs:
       - name: Cache for deno
         uses: actions/cache@v2
         with:
-          path: $DENO_DIR
-          key: ${{ runner.os }}-deno-${{ hashFiles("tools/deps.js") }}
+          path: |
+            $DENO_DIR
+          key: |
+            ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
           restore-keys: |
             ${{ runner.os }}-deno-
       - uses: actions/setup-node@v2
@@ -51,8 +54,10 @@ jobs:
       - name: Cache for npm
         uses: actions/cache@v2
         with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles("**/package-lock.json") }}
+          path: |
+            ${{ steps.npm-cache.outputs.dir }}
+          key: |
+            ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
       - name: Prepare GitHub CI
