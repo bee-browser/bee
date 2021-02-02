@@ -8,6 +8,8 @@ name: Pull Request
       - master
 jobs:
   build:
+    env:
+      DENO_DIR: /tmp/deno
     strategy:
       matrix:
         runner:
@@ -40,6 +42,13 @@ jobs:
       - uses: denolib/setup-deno@v2
         with:
           deno-version: v1.x
+      - name: Cache for deno
+        uses: actions/cache@v2
+        with:
+          path: $DENO_DIR
+          key: '${{ runner.os }}-deno-${{ hashFiles(''tools/deps.js'') }}'
+          restore-keys: |
+            ${{ runner.os }}-deno-
       - uses: actions/setup-node@v2
       - name: Get npm cache directory
         id: npm-cache
@@ -68,6 +77,8 @@ jobs:
   coverage:
     needs:
       - build
+    env:
+      DENO_DIR: /tmp/deno
     runs-on: ubuntu-20.04
     continue-on-error: true
     steps:
@@ -79,6 +90,13 @@ jobs:
       - uses: denolib/setup-deno@v2
         with:
           deno-version: v1.x
+      - name: Cache for deno
+        uses: actions/cache@v2
+        with:
+          path: $DENO_DIR
+          key: '${{ runner.os }}-deno-${{ hashFiles(''tools/deps.js'') }}'
+          restore-keys: |
+            ${{ runner.os }}-deno-
       - uses: actions/setup-node@v2
       - name: Get npm cache directory
         id: npm-cache
