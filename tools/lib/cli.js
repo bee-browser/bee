@@ -1,7 +1,7 @@
 import {
   changeCase,
   docopt,
-} from '../vendor.js';
+} from '../deps.js';
 
 export function parseCommand({ doc, conv, init }) {
   try {

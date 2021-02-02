@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { path } from '../vendor.js';
+import { path } from '../deps.js';
 import { parseCommand, runCommand } from '../lib/cli.js';
 
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));

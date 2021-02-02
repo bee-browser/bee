@@ -1,4 +1,4 @@
-#!/usr/bin/env deno run -A --unstable
+#!/usr/bin/env -S deno run -A --unstable
 
 'use strict';
 
@@ -7,11 +7,23 @@ import {
   docopt,
   path,
   puppeteer,
-} from '../vendor.js';
+  testing,
+} from '../deps.js';
 
 import { parseCommand } from '../lib/cli.js';
 
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));
+
+const DEFAULT_LINUX_EXECUTABLE = '/opt/google/chrome/google-chrome';
+const DEFAULT_MACOS_EXECUTABLE = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const DEFAULT_WINDOWS_EXECUTABLE = path.join(
+  '%ProgramFiles%', 'Google', 'Chrome', 'Application', 'chrome.exe');
+
+const DEFAULT_EXECUTABLE =
+  Deno.build.os === 'linux' ? DEFAULT_LINUX_EXECUTABLE :
+  Deno.build.os === 'darwin' ? DEFAULT_MACOS_EXECUTABLE :
+  Deno.build.os === 'windows' ? DEFAULT_WINDOWS_EXECUTABLE :
+  testing.unreachable();
 
 const DEFAULT_VIEWPORT_SIZE = '1280x720';
 
@@ -31,6 +43,9 @@ Options:
 
   --logging
     Enable logging.
+
+  --executable=<path>  [default: ${DEFAULT_EXECUTABLE}]
+    Path to an executable of Chrome.
 
   --viewport=<size>  [default: ${DEFAULT_VIEWPORT_SIZE}]
     Viewport size in pixels in the form "<width>x<height>".
@@ -55,7 +70,7 @@ const { options, args } = parseCommand({
         new URL(value);
         return value;
       } catch (err) {
-        return `file://${path.resolve(value)}`;
+        return path.toFileUrl(path.resolve(value));
       }
     default:
       return value;
@@ -67,7 +82,7 @@ Deno.exit(await run(args.url, options));
 
 async function run(url, options) {
   let opts = {
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    executablePath: options.executable,
     devtools: options.debug,
     dumpio: options.logging,
   };
