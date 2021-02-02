@@ -3,7 +3,7 @@ jobs:
     strategy:
       matrix:
         runner:
-          - ubuntu-latest
+          - ubuntu-20.04
         target:
           - arm-unknown-linux-gnueabi
           - armv7-unknown-linux-gnueabihf

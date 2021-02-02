@@ -4,7 +4,7 @@ jobs:
       matrix:
         runner:
           - macos-latest
-          - ubuntu-latest
+          - ubuntu-20.04
         rust:
           - stable
           #- nightly
