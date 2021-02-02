@@ -17,7 +17,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: $DENO_DIR
-          key: ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
+          key: ${{ runner.os }}-deno-${{ hashFiles("tools/deps.js") }}
           restore-keys: |
             ${{ runner.os }}-deno-
       - uses: actions/setup-node@v2
@@ -29,9 +29,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-npm-${{ hashFiles("**/package-lock.json") }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-npm-
       - name: Clean
         run: |
           make clean
