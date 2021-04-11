@@ -55,3 +55,7 @@ async function loadJson(file) {
   const decoder = new TextDecoder('utf-8');
   return decoder.decode(data);
 }
+
+// Local Variables:
+// mode: js
+// End:

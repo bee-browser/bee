@@ -1,11 +1,11 @@
 'use strict';
 
-import { h } from './helper';
-import Widget from './widget';
-import LayoutObject from './layout_object';
-import LayoutLayer from './layout_layer';
-import TreeView from './tree_view';
-import LayoutPropView from './layout_prop_view';
+import { h } from './helper.js';
+import Widget from './widget.js';
+import LayoutObject from './layout_object.js';
+import LayoutLayer from './layout_layer.js';
+import TreeView from './tree_view.js';
+import LayoutPropView from './layout_prop_view.js';
 
 export default class LayoutView extends Widget {
   constructor() {

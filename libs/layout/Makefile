@@ -21,6 +21,7 @@ $(TESTGEN_DIR)/%.scenario.jsonl: $(TESTGEN_DIR)/%.dom.json | $(TESTGEN_DIR)
 	@echo Generating $@...
 	@bee-tools-layout-builder $< >$@
 
+.PRECIOUS: $(TESTGEN_DIR)/%.dom.json
 $(TESTGEN_DIR)/%.dom.json: $(TESTGEN_DIR)/%.html | $(TESTGEN_DIR)
 	@echo Generating $@...
 	@bee-tools-dom-scraper --viewport=$(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@

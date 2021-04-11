@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <style>
+      .glyph {
+          position: absolute;
+          z-index: 0;
+          width: calc({{box.width}}px * {{font.COLUMNS}});
+          height: calc({{box.height}}px * {{font.ROWS}});
+          top: {{box.height}}px;
+      }
+      .row {
+          position: absolute;
+          z-index: 0;
+          width: calc({{box.width}}px * {{font.COLUMNS}});
+          height: {{box.height}}px;
+      }
+      .dot {
+          position: absolute;
+          width: {{box.width}}px;
+          height: {{box.height}}px;
+          background-color: {{color}};
+      }
+    </style>
+  </head>
+  <body>
+    {{#each glyphs}}
+      <div class="glyph" style="left: calc({{../box.width}}px * (1 + (({{../font.COLUMNS}} + 1) * {{@index}})))">
+        {{#each this}}
+          <div class="row" style="top: calc({{../../box.height}}px * {{@index}})">
+            {{#each this}}
+              {{#if this}}
+                <div class="dot" style="left: calc({{../../../box.width}}px * {{@index}})"></div>
+              {{/if}}
+            {{/each}}
+          </div>
+        {{/each}}
+      </div>
+    {{/each}}
+  </body>
+</html>

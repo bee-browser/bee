@@ -1,7 +1,7 @@
 'use strict';
 
-import { h } from './helper';
-import Widget from './widget';
+import { h } from './helper.js';
+import Widget from './widget.js';
 
 export default class BoxOverlay extends Widget {
   constructor() {

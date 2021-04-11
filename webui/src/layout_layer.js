@@ -1,6 +1,6 @@
 'use strict';
 
-import TreeNode from './tree_node';
+import TreeNode from './tree_node.js';
 
 export default class LayoutLayer extends TreeNode {
   constructor(id, owner) {

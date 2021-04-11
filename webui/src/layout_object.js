@@ -1,6 +1,6 @@
 'use strict';
 
-import TreeNode from './tree_node';
+import TreeNode from './tree_node.js';
 
 export default class LayoutObject extends TreeNode {
   constructor({ object_id, schema }) {

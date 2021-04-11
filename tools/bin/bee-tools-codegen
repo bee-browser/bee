@@ -1,0 +1,70 @@
+#!/usr/bin/env -S deno run -A --unstable
+
+'use strict';
+
+import { handlebars } from '../deps.js';
+import { parseCommand } from '../lib/cli.js';
+
+DEFAULT_LAYOUT = undefined;
+DEFAULT_LAYOUTS_DIR = 'layouts';
+DEFAULT_PARTIALS_DIR = 'partials';
+
+const DOC = `
+Generate a source file from a Handlebars template with variables.
+
+Usage:
+  bee-tools-codegen [options] <template> <variables>...
+  bee-tools-codegen -h | --help
+
+Options:
+  -b, --base-dir=<base-dir> [default: ${Deno.cwd()}]
+    Path to the base directory containing template files.
+
+  --layouts-dir=<layouts-dir> [default: ${DEFAULT_LAYOUTS_DIR}]
+    Directory name containing layout template files.
+
+  --partials-dir=<partials-dir> [default: ${DEFAULT_PARTIALS_DIR}]
+    Directory name containing partial template files.
+
+  --layout=<layout-template> [default: ${DEFAULT_LAYOUT}]
+    Layout template name to use.
+
+Arguments:
+  <template>
+    Path to the template file to use.
+
+  <variables>
+    Template variables.
+`.trim();
+
+const { options, args } = parseCommand({
+  doc: DOC,
+  conv: (name, value) => {
+    switch (name) {
+    case '<variables>':
+      return value.reduce((acc, pair) => {
+        const [name, value] = pair.split('=', 2);
+        acc[name] = value;
+        return acc;
+      }, {});
+    default:
+      return value;
+    }
+  },
+});
+
+Deno.exit(await run(args.template, args.variables, options));
+
+async function run(template, variables, options) {
+  const renderer = new handlebars.Handlebars({
+    baseDir: options.baseDir,
+    layoutsDir: options.layoutDir,
+    partialsDir: options.partialsDir,
+    defaultLayout: undefined,
+  });
+  console.log(await renderer.renderView(template, variables, options.layout));
+}
+
+// Local Variables:
+// mode: js
+// End:

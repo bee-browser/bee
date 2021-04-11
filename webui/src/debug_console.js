@@ -1,12 +1,12 @@
 'use strict';
 
-import { h } from './helper';
-import Widget from './widget';
-import NavigationBar from './navigation_bar';
-import BoxView from './box_view';
-import TabBar from './tab_bar';
-import LogListView from './log_list_view';
-import LayoutView from './layout_view';
+import { h } from './helper.js';
+import Widget from './widget.js';
+import NavigationBar from './navigation_bar.js';
+import BoxView from './box_view.js';
+import TabBar from './tab_bar.js';
+import LogListView from './log_list_view.js';
+import LayoutView from './layout_view.js';
 
 export default class DebugConsole extends Widget {
   constructor() {
@@ -71,7 +71,7 @@ export default class DebugConsole extends Widget {
   }
 
   start() {
-    this.ws_ = new WebSocket(`ws://${location.host}/`);
+    this.ws_ = new WebSocket(`ws://${location.host}/api/debcon`);
     this.ws_.addEventListener('open', (event) => {
       this.emit('ready', this);
     });

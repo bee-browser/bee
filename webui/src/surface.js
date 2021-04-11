@@ -1,7 +1,7 @@
 'use strict';
 
-import { h } from './helper';
-import Widget from './widget';
+import { h } from './helper.js';
+import Widget from './widget.js';
 
 export default class Surface extends Widget {
   constructor() {
@@ -11,9 +11,9 @@ export default class Surface extends Widget {
     this.boxOutlines_ = {};
   }
 
-  start({ width, height }) {
-    this.elem_.style.width = width + 'px';
-    this.elem_.style.height = height + 'px';
+  start(size) {
+    this.elem_.style.width = size[0] + 'px';
+    this.elem_.style.height = size[1] + 'px';
   }
 
   renderBox({ layout_id, rect, background, border }) {

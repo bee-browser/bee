@@ -1,8 +1,8 @@
 'use strict';
 
-import { h, t } from './helper';
-import Widget from './widget';
-import LogView from './log_view';
+import { h, t } from './helper.js';
+import Widget from './widget.js';
+import LogView from './log_view.js';
 
 export default class LogListView extends Widget {
   constructor() {

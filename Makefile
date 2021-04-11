@@ -93,7 +93,6 @@ testgen: $(TESTGEN_TARGETS)
 .PHONY: devenv
 devenv:
 	@make -C tools prepare
-	@make -C webui prepare
 
 .PHONY: install-grcov
 install-grcov:

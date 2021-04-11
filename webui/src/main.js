@@ -1,6 +1,6 @@
 'use strict';
 
-import DebugConsole from './debug_console';
+import DebugConsole from './debug_console.js';
 
 const widget = new DebugConsole;
 document.body.appendChild(widget.render());

@@ -16,16 +16,15 @@ struct Opt {
 
     /// Input file
     #[structopt(name = "FILE")]
-    input: String,
+    input: Option<String>,
 }
 
 fn main() -> Result<()> {
     let opt = Opt::from_args();
 
-    if opt.input == "-" {
-        interpret(&opt, std::io::stdin().lock())
-    } else {
-        interpret(&opt, BufReader::new(File::open(&opt.input)?))
+    match opt.input {
+        Some(ref input) => interpret(&opt, BufReader::new(File::open(input)?)),
+        None => interpret(&opt, std::io::stdin().lock()),
     }
 }
 

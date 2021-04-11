@@ -1,10 +1,10 @@
 'use strict';
 
-import { h, formatBeeRect } from './helper';
-import Widget from './widget';
-import BoxOverlay from './box_overlay';
-import Surface from './surface';
-import BoxPropView from './box_prop_view';
+import { h, formatBeeRect } from './helper.js';
+import Widget from './widget.js';
+import BoxOverlay from './box_overlay.js';
+import Surface from './surface.js';
+import BoxPropView from './box_prop_view.js';
 
 const BOX_OUTLINE_PROP_MAP = {
   top: 'y', left: 'x', width: 'width', height: 'height'

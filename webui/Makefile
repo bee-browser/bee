@@ -17,16 +17,15 @@ build: $(ASSETS_FILES)
 clean:
 	@rm -rf $(ASSETS_DIR)
 
-.PHONE: prepare
-prepare:
-	@npm install
-
+# TODO: minify the file
 $(BUNDLE_JS): $(JS_FILES) | $(ASSETS_DIR)
-	npx rollup -c rollup.config.js -i src/main.js -o $@
+	deno bundle src/main.js $@
 
+# TODO: minify the file
 $(BUNDLE_CSS): $(CSS_FILES) | $(ASSETS_DIR)
 	cp src/main.css $@
 
+# TODO: minify the file
 $(INDEX_HTML): $(HTML_FILES) | $(ASSETS_DIR)
 	cp src/index.html $@
 

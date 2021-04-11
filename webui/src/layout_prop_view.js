@@ -1,8 +1,8 @@
 'use strict';
 
-import { f, h, t, formatBeeNumber, formatBeePoint } from './helper';
-import Widget from './widget';
-import TabBar from './tab_bar';
+import { f, h, t, formatBeeNumber, formatBeePoint } from './helper.js';
+import Widget from './widget.js';
+import TabBar from './tab_bar.js';
 
 export default class LayoutPropView extends Widget {
   constructor() {

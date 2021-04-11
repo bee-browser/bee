@@ -1,8 +1,8 @@
 'use strict';
 
-import { h, t, formatBeeRect } from './helper';
-import Widget from './widget';
-import TabBar from './tab_bar';
+import { h, t, formatBeeRect } from './helper.js';
+import Widget from './widget.js';
+import TabBar from './tab_bar.js';
 
 export default class BoxPropView extends Widget {
   constructor() {

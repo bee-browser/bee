@@ -1,7 +1,7 @@
 'use strict';
 
-import { h, t } from './helper';
-import Widget from './widget';
+import { h, t } from './helper.js';
+import Widget from './widget.js';
 
 export default class TabBar extends Widget {
   constructor() {

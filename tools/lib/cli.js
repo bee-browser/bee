@@ -37,3 +37,8 @@ export async function runCommand(cmd) {
   const status = await Deno.run({ cmd }).status();
   return status.code;
 }
+
+export async function readAllText(reader) {
+  const decoder = new TextDecoder();
+  return decoder.decode(await Deno.readAll(reader));
+}
