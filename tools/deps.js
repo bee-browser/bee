@@ -1,16 +1,14 @@
 // At this point, it's not suitable for bee-tools to use the --import-map option.
 // This option does not work well with shebangs.
 
-// TODO: automate upgrades of packages in this file.
-
 // std
 
-export * as fs from 'https://deno.land/std@0.85.0/fs/mod.ts';
-export * as http from 'https://deno.land/std@0.85.0/http/mod.ts';
-export * as http_file_server from 'https://deno.land/std@0.85.0/http/file_server.ts';
-export * as path from 'https://deno.land/std@0.85.0/path/mod.ts';
-export * as testing from 'https://deno.land/std@0.85.0/testing/asserts.ts';
-export * as ws from 'https://deno.land/std@0.85.0/ws/mod.ts';
+export * as fs from 'https://deno.land/std@0.92.0/fs/mod.ts';
+export * as http from 'https://deno.land/std@0.92.0/http/mod.ts';
+export * as http_file_server from 'https://deno.land/std@0.92.0/http/file_server.ts';
+export * as path from 'https://deno.land/std@0.92.0/path/mod.ts';
+export * as testing from 'https://deno.land/std@0.92.0/testing/asserts.ts';
+export * as ws from 'https://deno.land/std@0.92.0/ws/mod.ts';
 
 // third party
 

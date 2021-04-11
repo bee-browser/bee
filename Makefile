@@ -94,6 +94,10 @@ testgen: $(TESTGEN_TARGETS)
 devenv:
 	@make -C tools prepare
 
+.PHONY: tools-update-deps
+tools-update-deps:
+	@make -C tools update-deps
+
 .PHONY: install-grcov
 install-grcov:
 	cargo install grcov
