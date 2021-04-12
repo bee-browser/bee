@@ -3,7 +3,7 @@ import {
   docopt,
 } from '../deps.js';
 
-export function parseCommand({ doc, conv, init }) {
+export async function parseCommand({ doc, conv, init }) {
   try {
     const raw = docopt(doc, init);
     let cmds = [];
@@ -11,9 +11,9 @@ export function parseCommand({ doc, conv, init }) {
     let args = {};
     for (const [name, value] of Object.entries(raw)) {
       if (name.startsWith('--')) {
-        options[changeCase.camelCase(name.slice(2))] = conv ? conv(name, value) : value;
+        options[changeCase.camelCase(name.slice(2))] = conv ? await conv(name, value) : value;
       } else if (name.startsWith('<')) {
-        args[changeCase.camelCase(name.slice(1, -1))] = conv ? conv(name, value) : value;
+        args[changeCase.camelCase(name.slice(1, -1))] = conv ? await conv(name, value) : value;
       } else if (value) {
         cmds.push(name);
       }
@@ -39,6 +39,6 @@ export async function runCommand(cmd) {
 }
 
 export async function readAllText(reader) {
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder('utf-8');
   return decoder.decode(await Deno.readAll(reader));
 }

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { handlebars } from '../deps.js';
+import { Handlebars } from '../deps.js';
 import { parseCommand } from '../lib/cli.js';
 
 DEFAULT_LAYOUT = undefined;
@@ -10,59 +10,46 @@ DEFAULT_LAYOUTS_DIR = 'layouts';
 DEFAULT_PARTIALS_DIR = 'partials';
 
 const DOC = `
-Generate a source file from a Handlebars template with variables.
+Generate a source file from a Handlebars template file.
 
 Usage:
-  bee-tools-codegen [options] <template> <variables>...
+  bee-tools-codegen [options] <template> [<context>]
   bee-tools-codegen -h | --help
 
 Options:
-  -b, --base-dir=<base-dir> [default: ${Deno.cwd()}]
-    Path to the base directory containing template files.
-
-  --layouts-dir=<layouts-dir> [default: ${DEFAULT_LAYOUTS_DIR}]
-    Directory name containing layout template files.
-
-  --partials-dir=<partials-dir> [default: ${DEFAULT_PARTIALS_DIR}]
-    Directory name containing partial template files.
-
-  --layout=<layout-template> [default: ${DEFAULT_LAYOUT}]
-    Layout template name to use.
 
 Arguments:
   <template>
     Path to the template file to use.
 
-  <variables>
-    Template variables.
+  <context>
+    JSON string used as an input object for a template function compiled from <template>.
+
+    Read JSON string from STDIN if the <context> is not specified.
 `.trim();
 
-const { options, args } = parseCommand({
+const { options, args } = await parseCommand({
   doc: DOC,
-  conv: (name, value) => {
-    switch (name) {
-    case '<variables>':
-      return value.reduce((acc, pair) => {
-        const [name, value] = pair.split('=', 2);
-        acc[name] = value;
-        return acc;
-      }, {});
-    default:
-      return value;
-    }
-  },
 });
 
-Deno.exit(await run(args.template, args.variables, options));
+Deno.exit(await run(args, options));
 
-async function run(template, variables, options) {
-  const renderer = new handlebars.Handlebars({
-    baseDir: options.baseDir,
-    layoutsDir: options.layoutDir,
-    partialsDir: options.partialsDir,
-    defaultLayout: undefined,
-  });
-  console.log(await renderer.renderView(template, variables, options.layout));
+async function run(args, options) {
+  const src = await loadTemplateSource(args.template);
+  const context = await loadContext(args.context);
+  const template = Handlebars.compile(src);
+  console.log(template(context));
+}
+
+async function loadTemplateSource(file) {
+  return await Deno.readTextFile(file)
+}
+
+async function loadContext(context) {
+  if (context) {
+    return JSON.parse(context);
+  }
+  return JSON.parse(await readAllText(Deno.stdin));
 }
 
 // Local Variables:

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { path, handlebars } from '../deps.js';
+import { path, Handlebars } from '../deps.js';
 import { RESOURCES_DIR } from '../lib/consts.js';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { DOT_MATRIX_FONT } from '../resources/dot_matrix/font.js';
@@ -28,39 +28,36 @@ Options:
     Text color.
 
 Arguments:
-  text
+  <text>
     The text to be renderer with the dot matrix font.
 
     Read the text from STDIN if no text is specified in the command.
 `.trim();
 
-const { options, args } = parseCommand({
+const { options, args } = await parseCommand({
   doc: DOC,
-  conv: (name, value) => {
+  conv: async (name, value) => {
     switch (name) {
     case '--box':
       const [width, height] = value.split('x', 2);
       return { width: parseInt(width), height: parseInt(height) };
+    case '<text>':
+      if (value) {
+        return value;
+      }
+      return await readAllText(Deno.stdin);
     default:
       return value;
     }
   },
 });
 
-let text;
-if (args.text) {
-  text = args.text;
-} else {
-  text = await readAllText(Deno.stdin);
-}
-
-Deno.exit(await run(text, options));
+Deno.exit(await run(args.text, options));
 
 async function run(text, options) {
-  const renderer = new handlebars.Handlebars({
-    baseDir: path.join(RESOURCES_DIR, 'dot_matrix'),
-  });
-  console.log(await renderer.render(TEMPLATE_FILE, {
+  const src = await Deno.readTextFile(TEMPLATE_FILE);
+  const template = Handlebars.compile(src);
+  console.log(template({
     font: DOT_MATRIX_FONT,
     glyphs: DOT_MATRIX_FONT.getGlyphs(text),
     box: options.box,

@@ -14,9 +14,8 @@ export * as ws from 'https://deno.land/std@0.92.0/ws/mod.ts';
 
 export * as changeCase from 'https://deno.land/x/case@v2.1.0/mod.ts';
 export { default as docopt } from 'https://deno.land/x/docopt@v1.0.6/mod.ts';
-//export { default as puppeteer } from 'https://deno.land/x/puppeteer@5.5.1/mod.ts';
-export { default as puppeteer } from 'https://raw.githubusercontent.com/masnagam/deno-puppeteer/main/mod.ts';
+export { default as puppeteer } from 'https://raw.githubusercontent.com/lucacasonato/deno-puppeteer/main/mod.ts';
 export * as oak from 'https://deno.land/x/oak@v6.5.0/mod.ts';
 export { default as oak_logger } from 'https://deno.land/x/oak_logger@1.0.0/mod.ts';
-export * as handlebars from 'https://deno.land/x/handlebars@v0.6.0/mod.ts';
+export { default as Handlebars } from 'https://dev.jspm.io/handlebars@latest';
 export * as base64 from 'https://denopkg.com/chiefbiiko/base64@v0.2.1/mod.ts';

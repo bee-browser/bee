@@ -56,6 +56,10 @@ async function scrapeDom(page, options) {
   return await scrapeDomUsingScript(page, options);
 }
 
+// FIXME
+// -----
+// This function does not work properly on many sites due to some sort of a size limit on the IPC
+// channel between the Puppeteer and the Chrome.
 async function scrapeDomUsingScript(page, options) {
   const script = Deno.readTextFileSync(path.join(RESOURCES_DIR, 'dom_scraper.js'));
   const dom = await page.evaluate((script, options) => {

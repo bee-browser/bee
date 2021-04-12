@@ -33,7 +33,7 @@ function buildScript({ uri, width, height, layouter}) {
     commands.push(`${TEXT_TO_DOT_MATRIX} ${JSON.stringify(text)}`);
     commands.push(`${DOM_SCRAPER} --viewport=${width}x${height}`);
   } else {
-    scripts.push(`${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
+    commands.push(`${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
   }
   commands.push(LAYOUT_BUILDER);
   commands.push(layouter);

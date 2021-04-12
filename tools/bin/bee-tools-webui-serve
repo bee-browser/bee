@@ -28,7 +28,7 @@ Options:
     Use debug-build binaries.
 `.trim();
 
-const { options, args, } = parseCommand({
+const { options, args, } = await parseCommand({
   doc: DOC,
   conv: (name, value) => {
     switch (name) {

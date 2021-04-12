@@ -17,7 +17,7 @@ Usage:
   bee-tools-webui -h | --help
 `.trim();
 
-const { cmds, args, } = parseCommand({
+const { cmds, args, } = await parseCommand({
   doc: DOC,
   init: { optionsFirst: true },
 });

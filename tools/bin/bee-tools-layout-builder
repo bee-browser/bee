@@ -9,7 +9,7 @@ import {
   puppeteer,
 } from '../deps.js';
 
-import { parseCommand } from '../lib/cli.js';
+import { parseCommand, readAllText } from '../lib/cli.js';
 import { LayoutBuilder } from '../lib/layout_builder.js';
 
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));
@@ -30,10 +30,9 @@ Arguments:
     Path to a JSON file containing the DOM tree.
 
     Read a JSON from STDIN if no file is specified.
-
 `.trim();
 
-const { options, args } = parseCommand({
+const { options, args } = await parseCommand({
   doc: DOC,
 });
 
@@ -51,9 +50,7 @@ async function loadJson(file) {
   if (file) {
     return await Deno.readTextFile(file);
   }
-  const data = await Deno.readAll(Deno.stdin);
-  const decoder = new TextDecoder('utf-8');
-  return decoder.decode(data);
+  return await readAllText(Deno.stdin);
 }
 
 // Local Variables:
