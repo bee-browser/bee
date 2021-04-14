@@ -14,7 +14,8 @@ export * as yaml from 'https://deno.land/std@0.93.0/encoding/yaml.ts';
 // third party
 
 export * as changeCase from 'https://deno.land/x/case@v2.1.0/mod.ts';
-export { default as docopt } from 'https://deno.land/x/docopt@v1.0.6/mod.ts';
+//export { default as docopt } from 'https://deno.land/x/docopt@v1.0.6/mod.ts';
+export { default as docopt } from 'https://raw.githubusercontent.com/masnagam/docopt.js/master/mod.ts';
 export { default as puppeteer } from 'https://raw.githubusercontent.com/lucacasonato/deno-puppeteer/main/mod.ts';
 export * as oak from 'https://deno.land/x/oak@v6.5.1/mod.ts';
 export { default as oak_logger } from 'https://deno.land/x/oak_logger@1.0.0/mod.ts';
