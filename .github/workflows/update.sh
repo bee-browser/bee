@@ -10,7 +10,7 @@ EOF
 
 cat <<EOF >$WORKFLOWS_DIR/ci.yml
 $HEADER
-$(bee-deepmerge --format yaml \
+$(bee-tools-deepmerge --format yaml \
     $TEMPLATES_DIR/ci.workflow.yml \
     $TEMPLATES_DIR/build.job.yml \
     $TEMPLATES_DIR/coverage.job.yml)
@@ -24,7 +24,7 @@ EOF
 
 cat <<EOF >$WORKFLOWS_DIR/pull-request.yml
 $HEADER
-$(bee-deepmerge --format yaml \
+$(bee-tools-deepmerge --format yaml \
     $TEMPLATES_DIR/pull-request.workflow.yml \
     $TEMPLATES_DIR/build.job.yml \
     $TEMPLATES_DIR/coverage.job.yml \

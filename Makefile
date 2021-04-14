@@ -90,10 +90,6 @@ coverage-html: coverage-test install-grcov | $(PROJDIR)/target/coverage
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
 
-.PHONY: devenv
-devenv:
-	@make -C tools prepare
-
 .PHONY: tools-update-deps
 tools-update-deps:
 	@make -C tools update-deps
@@ -103,9 +99,8 @@ install-grcov:
 	cargo install grcov
 
 .PHONY: github-ci
-github-ci: devenv
+github-ci:
 	@echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
-	@echo "$GITHUB_WORKSPACE/tools/node_modules/.bin" >>$GITHUB_PATH
 
 .PHONY: github-workflows
 github-workflows:

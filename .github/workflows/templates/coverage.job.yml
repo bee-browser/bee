@@ -2,7 +2,7 @@ jobs:
   coverage:
     env:
       DENO_DIR: /tmp/deno
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - uses: actions/checkout@v2
@@ -22,20 +22,6 @@ jobs:
             ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
           restore-keys: |
             ${{ runner.os }}-deno-
-      - uses: actions/setup-node@v2
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - name: Cache for npm
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ steps.npm-cache.outputs.dir }}
-          key: |
-            ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
       - name: Clean
         run: |
           make clean

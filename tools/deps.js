@@ -9,6 +9,7 @@ export * as http_file_server from 'https://deno.land/std@0.92.0/http/file_server
 export * as path from 'https://deno.land/std@0.92.0/path/mod.ts';
 export * as testing from 'https://deno.land/std@0.92.0/testing/asserts.ts';
 export * as ws from 'https://deno.land/std@0.92.0/ws/mod.ts';
+export * as yaml from 'https://deno.land/std@0.92.0/encoding/yaml.ts';
 
 // third party
 
@@ -19,3 +20,4 @@ export * as oak from 'https://deno.land/x/oak@v6.5.0/mod.ts';
 export { default as oak_logger } from 'https://deno.land/x/oak_logger@1.0.0/mod.ts';
 export { default as Handlebars } from 'https://dev.jspm.io/handlebars@latest';
 export * as base64 from 'https://denopkg.com/chiefbiiko/base64@v0.2.1/mod.ts';
+export { deepmerge } from 'https://deno.land/x/deepmerge@1.0.3/mod.ts';

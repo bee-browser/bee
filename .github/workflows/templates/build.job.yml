@@ -6,7 +6,7 @@ jobs:
       matrix:
         runner:
           - macos-latest
-          - ubuntu-20.04
+          - ubuntu-latest
         rust:
           - stable
           #- nightly
@@ -46,20 +46,6 @@ jobs:
             ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
           restore-keys: |
             ${{ runner.os }}-deno-
-      - uses: actions/setup-node@v2
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - name: Cache for npm
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ steps.npm-cache.outputs.dir }}
-          key: |
-            ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
       - name: Prepare GitHub CI
         run: |
           make github-ci
