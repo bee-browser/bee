@@ -2,30 +2,41 @@
 
 'use strict';
 
-import { Handlebars } from '../deps.js';
-import { parseCommand } from '../lib/cli.js';
+import { Handlebars, fs, path } from '../deps.js';
+import { parseCommand, readAllText } from '../lib/cli.js';
 
-DEFAULT_LAYOUT = undefined;
-DEFAULT_LAYOUTS_DIR = 'layouts';
-DEFAULT_PARTIALS_DIR = 'partials';
+const PROGNAME = path.basename(Deno.mainModule);
 
 const DOC = `
-Generate a source file from a Handlebars template file.
+Generate a source file using a Handlebars template file and an input object.
 
 Usage:
-  bee-tools-codegen [options] <template> [<context>]
-  bee-tools-codegen -h | --help
+  ${PROGNAME} [options] <template> [<input>]
+  ${PROGNAME} -h | --help
 
 Options:
+  --no-escape
+    Disable to HTML-escape results of expressions in mustaches.
+
+  -p, --partials-dir <partials-dir>
+    Load partial template files in <partial-dir>.
 
 Arguments:
   <template>
-    Path to the template file to use.
+    The path to the template file to use.
 
-  <context>
-    JSON string used as an input object for a template function compiled from <template>.
+  <input>
+    The JSON string used as the input object for the template function compiled from the template
+    file.  Read a JSON string from STDIN if '-' is specified in the <input>.
 
-    Read JSON string from STDIN if the <context> is not specified.
+Description:
+  This command processes the template function in the strict mode and stops the processing if
+  identifies used in the template are undefined.
+
+Custom @data:
+  @command
+    The command that generated the source file.  The JSON string of the input object is not
+    included if it's read from STDIN.
 `.trim();
 
 const { options, args } = await parseCommand({
@@ -35,21 +46,44 @@ const { options, args } = await parseCommand({
 Deno.exit(await run(args, options));
 
 async function run(args, options) {
-  const src = await loadTemplateSource(args.template);
-  const context = await loadContext(args.context);
-  const template = Handlebars.compile(src);
-  console.log(template(context));
-}
-
-async function loadTemplateSource(file) {
-  return await Deno.readTextFile(file)
-}
-
-async function loadContext(context) {
-  if (context) {
-    return JSON.parse(context);
+  const src = await Deno.readTextFile(args.template);
+  const input = await loadJson(args.input);
+  if (options.partialsDir) {
+    await loadPartials(options.partialsDir);
   }
-  return JSON.parse(await readAllText(Deno.stdin));
+  const template = Handlebars.compile(src, {
+    noEscape: options.noEscape,
+    strict: true,
+  });
+  console.log(template(input, {
+    data: {
+      command: `${PROGNAME} ${Deno.args.join(' ')}`,
+    },
+  }).trim());
+}
+
+async function loadJson(input) {
+  if (!input) {
+    return {};
+  }
+  if (input === '-') {
+    return JSON.parse(await readAllText(Deno.stdin));
+  }
+  return JSON.parse(input);
+}
+
+async function loadPartials(dir) {
+  const options = {
+    maxDepth: 1,
+    exts: ['.hbs'],
+  };
+  for await (const entry of fs.walk(dir, options)) {
+    if (!entry.isFile) {
+      continue;
+    }
+    const name = path.basename(entry.path, '.hbs');
+    Handlebars.registerPartial(name, await Deno.readTextFile(entry.path));
+  }
 }
 
 // Local Variables:

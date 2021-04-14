@@ -1,0 +1,21 @@
+{{#> layout.html}}
+
+{{#*inline 'description'}}
+The block box is horizontally centered.
+{{/inline}}
+
+{{#*inline 'styles'}}
+{{> block_box_constraints.styles}}
+
+.block {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+}
+{{/inline}}
+
+{{#*inline 'content'}}
+<div class="blue block"></div>
+{{/inline}}
+
+{{/layout.html}}

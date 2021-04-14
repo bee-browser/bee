@@ -1,11 +1,11 @@
-{% extends '_block_box_constraints.html.njk' %}
+{{#> layout.html}}
 
-{% block description %}
+{{#*inline 'description'}}
 The block box should have specified width and height.
-{% endblock %}
+{{/inline}}
 
-{% block style %}
-{{ super() }}
+{{#*inline 'styles'}}
+{{> block_box_constraints.styles}}
 
 .block {
   width: 100px;
@@ -14,8 +14,10 @@ The block box should have specified width and height.
   border: solid 20px red;
   margin: 30px;
 }
-{% endblock %}
+{{/inline}}
 
-{% block content %}
+{{#*inline 'content'}}
 <div class="blue block"></div>
-{% endblock %}
+{{/inline}}
+
+{{/layout.html}}

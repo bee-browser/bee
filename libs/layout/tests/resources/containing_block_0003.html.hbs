@@ -1,0 +1,17 @@
+{{#> layout.html}}
+
+{{#*inline 'description'}}
+in-flow blocks
+{{/inline}}
+
+{{#*inline 'styles'}}
+{{> containing_block.styles}}
+{{/inline}}
+
+{{#*inline 'content'}}
+<div class="blue" style="width: 80%; height: 80%;">
+  <div class="green" style="width: 50%; height: 50%;"></div>
+</div>
+{{/inline}}
+
+{{/layout.html}}

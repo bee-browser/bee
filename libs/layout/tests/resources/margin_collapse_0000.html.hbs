@@ -1,0 +1,21 @@
+{{#> layout.html}}
+
+{{#*inline 'description'}}
+Adjacent blocks with no margins.
+{{/inline}}
+
+{{#*inline 'styles'}}
+{{> margin_collapse.styles}}
+
+.block {
+  width: auto;
+  height: 50px;
+}
+{{/inline}}
+
+{{#*inline 'content'}}
+<div class="green block"></div>
+<div class="blue block"></div>
+{{/inline}}
+
+{{/layout.html}}

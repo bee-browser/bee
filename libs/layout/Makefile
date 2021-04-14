@@ -1,10 +1,14 @@
+EMPTY =
+SPACE = $(EMPTY) $(EMPTY)
+SEP = ", "
+
 TESTS_DIR = $(abspath tests)
 RESOURCES_DIR = $(TESTS_DIR)/resources
 TESTGEN_DIR = $(BEE_CARGO_CODEGEN_DIR)/libs/layout/tests
 
 LAYOUT_TEST_VIEWPORT_SIZE = "1000x500"
-LAYOUT_TEST_COMMON_FILES = $(wildcard $(RESOURCES_DIR)/common/*.html.njk)
-LAYOUT_TEST_SRC_FILES = $(wildcard $(RESOURCES_DIR)/*.html.njk)
+LAYOUT_TEST_PARTIAL_FILES = $(wildcard $(RESOURCES_DIR)/partials/*.hbs)
+LAYOUT_TEST_SRC_FILES = $(wildcard $(RESOURCES_DIR)/*.html.hbs)
 LAYOUT_TEST_NAMES = $(notdir $(basename $(basename $(LAYOUT_TEST_SRC_FILES))))
 LAYOUT_TEST_SCENARIO_FILES = \
   $(addprefix $(TESTGEN_DIR)/,$(addsuffix .scenario.jsonl,$(LAYOUT_TEST_NAMES)))
@@ -12,10 +16,17 @@ LAYOUT_TEST_SCENARIO_FILES = \
 .PHONY: testgen
 testgen: $(TESTGEN_DIR)/layout_test.rs $(LAYOUT_TEST_SCENARIO_FILES)
 
-$(TESTGEN_DIR)/layout_test.rs: $(RESOURCES_DIR)/layout_test.rs.njk $(LAYOUT_TEST_SRC_FILES) | $(TESTGEN_DIR)
+$(TESTGEN_DIR)/layout_test.rs: $(RESOURCES_DIR)/layout_test.rs.hbs $(TESTGEN_DIR)/layout_test.json | $(TESTGEN_DIR)
 	@echo Generating $@...
-	@bee-codegen -v "names=$(LAYOUT_TEST_NAMES)" -v "resources_dir=$(RESOURCES_DIR)" \
-	  -v "codegen_dir=$(TESTGEN_DIR)" $< >$@
+	@bee-tools-codegen $< - <$(TESTGEN_DIR)/layout_test.json >$@
+
+$(TESTGEN_DIR)/layout_test.json: $(LAYOUT_TEST_SRC_FILES) | $(TESTGEN_DIR)
+	@echo Generating $@...
+	@echo '{' >$@
+	@echo '  "codegen_dir": "$(TESTGEN_DIR)",' >>$@
+	@echo '  "resources_dir": "$(RESOURCES_DIR)",' >>$@
+	@echo '  "names": ["$(subst $(SPACE),$(SEP),$(LAYOUT_TEST_NAMES))"]' >>$@
+	@echo '}' >>$@
 
 $(TESTGEN_DIR)/%.scenario.jsonl: $(TESTGEN_DIR)/%.dom.json | $(TESTGEN_DIR)
 	@echo Generating $@...
@@ -27,9 +38,9 @@ $(TESTGEN_DIR)/%.dom.json: $(TESTGEN_DIR)/%.html | $(TESTGEN_DIR)
 	@bee-tools-dom-scraper --viewport=$(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@
 
 .PRECIOUS: $(TESTGEN_DIR)/%.html
-$(TESTGEN_DIR)/%.html: $(RESOURCES_DIR)/%.html.njk $(LAYOUT_TEST_COMMON_FILES) | $(TESTGEN_DIR)
+$(TESTGEN_DIR)/%.html: $(RESOURCES_DIR)/%.html.hbs $(LAYOUT_TEST_PARTIAL_FILES) | $(TESTGEN_DIR)
 	@echo Generating $@...
-	@bee-codegen -s $(RESOURCES_DIR)/common $< >$@
+	@bee-tools-codegen -p $(RESOURCES_DIR)/partials $< >$@
 
 $(TESTGEN_DIR):
 	@mkdir -p $@

@@ -16,7 +16,7 @@ Install the following software:
 * Rust
   * stable
   * nightly (used for generating a coverage report of tests)
-* deno 1.7.0
+* deno 1.9.0
 * GNU make
 
 Then:
