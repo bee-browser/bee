@@ -1,10 +1,6 @@
 'use strict';
 
-import {
-  path,
-  puppeteer,
-} from '../deps.js';
-
+import { path, puppeteer, } from '../deps.js';
 import { RESOURCES_DIR, } from './consts.js';
 
 const DEFAULT_LINUX_EXECUTABLE = '/opt/google/chrome/google-chrome';
@@ -20,6 +16,12 @@ export const DEFAULT_EXECUTABLE =
   testing.unreachable();
 
 export const DEFAULT_VIEWPORT_SIZE = '1280x720';
+
+const TAKE_SNAPSHOT_SCRIPT = await Deno.readTextFile(
+  path.join(RESOURCES_DIR, 'dom_scraper', 'take_snapshot.js'));
+
+const TRANSFER_DATA_SCRIPT = await Deno.readTextFile(
+  path.join(RESOURCES_DIR, 'dom_scraper', 'transfer_data.js'));
 
 export async function scrape(url, options) {
   let opts = {
@@ -37,8 +39,11 @@ export async function scrape(url, options) {
     const page = await browser.newPage();
     await page.setViewport(options.viewport);
     await page.goto(url);
-    const dom = await scrapeDom(page, options);
-    console.log(JSON.stringify(dom));
+    const json = await scrapeDom(page, options);
+    if (options.debug) {
+      JSON.parse(json);
+    }
+    console.log(json);
   } catch (err) {
     console.error(err);
   } finally {
@@ -56,18 +61,40 @@ async function scrapeDom(page, options) {
   return await scrapeDomUsingScript(page, options);
 }
 
-// FIXME
-// -----
-// This function does not work properly on many sites due to some sort of a size limit on the IPC
+// NOTE
+// ----
+// We cannot transfer scraped data at once due to some sort of a size limit on the communication
 // channel between the Puppeteer and the Chrome.
 async function scrapeDomUsingScript(page, options) {
-  const script = Deno.readTextFileSync(path.join(RESOURCES_DIR, 'dom_scraper.js'));
-  const dom = await page.evaluate((script, options) => {
-    const func = new Function('$OPTIONS', script);
-    return func(options);
-  }, script, { debug: options.debug });
-  return dom;
+  await takeSnapshot(page, options);
+
+  let segments = [];
+  for (;;) {
+    const segment = await transferData(page, options);
+    if (segment === undefined) {
+      break;
+    }
+    segments.push(segment);
+  }
+
+  return segments.join('');
 }
+
+async function takeSnapshot(page, options) {
+  await page.evaluate((script, options) => {
+    const takeSnapshot = new Function('$OPTIONS', script);
+    return takeSnapshot(options);
+  }, TAKE_SNAPSHOT_SCRIPT, { debug: options.debug });
+}
+
+async function transferData(page, options) {
+  return await page.evaluate((script, options) => {
+    const transferData = new Function('$OPTIONS', script);
+    return transferData(options);
+  }, TRANSFER_DATA_SCRIPT, { debug: options.debug });
+}
+
+// experimental scraper using CDP.
 
 // NOTE
 // ----
@@ -83,14 +110,14 @@ async function scrapeDomUsingCdp(page, options) {
   await collectStylesUsingCdp(client, root);
   // TODO: collect resources like images as data URLs
   // TODO: convert nodes into our data structures
-  return {
+  return JSON.Stringify({
     document: {
       url: page.url(),
       title: await page.title(),
       root,
     },
     resources: {},  // TODO
-  };
+  });
 }
 
 // TODO

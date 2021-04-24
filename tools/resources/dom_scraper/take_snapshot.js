@@ -195,15 +195,19 @@ class Scraper {
   }
 }
 
-async function scrape() {
+async function takeSnapshot() {
   // TODO: frames
   const scraper = new Scraper(document);
-  return await scraper.scrape();
+  window.beeTools = {
+    domScraper: {
+      snapshot: await scraper.scrape(),
+    },
+  };
 }
 
 return new Promise(async (resolve, reject) => {
   try {
-    resolve(await scrape());
+    resolve(await takeSnapshot());
   } catch (e) {
     reject(e);
   }
