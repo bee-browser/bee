@@ -48,10 +48,12 @@ export class LayoutBuilder {
     switch (node.type) {
     case 'dom.element':
       return this.buildElement_(node);
-    case 'dom.paseudo_element':
+    case 'dom.pseudo_element':
       return this.buildPseudoElement_(node);
     case 'dom.text':
       return this.buildText_(node);
+    default:
+      throw new Error(`Unsupported node type: ${node.type}`);
     }
   }
 
