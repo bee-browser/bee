@@ -3,4 +3,4 @@ all:
 
 .PHONY: update-deps
 update-deps:
-	@deno run --allow-net --allow-read --allow-write https://raw.githubusercontent.com/bee-browser/deno-udd/master/main.ts deps.js
+	@deno run --allow-net --allow-read --allow-write https://deno.land/x/udd@0.5.0/main.ts deps.js
