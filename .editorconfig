@@ -11,3 +11,12 @@ max_line_length = 99
 
 [*.rs]
 indent_size = 4
+
+[*.html.hbs]
+emacs_mode = html
+
+[*.rs.hbs]
+emacs_mode = rust
+
+[*.yml.hbs]
+emacs_mode = yaml
