@@ -22,13 +22,19 @@ LAYOUT_TEST_JSON_FILES = $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.json,$(LA
 .PHONY: testgen
 testgen: $(TESTGEN_DIR)/index.html $(TESTGEN_DIR)/layout_test.rs
 
-$(TESTGEN_DIR)/index.html: $(RESOURCES_DIR)/index.html.hbs $(TESTGEN_DIR)/index.json $(LAYOUT_TEST_HTML_FILES) | $(TESTGEN_DIR)
+$(TESTGEN_DIR)/index.html: $(RESOURCES_DIR)/index.html.hbs $(TESTGEN_DIR)/index.json $(TESTGEN_DIR)/tests.js | $(TESTGEN_DIR)
 	@echo Generating $@...
 	@bee-tools-codegen $< - <$(TESTGEN_DIR)/index.json >$@
 
 $(TESTGEN_DIR)/index.json: $(LAYOUT_TEST_SRC_FILES) | $(TESTGEN_DIR)
 	@echo Generating $@...
 	@echo '{"names":["$(subst $(SPACE),$(SEP),$(LAYOUT_TEST_SRC_NAMES))"],"viewport":{"width":$(LAYOUT_TEST_VIEWPORT_WIDTH),"height":$(LAYOUT_TEST_VIEWPORT_HEIGHT)}}' >$@
+
+$(TESTGEN_DIR)/tests.js: $(LAYOUT_TEST_JSON_FILES) $(LAYOUT_TEST_HTML_FILES) | $(TESTGEN_DIR)
+	@echo Generating $@...
+	@echo 'const TESTS = [' >$@
+	@for file in $(LAYOUT_TEST_JSON_FILES); do cat $$file >>$@; echo ',' >>$@; done
+	@echo '];' >>$@
 
 $(TESTGEN_DIR)/layout_test.rs: $(RESOURCES_DIR)/layout_test.rs.hbs $(TESTGEN_DIR)/layout_test.json $(LAYOUT_TEST_SCENARIO_FILES) | $(TESTGEN_DIR)
 	@echo Generating $@...
