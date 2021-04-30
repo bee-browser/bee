@@ -15,7 +15,10 @@ Usage:
   ${PROGNAME} -h | --help
 
 Options:
-  -f, --format=<format>  [default: json]
+  -i, --input=<format>  [default: json]
+    json or yaml.
+
+  -o, --output=<format>  [default: json]
     json or yaml.
 
 Arguments:
@@ -27,7 +30,8 @@ const { options, args } = await parseCommand({
   doc: DOC,
   conv: async (name, value) => {
     switch (name) {
-    case '--format':
+    case '--input':
+    case '--output':
       if (!['json', 'yaml'].includes(value)) {
         throw new Error('json or yaml');
       }
@@ -42,13 +46,19 @@ Deno.exit(await run(args.files, options));
 
 async function run(files, options) {
   let parse, stringify;
-  switch (options.format) {
+  switch (options.input) {
   case 'json':
     parse = JSON.parse;
-    stringify = JSON.stringify;
     break;
   case 'yaml':
     parse = yaml.parse;
+    break;
+  }
+  switch (options.output) {
+  case 'json':
+    stringify = JSON.stringify;
+    break;
+  case 'yaml':
     stringify = (o) => yaml.stringify(o, { lineWidth: -1 });
     break;
   }

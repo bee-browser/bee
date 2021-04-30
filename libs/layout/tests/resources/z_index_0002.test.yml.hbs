@@ -1,0 +1,13 @@
+description: |-
+  The red box should be painted before the blue box.
+
+  The red and boxes are stacked onto the root layer and the z-index of the red box is less than the
+  blue box's one.
+
+css: |-
+  {{> z_index.css}}
+
+html: |-
+  <div class="abs blue" style="z-index: 0">
+    <div class="fixed red" style="z-index: -1"></div>
+  </div>
