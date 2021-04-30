@@ -19,7 +19,11 @@ Options:
     Disable to HTML-escape results of expressions in mustaches.
 
   -p, --partials-dir <partials-dir>
-    Load partial template files in <partial-dir>.
+    Load partial template files in <partial-dir>.  Files in descendant folders won't loaded.
+
+    Name of every partial template file must start with '_' and it can be used in other templates
+    without the '_'.  For example, \`_partial.html\` template file can be rendered with
+    \`{{< partial.html}}\`.
 
 Arguments:
   <template>
@@ -62,7 +66,7 @@ async function run(args, options) {
   }).trim());
 }
 
-async function loadJson(input) {
+async function loadJson(input, options) {
   if (!input) {
     return {};
   }
@@ -75,13 +79,16 @@ async function loadJson(input) {
 async function loadPartials(dir) {
   const options = {
     maxDepth: 1,
-    exts: ['.hbs'],
   };
   for await (const entry of fs.walk(dir, options)) {
     if (!entry.isFile) {
       continue;
     }
-    const name = path.basename(entry.path, '.hbs');
+    const filename = path.basename(entry.path);
+    if (!filename.startsWith('_')) {
+      continue;
+    }
+    const name = filename.slice(1);
     Handlebars.registerPartial(name, await Deno.readTextFile(entry.path));
   }
 }

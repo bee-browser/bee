@@ -1,0 +1,16 @@
+description: |-
+  The containing block of an absolutely positioned box is the padding box of the nearest ancestor
+  positioned box.
+
+css: |-
+  {{> containing_block.css}}
+
+  .containing-block {
+    padding: 50px;
+    border: solid 10px transparent;
+  }
+
+html: |-
+  <div class="abs containing-block">
+    <div class="abs blue" style="width: 80%; height: 80%;"></div>
+  </div>
