@@ -1,26 +1,29 @@
-EMPTY =
-SPACE = $(EMPTY) $(EMPTY)
-SEP = ","
+EMPTY :=
+SPACE := $(EMPTY) $(EMPTY)
+SEP := ","
 
-TESTS_DIR = $(abspath tests)
-RESOURCES_DIR = $(TESTS_DIR)/resources
-TESTGEN_DIR = $(BEE_CARGO_CODEGEN_DIR)/libs/layout/tests
+TESTS_DIR := $(abspath tests)
+RESOURCES_DIR := $(TESTS_DIR)/resources
+TESTGEN_DIR := $(BEE_CARGO_CODEGEN_DIR)/libs/layout/tests
 
-LAYOUT_TEST_VIEWPORT_WIDTH = 1000
-LAYOUT_TEST_VIEWPORT_HEIGHT = 500
-LAYOUT_TEST_VIEWPORT_SIZE = $(LAYOUT_TEST_VIEWPORT_WIDTH)x$(LAYOUT_TEST_VIEWPORT_HEIGHT)
-LAYOUT_TEST_PARTIAL_FILES = $(wildcard $(RESOURCES_DIR)/partials/_*)
-LAYOUT_TEST_SRC_FILES = $(wildcard $(RESOURCES_DIR)/*.test.yml.hbs)
-LAYOUT_TEST_SRC_NAMES = $(subst .test.yml.hbs,,$(notdir $(LAYOUT_TEST_SRC_FILES)))
-LAYOUT_TEST_HTML_FILES = $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.html,$(LAYOUT_TEST_SRC_NAMES)))
-LAYOUT_TEST_JSON_FILES = $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.json,$(LAYOUT_TEST_SRC_NAMES)))
-LAYOUT_TEST_EXPECTED_FILES = $(wildcard $(RESOURCES_DIR)/*.expected.yml)
-LAYOUT_TEST_NAMES = $(subst .expected.yml,,$(notdir $(LAYOUT_TEST_EXPECTED_FILES)))
-LAYOUT_TEST_SCENARIO_FILES = $(addprefix $(TESTGEN_DIR)/,$(addsuffix .scenario.jsonl,$(LAYOUT_TEST_NAMES)))
-LAYOUT_TEST_JSON_FILES = $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.json,$(LAYOUT_TEST_SRC_NAMES)))
+LAYOUT_TEST_VIEWPORT_WIDTH := 1000
+LAYOUT_TEST_VIEWPORT_HEIGHT := 500
+LAYOUT_TEST_VIEWPORT_SIZE := $(LAYOUT_TEST_VIEWPORT_WIDTH)x$(LAYOUT_TEST_VIEWPORT_HEIGHT)
+LAYOUT_TEST_SRC_FILES := $(wildcard $(RESOURCES_DIR)/*.test.yml.hbs)
+LAYOUT_TEST_SRC_NAMES := $(subst .test.yml.hbs,,$(notdir $(LAYOUT_TEST_SRC_FILES)))
+LAYOUT_TEST_HTML_FILES := $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.html,$(LAYOUT_TEST_SRC_NAMES)))
+LAYOUT_TEST_JSON_FILES := $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.json,$(LAYOUT_TEST_SRC_NAMES)))
+LAYOUT_TEST_EXPECTED_FILES := $(wildcard $(RESOURCES_DIR)/*.expected.yml)
+LAYOUT_TEST_NAMES := $(subst .expected.yml,,$(notdir $(LAYOUT_TEST_EXPECTED_FILES)))
+LAYOUT_TEST_SCENARIO_FILES := $(addprefix $(TESTGEN_DIR)/,$(addsuffix .scenario.jsonl,$(LAYOUT_TEST_NAMES)))
+LAYOUT_TEST_JSON_FILES := $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.json,$(LAYOUT_TEST_SRC_NAMES)))
+
+DEPS := $(addprefix $(TESTGEN_DIR)/,$(addsuffix .test.yml.d,$(LAYOUT_TEST_SRC_NAMES)))
 
 .PHONY: testgen
 testgen: $(TESTGEN_DIR)/index.html $(TESTGEN_DIR)/layout_test.rs
+
+-include $(DEPS)
 
 $(TESTGEN_DIR)/index.html: $(RESOURCES_DIR)/index.html.hbs $(TESTGEN_DIR)/index.json $(TESTGEN_DIR)/tests.js | $(TESTGEN_DIR)
 	@echo Generating $@...
@@ -64,9 +67,14 @@ $(TESTGEN_DIR)/%.test.json: $(TESTGEN_DIR)/%.test.yml | $(TESTGEN_DIR)
 	@bee-tools-deepmerge -i yaml -o json $< >$@
 
 .PRECIOUS: $(TESTGEN_DIR)/%.test.yml
-$(TESTGEN_DIR)/%.test.yml: $(RESOURCES_DIR)/%.test.yml.hbs $(LAYOUT_TEST_PARTIAL_FILES) | $(TESTGEN_DIR)
+$(TESTGEN_DIR)/%.test.yml: $(RESOURCES_DIR)/%.test.yml.hbs | $(TESTGEN_DIR)
 	@echo Generating $@...
 	@bee-tools-codegen -p $(RESOURCES_DIR)/partials $< >$@
+
+.PRECIOUS: $(TESTGEN_DIR)/%.test.yml.d
+$(TESTGEN_DIR)/%.test.yml.d: $(RESOURCES_DIR)/%.test.yml.hbs | $(TESTGEN_DIR)
+	@echo Generating $@...
+	@bee-tools-codegen -p $(RESOURCES_DIR)/partials --deps $(subst .d,,$@) $< >$@
 
 $(TESTGEN_DIR):
 	@mkdir -p $@
