@@ -25,6 +25,9 @@ Options:
     without the '_'.  For example, \`_partial.html\` template file can be rendered with
     \`{{< partial.html}}\`.
 
+  --deps <target>
+    Print a Makefile which contains dependencies of the <target>.
+
 Arguments:
   <template>
     The path to the template file to use.
@@ -52,8 +55,23 @@ Deno.exit(await run(args, options));
 async function run(args, options) {
   const src = await Deno.readTextFile(args.template);
   const input = await loadJson(args.input);
+  if (options.deps) {
+    return await depsgen(src, input, options);
+  }
+  await codegen(src, input, options);
+}
+
+async function codegen(src, input, options) {
   if (options.partialsDir) {
-    await loadPartials(options.partialsDir);
+    await loadPartials(options.partialsDir, (name, path) => {
+      let partial = null;
+      Handlebars.registerPartial(name, () => {
+        if (partial === null) {
+          partial = Deno.readTextFileSync(path);
+        }
+        return partial;
+      });
+    });
   }
   const template = Handlebars.compile(src, {
     noEscape: options.noEscape,
@@ -66,6 +84,28 @@ async function run(args, options) {
   }).trim());
 }
 
+async function depsgen(src, input, options) {
+  const deps = new Set();
+  if (options.partialsDir) {
+    await loadPartials(options.partialsDir, (name, path) => {
+      Handlebars.registerPartial(name, () => {
+        deps.add(path);
+        return '';
+      });
+    });
+  }
+  const template = Handlebars.compile(src, {
+    noEscape: options.noEscape,
+    strict: true,
+  });
+  template(input, {
+    data: {
+      command: `${PROGNAME} ${Deno.args.join(' ')}`,
+    },
+  });
+  console.log(`${options.deps}: ${Array.from(deps).join(' ')}`);
+}
+
 async function loadJson(input, options) {
   if (!input) {
     return {};
@@ -76,7 +116,7 @@ async function loadJson(input, options) {
   return JSON.parse(input);
 }
 
-async function loadPartials(dir) {
+async function loadPartials(dir, register) {
   const options = {
     maxDepth: 1,
   };
@@ -89,7 +129,7 @@ async function loadPartials(dir) {
       continue;
     }
     const name = filename.slice(1);
-    Handlebars.registerPartial(name, await Deno.readTextFile(entry.path));
+    register(name, entry.path);
   }
 }
 
