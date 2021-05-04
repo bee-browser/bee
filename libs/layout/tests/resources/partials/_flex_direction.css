@@ -1,0 +1,38 @@
+.red {
+  background-color: red;
+}
+
+.green {
+  background-color: green;
+}
+
+.blue {
+  background-color: blue;
+}
+
+.orange {
+  background-color: orange;
+}
+
+.lime {
+  background-color: lime;
+}
+
+.aqua {
+  background-color: aqua;
+}
+
+.yellow {
+  background-color: yellow;
+}
+
+.flex {
+  display: flex;
+  width: 400px;
+  height: 400px;
+}
+
+.flex > * {
+  width: 100px;
+  height: 100px;
+}

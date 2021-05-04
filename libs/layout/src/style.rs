@@ -6,6 +6,7 @@ use num_traits::{Bounded, Zero};
 use serde::{Deserialize, Serialize};
 
 use crate::Decimal;
+use crate::Integer;
 use crate::LayoutLength;
 
 #[derive(Default)]
@@ -17,6 +18,7 @@ pub struct Style {
     pub box_model: BoxModelStyle,
     pub background: BackgroundStyle,
     pub layer: LayerStyle,
+    pub flex: FlexStyle,
 }
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -701,6 +703,140 @@ pub enum LayerZIndex {
 impl Default for LayerZIndex {
     fn default() -> Self {
         LayerZIndex::Auto
+    }
+}
+
+#[derive(Default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
+pub struct FlexStyle {
+    pub direction: FlexDirection,
+    pub wrap: FlexWrap,
+    pub order: Integer,
+    pub grow: Decimal,
+    pub shrink: Decimal,
+    pub basis: FlexBasis,
+    pub justify_content: JustifyContent,
+    pub align_items: AlignItems,
+    pub align_self: AlignSelf,
+    pub align_content: AlignContent,
+}
+
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum FlexDirection {
+    Row,
+    RowReverse,
+    Column,
+    ColumnReverse,
+}
+
+impl Default for FlexDirection {
+    fn default() -> Self {
+        FlexDirection::Row
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum FlexWrap {
+    Nowrap,
+    Wrap,
+    WrapReverse,
+}
+
+impl Default for FlexWrap {
+    fn default() -> Self {
+        FlexWrap::Nowrap
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum FlexBasis {
+    Auto,
+    Content,
+    Pixel(LayoutLength),
+    Scale(Decimal),
+    Calc(String),  // TODO: Fn
+}
+
+impl Default for FlexBasis {
+    fn default() -> Self {
+        FlexBasis::Auto
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum JustifyContent {
+    FlexStart,
+    FlexEnd,
+    Center,
+    SpaceBetween,
+    SpaceAround,
+}
+
+impl Default for JustifyContent {
+    fn default() -> Self {
+        JustifyContent::FlexStart
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum AlignItems {
+    FlexStart,
+    FlexEnd,
+    Center,
+    Baseline,
+    Stretch,
+}
+
+impl Default for AlignItems {
+    fn default() -> Self {
+        AlignItems::Stretch
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum AlignSelf {
+    Auto,
+    FlexStart,
+    FlexEnd,
+    Center,
+    Baseline,
+    Stretch,
+}
+
+impl Default for AlignSelf {
+    fn default() -> Self {
+        AlignSelf::Auto
+    }
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum AlignContent {
+    FlexStart,
+    FlexEnd,
+    Center,
+    SpaceBetween,
+    SpaceAround,
+    Stretch,
+}
+
+impl Default for AlignContent {
+    fn default() -> Self {
+        AlignContent::Stretch
     }
 }
 

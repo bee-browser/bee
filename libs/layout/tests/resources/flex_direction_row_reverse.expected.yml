@@ -1,0 +1,24 @@
+- type: render.start
+  data:
+    size: [1000, 500]
+- type: render.render_box
+  data:
+    rect: [0, 0, 400, 400]
+    background:
+      color: [255, 255, 0, 255]
+- type: render.render_box
+  data:
+    rect: [300, 0, 100, 100]
+    background:
+      color: [255, 0, 0, 255]
+- type: render.render_box
+  data:
+    rect: [200, 0, 100, 100]
+    background:
+      color: [0, 128, 0, 255]
+- type: render.render_box
+  data:
+    rect: [100, 0, 100, 100]
+    background:
+      color: [0, 0, 255, 255]
+- type: render.end
