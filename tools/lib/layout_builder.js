@@ -115,8 +115,9 @@ export class LayoutBuilder {
       display: this.buildDisplayStyle_(style),
       positioning: this.buildPositioningStyle_(style),
       box_model: this.buildBoxModelStyle_(style),
-      layer: this.buildLayerStyle_(style),
       background: this.buildBackgroundStyle_(style),
+      layer: this.buildLayerStyle_(style),
+      flex: this.buildFlexStyle_(style),
     };
   }
 
@@ -126,6 +127,10 @@ export class LayoutBuilder {
     switch (display) {
     case 'none':
       return { outside: 'none', inside: 'none' };
+    case 'flex':
+      return { outside: 'block', inside: 'flex' };
+    case 'inline-flex':
+      return { outside: 'inline', inside: 'flex' };
     case 'table':
       return { outside: 'block', inside: 'table' };
     case 'table-caption':
@@ -150,8 +155,6 @@ export class LayoutBuilder {
       return { outside: 'inline', inside: 'flow_root' };
     case 'inline-table':
       return { outside: 'inline', inside: 'table' };
-    case 'inline-flex':
-      return { outside: 'inline', inside: 'flex' };
     case 'inline-grid':
       return { outside: 'inline', inside: 'grid' };
     case 'contents':
@@ -202,6 +205,13 @@ export class LayoutBuilder {
     };
   }
 
+  buildBackgroundStyle_(style) {
+    return {
+      color: LayoutBuilder.buildColorValue_(style['background-color']),
+      images: [],
+    };
+  }
+
   buildLayerStyle_(style) {
     return {
       z_index: LayoutBuilder.buildZIndex_(style['z-index']),
@@ -209,11 +219,15 @@ export class LayoutBuilder {
     };
   }
 
-  buildBackgroundStyle_(style) {
+  buildFlexStyle_(style) {
     return {
-      color: LayoutBuilder.buildColorValue_(style['background-color']),
-      images: [],
-    };
+      direction: LayoutBuilder.buildKeywordValue_(style['flex-direction']),
+      wrap: LayoutBuilder.buildKeywordValue_(style['flex-wrap']),
+      order: LayoutBuilder.buildIntegerValue_(style['order']),
+      grow: LayoutBuilder.buildDecimalValue_(style['flex-grow']),
+      shrink: LayoutBuilder.buildDecimalValue_(style['flex-shrink']),
+      basis: LayoutBuilder.buildLengthValue_(style['flex-basis']),
+    }
   }
 
   static buildZIndex_(str) {
@@ -294,6 +308,14 @@ export class LayoutBuilder {
       ];
     }
     return [0, 0, 0, 0];  // transparent, black
+  }
+
+  static buildIntegerValue_(str) {
+    return parseInt(str);
+  }
+
+  static buildDecimalValue_(str) {
+    return LayoutBuilder.toNumber_(parseFloat(str));
   }
 
   static toNumber_(n) {  // f32

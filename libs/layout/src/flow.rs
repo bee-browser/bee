@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use num_traits::Zero;
-use tracing::{warn};
+use tracing::warn;
 
 use crate::BoxConstraintSolver;
 use crate::BoxModel;
@@ -14,6 +14,7 @@ use crate::SolvedBoxGeometry;
 use crate::ToVisual;
 use crate::LayoutVector2D;
 use crate::VisualRenderer;
+use crate::flex::FlexContainer;
 use crate::spec::*;
 use crate::style::*;
 
@@ -23,7 +24,7 @@ impl LayoutElement {
         Arc::new(FlowContainer::new(&self.children, avail))
     }
 
-    fn build_block(&self, avail: &AvailableSize) -> VisualBlock {
+    fn build_block(&self, avail: &AvailableSize) -> Block {
         let solved_geom = self.solve_block_box_geometry(avail);
 
         let box_model = BoxModel {
@@ -40,11 +41,12 @@ impl LayoutElement {
             height: Some(box_model.content_box().height()),
         };
 
-        let container = BlockContainer::new(&self.children, &new_avail);
+        let container = BlockContent::new(
+            self.spec.container, &self.children, &self.style, &new_avail);
 
         // TODO: update height
 
-        VisualBlock::new(box_model, container)
+        Block::new(box_model, container)
     }
 
     fn solve_block_box_geometry(&self, avail: &AvailableSize) -> SolvedBoxGeometry {
@@ -63,15 +65,15 @@ pub(crate) struct FlowContainer {
 }
 
 impl FlowContainer {
-    fn new(nodes: &[LayoutNodeRef], avail: &AvailableSize) -> Self {
+    pub(crate) fn new(nodes: &[LayoutNodeRef], avail: &AvailableSize) -> Self {
         FlowContainer {
             container: BlockContainer::new(nodes, avail),
         }
     }
 
-    pub(crate) fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    pub(crate) fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
     where
-        T: std::io::Write + ?Sized,
+        W: std::io::Write + ?Sized,
     {
         write!(write, "{:indent$}{}\n", "", "flow-root", indent=depth)?;
         self.container.inspect(write, depth + 1)?;
@@ -85,7 +87,7 @@ impl FlowContainer {
     }
 }
 
-struct BlockContainer {
+pub(crate) struct BlockContainer {
     children: Vec<BlockFlow>,
 }
 
@@ -101,9 +103,9 @@ impl BlockContainer {
         }
     }
 
-    fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    pub(crate) fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
     where
-        T: std::io::Write + ?Sized,
+        W: std::io::Write + ?Sized,
     {
         for flow in self.children.iter() {
             flow.inspect(write, depth)?;
@@ -183,17 +185,17 @@ impl<'a> BlockFlowBuilder<'a> {
 
 struct BlockFlow {
     advance: LayoutLength,
-    block: VisualBlock,
+    block: Block,
 }
 
 impl BlockFlow {
-    fn new(advance: LayoutLength, block: VisualBlock) -> Self {
+    fn new(advance: LayoutLength, block: Block) -> Self {
         BlockFlow { advance, block }
     }
 
-    fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
     where
-        T: std::io::Write + ?Sized,
+        W: std::io::Write + ?Sized,
     {
         self.block.inspect(write, depth)
     }
@@ -206,23 +208,23 @@ impl BlockFlow {
     }
 }
 
-struct VisualBlock {
+struct Block {
     box_model: BoxModel,
-    container: BlockContainer,
+    content: BlockContent,
 }
 
-impl VisualBlock {
+impl Block {
     #[inline]
-    fn new(box_model: BoxModel, container: BlockContainer) -> Self {
-        VisualBlock { box_model, container }
+    fn new(box_model: BoxModel, content: BlockContent) -> Self {
+        Block { box_model, content }
     }
 
-    fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
+    fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
     where
-        T: std::io::Write + ?Sized,
+        W: std::io::Write + ?Sized,
     {
         write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
-        self.container.inspect(write, depth + 1)?;
+        self.content.inspect(write, depth + 1)?;
         Ok(())
     }
 
@@ -235,13 +237,57 @@ impl VisualBlock {
 
         let v = self.box_model.content_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
-        self.container.render_blocks(renderer);
+        self.content.render_blocks(renderer);
         renderer.translate_coord(-v);
     }
 }
 
-impl std::fmt::Display for VisualBlock {
+impl std::fmt::Display for Block {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "block: {:?}", self.box_model)
+    }
+}
+
+enum BlockContent {
+    Block(BlockContainer),
+    Flow(FlowContainer),
+    Flex(FlexContainer),
+}
+
+impl BlockContent {
+    fn new(
+        spec: ContainerSpec,
+        nodes: &[LayoutNodeRef],
+        style: &Style,
+        avail: &AvailableSize,
+    ) -> Self {
+        match spec {
+            ContainerSpec::Flow => BlockContent::Flow(FlowContainer::new(nodes, avail)),
+            ContainerSpec::Block => BlockContent::Block(BlockContainer::new(nodes, avail)),
+            ContainerSpec::Flex => BlockContent::Flex(FlexContainer::new(nodes, style, avail)),
+            _ => unreachable!(),
+        }
+    }
+
+    fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
+    where
+        W: std::io::Write + ?Sized,
+    {
+        match self {
+            BlockContent::Block(ref block) => block.inspect(write, depth),
+            BlockContent::Flow(ref flow) => flow.inspect(write, depth),
+            BlockContent::Flex(ref flex) => flex.inspect(write, depth),
+        }
+    }
+
+    fn render_blocks<R>(&self, renderer: &mut R)
+    where
+        R: VisualRenderer,
+    {
+        match self {
+            BlockContent::Block(ref block) => block.render_blocks(renderer),
+            BlockContent::Flow(ref flow) => flow.render(renderer),
+            BlockContent::Flex(ref flex) => flex.render(renderer),
+        }
     }
 }

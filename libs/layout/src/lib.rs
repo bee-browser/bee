@@ -1,3 +1,4 @@
+mod flex;
 mod flow;
 mod spec;
 mod style;
@@ -15,6 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::spec::*;
 pub use crate::style::*;
+use crate::flex::FlexContainer;
 use crate::flow::FlowContainer;
 
 pub type Decimal = f32;
@@ -192,6 +194,10 @@ impl LayoutElement {
         }
     }
 
+    fn build_layer_content(&self, avail: &AvailableSize) -> Arc<LayerContent> {
+        Arc::new(LayerContent::new(self.spec.container, &self.children, &self.style, avail))
+    }
+
     fn build_top_level_layers(
         &self,
         initial_avail: &AvailableSize,
@@ -226,7 +232,7 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(initial_avail);
 
         // TODO: layout in-flow child elements.
-        let flow = self.build_flow(&AvailableSize {
+        let content = self.build_layer_content(&AvailableSize {
             width: solved_geom.width.value.clone(),
             height: solved_geom.height.value.clone(),
         });
@@ -261,7 +267,7 @@ impl LayoutElement {
         let layer = Arc::new(VisualLayer {
             box_model,
             stack_level,
-            flow,
+            content,
             child_layers: child_layers.into_vec(),
         });
 
@@ -278,7 +284,7 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(avail);
 
         // TODO: layout in-flow child elements.
-        let flow = self.build_flow(&AvailableSize {
+        let content = self.build_layer_content(&AvailableSize {
             width: solved_geom.width.value.clone(),
             height: solved_geom.height.value.clone(),
         });
@@ -307,7 +313,7 @@ impl LayoutElement {
                 let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level: 0,
-                    flow,
+                    content,
                     child_layers: vec![],
                 });
                 top_level_layers.push_front(layer);
@@ -319,7 +325,7 @@ impl LayoutElement {
                 let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level,
-                    flow,
+                    content,
                     child_layers: child_layers.into_vec(),
                 });
                 top_level_layers.push_front(layer);
@@ -368,7 +374,7 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(initial_avail);
 
         // TODO: layout in-flow child elements.
-        let flow = self.build_flow(&AvailableSize {
+        let content = self.build_layer_content(&AvailableSize {
             width: solved_geom.width.value.clone(),
             height: solved_geom.height.value.clone(),
         });
@@ -401,7 +407,7 @@ impl LayoutElement {
         let layer = Arc::new(VisualLayer {
             box_model,
             stack_level,
-            flow,
+            content,
             child_layers: child_layers.into_vec(),
         });
 
@@ -417,7 +423,7 @@ impl LayoutElement {
         let solved_geom = self.solve_box_geometry(avail);
 
         // TODO: layout in-flow child elements.
-        let flow = self.build_flow(&AvailableSize {
+        let content = self.build_layer_content(&AvailableSize {
             width: solved_geom.width.value.clone(),
             height: solved_geom.height.value.clone(),
         });
@@ -446,7 +452,7 @@ impl LayoutElement {
                 let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level: 0,
-                    flow,
+                    content,
                     child_layers: vec![],
                 });
                 child_layers.push_front(layer);
@@ -458,7 +464,7 @@ impl LayoutElement {
                 let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level,
-                    flow,
+                    content,
                     child_layers: child_layers.into_vec(),
                 });
                 let mut child_layers = VisualLayersMap::new();
@@ -798,7 +804,7 @@ impl ToVisual for BoxModel {
 struct VisualLayer {
     box_model: BoxModel,
     stack_level: i32,
-    flow: Arc<FlowContainer>,
+    content: Arc<LayerContent>,
     child_layers: Vec<Arc<VisualLayer>>,
 }
 
@@ -813,7 +819,7 @@ impl VisualLayer {
             layer.inspect(write, depth + 1)?;
         }
 
-        self.flow.inspect(write, depth + 1)?;
+        self.content.inspect(write, depth + 1)?;
 
         for layer in self.child_layers.iter().filter(|layer| layer.stack_level >= 0) {
             layer.inspect(write, depth + 1)?;
@@ -841,7 +847,7 @@ impl VisualLayer {
         // in-flow boxes
         let v = self.box_model.content_box().min.to_visual().to_vector();
         renderer.translate_coord(v);
-        self.flow.render(renderer);
+        self.content.render(renderer);
         renderer.translate_coord(-v);
 
         // non-negative layers
@@ -857,6 +863,46 @@ impl VisualLayer {
 impl std::fmt::Display for VisualLayer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "layer: {:?}, stack_level={}", self.box_model, self.stack_level)
+    }
+}
+
+enum LayerContent {
+    Flow(FlowContainer),
+    Flex(FlexContainer),
+}
+
+impl LayerContent {
+    fn new(
+        spec: ContainerSpec,
+        nodes: &[LayoutNodeRef],
+        style: &Style,
+        avail: &AvailableSize,
+    ) -> Self {
+        match spec {
+            ContainerSpec::Flow => LayerContent::Flow(FlowContainer::new(nodes, avail)),
+            ContainerSpec::Flex => LayerContent::Flex(FlexContainer::new(nodes, style, avail)),
+            _ => unreachable!(),
+        }
+    }
+
+    fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
+    where
+        W: std::io::Write + ?Sized,
+    {
+        match self {
+            LayerContent::Flow(ref flow) => flow.inspect(write, depth),
+            LayerContent::Flex(ref flex) => flex.inspect(write, depth),
+        }
+    }
+
+    fn render<R>(&self, renderer: &mut R)
+    where
+        R: VisualRenderer,
+    {
+        match self {
+            LayerContent::Flow(ref flow) => flow.render(renderer),
+            LayerContent::Flex(ref flex) => flex.render(renderer),
+        }
     }
 }
 

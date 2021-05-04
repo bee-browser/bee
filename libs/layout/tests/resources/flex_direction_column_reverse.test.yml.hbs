@@ -1,0 +1,22 @@
+description: |
+  The flex direction of the flex box is `column-reverse`.
+
+  The painting order of flex items is the same as the case of `column`:
+
+  1. `div.red`
+  2. `div.green`
+  3. `div.blue`
+
+css: |
+  {{> flex_direction.css}}
+
+  .flex {
+    flex-direction: column-reverse;
+  }
+
+html: |
+  <div class="flex yellow">
+    <div class="red"></div>
+    <div class="green"></div>
+    <div class="blue"></div>
+  </div>
