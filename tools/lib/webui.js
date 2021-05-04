@@ -1,11 +1,6 @@
 'use strict';
 
-import {
-  oak,
-  oak_logger,
-  path,
-} from '../deps.js';
-
+import { path, servest } from '../deps.js';
 import { PROJ_DIR, RESOURCES_DIR } from './consts.js';
 import { scrape } from './dom_scraper.js';
 import { LayoutBuilder } from './layout_builder.js';
@@ -13,12 +8,9 @@ import { LayoutBuilder } from './layout_builder.js';
 const NAVIGATION_JS = path.join(RESOURCES_DIR, 'navigation.worker.js');
 
 export async function serve(options) {
-  const router = new oak.Router();
-  router.get('/api/debcon', async (context) => {
-    if (!context.isUpgradable) {
-      throw new Error();
-    }
-    const socket = await context.upgrade();
+  const app = servest.createApp();
+
+  app.ws('/api/debcon', async (socket) => {
     for await (const data of socket) {
       if (typeof data === 'string') {
         await handleJson_(socket, data, options);
@@ -26,24 +18,9 @@ export async function serve(options) {
     }
   });
 
-  const app = new oak.Application();
-  app.use(oak_logger.logger);
-  app.use(assetsMiddleware_(options));
-  app.use(router.routes());
-  app.use(router.allowedMethods());
-  await app.listen({ port: options.port });
-}
+  app.use(servest.serveStatic(options.root));
 
-function assetsMiddleware_(options) {
-  return async (context, next) => {
-    if (context.request.url.pathname.startsWith('/api/')) {
-      return await next();
-    }
-    return await oak.send(context, context.request.url.pathname, {
-      root: options.root,
-      index: 'index.html',
-    });
-  };
+  await app.listen({ port: options.port });
 }
 
 async function handleJson_(socket, json, options) {
