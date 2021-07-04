@@ -129,15 +129,16 @@ impl FlexItemBond {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T, dir: FlexDirection) {
+        let origin = renderer.get_origin();
         let v = match dir {
             FlexDirection::Row | FlexDirection::RowReverse =>
                 LayoutVector2D::new(self.advance, LayoutLength::zero()).to_visual(),
             FlexDirection::Column | FlexDirection::ColumnReverse =>
                 LayoutVector2D::new(LayoutLength::zero(), self.advance).to_visual(),
         };
-        renderer.translate_coord(v);
+        renderer.set_origin(origin + v);
         self.item.render(renderer);
-        renderer.translate_coord(-v);
+        renderer.set_origin(origin);
     }
 }
 
@@ -189,6 +190,8 @@ impl FlexItem {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
+        let origin = renderer.get_origin();
+
         let box_model = self.box_model.to_visual();
 
         if box_model.is_visible() {
@@ -196,9 +199,10 @@ impl FlexItem {
         }
 
         let v = self.box_model.content_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(origin + v);
         self.container.render(renderer);
-        renderer.translate_coord(-v);
+
+        renderer.set_origin(origin);
     }
 }
 

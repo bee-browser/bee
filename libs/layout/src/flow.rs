@@ -201,10 +201,11 @@ impl BlockFlow {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
+        let origin = renderer.get_origin();
         let v = LayoutVector2D::new(LayoutLength::zero(), self.advance).to_visual();
-        renderer.translate_coord(v);
+        renderer.set_origin(origin + v);
         self.block.render(renderer);
-        renderer.translate_coord(-v);
+        renderer.set_origin(origin);
     }
 }
 
@@ -229,6 +230,8 @@ impl Block {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
+        let origin = renderer.get_origin();
+
         let box_model = self.box_model.to_visual();
 
         if box_model.is_visible() {
@@ -236,9 +239,10 @@ impl Block {
         }
 
         let v = self.box_model.content_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(origin + v);
         self.content.render_blocks(renderer);
-        renderer.translate_coord(-v);
+
+        renderer.set_origin(origin);
     }
 }
 

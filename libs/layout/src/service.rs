@@ -129,6 +129,14 @@ where
         self.send(RenderMessage::End);
     }
 
+    fn get_origin(&self) -> VisualVector2D {
+        self.origin
+    }
+
+    fn set_origin(&mut self, origin: VisualVector2D) {
+        self.origin = origin;
+    }
+
     fn render_box(&mut self, model: VisualBoxModel) {
         debug_assert!(!model.border_box.is_empty());
         self.send(RenderMessage::RenderBox {
@@ -136,10 +144,6 @@ where
             background: model.background,
             border: model.border,
         });
-    }
-
-    fn translate_coord(&mut self, v: VisualVector2D) {
-        self.origin += v;
     }
 }
 

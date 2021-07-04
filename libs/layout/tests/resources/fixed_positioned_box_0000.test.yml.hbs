@@ -1,0 +1,19 @@
+description: |-
+  The fixed.red box should be painted before the abs.blue box.
+
+css: |-
+  {{> absolutely_positioned_box.css}}
+
+  .abs {
+    width: 100px;
+    height: 100px;
+  }
+
+  .fixed {
+    width: 100px;
+    height: 100px;
+  }
+
+html: |-
+  <div class="fixed red"></div>
+  <div class="abs blue"></div>

@@ -128,7 +128,7 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
 
         let flow = element.build_flow(&avail);
 
-        let layers = element.build_top_level_layers_for_children(&avail, &avail).into_vec();
+        let layers = element.build_layers_for_children(&avail, &avail).into_vec();
 
         VisualRoot { box_model, flow, layers, }
     } else {
@@ -198,24 +198,6 @@ impl LayoutElement {
         Arc::new(LayerContent::new(self.spec.container, &self.children, &self.style, avail))
     }
 
-    fn build_top_level_layers(
-        &self,
-        initial_avail: &AvailableSize,
-        avail: &AvailableSize,
-    ) -> VisualLayersMap {
-        match self.style.positioning {
-            PositioningScheme::Static =>
-                self.build_top_level_layers_for_children(initial_avail, avail),
-            PositioningScheme::Fixed =>
-                self.build_top_level_layers_for_fixed(initial_avail),
-            PositioningScheme::Absolute |
-            PositioningScheme::Sticky =>  // TODO
-                self.build_top_level_layers_for_other(initial_avail, avail),
-            PositioningScheme::Relative =>
-                self.build_top_level_layers_for_children(initial_avail, avail),  // TODO
-        }
-    }
-
     fn solve_box_geometry(&self, avail: &AvailableSize) -> SolvedBoxGeometry {
         let mut solver = BoxConstraintSolver::new(avail);
         solver
@@ -225,201 +207,29 @@ impl LayoutElement {
         solver.geom
     }
 
-    fn build_top_level_layers_for_fixed(
-        &self,
-        initial_avail: &AvailableSize,
-    ) -> VisualLayersMap {
-        let solved_geom = self.solve_box_geometry(initial_avail);
-
-        // TODO: layout in-flow child elements.
-        let content = self.build_layer_content(&AvailableSize {
-            width: solved_geom.width.value.clone(),
-            height: solved_geom.height.value.clone(),
-        });
-
-        // TODO:
-        // * update the position of the layer with the static position if it has not been solved.
-        // * determine the height of the layer if it has not been solved.
-        let box_model = BoxModel {
-            style: self.style.clone(),
-            geometry: solved_geom.determine(),
-            background: BoxBackground {
-                color: self.style.background.color.clone(),
-                images: vec![],  // TODO
-            },
-        };
-
-        let new_avail = AvailableSize {
-            width: Some(box_model.padding_box().width()),
-            height: Some(box_model.padding_box().height()),
-        };
-
-        // The fixed layer always establishes a new stacking context.
-
-        let (mut top_level_layers, child_layers) =
-            self.build_layers_for_children(initial_avail, &new_avail);
-
-        let stack_level = match self.style.layer.z_index {
-            LayerZIndex::Auto => 0,
-            LayerZIndex::Index(index) => index,
-        };
-
-        let layer = Arc::new(VisualLayer {
-            box_model,
-            stack_level,
-            content,
-            child_layers: child_layers.into_vec(),
-        });
-
-        top_level_layers.push_front(layer);
-
-        top_level_layers
-    }
-
-    fn build_top_level_layers_for_other(
-        &self,
-        initial_avail: &AvailableSize,
-        avail: &AvailableSize,
-    ) -> VisualLayersMap {
-        let solved_geom = self.solve_box_geometry(avail);
-
-        // TODO: layout in-flow child elements.
-        let content = self.build_layer_content(&AvailableSize {
-            width: solved_geom.width.value.clone(),
-            height: solved_geom.height.value.clone(),
-        });
-
-        // TODO:
-        // * update the position of the layer with the static position if it has not been solved.
-        // * determine the height of the layer if it has not been solved.
-        let box_model = BoxModel {
-            style: self.style.clone(),
-            geometry: solved_geom.determine(),
-            background: BoxBackground {
-                color: self.style.background.color.clone(),
-                images: vec![],  // TODO
-            },
-        };
-
-        let new_avail = AvailableSize {
-            width: Some(box_model.padding_box().width()),
-            height: Some(box_model.padding_box().height()),
-        };
-
-        match self.style.layer.z_index {
-            LayerZIndex::Auto => {
-                let mut top_level_layers = self.build_top_level_layers_for_children(
-                    initial_avail, &new_avail);
-                let layer = Arc::new(VisualLayer {
-                    box_model,
-                    stack_level: 0,
-                    content,
-                    child_layers: vec![],
-                });
-                top_level_layers.push_front(layer);
-                top_level_layers
-            }
-            LayerZIndex::Index(stack_level) => {
-                let (mut top_level_layers, child_layers) = self.build_layers_for_children(
-                    initial_avail, &new_avail);
-                let layer = Arc::new(VisualLayer {
-                    box_model,
-                    stack_level,
-                    content,
-                    child_layers: child_layers.into_vec(),
-                });
-                top_level_layers.push_front(layer);
-                top_level_layers
-            }
-        }
-    }
-
-    fn build_top_level_layers_for_children(
-        &self,
-        initial_avail: &AvailableSize,
-        avail: &AvailableSize,
-    ) -> VisualLayersMap {
-        self.children.iter()
-            .filter_map(LayoutNodeRef::maybe_element)
-            .map(|element| element.build_top_level_layers(
-                initial_avail, avail))
-            .fold(VisualLayersMap::new(), |mut acc, v| {
-                acc.merge(v);
-                acc
-            })
-    }
-
     fn build_layers(
         &self,
         initial_avail: &AvailableSize,
         avail: &AvailableSize,
-    ) -> (VisualLayersMap, VisualLayersMap) {
+    ) -> VisualLayersMap {
         match self.style.positioning {
             PositioningScheme::Static =>
                 self.build_layers_for_children(initial_avail, avail),
             PositioningScheme::Fixed =>
-                self.build_layers_for_fixed(initial_avail),
+                self.build_layers_for_layer(initial_avail, initial_avail),
             PositioningScheme::Absolute |
             PositioningScheme::Sticky =>  // TODO
-                self.build_layers_for_other(initial_avail, avail),
+                self.build_layers_for_layer(initial_avail, avail),
             PositioningScheme::Relative =>
                 self.build_layers_for_children(initial_avail, avail),  // TODO
         }
     }
 
-    fn build_layers_for_fixed(
-        &self,
-        initial_avail: &AvailableSize,
-    ) -> (VisualLayersMap, VisualLayersMap) {
-        let solved_geom = self.solve_box_geometry(initial_avail);
-
-        // TODO: layout in-flow child elements.
-        let content = self.build_layer_content(&AvailableSize {
-            width: solved_geom.width.value.clone(),
-            height: solved_geom.height.value.clone(),
-        });
-
-        // TODO:
-        // * update the position of the layer with the static position if it has not been solved.
-        // * determine the height of the layer if it has not been solved.
-        let box_model = BoxModel {
-            style: self.style.clone(),
-            geometry: solved_geom.determine(),
-            background: BoxBackground {
-                color: self.style.background.color.clone(),
-                images: vec![],  // TODO
-            },
-        };
-
-        let new_avail = AvailableSize {
-            width: Some(box_model.padding_box().width()),
-            height: Some(box_model.padding_box().height()),
-        };
-
-        let (mut top_level_layers, child_layers) =
-            self.build_layers_for_children(initial_avail, &new_avail);
-
-        let stack_level = match self.style.layer.z_index {
-            LayerZIndex::Auto => 0,
-            LayerZIndex::Index(index) => index,
-        };
-
-        let layer = Arc::new(VisualLayer {
-            box_model,
-            stack_level,
-            content,
-            child_layers: child_layers.into_vec(),
-        });
-
-        top_level_layers.push_front(layer);
-        (top_level_layers, VisualLayersMap::new())
-    }
-
-    fn build_layers_for_other(
+    fn build_layers_for_layer(
         &self,
         initial_avail: &AvailableSize,
         avail: &AvailableSize,
-    ) -> (VisualLayersMap, VisualLayersMap) {
+    ) -> VisualLayersMap {
         let solved_geom = self.solve_box_geometry(avail);
 
         // TODO: layout in-flow child elements.
@@ -445,31 +255,29 @@ impl LayoutElement {
             height: Some(box_model.padding_box().height()),
         };
 
+        let mut layers = self.build_layers_for_children(initial_avail, &new_avail);
+
         match self.style.layer.z_index {
             LayerZIndex::Auto => {
-                let (top_level_layers, mut child_layers) =
-                    self.build_layers_for_children(initial_avail, &new_avail);
                 let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level: 0,
                     content,
                     child_layers: vec![],
                 });
-                child_layers.push_front(layer);
-                (top_level_layers, child_layers)
+                layers.push_front(layer);
+                layers
             }
             LayerZIndex::Index(stack_level) => {
-                let (top_level_layers, child_layers) =
-                    self.build_layers_for_children(initial_avail, &new_avail);
                 let layer = Arc::new(VisualLayer {
                     box_model,
                     stack_level,
                     content,
-                    child_layers: child_layers.into_vec(),
+                    child_layers: layers.into_vec(),
                 });
-                let mut child_layers = VisualLayersMap::new();
-                child_layers.push_back(layer);
-                (top_level_layers, child_layers)
+                let mut layers = VisualLayersMap::new();
+                layers.push_back(layer);
+                layers
             }
         }
     }
@@ -478,14 +286,12 @@ impl LayoutElement {
         &self,
         initial_avail: &AvailableSize,
         avail: &AvailableSize,
-    ) -> (VisualLayersMap, VisualLayersMap) {
+    ) -> VisualLayersMap {
         self.children.iter()
             .filter_map(LayoutNodeRef::maybe_element)
-            .map(|element| element.build_layers(
-                initial_avail, avail))
-            .fold((VisualLayersMap::new(), VisualLayersMap::new()), |mut acc, v| {
-                acc.0.merge(v.0);
-                acc.1.merge(v.1);
+            .map(|element| element.build_layers(initial_avail, avail))
+            .fold(VisualLayersMap::new(), |mut acc, v| {
+                acc.merge(v);
                 acc
             })
     }
@@ -574,25 +380,24 @@ impl VisualRoot {
 
         // negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(v);
         for layer in self.layers.iter().filter(|layer| layer.stack_level < 0) {
             layer.render(renderer);
         }
-        renderer.translate_coord(-v);
 
         // in-flow boxes
         let v = self.box_model.content_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(v);
         self.flow.render(renderer);
-        renderer.translate_coord(-v);
 
         // non-negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(v);
         for layer in self.layers.iter().filter(|layer| layer.stack_level >= 0) {
             layer.render(renderer);
         }
-        renderer.translate_coord(-v);
+
+        renderer.set_origin(VisualVector2D::zero());
 
         renderer.end();
     }
@@ -601,8 +406,9 @@ impl VisualRoot {
 pub trait VisualRenderer {
     fn start(&mut self, size: VisualSize2D);
     fn end(&mut self);
+    fn get_origin(&self) -> VisualVector2D;
+    fn set_origin(&mut self, origin: VisualVector2D);
     fn render_box(&mut self, model: VisualBoxModel);
-    fn translate_coord(&mut self, v: VisualVector2D);
 }
 
 pub struct VisualBoxModel {
@@ -829,6 +635,13 @@ impl VisualLayer {
     }
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T) {
+        let saved_origin = renderer.get_origin();
+
+        let origin = match self.box_model.style.positioning {
+            PositioningScheme::Fixed => Zero::zero(),
+            _ => saved_origin,
+        };
+
         let box_model = self.box_model.to_visual();
 
         if box_model.is_visible() {
@@ -838,25 +651,24 @@ impl VisualLayer {
 
         // negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(origin + v);
         for layer in self.child_layers.iter().filter(|layer| layer.stack_level < 0) {
             layer.render(renderer);
         }
-        renderer.translate_coord(-v);
 
         // in-flow boxes
         let v = self.box_model.content_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(origin + v);
         self.content.render(renderer);
-        renderer.translate_coord(-v);
 
         // non-negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();
-        renderer.translate_coord(v);
+        renderer.set_origin(origin + v);
         for layer in self.child_layers.iter().filter(|layer| layer.stack_level >= 0) {
             layer.render(renderer);
         }
-        renderer.translate_coord(-v);
+
+        renderer.set_origin(saved_origin);
     }
 }
 
