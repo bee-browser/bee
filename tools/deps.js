@@ -3,13 +3,13 @@
 
 // std
 
-export * as fs from 'https://deno.land/std@0.100.0/fs/mod.ts';
-export * as http from 'https://deno.land/std@0.100.0/http/mod.ts';
-export * as http_file_server from 'https://deno.land/std@0.100.0/http/file_server.ts';
-export * as path from 'https://deno.land/std@0.100.0/path/mod.ts';
-export * as testing from 'https://deno.land/std@0.100.0/testing/asserts.ts';
-export * as ws from 'https://deno.land/std@0.100.0/ws/mod.ts';
-export * as yaml from 'https://deno.land/std@0.100.0/encoding/yaml.ts';
+export * as fs from 'https://deno.land/std@0.101.0/fs/mod.ts';
+export * as http from 'https://deno.land/std@0.101.0/http/mod.ts';
+export * as http_file_server from 'https://deno.land/std@0.101.0/http/file_server.ts';
+export * as path from 'https://deno.land/std@0.101.0/path/mod.ts';
+export * as testing from 'https://deno.land/std@0.101.0/testing/asserts.ts';
+export * as ws from 'https://deno.land/std@0.101.0/ws/mod.ts';
+export * as yaml from 'https://deno.land/std@0.101.0/encoding/yaml.ts';
 
 // third party
 
