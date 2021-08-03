@@ -1,0 +1,21 @@
+description: |
+  2 flex lines are created.
+
+css: |
+  {{> flex_direction.css}}
+
+  .flex {
+    flex-wrap: wrap;
+    align-content: flex-start;  /* for simplicity */
+  }
+
+  .flex > .blue {
+    width: 300px;
+  }
+
+html: |
+  <div class="flex yellow">
+    <div class="red"></div>
+    <div class="green"></div>
+    <div class="blue"></div>
+  </div>
