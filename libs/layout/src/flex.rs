@@ -17,7 +17,7 @@ use crate::style::*;
 
 pub(crate) struct FlexContainer {
     direction: FlexDirection,
-    flows: Vec<FlexItemBond>,
+    lines: Vec<FlexLine>,
 }
 
 impl FlexContainer {
@@ -28,7 +28,7 @@ impl FlexContainer {
         }
         FlexContainer {
             direction: style.flex.direction,
-            flows: builder.build(),
+            lines: builder.build(),
         }
     }
 
@@ -36,9 +36,9 @@ impl FlexContainer {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", "flex", indent=depth)?;
-        for flow in self.flows.iter() {
-            flow.inspect(write, depth + 1)?;
+        write!(write, "{:indent$}flex:\n", "", indent=depth)?;
+        for line in self.lines.iter() {
+            line.inspect(write, depth + 1)?;
         }
         Ok(())
     }
@@ -47,8 +47,8 @@ impl FlexContainer {
     where
         R: VisualRenderer,
     {
-        for flow in self.flows.iter() {
-            flow.render(renderer, self.direction);
+        for line in self.lines.iter() {
+            line.render(renderer, self.direction);
         }
     }
 }
@@ -56,9 +56,7 @@ impl FlexContainer {
 struct FlexLineBuilder<'a> {
     style: &'a Style,
     avail: &'a AvailableSize,
-    main_advance: LayoutLength,
-    cross_advance: LayoutLength,
-    flows: Vec<FlexItemBond>,
+    items: Vec<FlexItem>,
 }
 
 impl<'a> FlexLineBuilder<'a> {
@@ -66,9 +64,7 @@ impl<'a> FlexLineBuilder<'a> {
         FlexLineBuilder {
             style,
             avail,
-            main_advance: LayoutLength::zero(),
-            cross_advance: LayoutLength::zero(),
-            flows: vec![],
+            items: vec![],
         }
     }
 
@@ -81,32 +77,134 @@ impl<'a> FlexLineBuilder<'a> {
 
     fn process_element(&mut self, element: &LayoutElement) {
         let item = element.build_flex_item(&self.avail);
-        let main_size = item.main_size(element.style.flex.direction);
-        self.flows.push(FlexItemBond::new(self.main_advance, item));
-        self.main_advance += main_size;
+        self.items.push(item);
     }
 
     fn process_text(&mut self, text: &LayoutText) {
         warn!("TODO: not implemented");
     }
 
-    fn build(mut self) -> Vec<FlexItemBond> {
-        let flows = std::mem::replace(&mut self.flows, vec![]);
+    fn build(mut self) -> Vec<FlexLine> {
+        let mut lines = self.build_lines();
 
-        let flows: Vec<FlexItemBond> = if self.style.flex.direction.is_reverse() {
-            let dir = self.style.flex.direction;
-            let main_size = self.avail.main_size(dir);
-            flows.into_iter()
-                .map(|mut flow| {
-                    flow.advance = main_size - (flow.advance + flow.item.main_size(dir));
-                    flow
-                })
-                .collect()
+        // TODO: Distribute free space
+
+        if self.style.flex.wrap.is_reverse() {
+            self.reverse_lines(&mut lines);
+        }
+        if self.style.flex.direction.is_reverse() {
+            self.reverse_items(&mut lines);
+        }
+
+        lines
+    }
+
+    fn build_lines(&mut self) -> Vec<FlexLine> {
+        let multiline = self.style.flex.wrap.is_multiline();
+        let dir = self.style.flex.direction;
+
+        let mut items = std::mem::replace(&mut self.items, vec![]);
+
+        Self::reoder_items(&mut items);
+
+        let mut lines = vec![];
+        let mut flows: Vec<FlexItemBond> = vec![];
+        let avail_size = self.avail.main_size(dir);
+        let mut main_advance = LayoutLength::zero();
+        let mut cross_advance = LayoutLength::zero();
+
+        for item in items.into_iter() {
+            let main_size = item.main_size(dir);
+            if multiline && main_advance + main_size > avail_size {
+                let cross_size = flows.iter()
+                    .map(|flow| flow.cross_size(dir))
+                    .max_by(|a, b| a.partial_cmp(b).unwrap())
+                    .expect("`flows` must be a non-empty");
+                // TODO: Distribute free space
+                let line = FlexLine::new(
+                    cross_advance, cross_size, std::mem::replace(&mut flows, vec![]));
+                cross_advance += cross_size;
+                lines.push(line);
+                main_advance = LayoutLength::zero();
+            }
+            flows.push(FlexItemBond::new(main_advance, item));
+            main_advance += main_size;
+        }
+
+        if !flows.is_empty() {
+            let cross_size = flows.iter()
+                .map(|flow| flow.cross_size(dir))
+                .max_by(|a, b| a.partial_cmp(b).unwrap())
+                .expect("`flows` must be a non-empty");
+            // TODO: Distribute free space
+            let line = FlexLine::new(
+                cross_advance, cross_size, std::mem::replace(&mut flows, vec![]));
+            lines.push(line);
+        }
+
+        lines
+    }
+
+    fn reoder_items(items: &mut Vec<FlexItem>) {
+        // TODO
+    }
+
+    fn reverse_lines(&self, lines: &mut Vec<FlexLine>) {
+        let dir = self.style.flex.direction;
+        let avail_size = self.avail.cross_size(dir);
+
+        for line in lines.iter_mut() {
+            line.advance = avail_size - (line.advance + line.cross_size);
+        }
+    }
+
+    fn reverse_items(&self, lines: &mut Vec<FlexLine>) {
+        let dir = self.style.flex.direction;
+        let avail_size = self.avail.main_size(dir);
+
+        for line in lines.iter_mut() {
+            for flow in line.flows.iter_mut() {
+                flow.advance = avail_size - (flow.advance + flow.main_size(dir));
+            }
+        }
+    }
+}
+
+struct FlexLine {
+    advance: LayoutLength,
+    cross_size: LayoutLength,
+    flows: Vec<FlexItemBond>,
+}
+
+impl FlexLine {
+    fn new(advance: LayoutLength, cross_size: LayoutLength, flows: Vec<FlexItemBond>) -> Self {
+        FlexLine { advance, cross_size, flows }
+    }
+
+    fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
+    where
+        W: std::io::Write + ?Sized,
+    {
+        write!(write, "{:indent$}flex-line: {:?} {:?}\n", "",
+               self.advance, self.cross_size, indent=depth)?;
+        for flow in self.flows.iter() {
+            flow.inspect(write, depth + 1)?
+        }
+        Ok(())
+    }
+
+    fn render<T: VisualRenderer>(&self, renderer: &mut T, dir: FlexDirection) {
+        let origin = renderer.get_origin();
+        let v = if dir.is_row() {
+            LayoutVector2D::new(LayoutLength::zero(), self.advance).to_visual()
         } else {
-            flows
+            LayoutVector2D::new(self.advance, LayoutLength::zero()).to_visual()
         };
-
-        flows
+        renderer.set_origin(origin + v);
+        for flow in self.flows.iter() {
+            flow.render(renderer, dir)
+        }
+        renderer.set_origin(origin);
     }
 }
 
@@ -130,15 +228,22 @@ impl FlexItemBond {
 
     fn render<T: VisualRenderer>(&self, renderer: &mut T, dir: FlexDirection) {
         let origin = renderer.get_origin();
-        let v = match dir {
-            FlexDirection::Row | FlexDirection::RowReverse =>
-                LayoutVector2D::new(self.advance, LayoutLength::zero()).to_visual(),
-            FlexDirection::Column | FlexDirection::ColumnReverse =>
-                LayoutVector2D::new(LayoutLength::zero(), self.advance).to_visual(),
+        let v = if dir.is_row() {
+            LayoutVector2D::new(self.advance, LayoutLength::zero()).to_visual()
+        } else {
+            LayoutVector2D::new(LayoutLength::zero(), self.advance).to_visual()
         };
         renderer.set_origin(origin + v);
         self.item.render(renderer);
         renderer.set_origin(origin);
+    }
+
+    fn main_size(&self, dir: FlexDirection) -> LayoutLength {
+        self.item.main_size(dir)
+    }
+
+    fn cross_size(&self, dir: FlexDirection) -> LayoutLength {
+        self.item.cross_size(dir)
     }
 }
 
@@ -167,16 +272,18 @@ impl FlexItem {
     }
 
     fn main_size(&self, dir: FlexDirection) -> LayoutLength {
-        match dir {
-            FlexDirection::Row | FlexDirection::RowReverse => self.inline_size(),
-            FlexDirection::Column | FlexDirection::ColumnReverse => self.block_size(),
+        if dir.is_row() {
+            self.inline_size()
+        } else {
+            self.block_size()
         }
     }
 
     fn cross_size(&self, dir: FlexDirection) -> LayoutLength {
-        match dir {
-            FlexDirection::Row | FlexDirection::RowReverse => self.block_size(),
-            FlexDirection::Column | FlexDirection::ColumnReverse => self.inline_size(),
+        if dir.is_row() {
+            self.block_size()
+        } else {
+            self.inline_size()
         }
     }
 
@@ -248,6 +355,13 @@ impl LayoutElement {
 }
 
 impl FlexDirection {
+    fn is_row(&self) -> bool {
+        match self {
+            FlexDirection::Row | FlexDirection::RowReverse => true,
+            _ => false,
+        }
+    }
+
     pub(crate) fn is_reverse(&self) -> bool {
         match self {
             FlexDirection::RowReverse | FlexDirection::ColumnReverse => true,
@@ -256,22 +370,36 @@ impl FlexDirection {
     }
 }
 
+impl FlexWrap {
+    fn is_multiline(&self) -> bool {
+        match self {
+            FlexWrap::Nowrap => false,
+            _ => true,
+        }
+    }
+
+    fn is_reverse(&self) -> bool {
+        match self {
+            FlexWrap::WrapReverse => true,
+            _ => false,
+        }
+    }
+}
+
 impl AvailableSize {
     fn main_size(&self, dir: FlexDirection) -> LayoutLength {
-        match dir {
-            FlexDirection::Row | FlexDirection::RowReverse =>
-                self.width.unwrap_or_default(),
-            FlexDirection::Column | FlexDirection::ColumnReverse =>
-                self.height.unwrap_or_default(),
+        if dir.is_row() {
+            self.width.unwrap_or_default()
+        } else {
+            self.height.unwrap_or_default()
         }
     }
 
     fn cross_size(&self, dir: FlexDirection) -> LayoutLength {
-        match dir {
-            FlexDirection::Row | FlexDirection::RowReverse =>
-                self.height.unwrap_or_default(),
-            FlexDirection::Column | FlexDirection::ColumnReverse =>
-                self.width.unwrap_or_default(),
+        if dir.is_row() {
+            self.height.unwrap_or_default()
+        } else {
+            self.width.unwrap_or_default()
         }
     }
 }
