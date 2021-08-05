@@ -1,6 +1,6 @@
 'use strict';
 
-import { path } from '../deps.js';
+import { io, path } from '../deps.js';
 import { PROJ_DIR, TOOLS_DIR } from '../lib/consts.js';
 
 let TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'bee-tools-text-to-dot-matrix');
@@ -53,18 +53,12 @@ async function runScript(script) {
   await shell.stdin.write(script);
   await shell.stdin.close();
 
-  const [status, stdout, stderr] = await Promise.all([
-    shell.status(),
-    shell.output(),
-    shell.stderrOutput(),
-  ]);
-
-  const decoder = new TextDecoder();
-  const jsonl = decoder.decode(stdout);
-  for (const json of jsonl.split('\n')) {
+  for await (let json of io.readLines(shell.stdout)) {
     self.postMessage({
       type: 'render',
       data: json,
     });
   }
+
+  shell.close();
 }

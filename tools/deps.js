@@ -6,6 +6,8 @@
 export * as fs from 'https://deno.land/std@0.103.0/fs/mod.ts';
 export * as http from 'https://deno.land/std@0.103.0/http/mod.ts';
 export * as http_file_server from 'https://deno.land/std@0.103.0/http/file_server.ts';
+export * as io from 'https://deno.land/std@0.103.0/io/mod.ts';
+export * as log from 'https://deno.land/std@0.103.0/log/mod.ts';
 export * as path from 'https://deno.land/std@0.103.0/path/mod.ts';
 export * as testing from 'https://deno.land/std@0.103.0/testing/asserts.ts';
 export * as ws from 'https://deno.land/std@0.103.0/ws/mod.ts';
