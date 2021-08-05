@@ -1,14 +1,33 @@
 'use strict';
 
-import { path, servest } from '../deps.js';
+import { log, path, servest } from '../deps.js';
 import { PROJ_DIR, RESOURCES_DIR } from './consts.js';
 import { scrape } from './dom_scraper.js';
 import { LayoutBuilder } from './layout_builder.js';
 
 const NAVIGATION_JS = path.join(RESOURCES_DIR, 'navigation.worker.js');
 
+await log.setup({
+  handlers: {
+    console: new log.handlers.ConsoleHandler('DEBUG', {
+      formatter: (rec) => {
+        const timestamp = rec.datetime.toISOString();
+        return `${timestamp} ${rec.levelName.padEnd(7)} ${rec.msg}`;
+      }
+    }),
+  },
+  loggers: {
+    default: {
+      level: 'DEBUG',
+      handlers: ['console'],
+    },
+  },
+});
+
 export async function serve(options) {
-  const app = servest.createApp();
+  const app = servest.createApp({
+    logger: logBridge_,
+  });
 
   app.ws('/api/debcon', async (socket) => {
     for await (const data of socket) {
@@ -21,6 +40,23 @@ export async function serve(options) {
   app.use(servest.serveStatic(options.root));
 
   await app.listen({ port: options.port });
+}
+
+function logBridge_(level, msg, ...args) {
+  switch (level) {
+  case servest.Loglevel.DEBUG:
+    log.debug(msg, ...args);
+    break;
+  case servest.Loglevel.INFO:
+    log.info(msg, ...args);
+    break;
+  case servest.Loglevel.WARN:
+    log.warning(msg, ...args);
+    break;
+  case servest.Loglevel.ERROR:
+    log.error(msg, ...args);
+    break;
+  }
 }
 
 async function handleJson_(socket, json, options) {
@@ -83,12 +119,12 @@ async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBu
       socket.send(JSON.stringify({ type: 'navigation.end' }));
       break;
     default:
-      console.debug(data);
+      log.debug(data);
       break;
     }
   };
   worker.onerror = (err) => {
-    console.error(`Navigation worker failed: ${err}`);
+    log.error(`Navigation worker failed: ${err}`);
   };
   worker.postMessage({ uri, width, height, layouter });
 
