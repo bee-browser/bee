@@ -2,7 +2,7 @@
 
 import { log, path, servest } from '../deps.js';
 import { PROJ_DIR, RESOURCES_DIR } from './consts.js';
-import { scrape } from './dom_scraper.js';
+import { scrape } from './chrome_devtools.js';
 import { LayoutBuilder } from './layout_builder.js';
 
 const NAVIGATION_JS = path.join(RESOURCES_DIR, 'navigation.worker.js');
