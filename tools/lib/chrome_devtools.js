@@ -24,17 +24,7 @@ const TRANSFER_DATA_SCRIPT = await Deno.readTextFile(
   path.join(RESOURCES_DIR, 'dom_scraper', 'transfer_data.js'));
 
 export async function scrape(url, options) {
-  let opts = {
-    executablePath: options.executable || DEFAULT_EXECUTABLE,
-    devtools: options.debug || false,
-    dumpio: options.logging || false,
-  };
-
-  if (!options.sandbox) {
-    opts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
-  }
-
-  const browser = await puppeteer.launch(opts);
+  const browser = await launch_puppeteer(options);
   try {
     const page = await browser.newPage();
     await page.setViewport(options.viewport);
@@ -52,6 +42,46 @@ export async function scrape(url, options) {
       await browser.close();
     }
   }
+}
+
+export async function tracing(url, options) {
+  const browser = await launch_puppeteer(options);
+  // tracing.stop() returns a promise which resolves to buffer with trace data, but it does NOT
+  // contain meaningful data actually.  We use a temporal file as a trace file.
+  const trace = await Deno.makeTempFile();
+  try {
+    const page = await browser.newPage();
+    await page.setViewport(options.viewport);
+    await page.tracing.start({
+      path: trace,
+      screenshots: true,
+    });
+    await page.goto(url);
+    await page.tracing.stop();
+    return await Deno.readTextFile(trace);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await Deno.remove(trace);
+    if (browser.isConnected()) {
+      // In Puppeteer 5.5.0, `browser.close()` hangs if the browser has already disconnected.
+      await browser.close();
+    }
+  }
+}
+
+async function launch_puppeteer(options) {
+  let opts = {
+    executablePath: options.executable || DEFAULT_EXECUTABLE,
+    devtools: options.debug || false,
+    dumpio: options.logging || false,
+  };
+
+  if (!options.sandbox) {
+    opts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
+  }
+
+  return await puppeteer.launch(opts);
 }
 
 async function scrapeDom(page, options) {
