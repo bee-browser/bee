@@ -1,6 +1,7 @@
 'use strict';
 
-import { path, puppeteer, } from '../deps.js';
+import * as path from 'std/path/mod.ts';
+import { default as puppeteer } from 'puppeteer';
 import { RESOURCES_DIR, } from './consts.js';
 
 const DEFAULT_LINUX_EXECUTABLE = '/opt/google/chrome/google-chrome';

@@ -1,6 +1,6 @@
 'use strict';
 
-import { path } from '../deps.js';
+import * as path from 'std/path/mod.ts';
 import { parseCommand, runCommand } from '../lib/cli.js';
 
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));

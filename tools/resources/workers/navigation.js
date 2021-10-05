@@ -1,11 +1,14 @@
 'use strict';
 
-import { io, path } from '../deps.js';
-import { PROJ_DIR, TOOLS_DIR } from '../lib/consts.js';
+// The import map is NOT applied to workers:
+// https://github.com/denoland/deno/issues/6675
+import * as io from 'https://deno.land/std@0.110.0/io/mod.ts';
+import * as path from 'https://deno.land/std@0.110.0/path/mod.ts';
 
-let TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'bee-tools-text-to-dot-matrix');
-let DOM_SCRAPER = path.join(TOOLS_DIR, 'bin', 'bee-tools-dom-scraper');
-let LAYOUT_BUILDER = path.join(TOOLS_DIR, 'bin', 'bee-tools-layout-builder');
+const TOOLS_DIR = path.resolve(path.dirname(path.fromFileUrl(import.meta.url)), '..', '..');
+const TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'bee-tools-text-to-dot-matrix');
+const DOM_SCRAPER = path.join(TOOLS_DIR, 'bin', 'bee-tools-dom-scraper');
+const LAYOUT_BUILDER = path.join(TOOLS_DIR, 'bin', 'bee-tools-layout-builder');
 
 self.onmessage = async ({ data }) => {
   try {

@@ -1,2 +1,4 @@
 #!/bin/sh
-deno run -A --unstable $BEE_TOOLS_DENO_OPTIONS $0.js $@
+PROGNAME=$(basename $0)
+BASEDIR=$(cd $(dirname $0); pwd)
+sh $BASEDIR/deno.sh $BASEDIR/$PROGNAME.js "$@"

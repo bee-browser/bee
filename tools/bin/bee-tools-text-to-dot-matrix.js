@@ -1,6 +1,7 @@
 'use strict';
 
-import { path, Handlebars } from '../deps.js';
+import * as path from 'std/path/mod.ts';
+import { default as Handlebars } from 'handlebars';
 import { RESOURCES_DIR } from '../lib/consts.js';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { DOT_MATRIX_FONT } from '../resources/dot_matrix/font.js';
