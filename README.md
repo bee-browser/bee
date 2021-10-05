@@ -3,7 +3,7 @@
 > Browser Engine for Embedding
 
 [![ci-status](https://github.com/bee-browser/prototype/workflows/CI/badge.svg)](https://github.com/bee-browser/prototype/actions?workflow=CI)
-[![codecov](https://codecov.io/gh/bee-browser/prototype/branch/master/graph/badge.svg?token=ZU1I8W30M9)](https://codecov.io/gh/bee-browser/prototype)
+[![codecov](https://codecov.io/gh/bee-browser/prototype/branch/main/graph/badge.svg?token=ZU1I8W30M9)](https://codecov.io/gh/bee-browser/prototype)
 
 ## What's BEE?
 
