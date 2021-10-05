@@ -1,6 +1,8 @@
 'use strict';
 
-import { Handlebars, fs, path } from '../deps.js';
+import * as fs from 'std/fs/mod.ts';
+import * as path from 'std/path/mod.ts';
+import { default as Handlebars } from 'handlebars';
 import { parseCommand, readAllText } from '../lib/cli.js';
 
 const PROGNAME = path.basename(Deno.mainModule);

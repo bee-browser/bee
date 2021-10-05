@@ -1,7 +1,5 @@
-import {
-  changeCase,
-  docopt,
-} from '../deps.js';
+import * as changeCase from 'case';
+import { default as docopt } from 'docopt';
 
 export async function parseCommand({ doc, conv, init }) {
   try {

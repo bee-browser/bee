@@ -1,12 +1,9 @@
 'use strict';
 
-import {
-  changeCase,
-  docopt,
-  path,
-  puppeteer,
-} from '../deps.js';
-
+import * as path from 'std/path/mod.ts';
+import * as changeCase from 'case';
+import { default as docopt } from 'docopt';
+import { default as puppeteer } from 'puppeteer';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { LayoutBuilder } from '../lib/layout_builder.js';
 

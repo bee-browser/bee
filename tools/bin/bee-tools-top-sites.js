@@ -1,6 +1,7 @@
 'use strict';
 
-import { base64, path } from '../deps.js';
+import * as path from 'std/path/mod.ts';
+import * as base64 from 'base64';
 import { parseCommand } from '../lib/cli.js';
 import * as top_sites from '../lib/top_sites.js';
 

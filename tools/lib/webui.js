@@ -1,11 +1,13 @@
 'use strict';
 
-import { log, path, servest } from '../deps.js';
-import { PROJ_DIR, RESOURCES_DIR } from './consts.js';
+import * as log from 'std/log/mod.ts';
+import * as path from 'std/path/mod.ts';
+import * as servest from 'servest';
+import { PROJ_DIR, WORKERS_DIR } from './consts.js';
 import { scrape } from './chrome_devtools.js';
 import { LayoutBuilder } from './layout_builder.js';
 
-const NAVIGATION_JS = path.join(RESOURCES_DIR, 'navigation.worker.js');
+const NAVIGATION_JS = path.join(WORKERS_DIR, 'navigation.js');
 
 await log.setup({
   handlers: {
