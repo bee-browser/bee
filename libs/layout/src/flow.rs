@@ -12,8 +12,10 @@ use crate::LayoutElement;
 use crate::LayoutText;
 use crate::SolvedBoxGeometry;
 use crate::ToVisual;
+use crate::LayoutBox2D;
 use crate::LayoutVector2D;
 use crate::VisualRenderer;
+use crate::canvas::CanvasContainer;
 use crate::flex::FlexContainer;
 use crate::spec::*;
 use crate::style::*;
@@ -240,7 +242,7 @@ impl Block {
 
         let v = self.box_model.content_box().min.to_visual().to_vector();
         renderer.set_origin(origin + v);
-        self.content.render_blocks(renderer);
+        self.content.render(renderer, self.box_model.content_box());
 
         renderer.set_origin(origin);
     }
@@ -253,9 +255,11 @@ impl std::fmt::Display for Block {
 }
 
 enum BlockContent {
+    None,
     Block(BlockContainer),
     Flow(FlowContainer),
     Flex(FlexContainer),
+    Canvas(CanvasContainer),
 }
 
 impl BlockContent {
@@ -266,10 +270,12 @@ impl BlockContent {
         avail: &AvailableSize,
     ) -> Self {
         match spec {
-            ContainerSpec::Flow => BlockContent::Flow(FlowContainer::new(nodes, avail)),
-            ContainerSpec::Block => BlockContent::Block(BlockContainer::new(nodes, avail)),
-            ContainerSpec::Flex => BlockContent::Flex(FlexContainer::new(nodes, style, avail)),
-            _ => unreachable!(),
+            ContainerSpec::None => Self::None,
+            ContainerSpec::Flow => Self::Flow(FlowContainer::new(nodes, avail)),
+            ContainerSpec::Block => Self::Block(BlockContainer::new(nodes, avail)),
+            ContainerSpec::Flex => Self::Flex(FlexContainer::new(nodes, style, avail)),
+            ContainerSpec::Canvas => Self::Canvas(CanvasContainer::new(style)),
+            spec => unreachable!(format!("{:?}", spec)),
         }
     }
 
@@ -278,20 +284,24 @@ impl BlockContent {
         W: std::io::Write + ?Sized,
     {
         match self {
-            BlockContent::Block(ref block) => block.inspect(write, depth),
-            BlockContent::Flow(ref flow) => flow.inspect(write, depth),
-            BlockContent::Flex(ref flex) => flex.inspect(write, depth),
+            Self::None => write!(write, "{:indent$}none\n", "", indent=depth),
+            Self::Block(ref block) => block.inspect(write, depth),
+            Self::Flow(ref flow) => flow.inspect(write, depth),
+            Self::Flex(ref flex) => flex.inspect(write, depth),
+            Self::Canvas(ref canvas) => canvas.inspect(write, depth),
         }
     }
 
-    fn render_blocks<R>(&self, renderer: &mut R)
+    fn render<R>(&self, renderer: &mut R, content_box: &LayoutBox2D)
     where
         R: VisualRenderer,
     {
         match self {
-            BlockContent::Block(ref block) => block.render_blocks(renderer),
-            BlockContent::Flow(ref flow) => flow.render(renderer),
-            BlockContent::Flex(ref flex) => flex.render(renderer),
+            Self::None => (),
+            Self::Block(ref block) => block.render_blocks(renderer),
+            Self::Flow(ref flow) => flow.render(renderer),
+            Self::Flex(ref flex) => flex.render(renderer),
+            Self::Canvas(ref canvas) => canvas.render(renderer, content_box),
         }
     }
 }

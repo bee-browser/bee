@@ -145,6 +145,13 @@ where
             border: model.border,
         });
     }
+
+    fn render_asset(&mut self, asset_id: u64, content_box: VisualBox2D) {
+        self.send(RenderMessage::RenderAsset {
+            asset_id,
+            rect: content_box.translate(self.origin).into(),
+        });
+    }
 }
 
 #[derive(Serialize)]
@@ -164,6 +171,11 @@ enum RenderMessage {
         #[serde(skip_serializing_if = "has_no_visible_border")]
         border: BoxQuad<Option<VisualBorder>>,
     },
+    #[serde(rename = "render.render_asset")]
+    RenderAsset {
+        asset_id: u64,
+        rect: VisualRect,
+    }
 }
 
 fn has_no_visible_border(border: &BoxQuad<Option<VisualBorder>>) -> bool {

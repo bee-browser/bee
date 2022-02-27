@@ -19,9 +19,6 @@ Options:
   -p, --port=<port>  [default: ${DEFAULT_PORT}]
     Port to be listened.
 
-  --logging
-    Enable logging.
-
   --debug-build
     Use debug-build binaries.
 `.trim();

@@ -9,7 +9,8 @@ class Scraper {
 
   constructor(document) {
     this.document_ = document;
-    this.resources_ = {};
+    this.assets_ = {};
+    this.assetUrlMap_ = {};
   }
 
   async scrape() {
@@ -21,7 +22,7 @@ class Scraper {
 
     return {
       document,
-      resources: this.resources_,
+      assets: this.assets_,
       viewport: {
         width: window.innerWidth,
         height: window.innerHeight,
@@ -47,7 +48,7 @@ class Scraper {
     const id = Scraper.getNextNodeId_();
     const style = this.scrapeComputedStyle_(element);
 
-    await this.collectResources_(element, style);
+    await this.collectAssets_(element, style);
 
     let childNodes = [];
     childNodes.push(await this.scrapePseudoElement_(element, '::before'));
@@ -81,7 +82,7 @@ class Scraper {
       return null;
     }
 
-    await this.collectResources_(null, style);
+    await this.collectAssets_(null, style);
 
     return {
       type: 'dom.pseudo_element',
@@ -140,19 +141,67 @@ class Scraper {
     };
   }
 
-  async collectResources_(element, style) {
+  async collectAssets_(element, style) {
     switch (element?.tagName) {
     case 'IMG':
-      const id = Scraper.getNextResourceId_();
-      this.resources_[id] = {
-        id,
-        type: 'image',
-        source: `url("#{element.currentSrc}")`,
-        dataUrl: Scraper.convertImageToDataUrl_(element),
-        naturalWidth: element.naturalWidth,
-        naturalHeight: element.naturalHeight,
-      };
-      style['-bee-content'] = id;
+      {
+        let url = element.currentSrc;
+        if (url === '') {
+          url = Scraper.convertImageToDataUrl_(element);
+        }
+        let id = this.assetUrlMap_[url];
+        if (id === undefined) {
+          id = Scraper.getNextAssetId_();
+          this.assets_[id] = {
+            id,
+            url,
+            type: 'image',
+            width: element.naturalWidth,
+            height: element.naturalHeight,
+          };
+          this.assetUrlMap_[url] = id;
+        }
+        style['-bee-content-asset-id'] = id;
+      }
+      break;
+    case 'VIDEO':
+      {
+        const url = element.currentSrc;
+        let id = this.assetUrlMap_[url];
+        if (id === undefined) {
+          id = Scraper.getNextAssetId_();
+          this.assets_[id] = {
+            id,
+            url,
+            type: 'video',
+            width: element.videoWidth,
+            height: element.videoHeight,
+          };
+          this.assetUrlMap_[url] = id;
+        }
+        style['-bee-content-asset-id'] = id;
+      }
+      break;
+    case 'CANVAS':
+      {
+        const url = element.toDataURL('image/png');
+        let id = this.assetUrlMap_[url];
+        if (id === undefined) {
+          id = Scraper.getNextAssetId_();
+          this.assets_[id] = {
+            id,
+            url,
+            type: 'canvas',
+            width: element.width,
+            height: element.height,
+          };
+          this.assetUrlMap_[url] = id;
+        }
+        style['-bee-content-asset-id'] = id;
+      }
+      break;
+    case 'OBJECT':
+      // TODO
       break;
     }
   }
@@ -164,10 +213,10 @@ class Scraper {
     return id;
   }
 
-  static nextResourceId_ = 1;  // unique in the same document
+  static nextAssetId_ = 1;  // unique in the same document
 
-  static getNextResourceId_() {
-    const id = this.nextResourceId_++;
+  static getNextAssetId_() {
+    const id = this.nextAssetId_++;
     return id;
   }
 

@@ -3,7 +3,7 @@ export class LayoutBuilder {
 
   constructor(dom) {
     this.document_ = dom.document;
-    this.resources_ = dom.resources;
+    this.assets_ = dom.assets;
     this.viewport_ = dom.viewport;
     this.instructions_ = [];
   }
@@ -118,6 +118,7 @@ export class LayoutBuilder {
       background: this.buildBackgroundStyle_(style),
       layer: this.buildLayerStyle_(style),
       flex: this.buildFlexStyle_(style),
+      content: this.buildContentStyle_(style),
     };
   }
 
@@ -183,6 +184,10 @@ export class LayoutBuilder {
       inside = 'grid';
     }
 
+    if (style['-bee-content-asset-id']) {
+      inside = 'canvas';
+    }
+
     return { outside, inside };
   }
 
@@ -208,7 +213,7 @@ export class LayoutBuilder {
   buildBackgroundStyle_(style) {
     return {
       color: LayoutBuilder.buildColorValue_(style['background-color']),
-      images: [],
+      images: [],  // TODO
     };
   }
 
@@ -227,7 +232,23 @@ export class LayoutBuilder {
       grow: LayoutBuilder.buildDecimalValue_(style['flex-grow']),
       shrink: LayoutBuilder.buildDecimalValue_(style['flex-shrink']),
       basis: LayoutBuilder.buildLengthValue_(style['flex-basis']),
+    };
+  }
+
+  buildContentStyle_(style) {
+    const id = style['-bee-content-asset-id']
+    if (id === undefined) {
+      return undefined;
     }
+    const asset = this.assets_[id];
+    return {
+      asset: {
+        id,
+        size: {
+          pixel: [asset.width, asset.height],
+        },
+      },
+    };
   }
 
   static buildZIndex_(str) {

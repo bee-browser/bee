@@ -8,6 +8,8 @@ import { scrape } from './chrome_devtools.js';
 import { LayoutBuilder } from './layout_builder.js';
 
 const NAVIGATION_JS = path.join(WORKERS_DIR, 'navigation.js');
+const DEFAULT_VIEWPORT_WIDTH = 1280;
+const DEFAULT_VIEWPORT_HEIGHT = 720;
 
 await log.setup({
   handlers: {
@@ -20,7 +22,7 @@ await log.setup({
   },
   loggers: {
     default: {
-      level: 'DEBUG',
+      level: Deno.env.get('BEE_TOOLS_LOG') ?? 'INFO',
       handlers: ['console'],
     },
   },
@@ -28,7 +30,22 @@ await log.setup({
 
 export async function serve(options) {
   const app = servest.createApp({
-    logger: logBridge_,
+    logger: (level, msg, ...args) => {
+      switch (level) {
+      case servest.Loglevel.DEBUG:
+        log.debug(msg, ...args);
+        break;
+      case servest.Loglevel.INFO:
+        log.info(msg, ...args);
+        break;
+      case servest.Loglevel.WARN:
+        log.warning(msg, ...args);
+        break;
+      case servest.Loglevel.ERROR:
+        log.error(msg, ...args);
+        break;
+      }
+    },
   });
 
   app.ws('/api/debcon', async (socket) => {
@@ -44,23 +61,6 @@ export async function serve(options) {
   await app.listen({ port: options.port });
 }
 
-function logBridge_(level, msg, ...args) {
-  switch (level) {
-  case servest.Loglevel.DEBUG:
-    log.debug(msg, ...args);
-    break;
-  case servest.Loglevel.INFO:
-    log.info(msg, ...args);
-    break;
-  case servest.Loglevel.WARN:
-    log.warning(msg, ...args);
-    break;
-  case servest.Loglevel.ERROR:
-    log.error(msg, ...args);
-    break;
-  }
-}
-
 async function handleJson_(socket, json, options) {
   const msg = JSON.parse(json);
   switch (msg.type) {
@@ -70,20 +70,14 @@ async function handleJson_(socket, json, options) {
 }
 
 async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBuild }) {
+  log.info(`navigation: navigation.go: ${uri}`);
+
   if (!uri) {  // required
     return;
   }
 
-  let width = 1280;
-  let height = 720;
-  if (typeof viewport === 'object') {
-    if ('width' in viewport) {
-      width = viewport.width;
-    }
-    if ('height' in viewport) {
-      height = viewport.height;
-    }
-  }
+  let width = viewport?.width ?? DEFAULT_VIEWPORT_WIDTH;
+  let height = viewport?.height ?? DEFAULT_VIEWPORT_HEIGHT;
 
   if (typeof remotes !== 'object') {
     remotes = {};
@@ -114,11 +108,17 @@ async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBu
   });
   worker.onmessage = async ({ data }) => {
     switch (data.type) {
+    case 'asset':
+      log.debug('navigation: worker: asset message');
+      socket.send(data.data);
+      break;
     case 'render':
+      log.debug('navigation: worker: render message');
       socket.send(data.data);
       break;
     case 'done':
       socket.send(JSON.stringify({ type: 'navigation.end' }));
+      log.info('navigation: navigation.end');
       break;
     default:
       log.debug(data);
@@ -126,9 +126,12 @@ async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBu
     }
   };
   worker.onerror = (err) => {
-    log.error(`Navigation worker failed: ${err}`);
+    log.error(`navigation: worker: ${err}`);
   };
+
+  log.debug('navigation: start worker');
   worker.postMessage({ uri, width, height, layouter });
 
   socket.send(JSON.stringify({ type: 'navigation.start' }));
+  log.info('navigation: navigation.start')
 }

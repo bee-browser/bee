@@ -6,9 +6,14 @@ import Widget from './widget.js';
 export default class Surface extends Widget {
   constructor() {
     super();
+    this.assets_ = {};
     this.boxes_ = [];  // in CSS painting order (back-to-front)
     this.selections_ = [];
     this.boxOutlines_ = {};
+  }
+
+  addAsset(asset) {
+    this.assets_[asset.id] = asset;
   }
 
   start(size) {
@@ -17,7 +22,16 @@ export default class Surface extends Widget {
   }
 
   renderBox({ layout_id, rect, background, border }) {
-    this.append_(new Box(layout_id, rect, background, border));
+    this.append_(new Box(this, layout_id, rect, background, border));
+  }
+
+  renderAsset({ layout_id, asset_id, rect }) {
+    const asset = this.assets_[asset_id];
+    if (asset === undefined) {
+      console.error(`No such asset: ${asset_id}`);
+      return;
+    }
+    this.append_(new Asset(this, layout_id, asset, rect));
   }
 
   end() {
@@ -101,8 +115,9 @@ export default class Surface extends Widget {
 }
 
 class Box extends Widget {
-  constructor(layoutId, rect, background, border) {
+  constructor(surface, layoutId, rect, background, border) {
     super();
+    this.surface_ = surface;
     this.layoutId_ = layoutId;
     this.rect_ = rect;
     this.background_ = background;
@@ -145,6 +160,15 @@ class Box extends Widget {
     if (this.background_) {
       style.backgroundColor = Box.convertColor_(this.background_.color);
       if (this.background_.images) {
+        const images =  this.background_.images.map((image) => {
+          const asset = this.surface_.assets_[image.asset.id];
+          if (asset !== undefined) {
+            return `url(${asset.dataUrl})`;
+          } else {
+            return 'url(data:,)';
+          }
+        });
+        style.backgroundImage = images.join(',');
         // TODO
       }
     }
@@ -158,5 +182,31 @@ class Box extends Widget {
         }
       }
     }
+  }
+}
+
+class Asset extends Box {
+  constructor(surface, layoutId, asset, rect) {
+    super(surface, layoutId, rect);
+    this.asset_ = asset;
+  }
+
+  // Widget
+
+  render() {
+    switch (this.asset_.type) {
+    case 'image':
+    case 'canvas':
+      return this.renderImage_();
+    default:
+      console.error(`Unknown asset type: ${asset.type}`);
+      return;
+    }
+  }
+
+  renderImage_() {
+    this.elem_ = h('img', { 'class': 'asset box', 'src': this.asset_.url });
+    this.renderStyle_(this.elem_.style);
+    return this.elem_;
   }
 }

@@ -1,3 +1,4 @@
+mod canvas;
 mod flex;
 mod flow;
 mod spec;
@@ -409,6 +410,7 @@ pub trait VisualRenderer {
     fn get_origin(&self) -> VisualVector2D;
     fn set_origin(&mut self, origin: VisualVector2D);
     fn render_box(&mut self, model: VisualBoxModel);
+    fn render_asset(&mut self, asset_id: u64, content_box: VisualBox2D);
 }
 
 pub struct VisualBoxModel {
@@ -447,7 +449,7 @@ impl VisualBackground {
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct VisualBackgroundImage {
-    pub media: VisualMedia,
+    pub asset: Asset,
     pub crop_area: VisualBox2D,
     pub tile_size: VisualSize2D,
     pub position: VisualPoint2D,
@@ -513,7 +515,7 @@ struct BoxBackground {
 }
 
 struct BoxBackgroundImage {
-    media: VisualMedia,
+    asset: Asset,
     crop_area: LayoutBox2D,
     tile_size: LayoutSize2D,
     position: LayoutPoint2D,
@@ -553,7 +555,7 @@ impl ToVisual for BoxBackgroundImage {
 
     fn to_visual(&self) -> Self::VisualType {
         VisualBackgroundImage {
-            media: self.media.clone(),
+            asset: self.asset.clone(),
             crop_area: self.crop_area.to_visual(),
             tile_size: self.tile_size.to_visual(),
             position: self.position.to_visual(),

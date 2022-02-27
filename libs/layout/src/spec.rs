@@ -35,6 +35,7 @@ impl Spec {
                 _ => ContainerSpec::Inline,
             }
             DisplayInside::Flex => ContainerSpec::Flex,
+            DisplayInside::Canvas => ContainerSpec::Canvas,
             _ => ContainerSpec::None,
         };
 
@@ -111,4 +112,5 @@ pub(crate) enum ContainerSpec {
     Block,
     Inline,
     Flex,
+    Canvas,
 }
