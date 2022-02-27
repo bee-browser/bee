@@ -275,7 +275,7 @@ impl BlockContent {
             ContainerSpec::Block => Self::Block(BlockContainer::new(nodes, avail)),
             ContainerSpec::Flex => Self::Flex(FlexContainer::new(nodes, style, avail)),
             ContainerSpec::Canvas => Self::Canvas(CanvasContainer::new(style)),
-            spec => unreachable!(format!("{:?}", spec)),
+            spec => unreachable!("{:?}", spec),
         }
     }
 

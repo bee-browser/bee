@@ -4,7 +4,6 @@ use crate::style::*;
 pub(crate) struct Spec {
     pub(crate) node: NodeSpec,
     pub(crate) container: ContainerSpec,
-    pub(crate) anonymous: bool,
 }
 
 impl Spec {
@@ -66,11 +65,6 @@ impl Spec {
     fn determine(&self) -> Self {
         self.clone()
     }
-
-    fn is_paragraph(&self) -> bool {
-        matches!((self.node, self.container, self.anonymous),
-                 (NodeSpec::Block, ContainerSpec::Inline, true))
-    }
 }
 
 impl Default for Spec {
@@ -78,7 +72,6 @@ impl Default for Spec {
         Spec {
             node: NodeSpec::None,
             container: ContainerSpec::None,
-            anonymous: false,
         }
     }
 }

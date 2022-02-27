@@ -81,7 +81,7 @@ impl<'a> FlexLineBuilder<'a> {
     }
 
     fn process_text(&mut self, text: &LayoutText) {
-        warn!("TODO: not implemented");
+        warn!("TODO: not implemented: {}", text);
     }
 
     fn build(mut self) -> Vec<FlexLine> {
@@ -146,7 +146,7 @@ impl<'a> FlexLineBuilder<'a> {
     }
 
     fn reoder_items(items: &mut Vec<FlexItem>) {
-        // TODO
+        warn!("TODO: reorder items: {}", items.len());
     }
 
     fn reverse_lines(&self, lines: &mut Vec<FlexLine>) {
