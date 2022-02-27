@@ -1,12 +1,12 @@
 [package]
 name = "bee-benches"
 version = "0.0.0"
-edition = "2018"
+edition = "2021"
 publish = false
 
 [dev-dependencies]
-criterion = "0.3"
-criterion-cycles-per-byte = "0.1"
+criterion = "0.3.5"
+criterion-cycles-per-byte = "0.1.2"
 
 [[bench]]
 name = "bench"

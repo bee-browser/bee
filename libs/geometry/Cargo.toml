@@ -2,14 +2,14 @@
 name = "bee-geometry"
 version = "0.1.0"
 authors = ["BEE project contributors"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 num-traits = "0.2.14"
-serde = { version = "1.0.118", features = ["derive"], optional = true }
+serde = { version = "1.0.136", features = ["derive"], optional = true }
 
 [dev-dependencies]
-serde_test = "1.0.118"
+serde_test = "1.0.136"
