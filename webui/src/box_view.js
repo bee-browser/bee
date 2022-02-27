@@ -79,11 +79,17 @@ export default class BoxView extends Widget {
 
   handleMessage(msg) {
     switch (msg.type) {
+    case 'asset.add':
+      this.surface_.addAsset(msg.data);
+      break;
     case 'render.start':
       this.surface_.start(msg.data);
       break;
     case 'render.render_box':
       this.surface_.renderBox(msg.data);
+      break;
+    case 'render.render_asset':
+      this.surface_.renderAsset(msg.data);
       break;
     case 'render.end':
       this.surface_.end();

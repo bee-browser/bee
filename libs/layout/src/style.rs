@@ -19,6 +19,7 @@ pub struct Style {
     pub background: BackgroundStyle,
     pub layer: LayerStyle,
     pub flex: FlexStyle,
+    pub content: Option<ContentStyle>,
 }
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -61,7 +62,7 @@ pub enum DisplayInside {
     Table,
     TableRowGroup,
     TableRow,
-    Widget,
+    Canvas,
     Flex,
     Grid,
     Ruby,
@@ -530,7 +531,7 @@ pub struct BackgroundStyle {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 pub struct BackgroundImage {
-    pub media: VisualMedia,
+    pub asset: Asset,
     pub attachment: BackgroundAttachment,
     pub clip: BackgroundClip,
     pub origin: BackgroundOrigin,
@@ -540,28 +541,6 @@ pub struct BackgroundImage {
     pub repeat_y: BackgroundRepeat,
     pub width: BackgroundSize,
     pub height: BackgroundSize,
-}
-
-#[derive(Clone, Default)]
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[cfg_attr(feature = "serde", serde(default))]
-pub struct VisualMedia {
-    // TODO: id
-    pub size: VisualMediaSize,  // natural size is required for computing the box size
-}
-
-#[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-pub enum VisualMediaSize {
-    Pixel(LayoutLength, LayoutLength),
-    Ratio(Decimal, Decimal),
-}
-
-impl Default for VisualMediaSize {
-    fn default() -> Self {
-        VisualMediaSize::Pixel(LayoutLength::new(300.0), LayoutLength::new(150.0))
-    }
 }
 
 #[derive(Clone)]
@@ -837,6 +816,35 @@ pub enum AlignContent {
 impl Default for AlignContent {
     fn default() -> Self {
         AlignContent::Stretch
+    }
+}
+
+#[derive(Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
+pub struct ContentStyle {
+    pub asset: Asset,
+}
+
+#[derive(Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(default))]
+pub struct Asset {
+    pub id: u64,
+    pub size: AssetSize,  // natural size is required for computing the box size
+}
+
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
+pub enum AssetSize {
+    Pixel(LayoutLength, LayoutLength),
+    Ratio(Decimal, Decimal),
+}
+
+impl Default for AssetSize {
+    fn default() -> Self {
+        Self::Pixel(LayoutLength::new(300.0), LayoutLength::new(150.0))
     }
 }
 
