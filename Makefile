@@ -40,6 +40,7 @@ TESTGEN_TARGETS = $(addprefix testgen-,\
 )
 
 COVERAGE_TEST_ENV_VARS = \
+  RUSTC_BOOTSTRAP=1 \
   CARGO_INCREMENTAL=0 \
   RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort" \
   RUSTDOCFLAGS="-Cpanic=abort"
@@ -81,7 +82,7 @@ debug-test: testgen
 
 .PHONY: coverage-test
 coverage-test: testgen
-	env $(COVERAGE_TEST_ENV_VARS) cargo +nightly test --all-features --no-fail-fast
+	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features --no-fail-fast
 
 .PHONY: coverage-lcov
 coverage-lcov: coverage-test install-grcov | $(PROJDIR)/target/coverage
