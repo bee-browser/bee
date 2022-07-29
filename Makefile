@@ -105,8 +105,9 @@ codegen: $(CODEGEN_TARGETS)
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
 
-.PHONY: tools-update-deps
-tools-update-deps:
+.PHONY: update-deps
+update-deps:
+	@cargo upgrade --to-lockfile
 	@make -C tools update-deps
 
 .PHONY: install-grcov

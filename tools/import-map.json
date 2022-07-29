@@ -8,6 +8,6 @@
     "handlebars": "https://dev.jspm.io/handlebars@latest",
     "base64": "https://denopkg.com/chiefbiiko/base64@v0.2.1/mod.ts",
     "deepmerge": "https://deno.land/x/deepmerge@1.0.3/mod.ts",
-    "zipjs": "https://deno.land/x/zipjs@v2.6.6/index.js"
+    "zipjs": "https://deno.land/x/zipjs@v2.6.7/index.js"
   }
 }
