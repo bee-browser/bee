@@ -1,5 +1,7 @@
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
+export BEE_VENDOR_DIR := $(PROJDIR)/vendor
+export BEE_HTML5LIB_TESTS_DIR := $(BEE_VENDOR_DIR)/html5lib-tests
 export BEE_CARGO_CODEGEN_DIR := $(PROJDIR)/target/codegen
 
 # These are used in the "lldb.launch.sourceMap" property in //.vscode/settings.json.
@@ -35,7 +37,12 @@ CLEAN_TARGETS = $(addprefix clean-,\
   webui \
 )
 
+CODEGEN_TARGETS = $(addprefix codegen-,\
+  libs/htmlparser \
+)
+
 TESTGEN_TARGETS = $(addprefix testgen-,\
+  libs/htmlparser \
   libs/layout \
 )
 
@@ -61,11 +68,11 @@ list:
 	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 .PHONY: build
-build: $(BUILD_TARGETS)
+build: codegen $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: testgen
+test: codegen testgen
 	cargo test --release --all-features
 
 .PHONY: clean
@@ -73,15 +80,15 @@ clean: $(CLEAN_TARGETS)
 	cargo clean
 
 .PHONY: debug-build
-debug-build: $(BUILD_TARGETS)
+debug-build: codegen $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: debug-test
-debug-test: testgen
+debug-test: codegen testgen
 	cargo test --all-features
 
 .PHONY: coverage-test
-coverage-test: testgen
+coverage-test: codegen testgen
 	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features --no-fail-fast
 
 .PHONY: coverage-lcov
@@ -91,6 +98,9 @@ coverage-lcov: coverage-test install-grcov | $(PROJDIR)/target/coverage
 .PHONY: coverage-html
 coverage-html: coverage-test install-grcov | $(PROJDIR)/target/coverage
 	grcov $(GRCOV_COMMON_ARGS) -t html -o $(PROJDIR)/target/coverage
+
+.PHONE: codegen
+codegen: $(CODEGEN_TARGETS)
 
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
@@ -118,6 +128,10 @@ $(BUILD_TARGETS):
 .PHONY: $(TESTGEN_TARGETS)
 $(TESTGEN_TARGETS):
 	@make -C $(subst testgen-,,$@) testgen
+
+.PHONY: $(CODEGEN_TARGETS)
+$(CODEGEN_TARGETS):
+	@make -C $(subst codegen-,,$@) codegen
 
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):

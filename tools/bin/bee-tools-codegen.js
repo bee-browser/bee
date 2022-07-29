@@ -2,6 +2,7 @@
 
 import * as fs from 'std/fs/mod.ts';
 import * as path from 'std/path/mod.ts';
+import * as changeCase from 'case';
 import { default as Handlebars } from 'handlebars';
 import { parseCommand, readAllText } from '../lib/cli.js';
 
@@ -25,6 +26,12 @@ Options:
     without the '_'.  For example, \`_partial.html\` template file can be rendered with
     \`{{< partial.html}}\`.
 
+  --input-inline
+    A JSON string as the input object is specified in the command line.
+
+  --input-stdin
+    Read a JSON string as the input object from STDIN.
+
   --deps <target>
     Print a Makefile which contains dependencies of the <target>.
 
@@ -33,8 +40,7 @@ Arguments:
     The path to the template file to use.
 
   <input>
-    The JSON string used as the input object for the template function compiled from the template
-    file.  Read a JSON string from STDIN if '-' is specified in the <input>.
+    A data source of the input object.
 
 Description:
   This command processes the template function in the strict mode and stops the processing if
@@ -44,6 +50,11 @@ Custom @data:
   @command
     The command that generated the source file.  The JSON string of the input object is not
     included if it's read from STDIN.
+
+Helpers:
+  * https://deno.land/x/case/mod.ts
+  * escapeForRust
+  * escapeUnicodeForRust
 `.trim();
 
 const { options, args } = await parseCommand({
@@ -54,11 +65,50 @@ Deno.exit(await run(args, options));
 
 async function run(args, options) {
   const src = await Deno.readTextFile(args.template);
-  const input = await loadJson(args.input);
+  const input = await loadJson(args.input, options);
+  registerHelpers();
   if (options.deps) {
     return await depsgen(src, input, options);
   }
   await codegen(src, input, options);
+}
+
+function registerHelpers() {
+  for (var name in changeCase) {
+    Handlebars.registerHelper(name, changeCase[name]);
+  }
+
+  Handlebars.registerHelper("escapeForRust", (str) => {
+    const CHARMAP = {
+      '\0': '\\0',
+      '\r': '\\r',
+      '\\': '\\\\',
+      "'": "\\'",
+      '"': '\\"',
+    };
+    let escaped = '';
+    for (let i = 0; i < str.length; ++i) {
+      const ch = str[i];
+      if (ch in CHARMAP) {
+        escaped += CHARMAP[ch];
+      } else {
+        escaped += ch;
+      }
+    }
+    return escaped;
+  });
+
+  Handlebars.registerHelper("escapeUnicodeForRust", (str) => {
+    let escaped = '';
+    let i = 0;
+    while (i < str.length) {
+      const cp = str.codePointAt(i);
+      const hex = cp.toString(16).toUpperCase();
+      escaped += `\\u{${hex}}`;
+      i += String.fromCodePoint(cp).length;
+    }
+    return escaped;
+  });
 }
 
 async function codegen(src, input, options) {
@@ -110,10 +160,13 @@ async function loadJson(input, options) {
   if (!input) {
     return {};
   }
-  if (input === '-') {
+  if (options.inputStdin) {
     return JSON.parse(await readAllText(Deno.stdin));
   }
-  return JSON.parse(input);
+  if (options.inputInline) {
+    return JSON.parse(input);
+  }
+  return JSON.parse(await Deno.readTextFile(input));
 }
 
 async function loadPartials(dir, register) {

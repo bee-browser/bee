@@ -1,0 +1,455 @@
+{
+  "tests": [
+    {
+      "description": "PLAINTEXT content model flag",
+      "initialStates": [
+        "Plaintext"
+      ],
+      "lastStartTag": "plaintext",
+      "input": [
+        60,
+        104,
+        101,
+        97,
+        100,
+        62,
+        38,
+        98,
+        111,
+        100,
+        121,
+        59
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "<head>&body;"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "PLAINTEXT with seeming close tag",
+      "initialStates": [
+        "Plaintext"
+      ],
+      "lastStartTag": "plaintext",
+      "input": [
+        60,
+        47,
+        112,
+        108,
+        97,
+        105,
+        110,
+        116,
+        101,
+        120,
+        116,
+        62,
+        38,
+        98,
+        111,
+        100,
+        121,
+        59
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "</plaintext>&body;"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "End tag closing RCDATA or RAWTEXT",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        102,
+        111,
+        111,
+        60,
+        47,
+        120,
+        109,
+        112,
+        62
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "foo"
+          }
+        },
+        {
+          "EndTag": {
+            "name": "xmp"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "End tag closing RCDATA or RAWTEXT (case-insensitivity)",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        102,
+        111,
+        111,
+        60,
+        47,
+        120,
+        77,
+        112,
+        62
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "foo"
+          }
+        },
+        {
+          "EndTag": {
+            "name": "xmp"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "End tag closing RCDATA or RAWTEXT (ending with space)",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        102,
+        111,
+        111,
+        60,
+        47,
+        120,
+        109,
+        112,
+        32
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "foo"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "EofInTag",
+          "location": {
+            "line": 1,
+            "column": 10
+          }
+        }
+      ]
+    },
+    {
+      "description": "End tag closing RCDATA or RAWTEXT (ending with EOF)",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        102,
+        111,
+        111,
+        60,
+        47,
+        120,
+        109,
+        112
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "foo</xmp"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "End tag closing RCDATA or RAWTEXT (ending with slash)",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        102,
+        111,
+        111,
+        60,
+        47,
+        120,
+        109,
+        112,
+        47
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "foo"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "EofInTag",
+          "location": {
+            "line": 1,
+            "column": 10
+          }
+        }
+      ]
+    },
+    {
+      "description": "End tag not closing RCDATA or RAWTEXT (ending with left-angle-bracket)",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        102,
+        111,
+        111,
+        60,
+        47,
+        120,
+        109,
+        112,
+        60
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "foo</xmp<"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "End tag with incorrect name in RCDATA or RAWTEXT",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        60,
+        47,
+        102,
+        111,
+        111,
+        62,
+        98,
+        97,
+        114,
+        60,
+        47,
+        120,
+        109,
+        112,
+        62
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "</foo>bar"
+          }
+        },
+        {
+          "EndTag": {
+            "name": "xmp"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "Partial end tags leading straight into partial end tags",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        60,
+        47,
+        120,
+        109,
+        112,
+        60,
+        47,
+        120,
+        109,
+        112,
+        60,
+        47,
+        120,
+        109,
+        112,
+        62
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "</xmp</xmp"
+          }
+        },
+        {
+          "EndTag": {
+            "name": "xmp"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "End tag with incorrect name in RCDATA or RAWTEXT (starting like correct name)",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        60,
+        47,
+        102,
+        111,
+        111,
+        62,
+        98,
+        97,
+        114,
+        60,
+        47,
+        120,
+        109,
+        112,
+        97,
+        97,
+        114,
+        62
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "</foo>bar</xmpaar>"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "End tag closing RCDATA or RAWTEXT, switching back to PCDATA",
+      "initialStates": [
+        "Rcdata",
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        102,
+        111,
+        111,
+        60,
+        47,
+        120,
+        109,
+        112,
+        62,
+        60,
+        47,
+        98,
+        97,
+        122,
+        62
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "foo"
+          }
+        },
+        {
+          "EndTag": {
+            "name": "xmp"
+          }
+        },
+        {
+          "EndTag": {
+            "name": "baz"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "RAWTEXT w/ something looking like an entity",
+      "initialStates": [
+        "Rawtext"
+      ],
+      "lastStartTag": "xmp",
+      "input": [
+        38,
+        102,
+        111,
+        111,
+        59
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "&foo;"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "description": "RCDATA w/ an entity",
+      "initialStates": [
+        "Rcdata"
+      ],
+      "lastStartTag": "textarea",
+      "input": [
+        38,
+        108,
+        116,
+        59
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "<"
+          }
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "name": "contentModelFlags"
+}

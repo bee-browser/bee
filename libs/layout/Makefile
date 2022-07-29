@@ -27,7 +27,7 @@ testgen: $(TESTGEN_DIR)/index.html $(TESTGEN_DIR)/layout_test.rs
 
 $(TESTGEN_DIR)/index.html: $(RESOURCES_DIR)/index.html.hbs $(TESTGEN_DIR)/index.json $(TESTGEN_DIR)/tests.js | $(TESTGEN_DIR)
 	@echo Generating $@...
-	@bee-tools-codegen $< - <$(TESTGEN_DIR)/index.json >$@
+	@bee-tools-codegen $< $(TESTGEN_DIR)/index.json >$@
 
 $(TESTGEN_DIR)/index.json: $(LAYOUT_TEST_SRC_FILES) | $(TESTGEN_DIR)
 	@echo Generating $@...
@@ -41,7 +41,7 @@ $(TESTGEN_DIR)/tests.js: $(LAYOUT_TEST_JSON_FILES) $(LAYOUT_TEST_HTML_FILES) | $
 
 $(TESTGEN_DIR)/layout_test.rs: $(RESOURCES_DIR)/layout_test.rs.hbs $(TESTGEN_DIR)/layout_test.json $(LAYOUT_TEST_SCENARIO_FILES) | $(TESTGEN_DIR)
 	@echo Generating $@...
-	@bee-tools-codegen $< - <$(TESTGEN_DIR)/layout_test.json >$@
+	@bee-tools-codegen $< $(TESTGEN_DIR)/layout_test.json >$@
 
 $(TESTGEN_DIR)/layout_test.json: $(LAYOUT_TEST_EXPECTED_FILES) | $(TESTGEN_DIR)
 	@echo Generating $@...
@@ -59,7 +59,7 @@ $(TESTGEN_DIR)/%.dom.json: $(TESTGEN_DIR)/%.test.html | $(TESTGEN_DIR)
 .PRECIOUS: $(TESTGEN_DIR)/%.test.html
 $(TESTGEN_DIR)/%.test.html: $(TESTGEN_DIR)/%.test.json $(RESOURCES_DIR)/test.html.hbs | $(TESTGEN_DIR)
 	@echo Generating $@...
-	@bee-tools-codegen $(RESOURCES_DIR)/test.html.hbs - <$< >$@
+	@bee-tools-codegen $(RESOURCES_DIR)/test.html.hbs $< >$@
 
 .PRECIOUS: $(TESTGEN_DIR)/%.test.json
 $(TESTGEN_DIR)/%.test.json: $(TESTGEN_DIR)/%.test.yml | $(TESTGEN_DIR)

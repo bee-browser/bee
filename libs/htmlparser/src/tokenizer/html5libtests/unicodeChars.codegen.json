@@ -1,0 +1,6312 @@
+{
+  "tests": [
+    {
+      "description": "Invalid Unicode character U+0001",
+      "input": [
+        1
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0001"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0002",
+      "input": [
+        2
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0002"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0003",
+      "input": [
+        3
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0003"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0004",
+      "input": [
+        4
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0004"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0005",
+      "input": [
+        5
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0005"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0006",
+      "input": [
+        6
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0006"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0007",
+      "input": [
+        7
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0007"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0008",
+      "input": [
+        8
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\b"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+000B",
+      "input": [
+        11
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u000b"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+000E",
+      "input": [
+        14
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u000e"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+000F",
+      "input": [
+        15
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u000f"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0010",
+      "input": [
+        16
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0010"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0011",
+      "input": [
+        17
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0011"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0012",
+      "input": [
+        18
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0012"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0013",
+      "input": [
+        19
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0013"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0014",
+      "input": [
+        20
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0014"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0015",
+      "input": [
+        21
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0015"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0016",
+      "input": [
+        22
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0016"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0017",
+      "input": [
+        23
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0017"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0018",
+      "input": [
+        24
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0018"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+0019",
+      "input": [
+        25
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u0019"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+001A",
+      "input": [
+        26
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u001a"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+001B",
+      "input": [
+        27
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u001b"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+001C",
+      "input": [
+        28
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u001c"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+001D",
+      "input": [
+        29
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u001d"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+001E",
+      "input": [
+        30
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u001e"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+001F",
+      "input": [
+        31
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\u001f"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+007F",
+      "input": [
+        127
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": ""
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "ControlCharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD0",
+      "input": [
+        64976
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷐"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD1",
+      "input": [
+        64977
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷑"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD2",
+      "input": [
+        64978
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷒"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD3",
+      "input": [
+        64979
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷓"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD4",
+      "input": [
+        64980
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷔"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD5",
+      "input": [
+        64981
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷕"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD6",
+      "input": [
+        64982
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷖"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD7",
+      "input": [
+        64983
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷗"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD8",
+      "input": [
+        64984
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷘"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDD9",
+      "input": [
+        64985
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷙"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDDA",
+      "input": [
+        64986
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷚"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDDB",
+      "input": [
+        64987
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷛"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDDC",
+      "input": [
+        64988
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷜"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDDD",
+      "input": [
+        64989
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷝"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDDE",
+      "input": [
+        64990
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷞"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDDF",
+      "input": [
+        64991
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷟"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE0",
+      "input": [
+        64992
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷠"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE1",
+      "input": [
+        64993
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷡"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE2",
+      "input": [
+        64994
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷢"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE3",
+      "input": [
+        64995
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷣"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE4",
+      "input": [
+        64996
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷤"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE5",
+      "input": [
+        64997
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷥"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE6",
+      "input": [
+        64998
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷦"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE7",
+      "input": [
+        64999
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷧"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE8",
+      "input": [
+        65000
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷨"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDE9",
+      "input": [
+        65001
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷩"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDEA",
+      "input": [
+        65002
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷪"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDEB",
+      "input": [
+        65003
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷫"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDEC",
+      "input": [
+        65004
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷬"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDED",
+      "input": [
+        65005
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷭"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDEE",
+      "input": [
+        65006
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷮"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FDEF",
+      "input": [
+        65007
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷯"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FFFE",
+      "input": [
+        65534
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "￾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FFFF",
+      "input": [
+        65535
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "￿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+1FFFE",
+      "input": [
+        55359,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "🿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+1FFFF",
+      "input": [
+        55359,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "🿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+2FFFE",
+      "input": [
+        55423,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𯿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+2FFFF",
+      "input": [
+        55423,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𯿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+3FFFE",
+      "input": [
+        55487,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𿿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+3FFFF",
+      "input": [
+        55487,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𿿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+4FFFE",
+      "input": [
+        55551,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񏿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+4FFFF",
+      "input": [
+        55551,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񏿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+5FFFE",
+      "input": [
+        55615,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񟿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+5FFFF",
+      "input": [
+        55615,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񟿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+6FFFE",
+      "input": [
+        55679,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񯿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+6FFFF",
+      "input": [
+        55679,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񯿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+7FFFE",
+      "input": [
+        55743,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񿿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+7FFFF",
+      "input": [
+        55743,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񿿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+8FFFE",
+      "input": [
+        55807,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򏿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+8FFFF",
+      "input": [
+        55807,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򏿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+9FFFE",
+      "input": [
+        55871,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򟿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+9FFFF",
+      "input": [
+        55871,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򟿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+AFFFE",
+      "input": [
+        55935,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򯿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+AFFFF",
+      "input": [
+        55935,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򯿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+BFFFE",
+      "input": [
+        55999,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򿿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+BFFFF",
+      "input": [
+        55999,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򿿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+CFFFE",
+      "input": [
+        56063,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󏿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+CFFFF",
+      "input": [
+        56063,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󏿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+DFFFE",
+      "input": [
+        56127,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󟿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+DFFFF",
+      "input": [
+        56127,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󟿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+EFFFE",
+      "input": [
+        56191,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󯿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+EFFFF",
+      "input": [
+        56191,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󯿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FFFFE",
+      "input": [
+        56255,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󿿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+FFFFF",
+      "input": [
+        56255,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󿿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+10FFFE",
+      "input": [
+        56319,
+        57342
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "􏿾"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Invalid Unicode character U+10FFFF",
+      "input": [
+        56319,
+        57343
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "􏿿"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "NoncharacterInInputStream",
+          "location": {
+            "line": 1,
+            "column": 1
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ]
+    },
+    {
+      "description": "Valid Unicode character U+0009",
+      "input": [
+        9
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\t"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+000A",
+      "input": [
+        10
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\n"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0020",
+      "input": [
+        32
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": " "
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0021",
+      "input": [
+        33
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "!"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0022",
+      "input": [
+        34
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\""
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0023",
+      "input": [
+        35
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "#"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0024",
+      "input": [
+        36
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "$"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0025",
+      "input": [
+        37
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "%"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0026",
+      "input": [
+        38
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "&"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0027",
+      "input": [
+        39
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "'"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0028",
+      "input": [
+        40
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "("
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0029",
+      "input": [
+        41
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": ")"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+002A",
+      "input": [
+        42
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "*"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+002B",
+      "input": [
+        43
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "+"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+002C",
+      "input": [
+        44
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": ","
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+002D",
+      "input": [
+        45
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "-"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+002E",
+      "input": [
+        46
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "."
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+002F",
+      "input": [
+        47
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "/"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0030",
+      "input": [
+        48
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "0"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0031",
+      "input": [
+        49
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "1"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0032",
+      "input": [
+        50
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "2"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0033",
+      "input": [
+        51
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "3"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0034",
+      "input": [
+        52
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "4"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0035",
+      "input": [
+        53
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "5"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0036",
+      "input": [
+        54
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "6"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0037",
+      "input": [
+        55
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "7"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0038",
+      "input": [
+        56
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "8"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0039",
+      "input": [
+        57
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "9"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+003A",
+      "input": [
+        58
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": ":"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+003B",
+      "input": [
+        59
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": ";"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+003D",
+      "input": [
+        61
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "="
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+003E",
+      "input": [
+        62
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": ">"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+003F",
+      "input": [
+        63
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "?"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0040",
+      "input": [
+        64
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "@"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0041",
+      "input": [
+        65
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "A"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0042",
+      "input": [
+        66
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "B"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0043",
+      "input": [
+        67
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "C"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0044",
+      "input": [
+        68
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "D"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0045",
+      "input": [
+        69
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "E"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0046",
+      "input": [
+        70
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "F"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0047",
+      "input": [
+        71
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "G"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0048",
+      "input": [
+        72
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "H"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0049",
+      "input": [
+        73
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "I"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+004A",
+      "input": [
+        74
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "J"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+004B",
+      "input": [
+        75
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "K"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+004C",
+      "input": [
+        76
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "L"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+004D",
+      "input": [
+        77
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "M"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+004E",
+      "input": [
+        78
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "N"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+004F",
+      "input": [
+        79
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "O"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0050",
+      "input": [
+        80
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "P"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0051",
+      "input": [
+        81
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Q"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0052",
+      "input": [
+        82
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "R"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0053",
+      "input": [
+        83
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "S"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0054",
+      "input": [
+        84
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "T"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0055",
+      "input": [
+        85
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "U"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0056",
+      "input": [
+        86
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "V"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0057",
+      "input": [
+        87
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "W"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0058",
+      "input": [
+        88
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "X"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0059",
+      "input": [
+        89
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Y"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+005A",
+      "input": [
+        90
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Z"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+005B",
+      "input": [
+        91
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "["
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+005C",
+      "input": [
+        92
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "\\"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+005D",
+      "input": [
+        93
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "]"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+005E",
+      "input": [
+        94
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "^"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+005F",
+      "input": [
+        95
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "_"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0060",
+      "input": [
+        96
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "`"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0061",
+      "input": [
+        97
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "a"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0062",
+      "input": [
+        98
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "b"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0063",
+      "input": [
+        99
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "c"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0064",
+      "input": [
+        100
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "d"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0065",
+      "input": [
+        101
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "e"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0066",
+      "input": [
+        102
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "f"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0067",
+      "input": [
+        103
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "g"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0068",
+      "input": [
+        104
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "h"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0069",
+      "input": [
+        105
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "i"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+006A",
+      "input": [
+        106
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "j"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+006B",
+      "input": [
+        107
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "k"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+006C",
+      "input": [
+        108
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "l"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+006D",
+      "input": [
+        109
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "m"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+006E",
+      "input": [
+        110
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "n"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+006F",
+      "input": [
+        111
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "o"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0070",
+      "input": [
+        112
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "p"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0071",
+      "input": [
+        113
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "q"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0072",
+      "input": [
+        114
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "r"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0073",
+      "input": [
+        115
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "s"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0074",
+      "input": [
+        116
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "t"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0075",
+      "input": [
+        117
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "u"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0076",
+      "input": [
+        118
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "v"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0077",
+      "input": [
+        119
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "w"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0078",
+      "input": [
+        120
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "x"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+0079",
+      "input": [
+        121
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "y"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+007A",
+      "input": [
+        122
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "z"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+007B",
+      "input": [
+        123
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "{"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+007C",
+      "input": [
+        124
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "|"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+007D",
+      "input": [
+        125
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "}"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+007E",
+      "input": [
+        126
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "~"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A0",
+      "input": [
+        160
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": " "
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A1",
+      "input": [
+        161
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¡"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A2",
+      "input": [
+        162
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¢"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A3",
+      "input": [
+        163
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "£"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A4",
+      "input": [
+        164
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¤"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A5",
+      "input": [
+        165
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¥"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A6",
+      "input": [
+        166
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¦"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A7",
+      "input": [
+        167
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "§"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A8",
+      "input": [
+        168
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¨"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00A9",
+      "input": [
+        169
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "©"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00AA",
+      "input": [
+        170
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ª"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00AB",
+      "input": [
+        171
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "«"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00AC",
+      "input": [
+        172
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¬"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00AD",
+      "input": [
+        173
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "­"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00AE",
+      "input": [
+        174
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "®"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00AF",
+      "input": [
+        175
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¯"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B0",
+      "input": [
+        176
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "°"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B1",
+      "input": [
+        177
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "±"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B2",
+      "input": [
+        178
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "²"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B3",
+      "input": [
+        179
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "³"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B4",
+      "input": [
+        180
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "´"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B5",
+      "input": [
+        181
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "µ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B6",
+      "input": [
+        182
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¶"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B7",
+      "input": [
+        183
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "·"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B8",
+      "input": [
+        184
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¸"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00B9",
+      "input": [
+        185
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¹"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00BA",
+      "input": [
+        186
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "º"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00BB",
+      "input": [
+        187
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "»"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00BC",
+      "input": [
+        188
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¼"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00BD",
+      "input": [
+        189
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "½"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00BE",
+      "input": [
+        190
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¾"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00BF",
+      "input": [
+        191
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "¿"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C0",
+      "input": [
+        192
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "À"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C1",
+      "input": [
+        193
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Á"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C2",
+      "input": [
+        194
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Â"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C3",
+      "input": [
+        195
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ã"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C4",
+      "input": [
+        196
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ä"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C5",
+      "input": [
+        197
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Å"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C6",
+      "input": [
+        198
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Æ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C7",
+      "input": [
+        199
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ç"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C8",
+      "input": [
+        200
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "È"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00C9",
+      "input": [
+        201
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "É"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00CA",
+      "input": [
+        202
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ê"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00CB",
+      "input": [
+        203
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ë"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00CC",
+      "input": [
+        204
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ì"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00CD",
+      "input": [
+        205
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Í"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00CE",
+      "input": [
+        206
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Î"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00CF",
+      "input": [
+        207
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ï"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D0",
+      "input": [
+        208
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ð"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D1",
+      "input": [
+        209
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ñ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D2",
+      "input": [
+        210
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ò"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D3",
+      "input": [
+        211
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ó"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D4",
+      "input": [
+        212
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ô"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D5",
+      "input": [
+        213
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Õ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D6",
+      "input": [
+        214
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ö"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D7",
+      "input": [
+        215
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "×"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D8",
+      "input": [
+        216
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ø"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00D9",
+      "input": [
+        217
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ù"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00DA",
+      "input": [
+        218
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ú"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00DB",
+      "input": [
+        219
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Û"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00DC",
+      "input": [
+        220
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ü"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00DD",
+      "input": [
+        221
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Ý"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00DE",
+      "input": [
+        222
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "Þ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00DF",
+      "input": [
+        223
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ß"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E0",
+      "input": [
+        224
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "à"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E1",
+      "input": [
+        225
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "á"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E2",
+      "input": [
+        226
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "â"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E3",
+      "input": [
+        227
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ã"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E4",
+      "input": [
+        228
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ä"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E5",
+      "input": [
+        229
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "å"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E6",
+      "input": [
+        230
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "æ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E7",
+      "input": [
+        231
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ç"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E8",
+      "input": [
+        232
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "è"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00E9",
+      "input": [
+        233
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "é"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00EA",
+      "input": [
+        234
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ê"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00EB",
+      "input": [
+        235
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ë"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00EC",
+      "input": [
+        236
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ì"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00ED",
+      "input": [
+        237
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "í"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00EE",
+      "input": [
+        238
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "î"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00EF",
+      "input": [
+        239
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ï"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F0",
+      "input": [
+        240
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ð"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F1",
+      "input": [
+        241
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ñ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F2",
+      "input": [
+        242
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ò"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F3",
+      "input": [
+        243
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ó"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F4",
+      "input": [
+        244
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ô"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F5",
+      "input": [
+        245
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "õ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F6",
+      "input": [
+        246
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ö"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F7",
+      "input": [
+        247
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "÷"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F8",
+      "input": [
+        248
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ø"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00F9",
+      "input": [
+        249
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ù"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00FA",
+      "input": [
+        250
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ú"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00FB",
+      "input": [
+        251
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "û"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00FC",
+      "input": [
+        252
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ü"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00FD",
+      "input": [
+        253
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ý"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00FE",
+      "input": [
+        254
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "þ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+00FF",
+      "input": [
+        255
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ÿ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+D7FF",
+      "input": [
+        55295
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "퟿"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+E000",
+      "input": [
+        57344
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": ""
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+FDCF",
+      "input": [
+        64975
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "﷏"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+FDF0",
+      "input": [
+        65008
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "ﷰ"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+FFFD",
+      "input": [
+        65533
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "�"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+10000",
+      "input": [
+        55296,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𐀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+1FFFD",
+      "input": [
+        55359,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "🿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+20000",
+      "input": [
+        55360,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𠀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+2FFFD",
+      "input": [
+        55423,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𯿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+30000",
+      "input": [
+        55424,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𰀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+3FFFD",
+      "input": [
+        55487,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "𿿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+40000",
+      "input": [
+        55488,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񀀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+4FFFD",
+      "input": [
+        55551,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񏿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+50000",
+      "input": [
+        55552,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񐀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+5FFFD",
+      "input": [
+        55615,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񟿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+60000",
+      "input": [
+        55616,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񠀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+6FFFD",
+      "input": [
+        55679,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񯿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+70000",
+      "input": [
+        55680,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񰀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+7FFFD",
+      "input": [
+        55743,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "񿿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+80000",
+      "input": [
+        55744,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򀀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+8FFFD",
+      "input": [
+        55807,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򏿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+90000",
+      "input": [
+        55808,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򐀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+9FFFD",
+      "input": [
+        55871,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򟿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+A0000",
+      "input": [
+        55872,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򠀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+AFFFD",
+      "input": [
+        55935,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򯿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+B0000",
+      "input": [
+        55936,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򰀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+BFFFD",
+      "input": [
+        55999,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "򿿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+C0000",
+      "input": [
+        56000,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󀀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+CFFFD",
+      "input": [
+        56063,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󏿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+D0000",
+      "input": [
+        56064,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󐀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+DFFFD",
+      "input": [
+        56127,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󟿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+E0000",
+      "input": [
+        56128,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󠀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+EFFFD",
+      "input": [
+        56191,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󯿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+F0000",
+      "input": [
+        56192,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󰀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+FFFFD",
+      "input": [
+        56255,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "󿿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+100000",
+      "input": [
+        56256,
+        56320
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "􀀀"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Valid Unicode character U+10FFFD",
+      "input": [
+        56319,
+        57341
+      ],
+      "output": [
+        {
+          "Character": {
+            "data": "􏿽"
+          }
+        }
+      ],
+      "initialStates": [
+        "Data"
+      ],
+      "errors": []
+    }
+  ],
+  "name": "unicodeChars"
+}
