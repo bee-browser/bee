@@ -69,7 +69,6 @@ fn main() -> Result<()> {
             }
             Err(err) => {
                 eprintln!("ERROR: {}", err);
-                return Ok(());
             }
         }
     }
