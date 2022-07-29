@@ -1,7 +1,6 @@
 'use strict';
 
 import * as path from 'std/path/mod.ts';
-import * as changeCase from 'case';
 import { default as docopt } from 'docopt';
 import { default as puppeteer } from 'puppeteer';
 import { parseCommand, readAllText } from '../lib/cli.js';
