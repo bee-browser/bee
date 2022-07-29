@@ -9,18 +9,18 @@ publish = false
 service = ["bee-geometry/serde", "serde", "serde_json"]
 
 [dependencies]
-anyhow = "1.0.55"
+anyhow = "1.0.58"
 bee-geometry = { path = "../geometry" }
-num-traits = "0.2.14"
-serde = { version = "1.0.136", features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0.79", optional = true }
-tracing = "0.1.31"
+num-traits = "0.2.15"
+serde = { version = "1.0.140", features = ["derive", "rc"], optional = true }
+serde_json = { version = "1.0.82", optional = true }
+tracing = "0.1.36"
 
 [dev-dependencies]
-assert-json-diff = "2.0.1"
+assert-json-diff = "2.0.2"
 assert_matches = "1.5.0"
-serde_json = "1.0.79"
-serde_yaml = "0.8.23"
+serde_json = "1.0.82"
+serde_yaml = "0.9.1"
 
 [[test]]
 name = "layout_test"

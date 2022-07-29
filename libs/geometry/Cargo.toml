@@ -8,8 +8,8 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-num-traits = "0.2.14"
-serde = { version = "1.0.136", features = ["derive"], optional = true }
+num-traits = "0.2.15"
+serde = { version = "1.0.140", features = ["derive"], optional = true }
 
 [dev-dependencies]
-serde_test = "1.0.136"
+serde_test = "1.0.140"
