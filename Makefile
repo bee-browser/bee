@@ -107,7 +107,7 @@ testgen: $(TESTGEN_TARGETS)
 
 .PHONY: update-deps
 update-deps:
-	@cargo upgrade --to-lockfile
+	@cargo upgrade -v --to-lockfile
 	@make -C tools update-deps
 
 .PHONY: install-grcov

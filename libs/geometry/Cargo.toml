@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 num-traits = "0.2.15"
-serde = { version = "1.0.140", features = ["derive"], optional = true }
+serde = { version = "1.0.144", features = ["derive"], optional = true }
 
 [dev-dependencies]
-serde_test = "1.0.140"
+serde_test = "1.0.144"
