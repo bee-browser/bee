@@ -38,11 +38,11 @@ CLEAN_TARGETS = $(addprefix clean-,\
 )
 
 CODEGEN_TARGETS = $(addprefix codegen-,\
-  libs/htmlparser \
+  libs/htmltokenizer \
 )
 
 TESTGEN_TARGETS = $(addprefix testgen-,\
-  libs/htmlparser \
+  libs/htmltokenizer \
   libs/layout \
 )
 

@@ -1,12 +1,9 @@
-#[cfg(test)]
-mod html5libtests;
-
+use crate::error::Error;
+use crate::error::ErrorCode;
 use std::collections::VecDeque;
 use std::ops::Range;
 use crate::Location;
 use crate::charref::CharRefResolver;
-use crate::error::Error;
-use crate::error::ErrorCode;
 use crate::inputstream::CodePoint;
 use crate::inputstream::InputStream;
 
@@ -14,7 +11,7 @@ use crate::inputstream::InputStream;
 ///
 /// The `Tokenizer` type implements the tokenization state machine described in
 /// "13.2.5 Tokenization" in the WHATWG HTML specification.
-pub(crate) struct Tokenizer {
+pub struct Tokenizer {
     state: State,
     return_state: State,
     input_stream: InputStream,
@@ -37,7 +34,7 @@ pub(crate) struct Tokenizer {
 impl Tokenizer {
     const INITIAL_BUFFER_SIZE: usize = 4096;
 
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Tokenizer {
             state: State::Data,
             return_state: State::Data,
@@ -59,7 +56,7 @@ impl Tokenizer {
         }
     }
 
-    pub(crate) fn next_token(&mut self) -> Result<Token, Error> {
+    pub fn next_token(&mut self) -> Result<Token, Error> {
         loop {
             if let Some(token) = self.tokens.pop_front() {
                 return token;
@@ -78,66 +75,67 @@ impl Tokenizer {
         }
     }
 
-    pub(crate) fn feed_data(&mut self, data: Vec<u16>) {
+    pub fn feed_data(&mut self, data: Vec<u16>) {
         self.input_stream.feed_data(data);
     }
 
-    pub(crate) fn feed_end(&mut self) {
+    pub fn feed_end(&mut self) {
         self.input_stream.feed_end();
     }
 
+    #[cfg(test)]
     pub(crate) fn set_initial_state(&mut self, state: State) {
         self.state = state;
     }
 
     #[cfg(test)]
-    fn set_last_start_tag(&mut self, tag_name: String) {
+    pub fn set_last_start_tag(&mut self, tag_name: String) {
         self.last_start_tag = Some(tag_name);
     }
 
-    pub(crate) fn doctype_name(&self) -> Option<&str> {
+    pub fn doctype_name(&self) -> Option<&str> {
         self.doctype.name.as_ref().map(|range| {
             self.char_buffer.get(range.clone())
                 .expect("")
         })
     }
 
-    pub(crate) fn doctype_public_id(&self) -> Option<&str> {
+    pub fn doctype_public_id(&self) -> Option<&str> {
         self.doctype.public_id.as_ref().map(|range| {
             self.char_buffer.get(range.clone())
                 .expect("")
         })
     }
 
-    pub(crate) fn doctype_system_id(&self) -> Option<&str> {
+    pub fn doctype_system_id(&self) -> Option<&str> {
         self.doctype.system_id.as_ref().map(|range| {
             self.char_buffer.get(range.clone())
                 .expect("")
         })
     }
 
-    pub(crate) fn force_quirks(&self) -> bool {
+    pub fn force_quirks(&self) -> bool {
         self.doctype.force_quirks
     }
 
-    pub(crate) fn tag_name(&self) -> &str {
+    pub fn tag_name(&self) -> &str {
         self.char_buffer.get(self.tag.name.clone())
             .expect("")
     }
 
-    pub(crate) fn attrs(&self) -> Attrs {
+    pub fn attrs(&self) -> Attrs {
         Attrs::new(self)
     }
 
-    pub(crate) fn is_empty_tag(&self) -> bool {
+    pub fn is_empty_tag(&self) -> bool {
         self.tag.self_closing
     }
 
-    pub(crate) fn text(&self) -> &str {
+    pub fn text(&self) -> &str {
         self.char_buffer.as_str()
     }
 
-    pub(crate) fn comment(&self) -> &str {
+    pub fn comment(&self) -> &str {
         self.char_buffer.as_str()
     }
 
@@ -3494,7 +3492,7 @@ impl Tokenizer {
 
 struct Char(Option<char>, Location);
 
-pub(crate) enum Token {
+pub enum Token {
     Doctype,
     StartTag,
     EndTag,
@@ -3658,7 +3656,7 @@ pub struct Attrs<'a> {
 }
 
 impl<'a> Attrs<'a> {
-    pub(crate) fn new(tokenizer: &'a Tokenizer) -> Self {
+    fn new(tokenizer: &'a Tokenizer) -> Self {
         Attrs {
             tokenizer,
             index: 0,
