@@ -1,11 +1,14 @@
-use crate::error::Error;
-use crate::error::ErrorCode;
 use std::collections::VecDeque;
 use std::ops::Range;
 use crate::Location;
+use crate::error::Error;
+use crate::error::ErrorCode;
 use crate::charref::CharRefResolver;
 use crate::inputstream::CodePoint;
 use crate::inputstream::InputStream;
+
+#[cfg(test)]
+use serde::Deserialize;
 
 /// An HTML5-compliant tokenizer.
 ///
@@ -83,9 +86,15 @@ impl Tokenizer {
         self.input_stream.feed_end();
     }
 
-    #[cfg(test)]
-    pub(crate) fn set_initial_state(&mut self, state: State) {
-        self.state = state;
+    pub fn set_initial_state(&mut self, state: InitialState) {
+        self.state = match state {
+            InitialState::Data => State::Data,
+            InitialState::Rcdata => State::Rcdata,
+            InitialState::Rawtext => State::Rawtext,
+            InitialState::ScriptData => State::ScriptData,
+            InitialState::CdataSection => State::CdataSection,
+            InitialState::Plaintext => State::Plaintext,
+        };
     }
 
     #[cfg(test)]
@@ -3542,8 +3551,19 @@ impl Doctype {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(test, derive(Deserialize))]
+pub enum InitialState {
+    Data,
+    Rcdata,
+    Rawtext,
+    ScriptData,
+    CdataSection,
+    Plaintext,
+}
+
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum State {
+enum State {
     Data,
     Rcdata,
     Rawtext,

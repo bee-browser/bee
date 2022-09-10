@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use super::*;
-use crate::tokenizer::State;
 
 #[derive(Deserialize)]
 struct TestSuite {
@@ -22,17 +21,6 @@ struct TestCase {
     initial_states: Vec<InitialState>,
     last_start_tag: Option<String>,
     errors: Vec<Error>,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-#[derive(Deserialize)]
-enum InitialState {
-    Data,
-    Rcdata,
-    Rawtext,
-    ScriptData,
-    CdataSection,
-    Plaintext,
 }
 
 #[derive(Debug, PartialEq)]
@@ -68,14 +56,7 @@ fn tokenize(
     let mut outputs = vec![];
     let mut errors = vec![];
     let mut tokenizer = Tokenizer::new();
-    tokenizer.set_initial_state(match initial_state {
-        InitialState::Data => State::Data,
-        InitialState::Rcdata => State::Rcdata,
-        InitialState::Rawtext => State::Rawtext,
-        InitialState::ScriptData => State::ScriptData,
-        InitialState::CdataSection => State::CdataSection,
-        InitialState::Plaintext => State::Plaintext,
-    });
+    tokenizer.set_initial_state(initial_state);
     if let Some(tag_name) = last_start_tag {
         tokenizer.set_last_start_tag(tag_name);
     }
