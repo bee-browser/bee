@@ -12,6 +12,7 @@ use match_cfg::match_cfg;
 pub use crate::error::Error;
 pub use crate::error::ErrorCode;
 pub use crate::tokenizer::Attrs;
+pub use crate::tokenizer::InitialState;
 pub use crate::tokenizer::Token;
 pub use crate::tokenizer::Tokenizer;
 
