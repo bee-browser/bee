@@ -1,7 +1,7 @@
-use crate::error::Error;
-use crate::tokenizer::Token;
-use crate::tokenizer::Tokenizer;
-use crate::tokenizer::Attrs;
+use bee_htmltokenizer::Error;
+use bee_htmltokenizer::Token;
+use bee_htmltokenizer::Tokenizer;
+use bee_htmltokenizer::Attrs;
 
 pub struct Parser {
     tokenizer: Tokenizer,

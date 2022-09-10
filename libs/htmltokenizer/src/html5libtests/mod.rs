@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use super::*;
+use crate::tokenizer::State;
 
 #[derive(Deserialize)]
 struct TestSuite {
