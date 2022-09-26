@@ -6,7 +6,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-anyhow = "1.0.64"
+anyhow = "1.0.65"
 bee-layout = { path = "../../libs/layout", features = ["service"] }
 serde_json = "1.0.85"
 structopt = "0.3.26"
