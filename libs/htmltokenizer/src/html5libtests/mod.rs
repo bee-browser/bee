@@ -64,31 +64,30 @@ fn tokenize(
     tokenizer.feed_end();
     loop {
         match tokenizer.next_token() {
-            Ok(Token::Doctype) => {
+            Ok(Token::Doctype { name, public_id, system_id, force_quirks }) => {
                 outputs.push(Output::Doctype {
-                    name: tokenizer.doctype_name().map(|s| s.to_string()),
-                    public_id: tokenizer.doctype_public_id().map(|s| s.to_string()),
-                    system_id: tokenizer.doctype_system_id().map(|s| s.to_string()),
-                    force_quirks: tokenizer.force_quirks(),
+                    name: name.map(|s| s.to_string()),
+                    public_id: public_id.map(|s| s.to_string()),
+                    system_id: system_id.map(|s| s.to_string()),
+                    force_quirks,
                 });
             }
-            Ok(Token::StartTag) => {
-                let name = tokenizer.tag_name().to_string();
-                let attrs = HashMap::from_iter(
-                    tokenizer.attrs().map(|(name, value)| {
-                        (name.to_string(), value.to_string())
-                    }));
-                let self_closing = tokenizer.is_empty_tag();
+            Ok(Token::StartTag { name, attrs, self_closing }) => {
                 outputs.push(Output::StartTag {
-                    name, attrs, self_closing
+                    name: name.to_string(),
+                    attrs: HashMap::from_iter(
+                        attrs.map(|(name, value)| {
+                            (name.to_string(), value.to_string())
+                        })),
+                    self_closing,
                 });
             }
-            Ok(Token::EndTag) => {
-                let name = tokenizer.tag_name().to_string();
-                outputs.push(Output::EndTag { name });
+            Ok(Token::EndTag { name }) => {
+                outputs.push(Output::EndTag {
+                    name: name.to_string(),
+                });
             },
-            Ok(Token::Text) => {
-                let text = tokenizer.text();
+            Ok(Token::Text { text }) => {
                 match outputs.last_mut() {
                     Some(Output::Character { ref mut data }) => {
                         data.push_str(text);
@@ -100,15 +99,14 @@ fn tokenize(
                     }
                 }
             },
-            Ok(Token::Comment) => {
-                let text = tokenizer.comment();
+            Ok(Token::Comment { comment }) => {
                 match outputs.last_mut() {
                     Some(Output::Comment { ref mut data }) => {
-                        data.push_str(text);
+                        data.push_str(comment);
                     }
                     _ => {
                         outputs.push(Output::Comment {
-                            data: text.to_string(),
+                            data: comment.to_string(),
                         });
                     }
                 }

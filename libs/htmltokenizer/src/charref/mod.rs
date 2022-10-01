@@ -47,10 +47,6 @@ impl CharRefResolver {
         &self.node().buffer[len..]
     }
 
-    pub(crate) fn is_valid(&self) -> bool {
-        self.last_valid == self.node_index
-    }
-
     fn node(&self) -> &'static TrieNode {
         &trie::NODES[self.node_index]
     }

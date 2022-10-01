@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::ops::Range;
 use crate::Location;
 use crate::error::Error;
@@ -24,14 +23,17 @@ pub struct Tokenizer {
     temp_buffer: String,
     tag: Tag,
     last_start_tag: Option<String>,
-    doctype: Doctype,
+    doctype: DoctypeRange,
     char_ref_code: u32,
     char_ref_resolver: CharRefResolver,
     has_text: bool,
     has_comment: bool,
     clear_char_buffer: bool,
     has_duplicate_attr: bool,
-    tokens: VecDeque<Result<Token, Error>>,
+    // Assumed that at most one token occurs in a single iteration.
+    token: Option<TokenKind>,
+    // Assumed that at most one error occurs in a single iteration.
+    error: Option<Error>,
 }
 
 impl Tokenizer {
@@ -55,14 +57,39 @@ impl Tokenizer {
             has_comment: false,
             clear_char_buffer: false,
             has_duplicate_attr: false,
-            tokens: VecDeque::with_capacity(3),
+            token: None,
+            error: None,
         }
     }
 
-    pub fn next_token(&mut self) -> Result<Token, Error> {
+    pub fn next_token(&mut self) -> Result<Token<'_>, Error> {
         loop {
-            if let Some(token) = self.tokens.pop_front() {
-                return token;
+            if let Some(error) = self.error.take() {
+                return Err(error);
+            }
+
+            match self.token.take() {
+                Some(TokenKind::Doctype) => return Ok(Token::Doctype {
+                    name: self.doctype.name.take().map(|r| &self.char_buffer[r]),
+                    public_id: self.doctype.public_id.take().map(|r| &self.char_buffer[r]),
+                    system_id:self.doctype.system_id.take().map(|r| &self.char_buffer[r]),
+                    force_quirks: self.doctype.force_quirks,
+                }),
+                Some(TokenKind::StartTag) => return Ok(Token::StartTag {
+                    name: &self.char_buffer[self.tag.name.clone()],
+                    attrs: Attrs::new(self),
+                    self_closing: self.tag.self_closing,
+                }),
+                Some(TokenKind::EndTag) => return Ok(Token::EndTag {
+                    name: &self.char_buffer[self.tag.name.clone()],
+                }),
+                Some(TokenKind::Text) => return Ok(Token::Text {
+                    text: &self.char_buffer,
+                }),
+                Some(TokenKind::Comment) => return Ok(Token::Comment {
+                    comment: &self.char_buffer,
+                }),
+                None => (),
             }
 
             if let State::End = self.state {
@@ -100,52 +127,6 @@ impl Tokenizer {
     #[cfg(test)]
     pub fn set_last_start_tag(&mut self, tag_name: String) {
         self.last_start_tag = Some(tag_name);
-    }
-
-    pub fn doctype_name(&self) -> Option<&str> {
-        self.doctype.name.as_ref().map(|range| {
-            self.char_buffer.get(range.clone())
-                .expect("")
-        })
-    }
-
-    pub fn doctype_public_id(&self) -> Option<&str> {
-        self.doctype.public_id.as_ref().map(|range| {
-            self.char_buffer.get(range.clone())
-                .expect("")
-        })
-    }
-
-    pub fn doctype_system_id(&self) -> Option<&str> {
-        self.doctype.system_id.as_ref().map(|range| {
-            self.char_buffer.get(range.clone())
-                .expect("")
-        })
-    }
-
-    pub fn force_quirks(&self) -> bool {
-        self.doctype.force_quirks
-    }
-
-    pub fn tag_name(&self) -> &str {
-        self.char_buffer.get(self.tag.name.clone())
-            .expect("")
-    }
-
-    pub fn attrs(&self) -> Attrs {
-        Attrs::new(self)
-    }
-
-    pub fn is_empty_tag(&self) -> bool {
-        self.tag.self_closing
-    }
-
-    pub fn text(&self) -> &str {
-        self.char_buffer.as_str()
-    }
-
-    pub fn comment(&self) -> &str {
-        self.char_buffer.as_str()
     }
 
     fn tokenize(&mut self) {
@@ -3291,7 +3272,7 @@ impl Tokenizer {
 
     fn start_new_attr(&mut self) {
         let pos = self.char_buffer.len();
-        self.tag.attrs.push(Attr {
+        self.tag.attrs.push(AttrRange {
             name: pos..pos,
             value: pos..pos,
             duplicate: false,
@@ -3333,8 +3314,9 @@ impl Tokenizer {
     }
 
     fn emit_tag(&mut self, location: Location) {
+        debug_assert!(self.token.is_none());
         if self.tag.start_tag {
-            self.tokens.push_back(Ok(Token::StartTag));
+            self.token = Some(TokenKind::StartTag);
             self.last_start_tag = Some(self.tag_name().to_string());
         } else {
             if !self.tag.attrs.is_empty() {
@@ -3343,7 +3325,7 @@ impl Tokenizer {
             if self.tag.self_closing {
                 self.emit_error(ErrorCode::EndTagWithTrailingSolidus, location);
             }
-            self.tokens.push_back(Ok(Token::EndTag));
+            self.token = Some(TokenKind::EndTag);
         }
         self.clear_char_buffer = true;
     }
@@ -3390,7 +3372,8 @@ impl Tokenizer {
     }
 
     fn emit_docype(&mut self) {
-        self.tokens.push_back(Ok(Token::Doctype));
+        debug_assert!(self.token.is_none());
+        self.token = Some(TokenKind::Doctype);
         self.clear_char_buffer = true;
     }
 
@@ -3405,7 +3388,8 @@ impl Tokenizer {
     }
 
     fn emit_comment(&mut self) {
-        self.tokens.push_back(Ok(Token::Comment));
+        debug_assert!(self.token.is_none());
+        self.token = Some(TokenKind::Comment);
         self.has_comment = false;
         self.clear_char_buffer = true;
     }
@@ -3421,7 +3405,8 @@ impl Tokenizer {
     }
 
     fn emit_text(&mut self) {
-        self.tokens.push_back(Ok(Token::Text));
+        debug_assert!(self.token.is_none());
+        self.token = Some(TokenKind::Text);
         self.has_text = false;
         self.clear_char_buffer = true;
     }
@@ -3458,7 +3443,13 @@ impl Tokenizer {
     }
 
     fn emit_error(&mut self, code: ErrorCode, location: Location) {
-        self.tokens.push_back(Err(Error::new(code, location)));
+        debug_assert!(self.error.is_none());
+        self.error = Some(Error::new(code, location));
+    }
+
+    fn tag_name(&self) -> &str {
+        self.char_buffer.get(self.tag.name.clone())
+            .expect("")
     }
 
     fn is_appropriate_end_tag(&self) -> bool {
@@ -3501,19 +3492,42 @@ impl Tokenizer {
 
 struct Char(Option<char>, Location);
 
-pub enum Token {
+pub enum Token<'a> {
+    Doctype {
+        name: Option<&'a str>,
+        public_id: Option<&'a str>,
+        system_id: Option<&'a str>,
+        force_quirks: bool,
+    },
+    StartTag {
+        name: &'a str,
+        attrs: Attrs<'a>,
+        self_closing: bool,
+    },
+    EndTag {
+        name: &'a str,
+    },
+    Text {
+        text: &'a str,
+    },
+    Comment {
+        comment: &'a str,
+    },
+    End,
+}
+
+enum TokenKind {
     Doctype,
     StartTag,
     EndTag,
     Text,
     Comment,
-    End,
 }
 
 #[derive(Default)]
 struct Tag {
     name: Range<usize>,
-    attrs: Vec<Attr>,
+    attrs: Vec<AttrRange>,
     start_tag: bool,
     self_closing: bool,
 }
@@ -3528,21 +3542,21 @@ impl Tag {
 }
 
 #[derive(Default)]
-struct Attr {
+struct AttrRange {
     name: Range<usize>,
     value: Range<usize>,
     duplicate: bool,
 }
 
 #[derive(Default)]
-struct Doctype {
+struct DoctypeRange {
     name: Option<Range<usize>>,
     public_id: Option<Range<usize>>,
     system_id: Option<Range<usize>>,
     force_quirks: bool,
 }
 
-impl Doctype {
+impl DoctypeRange {
     fn clear(&mut self) {
         self.name = None;
         self.public_id = None;
