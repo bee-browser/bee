@@ -1,7 +1,6 @@
 use bee_htmltokenizer::Error;
 use bee_htmltokenizer::Token;
 use bee_htmltokenizer::Tokenizer;
-use bee_htmltokenizer::Attrs;
 
 pub struct Parser {
     tokenizer: Tokenizer,
@@ -31,27 +30,27 @@ impl Parser {
             "meta"
         ];
         match self.tokenizer.next_token()? {
-            Token::Doctype => {
+            Token::Doctype { .. }=> {
                 self.depth = self.opened_tags.len();
                 Ok(Event::Doctype)
             }
-            Token::StartTag => {
+            Token::StartTag { name, self_closing, .. } => {
                 self.depth = self.opened_tags.len();
-                if !self.is_empty_tag() && !EMPTY_TAG_NAMES.contains(&self.tag_name()) {
-                    self.opened_tags.push(self.tag_name().to_string());
+                if !self_closing && !EMPTY_TAG_NAMES.contains(&name) {
+                    self.opened_tags.push(name.to_string());
                 }
                 Ok(Event::StartTag)
             }
-            Token::EndTag => {
+            Token::EndTag { .. } => {
                 self.opened_tags.pop();
                 self.depth = self.opened_tags.len();
                 Ok(Event::EndTag)
             }
-            Token::Text => {
+            Token::Text { .. } => {
                 self.depth = self.opened_tags.len();
                 Ok(Event::Text)
             }
-            Token::Comment => {
+            Token::Comment { .. } => {
                 self.depth = self.opened_tags.len();
                 Ok(Event::Comment)
             }
@@ -59,42 +58,6 @@ impl Parser {
                 Ok(Event::End)
             }
         }
-    }
-
-    pub fn doctype_name(&self) -> Option<&str> {
-        self.tokenizer.doctype_name()
-    }
-
-    pub fn doctype_public_id(&self) -> Option<&str> {
-        self.tokenizer.doctype_public_id()
-    }
-
-    pub fn doctype_system_id(&self) -> Option<&str> {
-        self.tokenizer.doctype_system_id()
-    }
-
-    pub fn force_quirks(&self) -> bool {
-        self.tokenizer.force_quirks()
-    }
-
-    pub fn tag_name(&self) -> &str {
-        self.tokenizer.tag_name()
-    }
-
-    pub fn attrs(&self) -> Attrs {
-        self.tokenizer.attrs()
-    }
-
-    pub fn is_empty_tag(&self) -> bool {
-        self.tokenizer.is_empty_tag()
-    }
-
-    pub fn text(&self) -> &str {
-        self.tokenizer.text()
-    }
-
-    pub fn comment(&self) -> &str {
-        self.tokenizer.comment()
     }
 
     pub fn depth(&self) -> usize {
