@@ -1,5 +1,8 @@
 use std::ops::Range;
+use bee_htmltags::HtmlTag;
 use crate::Location;
+use crate::TagKind;
+use crate::TokenHandler;
 use crate::error::Error;
 use crate::error::ErrorCode;
 use crate::charref::CharRefResolver;
@@ -13,7 +16,7 @@ use serde::Deserialize;
 ///
 /// The `Tokenizer` type implements the tokenization state machine described in
 /// "13.2.5 Tokenization" in the WHATWG HTML specification.
-pub struct Tokenizer {
+pub struct Tokenizer<T> {
     state: State,
     return_state: State,
     input_stream: InputStream,
@@ -28,18 +31,14 @@ pub struct Tokenizer {
     char_ref_resolver: CharRefResolver,
     has_text: bool,
     has_comment: bool,
-    clear_char_buffer: bool,
     has_duplicate_attr: bool,
-    // Assumed that at most one token occurs in a single iteration.
-    token: Option<TokenKind>,
-    // Assumed that at most one error occurs in a single iteration.
-    error: Option<Error>,
+    handler: T,
 }
 
-impl Tokenizer {
+impl<T: TokenHandler> Tokenizer<T> {
     const INITIAL_BUFFER_SIZE: usize = 4096;
 
-    pub fn new() -> Self {
+    pub fn new(handler: T) -> Self {
         Tokenizer {
             state: State::Data,
             return_state: State::Data,
@@ -55,50 +54,16 @@ impl Tokenizer {
             char_ref_resolver: Default::default(),
             has_text: false,
             has_comment: false,
-            clear_char_buffer: false,
             has_duplicate_attr: false,
-            token: None,
-            error: None,
+            handler,
         }
     }
 
-    pub fn next_token(&mut self) -> Result<Token<'_>, Error> {
+    pub fn next_token(&mut self) -> Result<(), Error> {
         loop {
-            if let Some(error) = self.error.take() {
-                return Err(error);
-            }
-
-            match self.token.take() {
-                Some(TokenKind::Doctype) => return Ok(Token::Doctype {
-                    name: self.doctype.name.take().map(|r| &self.char_buffer[r]),
-                    public_id: self.doctype.public_id.take().map(|r| &self.char_buffer[r]),
-                    system_id:self.doctype.system_id.take().map(|r| &self.char_buffer[r]),
-                    force_quirks: self.doctype.force_quirks,
-                }),
-                Some(TokenKind::StartTag) => return Ok(Token::StartTag {
-                    name: &self.char_buffer[self.tag.name.clone()],
-                    attrs: Attrs::new(self),
-                    self_closing: self.tag.self_closing,
-                }),
-                Some(TokenKind::EndTag) => return Ok(Token::EndTag {
-                    name: &self.char_buffer[self.tag.name.clone()],
-                }),
-                Some(TokenKind::Text) => return Ok(Token::Text {
-                    text: &self.char_buffer,
-                }),
-                Some(TokenKind::Comment) => return Ok(Token::Comment {
-                    comment: &self.char_buffer,
-                }),
-                None => (),
-            }
-
             if let State::End = self.state {
-                return Ok(Token::End);
-            }
-
-            if self.clear_char_buffer {
-                self.char_buffer.clear();
-                self.clear_char_buffer = false;
+                self.handler.handle_end();
+                return Ok(());
             }
 
             self.tokenize();
@@ -3314,10 +3279,16 @@ impl Tokenizer {
     }
 
     fn emit_tag(&mut self, location: Location) {
-        debug_assert!(self.token.is_none());
         if self.tag.start_tag {
-            self.token = Some(TokenKind::StartTag);
             self.last_start_tag = Some(self.tag_name().to_string());
+            let name = &self.char_buffer[self.tag.name.clone()];
+            let name = match HtmlTag::lookup(name) {
+                Some(htmltag) => TagKind::Html(htmltag),
+                None => TagKind::Other(name),
+            };
+            let attrs = Attrs::new(&self.char_buffer, &self.tag.attrs);
+            let self_closing = self.tag.self_closing;
+            self.handler.handle_start_tag(name, attrs, self_closing);
         } else {
             if !self.tag.attrs.is_empty() {
                 self.emit_error(ErrorCode::EndTagWithAttributes, location);
@@ -3325,9 +3296,14 @@ impl Tokenizer {
             if self.tag.self_closing {
                 self.emit_error(ErrorCode::EndTagWithTrailingSolidus, location);
             }
-            self.token = Some(TokenKind::EndTag);
+            let name = &self.char_buffer[self.tag.name.clone()];
+            let name = match HtmlTag::lookup(name) {
+                Some(htmltag) => TagKind::Html(htmltag),
+                None => TagKind::Other(name),
+            };
+            self.handler.handle_end_tag(name);
         }
-        self.clear_char_buffer = true;
+        self.char_buffer.clear();
     }
 
     fn create_doctype(&mut self) {
@@ -3372,9 +3348,12 @@ impl Tokenizer {
     }
 
     fn emit_docype(&mut self) {
-        debug_assert!(self.token.is_none());
-        self.token = Some(TokenKind::Doctype);
-        self.clear_char_buffer = true;
+        let name = self.doctype.name.take().map(|r| &self.char_buffer[r]);
+        let public_id = self.doctype.public_id.take().map(|r| &self.char_buffer[r]);
+        let system_id = self.doctype.system_id.take().map(|r| &self.char_buffer[r]);
+        let force_quirks = self.doctype.force_quirks;
+        self.handler.handle_doctype(name, public_id, system_id, force_quirks);
+        self.char_buffer.clear();
     }
 
     fn append_char_to_comment(&mut self, c: char) {
@@ -3388,10 +3367,9 @@ impl Tokenizer {
     }
 
     fn emit_comment(&mut self) {
-        debug_assert!(self.token.is_none());
-        self.token = Some(TokenKind::Comment);
         self.has_comment = false;
-        self.clear_char_buffer = true;
+        self.handler.handle_comment(&self.char_buffer);
+        self.char_buffer.clear();
     }
 
     fn append_char_to_text(&mut self, c: char) {
@@ -3405,10 +3383,9 @@ impl Tokenizer {
     }
 
     fn emit_text(&mut self) {
-        debug_assert!(self.token.is_none());
-        self.token = Some(TokenKind::Text);
         self.has_text = false;
-        self.clear_char_buffer = true;
+        self.handler.handle_text(&self.char_buffer);
+        self.char_buffer.clear();
     }
 
     fn emit_token_if_exists(&mut self) {
@@ -3443,8 +3420,7 @@ impl Tokenizer {
     }
 
     fn emit_error(&mut self, code: ErrorCode, location: Location) {
-        debug_assert!(self.error.is_none());
-        self.error = Some(Error::new(code, location));
+        self.handler.handle_error(Error::new(code, location));
     }
 
     fn tag_name(&self) -> &str {
@@ -3685,14 +3661,16 @@ enum State {
 }
 
 pub struct Attrs<'a> {
-    tokenizer: &'a Tokenizer,
+    buffer: &'a str,
+    attrs: &'a [AttrRange],
     index: usize,
 }
 
 impl<'a> Attrs<'a> {
-    fn new(tokenizer: &'a Tokenizer) -> Self {
+    fn new(buffer: &'a str, attrs: &'a [AttrRange]) -> Self {
         Attrs {
-            tokenizer,
+            buffer,
+            attrs,
             index: 0,
         }
     }
@@ -3703,18 +3681,18 @@ impl<'a> Iterator for Attrs<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut i = self.index;
-        while i < self.tokenizer.tag.attrs.len() {
-            if !self.tokenizer.tag.attrs[i].duplicate {
+        while i < self.attrs.len() {
+            if !self.attrs[i].duplicate {
                 break;
             }
             i += 1;
         }
 
-        let attr = self.tokenizer.tag.attrs
+        let attr = self.attrs
             .get(i)
             .map(|attr| {
-                let name = &self.tokenizer.char_buffer[attr.name.clone()];
-                let value = &self.tokenizer.char_buffer[attr.value.clone()];
+                let name = &self.buffer[attr.name.clone()];
+                let value = &self.buffer[attr.value.clone()];
                 (name, value)
             });
         self.index = i + 1;
