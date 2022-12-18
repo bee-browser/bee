@@ -6,6 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
+bee-htmltags = { path = "../htmltags" }
 bee-htmltokenizer = { path = "../htmltokenizer" }
 thiserror = "1.0.36"
 

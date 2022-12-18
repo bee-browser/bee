@@ -1,0 +1,16 @@
+[package]
+name = "bee-htmltags"
+version = "0.1.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+phf = "0.11.1"
+
+[build-dependencies]
+indexmap = { version = "1.9.1", features = ["serde"] }
+handlebars = "4.3.5"
+phf_codegen = "0.11.1"
+serde = { version = "1.0.145", features = ["derive"] }
+serde_yaml = "0.9.13"

@@ -9,12 +9,66 @@ mod html5libtests;
 use std::fmt;
 use match_cfg::match_cfg;
 
+use bee_htmltags::HtmlTag;
+
 pub use crate::error::Error;
 pub use crate::error::ErrorCode;
 pub use crate::tokenizer::Attrs;
 pub use crate::tokenizer::InitialState;
 pub use crate::tokenizer::Token;
 pub use crate::tokenizer::Tokenizer;
+
+pub trait TokenHandler {
+    #[allow(unused_variables)]
+    fn handle_doctype(&mut self, name: Option<&str>, public_id: Option<&str>, system_id: Option<&str>, force_quirks: bool) -> bool {
+        true
+    }
+
+    #[allow(unused_variables)]
+    fn handle_start_tag(&mut self, name: TagKind, attrs: Attrs<'_>, self_closing: bool) -> bool {
+        true
+    }
+
+    #[allow(unused_variables)]
+    fn handle_end_tag(&mut self, name: TagKind) -> bool {
+        true
+    }
+
+    #[allow(unused_variables)]
+    fn handle_text(&mut self, text: &str) -> bool {
+        for c in text.chars() {
+            if !self.handle_character(c) {
+                return false;
+            }
+        }
+        true
+    }
+
+    #[allow(unused_variables)]
+    fn handle_character(&mut self, c: char) -> bool {
+        true
+    }
+
+    #[allow(unused_variables)]
+    fn handle_comment(&mut self, comment: &str) -> bool {
+        true
+    }
+
+    #[allow(unused_variables)]
+    fn handle_end(&mut self) -> bool {
+        true
+    }
+
+    #[allow(unused_variables)]
+    fn handle_error(&mut self, err: Error) -> bool {
+        true
+    }
+}
+
+pub enum TagKind<'a> {
+    Html(HtmlTag),
+    Other(&'a str),
+}
 
 match_cfg! {
     #[cfg(test)] => {
