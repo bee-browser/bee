@@ -3,11 +3,12 @@ use crate::error::Error;
 use crate::error::ErrorCode;
 use crate::inputstream::CodePoint;
 use crate::inputstream::InputStream;
+use crate::token::AttrRange;
+use crate::token::TagRange;
+use crate::token::Token;
+use crate::token::TokenRange;
 use crate::Location;
-use crate::TagKind;
-use bee_htmltags::HtmlTag;
 use std::collections::VecDeque;
-use std::ops::Range;
 
 #[cfg(test)]
 use serde::Deserialize;
@@ -54,7 +55,7 @@ impl Tokenizer {
     pub fn next_token(&mut self) -> Token<'_> {
         loop {
             if let Some(token) = self.tokens.pop_front() {
-                return self.token(token);
+                return Token::new(token, &self.char_buffer);
             }
 
             if let State::End = self.state {
@@ -91,40 +92,6 @@ impl Tokenizer {
             InitialState::CdataSection => State::CdataSection,
             InitialState::Plaintext => State::Plaintext,
         };
-    }
-
-    fn token(&self, token: TokenRange) -> Token<'_> {
-        match token {
-            TokenRange::Doctype(doctype) => Token::Doctype {
-                name: doctype.name.map(|range| &self.char_buffer[range]),
-                public_id: doctype.public_id.map(|range| &self.char_buffer[range]),
-                system_id: doctype.system_id.map(|range| &self.char_buffer[range]),
-                force_quirks: doctype.force_quirks,
-            },
-            TokenRange::Tag(tag) => {
-                let name = &self.char_buffer[tag.name];
-                let name = match HtmlTag::lookup(name) {
-                    Some(htmltag) => TagKind::Html(htmltag),
-                    None => TagKind::Other(name),
-                };
-                if tag.start_tag {
-                    Token::StartTag {
-                        name,
-                        attrs: Attrs::new(&self.char_buffer, tag.attrs),
-                        self_closing: tag.self_closing,
-                    }
-                } else {
-                    Token::EndTag { name }
-                }
-            }
-            TokenRange::Text(text) => Token::Text {
-                text: &self.char_buffer[text],
-            },
-            TokenRange::Comment(comment) => Token::Comment {
-                comment: &self.char_buffer[comment],
-            },
-            TokenRange::Error(err) => Token::Error(err),
-        }
     }
 
     #[cfg(test)]
@@ -3517,63 +3484,6 @@ impl Tokenizer {
 
 struct Char(Option<char>, Location);
 
-#[derive(Debug, Default)]
-struct DoctypeRange {
-    name: Option<Range<usize>>,
-    public_id: Option<Range<usize>>,
-    system_id: Option<Range<usize>>,
-    force_quirks: bool,
-}
-
-#[derive(Debug)]
-struct TagRange {
-    name: Range<usize>,
-    attrs: Vec<AttrRange>,
-    self_closing: bool,
-    start_tag: bool,
-}
-
-#[derive(Debug)]
-enum TokenRange {
-    Doctype(DoctypeRange),
-    Tag(TagRange),
-    Text(Range<usize>),
-    Comment(Range<usize>),
-    Error(Error),
-}
-
-pub enum Token<'a> {
-    Doctype {
-        name: Option<&'a str>,
-        public_id: Option<&'a str>,
-        system_id: Option<&'a str>,
-        force_quirks: bool,
-    },
-    StartTag {
-        name: TagKind<'a>,
-        attrs: Attrs<'a>,
-        self_closing: bool,
-    },
-    EndTag {
-        name: TagKind<'a>,
-    },
-    Text {
-        text: &'a str,
-    },
-    Comment {
-        comment: &'a str,
-    },
-    Error(Error),
-    End,
-}
-
-#[derive(Debug)]
-pub struct AttrRange {
-    name: Range<usize>,
-    value: Range<usize>,
-    duplicate: bool,
-}
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(test, derive(Deserialize))]
 pub enum InitialState {
@@ -3691,42 +3601,4 @@ enum State {
     DecimalCharacterReference,
     NumericCharacterReferenceEnd,
     End,
-}
-
-pub struct Attrs<'a> {
-    buffer: &'a str,
-    attrs: Vec<AttrRange>,
-    index: usize,
-}
-
-impl<'a> Attrs<'a> {
-    fn new(buffer: &'a str, attrs: Vec<AttrRange>) -> Self {
-        Attrs {
-            buffer,
-            attrs,
-            index: 0,
-        }
-    }
-}
-
-impl<'a> Iterator for Attrs<'a> {
-    type Item = (&'a str, &'a str);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut i = self.index;
-        while i < self.attrs.len() {
-            if !self.attrs[i].duplicate {
-                break;
-            }
-            i += 1;
-        }
-
-        let attr = self.attrs.get(i).map(|attr| {
-            let name = &self.buffer[attr.name.clone()];
-            let value = &self.buffer[attr.value.clone()];
-            (name, value)
-        });
-        self.index = i + 1;
-        attr
-    }
 }

@@ -65,20 +65,11 @@ fn tokenize(
     tokenizer.feed_end();
     loop {
         match tokenizer.next_token() {
-            Token::Doctype {
-                name,
-                public_id,
-                system_id,
-                force_quirks,
-            } => validator.handle_doctype(name, public_id, system_id, force_quirks),
-            Token::StartTag {
-                name,
-                attrs,
-                self_closing,
-            } => validator.handle_start_tag(name, attrs, self_closing),
-            Token::EndTag { name } => validator.handle_end_tag(name),
-            Token::Text { text } => validator.handle_text(text),
-            Token::Comment { comment } => validator.handle_comment(comment),
+            Token::Doctype(doctype) => validator.handle_doctype(doctype),
+            Token::StartTag(tag) => validator.handle_start_tag(tag),
+            Token::EndTag(tag) => validator.handle_end_tag(tag),
+            Token::Text(text) => validator.handle_text(text),
+            Token::Comment(comment) => validator.handle_comment(comment),
             Token::End => {
                 validator.handle_end();
                 break;
@@ -105,64 +96,53 @@ impl<'a> Validator<'a> {
 }
 
 impl<'a> Validator<'a> {
-    fn handle_doctype(
-        &mut self,
-        name: Option<&str>,
-        public_id: Option<&str>,
-        system_id: Option<&str>,
-        force_quirks: bool,
-    ) {
+    fn handle_doctype(&mut self, doctype: Doctype) {
         self.output.push(Output::Doctype {
-            name: name.map(|s| s.to_string()),
-            public_id: public_id.map(|s| s.to_string()),
-            system_id: system_id.map(|s| s.to_string()),
-            force_quirks,
+            name: doctype.name.map(|s| s.to_string()),
+            public_id: doctype.public_id.map(|s| s.to_string()),
+            system_id: doctype.system_id.map(|s| s.to_string()),
+            force_quirks: doctype.force_quirks,
         });
     }
 
-    fn handle_start_tag(&mut self, name: TagKind, attrs: Attrs<'_>, self_closing: bool) {
+    fn handle_start_tag(&mut self, tag: Tag) {
         self.output.push(Output::StartTag {
-            name: match name {
-                TagKind::Html(htmltag) => htmltag.name().to_string(),
-                TagKind::Other(name) => name.to_string(),
-            },
+            name: tag.name().to_string(),
             attrs: HashMap::from_iter(
-                attrs.map(|(name, value)| (name.to_string(), value.to_string())),
+                tag.attrs()
+                    .map(|(name, value)| (name.to_string(), value.to_string())),
             ),
-            self_closing,
+            self_closing: tag.self_closing,
         });
     }
 
-    fn handle_end_tag(&mut self, name: TagKind) {
+    fn handle_end_tag(&mut self, tag: Tag) {
         self.output.push(Output::EndTag {
-            name: match name {
-                TagKind::Html(htmltag) => htmltag.name().to_string(),
-                TagKind::Other(name) => name.to_string(),
-            },
+            name: tag.name().to_string(),
         });
     }
 
-    fn handle_text(&mut self, text: &str) {
+    fn handle_text(&mut self, text: Text) {
         match self.output.last_mut() {
             Some(Output::Character { ref mut data }) => {
-                data.push_str(text);
+                data.push_str(text.data);
             }
             _ => {
                 self.output.push(Output::Character {
-                    data: text.to_string(),
+                    data: text.data.to_string(),
                 });
             }
         }
     }
 
-    fn handle_comment(&mut self, comment: &str) {
+    fn handle_comment(&mut self, comment: Comment) {
         match self.output.last_mut() {
             Some(Output::Comment { ref mut data }) => {
-                data.push_str(comment);
+                data.push_str(comment.data);
             }
             _ => {
                 self.output.push(Output::Comment {
-                    data: comment.to_string(),
+                    data: comment.data.to_string(),
                 });
             }
         }

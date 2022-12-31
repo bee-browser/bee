@@ -1,6 +1,7 @@
 mod charref;
 mod error;
 mod inputstream;
+mod token;
 mod tokenizer;
 
 #[cfg(test)]
@@ -9,19 +10,17 @@ mod html5libtests;
 use match_cfg::match_cfg;
 use std::fmt;
 
-use bee_htmltags::HtmlTag;
-
 pub use crate::error::Error;
 pub use crate::error::ErrorCode;
-pub use crate::tokenizer::Attrs;
+pub use crate::token::Attrs;
+pub use crate::token::Comment;
+pub use crate::token::Doctype;
+pub use crate::token::Tag;
+pub use crate::token::TagKind;
+pub use crate::token::Text;
+pub use crate::token::Token;
 pub use crate::tokenizer::InitialState;
-pub use crate::tokenizer::Token;
 pub use crate::tokenizer::Tokenizer;
-
-pub enum TagKind<'a> {
-    Html(HtmlTag),
-    Other(&'a str),
-}
 
 match_cfg! {
     #[cfg(test)] => {
