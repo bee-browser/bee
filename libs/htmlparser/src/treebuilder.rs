@@ -105,7 +105,7 @@ impl TreeBuilder {
     fn handle_start_tag(
         &mut self,
         name: TagKind,
-        attrs: bee_htmltokenizer::Attrs<'_>,
+        attrs: bee_htmltokenizer::Attrs<'_, '_>,
         self_closing: bool,
     ) -> bool {
         loop {

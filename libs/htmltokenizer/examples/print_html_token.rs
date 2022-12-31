@@ -12,31 +12,22 @@ fn main() -> Result<()> {
     tokenizer.feed_end();
     loop {
         match tokenizer.next_token() {
-            Token::Doctype {
-                name,
-                public_id,
-                system_id,
-                force_quirks,
-            } => {
+            Token::Doctype(doctype) => {
                 print!(r#"#DOCTYPE:"#);
-                if let Some(name) = name {
+                if let Some(name) = doctype.name {
                     print!(r#" "{}""#, name.escape_debug());
                 }
-                if let Some(public_id) = public_id {
+                if let Some(public_id) = doctype.public_id {
                     print!(r#" public-id="{}""#, public_id.escape_debug());
                 }
-                if let Some(system_id) = system_id {
+                if let Some(system_id) = doctype.system_id {
                     print!(r#" system-id="{}""#, system_id.escape_debug());
                 }
-                println!(r#" force-quirks={}"#, force_quirks);
+                println!(r#" force-quirks={}"#, doctype.force_quirks);
             }
-            Token::StartTag {
-                name,
-                attrs,
-                self_closing,
-            } => {
+            Token::StartTag(tag) => {
                 let mut attrs_str = String::new();
-                for (name, value) in attrs {
+                for (name, value) in tag.attrs() {
                     write!(
                         &mut attrs_str,
                         r#" "{}"="{}""#,
@@ -45,28 +36,24 @@ fn main() -> Result<()> {
                     )
                     .unwrap();
                 }
-                let name = match name {
-                    TagKind::Html(htmltag) => htmltag.name(),
-                    TagKind::Other(name) => name,
-                };
-                if self_closing {
-                    println!(r#"<{}{}/>"#, name.escape_debug(), attrs_str);
+                if tag.self_closing {
+                    println!(r#"<{}{}/>"#, tag.name().escape_debug(), attrs_str);
                 } else {
-                    println!(r#"<{}{}>"#, name.escape_debug(), attrs_str);
+                    println!(r#"<{}{}>"#, tag.name().escape_debug(), attrs_str);
                 }
             }
-            Token::EndTag { name } => {
-                let name = match name {
+            Token::EndTag(tag) => {
+                let name = match tag.name {
                     TagKind::Html(htmltag) => htmltag.name(),
                     TagKind::Other(name) => name,
                 };
                 println!(r#"</{}>"#, name.escape_debug());
             }
-            Token::Text { text } => {
-                println!(r#"#text:"{}""#, text.escape_debug());
+            Token::Text(text) => {
+                println!(r#"#text:"{}""#, text.data.escape_debug());
             }
-            Token::Comment { comment } => {
-                println!(r#"#comment:"{}""#, comment.escape_debug());
+            Token::Comment(comment) => {
+                println!(r#"#comment:"{}""#, comment.data.escape_debug());
             }
             Token::Error(err) => {
                 eprintln!("ERROR: {}", err);
