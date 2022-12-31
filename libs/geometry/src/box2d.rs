@@ -52,13 +52,23 @@ impl<T: Copy + Sub<Output = T>, U> Box2D<T, U> {
 
 impl<T: Copy + Add<Output = T> + Sub<Output = T>, U> Box2D<T, U> {
     pub fn shrink_edges(&self, quad: Quad<Length<T, U>>) -> Self {
-        (self.min.x + quad.0, self.min.y + quad.1,
-         self.max.x - quad.2, self.max.y - quad.3).into()
+        (
+            self.min.x + quad.0,
+            self.min.y + quad.1,
+            self.max.x - quad.2,
+            self.max.y - quad.3,
+        )
+            .into()
     }
 
     pub fn expand_edges(&self, quad: Quad<Length<T, U>>) -> Self {
-        (self.min.x - quad.0, self.min.y - quad.1,
-         self.max.x + quad.2, self.max.y + quad.3).into()
+        (
+            self.min.x - quad.0,
+            self.min.y - quad.1,
+            self.max.x + quad.2,
+            self.max.y + quad.3,
+        )
+            .into()
     }
 }
 
@@ -127,7 +137,7 @@ mod serde_impl {
     mod tests {
         use super::Box2D;
 
-        use serde_test::{Token, assert_tokens};
+        use serde_test::{assert_tokens, Token};
 
         // TODO: remove PartialEq
         #[derive(Debug, PartialEq)]
@@ -136,14 +146,17 @@ mod serde_impl {
         #[test]
         fn test_serde() {
             let v: Box2D<i32, Px> = (0, 1, 2, 3).into();
-            assert_tokens(&v, &[
-                Token::Tuple { len: 4 },
-                Token::I32(0),
-                Token::I32(1),
-                Token::I32(2),
-                Token::I32(3),
-                Token::TupleEnd,
-            ]);
+            assert_tokens(
+                &v,
+                &[
+                    Token::Tuple { len: 4 },
+                    Token::I32(0),
+                    Token::I32(1),
+                    Token::I32(2),
+                    Token::I32(3),
+                    Token::TupleEnd,
+                ],
+            );
         }
     }
 }

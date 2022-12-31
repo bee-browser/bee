@@ -1,5 +1,4 @@
 use bee_htmltags::HtmlTag;
-use bee_htmltokenizer::TokenHandler;
 use bee_htmltokenizer::TagKind;
 
 pub(crate) struct TreeBuilder {
@@ -13,35 +12,56 @@ impl TreeBuilder {
         }
     }
 
-    fn is_valid_doctype(&mut self, name: Option<&str>, public_id: Option<&str>, system_id: Option<&str>, force_quirks: bool) -> bool {
+    fn is_valid_doctype(
+        &mut self,
+        name: Option<&str>,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
+        force_quirks: bool,
+    ) -> bool {
         true
     }
 
-    fn append_doctype(&mut self, name: Option<&str>, public_id: Option<&str>, system_id: Option<&str>, force_quirks: bool) {
+    fn append_doctype(
+        &mut self,
+        name: Option<&str>,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
+        force_quirks: bool,
+    ) {
     }
 
-    fn determine_quirks_mode(&mut self, name: Option<&str>, public_id: Option<&str>, system_id: Option<&str>, force_quirks: bool) {
+    fn determine_quirks_mode(
+        &mut self,
+        name: Option<&str>,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
+        force_quirks: bool,
+    ) {
     }
 
     // Implement the "Insert a comment" algorithm.
-    fn insert_comment(&mut self, comment: &str) {
-    }
+    fn insert_comment(&mut self, comment: &str) {}
 
     // Implement the "Insert a comment as the last child of the Document object" algorithm.
-    fn append_comment(&mut self, comment: &str) {
-    }
+    fn append_comment(&mut self, comment: &str) {}
 
     // Implement the "TODO: Insert a comment as the last child of the first element in the stack of open elements (the html element)" algorithm.
-    fn append_comment_to_root_element(&mut self, comment: &str) {
-    }
+    fn append_comment_to_root_element(&mut self, comment: &str) {}
 
     fn switch_to(&mut self, insertion_mode: InsertionMode) {
         self.insertion_mode = insertion_mode;
     }
 }
 
-impl TokenHandler for TreeBuilder {
-    fn handle_doctype(&mut self, name: Option<&str>, public_id: Option<&str>, system_id: Option<&str>, force_quirks: bool) -> bool {
+impl TreeBuilder {
+    fn handle_doctype(
+        &mut self,
+        name: Option<&str>,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
+        force_quirks: bool,
+    ) -> bool {
         match self.insertion_mode {
             InsertionMode::Initial => {
                 if !self.is_valid_doctype(name, public_id, system_id, force_quirks) {
@@ -51,39 +71,43 @@ impl TokenHandler for TreeBuilder {
                 self.determine_quirks_mode(name, public_id, system_id, force_quirks);
                 self.insertion_mode = InsertionMode::BeforeHtml;
             }
-            InsertionMode::BeforeHtml |
-            InsertionMode::BeforeHead |
-            InsertionMode::InHead |
-            InsertionMode::InHeadNoscript |
-            InsertionMode::AfterHead |
-            InsertionMode::InBody |
-            InsertionMode::InTable |
-            InsertionMode::InCaption |
-            InsertionMode::InColumnGroup |
-            InsertionMode::InTableBody |
-            InsertionMode::InRow |
-            InsertionMode::InCell |
-            InsertionMode::InSelect |
-            InsertionMode::InSelectInTable |
-            InsertionMode::InTemplate |
-            InsertionMode::AfterBody |
-            InsertionMode::InFrameset |
-            InsertionMode::AfterFrameset |
-            InsertionMode::AfterAfterBody |
-            InsertionMode::AfterAfterFrameset |
-            InsertionMode::InForeignContent => {
+            InsertionMode::BeforeHtml
+            | InsertionMode::BeforeHead
+            | InsertionMode::InHead
+            | InsertionMode::InHeadNoscript
+            | InsertionMode::AfterHead
+            | InsertionMode::InBody
+            | InsertionMode::InTable
+            | InsertionMode::InCaption
+            | InsertionMode::InColumnGroup
+            | InsertionMode::InTableBody
+            | InsertionMode::InRow
+            | InsertionMode::InCell
+            | InsertionMode::InSelect
+            | InsertionMode::InSelectInTable
+            | InsertionMode::InTemplate
+            | InsertionMode::AfterBody
+            | InsertionMode::InFrameset
+            | InsertionMode::AfterFrameset
+            | InsertionMode::AfterAfterBody
+            | InsertionMode::AfterAfterFrameset
+            | InsertionMode::InForeignContent => {
                 // TODO: Parse error.
                 // Ignore the token.
             }
-            InsertionMode::Text |
-            InsertionMode::InTableText => {
+            InsertionMode::Text | InsertionMode::InTableText => {
                 unreachable!();
             }
         }
         true
     }
 
-    fn handle_start_tag(&mut self, name: TagKind, attrs: bee_htmltokenizer::Attrs<'_>, self_closing: bool) -> bool {
+    fn handle_start_tag(
+        &mut self,
+        name: TagKind,
+        attrs: bee_htmltokenizer::Attrs<'_>,
+        self_closing: bool,
+    ) -> bool {
         loop {
             match self.insertion_mode {
                 InsertionMode::Initial => {
@@ -105,7 +129,7 @@ impl TokenHandler for TreeBuilder {
                         self.insertion_mode = InsertionMode::BeforeHead;
                         // Reprocess the token.
                     }
-                }
+                },
                 InsertionMode::BeforeHead => match name {
                     TagKind::Html(HtmlTag::HTML) => {
                         // TODO: Process the token using the rules for the "in body" insertion mode.
@@ -122,7 +146,7 @@ impl TokenHandler for TreeBuilder {
                         self.insertion_mode = InsertionMode::InHead;
                         // Reprocess the token.
                     }
-                }
+                },
                 InsertionMode::InHead => match name {
                     // TODO: We can improve the performance of the following pattern matching by introducing flags.
                     TagKind::Html(HtmlTag::HTML) => {
@@ -181,14 +205,13 @@ impl TokenHandler for TreeBuilder {
                         self.insertion_mode = InsertionMode::AfterHead;
                         // Reprocess the token.
                     }
-                }
+                },
                 InsertionMode::InHeadNoscript => match name {
                     TagKind::Html(HtmlTag::HTML) => {
                         // TODO: Process the token using the rules for the "in body" insertion mode.
                         return true;
                     }
-                    TagKind::Html(HtmlTag::HEAD) |
-                    TagKind::Html(HtmlTag::NOSCRIPT) => {
+                    TagKind::Html(HtmlTag::HEAD) | TagKind::Html(HtmlTag::NOSCRIPT) => {
                         // TODO: Parse error.
                         // Ignore the token.
                         return true;
@@ -199,7 +222,7 @@ impl TokenHandler for TreeBuilder {
                         self.insertion_mode = InsertionMode::InHead;
                         // Reprocess the token.
                     }
-                }
+                },
                 InsertionMode::AfterHead => match name {
                     TagKind::Html(HtmlTag::HTML) => {
                         // TODO: Process the token using the rules for the "in body" insertion mode.
@@ -214,16 +237,16 @@ impl TokenHandler for TreeBuilder {
                         // TODO: Insert an HTML element for the token.
                         self.insertion_mode = InsertionMode::InFrameset;
                     }
-                    TagKind::Html(HtmlTag::BASE) |
-                    TagKind::Html(HtmlTag::BASEFONT) |
-                    TagKind::Html(HtmlTag::BGSOUND) |
-                    TagKind::Html(HtmlTag::LINK) |
-                    TagKind::Html(HtmlTag::META) |
-                    TagKind::Html(HtmlTag::NOFRAMES) |
-                    TagKind::Html(HtmlTag::SCRIPT) |
-                    TagKind::Html(HtmlTag::STYLE) |
-                    TagKind::Html(HtmlTag::TEMPLATE) |
-                    TagKind::Html(HtmlTag::TITLE) => {
+                    TagKind::Html(HtmlTag::BASE)
+                    | TagKind::Html(HtmlTag::BASEFONT)
+                    | TagKind::Html(HtmlTag::BGSOUND)
+                    | TagKind::Html(HtmlTag::LINK)
+                    | TagKind::Html(HtmlTag::META)
+                    | TagKind::Html(HtmlTag::NOFRAMES)
+                    | TagKind::Html(HtmlTag::SCRIPT)
+                    | TagKind::Html(HtmlTag::STYLE)
+                    | TagKind::Html(HtmlTag::TEMPLATE)
+                    | TagKind::Html(HtmlTag::TITLE) => {
                         // TODO: Parse error.
                         // TODO: Push the node pointed to by the head element pointer onto the stack of open elements.
                         // TODO: Process the token using the rules for the "in head" insertion mode.
@@ -240,7 +263,7 @@ impl TokenHandler for TreeBuilder {
                         self.insertion_mode = InsertionMode::InBody;
                         // Reprocess the token.
                     }
-                }
+                },
                 InsertionMode::InBody => match name {
                     TagKind::Html(HtmlTag::HTML) => {
                         // TODO: Parse error.
@@ -248,16 +271,16 @@ impl TokenHandler for TreeBuilder {
                         // TODO: Otherwise, for each attribute on the token, check to see if the attribute is already present on the top element of the stack of open elements. If it is not, add the attribute and its corresponding value to that element.
                         return true;
                     }
-                    TagKind::Html(HtmlTag::BASE) |
-                    TagKind::Html(HtmlTag::BASEFONT) |
-                    TagKind::Html(HtmlTag::BGSOUND) |
-                    TagKind::Html(HtmlTag::LINK) |
-                    TagKind::Html(HtmlTag::META) |
-                    TagKind::Html(HtmlTag::NOFRAMES) |
-                    TagKind::Html(HtmlTag::SCRIPT) |
-                    TagKind::Html(HtmlTag::STYLE) |
-                    TagKind::Html(HtmlTag::TEMPLATE) |
-                    TagKind::Html(HtmlTag::TITLE) => {
+                    TagKind::Html(HtmlTag::BASE)
+                    | TagKind::Html(HtmlTag::BASEFONT)
+                    | TagKind::Html(HtmlTag::BGSOUND)
+                    | TagKind::Html(HtmlTag::LINK)
+                    | TagKind::Html(HtmlTag::META)
+                    | TagKind::Html(HtmlTag::NOFRAMES)
+                    | TagKind::Html(HtmlTag::SCRIPT)
+                    | TagKind::Html(HtmlTag::STYLE)
+                    | TagKind::Html(HtmlTag::TEMPLATE)
+                    | TagKind::Html(HtmlTag::TITLE) => {
                         // TODO: Process the token using the rules for the "in head" insertion mode.
                         return true;
                     }
@@ -271,47 +294,46 @@ impl TokenHandler for TreeBuilder {
                         // TODO
                         return true;
                     }
-                    TagKind::Html(HtmlTag::ADDRESS) |
-                    TagKind::Html(HtmlTag::ARTICLE) |
-                    TagKind::Html(HtmlTag::ASIDE) |
-                    TagKind::Html(HtmlTag::BLOCKQUOTE) |
-                    TagKind::Html(HtmlTag::CENTER) |
-                    TagKind::Html(HtmlTag::DETAILS) |
-                    TagKind::Html(HtmlTag::DIALOG) |
-                    TagKind::Html(HtmlTag::DIR) |
-                    TagKind::Html(HtmlTag::DIV) |
-                    TagKind::Html(HtmlTag::DL) |
-                    TagKind::Html(HtmlTag::FIELDSET) |
-                    TagKind::Html(HtmlTag::FIGCAPTION) |
-                    TagKind::Html(HtmlTag::FIGURE) |
-                    TagKind::Html(HtmlTag::FOOTER) |
-                    TagKind::Html(HtmlTag::HEADER) |
-                    TagKind::Html(HtmlTag::HGROUP) |
-                    TagKind::Html(HtmlTag::MAIN) |
-                    TagKind::Html(HtmlTag::MENU) |
-                    TagKind::Html(HtmlTag::NAV) |
-                    TagKind::Html(HtmlTag::OL) |
-                    TagKind::Html(HtmlTag::P) |
-                    TagKind::Html(HtmlTag::SECTION) |
-                    TagKind::Html(HtmlTag::SUMMARY) |
-                    TagKind::Html(HtmlTag::UL) => {
+                    TagKind::Html(HtmlTag::ADDRESS)
+                    | TagKind::Html(HtmlTag::ARTICLE)
+                    | TagKind::Html(HtmlTag::ASIDE)
+                    | TagKind::Html(HtmlTag::BLOCKQUOTE)
+                    | TagKind::Html(HtmlTag::CENTER)
+                    | TagKind::Html(HtmlTag::DETAILS)
+                    | TagKind::Html(HtmlTag::DIALOG)
+                    | TagKind::Html(HtmlTag::DIR)
+                    | TagKind::Html(HtmlTag::DIV)
+                    | TagKind::Html(HtmlTag::DL)
+                    | TagKind::Html(HtmlTag::FIELDSET)
+                    | TagKind::Html(HtmlTag::FIGCAPTION)
+                    | TagKind::Html(HtmlTag::FIGURE)
+                    | TagKind::Html(HtmlTag::FOOTER)
+                    | TagKind::Html(HtmlTag::HEADER)
+                    | TagKind::Html(HtmlTag::HGROUP)
+                    | TagKind::Html(HtmlTag::MAIN)
+                    | TagKind::Html(HtmlTag::MENU)
+                    | TagKind::Html(HtmlTag::NAV)
+                    | TagKind::Html(HtmlTag::OL)
+                    | TagKind::Html(HtmlTag::P)
+                    | TagKind::Html(HtmlTag::SECTION)
+                    | TagKind::Html(HtmlTag::SUMMARY)
+                    | TagKind::Html(HtmlTag::UL) => {
                         // TODO: If the stack of open elements has a p element in button scope, then close a p element.
                         // TODO: Insert an HTML element for the token.
                         return true;
                     }
-                    TagKind::Html(HtmlTag::H1) |
-                    TagKind::Html(HtmlTag::H2) |
-                    TagKind::Html(HtmlTag::H3) |
-                    TagKind::Html(HtmlTag::H4) |
-                    TagKind::Html(HtmlTag::H5) |
-                    TagKind::Html(HtmlTag::H6) => {
+                    TagKind::Html(HtmlTag::H1)
+                    | TagKind::Html(HtmlTag::H2)
+                    | TagKind::Html(HtmlTag::H3)
+                    | TagKind::Html(HtmlTag::H4)
+                    | TagKind::Html(HtmlTag::H5)
+                    | TagKind::Html(HtmlTag::H6) => {
                         // TODO: If the stack of open elements has a p element in button scope, then close a p element.
                         // TODO: If the current node is an HTML element whose tag name is one of "h1", "h2", "h3", "h4", "h5", or "h6", then this is a parse error; pop the current node off the stack of open elements.
                         // TODO: Insert an HTML element for the token.
                         return true;
                     }
-                    TagKind::Html(HtmlTag::PRE) |
-                    TagKind::Other("listing") => {
+                    TagKind::Html(HtmlTag::PRE) | TagKind::Other("listing") => {
                         // TODO: If the stack of open elements has a p element in button scope, then close a p element.
                         // TODO: Insert an HTML element for the token.
                         // TODO: If the next token is a U+000A LINE FEED (LF) character token, then ignore that token and move on to the next one. (Newlines at the start of pre blocks are ignored as an authoring convenience.)
@@ -329,8 +351,7 @@ impl TokenHandler for TreeBuilder {
                         // TODO
                         return true;
                     }
-                    TagKind::Html(HtmlTag::DD) |
-                    TagKind::Html(HtmlTag::DT) => {
+                    TagKind::Html(HtmlTag::DD) | TagKind::Html(HtmlTag::DT) => {
                         // TODO
                         return true;
                     }
@@ -346,18 +367,18 @@ impl TokenHandler for TreeBuilder {
                         // TODO
                         return true;
                     }
-                    TagKind::Html(HtmlTag::B) |
-                    TagKind::Html(HtmlTag::BIG) |
-                    TagKind::Html(HtmlTag::CODE) |
-                    TagKind::Html(HtmlTag::EM) |
-                    TagKind::Html(HtmlTag::FONT) |
-                    TagKind::Html(HtmlTag::I) |
-                    TagKind::Html(HtmlTag::S) |
-                    TagKind::Html(HtmlTag::SMALL) |
-                    TagKind::Html(HtmlTag::STRIKE) |
-                    TagKind::Html(HtmlTag::STRONG) |
-                    TagKind::Html(HtmlTag::TT) |
-                    TagKind::Html(HtmlTag::U) => {
+                    TagKind::Html(HtmlTag::B)
+                    | TagKind::Html(HtmlTag::BIG)
+                    | TagKind::Html(HtmlTag::CODE)
+                    | TagKind::Html(HtmlTag::EM)
+                    | TagKind::Html(HtmlTag::FONT)
+                    | TagKind::Html(HtmlTag::I)
+                    | TagKind::Html(HtmlTag::S)
+                    | TagKind::Html(HtmlTag::SMALL)
+                    | TagKind::Html(HtmlTag::STRIKE)
+                    | TagKind::Html(HtmlTag::STRONG)
+                    | TagKind::Html(HtmlTag::TT)
+                    | TagKind::Html(HtmlTag::U) => {
                         // TODO
                         return true;
                     }
@@ -365,9 +386,9 @@ impl TokenHandler for TreeBuilder {
                         // TODO
                         return true;
                     }
-                    TagKind::Html(HtmlTag::APPLET) |
-                    TagKind::Html(HtmlTag::MARQUEE) |
-                    TagKind::Html(HtmlTag::OBJECT) => {
+                    TagKind::Html(HtmlTag::APPLET)
+                    | TagKind::Html(HtmlTag::MARQUEE)
+                    | TagKind::Html(HtmlTag::OBJECT) => {
                         // TODO
                         return true;
                     }
@@ -376,7 +397,7 @@ impl TokenHandler for TreeBuilder {
                         // TODO: Insert an HTML element for the token.
                         return true;
                     }
-                }
+                },
                 InsertionMode::Text => {
                     unreachable!();
                 }
@@ -400,17 +421,17 @@ impl TokenHandler for TreeBuilder {
                         self.switch_to(InsertionMode::InColumnGroup);
                         // Reprocess the current token.
                     }
-                    TagKind::Html(HtmlTag::TBODY) |
-                    TagKind::Html(HtmlTag::TFOOT) |
-                    TagKind::Html(HtmlTag::THEAD) => {
+                    TagKind::Html(HtmlTag::TBODY)
+                    | TagKind::Html(HtmlTag::TFOOT)
+                    | TagKind::Html(HtmlTag::THEAD) => {
                         // TODO: Clear the stack back to a table context.
                         // TODO: Insert an HTML element for the token
                         self.switch_to(InsertionMode::InTableBody);
                         return true;
                     }
-                    TagKind::Html(HtmlTag::TD) |
-                    TagKind::Html(HtmlTag::TH) |
-                    TagKind::Html(HtmlTag::TR) => {
+                    TagKind::Html(HtmlTag::TD)
+                    | TagKind::Html(HtmlTag::TH)
+                    | TagKind::Html(HtmlTag::TR) => {
                         // TODO: Clear the stack back to a table context.
                         // TODO: Insert an HTML element for a "tbody" start tag token with no attributes
                         self.switch_to(InsertionMode::InTableBody);
@@ -424,9 +445,9 @@ impl TokenHandler for TreeBuilder {
                         // TODO: Reset the insertion mode appropriately.
                         // Reprocess the current token.
                     }
-                    TagKind::Html(HtmlTag::STYLE) |
-                    TagKind::Html(HtmlTag::SCRIPT) |
-                    TagKind::Html(HtmlTag::TEMPLATE) => {
+                    TagKind::Html(HtmlTag::STYLE)
+                    | TagKind::Html(HtmlTag::SCRIPT)
+                    | TagKind::Html(HtmlTag::TEMPLATE) => {
                         // TODO: Process the token using the rules for the "in head" insertion mode.
                         return true;
                     }
@@ -449,22 +470,22 @@ impl TokenHandler for TreeBuilder {
                         // TODO: Parse error.
                         // TODO: Enable foster parenting, process the token using the rules for the "in body" insertion mode, and then disable foster parenting.
                     }
-                }
+                },
                 InsertionMode::InTableText => {
                     // TODO: If any of the tokens in the pending table character tokens list are character tokens that are not ASCII whitespace, then this is a parse error: reprocess the character tokens in the pending table character tokens list using the rules given in the "anything else" entry in the "in table" insertion mode.
                     // TODO: Otherwise, insert the characters given by the pending table character tokens list.
                     // TODO: Switch the insertion mode to the original insertion mode and reprocess the token.
                 }
                 InsertionMode::InCaption => match name {
-                    TagKind::Html(HtmlTag::CAPTION) |
-                    TagKind::Html(HtmlTag::COL) |
-                    TagKind::Html(HtmlTag::COLGROUP) |
-                    TagKind::Html(HtmlTag::TBODY) |
-                    TagKind::Html(HtmlTag::TD) |
-                    TagKind::Html(HtmlTag::TFOOT) |
-                    TagKind::Html(HtmlTag::TH) |
-                    TagKind::Html(HtmlTag::THEAD) |
-                    TagKind::Html(HtmlTag::TR) => {
+                    TagKind::Html(HtmlTag::CAPTION)
+                    | TagKind::Html(HtmlTag::COL)
+                    | TagKind::Html(HtmlTag::COLGROUP)
+                    | TagKind::Html(HtmlTag::TBODY)
+                    | TagKind::Html(HtmlTag::TD)
+                    | TagKind::Html(HtmlTag::TFOOT)
+                    | TagKind::Html(HtmlTag::TH)
+                    | TagKind::Html(HtmlTag::THEAD)
+                    | TagKind::Html(HtmlTag::TR) => {
                         // TODO: If the stack of open elements does not have a caption element in table scope, this is a parse error; ignore the token. (fragment case)
                         // TODO: Otherwise:
                         // TODO: Generate implied end tags.
@@ -477,7 +498,7 @@ impl TokenHandler for TreeBuilder {
                     _ => {
                         // TODO: Process the token using the rules for the "in body" insertion mode.
                     }
-                }
+                },
                 InsertionMode::InColumnGroup => match name {
                     TagKind::Html(HtmlTag::HTML) => {
                         // TODO: Process the token using the rules for the "in body" insertion mode.
@@ -495,7 +516,7 @@ impl TokenHandler for TreeBuilder {
                         self.switch_to(InsertionMode::InTable);
                         // Reprocess the token.
                     }
-                }
+                },
                 InsertionMode::InTableBody => match name {
                     TagKind::Html(HtmlTag::TR) => {
                         // TODO: Clear the stack back to a table body context.
@@ -503,20 +524,19 @@ impl TokenHandler for TreeBuilder {
                         self.switch_to(InsertionMode::InRow);
                         return true;
                     }
-                    TagKind::Html(HtmlTag::TH) |
-                    TagKind::Html(HtmlTag::TD) => {
+                    TagKind::Html(HtmlTag::TH) | TagKind::Html(HtmlTag::TD) => {
                         // TODO: Parse error.
                         // TODO: Clear the stack back to a table body context.
                         // TODO: Insert an HTML element for a "tr" start tag token with no attributes
                         self.switch_to(InsertionMode::InRow);
                         // Reprocess the current token.
                     }
-                    TagKind::Html(HtmlTag::CAPTION) |
-                    TagKind::Html(HtmlTag::COL) |
-                    TagKind::Html(HtmlTag::COLGROUP) |
-                    TagKind::Html(HtmlTag::TBODY) |
-                    TagKind::Html(HtmlTag::TFOOT) |
-                    TagKind::Html(HtmlTag::THEAD) => {
+                    TagKind::Html(HtmlTag::CAPTION)
+                    | TagKind::Html(HtmlTag::COL)
+                    | TagKind::Html(HtmlTag::COLGROUP)
+                    | TagKind::Html(HtmlTag::TBODY)
+                    | TagKind::Html(HtmlTag::TFOOT)
+                    | TagKind::Html(HtmlTag::THEAD) => {
                         // TODO: If the stack of open elements does not have a tbody, thead, or tfoot element in table scope, this is a parse error; ignore the token.
                         // TODO: Otherwise:
                         // TODO: Clear the stack back to a table body context. (See below.)
@@ -527,23 +547,22 @@ impl TokenHandler for TreeBuilder {
                     _ => {
                         // TODO: Process the token using the rules for the "in table" insertion mode.
                     }
-                }
+                },
                 InsertionMode::InRow => match name {
-                    TagKind::Html(HtmlTag::TH) |
-                    TagKind::Html(HtmlTag::TD) => {
+                    TagKind::Html(HtmlTag::TH) | TagKind::Html(HtmlTag::TD) => {
                         // TODO: Clear the stack back to a table row context.
                         // TODO: Insert an HTML element for the token
                         self.switch_to(InsertionMode::InCell);
                         // TODO: Insert a marker at the end of the list of active formatting elements.
                         return true;
                     }
-                    TagKind::Html(HtmlTag::CAPTION) |
-                    TagKind::Html(HtmlTag::COL) |
-                    TagKind::Html(HtmlTag::COLGROUP) |
-                    TagKind::Html(HtmlTag::TBODY) |
-                    TagKind::Html(HtmlTag::TFOOT) |
-                    TagKind::Html(HtmlTag::THEAD) |
-                    TagKind::Html(HtmlTag::TR) => {
+                    TagKind::Html(HtmlTag::CAPTION)
+                    | TagKind::Html(HtmlTag::COL)
+                    | TagKind::Html(HtmlTag::COLGROUP)
+                    | TagKind::Html(HtmlTag::TBODY)
+                    | TagKind::Html(HtmlTag::TFOOT)
+                    | TagKind::Html(HtmlTag::THEAD)
+                    | TagKind::Html(HtmlTag::TR) => {
                         // TODO: If the stack of open elements does not have a tr element in table scope, this is a parse error; ignore the token.
                         // TODO: Otherwise:
                         // TODO: Clear the stack back to a table row context. (See below.)
@@ -554,9 +573,8 @@ impl TokenHandler for TreeBuilder {
                     _ => {
                         // TODO: Process the token using the rules for the "in table" insertion mode.
                     }
-                }
-                _ => {
-                }
+                },
+                _ => {}
             }
         }
     }
@@ -816,36 +834,35 @@ impl TokenHandler for TreeBuilder {
 
     fn handle_comment(&mut self, comment: &str) -> bool {
         match self.insertion_mode {
-            InsertionMode::BeforeHead |
-            InsertionMode::InHead |
-            InsertionMode::InHeadNoscript |
-            InsertionMode::AfterHead |
-            InsertionMode::InBody |
-            InsertionMode::InTable |
-            InsertionMode::InCaption |
-            InsertionMode::InColumnGroup |
-            InsertionMode::InTableBody |
-            InsertionMode::InRow |
-            InsertionMode::InCell |
-            InsertionMode::InSelect |
-            InsertionMode::InSelectInTable |
-            InsertionMode::InTemplate |
-            InsertionMode::InFrameset |
-            InsertionMode::AfterFrameset |
-            InsertionMode::InForeignContent => {
+            InsertionMode::BeforeHead
+            | InsertionMode::InHead
+            | InsertionMode::InHeadNoscript
+            | InsertionMode::AfterHead
+            | InsertionMode::InBody
+            | InsertionMode::InTable
+            | InsertionMode::InCaption
+            | InsertionMode::InColumnGroup
+            | InsertionMode::InTableBody
+            | InsertionMode::InRow
+            | InsertionMode::InCell
+            | InsertionMode::InSelect
+            | InsertionMode::InSelectInTable
+            | InsertionMode::InTemplate
+            | InsertionMode::InFrameset
+            | InsertionMode::AfterFrameset
+            | InsertionMode::InForeignContent => {
                 self.insert_comment(comment);
             }
-            InsertionMode::Initial |
-            InsertionMode::BeforeHtml |
-            InsertionMode::AfterAfterBody |
-            InsertionMode::AfterAfterFrameset => {
+            InsertionMode::Initial
+            | InsertionMode::BeforeHtml
+            | InsertionMode::AfterAfterBody
+            | InsertionMode::AfterAfterFrameset => {
                 self.append_comment(comment);
             }
             InsertionMode::AfterBody => {
                 self.append_comment_to_root_element(comment);
             }
-            InsertionMode::Text |
-            InsertionMode::InTableText => {
+            InsertionMode::Text | InsertionMode::InTableText => {
                 unreachable!();
             }
         }

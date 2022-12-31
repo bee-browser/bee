@@ -133,7 +133,7 @@ pub enum ContentSize {
     FitContent(NumericSize),
     Pixel(LayoutLength),
     Scale(Decimal),
-    Calc(String),  // TODO: Fn
+    Calc(String), // TODO: Fn
 }
 
 impl ContentSize {
@@ -164,7 +164,7 @@ pub enum ContentMinSize {
     FitContent(NumericSize),
     Pixel(LayoutLength),
     Scale(Decimal),
-    Calc(String),  // TODO: Fn
+    Calc(String), // TODO: Fn
 }
 
 impl ContentMinSize {
@@ -191,7 +191,7 @@ pub enum ContentMaxSize {
     None,
     Pixel(LayoutLength),
     Scale(Decimal),
-    Calc(String),  // TODO: Fn
+    Calc(String), // TODO: Fn
 }
 
 impl ContentMaxSize {
@@ -217,7 +217,7 @@ impl Default for ContentMaxSize {
 pub enum Padding {
     Pixel(LayoutLength),
     Scale(Decimal),
-    Calc(String),  // TODO: Fn
+    Calc(String), // TODO: Fn
 }
 
 impl Padding {
@@ -321,7 +321,12 @@ impl BoxQuad<Border> {
 
 impl Into<(LayoutLength, LayoutLength, LayoutLength, LayoutLength)> for BoxQuad<Border> {
     fn into(self) -> (LayoutLength, LayoutLength, LayoutLength, LayoutLength) {
-        (self.top.width, self.right.width, self.bottom.width, self.left.width)
+        (
+            self.top.width,
+            self.right.width,
+            self.bottom.width,
+            self.left.width,
+        )
     }
 }
 
@@ -377,7 +382,14 @@ impl Default for Color {
 
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "rgba({}, {}, {}, {})", self.red(), self.green(), self.blue(), self.alpha())
+        write!(
+            f,
+            "rgba({}, {}, {}, {})",
+            self.red(),
+            self.green(),
+            self.blue(),
+            self.alpha()
+        )
     }
 }
 
@@ -388,7 +400,7 @@ pub enum Margin {
     Auto,
     Pixel(LayoutLength),
     Scale(Decimal),
-    Calc(String),  // TODO: Fn
+    Calc(String), // TODO: Fn
 }
 
 impl Margin {
@@ -418,19 +430,24 @@ pub struct BoxQuad<T> {
 
 impl<T> BoxQuad<T> {
     pub fn new(top: T, right: T, bottom: T, left: T) -> Self {
-        BoxQuad { top, right, bottom, left }
+        BoxQuad {
+            top,
+            right,
+            bottom,
+            left,
+        }
     }
 
     pub fn any<F>(&self, f: F) -> bool
     where
-        F: Fn(&T) -> bool
+        F: Fn(&T) -> bool,
     {
         f(&self.top) || f(&self.right) || f(&self.bottom) || f(&self.left)
     }
 
     pub fn all<F>(&self, f: F) -> bool
     where
-        F: Fn(&T) -> bool
+        F: Fn(&T) -> bool,
     {
         f(&self.top) && f(&self.right) && f(&self.bottom) && f(&self.left)
     }
@@ -467,13 +484,21 @@ impl<T: Copy + Add<Output = T>> BoxQuad<T> {
 
 impl<T: std::fmt::Display> std::fmt::Display for BoxQuad<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}, {}, {}, {}]", self.top, self.right, self.bottom, self.left)
+        write!(
+            f,
+            "[{}, {}, {}, {}]",
+            self.top, self.right, self.bottom, self.left
+        )
     }
 }
 
 impl<T: std::fmt::Debug> std::fmt::Debug for BoxQuad<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{:?}, {:?}, {:?}, {:?}]", self.top, self.right, self.bottom, self.left)
+        write!(
+            f,
+            "[{:?}, {:?}, {:?}, {:?}]",
+            self.top, self.right, self.bottom, self.left
+        )
     }
 }
 
@@ -486,7 +511,7 @@ macro_rules! box_quad {
         BoxQuad::new($vert.clone(), $hori.clone(), $vert.clone(), $hori.clone())
     };
     ($top:expr, $right:expr, $bottom:expr, $left:expr) => {
-        BoxQuad::new($top, $right, $bottom,  $left)
+        BoxQuad::new($top, $right, $bottom, $left)
     };
 }
 
@@ -651,7 +676,7 @@ pub enum LayerOffset {
     Auto,
     Pixel(LayoutLength),
     Scale(Decimal),
-    Calc(String),  // TODO: Fn
+    Calc(String), // TODO: Fn
 }
 
 impl LayerOffset {
@@ -740,7 +765,7 @@ pub enum FlexBasis {
     Content,
     Pixel(LayoutLength),
     Scale(Decimal),
-    Calc(String),  // TODO: Fn
+    Calc(String), // TODO: Fn
 }
 
 impl Default for FlexBasis {
@@ -831,7 +856,7 @@ pub struct ContentStyle {
 #[cfg_attr(feature = "serde", serde(default))]
 pub struct Asset {
     pub id: u64,
-    pub size: AssetSize,  // natural size is required for computing the box size
+    pub size: AssetSize, // natural size is required for computing the box size
 }
 
 #[derive(Clone)]
@@ -858,8 +883,8 @@ pub struct AvailableSize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json;
     use assert_matches::assert_matches;
+    use serde_json;
 
     #[test]
     fn test_border_style_serde() {
@@ -879,8 +904,7 @@ mod tests {
             let result = assert_matches!(serde_json::to_string(&pair.0), Ok(v) => v);
             assert_eq!(result, pair.1);
 
-            let result: BorderStyle =
-                assert_matches!(serde_json::from_str(&pair.1), Ok(v) => v);
+            let result: BorderStyle = assert_matches!(serde_json::from_str(&pair.1), Ok(v) => v);
             assert_eq!(result, pair.0);
         }
     }
@@ -924,8 +948,8 @@ mod tests {
 mod serde_impl {
     use super::*;
 
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde::ser::SerializeTuple;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     impl<T> Serialize for BoxQuad<T>
     where

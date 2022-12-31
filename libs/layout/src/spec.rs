@@ -32,7 +32,7 @@ impl Spec {
             DisplayInside::Flow => match display.outside {
                 DisplayOutside::Block => ContainerSpec::Block,
                 _ => ContainerSpec::Inline,
-            }
+            },
             DisplayInside::Flex => ContainerSpec::Flex,
             DisplayInside::Canvas => ContainerSpec::Canvas,
             _ => ContainerSpec::None,
@@ -44,9 +44,9 @@ impl Spec {
     fn check_positioning<'a>(&'a mut self, positioning: PositioningScheme) -> &'a mut Self {
         if !self.node.is_none() {
             match positioning {
-                PositioningScheme::Absolute |
-                PositioningScheme::Fixed |
-                PositioningScheme::Sticky => {
+                PositioningScheme::Absolute
+                | PositioningScheme::Fixed
+                | PositioningScheme::Sticky => {
                     self.node = NodeSpec::Layer;
                     self.container = ContainerSpec::Flow;
                 }

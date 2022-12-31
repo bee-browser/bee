@@ -3,22 +3,22 @@ use std::sync::Arc;
 use num_traits::Zero;
 use tracing::warn;
 
-use crate::BoxConstraintSolver;
-use crate::BoxModel;
-use crate::BoxBackground;
-use crate::LayoutLength;
-use crate::LayoutNodeRef;
-use crate::LayoutElement;
-use crate::LayoutText;
-use crate::SolvedBoxGeometry;
-use crate::ToVisual;
-use crate::LayoutBox2D;
-use crate::LayoutVector2D;
-use crate::VisualRenderer;
 use crate::canvas::CanvasContainer;
 use crate::flex::FlexContainer;
 use crate::spec::*;
 use crate::style::*;
+use crate::BoxBackground;
+use crate::BoxConstraintSolver;
+use crate::BoxModel;
+use crate::LayoutBox2D;
+use crate::LayoutElement;
+use crate::LayoutLength;
+use crate::LayoutNodeRef;
+use crate::LayoutText;
+use crate::LayoutVector2D;
+use crate::SolvedBoxGeometry;
+use crate::ToVisual;
+use crate::VisualRenderer;
 
 impl LayoutElement {
     pub(crate) fn build_flow(&self, avail: &AvailableSize) -> Arc<FlowContainer> {
@@ -34,7 +34,7 @@ impl LayoutElement {
             geometry: solved_geom.determine(),
             background: BoxBackground {
                 color: self.style.background.color.clone(),
-                images: vec![],  // TODO
+                images: vec![], // TODO
             },
         };
 
@@ -43,8 +43,8 @@ impl LayoutElement {
             height: Some(box_model.content_box().height()),
         };
 
-        let container = BlockContent::new(
-            self.spec.container, &self.children, &self.style, &new_avail);
+        let container =
+            BlockContent::new(self.spec.container, &self.children, &self.style, &new_avail);
 
         // TODO: update height
 
@@ -53,9 +53,7 @@ impl LayoutElement {
 
     fn solve_block_box_geometry(&self, avail: &AvailableSize) -> SolvedBoxGeometry {
         let mut solver = BoxConstraintSolver::new(avail);
-        solver
-            .apply_style(&self.style)
-            .solve_constraints();
+        solver.apply_style(&self.style).solve_constraints();
 
         solver.geom
     }
@@ -77,7 +75,7 @@ impl FlowContainer {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", "flow-root", indent=depth)?;
+        write!(write, "{:indent$}{}\n", "", "flow-root", indent = depth)?;
         self.container.inspect(write, depth + 1)?;
         Ok(())
     }
@@ -168,11 +166,11 @@ impl<'a> BlockFlowBuilder<'a> {
         self.advance += height;
     }
 
-    fn process_inline_element(&mut self, _element:  &LayoutElement) {
+    fn process_inline_element(&mut self, _element: &LayoutElement) {
         warn!("TODO: not implemented");
     }
 
-    fn process_float_element(&mut self, _element:  &LayoutElement) {
+    fn process_float_element(&mut self, _element: &LayoutElement) {
         warn!("TODO: not implemented");
     }
 
@@ -226,7 +224,7 @@ impl Block {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
+        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
         self.content.inspect(write, depth + 1)?;
         Ok(())
     }
@@ -284,7 +282,7 @@ impl BlockContent {
         W: std::io::Write + ?Sized,
     {
         match self {
-            Self::None => write!(write, "{:indent$}none\n", "", indent=depth),
+            Self::None => write!(write, "{:indent$}none\n", "", indent = depth),
             Self::Block(ref block) => block.inspect(write, depth),
             Self::Flow(ref flow) => flow.inspect(write, depth),
             Self::Flex(ref flex) => flex.inspect(write, depth),

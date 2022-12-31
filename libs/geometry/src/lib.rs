@@ -12,4 +12,4 @@ pub use crate::rect::Rect;
 pub use crate::size2d::Size2D;
 pub use crate::vector2d::Vector2D;
 
-type Quad<T> = (T, T, T, T);  // internal quad type to make developer's life easier
+type Quad<T> = (T, T, T, T); // internal quad type to make developer's life easier

@@ -15,10 +15,10 @@ use num_traits::{Bounded, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::spec::*;
-pub use crate::style::*;
 use crate::flex::FlexContainer;
 use crate::flow::FlowContainer;
+use crate::spec::*;
+pub use crate::style::*;
 
 pub type Decimal = f32;
 pub type Integer = i32;
@@ -91,22 +91,26 @@ impl ToVisual for LayoutVector2D {
 }
 
 pub fn new_element(
-    style: Arc<Style>, children: Vec<LayoutNodeHandle>, label: String) -> LayoutNodeHandle {
+    style: Arc<Style>,
+    children: Vec<LayoutNodeHandle>,
+    label: String,
+) -> LayoutNodeHandle {
     let children = children.into_iter().map(|handle| handle.0).collect();
-    LayoutNodeHandle(LayoutNodeRef::Element(
-        Arc::new(LayoutElement::new(style, children, label))))
+    LayoutNodeHandle(LayoutNodeRef::Element(Arc::new(LayoutElement::new(
+        style, children, label,
+    ))))
 }
 
 pub fn new_text(text: String, label: String) -> LayoutNodeHandle {
-    LayoutNodeHandle(LayoutNodeRef::Text(
-        Arc::new(LayoutText::new(text, label))))
+    LayoutNodeHandle(LayoutNodeRef::Text(Arc::new(LayoutText::new(text, label))))
 }
 
 pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: usize) -> VisualRoot {
     if let LayoutNodeRef::Element(ref element) = layout_root.0 {
         let width = LayoutLength::new(width as f32);
         let height = LayoutLength::new(height as f32);
-        let root_box: LayoutBox2D = (LayoutLength::zero(), LayoutLength::zero(), width, height).into();
+        let root_box: LayoutBox2D =
+            (LayoutLength::zero(), LayoutLength::zero(), width, height).into();
 
         let box_model = BoxModel {
             style: element.style.clone(),
@@ -118,7 +122,7 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
             },
             background: BoxBackground {
                 color: element.style.background.color.clone(),
-                images: vec![],  // TODO
+                images: vec![], // TODO
             },
         };
 
@@ -131,14 +135,18 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
 
         let layers = element.build_layers_for_children(&avail, &avail).into_vec();
 
-        VisualRoot { box_model, flow, layers, }
+        VisualRoot {
+            box_model,
+            flow,
+            layers,
+        }
     } else {
         unreachable!();
     }
 }
 
 #[derive(Clone)]
-pub struct LayoutNodeHandle(LayoutNodeRef);  // opaque
+pub struct LayoutNodeHandle(LayoutNodeRef); // opaque
 
 impl LayoutNodeHandle {
     //<coverage:exclude>
@@ -196,14 +204,17 @@ impl LayoutElement {
     }
 
     fn build_layer_content(&self, avail: &AvailableSize) -> Arc<LayerContent> {
-        Arc::new(LayerContent::new(self.spec.container, &self.children, &self.style, avail))
+        Arc::new(LayerContent::new(
+            self.spec.container,
+            &self.children,
+            &self.style,
+            avail,
+        ))
     }
 
     fn solve_box_geometry(&self, avail: &AvailableSize) -> SolvedBoxGeometry {
         let mut solver = BoxConstraintSolver::new(avail);
-        solver
-            .apply_style(&self.style)
-            .solve_constraints();
+        solver.apply_style(&self.style).solve_constraints();
 
         solver.geom
     }
@@ -214,15 +225,14 @@ impl LayoutElement {
         avail: &AvailableSize,
     ) -> VisualLayersMap {
         match self.style.positioning {
-            PositioningScheme::Static =>
-                self.build_layers_for_children(initial_avail, avail),
-            PositioningScheme::Fixed =>
-                self.build_layers_for_layer(initial_avail, initial_avail),
-            PositioningScheme::Absolute |
-            PositioningScheme::Sticky =>  // TODO
-                self.build_layers_for_layer(initial_avail, avail),
-            PositioningScheme::Relative =>
-                self.build_layers_for_children(initial_avail, avail),  // TODO
+            PositioningScheme::Static => self.build_layers_for_children(initial_avail, avail),
+            PositioningScheme::Fixed => self.build_layers_for_layer(initial_avail, initial_avail),
+            PositioningScheme::Absolute | PositioningScheme::Sticky =>
+            // TODO
+            {
+                self.build_layers_for_layer(initial_avail, avail)
+            }
+            PositioningScheme::Relative => self.build_layers_for_children(initial_avail, avail), // TODO
         }
     }
 
@@ -247,7 +257,7 @@ impl LayoutElement {
             geometry: solved_geom.determine(),
             background: BoxBackground {
                 color: self.style.background.color.clone(),
-                images: vec![],  // TODO
+                images: vec![], // TODO
             },
         };
 
@@ -288,7 +298,8 @@ impl LayoutElement {
         initial_avail: &AvailableSize,
         avail: &AvailableSize,
     ) -> VisualLayersMap {
-        self.children.iter()
+        self.children
+            .iter()
             .filter_map(LayoutNodeRef::maybe_element)
             .map(|element| element.build_layers(initial_avail, avail))
             .fold(VisualLayersMap::new(), |mut acc, v| {
@@ -302,7 +313,7 @@ impl LayoutElement {
     where
         T: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
+        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
         for node_ref in self.children.iter() {
             node_ref.inspect(write, depth + 1)?;
         }
@@ -331,14 +342,18 @@ impl LayoutText {
     where
         T: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent=depth)
+        write!(write, "{:indent$}{}\n", "", self, indent = depth)
     }
 }
 
 impl std::fmt::Display for LayoutText {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "text: text=\"{}\", label=\"{}\"",
-               self.text.escape_debug().to_string(), self.label)
+        write!(
+            f,
+            "text: text=\"{}\", label=\"{}\"",
+            self.text.escape_debug().to_string(),
+            self.label
+        )
     }
 }
 
@@ -542,10 +557,7 @@ impl ToVisual for BoxBackground {
     fn to_visual(&self) -> Self::VisualType {
         VisualBackground {
             color: self.color.clone(),
-            images: self.images
-                .iter()
-                .map(|image| image.to_visual())
-                .collect(),
+            images: self.images.iter().map(|image| image.to_visual()).collect(),
         }
     }
 }
@@ -621,15 +633,23 @@ impl VisualLayer {
     where
         T: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
+        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
 
-        for layer in self.child_layers.iter().filter(|layer| layer.stack_level < 0) {
+        for layer in self
+            .child_layers
+            .iter()
+            .filter(|layer| layer.stack_level < 0)
+        {
             layer.inspect(write, depth + 1)?;
         }
 
         self.content.inspect(write, depth + 1)?;
 
-        for layer in self.child_layers.iter().filter(|layer| layer.stack_level >= 0) {
+        for layer in self
+            .child_layers
+            .iter()
+            .filter(|layer| layer.stack_level >= 0)
+        {
             layer.inspect(write, depth + 1)?;
         }
 
@@ -654,7 +674,11 @@ impl VisualLayer {
         // negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();
         renderer.set_origin(origin + v);
-        for layer in self.child_layers.iter().filter(|layer| layer.stack_level < 0) {
+        for layer in self
+            .child_layers
+            .iter()
+            .filter(|layer| layer.stack_level < 0)
+        {
             layer.render(renderer);
         }
 
@@ -666,7 +690,11 @@ impl VisualLayer {
         // non-negative layers
         let v = self.box_model.padding_box().min.to_visual().to_vector();
         renderer.set_origin(origin + v);
-        for layer in self.child_layers.iter().filter(|layer| layer.stack_level >= 0) {
+        for layer in self
+            .child_layers
+            .iter()
+            .filter(|layer| layer.stack_level >= 0)
+        {
             layer.render(renderer);
         }
 
@@ -676,7 +704,11 @@ impl VisualLayer {
 
 impl std::fmt::Display for VisualLayer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "layer: {:?}, stack_level={}", self.box_model, self.stack_level)
+        write!(
+            f,
+            "layer: {:?}, stack_level={}",
+            self.box_model, self.stack_level
+        )
     }
 }
 
@@ -744,16 +776,30 @@ impl SolvedBoxGeometry {
         let margin_max = margin_min
             + LayoutVector2D::new(
                 margin.dw() + self.border.dw() + self.padding.dw() + self.width.value.unwrap(),
-                margin.dh() + self.border.dh() + self.padding.dh() + self.height.value.unwrap());
+                margin.dh() + self.border.dh() + self.padding.dh() + self.height.value.unwrap(),
+            );
         let margin_box = LayoutBox2D::new(margin_min, margin_max);
-        let border_box = margin_box.shrink_edges((
-            margin.left, margin.top, margin.right, margin.bottom));
+        let border_box =
+            margin_box.shrink_edges((margin.left, margin.top, margin.right, margin.bottom));
         let padding_box = border_box.shrink_edges((
-            self.border.left, self.border.top, self.border.right, self.border.bottom));
+            self.border.left,
+            self.border.top,
+            self.border.right,
+            self.border.bottom,
+        ));
         let content_box = padding_box.shrink_edges((
-            self.padding.left, self.padding.top, self.padding.right, self.padding.bottom));
+            self.padding.left,
+            self.padding.top,
+            self.padding.right,
+            self.padding.bottom,
+        ));
 
-        BoxGeometry { margin_box, border_box, padding_box, content_box }
+        BoxGeometry {
+            margin_box,
+            border_box,
+            padding_box,
+            content_box,
+        }
     }
 }
 
@@ -820,8 +866,10 @@ impl BoxConstraintSolver {
         let (dw, dh) = match style.box_model.box_sizing {
             BoxSizing::ContentBox => (LayoutLength::zero(), LayoutLength::zero()),
             BoxSizing::PaddingBox => (self.geom.padding.dw(), self.geom.padding.dh()),
-            BoxSizing::BorderBox => (self.geom.padding.dw() + self.geom.border.dw(),
-                                     self.geom.padding.dh() + self.geom.border.dh()),
+            BoxSizing::BorderBox => (
+                self.geom.padding.dw() + self.geom.border.dw(),
+                self.geom.padding.dh() + self.geom.border.dh(),
+            ),
         };
 
         self.geom.width.subtract(dw);
@@ -829,7 +877,11 @@ impl BoxConstraintSolver {
 
         self.geom.offset = match style.positioning {
             PositioningScheme::Static | PositioningScheme::Relative => box_quad!(
-                Some(LayoutLength::zero()), Some(LayoutLength::zero()), None, Some(LayoutLength::zero())),
+                Some(LayoutLength::zero()),
+                Some(LayoutLength::zero()),
+                None,
+                Some(LayoutLength::zero())
+            ),
             _ => style.layer.offset.resolve(&self.avail),
         };
 
@@ -839,17 +891,23 @@ impl BoxConstraintSolver {
     fn solve_constraints(&mut self) -> &mut Self {
         if let Some(avail_width) = self.avail.width {
             self.solve_horizontal_constraints(
-                avail_width - self.geom.border.dw() - self.geom.padding.dw());
+                avail_width - self.geom.border.dw() - self.geom.padding.dw(),
+            );
         }
         if let Some(avail_height) = self.avail.height {
             self.solve_vertical_constraints(
-                avail_height - self.geom.border.dh() - self.geom.padding.dh());
+                avail_height - self.geom.border.dh() - self.geom.padding.dh(),
+            );
         }
         self
     }
 
     fn solve_horizontal_constraints(&mut self, avail_width: LayoutLength) {
-        match (self.geom.width.value, self.geom.offset.left, self.geom.offset.right) {
+        match (
+            self.geom.width.value,
+            self.geom.offset.left,
+            self.geom.offset.right,
+        ) {
             // none of the three is 'auto'
             (Some(width), Some(left), Some(right)) => {
                 let remaining = avail_width - width - left - right;
@@ -936,7 +994,11 @@ impl BoxConstraintSolver {
     }
 
     fn solve_vertical_constraints(&mut self, avail_height: LayoutLength) {
-        match (self.geom.height.value, self.geom.offset.top, self.geom.offset.bottom) {
+        match (
+            self.geom.height.value,
+            self.geom.offset.top,
+            self.geom.offset.bottom,
+        ) {
             // none of the three is 'auto'
             (Some(height), Some(top), Some(bottom)) => {
                 let remaining = avail_height - height - top - bottom;
