@@ -78,7 +78,12 @@ mod serde_impl {
         where
             S: Serializer,
         {
-            (&self.origin.x, &self.origin.y, &self.size.width, &self.size.height)
+            (
+                &self.origin.x,
+                &self.origin.y,
+                &self.size.width,
+                &self.size.height,
+            )
                 .serialize(serializer)
         }
     }
@@ -100,7 +105,7 @@ mod serde_impl {
     mod tests {
         use super::Rect;
 
-        use serde_test::{Token, assert_tokens};
+        use serde_test::{assert_tokens, Token};
 
         // TODO: remove PartialEq
         #[derive(Debug, PartialEq)]
@@ -109,14 +114,17 @@ mod serde_impl {
         #[test]
         fn test_serde() {
             let v: Rect<i32, Px> = (0, 1, 2, 3).into();
-            assert_tokens(&v, &[
-                Token::Tuple { len: 4 },
-                Token::I32(0),
-                Token::I32(1),
-                Token::I32(2),
-                Token::I32(3),
-                Token::TupleEnd,
-            ]);
+            assert_tokens(
+                &v,
+                &[
+                    Token::Tuple { len: 4 },
+                    Token::I32(0),
+                    Token::I32(1),
+                    Token::I32(2),
+                    Token::I32(3),
+                    Token::TupleEnd,
+                ],
+            );
         }
     }
 }

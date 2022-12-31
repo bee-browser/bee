@@ -3,8 +3,8 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
 
-use indexmap::IndexMap;
 use handlebars::Handlebars;
+use indexmap::IndexMap;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -12,10 +12,13 @@ const TAGS_YAML: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/data/tags.yaml");
 const TEMPLATE: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/data/codegen.rs.hbs");
 
 fn main() {
-    let tags: IndexMap<String, HtmlTagInfo> = serde_yaml::from_reader(File::open(TAGS_YAML).unwrap()).unwrap();
+    let tags: IndexMap<String, HtmlTagInfo> =
+        serde_yaml::from_reader(File::open(TAGS_YAML).unwrap()).unwrap();
 
     let mut handlebars = Handlebars::new();
-    handlebars.register_template_file("codegen.rs", TEMPLATE).unwrap();
+    handlebars
+        .register_template_file("codegen.rs", TEMPLATE)
+        .unwrap();
 
     let mut phf = phf_codegen::Map::new();
     for tag in tags.keys() {
@@ -26,16 +29,21 @@ fn main() {
     let data = Data {
         num_tags: tags.len(),
         tags: tags.keys().map(|tag| tag.to_ascii_uppercase()).collect(),
-        data: tags.iter().map(|(tag, data)| HtmlTagData {
-            name: tag.clone(),
-            deprecated: data.deprecated,
-        }).collect(),
+        data: tags
+            .iter()
+            .map(|(tag, data)| HtmlTagData {
+                name: tag.clone(),
+                deprecated: data.deprecated,
+            })
+            .collect(),
         phf: format!("{}", phf.build()),
     };
 
     let path = Path::new(&env::var("OUT_DIR").unwrap()).join("codegen.rs");
     let file = BufWriter::new(File::create(&path).unwrap());
-    handlebars.render_to_write("codegen.rs", &data, file).unwrap();
+    handlebars
+        .render_to_write("codegen.rs", &data, file)
+        .unwrap();
 }
 
 #[derive(Deserialize)]

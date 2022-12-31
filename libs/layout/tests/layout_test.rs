@@ -11,12 +11,12 @@ fn layout_test(scenario_path: &str, expected_path: &str) {
     let mut interp = MessageInterpreter::new(validator);
 
     let file = File::open(scenario_path).unwrap_or_else(|err| {
-        panic!("{}: {}", scenario_path, err);  //<coverage:exclude/>
+        panic!("{}: {}", scenario_path, err); //<coverage:exclude/>
     });
 
     BufReader::new(file).lines().for_each(|line| {
         let line = line.unwrap_or_else(|err| {
-            panic!("{}: {}", scenario_path, err);  //<coverage:exclude/>
+            panic!("{}: {}", scenario_path, err); //<coverage:exclude/>
         });
         interp.interpret(&line).unwrap();
     });
@@ -30,10 +30,10 @@ struct JsonValidator {
 impl JsonValidator {
     fn new(path: &str) -> Self {
         let file = File::open(path).unwrap_or_else(|err| {
-            panic!("{}: {}", path, err);  //<coverage:exclude/>
+            panic!("{}: {}", path, err); //<coverage:exclude/>
         });
         let expected = serde_yaml::from_reader(BufReader::new(file)).unwrap_or_else(|err| {
-            panic!("{}: {}", path, err);  //<coverage:exclude/>
+            panic!("{}: {}", path, err); //<coverage:exclude/>
         });
         let actual = serde_json::Value::Array(Vec::new());
         JsonValidator { expected, actual }
@@ -56,4 +56,7 @@ impl JsonSink for JsonValidator {
     }
 }
 
-include!(concat!(env!("BEE_CARGO_CODEGEN_DIR"), "/libs/layout/tests/layout_test.rs"));
+include!(concat!(
+    env!("BEE_CARGO_CODEGEN_DIR"),
+    "/libs/layout/tests/layout_test.rs"
+));

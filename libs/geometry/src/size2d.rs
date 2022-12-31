@@ -66,7 +66,7 @@ impl<T: PartialEq, U> PartialEq for Size2D<T, U> {
 mod tests {
     use super::*;
 
-    #[derive(Debug)]  // TODO: remove
+    #[derive(Debug)] // TODO: remove
     struct Px;
 
     #[test]
@@ -118,7 +118,7 @@ mod serde_impl {
     mod tests {
         use super::*;
 
-        use serde_test::{Token, assert_tokens};
+        use serde_test::{assert_tokens, Token};
 
         // TODO: remove PartialEq
         #[derive(Debug, PartialEq)]
@@ -127,12 +127,15 @@ mod serde_impl {
         #[test]
         fn test_serde() {
             let v: Size2D<i32, Px> = (0, 1).into();
-            assert_tokens(&v, &[
-                Token::Tuple { len: 2 },
-                Token::I32(0),
-                Token::I32(1),
-                Token::TupleEnd,
-            ]);
+            assert_tokens(
+                &v,
+                &[
+                    Token::Tuple { len: 2 },
+                    Token::I32(0),
+                    Token::I32(1),
+                    Token::TupleEnd,
+                ],
+            );
         }
     }
 }

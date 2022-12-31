@@ -1,14 +1,16 @@
-use bee_htmltokenizer::Tokenizer;
 use crate::treebuilder::TreeBuilder;
+use bee_htmltokenizer::Tokenizer;
 
 pub struct Parser {
-    tokenizer: Tokenizer<TreeBuilder>,
+    tokenizer: Tokenizer,
+    tree_builder: TreeBuilder,
 }
 
 impl Parser {
     pub fn new() -> Parser {
         Parser {
-            tokenizer: Tokenizer::new(TreeBuilder::new()),
+            tokenizer: Tokenizer::new(),
+            tree_builder: TreeBuilder::new(),
         }
     }
 

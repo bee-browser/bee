@@ -1,7 +1,7 @@
+use crate::style::*;
 use crate::LayoutBox2D;
 use crate::ToVisual;
 use crate::VisualRenderer;
-use crate::style::*;
 
 pub(crate) struct CanvasContainer {
     asset: Asset,
@@ -18,7 +18,7 @@ impl CanvasContainer {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}canvas:\n", "", indent=depth)?;
+        write!(write, "{:indent$}canvas:\n", "", indent = depth)?;
         Ok(())
     }
 

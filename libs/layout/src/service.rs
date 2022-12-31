@@ -26,11 +26,17 @@ where
 
     // TODO: use BufRead as argument
     pub fn interpret(&mut self, json: &str) -> Result<()> {
-        let msg = serde_json::from_str(json)
-            .with_context(|| format!("Failed to parse: {}", json))?;
+        let msg =
+            serde_json::from_str(json).with_context(|| format!("Failed to parse: {}", json))?;
         match msg {
-            LayoutMessage::CreateElement { id, style, children, label } => {
-                let children = children.iter()
+            LayoutMessage::CreateElement {
+                id,
+                style,
+                children,
+                label,
+            } => {
+                let children = children
+                    .iter()
                     .map(|id| self.node_map.get(id).unwrap())
                     .cloned()
                     .collect();
@@ -86,10 +92,7 @@ enum LayoutMessage {
         label: String,
     },
     #[serde(rename = "layout.visualize")]
-    Visualize {
-        width: usize,
-        height: usize,
-    },
+    Visualize { width: usize, height: usize },
 }
 
 pub trait JsonSink {
@@ -103,7 +106,7 @@ struct JsonRenderer<'a, T> {
 
 impl<'a, T> JsonRenderer<'a, T>
 where
-    T: JsonSink
+    T: JsonSink,
 {
     fn new(sink: &'a mut T) -> Self {
         JsonRenderer {
@@ -119,7 +122,7 @@ where
 
 impl<'a, T> VisualRenderer for JsonRenderer<'a, T>
 where
-    T: JsonSink
+    T: JsonSink,
 {
     fn start(&mut self, size: VisualSize2D) {
         self.send(RenderMessage::Start { size });
@@ -158,9 +161,7 @@ where
 #[serde(tag = "type", content = "data")]
 enum RenderMessage {
     #[serde(rename = "render.start")]
-    Start {
-        size: VisualSize2D,
-    },
+    Start { size: VisualSize2D },
     #[serde(rename = "render.end")]
     End,
     #[serde(rename = "render.render_box")]
@@ -172,10 +173,7 @@ enum RenderMessage {
         border: BoxQuad<Option<VisualBorder>>,
     },
     #[serde(rename = "render.render_asset")]
-    RenderAsset {
-        asset_id: u64,
-        rect: VisualRect,
-    }
+    RenderAsset { asset_id: u64, rect: VisualRect },
 }
 
 fn has_no_visible_border(border: &BoxQuad<Option<VisualBorder>>) -> bool {

@@ -1,6 +1,8 @@
 use num_traits::Zero;
 use tracing::warn;
 
+use crate::flow::FlowContainer;
+use crate::style::*;
 use crate::BoxBackground;
 use crate::BoxConstraintSolver;
 use crate::BoxModel;
@@ -12,8 +14,6 @@ use crate::LayoutVector2D;
 use crate::SolvedBoxGeometry;
 use crate::ToVisual;
 use crate::VisualRenderer;
-use crate::flow::FlowContainer;
-use crate::style::*;
 
 pub(crate) struct FlexContainer {
     direction: FlexDirection,
@@ -36,7 +36,7 @@ impl FlexContainer {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}flex:\n", "", indent=depth)?;
+        write!(write, "{:indent$}flex:\n", "", indent = depth)?;
         for line in self.lines.iter() {
             line.inspect(write, depth + 1)?;
         }
@@ -116,13 +116,17 @@ impl<'a> FlexLineBuilder<'a> {
         for item in items.into_iter() {
             let main_size = item.main_size(dir);
             if multiline && main_advance + main_size > avail_size {
-                let cross_size = flows.iter()
+                let cross_size = flows
+                    .iter()
                     .map(|flow| flow.cross_size(dir))
                     .max_by(|a, b| a.partial_cmp(b).unwrap())
                     .expect("`flows` must be a non-empty");
                 // TODO: Distribute free space
                 let line = FlexLine::new(
-                    cross_advance, cross_size, std::mem::replace(&mut flows, vec![]));
+                    cross_advance,
+                    cross_size,
+                    std::mem::replace(&mut flows, vec![]),
+                );
                 cross_advance += cross_size;
                 lines.push(line);
                 main_advance = LayoutLength::zero();
@@ -132,13 +136,17 @@ impl<'a> FlexLineBuilder<'a> {
         }
 
         if !flows.is_empty() {
-            let cross_size = flows.iter()
+            let cross_size = flows
+                .iter()
                 .map(|flow| flow.cross_size(dir))
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
                 .expect("`flows` must be a non-empty");
             // TODO: Distribute free space
             let line = FlexLine::new(
-                cross_advance, cross_size, std::mem::replace(&mut flows, vec![]));
+                cross_advance,
+                cross_size,
+                std::mem::replace(&mut flows, vec![]),
+            );
             lines.push(line);
         }
 
@@ -178,15 +186,25 @@ struct FlexLine {
 
 impl FlexLine {
     fn new(advance: LayoutLength, cross_size: LayoutLength, flows: Vec<FlexItemBond>) -> Self {
-        FlexLine { advance, cross_size, flows }
+        FlexLine {
+            advance,
+            cross_size,
+            flows,
+        }
     }
 
     fn inspect<W>(&self, write: &mut W, depth: usize) -> std::io::Result<()>
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}flex-line: {:?} {:?}\n", "",
-               self.advance, self.cross_size, indent=depth)?;
+        write!(
+            write,
+            "{:indent$}flex-line: {:?} {:?}\n",
+            "",
+            self.advance,
+            self.cross_size,
+            indent = depth
+        )?;
         for flow in self.flows.iter() {
             flow.inspect(write, depth + 1)?
         }
@@ -222,7 +240,7 @@ impl FlexItemBond {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
+        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
         self.item.inspect(write, depth + 1)
     }
 
@@ -260,7 +278,10 @@ struct FlexItem {
 
 impl FlexItem {
     fn new(box_model: BoxModel, container: FlowContainer) -> Self {
-        FlexItem { box_model, container }
+        FlexItem {
+            box_model,
+            container,
+        }
     }
 
     fn inline_size(&self) -> LayoutLength {
@@ -291,7 +312,7 @@ impl FlexItem {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent=depth)?;
+        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
         self.container.inspect(write, depth + 1)?;
         Ok(())
     }
@@ -328,7 +349,7 @@ impl LayoutElement {
             geometry: solved_geom.determine(),
             background: BoxBackground {
                 color: self.style.background.color.clone(),
-                images: vec![],  // TODO
+                images: vec![], // TODO
             },
         };
 
@@ -346,9 +367,7 @@ impl LayoutElement {
 
     fn solve_flex_item_box_geometry(&self, avail: &AvailableSize) -> SolvedBoxGeometry {
         let mut solver = BoxConstraintSolver::new(avail);
-        solver
-            .apply_style(&self.style)
-            .solve_constraints();
+        solver.apply_style(&self.style).solve_constraints();
 
         solver.geom
     }

@@ -1,7 +1,7 @@
 use core::ops::Add;
+use core::ops::AddAssign;
 use core::ops::Neg;
 use core::ops::Sub;
-use core::ops::AddAssign;
 
 use num_traits::Zero;
 
@@ -75,6 +75,6 @@ impl<T: Neg<Output = T>, U> Neg for Vector2D<T, U> {
 
 impl<T: PartialEq, U> PartialEq for Vector2D<T, U> {
     fn eq(&self, rhs: &Self) -> bool {
-        self.x ==  rhs.x && self.y == rhs.y
+        self.x == rhs.x && self.y == rhs.y
     }
 }

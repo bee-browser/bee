@@ -1,13 +1,13 @@
-use std::ops::Range;
-use bee_htmltags::HtmlTag;
-use crate::Location;
-use crate::TagKind;
-use crate::TokenHandler;
+use crate::charref::CharRefResolver;
 use crate::error::Error;
 use crate::error::ErrorCode;
-use crate::charref::CharRefResolver;
 use crate::inputstream::CodePoint;
 use crate::inputstream::InputStream;
+use crate::Location;
+use crate::TagKind;
+use bee_htmltags::HtmlTag;
+use std::collections::VecDeque;
+use std::ops::Range;
 
 #[cfg(test)]
 use serde::Deserialize;
@@ -16,7 +16,7 @@ use serde::Deserialize;
 ///
 /// The `Tokenizer` type implements the tokenization state machine described in
 /// "13.2.5 Tokenization" in the WHATWG HTML specification.
-pub struct Tokenizer<T> {
+pub struct Tokenizer {
     state: State,
     return_state: State,
     input_stream: InputStream,
@@ -24,21 +24,17 @@ pub struct Tokenizer<T> {
     next_code_point: Option<(CodePoint, Location)>,
     char_buffer: String,
     temp_buffer: String,
-    tag: Tag,
     last_start_tag: Option<String>,
-    doctype: DoctypeRange,
     char_ref_code: u32,
     char_ref_resolver: CharRefResolver,
-    has_text: bool,
-    has_comment: bool,
-    has_duplicate_attr: bool,
-    handler: T,
+    tokens: VecDeque<TokenRange>,
+    current_token: Option<TokenRange>,
 }
 
-impl<T: TokenHandler> Tokenizer<T> {
+impl Tokenizer {
     const INITIAL_BUFFER_SIZE: usize = 4096;
 
-    pub fn new(handler: T) -> Self {
+    pub fn new() -> Self {
         Tokenizer {
             state: State::Data,
             return_state: State::Data,
@@ -47,27 +43,35 @@ impl<T: TokenHandler> Tokenizer<T> {
             next_code_point: None,
             char_buffer: String::with_capacity(Self::INITIAL_BUFFER_SIZE),
             temp_buffer: String::with_capacity(Self::INITIAL_BUFFER_SIZE),
-            tag: Default::default(),
             last_start_tag: None,
-            doctype: Default::default(),
             char_ref_code: 0,
             char_ref_resolver: Default::default(),
-            has_text: false,
-            has_comment: false,
-            has_duplicate_attr: false,
-            handler,
+            tokens: VecDeque::with_capacity(3),
+            current_token: None,
         }
     }
 
-    pub fn next_token(&mut self) -> Result<(), Error> {
+    pub fn next_token(&mut self) -> Token<'_> {
         loop {
+            if let Some(token) = self.tokens.pop_front() {
+                return self.token(token);
+            }
+
             if let State::End = self.state {
-                self.handler.handle_end();
-                return Ok(());
+                return Token::End;
+            }
+
+            if self.current_token.is_none() {
+                self.clear_char_buffer();
             }
 
             self.tokenize();
         }
+    }
+
+    fn clear_char_buffer(&mut self) {
+        tracing::trace!("Clear char_buffer");
+        self.char_buffer.clear();
     }
 
     pub fn feed_data(&mut self, data: Vec<u16>) {
@@ -89,219 +93,177 @@ impl<T: TokenHandler> Tokenizer<T> {
         };
     }
 
+    fn token(&self, token: TokenRange) -> Token<'_> {
+        match token {
+            TokenRange::Doctype(doctype) => Token::Doctype {
+                name: doctype.name.map(|range| &self.char_buffer[range]),
+                public_id: doctype.public_id.map(|range| &self.char_buffer[range]),
+                system_id: doctype.system_id.map(|range| &self.char_buffer[range]),
+                force_quirks: doctype.force_quirks,
+            },
+            TokenRange::Tag(tag) => {
+                let name = &self.char_buffer[tag.name];
+                let name = match HtmlTag::lookup(name) {
+                    Some(htmltag) => TagKind::Html(htmltag),
+                    None => TagKind::Other(name),
+                };
+                if tag.start_tag {
+                    Token::StartTag {
+                        name,
+                        attrs: Attrs::new(&self.char_buffer, tag.attrs),
+                        self_closing: tag.self_closing,
+                    }
+                } else {
+                    Token::EndTag { name }
+                }
+            }
+            TokenRange::Text(text) => Token::Text {
+                text: &self.char_buffer[text],
+            },
+            TokenRange::Comment(comment) => Token::Comment {
+                comment: &self.char_buffer[comment],
+            },
+            TokenRange::Error(err) => Token::Error(err),
+        }
+    }
+
     #[cfg(test)]
     pub fn set_last_start_tag(&mut self, tag_name: String) {
         self.last_start_tag = Some(tag_name);
     }
 
     fn tokenize(&mut self) {
+        tracing::trace!(?self.state, "Tokenize");
         match self.state {
-            State::Data =>
-                self.tokenize_data(),
-            State::Rcdata =>
-                self.tokenize_rcdata(),
-            State::Rawtext =>
-                self.tokenize_rawtext(),
-            State::ScriptData =>
-                self.tokenize_script_data(),
-            State::Plaintext =>
-                self.tokenize_plaintext(),
-            State::TagOpen =>
-                self.tokenize_tag_open(),
-            State::EndTagOpen =>
-                self.tokenize_end_tag_open(),
-            State::TagName =>
-                self.tokenize_tag_name(),
-            State::RcdataLessThanSign =>
-                self.tokenize_rcdata_less_than_sign(),
-            State::RcdataEndTagOpen =>
-                self.tokenizer_rcdata_end_tag_open(),
-            State::RcdataEndTagName =>
-                self.tokenize_rcdata_end_tag_name(),
-            State::RawtextLessThanSign =>
-                self.tokenize_rawtext_less_than_sign(),
-            State::RawtextEndTagOpen =>
-                self.tokenizer_rawtext_end_tag_open(),
-            State::RawtextEndTagName =>
-                self.tokenize_rawtext_end_tag_name(),
-            State::ScriptDataLessThanSign =>
-                self.tokenize_script_data_less_than_sign(),
-            State::ScriptDataEndTagOpen =>
-                self.tokenize_script_data_end_tag_open(),
-            State::ScriptDataEndTagName =>
-                self.tokenize_script_data_end_tag_name(),
-            State::ScriptDataEscapeStart =>
-                self.tokenize_script_data_escape_start(),
-            State::ScriptDataEscapeStartDash =>
-                self.tokenize_script_data_escape_start_dash(),
-            State::ScriptDataEscaped =>
-                self.tokenize_script_data_escaped(),
-            State::ScriptDataEscapedDash =>
-                self.tokenize_script_data_escaped_dash(),
-            State::ScriptDataEscapedDashDash =>
-                self.tokenize_script_data_escaped_dash_dash(),
-            State::ScriptDataEscapedLessThanSign =>
-                self.tokenize_script_data_escaped_less_than_sign(),
-            State::ScriptDataEscapedEndTagOpen =>
-                self.tokenize_script_data_escaped_end_tag_open(),
-            State::ScriptDataEscapedEndTagName =>
-                self.tokenize_script_data_escaped_end_tag_name(),
-            State::ScriptDataDoubleEscapeStart =>
-                self.tokenize_script_data_double_escape_start(),
-            State::ScriptDataDoubleEscaped =>
-                self.tokenize_script_data_double_escaped(),
-            State::ScriptDataDoubleEscapedDash =>
-                self.tokenize_script_data_double_escaped_dash(),
-            State::ScriptDataDoubleEscapedDashDash =>
-                self.tokenize_script_data_double_escaped_dash_dash(),
-            State::ScriptDataDoubleEscapedLessThanSign =>
-                self.tokenize_script_data_double_escaped_less_than_sign(),
-            State::ScriptDataDoubleEscapeEnd =>
-                self.tokenize_script_data_double_escape_end(),
-            State::BeforeAttributeName =>
-                self.tokenize_before_attribute_name(),
-            State::AttributeName =>
-                self.tokenize_attribute_name(),
-            State::AfterAttributeName =>
-                self.tokenize_after_attribute_name(),
-            State::BeforeAttributeValue =>
-                self.tokenize_before_attribute_value(),
-            State::AttributeValueDoubleQuoted =>
-                self.tokenize_attribute_value_double_quoted(),
-            State::AttributeValueSingleQuoted =>
-                self.tokenize_attribute_value_single_quoted(),
-            State::AttributeValueUnquoted =>
-                self.tokenize_attribute_value_unquoted(),
-            State::AfterAttributeValueQuoted =>
-                self.tokenize_after_attribute_value_quoted(),
-            State::SelfClosingTag =>
-                self.tokenize_self_closing_tag(),
-            State::BogusComment =>
-                self.tokenize_bogus_comment(),
-            State::MarkupDeclarationOpen =>
-                self.tokenize_markup_declaration(),
-            State::MaybeCommentStart =>
-                self.tokenize_maybe_comment_start(),
-            State::CommentStart =>
-                self.tokenize_comment_start(),
-            State::CommentStartDash =>
-                self.tokenize_comment_start_dash(),
-            State::Comment =>
-                self.tokenize_comment(),
-            State::CommentLessThanSign =>
-                self.tokenize_comment_less_than_sign(),
-            State::CommentLessThanSignBang =>
-                self.tokenize_comment_less_than_sign_bang(),
-            State::CommentLessThanSignBangDash =>
-                self.tokenize_comment_less_than_sign_bang_dash(),
-            State::CommentLessThanSignBangDashDash =>
-                self.tokenize_comment_less_than_sign_bang_dash_dash(),
-            State::CommentEndDash =>
-                self.tokenize_comment_end_dash(),
-            State::CommentEnd =>
-                self.tokenize_comment_end(),
-            State::CommentEndBang =>
-                self.tokenize_comment_end_bang(),
-            State::MaybeDoctype1 =>
-                self.tokenize_maybe_doctype1(),
-            State::MaybeDoctype2 =>
-                self.tokenize_maybe_doctype2(),
-            State::MaybeDoctype3 =>
-                self.tokenize_maybe_doctype3(),
-            State::MaybeDoctype4 =>
-                self.tokenize_maybe_doctype4(),
-            State::MaybeDoctype5 =>
-                self.tokenize_maybe_doctype5(),
-            State::MaybeDoctype6 =>
-                self.tokenize_maybe_doctype6(),
-            State::Doctype =>
-                self.tokenize_doctype(),
-            State::BeforeDoctypeName =>
-                self.tokenize_before_doctype_name(),
-            State::DoctypeName =>
-                self.tokenize_doctype_name(),
-            State::AfterDoctypeName =>
-                self.tokenize_after_doctype_name(),
-            State::MaybeDoctypePublicKeyword1 =>
-                self.tokenize_maybe_doctype_public_keyword1(),
-            State::MaybeDoctypePublicKeyword2 =>
-                self.tokenize_maybe_doctype_public_keyword2(),
-            State::MaybeDoctypePublicKeyword3 =>
-                self.tokenize_maybe_doctype_public_keyword3(),
-            State::MaybeDoctypePublicKeyword4 =>
-                self.tokenize_maybe_doctype_public_keyword4(),
-            State::MaybeDoctypePublicKeyword5 =>
-                self.tokenize_maybe_doctype_public_keyword5(),
-            State::AfterDoctypePublicKeyword =>
-                self.tokenize_after_doctype_public_keyword(),
-            State::BeforeDoctypePublicIdentifier =>
-                self.tokenize_before_doctype_public_identifier(),
-            State::DoctypePublicIdentifierDoubleQuoted =>
-                self.tokenize_doctype_public_identifier_double_quoted(),
-            State::DoctypePublicIdentifierSingleQuoted =>
-                self.tokenize_doctype_public_identifier_single_quoted(),
-            State::AfterDoctypePublicIdentifier =>
-                self.tokenize_after_doctype_public_identifier(),
-            State::BetweenDoctypePublicAndSystemIdentifiers =>
-                self.tokenize_between_doctype_public_and_system_identifiers(),
-            State::MaybeDoctypeSystemKeyword1 =>
-                self.tokenize_maybe_doctype_system_keyword1(),
-            State::MaybeDoctypeSystemKeyword2 =>
-                self.tokenize_maybe_doctype_system_keyword2(),
-            State::MaybeDoctypeSystemKeyword3 =>
-                self.tokenize_maybe_doctype_system_keyword3(),
-            State::MaybeDoctypeSystemKeyword4 =>
-                self.tokenize_maybe_doctype_system_keyword4(),
-            State::MaybeDoctypeSystemKeyword5 =>
-                self.tokenize_maybe_doctype_system_keyword5(),
-            State::AfterDoctypeSystemKeyword =>
-                self.tokenize_after_doctype_system_keyword(),
-            State::BeforeDoctypeSystemIdentifier =>
-                self.tokenize_before_doctype_system_identifier(),
-            State::DoctypeSystemIdentifierDoubleQuoted =>
-                self.tokenize_doctype_system_identifier_double_quoted(),
-            State::DoctypeSystemIdentifierSingleQuoted =>
-                self.tokenize_doctype_system_identifier_single_quoted(),
-            State::AfterDoctypeSystemIdentifier =>
-                self.tokenize_after_doctype_system_identifier(),
-            State::BogusDoctype =>
-                self.tokenize_bogus_doctype(),
-            State::MaybeCdataSection1 =>
-                self.tokenize_maybe_cdata_section1(),
-            State::MaybeCdataSection2 =>
-                self.tokenize_maybe_cdata_section2(),
-            State::MaybeCdataSection3 =>
-                self.tokenize_maybe_cdata_section3(),
-            State::MaybeCdataSection4 =>
-                self.tokenize_maybe_cdata_section4(),
-            State::MaybeCdataSection5 =>
-                self.tokenize_maybe_cdata_section5(),
-            State::MaybeCdataSection6 =>
-                self.tokenize_maybe_cdata_section6(),
-            State::CdataSection =>
-                self.tokenize_cdata_section(),
-            State::CdataSectionBracket =>
-                self.tokenize_cdata_section_bracket(),
-            State::CdataSectionEnd =>
-                self.tokenize_cdata_section_end(),
-            State::CharacterReference =>
-                self.tokenize_character_reference(),
-            State::NamedCharacterReference =>
-                self.tokenize_named_character_reference(),
-            State::AmbigousAmpersand =>
-                self.tokenize_ambigous_ampersand(),
-            State::NumericCharacterReference =>
-                self.tokenize_numeric_character_reference(),
-            State::HexadecimalCharacterReferenceStart =>
-                self.tokenize_hexadecimal_character_reference_start(),
-            State::DecimalCharacterReferenceStart =>
-                self.tokenize_decimal_character_reference_start(),
-            State::HexadecimalCharacterReference =>
-                self.tokenize_hexadecimal_character_reference(),
-            State::DecimalCharacterReference =>
-                self.tokenize_decimal_character_reference(),
-            State::NumericCharacterReferenceEnd =>
-                self.tokenize_numeric_character_reference_end(),
+            State::Data => self.tokenize_data(),
+            State::Rcdata => self.tokenize_rcdata(),
+            State::Rawtext => self.tokenize_rawtext(),
+            State::ScriptData => self.tokenize_script_data(),
+            State::Plaintext => self.tokenize_plaintext(),
+            State::TagOpen => self.tokenize_tag_open(),
+            State::EndTagOpen => self.tokenize_end_tag_open(),
+            State::TagName => self.tokenize_tag_name(),
+            State::RcdataLessThanSign => self.tokenize_rcdata_less_than_sign(),
+            State::RcdataEndTagOpen => self.tokenizer_rcdata_end_tag_open(),
+            State::RcdataEndTagName => self.tokenize_rcdata_end_tag_name(),
+            State::RawtextLessThanSign => self.tokenize_rawtext_less_than_sign(),
+            State::RawtextEndTagOpen => self.tokenizer_rawtext_end_tag_open(),
+            State::RawtextEndTagName => self.tokenize_rawtext_end_tag_name(),
+            State::ScriptDataLessThanSign => self.tokenize_script_data_less_than_sign(),
+            State::ScriptDataEndTagOpen => self.tokenize_script_data_end_tag_open(),
+            State::ScriptDataEndTagName => self.tokenize_script_data_end_tag_name(),
+            State::ScriptDataEscapeStart => self.tokenize_script_data_escape_start(),
+            State::ScriptDataEscapeStartDash => self.tokenize_script_data_escape_start_dash(),
+            State::ScriptDataEscaped => self.tokenize_script_data_escaped(),
+            State::ScriptDataEscapedDash => self.tokenize_script_data_escaped_dash(),
+            State::ScriptDataEscapedDashDash => self.tokenize_script_data_escaped_dash_dash(),
+            State::ScriptDataEscapedLessThanSign => {
+                self.tokenize_script_data_escaped_less_than_sign()
+            }
+            State::ScriptDataEscapedEndTagOpen => self.tokenize_script_data_escaped_end_tag_open(),
+            State::ScriptDataEscapedEndTagName => self.tokenize_script_data_escaped_end_tag_name(),
+            State::ScriptDataDoubleEscapeStart => self.tokenize_script_data_double_escape_start(),
+            State::ScriptDataDoubleEscaped => self.tokenize_script_data_double_escaped(),
+            State::ScriptDataDoubleEscapedDash => self.tokenize_script_data_double_escaped_dash(),
+            State::ScriptDataDoubleEscapedDashDash => {
+                self.tokenize_script_data_double_escaped_dash_dash()
+            }
+            State::ScriptDataDoubleEscapedLessThanSign => {
+                self.tokenize_script_data_double_escaped_less_than_sign()
+            }
+            State::ScriptDataDoubleEscapeEnd => self.tokenize_script_data_double_escape_end(),
+            State::BeforeAttributeName => self.tokenize_before_attribute_name(),
+            State::AttributeName => self.tokenize_attribute_name(),
+            State::AfterAttributeName => self.tokenize_after_attribute_name(),
+            State::BeforeAttributeValue => self.tokenize_before_attribute_value(),
+            State::AttributeValueDoubleQuoted => self.tokenize_attribute_value_double_quoted(),
+            State::AttributeValueSingleQuoted => self.tokenize_attribute_value_single_quoted(),
+            State::AttributeValueUnquoted => self.tokenize_attribute_value_unquoted(),
+            State::AfterAttributeValueQuoted => self.tokenize_after_attribute_value_quoted(),
+            State::SelfClosingTag => self.tokenize_self_closing_tag(),
+            State::BogusComment => self.tokenize_bogus_comment(),
+            State::MarkupDeclarationOpen => self.tokenize_markup_declaration_open(),
+            State::MaybeCommentStart => self.tokenize_maybe_comment_start(),
+            State::CommentStart => self.tokenize_comment_start(),
+            State::CommentStartDash => self.tokenize_comment_start_dash(),
+            State::Comment => self.tokenize_comment(),
+            State::CommentLessThanSign => self.tokenize_comment_less_than_sign(),
+            State::CommentLessThanSignBang => self.tokenize_comment_less_than_sign_bang(),
+            State::CommentLessThanSignBangDash => self.tokenize_comment_less_than_sign_bang_dash(),
+            State::CommentLessThanSignBangDashDash => {
+                self.tokenize_comment_less_than_sign_bang_dash_dash()
+            }
+            State::CommentEndDash => self.tokenize_comment_end_dash(),
+            State::CommentEnd => self.tokenize_comment_end(),
+            State::CommentEndBang => self.tokenize_comment_end_bang(),
+            State::MaybeDoctype1 => self.tokenize_maybe_doctype1(),
+            State::MaybeDoctype2 => self.tokenize_maybe_doctype2(),
+            State::MaybeDoctype3 => self.tokenize_maybe_doctype3(),
+            State::MaybeDoctype4 => self.tokenize_maybe_doctype4(),
+            State::MaybeDoctype5 => self.tokenize_maybe_doctype5(),
+            State::MaybeDoctype6 => self.tokenize_maybe_doctype6(),
+            State::Doctype => self.tokenize_doctype(),
+            State::BeforeDoctypeName => self.tokenize_before_doctype_name(),
+            State::DoctypeName => self.tokenize_doctype_name(),
+            State::AfterDoctypeName => self.tokenize_after_doctype_name(),
+            State::MaybeDoctypePublicKeyword1 => self.tokenize_maybe_doctype_public_keyword1(),
+            State::MaybeDoctypePublicKeyword2 => self.tokenize_maybe_doctype_public_keyword2(),
+            State::MaybeDoctypePublicKeyword3 => self.tokenize_maybe_doctype_public_keyword3(),
+            State::MaybeDoctypePublicKeyword4 => self.tokenize_maybe_doctype_public_keyword4(),
+            State::MaybeDoctypePublicKeyword5 => self.tokenize_maybe_doctype_public_keyword5(),
+            State::AfterDoctypePublicKeyword => self.tokenize_after_doctype_public_keyword(),
+            State::BeforeDoctypePublicIdentifier => {
+                self.tokenize_before_doctype_public_identifier()
+            }
+            State::DoctypePublicIdentifierDoubleQuoted => {
+                self.tokenize_doctype_public_identifier_double_quoted()
+            }
+            State::DoctypePublicIdentifierSingleQuoted => {
+                self.tokenize_doctype_public_identifier_single_quoted()
+            }
+            State::AfterDoctypePublicIdentifier => self.tokenize_after_doctype_public_identifier(),
+            State::BetweenDoctypePublicAndSystemIdentifiers => {
+                self.tokenize_between_doctype_public_and_system_identifiers()
+            }
+            State::MaybeDoctypeSystemKeyword1 => self.tokenize_maybe_doctype_system_keyword1(),
+            State::MaybeDoctypeSystemKeyword2 => self.tokenize_maybe_doctype_system_keyword2(),
+            State::MaybeDoctypeSystemKeyword3 => self.tokenize_maybe_doctype_system_keyword3(),
+            State::MaybeDoctypeSystemKeyword4 => self.tokenize_maybe_doctype_system_keyword4(),
+            State::MaybeDoctypeSystemKeyword5 => self.tokenize_maybe_doctype_system_keyword5(),
+            State::AfterDoctypeSystemKeyword => self.tokenize_after_doctype_system_keyword(),
+            State::BeforeDoctypeSystemIdentifier => {
+                self.tokenize_before_doctype_system_identifier()
+            }
+            State::DoctypeSystemIdentifierDoubleQuoted => {
+                self.tokenize_doctype_system_identifier_double_quoted()
+            }
+            State::DoctypeSystemIdentifierSingleQuoted => {
+                self.tokenize_doctype_system_identifier_single_quoted()
+            }
+            State::AfterDoctypeSystemIdentifier => self.tokenize_after_doctype_system_identifier(),
+            State::BogusDoctype => self.tokenize_bogus_doctype(),
+            State::MaybeCdataSection1 => self.tokenize_maybe_cdata_section1(),
+            State::MaybeCdataSection2 => self.tokenize_maybe_cdata_section2(),
+            State::MaybeCdataSection3 => self.tokenize_maybe_cdata_section3(),
+            State::MaybeCdataSection4 => self.tokenize_maybe_cdata_section4(),
+            State::MaybeCdataSection5 => self.tokenize_maybe_cdata_section5(),
+            State::MaybeCdataSection6 => self.tokenize_maybe_cdata_section6(),
+            State::CdataSection => self.tokenize_cdata_section(),
+            State::CdataSectionBracket => self.tokenize_cdata_section_bracket(),
+            State::CdataSectionEnd => self.tokenize_cdata_section_end(),
+            State::CharacterReference => self.tokenize_character_reference(),
+            State::NamedCharacterReference => self.tokenize_named_character_reference(),
+            State::AmbigousAmpersand => self.tokenize_ambigous_ampersand(),
+            State::NumericCharacterReference => self.tokenize_numeric_character_reference(),
+            State::HexadecimalCharacterReferenceStart => {
+                self.tokenize_hexadecimal_character_reference_start()
+            }
+            State::DecimalCharacterReferenceStart => {
+                self.tokenize_decimal_character_reference_start()
+            }
+            State::HexadecimalCharacterReference => self.tokenize_hexadecimal_character_reference(),
+            State::DecimalCharacterReference => self.tokenize_decimal_character_reference(),
+            State::NumericCharacterReferenceEnd => self.tokenize_numeric_character_reference_end(),
             _ => unreachable!("{:?}", self.state),
         }
     }
@@ -322,8 +284,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_text('\0');
                 }
                 Char(Some(c), _) => {
@@ -354,8 +315,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, _) => {
@@ -380,8 +340,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, _) => {
@@ -406,8 +365,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, _) => {
@@ -427,8 +385,7 @@ impl<T: TokenHandler> Tokenizer<T> {
             let ch = self.next_char();
             match ch {
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, _) => {
@@ -453,9 +410,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::EndTagOpen);
             }
             Char(Some('?'), location) => {
-                self.emit_error(
-                    ErrorCode::UnexpectedQuestionMarkInsteadOfTagName,
-                    location);
+                self.emit_error(ErrorCode::UnexpectedQuestionMarkInsteadOfTagName, location);
                 // TODO: Create a comment token whose data is the empty string
                 self.reconsume_in(ch, State::BogusComment);
             }
@@ -470,8 +425,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::End);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::InvalidFirstCharacterOfTagName, location);
+                self.emit_error(ErrorCode::InvalidFirstCharacterOfTagName, location);
                 self.append_char_to_text('<');
                 self.reconsume_in(ch, State::Data);
             }
@@ -496,8 +450,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::End)
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::InvalidFirstCharacterOfTagName, location);
+                self.emit_error(ErrorCode::InvalidFirstCharacterOfTagName, location);
                 // TODO: Create a comment token whose data is the empty string
                 self.reconsume_in(ch, State::BogusComment)
             }
@@ -508,10 +461,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     self.switch_to(State::BeforeAttributeName);
                     return;
                 }
@@ -528,8 +481,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     self.append_char_to_tag_name(c.to_ascii_lowercase());
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_tag_name(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, location) => {
@@ -576,10 +528,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) if self.is_appropriate_end_tag() => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _)
+                    if self.is_appropriate_end_tag() =>
+                {
                     self.switch_to(State::BeforeAttributeName);
                     return;
                 }
@@ -643,10 +597,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) if self.is_appropriate_end_tag() => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _)
+                    if self.is_appropriate_end_tag() =>
+                {
                     self.switch_to(State::BeforeAttributeName);
                     return;
                 }
@@ -714,10 +670,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) if self.is_appropriate_end_tag() => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _)
+                    if self.is_appropriate_end_tag() =>
+                {
                     self.switch_to(State::BeforeAttributeName);
                     return;
                 }
@@ -789,13 +747,11 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, location) => {
-                    self.emit_error(
-                        ErrorCode::EofInScriptHtmlCommentLikeText, location);
+                    self.emit_error(ErrorCode::EofInScriptHtmlCommentLikeText, location);
                     self.emit_token_if_exists();
                     self.switch_to(State::End);
                     return;
@@ -824,8 +780,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.append_char_to_text(char::REPLACEMENT_CHARACTER);
             }
             Char(None, location) => {
-                self.emit_error(
-                    ErrorCode::EofInScriptHtmlCommentLikeText, location);
+                self.emit_error(ErrorCode::EofInScriptHtmlCommentLikeText, location);
                 self.emit_token_if_exists();
                 self.switch_to(State::End);
             }
@@ -854,15 +809,13 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.switch_to(State::ScriptDataEscaped);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                     return;
                 }
                 Char(None, location) => {
-                    self.emit_error(
-                        ErrorCode::EofInScriptHtmlCommentLikeText, location);
+                    self.emit_error(ErrorCode::EofInScriptHtmlCommentLikeText, location);
                     self.emit_token_if_exists();
                     self.switch_to(State::End);
                     return;
@@ -913,10 +866,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) if self.is_appropriate_end_tag() => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _)
+                    if self.is_appropriate_end_tag() =>
+                {
                     self.switch_to(State::BeforeAttributeName);
                     return;
                 }
@@ -952,12 +907,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) |
-                Char(Some('/'), _) |
-                Char(Some('>'), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _)
+                | Char(Some('/'), _)
+                | Char(Some('>'), _) => {
                     if self.temp_buffer == "script" {
                         self.switch_to(State::ScriptDataDoubleEscaped);
                     } else {
@@ -999,13 +954,11 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, location) => {
-                    self.emit_error(
-                        ErrorCode::EofInScriptHtmlCommentLikeText, location);
+                    self.emit_error(ErrorCode::EofInScriptHtmlCommentLikeText, location);
                     self.emit_token_if_exists();
                     self.switch_to(State::End);
                     return;
@@ -1034,9 +987,8 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.append_char_to_text(char::REPLACEMENT_CHARACTER);
             }
             Char(None, location) => {
-                self.emit_error(
-                    ErrorCode::EofInScriptHtmlCommentLikeText, location);
-                    self.emit_token_if_exists();
+                self.emit_error(ErrorCode::EofInScriptHtmlCommentLikeText, location);
+                self.emit_token_if_exists();
                 self.switch_to(State::End);
             }
             Char(Some(c), _) => {
@@ -1064,15 +1016,13 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.switch_to(State::ScriptDataDoubleEscaped);
                     self.append_char_to_text(char::REPLACEMENT_CHARACTER);
                     return;
                 }
                 Char(None, location) => {
-                    self.emit_error(
-                        ErrorCode::EofInScriptHtmlCommentLikeText, location);
+                    self.emit_error(ErrorCode::EofInScriptHtmlCommentLikeText, location);
                     self.emit_token_if_exists();
                     self.switch_to(State::End);
                     return;
@@ -1104,12 +1054,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) |
-                Char(Some('/'), _) |
-                Char(Some('>'), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _)
+                | Char(Some('/'), _)
+                | Char(Some('>'), _) => {
                     if self.temp_buffer == "script" {
                         self.switch_to(State::ScriptDataEscaped);
                     } else {
@@ -1140,14 +1090,13 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
-                Char(Some('/'), _) |
-                Char(Some('>'), _) => {
+                Char(Some('/'), _) | Char(Some('>'), _) => {
                     self.reconsume_in(ch, State::AfterAttributeName);
                     return;
                 }
@@ -1156,9 +1105,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('='), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedEqualsSignBeforeAttributeName,
-                        location);
+                    self.emit_error(ErrorCode::UnexpectedEqualsSignBeforeAttributeName, location);
                     self.start_new_attr();
                     self.append_char_to_attr_name('=');
                     self.switch_to(State::AttributeName);
@@ -1174,13 +1121,17 @@ impl<T: TokenHandler> Tokenizer<T> {
     }
 
     fn check_duplicate_attr(&mut self, location: Location) {
-        let last = self.tag.attrs.last().expect("");
+        let tag = match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => tag,
+            _ => unreachable!(),
+        };
+        let last = tag.attrs.last().expect("");
         let last_name = &self.char_buffer[last.name.clone()];
-        for attr in &self.tag.attrs[0..self.tag.attrs.len() - 1] {
+        for attr in &tag.attrs[0..tag.attrs.len() - 1] {
             let name = &self.char_buffer[attr.name.clone()];
             if name == last_name {
+                tag.attrs.last_mut().expect("").duplicate = true;
                 self.emit_error(ErrorCode::DuplicateAttribute, location);
-                self.tag.attrs.last_mut().expect("").duplicate = true;
                 return;
             }
         }
@@ -1194,12 +1145,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), location) |
-                Char(Some('\n'), location) |
-                Char(Some('\x0C'), location) |
-                Char(Some(' '), location) |
-                Char(Some('/'), location) |
-                Char(Some('>'), location) => {
+                Char(Some('\t'), location)
+                | Char(Some('\n'), location)
+                | Char(Some('\x0C'), location)
+                | Char(Some(' '), location)
+                | Char(Some('/'), location)
+                | Char(Some('>'), location) => {
                     self.check_duplicate_attr(location);
                     self.reconsume_in(ch, State::AfterAttributeName);
                     return;
@@ -1218,14 +1169,11 @@ impl<T: TokenHandler> Tokenizer<T> {
                     self.append_char_to_attr_name(c.to_ascii_lowercase());
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_attr_name(char::REPLACEMENT_CHARACTER);
                 }
                 Char(Some(c), location) if UNEXPECTED_CHARS.contains(&c) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedCharacterInAttributeName,
-                        location);
+                    self.emit_error(ErrorCode::UnexpectedCharacterInAttributeName, location);
                     self.append_char_to_attr_name(c);
                 }
                 Char(Some(c), _) => {
@@ -1239,10 +1187,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some('/'), _) => {
@@ -1276,10 +1224,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some('\"'), _) => {
@@ -1318,8 +1266,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_attr_value(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, location) => {
@@ -1348,8 +1295,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_attr_value(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, location) => {
@@ -1370,10 +1316,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     self.switch_to(State::BeforeAttributeName);
                     return;
                 }
@@ -1388,14 +1334,14 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_attr_value(char::REPLACEMENT_CHARACTER);
                 }
                 Char(Some(c), location) if UNEXPECTED_CHARS.contains(&c) => {
                     self.emit_error(
                         ErrorCode::UnexpectedCharacterInUnquotedAttributeValue,
-                        location);
+                        location,
+                    );
                     self.append_char_to_attr_value(c);
                 }
                 Char(None, location) => {
@@ -1413,10 +1359,10 @@ impl<T: TokenHandler> Tokenizer<T> {
     fn tokenize_after_attribute_value_quoted(&mut self) {
         let ch = self.next_char();
         match ch {
-            Char(Some('\t'), _) |
-            Char(Some('\n'), _) |
-            Char(Some('\x0C'), _) |
-            Char(Some(' '), _) => {
+            Char(Some('\t'), _)
+            | Char(Some('\n'), _)
+            | Char(Some('\x0C'), _)
+            | Char(Some(' '), _) => {
                 self.switch_to(State::BeforeAttributeName);
             }
             Char(Some('/'), _) => {
@@ -1431,8 +1377,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::End);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::MissingWhitespaceBetweenAttributes, location);
+                self.emit_error(ErrorCode::MissingWhitespaceBetweenAttributes, location);
                 self.reconsume_in(ch, State::BeforeAttributeName);
             }
         }
@@ -1440,9 +1385,13 @@ impl<T: TokenHandler> Tokenizer<T> {
 
     fn tokenize_self_closing_tag(&mut self) {
         let ch = self.next_char();
+        let tag = match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => tag,
+            _ => unreachable!(),
+        };
         match ch {
             Char(Some('>'), location) => {
-                self.tag.self_closing = true;
+                tag.self_closing = true;
                 self.switch_to(State::Data);
                 self.emit_tag(location);
             }
@@ -1471,9 +1420,8 @@ impl<T: TokenHandler> Tokenizer<T> {
                     self.emit_comment();
                     return;
                 }
-                Char(Some('\0'), location)  => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                Char(Some('\0'), location) => {
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_comment(char::REPLACEMENT_CHARACTER);
                 }
                 Char(Some(c), _) => {
@@ -1483,7 +1431,7 @@ impl<T: TokenHandler> Tokenizer<T> {
         }
     }
 
-    fn tokenize_markup_declaration(&mut self) {
+    fn tokenize_markup_declaration_open(&mut self) {
         let ch = self.next_char();
         match ch {
             Char(Some('-'), _) => {
@@ -1502,9 +1450,8 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeCdataSection1);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment, location);
-                // TODO: Create a comment token whose data is the empty string
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location);
+                self.create_comment();
                 self.reconsume_in(ch, State::BogusComment);
             }
         }
@@ -1514,11 +1461,11 @@ impl<T: TokenHandler> Tokenizer<T> {
         let ch = self.next_char();
         match ch {
             Char(Some('-'), _) => {
+                self.create_comment();
                 self.switch_to(State::CommentStart);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment, location.offset(-1));
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location.offset(-1));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.reconsume_in(ch, State::BogusComment);
@@ -1533,8 +1480,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::CommentStartDash);
             }
             Char(Some('>'), location) => {
-                self.emit_error(
-                    ErrorCode::AbruptClosingOfEmptyComment, location);
+                self.emit_error(ErrorCode::AbruptClosingOfEmptyComment, location);
                 self.switch_to(State::Data);
                 self.emit_comment();
             }
@@ -1551,8 +1497,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::CommentEnd);
             }
             Char(Some('>'), location) => {
-                self.emit_error(
-                    ErrorCode::AbruptClosingOfEmptyComment, location);
+                self.emit_error(ErrorCode::AbruptClosingOfEmptyComment, location);
                 self.switch_to(State::Data);
                 self.emit_comment();
             }
@@ -1582,8 +1527,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.append_char_to_comment(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, location) => {
@@ -1647,8 +1591,7 @@ impl<T: TokenHandler> Tokenizer<T> {
     fn tokenize_comment_less_than_sign_bang_dash_dash(&mut self) {
         let ch = self.next_char();
         match ch {
-            Char(Some('>'), _) |
-            Char(None, _) => {
+            Char(Some('>'), _) | Char(None, _) => {
                 self.reconsume_in(ch, State::CommentEnd);
             }
             Char(_, location) => {
@@ -1741,9 +1684,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeDoctype2);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment,
-                    location.offset(-1));
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location.offset(-1));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.switch_to(State::BogusComment);
@@ -1761,9 +1702,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeDoctype3);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment,
-                    location.offset(-2));
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location.offset(-2));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.switch_to(State::BogusComment);
@@ -1781,9 +1720,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeDoctype4);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment,
-                    location.offset(-3));
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location.offset(-3));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.switch_to(State::BogusComment);
@@ -1801,9 +1738,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeDoctype5);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment,
-                    location.offset(-4));
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location.offset(-4));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.switch_to(State::BogusComment);
@@ -1821,9 +1756,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeDoctype6);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment,
-                    location.offset(-5));
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location.offset(-5));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.switch_to(State::BogusComment);
@@ -1841,9 +1774,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::Doctype);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::IncorrectlyOpenedComment,
-                    location.offset(-6));
+                self.emit_error(ErrorCode::IncorrectlyOpenedComment, location.offset(-6));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.switch_to(State::BogusComment);
@@ -1854,25 +1785,22 @@ impl<T: TokenHandler> Tokenizer<T> {
     fn tokenize_doctype(&mut self) {
         let ch = self.next_char();
         match ch {
-            Char(Some('\t'), _) |
-            Char(Some('\n'), _) |
-            Char(Some('\x0C'), _) |
-            Char(Some(' '), _) => {
-                self.switch_to(State::BeforeDoctypeName)
-            }
+            Char(Some('\t'), _)
+            | Char(Some('\n'), _)
+            | Char(Some('\x0C'), _)
+            | Char(Some(' '), _) => self.switch_to(State::BeforeDoctypeName),
             Char(Some('>'), _) => {
                 self.reconsume_in(ch, State::BeforeDoctypeName);
             }
             Char(None, location) => {
                 self.emit_error(ErrorCode::EofInDoctype, location);
                 self.create_doctype();
-                self.doctype.force_quirks = true;
+                self.set_doctype_quirks();
                 self.emit_docype();
                 self.switch_to(State::End);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::MissingWhitespaceBeforeDoctypeName, location);
+                self.emit_error(ErrorCode::MissingWhitespaceBeforeDoctypeName, location);
                 self.reconsume_in(ch, State::BeforeDoctypeName);
             }
         }
@@ -1882,10 +1810,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some(c), _) if c.is_ascii_uppercase() => {
@@ -1896,19 +1824,17 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     self.create_doctype();
                     self.start_doctype_name();
-                    self.append_char_to_doctype_name(
-                        char::REPLACEMENT_CHARACTER);
+                    self.append_char_to_doctype_name(char::REPLACEMENT_CHARACTER);
                     self.switch_to(State::DoctypeName);
                     return;
                 }
                 Char(Some('>'), location) => {
                     self.emit_error(ErrorCode::MissingDoctypeName, location);
                     self.create_doctype();
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.switch_to(State::Data);
                     self.emit_docype();
                     return;
@@ -1916,7 +1842,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
                     self.create_doctype();
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -1936,10 +1862,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     self.switch_to(State::AfterDoctypeName);
                     return;
                 }
@@ -1952,14 +1878,12 @@ impl<T: TokenHandler> Tokenizer<T> {
                     self.append_char_to_doctype_name(c.to_ascii_lowercase());
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
-                    self.append_char_to_doctype_name(
-                        char::REPLACEMENT_CHARACTER);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
+                    self.append_char_to_doctype_name(char::REPLACEMENT_CHARACTER);
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -1975,10 +1899,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some('>'), _) => {
@@ -1988,7 +1912,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2008,8 +1932,9 @@ impl<T: TokenHandler> Tokenizer<T> {
                 Char(_, location) => {
                     self.emit_error(
                         ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                        location);
-                    self.doctype.force_quirks = true;
+                        location,
+                    );
+                    self.set_doctype_quirks();
                     self.reconsume_in(ch, State::BogusDoctype);
                     return;
                 }
@@ -2029,8 +1954,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-1));
-                self.doctype.force_quirks = true;
+                    location.offset(-1),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2048,8 +1974,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-2));
-                self.doctype.force_quirks = true;
+                    location.offset(-2),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2067,8 +1994,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-3));
-                self.doctype.force_quirks = true;
+                    location.offset(-3),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2086,8 +2014,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-4));
-                self.doctype.force_quirks = true;
+                    location.offset(-4),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2105,8 +2034,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-5));
-                self.doctype.force_quirks = true;
+                    location.offset(-5),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2115,45 +2045,47 @@ impl<T: TokenHandler> Tokenizer<T> {
     fn tokenize_after_doctype_public_keyword(&mut self) {
         let ch = self.next_char();
         match ch {
-            Char(Some('\t'), _) |
-            Char(Some('\n'), _) |
-            Char(Some('\x0C'), _) |
-            Char(Some(' '), _) => {
+            Char(Some('\t'), _)
+            | Char(Some('\n'), _)
+            | Char(Some('\x0C'), _)
+            | Char(Some(' '), _) => {
                 self.switch_to(State::BeforeDoctypePublicIdentifier);
             }
             Char(Some('"'), location) => {
                 self.emit_error(
                     ErrorCode::MissingWhitespaceAfterDoctypePublicKeyword,
-                    location);
-                self.doctype.force_quirks = true;
+                    location,
+                );
+                self.set_doctype_quirks();
                 self.start_doctype_public_id();
                 self.switch_to(State::DoctypePublicIdentifierDoubleQuoted);
             }
             Char(Some('\''), location) => {
                 self.emit_error(
                     ErrorCode::MissingWhitespaceAfterDoctypePublicKeyword,
-                    location);
+                    location,
+                );
                 self.start_doctype_public_id();
                 self.switch_to(State::DoctypePublicIdentifierSingleQuoted);
             }
             Char(Some('>'), location) => {
-                self.emit_error(
-                    ErrorCode::MissingDoctypePublicIdentifier, location);
-                self.doctype.force_quirks = true;
+                self.emit_error(ErrorCode::MissingDoctypePublicIdentifier, location);
+                self.set_doctype_quirks();
                 self.switch_to(State::Data);
                 self.emit_docype();
             }
             Char(None, location) => {
                 self.emit_error(ErrorCode::EofInDoctype, location);
-                self.doctype.force_quirks = true;
+                self.set_doctype_quirks();
                 self.emit_docype();
                 self.switch_to(State::End);
             }
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::MissingQuoteBeforeDoctypePublicIdentifier,
-                    location);
-                self.doctype.force_quirks = true;
+                    location,
+                );
+                self.set_doctype_quirks();
                 self.reconsume_in(ch, State::BogusDoctype);
             }
         }
@@ -2163,10 +2095,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some('"'), _) => {
@@ -2180,16 +2112,15 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('>'), location) => {
-                    self.emit_error(
-                        ErrorCode::MissingDoctypePublicIdentifier, location);
-                    self.doctype.force_quirks = true;
+                    self.emit_error(ErrorCode::MissingDoctypePublicIdentifier, location);
+                    self.set_doctype_quirks();
                     self.switch_to(State::Data);
                     self.emit_docype();
                     return;
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2197,8 +2128,9 @@ impl<T: TokenHandler> Tokenizer<T> {
                 Char(_, location) => {
                     self.emit_error(
                         ErrorCode::MissingQuoteBeforeDoctypePublicIdentifier,
-                        location);
-                    self.doctype.force_quirks = true;
+                        location,
+                    );
+                    self.set_doctype_quirks();
                     self.reconsume_in(ch, State::BogusDoctype);
                     return;
                 }
@@ -2215,22 +2147,19 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
-                    self.append_char_to_doctype_public_id(
-                        char::REPLACEMENT_CHARACTER);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
+                    self.append_char_to_doctype_public_id(char::REPLACEMENT_CHARACTER);
                 }
                 Char(Some('>'), location) => {
-                    self.emit_error(
-                        ErrorCode::AbruptDoctypePublicIdentifier, location);
-                    self.doctype.force_quirks = true;
+                    self.emit_error(ErrorCode::AbruptDoctypePublicIdentifier, location);
+                    self.set_doctype_quirks();
                     self.switch_to(State::Data);
                     self.emit_docype();
                     return;
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2251,22 +2180,19 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
-                    self.append_char_to_doctype_public_id(
-                        char::REPLACEMENT_CHARACTER);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
+                    self.append_char_to_doctype_public_id(char::REPLACEMENT_CHARACTER);
                 }
                 Char(Some('>'), location) => {
-                    self.emit_error(
-                        ErrorCode::AbruptDoctypePublicIdentifier, location);
-                    self.doctype.force_quirks = true;
+                    self.emit_error(ErrorCode::AbruptDoctypePublicIdentifier, location);
+                    self.set_doctype_quirks();
                     self.switch_to(State::Data);
                     self.emit_docype();
                     return;
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2281,10 +2207,10 @@ impl<T: TokenHandler> Tokenizer<T> {
     fn tokenize_after_doctype_public_identifier(&mut self) {
         let ch = self.next_char();
         match ch {
-            Char(Some('\t'), _) |
-            Char(Some('\n'), _) |
-            Char(Some('\x0C'), _) |
-            Char(Some(' '), _) => {
+            Char(Some('\t'), _)
+            | Char(Some('\n'), _)
+            | Char(Some('\x0C'), _)
+            | Char(Some(' '), _) => {
                 self.switch_to(State::BetweenDoctypePublicAndSystemIdentifiers);
             }
             Char(Some('>'), _) => {
@@ -2294,28 +2220,31 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(Some('"'), location) => {
                 self.emit_error(
                     ErrorCode::MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers,
-                    location);
+                    location,
+                );
                 self.start_doctype_system_id();
                 self.switch_to(State::DoctypeSystemIdentifierDoubleQuoted);
             }
             Char(Some('\''), location) => {
                 self.emit_error(
                     ErrorCode::MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers,
-                    location);
+                    location,
+                );
                 self.start_doctype_system_id();
                 self.switch_to(State::DoctypeSystemIdentifierSingleQuoted);
             }
             Char(None, location) => {
                 self.emit_error(ErrorCode::EofInDoctype, location);
-                self.doctype.force_quirks = true;
+                self.set_doctype_quirks();
                 self.emit_docype();
                 self.switch_to(State::End);
             }
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::MissingQuoteBeforeDoctypeSystemIdentifier,
-                    location);
-                self.doctype.force_quirks = true;
+                    location,
+                );
+                self.set_doctype_quirks();
                 self.reconsume_in(ch, State::BogusDoctype);
             }
         }
@@ -2325,10 +2254,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some('>'), _) => {
@@ -2348,7 +2277,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2356,8 +2285,9 @@ impl<T: TokenHandler> Tokenizer<T> {
                 Char(_, location) => {
                     self.emit_error(
                         ErrorCode::MissingQuoteBeforeDoctypeSystemIdentifier,
-                        location);
-                    self.doctype.force_quirks = true;
+                        location,
+                    );
+                    self.set_doctype_quirks();
                     self.reconsume_in(ch, State::BogusDoctype);
                     return;
                 }
@@ -2377,8 +2307,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-1));
-                self.doctype.force_quirks = true;
+                    location.offset(-1),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2396,8 +2327,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-2));
-                self.doctype.force_quirks = true;
+                    location.offset(-2),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2415,8 +2347,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-3));
-                self.doctype.force_quirks = true;
+                    location.offset(-3),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2434,8 +2367,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-4));
-                self.doctype.force_quirks = true;
+                    location.offset(-4),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2453,8 +2387,9 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::InvalidCharacterSequenceAfterDoctypeName,
-                    location.offset(-5));
-                self.doctype.force_quirks = true;
+                    location.offset(-5),
+                );
+                self.set_doctype_quirks();
                 self.switch_to(State::BogusDoctype);
             }
         }
@@ -2463,44 +2398,46 @@ impl<T: TokenHandler> Tokenizer<T> {
     fn tokenize_after_doctype_system_keyword(&mut self) {
         let ch = self.next_char();
         match ch {
-            Char(Some('\t'), _) |
-            Char(Some('\n'), _) |
-            Char(Some('\x0C'), _) |
-            Char(Some(' '), _) => {
+            Char(Some('\t'), _)
+            | Char(Some('\n'), _)
+            | Char(Some('\x0C'), _)
+            | Char(Some(' '), _) => {
                 self.switch_to(State::BeforeDoctypeSystemIdentifier);
             }
             Char(Some('"'), location) => {
                 self.emit_error(
                     ErrorCode::MissingWhitespaceAfterDoctypeSystemKeyword,
-                    location);
+                    location,
+                );
                 self.start_doctype_system_id();
                 self.switch_to(State::DoctypeSystemIdentifierDoubleQuoted);
             }
             Char(Some('\''), location) => {
                 self.emit_error(
                     ErrorCode::MissingWhitespaceAfterDoctypeSystemKeyword,
-                    location);
+                    location,
+                );
                 self.start_doctype_system_id();
                 self.switch_to(State::DoctypeSystemIdentifierSingleQuoted);
             }
             Char(Some('>'), location) => {
-                self.emit_error(
-                    ErrorCode::MissingDoctypeSystemIdentifier, location);
-                self.doctype.force_quirks = true;
+                self.emit_error(ErrorCode::MissingDoctypeSystemIdentifier, location);
+                self.set_doctype_quirks();
                 self.switch_to(State::Data);
                 self.emit_docype();
             }
             Char(None, location) => {
                 self.emit_error(ErrorCode::EofInDoctype, location);
-                self.doctype.force_quirks = true;
+                self.set_doctype_quirks();
                 self.emit_docype();
                 self.switch_to(State::End);
             }
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::MissingQuoteBeforeDoctypeSystemIdentifier,
-                    location);
-                self.doctype.force_quirks = true;
+                    location,
+                );
+                self.set_doctype_quirks();
                 self.reconsume_in(ch, State::BogusDoctype);
             }
         }
@@ -2510,10 +2447,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some('"'), _) => {
@@ -2527,16 +2464,15 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('>'), location) => {
-                    self.emit_error(
-                        ErrorCode::MissingDoctypeSystemIdentifier, location);
-                    self.doctype.force_quirks = true;
+                    self.emit_error(ErrorCode::MissingDoctypeSystemIdentifier, location);
+                    self.set_doctype_quirks();
                     self.switch_to(State::Data);
                     self.emit_docype();
                     return;
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2544,8 +2480,9 @@ impl<T: TokenHandler> Tokenizer<T> {
                 Char(_, location) => {
                     self.emit_error(
                         ErrorCode::MissingQuoteBeforeDoctypeSystemIdentifier,
-                        location);
-                    self.doctype.force_quirks = true;
+                        location,
+                    );
+                    self.set_doctype_quirks();
                     self.reconsume_in(ch, State::BogusDoctype);
                     return;
                 }
@@ -2562,22 +2499,19 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
-                    self.append_char_to_doctype_system_id(
-                        char::REPLACEMENT_CHARACTER);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
+                    self.append_char_to_doctype_system_id(char::REPLACEMENT_CHARACTER);
                 }
                 Char(Some('>'), location) => {
-                    self.emit_error(
-                        ErrorCode::AbruptDoctypeSystemIdentifier, location);
-                    self.doctype.force_quirks = true;
+                    self.emit_error(ErrorCode::AbruptDoctypeSystemIdentifier, location);
+                    self.set_doctype_quirks();
                     self.switch_to(State::Data);
                     self.emit_docype();
                     return;
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2598,22 +2532,19 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
-                    self.append_char_to_doctype_system_id(
-                        char::REPLACEMENT_CHARACTER);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
+                    self.append_char_to_doctype_system_id(char::REPLACEMENT_CHARACTER);
                 }
                 Char(Some('>'), location) => {
-                    self.emit_error(
-                        ErrorCode::AbruptDoctypeSystemIdentifier, location);
-                    self.doctype.force_quirks = true;
+                    self.emit_error(ErrorCode::AbruptDoctypeSystemIdentifier, location);
+                    self.set_doctype_quirks();
                     self.switch_to(State::Data);
                     self.emit_docype();
                     return;
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2629,10 +2560,10 @@ impl<T: TokenHandler> Tokenizer<T> {
         loop {
             let ch = self.next_char();
             match ch {
-                Char(Some('\t'), _) |
-                Char(Some('\n'), _) |
-                Char(Some('\x0C'), _) |
-                Char(Some(' '), _) => {
+                Char(Some('\t'), _)
+                | Char(Some('\n'), _)
+                | Char(Some('\x0C'), _)
+                | Char(Some(' '), _) => {
                     // Ignore the character.
                 }
                 Char(Some('>'), _) => {
@@ -2642,7 +2573,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 }
                 Char(None, location) => {
                     self.emit_error(ErrorCode::EofInDoctype, location);
-                    self.doctype.force_quirks = true;
+                    self.set_doctype_quirks();
                     self.emit_docype();
                     self.switch_to(State::End);
                     return;
@@ -2650,7 +2581,8 @@ impl<T: TokenHandler> Tokenizer<T> {
                 Char(_, location) => {
                     self.emit_error(
                         ErrorCode::UnexpectedCharacterAfterDoctypeSystemIdentifier,
-                        location);
+                        location,
+                    );
                     self.reconsume_in(ch, State::BogusDoctype);
                     return;
                 }
@@ -2668,8 +2600,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     return;
                 }
                 Char(Some('\0'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnexpectedNullCharacter, location);
+                    self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
                     // Ignore the character.
                 }
                 Char(None, _) => {
@@ -2692,8 +2623,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeCdataSection2);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::CdataInHtmlContent, location.offset(-1));
+                self.emit_error(ErrorCode::CdataInHtmlContent, location.offset(-1));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.reconsume_in(ch, State::BogusComment);
@@ -2709,8 +2639,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeCdataSection3);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::CdataInHtmlContent, location.offset(-2));
+                self.emit_error(ErrorCode::CdataInHtmlContent, location.offset(-2));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.reconsume_in(ch, State::BogusComment);
@@ -2726,8 +2655,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeCdataSection4);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::CdataInHtmlContent, location.offset(-3));
+                self.emit_error(ErrorCode::CdataInHtmlContent, location.offset(-3));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.reconsume_in(ch, State::BogusComment);
@@ -2743,8 +2671,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeCdataSection5);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::CdataInHtmlContent, location.offset(-4));
+                self.emit_error(ErrorCode::CdataInHtmlContent, location.offset(-4));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.reconsume_in(ch, State::BogusComment);
@@ -2760,8 +2687,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.switch_to(State::MaybeCdataSection6);
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::CdataInHtmlContent, location.offset(-6));
+                self.emit_error(ErrorCode::CdataInHtmlContent, location.offset(-6));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.reconsume_in(ch, State::BogusComment);
@@ -2783,8 +2709,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 }
             }
             Char(_, location) => {
-                self.emit_error(
-                    ErrorCode::CdataInHtmlContent, location.offset(-7));
+                self.emit_error(ErrorCode::CdataInHtmlContent, location.offset(-7));
                 // TODO: Create a comment token whose data is the empty string
                 self.append_temp_to_comment();
                 self.reconsume_in(ch, State::BogusComment);
@@ -2872,9 +2797,9 @@ impl<T: TokenHandler> Tokenizer<T> {
 
     fn does_append_to_attr_value(&self) -> bool {
         match self.return_state {
-            State::AttributeValueDoubleQuoted |
-            State::AttributeValueSingleQuoted |
-            State::AttributeValueUnquoted => true,
+            State::AttributeValueDoubleQuoted
+            | State::AttributeValueSingleQuoted
+            | State::AttributeValueUnquoted => true,
             _ => false,
         }
     }
@@ -2892,8 +2817,8 @@ impl<T: TokenHandler> Tokenizer<T> {
             let (accepted, special_case) = match ch {
                 Char(Some(c), _) => (
                     self.char_ref_resolver.accept(c),
-                    has_remaining ||
-                        c == ';' || c == '=' || c.is_ascii_alphanumeric()),
+                    has_remaining || c == ';' || c == '=' || c.is_ascii_alphanumeric(),
+                ),
                 Char(None, _) => (false, has_remaining),
             };
             if self.char_ref_resolver.end() {
@@ -2910,36 +2835,31 @@ impl<T: TokenHandler> Tokenizer<T> {
             if !accepted {
                 if self.does_append_to_attr_value() && special_case {
                     self.append_temp_to_attr_value();
-                    self.append_str_to_attr_value(
-                        self.char_ref_resolver.buffer());
+                    self.append_str_to_attr_value(self.char_ref_resolver.buffer());
                     self.reconsume_in(ch, self.return_state);
                     return;
                 }
                 if let Some((char_ref, chars)) = self.char_ref_resolver.resolve() {
                     self.emit_error(
                         ErrorCode::MissingSemicolonAfterCharacterReference,
-                        base_location.offset(
-                            char_ref.len().try_into().unwrap()));
+                        base_location.offset(char_ref.len().try_into().unwrap()),
+                    );
                     if self.does_append_to_attr_value() {
                         self.append_str_to_attr_value(chars);
-                        self.append_str_to_attr_value(
-                            self.char_ref_resolver.remaining());
+                        self.append_str_to_attr_value(self.char_ref_resolver.remaining());
                     } else {
                         self.append_str_to_text(chars);
-                        self.append_str_to_text(
-                            self.char_ref_resolver.remaining());
+                        self.append_str_to_text(self.char_ref_resolver.remaining());
                     }
                     self.reconsume_in(ch, self.return_state);
                     return;
                 }
                 if self.does_append_to_attr_value() {
                     self.append_temp_to_attr_value();
-                    self.append_str_to_attr_value(
-                        self.char_ref_resolver.remaining());
+                    self.append_str_to_attr_value(self.char_ref_resolver.remaining());
                 } else {
                     self.append_temp_to_text();
-                    self.append_str_to_text(
-                        self.char_ref_resolver.remaining());
+                    self.append_str_to_text(self.char_ref_resolver.remaining());
                 }
                 self.reconsume_in(ch, State::AmbigousAmpersand);
                 return;
@@ -2959,8 +2879,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                     }
                 }
                 Char(Some(';'), location) => {
-                    self.emit_error(
-                        ErrorCode::UnknownNamedCharacterReference, location);
+                    self.emit_error(ErrorCode::UnknownNamedCharacterReference, location);
                     self.reconsume_in(ch, self.return_state);
                     return;
                 }
@@ -2981,9 +2900,7 @@ impl<T: TokenHandler> Tokenizer<T> {
                 self.append_char_to_temp(c);
                 self.switch_to(State::HexadecimalCharacterReferenceStart)
             }
-            _ => {
-                self.reconsume_in(ch, State::DecimalCharacterReferenceStart)
-            }
+            _ => self.reconsume_in(ch, State::DecimalCharacterReferenceStart),
         }
     }
 
@@ -2996,7 +2913,8 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::AbsenceOfDigitsInNumericCharacterReference,
-                    location);
+                    location,
+                );
                 self.append_temp_to_text();
                 self.reconsume_in(ch, self.return_state)
             }
@@ -3012,7 +2930,8 @@ impl<T: TokenHandler> Tokenizer<T> {
             Char(_, location) => {
                 self.emit_error(
                     ErrorCode::AbsenceOfDigitsInNumericCharacterReference,
-                    location);
+                    location,
+                );
                 self.append_temp_to_text();
                 self.reconsume_in(ch, self.return_state)
             }
@@ -3025,17 +2944,15 @@ impl<T: TokenHandler> Tokenizer<T> {
             match ch {
                 Char(Some(c), _) if c.is_ascii_hexdigit() => {
                     let digit = c.to_digit(16).unwrap();
-                    self.char_ref_code = self.char_ref_code.saturating_mul(16)
-                        .saturating_add(digit);
+                    self.char_ref_code =
+                        self.char_ref_code.saturating_mul(16).saturating_add(digit);
                 }
-                Char(Some(';'),  _) => {
+                Char(Some(';'), _) => {
                     self.switch_to(State::NumericCharacterReferenceEnd);
                     return;
                 }
                 Char(_, location) => {
-                    self.emit_error(
-                        ErrorCode::MissingSemicolonAfterCharacterReference,
-                        location);
+                    self.emit_error(ErrorCode::MissingSemicolonAfterCharacterReference, location);
                     self.reconsume_in(ch, State::NumericCharacterReferenceEnd);
                     return;
                 }
@@ -3049,17 +2966,15 @@ impl<T: TokenHandler> Tokenizer<T> {
             match ch {
                 Char(Some(c), _) if c.is_ascii_digit() => {
                     let digit = c.to_digit(10).unwrap();
-                    self.char_ref_code = self.char_ref_code.saturating_mul(10)
-                        .saturating_add(digit);
+                    self.char_ref_code =
+                        self.char_ref_code.saturating_mul(10).saturating_add(digit);
                 }
                 Char(Some(';'), _) => {
                     self.switch_to(State::NumericCharacterReferenceEnd);
                     return;
                 }
                 Char(_, location) => {
-                    self.emit_error(
-                        ErrorCode::MissingSemicolonAfterCharacterReference,
-                        location);
+                    self.emit_error(ErrorCode::MissingSemicolonAfterCharacterReference, location);
                     self.reconsume_in(ch, State::NumericCharacterReferenceEnd);
                     return;
                 }
@@ -3069,13 +2984,10 @@ impl<T: TokenHandler> Tokenizer<T> {
 
     fn tokenize_numeric_character_reference_end(&mut self) {
         const CHARMAP_C1: [char; 32] = [
-            '\u{20AC}', '\u{0081}', '\u{201A}', '\u{0192}',
-            '\u{201E}', '\u{2026}', '\u{2020}', '\u{2021}',
-            '\u{02C6}', '\u{2030}', '\u{0160}', '\u{2039}',
-            '\u{0152}', '\u{008D}', '\u{017D}', '\u{008F}',
-            '\u{0090}', '\u{2018}', '\u{2019}', '\u{201C}',
-            '\u{201D}', '\u{2022}', '\u{2013}', '\u{2014}',
-            '\u{02DC}', '\u{2122}', '\u{0161}', '\u{203A}',
+            '\u{20AC}', '\u{0081}', '\u{201A}', '\u{0192}', '\u{201E}', '\u{2026}', '\u{2020}',
+            '\u{2021}', '\u{02C6}', '\u{2030}', '\u{0160}', '\u{2039}', '\u{0152}', '\u{008D}',
+            '\u{017D}', '\u{008F}', '\u{0090}', '\u{2018}', '\u{2019}', '\u{201C}', '\u{201D}',
+            '\u{2022}', '\u{2013}', '\u{2014}', '\u{02DC}', '\u{2122}', '\u{0161}', '\u{203A}',
             '\u{0153}', '\u{009D}', '\u{017E}', '\u{0178}',
         ];
 
@@ -3156,25 +3068,19 @@ impl<T: TokenHandler> Tokenizer<T> {
             match cp {
                 Some((CodePoint::Scalar(cp), location)) => {
                     if Self::is_nonchar(cp) {
-                        self.emit_error(
-                            ErrorCode::NoncharacterInInputStream, location);
+                        self.emit_error(ErrorCode::NoncharacterInInputStream, location);
                     } else if Self::is_control_other_than_ascii_whitespace(cp) {
-                        self.emit_error(
-                            ErrorCode::ControlCharacterInInputStream,
-                            location);
+                        self.emit_error(ErrorCode::ControlCharacterInInputStream, location);
                     }
                     Char(Some(char::from_u32(cp).expect("")), location)
                 }
                 Some((CodePoint::Surrogate(_), location)) => {
-                    self.emit_error(
-                        ErrorCode::SurrogateInInputStream, location);
+                    self.emit_error(ErrorCode::SurrogateInInputStream, location);
                     Char(Some(char::REPLACEMENT_CHARACTER), location)
                 }
-                Some((CodePoint::Eof, location)) => {
-                    Char(None, location)
-                }
+                Some((CodePoint::Eof, location)) => Char(None, location),
                 None => {
-                  todo!("");
+                    todo!("");
                 }
             }
         }
@@ -3196,9 +3102,7 @@ impl<T: TokenHandler> Tokenizer<T> {
             Some((CodePoint::Surrogate(_), location)) => {
                 Char(Some(char::REPLACEMENT_CHARACTER), location)
             }
-            Some((CodePoint::Eof, location)) => {
-                Char(None, location)
-            }
+            Some((CodePoint::Eof, location)) => Char(None, location),
             None => {
                 todo!("");
             }
@@ -3215,15 +3119,33 @@ impl<T: TokenHandler> Tokenizer<T> {
     }
 
     fn create_start_tag(&mut self) {
-        self.tag.clear(self.char_buffer.len(), true);
+        assert!(self.current_token.is_none());
+        let pos = self.char_buffer.len();
+        self.current_token = Some(TokenRange::Tag(TagRange {
+            name: pos..pos,
+            attrs: Default::default(),
+            self_closing: false,
+            start_tag: true,
+        }));
     }
 
     fn create_end_tag(&mut self) {
-        self.tag.clear(self.char_buffer.len(), false);
+        assert!(self.current_token.is_none());
+        let pos = self.char_buffer.len();
+        self.current_token = Some(TokenRange::Tag(TagRange {
+            name: pos..pos,
+            attrs: Default::default(),
+            self_closing: false,
+            start_tag: false,
+        }));
     }
 
     fn discard_tag(&mut self) {
-        self.char_buffer.truncate(self.tag.name.start);
+        let pos = match self.current_token.take() {
+            Some(TokenRange::Tag(tag)) => tag.name.start,
+            _ => unreachable!(),
+        };
+        self.char_buffer.truncate(pos);
     }
 
     // TODO
@@ -3232,17 +3154,25 @@ impl<T: TokenHandler> Tokenizer<T> {
     // the buffer.  It's inefficient but simple and reliable.
     fn append_char_to_tag_name(&mut self, c: char) {
         self.char_buffer.push(c);
-        self.tag.name.end = self.char_buffer.len();
+        let pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => tag.name.end = pos,
+            _ => unreachable!(),
+        }
     }
 
     fn start_new_attr(&mut self) {
         let pos = self.char_buffer.len();
-        self.tag.attrs.push(AttrRange {
-            name: pos..pos,
-            value: pos..pos,
-            duplicate: false,
-        });
-        self.has_duplicate_attr = false;
+        match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => {
+                tag.attrs.push(AttrRange {
+                    name: pos..pos,
+                    value: pos..pos,
+                    duplicate: false,
+                });
+            }
+            _ => unreachable!(),
+        }
     }
 
     // TODO
@@ -3252,10 +3182,15 @@ impl<T: TokenHandler> Tokenizer<T> {
     // simple and reliable.
     fn append_char_to_attr_name(&mut self, c: char) {
         self.char_buffer.push(c);
-        let attr = self.tag.attrs.last_mut().unwrap();
         let pos = self.char_buffer.len();
-        attr.name.end = pos;
-        attr.value = pos..pos;
+        match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => {
+                let attr = tag.attrs.last_mut().unwrap();
+                attr.name.end = pos;
+                attr.value = pos..pos;
+            }
+            _ => unreachable!(),
+        }
     }
 
     // TODO
@@ -3265,7 +3200,13 @@ impl<T: TokenHandler> Tokenizer<T> {
     // and reliable.
     fn append_char_to_attr_value(&mut self, c: char) {
         self.char_buffer.push(c);
-        self.tag.attrs.last_mut().unwrap().value.end = self.char_buffer.len();
+        let pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => {
+                tag.attrs.last_mut().unwrap().value.end = pos;
+            }
+            _ => unreachable!(),
+        }
     }
 
     // TODO
@@ -3275,44 +3216,54 @@ impl<T: TokenHandler> Tokenizer<T> {
     // and reliable.
     fn append_str_to_attr_value(&mut self, s: &str) {
         self.char_buffer.push_str(s);
-        self.tag.attrs.last_mut().unwrap().value.end = self.char_buffer.len();
+        let pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => {
+                tag.attrs.last_mut().unwrap().value.end = pos;
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn emit_tag(&mut self, location: Location) {
-        if self.tag.start_tag {
-            self.last_start_tag = Some(self.tag_name().to_string());
-            let name = &self.char_buffer[self.tag.name.clone()];
-            let name = match HtmlTag::lookup(name) {
-                Some(htmltag) => TagKind::Html(htmltag),
-                None => TagKind::Other(name),
-            };
-            let attrs = Attrs::new(&self.char_buffer, &self.tag.attrs);
-            let self_closing = self.tag.self_closing;
-            self.handler.handle_start_tag(name, attrs, self_closing);
-        } else {
-            if !self.tag.attrs.is_empty() {
-                self.emit_error(ErrorCode::EndTagWithAttributes, location);
+        match self.current_token.take() {
+            Some(token) => {
+                if let TokenRange::Tag(ref tag) = token {
+                    if tag.start_tag {
+                        self.last_start_tag = Some(self.char_buffer[tag.name.clone()].to_string());
+                    } else {
+                        if !tag.attrs.is_empty() {
+                            self.emit_error(ErrorCode::EndTagWithAttributes, location);
+                        }
+                        if tag.self_closing {
+                            self.emit_error(ErrorCode::EndTagWithTrailingSolidus, location);
+                        }
+                    }
+                }
+                self.emit(token);
             }
-            if self.tag.self_closing {
-                self.emit_error(ErrorCode::EndTagWithTrailingSolidus, location);
-            }
-            let name = &self.char_buffer[self.tag.name.clone()];
-            let name = match HtmlTag::lookup(name) {
-                Some(htmltag) => TagKind::Html(htmltag),
-                None => TagKind::Other(name),
-            };
-            self.handler.handle_end_tag(name);
+            _ => unimplemented!(),
         }
-        self.char_buffer.clear();
     }
 
     fn create_doctype(&mut self) {
-        self.doctype.clear();
+        assert!(self.current_token.is_none());
+        self.current_token = Some(TokenRange::Doctype(Default::default()));
+    }
+
+    fn set_doctype_quirks(&mut self) {
+        match self.current_token {
+            Some(TokenRange::Doctype(ref mut doctype)) => doctype.force_quirks = true,
+            _ => unreachable!(),
+        }
     }
 
     fn start_doctype_name(&mut self) {
         let pos = self.char_buffer.len();
-        self.doctype.name = Some(pos..pos);
+        match self.current_token {
+            Some(TokenRange::Doctype(ref mut doctype)) => doctype.name = Some(pos..pos),
+            _ => unreachable!(),
+        }
     }
 
     // TODO
@@ -3322,77 +3273,143 @@ impl<T: TokenHandler> Tokenizer<T> {
     fn append_char_to_doctype_name(&mut self, c: char) {
         self.char_buffer.push(c);
         let pos = self.char_buffer.len();
-        self.doctype.name.as_mut().expect("").end = pos;
+        match self.current_token {
+            Some(TokenRange::Doctype(ref mut doctype)) => {
+                doctype.name.as_mut().expect("").end = pos
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn start_doctype_public_id(&mut self) {
         let pos = self.char_buffer.len();
-        self.doctype.public_id = Some(pos..pos);
+        match self.current_token {
+            Some(TokenRange::Doctype(ref mut doctype)) => doctype.public_id = Some(pos..pos),
+            _ => unreachable!(),
+        }
     }
 
     fn append_char_to_doctype_public_id(&mut self, c: char) {
         self.char_buffer.push(c);
         let pos = self.char_buffer.len();
-        self.doctype.public_id.as_mut().expect("").end = pos;
+        match self.current_token {
+            Some(TokenRange::Doctype(ref mut doctype)) => {
+                doctype.public_id.as_mut().expect("").end = pos
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn start_doctype_system_id(&mut self) {
         let pos = self.char_buffer.len();
-        self.doctype.system_id = Some(pos..pos);
+        match self.current_token {
+            Some(TokenRange::Doctype(ref mut doctype)) => doctype.system_id = Some(pos..pos),
+            _ => unreachable!(),
+        }
     }
 
     fn append_char_to_doctype_system_id(&mut self, c: char) {
         self.char_buffer.push(c);
         let pos = self.char_buffer.len();
-        self.doctype.system_id.as_mut().expect("").end = pos;
+        match self.current_token {
+            Some(TokenRange::Doctype(ref mut doctype)) => {
+                doctype.system_id.as_mut().expect("").end = pos
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn emit_docype(&mut self) {
-        let name = self.doctype.name.take().map(|r| &self.char_buffer[r]);
-        let public_id = self.doctype.public_id.take().map(|r| &self.char_buffer[r]);
-        let system_id = self.doctype.system_id.take().map(|r| &self.char_buffer[r]);
-        let force_quirks = self.doctype.force_quirks;
-        self.handler.handle_doctype(name, public_id, system_id, force_quirks);
-        self.char_buffer.clear();
+        match self.current_token.take() {
+            Some(token) => self.emit(token),
+            _ => unreachable!(),
+        }
+    }
+
+    fn create_comment(&mut self) {
+        assert!(self.current_token.is_none());
+        let pos = self.char_buffer.len();
+        self.current_token = Some(TokenRange::Comment(pos..pos));
     }
 
     fn append_char_to_comment(&mut self, c: char) {
+        let start_pos = self.char_buffer.len();
         self.char_buffer.push(c);
-        self.has_comment = true;
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Comment(ref mut comment)) => {
+                comment.end = end_pos;
+            }
+            None => {
+                self.current_token = Some(TokenRange::Comment(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn append_str_to_comment(&mut self, s: &str) {
+        let start_pos = self.char_buffer.len();
         self.char_buffer.push_str(s);
-        self.has_comment = true;
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Comment(ref mut comment)) => {
+                comment.end = end_pos;
+            }
+            None => {
+                self.current_token = Some(TokenRange::Comment(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn emit_comment(&mut self) {
-        self.has_comment = false;
-        self.handler.handle_comment(&self.char_buffer);
-        self.char_buffer.clear();
+        match self.current_token.take() {
+            Some(token) => self.emit(token),
+            _ => unimplemented!(),
+        }
     }
 
     fn append_char_to_text(&mut self, c: char) {
+        let start_pos = self.char_buffer.len();
         self.char_buffer.push(c);
-        self.has_text = true;
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Text(ref mut text)) => {
+                text.end = end_pos;
+            }
+            None => {
+                self.current_token = Some(TokenRange::Text(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn append_str_to_text(&mut self, s: &str) {
+        let start_pos = self.char_buffer.len();
         self.char_buffer.push_str(s);
-        self.has_text = true;
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Text(ref mut text)) => {
+                text.end = end_pos;
+            }
+            None => {
+                self.current_token = Some(TokenRange::Text(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn emit_text(&mut self) {
-        self.has_text = false;
-        self.handler.handle_text(&self.char_buffer);
-        self.char_buffer.clear();
+        match self.current_token.take() {
+            Some(token) => self.emit(token),
+            _ => unimplemented!(),
+        }
     }
 
     fn emit_token_if_exists(&mut self) {
-        if self.has_text {
-            self.emit_text();
-        } else if self.has_comment {
-            self.emit_comment();
+        match self.current_token.take() {
+            Some(token) => self.emit(token),
+            _ => (),
         }
     }
 
@@ -3405,33 +3422,63 @@ impl<T: TokenHandler> Tokenizer<T> {
     }
 
     fn append_temp_to_text(&mut self) {
+        let start_pos = self.char_buffer.len();
         self.char_buffer.push_str(&self.temp_buffer);
-        self.has_text = true;
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Text(ref mut text)) => {
+                text.end = end_pos;
+            }
+            None => {
+                self.current_token = Some(TokenRange::Text(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn append_temp_to_comment(&mut self) {
+        let start_pos = self.char_buffer.len();
         self.char_buffer.push_str(&self.temp_buffer);
-        self.has_comment = true;
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Comment(ref mut comment)) => {
+                comment.end = end_pos;
+            }
+            None => {
+                self.current_token = Some(TokenRange::Comment(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn append_temp_to_attr_value(&mut self) {
         self.char_buffer.push_str(&self.temp_buffer);
-        self.tag.attrs.last_mut().unwrap().value.end = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Tag(ref mut tag)) => {
+                tag.attrs.last_mut().unwrap().value.end = self.char_buffer.len()
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn emit_error(&mut self, code: ErrorCode, location: Location) {
-        self.handler.handle_error(Error::new(code, location));
+        self.emit(TokenRange::Error(Error::new(code, location)));
     }
 
-    fn tag_name(&self) -> &str {
-        self.char_buffer.get(self.tag.name.clone())
-            .expect("")
+    fn emit(&mut self, token: TokenRange) {
+        tracing::trace!(?token, "Emit");
+        self.tokens.push_back(token);
     }
 
     fn is_appropriate_end_tag(&self) -> bool {
         if let Some(ref tag_name) = self.last_start_tag {
-            if self.tag_name() == tag_name {
-                return true;
+            match self.current_token {
+                Some(TokenRange::Tag(ref tag)) => {
+                    if &self.char_buffer[tag.name.clone()] == tag_name {
+                        return true;
+                    }
+                }
+                _ => unreachable!(),
             }
         }
         false
@@ -3442,10 +3489,12 @@ impl<T: TokenHandler> Tokenizer<T> {
         if (0x00FDD0..=0x00FDEF).contains(&cp) {
             return true;
         }
-        if ((cp + 1) & 0x00FFFF) == 0 {  // 0x__FFFF
+        if ((cp + 1) & 0x00FFFF) == 0 {
+            // 0x__FFFF
             return true;
         }
-        if ((cp + 2) & 0x00FFFF) == 0 {  // 0x__FFFE
+        if ((cp + 2) & 0x00FFFF) == 0 {
+            // 0x__FFFE
             return true;
         }
         return false;
@@ -3461,12 +3510,37 @@ impl<T: TokenHandler> Tokenizer<T> {
             // DEL + C1
             0x7F..=0x9F => true,
             // Others
-            _ => false
+            _ => false,
         }
     }
 }
 
 struct Char(Option<char>, Location);
+
+#[derive(Debug, Default)]
+struct DoctypeRange {
+    name: Option<Range<usize>>,
+    public_id: Option<Range<usize>>,
+    system_id: Option<Range<usize>>,
+    force_quirks: bool,
+}
+
+#[derive(Debug)]
+struct TagRange {
+    name: Range<usize>,
+    attrs: Vec<AttrRange>,
+    self_closing: bool,
+    start_tag: bool,
+}
+
+#[derive(Debug)]
+enum TokenRange {
+    Doctype(DoctypeRange),
+    Tag(TagRange),
+    Text(Range<usize>),
+    Comment(Range<usize>),
+    Error(Error),
+}
 
 pub enum Token<'a> {
     Doctype {
@@ -3476,12 +3550,12 @@ pub enum Token<'a> {
         force_quirks: bool,
     },
     StartTag {
-        name: &'a str,
+        name: TagKind<'a>,
         attrs: Attrs<'a>,
         self_closing: bool,
     },
     EndTag {
-        name: &'a str,
+        name: TagKind<'a>,
     },
     Text {
         text: &'a str,
@@ -3489,56 +3563,15 @@ pub enum Token<'a> {
     Comment {
         comment: &'a str,
     },
+    Error(Error),
     End,
 }
 
-enum TokenKind {
-    Doctype,
-    StartTag,
-    EndTag,
-    Text,
-    Comment,
-}
-
-#[derive(Default)]
-struct Tag {
-    name: Range<usize>,
-    attrs: Vec<AttrRange>,
-    start_tag: bool,
-    self_closing: bool,
-}
-
-impl Tag {
-    fn clear(&mut self, pos: usize, start_tag: bool) {
-        self.name = pos..pos;
-        self.attrs.clear();
-        self.start_tag = start_tag;
-        self.self_closing = false;
-    }
-}
-
-#[derive(Default)]
-struct AttrRange {
+#[derive(Debug)]
+pub struct AttrRange {
     name: Range<usize>,
     value: Range<usize>,
     duplicate: bool,
-}
-
-#[derive(Default)]
-struct DoctypeRange {
-    name: Option<Range<usize>>,
-    public_id: Option<Range<usize>>,
-    system_id: Option<Range<usize>>,
-    force_quirks: bool,
-}
-
-impl DoctypeRange {
-    fn clear(&mut self) {
-        self.name = None;
-        self.public_id = None;
-        self.system_id = None;
-        self.force_quirks = false;
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -3662,12 +3695,12 @@ enum State {
 
 pub struct Attrs<'a> {
     buffer: &'a str,
-    attrs: &'a [AttrRange],
+    attrs: Vec<AttrRange>,
     index: usize,
 }
 
 impl<'a> Attrs<'a> {
-    fn new(buffer: &'a str, attrs: &'a [AttrRange]) -> Self {
+    fn new(buffer: &'a str, attrs: Vec<AttrRange>) -> Self {
         Attrs {
             buffer,
             attrs,
@@ -3688,13 +3721,11 @@ impl<'a> Iterator for Attrs<'a> {
             i += 1;
         }
 
-        let attr = self.attrs
-            .get(i)
-            .map(|attr| {
-                let name = &self.buffer[attr.name.clone()];
-                let value = &self.buffer[attr.value.clone()];
-                (name, value)
-            });
+        let attr = self.attrs.get(i).map(|attr| {
+            let name = &self.buffer[attr.name.clone()];
+            let value = &self.buffer[attr.value.clone()];
+            (name, value)
+        });
         self.index = i + 1;
         attr
     }

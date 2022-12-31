@@ -19,9 +19,7 @@ impl InputStream {
         }
     }
 
-    pub(crate) fn next_code_point(
-        &mut self
-    ) -> Option<(CodePoint, Location)> {
+    pub(crate) fn next_code_point(&mut self) -> Option<(CodePoint, Location)> {
         loop {
             match Self::decode(&self.data[self.pos..]) {
                 (Some(CodePoint::Scalar(0x000A)), _) => {
@@ -64,7 +62,7 @@ impl InputStream {
     }
 
     #[inline]
-    fn decode(data:  &[u16]) -> (Option<CodePoint>, usize) {
+    fn decode(data: &[u16]) -> (Option<CodePoint>, usize) {
         if data.is_empty() {
             return (None, 0);
         }
@@ -80,25 +78,22 @@ impl InputStream {
                     match second_unit {
                         // low surrogate
                         0xDC00..=0xDFFF => {
-                            let v = (((first_unit & 0x3FF) << 10) | (second_unit & 0x3FF)) + 0x10000;
+                            let v =
+                                (((first_unit & 0x3FF) << 10) | (second_unit & 0x3FF)) + 0x10000;
                             (Some(CodePoint::Scalar(v)), 2)
                         }
-                        _ => (Some(CodePoint::Surrogate(first_unit)), 1)
+                        _ => (Some(CodePoint::Surrogate(first_unit)), 1),
                     }
                 }
             }
             // low surrogate
             0xDC00..=0xDFFF => (Some(CodePoint::Surrogate(first_unit)), 1),
-            _ => (Some(CodePoint::Scalar(first_unit)), 1)
+            _ => (Some(CodePoint::Scalar(first_unit)), 1),
         }
     }
 
     #[inline]
-    fn consume(
-        &mut self,
-        cp: u32,
-        nunits: usize
-    ) -> Option<(CodePoint, Location)> {
+    fn consume(&mut self, cp: u32, nunits: usize) -> Option<(CodePoint, Location)> {
         let location = self.location.clone();
         self.pos += nunits;
         self.location.incr();
