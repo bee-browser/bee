@@ -65,14 +65,18 @@ all: build
 
 .PHONY: list
 list:
-	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | grep -E -v -e '^[^[:alnum:]]' -e '^$@$$'
+
+.PHONY: check
+check: format
+	cargo check --release --all-features
 
 .PHONY: build
-build: codegen $(BUILD_TARGETS)
+build: format codegen $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: codegen testgen
+test: format codegen testgen
 	cargo test --release --all-features
 
 .PHONY: clean
@@ -80,15 +84,15 @@ clean: $(CLEAN_TARGETS)
 	cargo clean
 
 .PHONY: debug-build
-debug-build: codegen $(BUILD_TARGETS)
+debug-build: format codegen $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: debug-test
-debug-test: codegen testgen
+debug-test: format codegen testgen
 	cargo test --all-features
 
 .PHONY: coverage-test
-coverage-test: codegen testgen
+coverage-test: format codegen testgen
 	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features --no-fail-fast
 
 .PHONY: coverage-lcov
@@ -104,6 +108,14 @@ codegen: $(CODEGEN_TARGETS)
 
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
+
+.PHONY: doc
+doc: format
+	cargo doc --workspace --all-features
+
+.PHONY: format
+format:
+	cargo fmt --all
 
 .PHONY: update-deps
 update-deps:
