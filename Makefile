@@ -119,7 +119,6 @@ format:
 
 .PHONY: update-deps
 update-deps:
-	@cargo upgrade -v
 	@make -C tools update-deps
 
 .PHONY: install-grcov
