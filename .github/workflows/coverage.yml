@@ -1,20 +1,29 @@
+name: coverage
+
+on:
+  workflow_run:
+    workflows:
+      - ci
+    types:
+      - completed
+
+env:
+  DENO_DIR: /tmp/deno
+
 jobs:
   coverage:
-    env:
-      DENO_DIR: /tmp/deno
     runs-on: ubuntu-latest
-    continue-on-error: true
+    if: |
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.conclusion == 'success'
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-      - uses: denolib/setup-deno@v2
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
       - name: Cache for deno
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             $DENO_DIR
@@ -32,7 +41,7 @@ jobs:
         run: |
           make coverage-lcov
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: '${{ secrets.CODECOV_TOKEN }}'
           file: target/coverage/lcov.info
