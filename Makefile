@@ -80,7 +80,7 @@ build: format codegen $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: format codegen testgen
+test: format codegen testgen install-nextest
 	cargo nextest run --release --all-features
 
 .PHONY: clean
@@ -92,7 +92,7 @@ debug-build: format codegen $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: debug-test
-debug-test: format codegen testgen
+debug-test: format codegen testgen install-nextest
 	cargo nextest run --all-features
 
 .PHONY: coverage-test
@@ -127,6 +127,10 @@ format:
 .PHONY: install-grcov
 install-grcov:
 	cargo install grcov
+
+.PHONY: install-nextest
+install-nextest:
+	cargo install cargo-nextest
 
 .PHONY: github-ci
 github-ci:
