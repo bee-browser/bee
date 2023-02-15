@@ -1,7 +1,7 @@
 mod charref;
 mod error;
 mod inputstream;
-mod token;
+pub mod token;
 mod tokenizer;
 
 #[cfg(test)]
@@ -12,13 +12,6 @@ use std::fmt;
 
 pub use crate::error::Error;
 pub use crate::error::ErrorCode;
-pub use crate::token::Attrs;
-pub use crate::token::Comment;
-pub use crate::token::Doctype;
-pub use crate::token::Tag;
-pub use crate::token::TagKind;
-pub use crate::token::Text;
-pub use crate::token::Token;
 pub use crate::tokenizer::InitialState;
 pub use crate::tokenizer::Tokenizer;
 

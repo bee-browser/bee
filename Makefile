@@ -46,6 +46,10 @@ TESTGEN_TARGETS = $(addprefix testgen-,\
   libs/layout \
 )
 
+UPDATE_DEPS_TARGETS = $(addprefix update-deps-,\
+  tools \
+)
+
 COVERAGE_TEST_ENV_VARS = \
   RUSTC_BOOTSTRAP=1 \
   CARGO_INCREMENTAL=0 \
@@ -77,7 +81,7 @@ build: format codegen $(BUILD_TARGETS)
 
 .PHONY: test
 test: format codegen testgen
-	cargo test --release --all-features
+	cargo nextest run --release --all-features
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
@@ -89,11 +93,11 @@ debug-build: format codegen $(BUILD_TARGETS)
 
 .PHONY: debug-test
 debug-test: format codegen testgen
-	cargo test --all-features
+	cargo nextest run --all-features
 
 .PHONY: coverage-test
 coverage-test: format codegen testgen
-	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features --no-fail-fast
+	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features
 
 .PHONY: coverage-lcov
 coverage-lcov: coverage-test install-grcov | $(PROJDIR)/target/coverage
@@ -109,6 +113,9 @@ codegen: $(CODEGEN_TARGETS)
 .PHONE: testgen
 testgen: $(TESTGEN_TARGETS)
 
+.PHONY: update-deps
+update-deps: $(UPDATE_DEPS_TARGETS)
+
 .PHONY: doc
 doc: format
 	cargo doc --workspace --all-features
@@ -116,10 +123,6 @@ doc: format
 .PHONY: format
 format:
 	cargo fmt --all
-
-.PHONY: update-deps
-update-deps:
-	@make -C tools update-deps
 
 .PHONY: install-grcov
 install-grcov:
@@ -148,6 +151,10 @@ $(CODEGEN_TARGETS):
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):
 	@make -C $(subst clean-,,$@) clean
+
+.PHONY: $(UPDATE_DEPS_TARGETS)
+$(UPDATE_DEPS_TARGETS):
+	@make -C $(subst update-deps-,,$@) update-deps
 
 $(PROJDIR)/target/coverage:
 	@mkdir -p $@

@@ -1,5 +1,6 @@
 use anyhow::Result;
-use bee_htmltokenizer::*;
+use bee_htmltokenizer::token::*;
+use bee_htmltokenizer::Tokenizer;
 use std::fmt::Write;
 use std::io;
 use std::io::Read;
