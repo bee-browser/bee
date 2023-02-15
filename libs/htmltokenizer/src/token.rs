@@ -1,9 +1,10 @@
 use std::ops::Range;
 
-use bee_htmltags::HtmlTag;
+pub use bee_htmltags::HtmlTag;
 
 use crate::error::Error;
 
+#[derive(Debug)]
 pub enum Token<'a> {
     Doctype(Doctype<'a>),
     StartTag(Tag<'a>),
@@ -32,6 +33,7 @@ impl<'a> Token<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Doctype<'a> {
     pub name: Option<&'a str>,
     pub public_id: Option<&'a str>,
@@ -50,6 +52,7 @@ impl<'a> Doctype<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Tag<'a> {
     pub name: TagKind<'a>,
     attrs: AttrsHolder<'a>,
@@ -67,6 +70,14 @@ impl<'a> Tag<'a> {
             name,
             attrs: AttrsHolder::new(buf, tag.attrs),
             self_closing: tag.self_closing,
+        }
+    }
+
+    pub fn with_html_tag(name: HtmlTag) -> Self {
+        Tag {
+            name: TagKind::Html(name),
+            attrs: AttrsHolder::empty(),
+            self_closing: false,
         }
     }
 
@@ -89,11 +100,13 @@ impl<'a> Tag<'a> {
     }
 }
 
+#[derive(Debug)]
 pub enum TagKind<'a> {
     Html(HtmlTag),
     Other(&'a str),
 }
 
+#[derive(Debug)]
 pub(crate) struct AttrsHolder<'a> {
     buffer: &'a str,
     attrs: Vec<AttrRange>,
@@ -102,6 +115,13 @@ pub(crate) struct AttrsHolder<'a> {
 impl<'a> AttrsHolder<'a> {
     pub(crate) fn new(buffer: &'a str, attrs: Vec<AttrRange>) -> Self {
         AttrsHolder { buffer, attrs }
+    }
+
+    pub fn empty() -> Self {
+        AttrsHolder {
+            buffer: "",
+            attrs: vec![],
+        }
     }
 }
 
@@ -143,6 +163,7 @@ impl<'a, 'b> Iterator for Attrs<'a, 'b> {
     }
 }
 
+#[derive(Debug)]
 pub struct Text<'a> {
     pub data: &'a str,
 }
@@ -153,6 +174,7 @@ impl<'a> Text<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Comment<'a> {
     pub data: &'a str,
 }

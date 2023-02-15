@@ -52,6 +52,7 @@ Custom @data:
     included if it's read from STDIN.
 
 Helpers:
+  * 'pad' from https://deno.land/std/strings/mod.ts
   * https://deno.land/x/case/mod.ts
   * escapeForRust
   * escapeUnicodeForRust

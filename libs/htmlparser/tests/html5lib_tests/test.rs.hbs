@@ -1,0 +1,18 @@
+//<coverage:exclude>
+use super::helper::parse;
+use super::helper::Test;
+{{#each tests}}
+
+#[test]
+fn test_{{{@index}}}() {
+    parse(Test {
+        data: r#"{{{data}}}"#,
+        document: vec![
+            {{#each document}}
+            ({{{this.[0]}}}, r#"{{{this.[1]}}}"#),
+            {{/each}}
+        ],
+    });
+}
+{{/each}}
+//</coverage:exclude>

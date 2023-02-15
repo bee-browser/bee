@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
+use super::token::*;
 use super::*;
 
 // We use a single test function examining all test cases in html5lib-tests.
