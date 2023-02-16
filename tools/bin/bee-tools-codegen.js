@@ -52,6 +52,7 @@ Custom @data:
     included if it's read from STDIN.
 
 Helpers:
+  * json as JSON.stringify
   * 'pad' from https://deno.land/std/strings/mod.ts
   * https://deno.land/x/case/mod.ts
   * escapeForRust
@@ -75,6 +76,8 @@ async function run(args, options) {
 }
 
 function registerHelpers() {
+  Handlebars.registerHelper('json', JSON.stringify);
+
   for (var name in changeCase) {
     Handlebars.registerHelper(name, changeCase[name]);
   }

@@ -1,0 +1,10 @@
+//<coverage:exclude>
+use super::helper::tokenize;
+{{#each .}}
+
+#[test]
+fn test_{{{@index}}}() {
+    tokenize(r##"{{{json .}}}"##);
+}
+{{/each}}
+//</coverage:exclude>

@@ -10,9 +10,6 @@ use crate::token::TokenRange;
 use crate::Location;
 use std::collections::VecDeque;
 
-#[cfg(test)]
-use serde::Deserialize;
-
 /// An HTML5-compliant tokenizer.
 ///
 /// The `Tokenizer` type implements the tokenization state machine described in
@@ -94,7 +91,6 @@ impl Tokenizer {
         };
     }
 
-    #[cfg(test)]
     pub fn set_last_start_tag(&mut self, tag_name: String) {
         self.last_start_tag = Some(tag_name);
     }
@@ -3485,7 +3481,7 @@ impl Tokenizer {
 struct Char(Option<char>, Location);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[cfg_attr(test, derive(Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 pub enum InitialState {
     Data,
     Rcdata,
