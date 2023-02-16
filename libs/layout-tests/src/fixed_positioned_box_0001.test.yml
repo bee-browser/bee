@@ -1,0 +1,38 @@
+description: |-
+  Dimensions of the fixed.blue box should be resolved using the initial containing block.
+
+css: |-
+  .abs {
+    position: absolute;
+  }
+  
+  .fixed {
+    position: fixed;
+  }
+  
+  .red {
+    background: red;
+  }
+  
+  .green {
+    background: green;
+  }
+  
+  .blue {
+    background: blue;
+  }
+
+  .abs {
+    width: 100px;
+    height: 100px;
+  }
+
+  .fixed {
+    width: 10%;
+    height: 20%;
+  }
+
+html: |-
+  <div class="abs red">
+    <div class="fixed blue"></div>
+  </div>

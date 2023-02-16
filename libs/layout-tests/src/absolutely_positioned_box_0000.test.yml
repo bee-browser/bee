@@ -1,0 +1,36 @@
+description: |-
+  The constraints are solved for the CSS `bottom` and `right` properties.
+
+css: |-
+  .abs {
+    position: absolute;
+  }
+  
+  .fixed {
+    position: fixed;
+  }
+  
+  .red {
+    background: red;
+  }
+  
+  .green {
+    background: green;
+  }
+  
+  .blue {
+    background: blue;
+  }
+
+  .abs {
+    width: 100px;
+    height: 100px;
+    padding: 10px;
+    border: solid 10px red;
+    margin: 10px;
+    top: 10px;
+    left: 10px;
+  }
+
+html: |-
+  <div class="abs blue"></div>

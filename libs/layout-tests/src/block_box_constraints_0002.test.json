@@ -1,0 +1,1 @@
+{"description":"Over-constrained: The right margin of the block box becomes -200px.","css":"html, body {\n  width: 100%;\n  height: 100%;\n}\n\n.red {\n  background: red;\n}\n\n.green {\n  background: green;\n}\n\n.blue {\n  background: blue;\n}\n\n.block {\n  width: 1200px;\n  height: 100px;\n}","html":"<div class=\"blue block\"></div>"}

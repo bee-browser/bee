@@ -1,0 +1,62 @@
+description: |
+  `overflow: scroll` is applied to the flex box.  The initial scroll position (`0`) is the
+  right-most because the flex direction is `row-reverse`.  The left-most scroll position is `-200`.
+
+css: |
+  .red {
+    background-color: red;
+  }
+  
+  .green {
+    background-color: green;
+  }
+  
+  .blue {
+    background-color: blue;
+  }
+  
+  .orange {
+    background-color: orange;
+  }
+  
+  .lime {
+    background-color: lime;
+  }
+  
+  .aqua {
+    background-color: aqua;
+  }
+  
+  .yellow {
+    background-color: yellow;
+  }
+  
+  .flex {
+    display: flex;
+    width: 400px;
+    height: 400px;
+  }
+  
+  .flex > * {
+    width: 100px;
+    height: 100px;
+  }
+
+  .flex {
+    flex-direction: row-reverse;
+    overflow: scroll;
+  }
+
+  .flex > * {
+    min-width: 100px;
+  }
+
+html: |
+  <div class="flex yellow">
+    <div class="red"></div>
+    <div class="green"></div>
+    <div class="blue"></div>
+    <div class="orange"></div>
+    <div class="lime"></div>
+    <div class="aqua"></div>
+  </div>
