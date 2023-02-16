@@ -1,0 +1,58 @@
+description: |
+  2 flex lines are created.
+
+css: |
+  .red {
+    background-color: red;
+  }
+  
+  .green {
+    background-color: green;
+  }
+  
+  .blue {
+    background-color: blue;
+  }
+  
+  .orange {
+    background-color: orange;
+  }
+  
+  .lime {
+    background-color: lime;
+  }
+  
+  .aqua {
+    background-color: aqua;
+  }
+  
+  .yellow {
+    background-color: yellow;
+  }
+  
+  .flex {
+    display: flex;
+    width: 400px;
+    height: 400px;
+  }
+  
+  .flex > * {
+    width: 100px;
+    height: 100px;
+  }
+
+  .flex {
+    flex-wrap: wrap;
+    align-content: flex-start;  /* for simplicity */
+  }
+
+  .flex > .blue {
+    width: 300px;
+  }
+
+html: |
+  <div class="flex yellow">
+    <div class="red"></div>
+    <div class="green"></div>
+    <div class="blue"></div>
+  </div>

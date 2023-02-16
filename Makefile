@@ -1,7 +1,6 @@
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 export BEE_VENDOR_DIR := $(PROJDIR)/vendor
-export BEE_HTML5LIB_TESTS_DIR := $(BEE_VENDOR_DIR)/html5lib-tests
 export BEE_CARGO_CODEGEN_DIR := $(PROJDIR)/target/codegen
 
 # These are used in the "lldb.launch.sourceMap" property in //.vscode/settings.json.
@@ -41,11 +40,6 @@ CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/htmltokenizer \
 )
 
-TESTGEN_TARGETS = $(addprefix testgen-,\
-  libs/htmltokenizer \
-  libs/layout \
-)
-
 UPDATE_DEPS_TARGETS = $(addprefix update-deps-,\
   tools \
 )
@@ -80,7 +74,7 @@ build: format codegen $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: format codegen testgen install-nextest
+test: format codegen install-nextest
 	cargo nextest run --release --all-features
 
 .PHONY: clean
@@ -92,11 +86,11 @@ debug-build: format codegen $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: debug-test
-debug-test: format codegen testgen install-nextest
+debug-test: format codegen install-nextest
 	cargo nextest run --all-features
 
 .PHONY: coverage-test
-coverage-test: format codegen testgen
+coverage-test: format codegen
 	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features
 
 .PHONY: coverage-lcov
@@ -109,9 +103,6 @@ coverage-html: coverage-test install-grcov | $(PROJDIR)/target/coverage
 
 .PHONE: codegen
 codegen: $(CODEGEN_TARGETS)
-
-.PHONE: testgen
-testgen: $(TESTGEN_TARGETS)
 
 .PHONY: update-deps
 update-deps: $(UPDATE_DEPS_TARGETS)
@@ -143,10 +134,6 @@ github-workflows:
 .PHONY: $(BUILD_TARGETS)
 $(BUILD_TARGETS):
 	@make -C $(subst build-,,$@) build
-
-.PHONY: $(TESTGEN_TARGETS)
-$(TESTGEN_TARGETS):
-	@make -C $(subst testgen-,,$@) testgen
 
 .PHONY: $(CODEGEN_TARGETS)
 $(CODEGEN_TARGETS):

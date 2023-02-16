@@ -1,0 +1,39 @@
+description: |-
+  The containing block of a top-level positioned box is the viewpoert.
+
+css: |-
+  html, body {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .abs {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 0px;
+    left: 0px;
+  }
+  
+  .fixed {
+    position: fixed;
+    width: 100px;
+    height: 100px;
+    top: 0px;
+    left: 0px;
+  }
+  
+  .red {
+    background: red;
+  }
+  
+  .green {
+    background: green;
+  }
+  
+  .blue {
+    background: blue;
+  }
+
+html: |-
+  <div class="abs blue" style="width: 80%; height: 80%;"></div>

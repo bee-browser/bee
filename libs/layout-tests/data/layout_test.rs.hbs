@@ -5,7 +5,10 @@
 
 // This file is included from //libs/layout/tests/layout_test.rs.
 
+//<coverage:exclude>
+use super::helper::layout_test;
 {{#each names}}
+
 #[test]
 fn {{.}}_layout_test() {
     layout_test(
@@ -13,5 +16,5 @@ fn {{.}}_layout_test() {
         "{{@root.resources_dir}}/{{.}}.expected.yml",
     );
 }
-
 {{/each}}
+//</coverage:exclude>

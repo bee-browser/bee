@@ -1,0 +1,53 @@
+description: |
+  The flex direction of the flex box is `row`.
+
+css: |
+  .red {
+    background-color: red;
+  }
+  
+  .green {
+    background-color: green;
+  }
+  
+  .blue {
+    background-color: blue;
+  }
+  
+  .orange {
+    background-color: orange;
+  }
+  
+  .lime {
+    background-color: lime;
+  }
+  
+  .aqua {
+    background-color: aqua;
+  }
+  
+  .yellow {
+    background-color: yellow;
+  }
+  
+  .flex {
+    display: flex;
+    width: 400px;
+    height: 400px;
+  }
+  
+  .flex > * {
+    width: 100px;
+    height: 100px;
+  }
+
+  .flex {
+    flex-direction: row;
+  }
+
+html: |
+  <div class="flex yellow">
+    <div class="red"></div>
+    <div class="green"></div>
+    <div class="blue"></div>
+  </div>

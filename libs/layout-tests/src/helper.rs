@@ -1,12 +1,14 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufRead;
+use std::io::BufReader;
 
 use assert_json_diff::assert_json_eq;
 use serde_json;
 
-use bee_layout::service::{JsonSink, MessageInterpreter};
+use bee_layout::service::JsonSink;
+use bee_layout::service::MessageInterpreter;
 
-fn layout_test(scenario_path: &str, expected_path: &str) {
+pub fn layout_test(scenario_path: &str, expected_path: &str) {
     let validator = JsonValidator::new(expected_path);
     let mut interp = MessageInterpreter::new(validator);
 
@@ -55,8 +57,3 @@ impl JsonSink for JsonValidator {
         }
     }
 }
-
-include!(concat!(
-    env!("BEE_CARGO_CODEGEN_DIR"),
-    "/libs/layout/tests/layout_test.rs"
-));

@@ -1,0 +1,38 @@
+description: |-
+  The blue box should be placed on the right side of the red box.
+  The green box should be placed on the bottom side of the blue box.
+
+css: |-
+  .container {
+    width: 500px;
+    outline: dashed 1px black;
+  }
+
+  .red-box {
+    float: left;
+    width: 200px;
+    height: 100px;
+    background: red;
+  }
+
+  .blue-box {
+    display: inline-block;
+    width: 100px;
+    height: 200px;
+    vertical-align: bottom;
+    background: blue;
+  }
+
+  .green-box {
+    float: left;
+    width: 400px;
+    height: 100px;
+    background: green;
+  }
+
+html: |-
+  <div class="container">
+    <div class="red-box"></div>
+    <div class="blue-box"></div>
+    <div class="green-box"></div>
+  </div>
