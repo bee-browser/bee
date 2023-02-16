@@ -1,68 +1,23 @@
 //<coverage:exclude>
-use glob::glob;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::BufReader;
 
-use super::token::*;
-use super::*;
+use bee_htmltokenizer::token::*;
+use bee_htmltokenizer::Error;
+use bee_htmltokenizer::InitialState;
+use bee_htmltokenizer::Tokenizer;
 
-// We use a single test function examining all test cases in html5lib-tests.
-//
-// Creating a separate test function for each test case takes a long time in
-// link time.  So, we decided to use the single test function.
-#[test]
-fn test() {
-    const PATTERN: &str = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/html5libtests/*.codegen.json"
-    );
-
-    tracing_subscriber::fmt::init();
-
-    for json_file in glob(PATTERN).unwrap() {
-        match json_file {
-            Ok(path) => {
-                let file = File::open(path).unwrap();
-                let reader = BufReader::new(file);
-                let test_suite: TestSuite = serde_json::from_reader(reader).unwrap();
-                for (index, test) in test_suite.tests.iter().enumerate() {
-                    for initial_state in test.initial_states.iter().cloned() {
-                        tracing::debug!(
-                            "{}#{} ({:?}): {}",
-                            test_suite.name,
-                            index,
-                            initial_state,
-                            test.description
-                        );
-                        let validator = Validator::new(test);
-                        tokenize(
-                            &test.input,
-                            initial_state,
-                            test.last_start_tag.clone(),
-                            validator,
-                        );
-                    }
-                }
-            }
-            Err(_err) => panic!(),
-        }
-    }
-}
-
-fn tokenize(
-    input: &[u16],
-    initial_state: InitialState,
-    last_start_tag: Option<String>,
-    mut validator: Validator,
-) {
+pub fn tokenize(json: &'static str) {
+    let test: TestCase = serde_json::from_str(json).unwrap();
+    println!("{}", test.description);
+    println!("input: {}", test.input);
+    let mut validator = Validator::new(&test);
     let mut tokenizer = Tokenizer::new();
-    tokenizer.set_initial_state(initial_state);
-    if let Some(tag_name) = last_start_tag {
-        tokenizer.set_last_start_tag(tag_name);
+    tokenizer.set_initial_state(test.initial_state);
+    if let Some(ref tag_name) = test.last_start_tag {
+        tokenizer.set_last_start_tag(tag_name.clone());
     }
-    tokenizer.feed_data(input.into());
+    tokenizer.feed_data(test.input_utf16.clone());
     tokenizer.feed_end();
     loop {
         match tokenizer.next_token() {
@@ -160,18 +115,13 @@ impl<'a> Validator<'a> {
 }
 
 #[derive(Deserialize)]
-struct TestSuite {
-    name: String,
-    tests: Vec<TestCase>,
-}
-
-#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct TestCase {
     description: String,
-    input: Vec<u16>,
+    input: String,
+    input_utf16: Vec<u16>,
     output: Vec<Output>,
-    initial_states: Vec<InitialState>,
+    initial_state: InitialState,
     last_start_tag: Option<String>,
     errors: Vec<Error>,
 }

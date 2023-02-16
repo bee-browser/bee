@@ -4,10 +4,10 @@ use thiserror;
 
 #[derive(Debug, PartialEq, thiserror::Error)]
 #[error("{location}: {code}")]
-#[cfg_attr(test, derive(serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 pub struct Error {
-    code: ErrorCode,
-    location: Location,
+    pub code: ErrorCode,
+    pub location: Location,
 }
 
 impl Error {
@@ -25,7 +25,7 @@ impl Error {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[cfg_attr(test, derive(serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 pub enum ErrorCode {
     AbruptClosingOfEmptyComment,
     AbruptDoctypePublicIdentifier,

@@ -4,9 +4,6 @@ mod inputstream;
 pub mod token;
 mod tokenizer;
 
-#[cfg(test)]
-mod html5libtests;
-
 use match_cfg::match_cfg;
 use std::fmt;
 
@@ -16,7 +13,7 @@ pub use crate::tokenizer::InitialState;
 pub use crate::tokenizer::Tokenizer;
 
 match_cfg! {
-    #[cfg(test)] => {
+    #[cfg(feature = "serde")] => {
         use serde::Deserialize;
 
         #[derive(Clone, Copy, Debug, PartialEq)]

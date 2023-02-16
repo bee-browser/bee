@@ -1,18 +1,20 @@
 import { pascalCase } from "https://deno.land/x/case/mod.ts";
 
+const name = Deno.args[0];
+
 const decoder = new TextDecoder('utf-8');
 const json = await decoder.decode(await Deno.readAll(Deno.stdin));
-const data = JSON.parse(json);
-
-data.name = Deno.args[0];
+const original = JSON.parse(json);
 
 function isString(v) {
   return typeof v === 'string' || v instanceof String;
 }
 
+let data = [];
+
 // https://github.com/html5lib/html5lib-tests/blob/master/tokenizer/README.md
-for (let testIndex = 0; testIndex < data.tests.length; ++testIndex) {
-  const test = data.tests[testIndex];
+for (let testIndex = 0; testIndex < original.tests.length; ++testIndex) {
+  const test = original.tests[testIndex];
   if (test.doubleEscaped) {
     test.input = JSON.parse(`"${test.input}"`);
     test.output = test.output.map((output) => {
@@ -22,11 +24,11 @@ for (let testIndex = 0; testIndex < data.tests.length; ++testIndex) {
     });
   }
 
-  const input = [];
+  const inputUtf16 = [];
   for (let i = 0; i < test.input.length; ++i) {
-    input.push(test.input.charCodeAt(i));
+    inputUtf16.push(test.input.charCodeAt(i));
   }
-  test.input = input;
+  test.inputUtf16 = inputUtf16;
 
   if (test.initialStates) {
     test.initialStates = test.initialStates.map((state) => {
@@ -37,6 +39,7 @@ for (let testIndex = 0; testIndex < data.tests.length; ++testIndex) {
     test.initialStates = ['Data'];
   }
 
+  // Normalize output data.
   test.output = test.output.map((output) => {
     switch (output[0]) {
     case 'StartTag':
@@ -93,7 +96,7 @@ for (let testIndex = 0; testIndex < data.tests.length; ++testIndex) {
     test.errors = [];
   }
 
-  if (data.name === 'test3') {
+  if (name === 'test3') {
     switch (testIndex) {
     case 67:
     case 139:
@@ -119,7 +122,11 @@ for (let testIndex = 0; testIndex < data.tests.length; ++testIndex) {
       break;
     }
   }
-  if (data.name === 'unicodeCharsProblematic') {
+  if (name === 'unicode_chars_problematic') {
+    if (test.input.includes('\uD800') || test.input.includes('\uDFFF')) {
+      // Required for avoiding a parse error in serde_json.
+      test.input = '';
+    }
     for (let output of test.output) {
       if (output.Character) {
         // Invalid characters will be replaced with U+FFFD by a tokenizer.
@@ -127,6 +134,18 @@ for (let testIndex = 0; testIndex < data.tests.length; ++testIndex) {
         output.Character.data = output.Character.data.replace('\uDFFF', '\uFFFD');
       }
     }
+  }
+
+  for (let i = 0; i < test.initialStates.length; ++i) {
+    data.push({
+      description: test.description,
+      initialState: test.initialStates[i],
+      lastStartTag: test.lastStartTag,
+      input: test.input,
+      inputUtf16: test.inputUtf16,
+      output: test.output,
+      errors: test.errors,
+    });
   }
 }
 
