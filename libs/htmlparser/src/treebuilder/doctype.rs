@@ -6,10 +6,18 @@ where
 {
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_doctype(&mut self, doctype: Doctype<'_>) -> Control {
-        tracing::debug!(?self.insertion_mode);
-        tracing::debug!(?doctype);
-        match self.insertion_mode {
+        tracing::debug!(mode = ?self.mode, ?doctype);
+        match self.mode {
             mode!(Initial) => {
+                if let Some("html") = doctype.name {
+                    // TODO: parse error
+                } else if let Some(_) = doctype.public_id {
+                    // TODO: parse error
+                } else if let Some(system_id) = doctype.system_id {
+                    if system_id != "about:legacy-compat" {
+                        // TODO: parse error
+                    }
+                }
                 self.append_doctype(&doctype);
                 self.determine_quirks_mode(&doctype);
                 self.switch_to(mode!(BeforeHtml));

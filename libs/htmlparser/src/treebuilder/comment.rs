@@ -6,37 +6,36 @@ where
 {
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_comment(&mut self, comment: Comment<'_>) -> Control {
-        tracing::debug!(?comment);
-        match self.insertion_mode {
-            InsertionMode::BeforeHead
-            | InsertionMode::InHead
-            | InsertionMode::InHeadNoscript
-            | InsertionMode::AfterHead
-            | InsertionMode::InBody
-            | InsertionMode::InTable
-            | InsertionMode::InCaption
-            | InsertionMode::InColumnGroup
-            | InsertionMode::InTableBody
-            | InsertionMode::InRow
-            | InsertionMode::InCell
-            | InsertionMode::InSelect
-            | InsertionMode::InSelectInTable
-            | InsertionMode::InTemplate
-            | InsertionMode::InFrameset
-            | InsertionMode::AfterFrameset
-            | InsertionMode::InForeignContent => {
+        tracing::debug!(mode = ?self.mode, ?comment);
+        match self.mode {
+            mode!(
+                BeforeHead,
+                InHead,
+                InHeadNoscript,
+                AfterHead,
+                InBody,
+                InTable,
+                InCaption,
+                InColumnGroup,
+                InTableBody,
+                InRow,
+                InCell,
+                InSelect,
+                InSelectInTable,
+                InTemplate,
+                InFrameset,
+                AfterFrameset,
+                InForeignContent
+            ) => {
                 self.insert_comment(&comment);
             }
-            InsertionMode::Initial
-            | InsertionMode::BeforeHtml
-            | InsertionMode::AfterAfterBody
-            | InsertionMode::AfterAfterFrameset => {
+            mode!(Initial, BeforeHtml, AfterAfterBody, AfterAfterFrameset) => {
                 self.append_comment(&comment);
             }
-            InsertionMode::AfterBody => {
+            mode!(AfterBody) => {
                 self.append_comment_to_root_element(&comment);
             }
-            InsertionMode::Text | InsertionMode::InTableText => {
+            mode!(Text, InTableText) => {
                 unreachable!();
             }
         }

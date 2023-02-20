@@ -3,7 +3,7 @@ use super::helper::tokenize;
 {{#each .}}
 
 #[test]
-fn test_{{{@index}}}() {
+fn test_{{{padStart @index 4 '0'}}}() {
     tokenize(r##"{{{json .}}}"##);
 }
 {{/each}}

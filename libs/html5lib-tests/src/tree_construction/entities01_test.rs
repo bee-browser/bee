@@ -3,980 +3,962 @@ use super::helper::parse;
 use super::helper::Test;
 
 #[test]
-fn test_0() {
+fn test_0000() {
     parse(Test {
-        data: r#"FOO&gt;BAR"#,
+        data: "FOO&gt;BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO>BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO>BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_1() {
+fn test_0001() {
     parse(Test {
-        data: r#"FOO&gtBAR"#,
+        data: "FOO&gtBAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO>BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO>BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_2() {
+fn test_0002() {
     parse(Test {
-        data: r#"FOO&gt BAR"#,
+        data: "FOO&gt BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO> BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO> BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_3() {
+fn test_0003() {
     parse(Test {
-        data: r#"FOO&gt;;;BAR"#,
+        data: "FOO&gt;;;BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO>;;BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO>;;BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_4() {
+fn test_0004() {
     parse(Test {
-        data: r#"I'm &notit; I tell you"#,
+        data: "I\'m &notit; I tell you",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""I'm ¬it; I tell you""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"I\'m ¬it; I tell you\""),
         ],
     });
 }
 
 #[test]
-fn test_5() {
+fn test_0005() {
     parse(Test {
-        data: r#"I'm &notin; I tell you"#,
+        data: "I\'m &notin; I tell you",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""I'm ∉ I tell you""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"I\'m ∉ I tell you\""),
         ],
     });
 }
 
 #[test]
-fn test_6() {
+fn test_0006() {
     parse(Test {
-        data: r#"&ammmp;"#,
+        data: "&ammmp;",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""&ammmp;""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"&ammmp;\""),
         ],
     });
 }
 
 #[test]
-fn test_7() {
+fn test_0007() {
     parse(Test {
-        data: r#"&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;"#,
+        data: "&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (
-                2,
-                r#""&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;""#,
-            ),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;\""),
         ],
     });
 }
 
 #[test]
-fn test_8() {
+fn test_0008() {
     parse(Test {
-        data: r#"FOO& BAR"#,
+        data: "FOO& BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO& BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO& BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_9() {
+fn test_0009() {
     parse(Test {
-        data: r#"FOO&<BAR>"#,
+        data: "FOO&<BAR>",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO&""#),
-            (2, r#"<bar>"#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO&\""),
+            (2, "<bar>"),
         ],
     });
 }
 
 #[test]
-fn test_10() {
+fn test_0010() {
     parse(Test {
-        data: r#"FOO&&&&gt;BAR"#,
+        data: "FOO&&&&gt;BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO&&&>BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO&&&>BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_11() {
+fn test_0011() {
     parse(Test {
-        data: r#"FOO&#41;BAR"#,
+        data: "FOO&#41;BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO)BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO)BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_12() {
+fn test_0012() {
     parse(Test {
-        data: r#"FOO&#x41;BAR"#,
+        data: "FOO&#x41;BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOABAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOABAR\""),
         ],
     });
 }
 
 #[test]
-fn test_13() {
+fn test_0013() {
     parse(Test {
-        data: r#"FOO&#X41;BAR"#,
+        data: "FOO&#X41;BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOABAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOABAR\""),
         ],
     });
 }
 
 #[test]
-fn test_14() {
+fn test_0014() {
     parse(Test {
-        data: r#"FOO&#BAR"#,
+        data: "FOO&#BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO&#BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO&#BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_15() {
+fn test_0015() {
     parse(Test {
-        data: r#"FOO&#ZOO"#,
+        data: "FOO&#ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO&#ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO&#ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_16() {
+fn test_0016() {
     parse(Test {
-        data: r#"FOO&#xBAR"#,
+        data: "FOO&#xBAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOºR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOºR\""),
         ],
     });
 }
 
 #[test]
-fn test_17() {
+fn test_0017() {
     parse(Test {
-        data: r#"FOO&#xZOO"#,
+        data: "FOO&#xZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO&#xZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO&#xZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_18() {
+fn test_0018() {
     parse(Test {
-        data: r#"FOO&#XZOO"#,
+        data: "FOO&#XZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO&#XZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO&#XZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_19() {
+fn test_0019() {
     parse(Test {
-        data: r#"FOO&#41BAR"#,
+        data: "FOO&#41BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO)BAR""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO)BAR\""),
         ],
     });
 }
 
 #[test]
-fn test_20() {
+fn test_0020() {
     parse(Test {
-        data: r#"FOO&#x41BAR"#,
+        data: "FOO&#x41BAR",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO䆺R""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO䆺R\""),
         ],
     });
 }
 
 #[test]
-fn test_21() {
+fn test_0021() {
     parse(Test {
-        data: r#"FOO&#x41ZOO"#,
+        data: "FOO&#x41ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOAZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOAZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_22() {
+fn test_0022() {
     parse(Test {
-        data: r#"FOO&#x0000;ZOO"#,
+        data: "FOO&#x0000;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_23() {
+fn test_0023() {
     parse(Test {
-        data: r#"FOO&#x0078;ZOO"#,
+        data: "FOO&#x0078;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOxZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOxZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_24() {
+fn test_0024() {
     parse(Test {
-        data: r#"FOO&#x0079;ZOO"#,
+        data: "FOO&#x0079;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOyZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOyZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_25() {
+fn test_0025() {
     parse(Test {
-        data: r#"FOO&#x0080;ZOO"#,
+        data: "FOO&#x0080;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO€ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO€ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_26() {
+fn test_0026() {
     parse(Test {
-        data: r#"FOO&#x0081;ZOO"#,
+        data: "FOO&#x0081;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_27() {
+fn test_0027() {
     parse(Test {
-        data: r#"FOO&#x0082;ZOO"#,
+        data: "FOO&#x0082;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO‚ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO‚ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_28() {
+fn test_0028() {
     parse(Test {
-        data: r#"FOO&#x0083;ZOO"#,
+        data: "FOO&#x0083;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOƒZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOƒZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_29() {
+fn test_0029() {
     parse(Test {
-        data: r#"FOO&#x0084;ZOO"#,
+        data: "FOO&#x0084;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO„ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO„ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_30() {
+fn test_0030() {
     parse(Test {
-        data: r#"FOO&#x0085;ZOO"#,
+        data: "FOO&#x0085;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO…ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO…ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_31() {
+fn test_0031() {
     parse(Test {
-        data: r#"FOO&#x0086;ZOO"#,
+        data: "FOO&#x0086;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO†ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO†ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_32() {
+fn test_0032() {
     parse(Test {
-        data: r#"FOO&#x0087;ZOO"#,
+        data: "FOO&#x0087;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO‡ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO‡ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_33() {
+fn test_0033() {
     parse(Test {
-        data: r#"FOO&#x0088;ZOO"#,
+        data: "FOO&#x0088;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOˆZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOˆZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_34() {
+fn test_0034() {
     parse(Test {
-        data: r#"FOO&#x0089;ZOO"#,
+        data: "FOO&#x0089;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO‰ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO‰ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_35() {
+fn test_0035() {
     parse(Test {
-        data: r#"FOO&#x008A;ZOO"#,
+        data: "FOO&#x008A;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOŠZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOŠZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_36() {
+fn test_0036() {
     parse(Test {
-        data: r#"FOO&#x008B;ZOO"#,
+        data: "FOO&#x008B;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO‹ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO‹ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_37() {
+fn test_0037() {
     parse(Test {
-        data: r#"FOO&#x008C;ZOO"#,
+        data: "FOO&#x008C;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOŒZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOŒZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_38() {
+fn test_0038() {
     parse(Test {
-        data: r#"FOO&#x008D;ZOO"#,
+        data: "FOO&#x008D;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_39() {
+fn test_0039() {
     parse(Test {
-        data: r#"FOO&#x008E;ZOO"#,
+        data: "FOO&#x008E;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOŽZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOŽZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_40() {
+fn test_0040() {
     parse(Test {
-        data: r#"FOO&#x008F;ZOO"#,
+        data: "FOO&#x008F;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_41() {
+fn test_0041() {
     parse(Test {
-        data: r#"FOO&#x0090;ZOO"#,
+        data: "FOO&#x0090;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_42() {
+fn test_0042() {
     parse(Test {
-        data: r#"FOO&#x0091;ZOO"#,
+        data: "FOO&#x0091;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO‘ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO‘ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_43() {
+fn test_0043() {
     parse(Test {
-        data: r#"FOO&#x0092;ZOO"#,
+        data: "FOO&#x0092;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO’ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO’ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_44() {
+fn test_0044() {
     parse(Test {
-        data: r#"FOO&#x0093;ZOO"#,
+        data: "FOO&#x0093;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO“ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO“ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_45() {
+fn test_0045() {
     parse(Test {
-        data: r#"FOO&#x0094;ZOO"#,
+        data: "FOO&#x0094;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO”ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO”ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_46() {
+fn test_0046() {
     parse(Test {
-        data: r#"FOO&#x0095;ZOO"#,
+        data: "FOO&#x0095;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO•ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO•ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_47() {
+fn test_0047() {
     parse(Test {
-        data: r#"FOO&#x0096;ZOO"#,
+        data: "FOO&#x0096;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO–ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO–ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_48() {
+fn test_0048() {
     parse(Test {
-        data: r#"FOO&#x0097;ZOO"#,
+        data: "FOO&#x0097;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO—ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO—ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_49() {
+fn test_0049() {
     parse(Test {
-        data: r#"FOO&#x0098;ZOO"#,
+        data: "FOO&#x0098;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO˜ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO˜ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_50() {
+fn test_0050() {
     parse(Test {
-        data: r#"FOO&#x0099;ZOO"#,
+        data: "FOO&#x0099;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO™ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO™ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_51() {
+fn test_0051() {
     parse(Test {
-        data: r#"FOO&#x009A;ZOO"#,
+        data: "FOO&#x009A;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOšZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOšZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_52() {
+fn test_0052() {
     parse(Test {
-        data: r#"FOO&#x009B;ZOO"#,
+        data: "FOO&#x009B;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO›ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO›ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_53() {
+fn test_0053() {
     parse(Test {
-        data: r#"FOO&#x009C;ZOO"#,
+        data: "FOO&#x009C;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOœZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOœZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_54() {
+fn test_0054() {
     parse(Test {
-        data: r#"FOO&#x009D;ZOO"#,
+        data: "FOO&#x009D;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_55() {
+fn test_0055() {
     parse(Test {
-        data: r#"FOO&#x009E;ZOO"#,
+        data: "FOO&#x009E;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOžZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOžZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_56() {
+fn test_0056() {
     parse(Test {
-        data: r#"FOO&#x009F;ZOO"#,
+        data: "FOO&#x009F;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOŸZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOŸZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_57() {
+fn test_0057() {
     parse(Test {
-        data: r#"FOO&#x00A0;ZOO"#,
+        data: "FOO&#x00A0;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_58() {
+fn test_0058() {
     parse(Test {
-        data: r#"FOO&#xD7FF;ZOO"#,
+        data: "FOO&#xD7FF;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO퟿ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO퟿ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_59() {
+fn test_0059() {
     parse(Test {
-        data: r#"FOO&#xD800;ZOO"#,
+        data: "FOO&#xD800;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_60() {
+fn test_0060() {
     parse(Test {
-        data: r#"FOO&#xD801;ZOO"#,
+        data: "FOO&#xD801;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_61() {
+fn test_0061() {
     parse(Test {
-        data: r#"FOO&#xDFFE;ZOO"#,
+        data: "FOO&#xDFFE;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_62() {
+fn test_0062() {
     parse(Test {
-        data: r#"FOO&#xDFFF;ZOO"#,
+        data: "FOO&#xDFFF;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_63() {
+fn test_0063() {
     parse(Test {
-        data: r#"FOO&#xE000;ZOO"#,
+        data: "FOO&#xE000;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOOZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOOZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_64() {
+fn test_0064() {
     parse(Test {
-        data: r#"FOO&#x10FFFE;ZOO"#,
+        data: "FOO&#x10FFFE;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO􏿾ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO􏿾ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_65() {
+fn test_0065() {
     parse(Test {
-        data: r#"FOO&#x1087D4;ZOO"#,
+        data: "FOO&#x1087D4;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO􈟔ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO􈟔ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_66() {
+fn test_0066() {
     parse(Test {
-        data: r#"FOO&#x10FFFF;ZOO"#,
+        data: "FOO&#x10FFFF;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO􏿿ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO􏿿ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_67() {
+fn test_0067() {
     parse(Test {
-        data: r#"FOO&#x110000;ZOO"#,
+        data: "FOO&#x110000;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_68() {
+fn test_0068() {
     parse(Test {
-        data: r#"FOO&#xFFFFFF;ZOO"#,
+        data: "FOO&#xFFFFFF;ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_69() {
+fn test_0069() {
     parse(Test {
-        data: r#"FOO&#11111111111"#,
-        document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�""#),
-        ],
+        data: "FOO&#11111111111",
+        document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
     });
 }
 
 #[test]
-fn test_70() {
+fn test_0070() {
     parse(Test {
-        data: r#"FOO&#1111111111"#,
-        document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�""#),
-        ],
+        data: "FOO&#1111111111",
+        document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
     });
 }
 
 #[test]
-fn test_71() {
+fn test_0071() {
     parse(Test {
-        data: r#"FOO&#111111111111"#,
-        document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�""#),
-        ],
+        data: "FOO&#111111111111",
+        document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
     });
 }
 
 #[test]
-fn test_72() {
+fn test_0072() {
     parse(Test {
-        data: r#"FOO&#11111111111ZOO"#,
+        data: "FOO&#11111111111ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_73() {
+fn test_0073() {
     parse(Test {
-        data: r#"FOO&#1111111111ZOO"#,
+        data: "FOO&#1111111111ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }
 
 #[test]
-fn test_74() {
+fn test_0074() {
     parse(Test {
-        data: r#"FOO&#111111111111ZOO"#,
+        data: "FOO&#111111111111ZOO",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO�ZOO""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO�ZOO\""),
         ],
     });
 }

@@ -2,7000 +2,7000 @@
 use super::helper::tokenize;
 
 #[test]
-fn test_0() {
+fn test_0000() {
     tokenize(
         r##"{"description":"[empty]","initialState":"Data","input":"","inputUtf16":[],"output":[],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_1() {
+fn test_0001() {
     tokenize(
         r##"{"description":"[empty]","initialState":"Plaintext","input":"","inputUtf16":[],"output":[],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_2() {
+fn test_0002() {
     tokenize(
         r##"{"description":"[empty]","initialState":"Rcdata","input":"","inputUtf16":[],"output":[],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_3() {
+fn test_0003() {
     tokenize(
         r##"{"description":"[empty]","initialState":"Rawtext","input":"","inputUtf16":[],"output":[],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_4() {
+fn test_0004() {
     tokenize(
         r##"{"description":"[empty]","initialState":"ScriptData","input":"","inputUtf16":[],"output":[],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_5() {
+fn test_0005() {
     tokenize(
         r##"{"description":"[empty]","initialState":"CdataSection","input":"","inputUtf16":[],"output":[],"errors":[{"code":"EofInCdata","location":{"line":1,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_6() {
+fn test_0006() {
     tokenize(
         r##"{"description":"\\u0009","initialState":"Data","input":"\t","inputUtf16":[9],"output":[{"Character":{"data":"\t"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_7() {
+fn test_0007() {
     tokenize(
         r##"{"description":"\\u0009","initialState":"Plaintext","input":"\t","inputUtf16":[9],"output":[{"Character":{"data":"\t"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_8() {
+fn test_0008() {
     tokenize(
         r##"{"description":"\\u0009","initialState":"Rcdata","input":"\t","inputUtf16":[9],"output":[{"Character":{"data":"\t"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_9() {
+fn test_0009() {
     tokenize(
         r##"{"description":"\\u0009","initialState":"Rawtext","input":"\t","inputUtf16":[9],"output":[{"Character":{"data":"\t"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_10() {
+fn test_0010() {
     tokenize(
         r##"{"description":"\\u0009","initialState":"ScriptData","input":"\t","inputUtf16":[9],"output":[{"Character":{"data":"\t"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_11() {
+fn test_0011() {
     tokenize(
         r##"{"description":"\\u0009","initialState":"CdataSection","input":"\t","inputUtf16":[9],"output":[{"Character":{"data":"\t"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_12() {
+fn test_0012() {
     tokenize(
         r##"{"description":"\\u000A","initialState":"Data","input":"\n","inputUtf16":[10],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_13() {
+fn test_0013() {
     tokenize(
         r##"{"description":"\\u000A","initialState":"Plaintext","input":"\n","inputUtf16":[10],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_14() {
+fn test_0014() {
     tokenize(
         r##"{"description":"\\u000A","initialState":"Rcdata","input":"\n","inputUtf16":[10],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_15() {
+fn test_0015() {
     tokenize(
         r##"{"description":"\\u000A","initialState":"Rawtext","input":"\n","inputUtf16":[10],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_16() {
+fn test_0016() {
     tokenize(
         r##"{"description":"\\u000A","initialState":"ScriptData","input":"\n","inputUtf16":[10],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_17() {
+fn test_0017() {
     tokenize(
         r##"{"description":"\\u000A","initialState":"CdataSection","input":"\n","inputUtf16":[10],"output":[{"Character":{"data":"\n"}}],"errors":[{"code":"EofInCdata","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_18() {
+fn test_0018() {
     tokenize(
         r##"{"description":"\\u000B","initialState":"Data","input":"\u000b","inputUtf16":[11],"output":[{"Character":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_19() {
+fn test_0019() {
     tokenize(
         r##"{"description":"\\u000B","initialState":"Plaintext","input":"\u000b","inputUtf16":[11],"output":[{"Character":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_20() {
+fn test_0020() {
     tokenize(
         r##"{"description":"\\u000B","initialState":"Rcdata","input":"\u000b","inputUtf16":[11],"output":[{"Character":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_21() {
+fn test_0021() {
     tokenize(
         r##"{"description":"\\u000B","initialState":"Rawtext","input":"\u000b","inputUtf16":[11],"output":[{"Character":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_22() {
+fn test_0022() {
     tokenize(
         r##"{"description":"\\u000B","initialState":"ScriptData","input":"\u000b","inputUtf16":[11],"output":[{"Character":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_23() {
+fn test_0023() {
     tokenize(
         r##"{"description":"\\u000B","initialState":"CdataSection","input":"\u000b","inputUtf16":[11],"output":[{"Character":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":1}},{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_24() {
+fn test_0024() {
     tokenize(
         r##"{"description":"\\u000C","initialState":"Data","input":"\f","inputUtf16":[12],"output":[{"Character":{"data":"\f"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_25() {
+fn test_0025() {
     tokenize(
         r##"{"description":"\\u000C","initialState":"Plaintext","input":"\f","inputUtf16":[12],"output":[{"Character":{"data":"\f"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_26() {
+fn test_0026() {
     tokenize(
         r##"{"description":"\\u000C","initialState":"Rcdata","input":"\f","inputUtf16":[12],"output":[{"Character":{"data":"\f"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_27() {
+fn test_0027() {
     tokenize(
         r##"{"description":"\\u000C","initialState":"Rawtext","input":"\f","inputUtf16":[12],"output":[{"Character":{"data":"\f"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_28() {
+fn test_0028() {
     tokenize(
         r##"{"description":"\\u000C","initialState":"ScriptData","input":"\f","inputUtf16":[12],"output":[{"Character":{"data":"\f"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_29() {
+fn test_0029() {
     tokenize(
         r##"{"description":"\\u000C","initialState":"CdataSection","input":"\f","inputUtf16":[12],"output":[{"Character":{"data":"\f"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_30() {
+fn test_0030() {
     tokenize(
         r##"{"description":" ","initialState":"Data","input":" ","inputUtf16":[32],"output":[{"Character":{"data":" "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_31() {
+fn test_0031() {
     tokenize(
         r##"{"description":" ","initialState":"Plaintext","input":" ","inputUtf16":[32],"output":[{"Character":{"data":" "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_32() {
+fn test_0032() {
     tokenize(
         r##"{"description":" ","initialState":"Rcdata","input":" ","inputUtf16":[32],"output":[{"Character":{"data":" "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_33() {
+fn test_0033() {
     tokenize(
         r##"{"description":" ","initialState":"Rawtext","input":" ","inputUtf16":[32],"output":[{"Character":{"data":" "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_34() {
+fn test_0034() {
     tokenize(
         r##"{"description":" ","initialState":"ScriptData","input":" ","inputUtf16":[32],"output":[{"Character":{"data":" "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_35() {
+fn test_0035() {
     tokenize(
         r##"{"description":" ","initialState":"CdataSection","input":" ","inputUtf16":[32],"output":[{"Character":{"data":" "}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_36() {
+fn test_0036() {
     tokenize(
         r##"{"description":"!","initialState":"Data","input":"!","inputUtf16":[33],"output":[{"Character":{"data":"!"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_37() {
+fn test_0037() {
     tokenize(
         r##"{"description":"!","initialState":"Plaintext","input":"!","inputUtf16":[33],"output":[{"Character":{"data":"!"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_38() {
+fn test_0038() {
     tokenize(
         r##"{"description":"!","initialState":"Rcdata","input":"!","inputUtf16":[33],"output":[{"Character":{"data":"!"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_39() {
+fn test_0039() {
     tokenize(
         r##"{"description":"!","initialState":"Rawtext","input":"!","inputUtf16":[33],"output":[{"Character":{"data":"!"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_40() {
+fn test_0040() {
     tokenize(
         r##"{"description":"!","initialState":"ScriptData","input":"!","inputUtf16":[33],"output":[{"Character":{"data":"!"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_41() {
+fn test_0041() {
     tokenize(
         r##"{"description":"!","initialState":"CdataSection","input":"!","inputUtf16":[33],"output":[{"Character":{"data":"!"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_42() {
+fn test_0042() {
     tokenize(
         r##"{"description":"\"","initialState":"Data","input":"\"","inputUtf16":[34],"output":[{"Character":{"data":"\""}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_43() {
+fn test_0043() {
     tokenize(
         r##"{"description":"\"","initialState":"Plaintext","input":"\"","inputUtf16":[34],"output":[{"Character":{"data":"\""}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_44() {
+fn test_0044() {
     tokenize(
         r##"{"description":"\"","initialState":"Rcdata","input":"\"","inputUtf16":[34],"output":[{"Character":{"data":"\""}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_45() {
+fn test_0045() {
     tokenize(
         r##"{"description":"\"","initialState":"Rawtext","input":"\"","inputUtf16":[34],"output":[{"Character":{"data":"\""}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_46() {
+fn test_0046() {
     tokenize(
         r##"{"description":"\"","initialState":"ScriptData","input":"\"","inputUtf16":[34],"output":[{"Character":{"data":"\""}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_47() {
+fn test_0047() {
     tokenize(
         r##"{"description":"\"","initialState":"CdataSection","input":"\"","inputUtf16":[34],"output":[{"Character":{"data":"\""}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_48() {
+fn test_0048() {
     tokenize(
         r##"{"description":"%","initialState":"Data","input":"%","inputUtf16":[37],"output":[{"Character":{"data":"%"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_49() {
+fn test_0049() {
     tokenize(
         r##"{"description":"%","initialState":"Plaintext","input":"%","inputUtf16":[37],"output":[{"Character":{"data":"%"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_50() {
+fn test_0050() {
     tokenize(
         r##"{"description":"%","initialState":"Rcdata","input":"%","inputUtf16":[37],"output":[{"Character":{"data":"%"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_51() {
+fn test_0051() {
     tokenize(
         r##"{"description":"%","initialState":"Rawtext","input":"%","inputUtf16":[37],"output":[{"Character":{"data":"%"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_52() {
+fn test_0052() {
     tokenize(
         r##"{"description":"%","initialState":"ScriptData","input":"%","inputUtf16":[37],"output":[{"Character":{"data":"%"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_53() {
+fn test_0053() {
     tokenize(
         r##"{"description":"%","initialState":"CdataSection","input":"%","inputUtf16":[37],"output":[{"Character":{"data":"%"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_54() {
+fn test_0054() {
     tokenize(
         r##"{"description":"&","initialState":"Data","input":"&","inputUtf16":[38],"output":[{"Character":{"data":"&"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_55() {
+fn test_0055() {
     tokenize(
         r##"{"description":"&","initialState":"Plaintext","input":"&","inputUtf16":[38],"output":[{"Character":{"data":"&"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_56() {
+fn test_0056() {
     tokenize(
         r##"{"description":"&","initialState":"Rcdata","input":"&","inputUtf16":[38],"output":[{"Character":{"data":"&"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_57() {
+fn test_0057() {
     tokenize(
         r##"{"description":"&","initialState":"Rawtext","input":"&","inputUtf16":[38],"output":[{"Character":{"data":"&"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_58() {
+fn test_0058() {
     tokenize(
         r##"{"description":"&","initialState":"ScriptData","input":"&","inputUtf16":[38],"output":[{"Character":{"data":"&"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_59() {
+fn test_0059() {
     tokenize(
         r##"{"description":"&","initialState":"CdataSection","input":"&","inputUtf16":[38],"output":[{"Character":{"data":"&"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_60() {
+fn test_0060() {
     tokenize(
         r##"{"description":"'","initialState":"Data","input":"'","inputUtf16":[39],"output":[{"Character":{"data":"'"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_61() {
+fn test_0061() {
     tokenize(
         r##"{"description":"'","initialState":"Plaintext","input":"'","inputUtf16":[39],"output":[{"Character":{"data":"'"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_62() {
+fn test_0062() {
     tokenize(
         r##"{"description":"'","initialState":"Rcdata","input":"'","inputUtf16":[39],"output":[{"Character":{"data":"'"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_63() {
+fn test_0063() {
     tokenize(
         r##"{"description":"'","initialState":"Rawtext","input":"'","inputUtf16":[39],"output":[{"Character":{"data":"'"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_64() {
+fn test_0064() {
     tokenize(
         r##"{"description":"'","initialState":"ScriptData","input":"'","inputUtf16":[39],"output":[{"Character":{"data":"'"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_65() {
+fn test_0065() {
     tokenize(
         r##"{"description":"'","initialState":"CdataSection","input":"'","inputUtf16":[39],"output":[{"Character":{"data":"'"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_66() {
+fn test_0066() {
     tokenize(
         r##"{"description":",","initialState":"Data","input":",","inputUtf16":[44],"output":[{"Character":{"data":","}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_67() {
+fn test_0067() {
     tokenize(
         r##"{"description":",","initialState":"Plaintext","input":",","inputUtf16":[44],"output":[{"Character":{"data":","}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_68() {
+fn test_0068() {
     tokenize(
         r##"{"description":",","initialState":"Rcdata","input":",","inputUtf16":[44],"output":[{"Character":{"data":","}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_69() {
+fn test_0069() {
     tokenize(
         r##"{"description":",","initialState":"Rawtext","input":",","inputUtf16":[44],"output":[{"Character":{"data":","}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_70() {
+fn test_0070() {
     tokenize(
         r##"{"description":",","initialState":"ScriptData","input":",","inputUtf16":[44],"output":[{"Character":{"data":","}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_71() {
+fn test_0071() {
     tokenize(
         r##"{"description":",","initialState":"CdataSection","input":",","inputUtf16":[44],"output":[{"Character":{"data":","}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_72() {
+fn test_0072() {
     tokenize(
         r##"{"description":"-","initialState":"Data","input":"-","inputUtf16":[45],"output":[{"Character":{"data":"-"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_73() {
+fn test_0073() {
     tokenize(
         r##"{"description":"-","initialState":"Plaintext","input":"-","inputUtf16":[45],"output":[{"Character":{"data":"-"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_74() {
+fn test_0074() {
     tokenize(
         r##"{"description":"-","initialState":"Rcdata","input":"-","inputUtf16":[45],"output":[{"Character":{"data":"-"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_75() {
+fn test_0075() {
     tokenize(
         r##"{"description":"-","initialState":"Rawtext","input":"-","inputUtf16":[45],"output":[{"Character":{"data":"-"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_76() {
+fn test_0076() {
     tokenize(
         r##"{"description":"-","initialState":"ScriptData","input":"-","inputUtf16":[45],"output":[{"Character":{"data":"-"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_77() {
+fn test_0077() {
     tokenize(
         r##"{"description":"-","initialState":"CdataSection","input":"-","inputUtf16":[45],"output":[{"Character":{"data":"-"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_78() {
+fn test_0078() {
     tokenize(
         r##"{"description":".","initialState":"Data","input":".","inputUtf16":[46],"output":[{"Character":{"data":"."}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_79() {
+fn test_0079() {
     tokenize(
         r##"{"description":".","initialState":"Plaintext","input":".","inputUtf16":[46],"output":[{"Character":{"data":"."}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_80() {
+fn test_0080() {
     tokenize(
         r##"{"description":".","initialState":"Rcdata","input":".","inputUtf16":[46],"output":[{"Character":{"data":"."}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_81() {
+fn test_0081() {
     tokenize(
         r##"{"description":".","initialState":"Rawtext","input":".","inputUtf16":[46],"output":[{"Character":{"data":"."}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_82() {
+fn test_0082() {
     tokenize(
         r##"{"description":".","initialState":"ScriptData","input":".","inputUtf16":[46],"output":[{"Character":{"data":"."}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_83() {
+fn test_0083() {
     tokenize(
         r##"{"description":".","initialState":"CdataSection","input":".","inputUtf16":[46],"output":[{"Character":{"data":"."}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_84() {
+fn test_0084() {
     tokenize(
         r##"{"description":"/","initialState":"Data","input":"/","inputUtf16":[47],"output":[{"Character":{"data":"/"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_85() {
+fn test_0085() {
     tokenize(
         r##"{"description":"/","initialState":"Plaintext","input":"/","inputUtf16":[47],"output":[{"Character":{"data":"/"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_86() {
+fn test_0086() {
     tokenize(
         r##"{"description":"/","initialState":"Rcdata","input":"/","inputUtf16":[47],"output":[{"Character":{"data":"/"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_87() {
+fn test_0087() {
     tokenize(
         r##"{"description":"/","initialState":"Rawtext","input":"/","inputUtf16":[47],"output":[{"Character":{"data":"/"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_88() {
+fn test_0088() {
     tokenize(
         r##"{"description":"/","initialState":"ScriptData","input":"/","inputUtf16":[47],"output":[{"Character":{"data":"/"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_89() {
+fn test_0089() {
     tokenize(
         r##"{"description":"/","initialState":"CdataSection","input":"/","inputUtf16":[47],"output":[{"Character":{"data":"/"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_90() {
+fn test_0090() {
     tokenize(
         r##"{"description":"0","initialState":"Data","input":"0","inputUtf16":[48],"output":[{"Character":{"data":"0"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_91() {
+fn test_0091() {
     tokenize(
         r##"{"description":"0","initialState":"Plaintext","input":"0","inputUtf16":[48],"output":[{"Character":{"data":"0"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_92() {
+fn test_0092() {
     tokenize(
         r##"{"description":"0","initialState":"Rcdata","input":"0","inputUtf16":[48],"output":[{"Character":{"data":"0"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_93() {
+fn test_0093() {
     tokenize(
         r##"{"description":"0","initialState":"Rawtext","input":"0","inputUtf16":[48],"output":[{"Character":{"data":"0"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_94() {
+fn test_0094() {
     tokenize(
         r##"{"description":"0","initialState":"ScriptData","input":"0","inputUtf16":[48],"output":[{"Character":{"data":"0"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_95() {
+fn test_0095() {
     tokenize(
         r##"{"description":"0","initialState":"CdataSection","input":"0","inputUtf16":[48],"output":[{"Character":{"data":"0"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_96() {
+fn test_0096() {
     tokenize(
         r##"{"description":"1","initialState":"Data","input":"1","inputUtf16":[49],"output":[{"Character":{"data":"1"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_97() {
+fn test_0097() {
     tokenize(
         r##"{"description":"1","initialState":"Plaintext","input":"1","inputUtf16":[49],"output":[{"Character":{"data":"1"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_98() {
+fn test_0098() {
     tokenize(
         r##"{"description":"1","initialState":"Rcdata","input":"1","inputUtf16":[49],"output":[{"Character":{"data":"1"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_99() {
+fn test_0099() {
     tokenize(
         r##"{"description":"1","initialState":"Rawtext","input":"1","inputUtf16":[49],"output":[{"Character":{"data":"1"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_100() {
+fn test_0100() {
     tokenize(
         r##"{"description":"1","initialState":"ScriptData","input":"1","inputUtf16":[49],"output":[{"Character":{"data":"1"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_101() {
+fn test_0101() {
     tokenize(
         r##"{"description":"1","initialState":"CdataSection","input":"1","inputUtf16":[49],"output":[{"Character":{"data":"1"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_102() {
+fn test_0102() {
     tokenize(
         r##"{"description":"9","initialState":"Data","input":"9","inputUtf16":[57],"output":[{"Character":{"data":"9"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_103() {
+fn test_0103() {
     tokenize(
         r##"{"description":"9","initialState":"Plaintext","input":"9","inputUtf16":[57],"output":[{"Character":{"data":"9"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_104() {
+fn test_0104() {
     tokenize(
         r##"{"description":"9","initialState":"Rcdata","input":"9","inputUtf16":[57],"output":[{"Character":{"data":"9"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_105() {
+fn test_0105() {
     tokenize(
         r##"{"description":"9","initialState":"Rawtext","input":"9","inputUtf16":[57],"output":[{"Character":{"data":"9"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_106() {
+fn test_0106() {
     tokenize(
         r##"{"description":"9","initialState":"ScriptData","input":"9","inputUtf16":[57],"output":[{"Character":{"data":"9"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_107() {
+fn test_0107() {
     tokenize(
         r##"{"description":"9","initialState":"CdataSection","input":"9","inputUtf16":[57],"output":[{"Character":{"data":"9"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_108() {
+fn test_0108() {
     tokenize(
         r##"{"description":";","initialState":"Data","input":";","inputUtf16":[59],"output":[{"Character":{"data":";"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_109() {
+fn test_0109() {
     tokenize(
         r##"{"description":";","initialState":"Plaintext","input":";","inputUtf16":[59],"output":[{"Character":{"data":";"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_110() {
+fn test_0110() {
     tokenize(
         r##"{"description":";","initialState":"Rcdata","input":";","inputUtf16":[59],"output":[{"Character":{"data":";"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_111() {
+fn test_0111() {
     tokenize(
         r##"{"description":";","initialState":"Rawtext","input":";","inputUtf16":[59],"output":[{"Character":{"data":";"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_112() {
+fn test_0112() {
     tokenize(
         r##"{"description":";","initialState":"ScriptData","input":";","inputUtf16":[59],"output":[{"Character":{"data":";"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_113() {
+fn test_0113() {
     tokenize(
         r##"{"description":";","initialState":"CdataSection","input":";","inputUtf16":[59],"output":[{"Character":{"data":";"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_114() {
+fn test_0114() {
     tokenize(
         r##"{"description":";=","initialState":"Data","input":";=","inputUtf16":[59,61],"output":[{"Character":{"data":";="}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_115() {
+fn test_0115() {
     tokenize(
         r##"{"description":";=","initialState":"Plaintext","input":";=","inputUtf16":[59,61],"output":[{"Character":{"data":";="}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_116() {
+fn test_0116() {
     tokenize(
         r##"{"description":";=","initialState":"Rcdata","input":";=","inputUtf16":[59,61],"output":[{"Character":{"data":";="}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_117() {
+fn test_0117() {
     tokenize(
         r##"{"description":";=","initialState":"Rawtext","input":";=","inputUtf16":[59,61],"output":[{"Character":{"data":";="}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_118() {
+fn test_0118() {
     tokenize(
         r##"{"description":";=","initialState":"ScriptData","input":";=","inputUtf16":[59,61],"output":[{"Character":{"data":";="}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_119() {
+fn test_0119() {
     tokenize(
         r##"{"description":";=","initialState":"CdataSection","input":";=","inputUtf16":[59,61],"output":[{"Character":{"data":";="}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_120() {
+fn test_0120() {
     tokenize(
         r##"{"description":";>","initialState":"Data","input":";>","inputUtf16":[59,62],"output":[{"Character":{"data":";>"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_121() {
+fn test_0121() {
     tokenize(
         r##"{"description":";>","initialState":"Plaintext","input":";>","inputUtf16":[59,62],"output":[{"Character":{"data":";>"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_122() {
+fn test_0122() {
     tokenize(
         r##"{"description":";>","initialState":"Rcdata","input":";>","inputUtf16":[59,62],"output":[{"Character":{"data":";>"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_123() {
+fn test_0123() {
     tokenize(
         r##"{"description":";>","initialState":"Rawtext","input":";>","inputUtf16":[59,62],"output":[{"Character":{"data":";>"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_124() {
+fn test_0124() {
     tokenize(
         r##"{"description":";>","initialState":"ScriptData","input":";>","inputUtf16":[59,62],"output":[{"Character":{"data":";>"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_125() {
+fn test_0125() {
     tokenize(
         r##"{"description":";>","initialState":"CdataSection","input":";>","inputUtf16":[59,62],"output":[{"Character":{"data":";>"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_126() {
+fn test_0126() {
     tokenize(
         r##"{"description":";?","initialState":"Data","input":";?","inputUtf16":[59,63],"output":[{"Character":{"data":";?"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_127() {
+fn test_0127() {
     tokenize(
         r##"{"description":";?","initialState":"Plaintext","input":";?","inputUtf16":[59,63],"output":[{"Character":{"data":";?"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_128() {
+fn test_0128() {
     tokenize(
         r##"{"description":";?","initialState":"Rcdata","input":";?","inputUtf16":[59,63],"output":[{"Character":{"data":";?"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_129() {
+fn test_0129() {
     tokenize(
         r##"{"description":";?","initialState":"Rawtext","input":";?","inputUtf16":[59,63],"output":[{"Character":{"data":";?"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_130() {
+fn test_0130() {
     tokenize(
         r##"{"description":";?","initialState":"ScriptData","input":";?","inputUtf16":[59,63],"output":[{"Character":{"data":";?"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_131() {
+fn test_0131() {
     tokenize(
         r##"{"description":";?","initialState":"CdataSection","input":";?","inputUtf16":[59,63],"output":[{"Character":{"data":";?"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_132() {
+fn test_0132() {
     tokenize(
         r##"{"description":";@","initialState":"Data","input":";@","inputUtf16":[59,64],"output":[{"Character":{"data":";@"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_133() {
+fn test_0133() {
     tokenize(
         r##"{"description":";@","initialState":"Plaintext","input":";@","inputUtf16":[59,64],"output":[{"Character":{"data":";@"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_134() {
+fn test_0134() {
     tokenize(
         r##"{"description":";@","initialState":"Rcdata","input":";@","inputUtf16":[59,64],"output":[{"Character":{"data":";@"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_135() {
+fn test_0135() {
     tokenize(
         r##"{"description":";@","initialState":"Rawtext","input":";@","inputUtf16":[59,64],"output":[{"Character":{"data":";@"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_136() {
+fn test_0136() {
     tokenize(
         r##"{"description":";@","initialState":"ScriptData","input":";@","inputUtf16":[59,64],"output":[{"Character":{"data":";@"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_137() {
+fn test_0137() {
     tokenize(
         r##"{"description":";@","initialState":"CdataSection","input":";@","inputUtf16":[59,64],"output":[{"Character":{"data":";@"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_138() {
+fn test_0138() {
     tokenize(
         r##"{"description":";A","initialState":"Data","input":";A","inputUtf16":[59,65],"output":[{"Character":{"data":";A"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_139() {
+fn test_0139() {
     tokenize(
         r##"{"description":";A","initialState":"Plaintext","input":";A","inputUtf16":[59,65],"output":[{"Character":{"data":";A"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_140() {
+fn test_0140() {
     tokenize(
         r##"{"description":";A","initialState":"Rcdata","input":";A","inputUtf16":[59,65],"output":[{"Character":{"data":";A"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_141() {
+fn test_0141() {
     tokenize(
         r##"{"description":";A","initialState":"Rawtext","input":";A","inputUtf16":[59,65],"output":[{"Character":{"data":";A"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_142() {
+fn test_0142() {
     tokenize(
         r##"{"description":";A","initialState":"ScriptData","input":";A","inputUtf16":[59,65],"output":[{"Character":{"data":";A"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_143() {
+fn test_0143() {
     tokenize(
         r##"{"description":";A","initialState":"CdataSection","input":";A","inputUtf16":[59,65],"output":[{"Character":{"data":";A"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_144() {
+fn test_0144() {
     tokenize(
         r##"{"description":";B","initialState":"Data","input":";B","inputUtf16":[59,66],"output":[{"Character":{"data":";B"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_145() {
+fn test_0145() {
     tokenize(
         r##"{"description":";B","initialState":"Plaintext","input":";B","inputUtf16":[59,66],"output":[{"Character":{"data":";B"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_146() {
+fn test_0146() {
     tokenize(
         r##"{"description":";B","initialState":"Rcdata","input":";B","inputUtf16":[59,66],"output":[{"Character":{"data":";B"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_147() {
+fn test_0147() {
     tokenize(
         r##"{"description":";B","initialState":"Rawtext","input":";B","inputUtf16":[59,66],"output":[{"Character":{"data":";B"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_148() {
+fn test_0148() {
     tokenize(
         r##"{"description":";B","initialState":"ScriptData","input":";B","inputUtf16":[59,66],"output":[{"Character":{"data":";B"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_149() {
+fn test_0149() {
     tokenize(
         r##"{"description":";B","initialState":"CdataSection","input":";B","inputUtf16":[59,66],"output":[{"Character":{"data":";B"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_150() {
+fn test_0150() {
     tokenize(
         r##"{"description":";Y","initialState":"Data","input":";Y","inputUtf16":[59,89],"output":[{"Character":{"data":";Y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_151() {
+fn test_0151() {
     tokenize(
         r##"{"description":";Y","initialState":"Plaintext","input":";Y","inputUtf16":[59,89],"output":[{"Character":{"data":";Y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_152() {
+fn test_0152() {
     tokenize(
         r##"{"description":";Y","initialState":"Rcdata","input":";Y","inputUtf16":[59,89],"output":[{"Character":{"data":";Y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_153() {
+fn test_0153() {
     tokenize(
         r##"{"description":";Y","initialState":"Rawtext","input":";Y","inputUtf16":[59,89],"output":[{"Character":{"data":";Y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_154() {
+fn test_0154() {
     tokenize(
         r##"{"description":";Y","initialState":"ScriptData","input":";Y","inputUtf16":[59,89],"output":[{"Character":{"data":";Y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_155() {
+fn test_0155() {
     tokenize(
         r##"{"description":";Y","initialState":"CdataSection","input":";Y","inputUtf16":[59,89],"output":[{"Character":{"data":";Y"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_156() {
+fn test_0156() {
     tokenize(
         r##"{"description":";Z","initialState":"Data","input":";Z","inputUtf16":[59,90],"output":[{"Character":{"data":";Z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_157() {
+fn test_0157() {
     tokenize(
         r##"{"description":";Z","initialState":"Plaintext","input":";Z","inputUtf16":[59,90],"output":[{"Character":{"data":";Z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_158() {
+fn test_0158() {
     tokenize(
         r##"{"description":";Z","initialState":"Rcdata","input":";Z","inputUtf16":[59,90],"output":[{"Character":{"data":";Z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_159() {
+fn test_0159() {
     tokenize(
         r##"{"description":";Z","initialState":"Rawtext","input":";Z","inputUtf16":[59,90],"output":[{"Character":{"data":";Z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_160() {
+fn test_0160() {
     tokenize(
         r##"{"description":";Z","initialState":"ScriptData","input":";Z","inputUtf16":[59,90],"output":[{"Character":{"data":";Z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_161() {
+fn test_0161() {
     tokenize(
         r##"{"description":";Z","initialState":"CdataSection","input":";Z","inputUtf16":[59,90],"output":[{"Character":{"data":";Z"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_162() {
+fn test_0162() {
     tokenize(
         r##"{"description":";`","initialState":"Data","input":";`","inputUtf16":[59,96],"output":[{"Character":{"data":";`"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_163() {
+fn test_0163() {
     tokenize(
         r##"{"description":";`","initialState":"Plaintext","input":";`","inputUtf16":[59,96],"output":[{"Character":{"data":";`"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_164() {
+fn test_0164() {
     tokenize(
         r##"{"description":";`","initialState":"Rcdata","input":";`","inputUtf16":[59,96],"output":[{"Character":{"data":";`"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_165() {
+fn test_0165() {
     tokenize(
         r##"{"description":";`","initialState":"Rawtext","input":";`","inputUtf16":[59,96],"output":[{"Character":{"data":";`"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_166() {
+fn test_0166() {
     tokenize(
         r##"{"description":";`","initialState":"ScriptData","input":";`","inputUtf16":[59,96],"output":[{"Character":{"data":";`"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_167() {
+fn test_0167() {
     tokenize(
         r##"{"description":";`","initialState":"CdataSection","input":";`","inputUtf16":[59,96],"output":[{"Character":{"data":";`"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_168() {
+fn test_0168() {
     tokenize(
         r##"{"description":";a","initialState":"Data","input":";a","inputUtf16":[59,97],"output":[{"Character":{"data":";a"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_169() {
+fn test_0169() {
     tokenize(
         r##"{"description":";a","initialState":"Plaintext","input":";a","inputUtf16":[59,97],"output":[{"Character":{"data":";a"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_170() {
+fn test_0170() {
     tokenize(
         r##"{"description":";a","initialState":"Rcdata","input":";a","inputUtf16":[59,97],"output":[{"Character":{"data":";a"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_171() {
+fn test_0171() {
     tokenize(
         r##"{"description":";a","initialState":"Rawtext","input":";a","inputUtf16":[59,97],"output":[{"Character":{"data":";a"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_172() {
+fn test_0172() {
     tokenize(
         r##"{"description":";a","initialState":"ScriptData","input":";a","inputUtf16":[59,97],"output":[{"Character":{"data":";a"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_173() {
+fn test_0173() {
     tokenize(
         r##"{"description":";a","initialState":"CdataSection","input":";a","inputUtf16":[59,97],"output":[{"Character":{"data":";a"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_174() {
+fn test_0174() {
     tokenize(
         r##"{"description":";b","initialState":"Data","input":";b","inputUtf16":[59,98],"output":[{"Character":{"data":";b"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_175() {
+fn test_0175() {
     tokenize(
         r##"{"description":";b","initialState":"Plaintext","input":";b","inputUtf16":[59,98],"output":[{"Character":{"data":";b"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_176() {
+fn test_0176() {
     tokenize(
         r##"{"description":";b","initialState":"Rcdata","input":";b","inputUtf16":[59,98],"output":[{"Character":{"data":";b"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_177() {
+fn test_0177() {
     tokenize(
         r##"{"description":";b","initialState":"Rawtext","input":";b","inputUtf16":[59,98],"output":[{"Character":{"data":";b"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_178() {
+fn test_0178() {
     tokenize(
         r##"{"description":";b","initialState":"ScriptData","input":";b","inputUtf16":[59,98],"output":[{"Character":{"data":";b"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_179() {
+fn test_0179() {
     tokenize(
         r##"{"description":";b","initialState":"CdataSection","input":";b","inputUtf16":[59,98],"output":[{"Character":{"data":";b"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_180() {
+fn test_0180() {
     tokenize(
         r##"{"description":";y","initialState":"Data","input":";y","inputUtf16":[59,121],"output":[{"Character":{"data":";y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_181() {
+fn test_0181() {
     tokenize(
         r##"{"description":";y","initialState":"Plaintext","input":";y","inputUtf16":[59,121],"output":[{"Character":{"data":";y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_182() {
+fn test_0182() {
     tokenize(
         r##"{"description":";y","initialState":"Rcdata","input":";y","inputUtf16":[59,121],"output":[{"Character":{"data":";y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_183() {
+fn test_0183() {
     tokenize(
         r##"{"description":";y","initialState":"Rawtext","input":";y","inputUtf16":[59,121],"output":[{"Character":{"data":";y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_184() {
+fn test_0184() {
     tokenize(
         r##"{"description":";y","initialState":"ScriptData","input":";y","inputUtf16":[59,121],"output":[{"Character":{"data":";y"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_185() {
+fn test_0185() {
     tokenize(
         r##"{"description":";y","initialState":"CdataSection","input":";y","inputUtf16":[59,121],"output":[{"Character":{"data":";y"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_186() {
+fn test_0186() {
     tokenize(
         r##"{"description":";z","initialState":"Data","input":";z","inputUtf16":[59,122],"output":[{"Character":{"data":";z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_187() {
+fn test_0187() {
     tokenize(
         r##"{"description":";z","initialState":"Plaintext","input":";z","inputUtf16":[59,122],"output":[{"Character":{"data":";z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_188() {
+fn test_0188() {
     tokenize(
         r##"{"description":";z","initialState":"Rcdata","input":";z","inputUtf16":[59,122],"output":[{"Character":{"data":";z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_189() {
+fn test_0189() {
     tokenize(
         r##"{"description":";z","initialState":"Rawtext","input":";z","inputUtf16":[59,122],"output":[{"Character":{"data":";z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_190() {
+fn test_0190() {
     tokenize(
         r##"{"description":";z","initialState":"ScriptData","input":";z","inputUtf16":[59,122],"output":[{"Character":{"data":";z"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_191() {
+fn test_0191() {
     tokenize(
         r##"{"description":";z","initialState":"CdataSection","input":";z","inputUtf16":[59,122],"output":[{"Character":{"data":";z"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_192() {
+fn test_0192() {
     tokenize(
         r##"{"description":";{","initialState":"Data","input":";{","inputUtf16":[59,123],"output":[{"Character":{"data":";{"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_193() {
+fn test_0193() {
     tokenize(
         r##"{"description":";{","initialState":"Plaintext","input":";{","inputUtf16":[59,123],"output":[{"Character":{"data":";{"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_194() {
+fn test_0194() {
     tokenize(
         r##"{"description":";{","initialState":"Rcdata","input":";{","inputUtf16":[59,123],"output":[{"Character":{"data":";{"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_195() {
+fn test_0195() {
     tokenize(
         r##"{"description":";{","initialState":"Rawtext","input":";{","inputUtf16":[59,123],"output":[{"Character":{"data":";{"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_196() {
+fn test_0196() {
     tokenize(
         r##"{"description":";{","initialState":"ScriptData","input":";{","inputUtf16":[59,123],"output":[{"Character":{"data":";{"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_197() {
+fn test_0197() {
     tokenize(
         r##"{"description":";{","initialState":"CdataSection","input":";{","inputUtf16":[59,123],"output":[{"Character":{"data":";{"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_198() {
+fn test_0198() {
     tokenize(
         r##"{"description":";\\uDBC0\\uDC00","initialState":"Data","input":";􀀀","inputUtf16":[59,56256,56320],"output":[{"Character":{"data":";􀀀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_199() {
+fn test_0199() {
     tokenize(
         r##"{"description":";\\uDBC0\\uDC00","initialState":"Plaintext","input":";􀀀","inputUtf16":[59,56256,56320],"output":[{"Character":{"data":";􀀀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_200() {
+fn test_0200() {
     tokenize(
         r##"{"description":";\\uDBC0\\uDC00","initialState":"Rcdata","input":";􀀀","inputUtf16":[59,56256,56320],"output":[{"Character":{"data":";􀀀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_201() {
+fn test_0201() {
     tokenize(
         r##"{"description":";\\uDBC0\\uDC00","initialState":"Rawtext","input":";􀀀","inputUtf16":[59,56256,56320],"output":[{"Character":{"data":";􀀀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_202() {
+fn test_0202() {
     tokenize(
         r##"{"description":";\\uDBC0\\uDC00","initialState":"ScriptData","input":";􀀀","inputUtf16":[59,56256,56320],"output":[{"Character":{"data":";􀀀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_203() {
+fn test_0203() {
     tokenize(
         r##"{"description":";\\uDBC0\\uDC00","initialState":"CdataSection","input":";􀀀","inputUtf16":[59,56256,56320],"output":[{"Character":{"data":";􀀀"}}],"errors":[{"code":"EofInCdata","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_204() {
+fn test_0204() {
     tokenize(
         r##"{"description":"<","initialState":"Data","input":"<","inputUtf16":[60],"output":[{"Character":{"data":"<"}}],"errors":[{"code":"EofBeforeTagName","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_205() {
+fn test_0205() {
     tokenize(
         r##"{"description":"<\\u0000","initialState":"Data","input":"<\u0000","inputUtf16":[60,0],"output":[{"Character":{"data":"<\u0000"}}],"errors":[{"code":"InvalidFirstCharacterOfTagName","location":{"line":1,"column":2}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_206() {
+fn test_0206() {
     tokenize(
         r##"{"description":"<\\u0009","initialState":"Data","input":"<\t","inputUtf16":[60,9],"output":[{"Character":{"data":"<\t"}}],"errors":[{"code":"InvalidFirstCharacterOfTagName","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_207() {
+fn test_0207() {
     tokenize(
         r##"{"description":"<\\u000A","initialState":"Data","input":"<\n","inputUtf16":[60,10],"output":[{"Character":{"data":"<\n"}}],"errors":[{"code":"InvalidFirstCharacterOfTagName","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_208() {
+fn test_0208() {
     tokenize(
         r##"{"description":"<\\u000B","initialState":"Data","input":"<\u000b","inputUtf16":[60,11],"output":[{"Character":{"data":"<\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":2}},{"code":"InvalidFirstCharacterOfTagName","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_209() {
+fn test_0209() {
     tokenize(
         r##"{"description":"<\\u000C","initialState":"Data","input":"<\f","inputUtf16":[60,12],"output":[{"Character":{"data":"<\f"}}],"errors":[{"code":"InvalidFirstCharacterOfTagName","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_210() {
+fn test_0210() {
     tokenize(
         r##"{"description":"< ","initialState":"Data","input":"< ","inputUtf16":[60,32],"output":[{"Character":{"data":"< "}}],"errors":[{"code":"InvalidFirstCharacterOfTagName","location":{"line":1,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_211() {
+fn test_0211() {
     tokenize(
         r##"{"description":"<!","initialState":"Data","input":"<!","inputUtf16":[60,33],"output":[{"Comment":{"data":""}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_212() {
+fn test_0212() {
     tokenize(
         r##"{"description":"<!\\u0000","initialState":"Data","input":"<!\u0000","inputUtf16":[60,33,0],"output":[{"Comment":{"data":"�"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_213() {
+fn test_0213() {
     tokenize(
         r##"{"description":"<!\\u0009","initialState":"Data","input":"<!\t","inputUtf16":[60,33,9],"output":[{"Comment":{"data":"\t"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_214() {
+fn test_0214() {
     tokenize(
         r##"{"description":"<!\\u000A","initialState":"Data","input":"<!\n","inputUtf16":[60,33,10],"output":[{"Comment":{"data":"\n"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_215() {
+fn test_0215() {
     tokenize(
         r##"{"description":"<!\\u000B","initialState":"Data","input":"<!\u000b","inputUtf16":[60,33,11],"output":[{"Comment":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":3}},{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_216() {
+fn test_0216() {
     tokenize(
         r##"{"description":"<!\\u000C","initialState":"Data","input":"<!\f","inputUtf16":[60,33,12],"output":[{"Comment":{"data":"\f"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_217() {
+fn test_0217() {
     tokenize(
         r##"{"description":"<! ","initialState":"Data","input":"<! ","inputUtf16":[60,33,32],"output":[{"Comment":{"data":" "}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_218() {
+fn test_0218() {
     tokenize(
         r##"{"description":"<! \\u0000","initialState":"Data","input":"<! \u0000","inputUtf16":[60,33,32,0],"output":[{"Comment":{"data":" �"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":4}}]}"##,
     );
 }
 
 #[test]
-fn test_219() {
+fn test_0219() {
     tokenize(
         r##"{"description":"<!!","initialState":"Data","input":"<!!","inputUtf16":[60,33,33],"output":[{"Comment":{"data":"!"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_220() {
+fn test_0220() {
     tokenize(
         r##"{"description":"<!\"","initialState":"Data","input":"<!\"","inputUtf16":[60,33,34],"output":[{"Comment":{"data":"\""}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_221() {
+fn test_0221() {
     tokenize(
         r##"{"description":"<!&","initialState":"Data","input":"<!&","inputUtf16":[60,33,38],"output":[{"Comment":{"data":"&"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_222() {
+fn test_0222() {
     tokenize(
         r##"{"description":"<!'","initialState":"Data","input":"<!'","inputUtf16":[60,33,39],"output":[{"Comment":{"data":"'"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_223() {
+fn test_0223() {
     tokenize(
         r##"{"description":"<!-","initialState":"Data","input":"<!-","inputUtf16":[60,33,45],"output":[{"Comment":{"data":"-"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_224() {
+fn test_0224() {
     tokenize(
         r##"{"description":"<!--","initialState":"Data","input":"<!--","inputUtf16":[60,33,45,45],"output":[{"Comment":{"data":""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":5}}]}"##,
     );
 }
 
 #[test]
-fn test_225() {
+fn test_0225() {
     tokenize(
         r##"{"description":"<!--\\u0000","initialState":"Data","input":"<!--\u0000","inputUtf16":[60,33,45,45,0],"output":[{"Comment":{"data":"�"}}],"errors":[{"code":"UnexpectedNullCharacter","location":{"line":1,"column":5}},{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_226() {
+fn test_0226() {
     tokenize(
         r##"{"description":"<!--\\u0009","initialState":"Data","input":"<!--\t","inputUtf16":[60,33,45,45,9],"output":[{"Comment":{"data":"\t"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_227() {
+fn test_0227() {
     tokenize(
         r##"{"description":"<!--\\u000A","initialState":"Data","input":"<!--\n","inputUtf16":[60,33,45,45,10],"output":[{"Comment":{"data":"\n"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_228() {
+fn test_0228() {
     tokenize(
         r##"{"description":"<!--\\u000B","initialState":"Data","input":"<!--\u000b","inputUtf16":[60,33,45,45,11],"output":[{"Comment":{"data":"\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":5}},{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_229() {
+fn test_0229() {
     tokenize(
         r##"{"description":"<!--\\u000C","initialState":"Data","input":"<!--\f","inputUtf16":[60,33,45,45,12],"output":[{"Comment":{"data":"\f"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_230() {
+fn test_0230() {
     tokenize(
         r##"{"description":"<!-- ","initialState":"Data","input":"<!-- ","inputUtf16":[60,33,45,45,32],"output":[{"Comment":{"data":" "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_231() {
+fn test_0231() {
     tokenize(
         r##"{"description":"<!-- \\u0000","initialState":"Data","input":"<!-- \u0000","inputUtf16":[60,33,45,45,32,0],"output":[{"Comment":{"data":" �"}}],"errors":[{"code":"UnexpectedNullCharacter","location":{"line":1,"column":6}},{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_232() {
+fn test_0232() {
     tokenize(
         r##"{"description":"<!-- \\u0009","initialState":"Data","input":"<!-- \t","inputUtf16":[60,33,45,45,32,9],"output":[{"Comment":{"data":" \t"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_233() {
+fn test_0233() {
     tokenize(
         r##"{"description":"<!-- \\u000A","initialState":"Data","input":"<!-- \n","inputUtf16":[60,33,45,45,32,10],"output":[{"Comment":{"data":" \n"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_234() {
+fn test_0234() {
     tokenize(
         r##"{"description":"<!-- \\u000B","initialState":"Data","input":"<!-- \u000b","inputUtf16":[60,33,45,45,32,11],"output":[{"Comment":{"data":" \u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":6}},{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_235() {
+fn test_0235() {
     tokenize(
         r##"{"description":"<!-- \\u000C","initialState":"Data","input":"<!-- \f","inputUtf16":[60,33,45,45,32,12],"output":[{"Comment":{"data":" \f"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_236() {
+fn test_0236() {
     tokenize(
         r##"{"description":"<!--  ","initialState":"Data","input":"<!--  ","inputUtf16":[60,33,45,45,32,32],"output":[{"Comment":{"data":"  "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_237() {
+fn test_0237() {
     tokenize(
         r##"{"description":"<!-- !","initialState":"Data","input":"<!-- !","inputUtf16":[60,33,45,45,32,33],"output":[{"Comment":{"data":" !"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_238() {
+fn test_0238() {
     tokenize(
         r##"{"description":"<!-- \"","initialState":"Data","input":"<!-- \"","inputUtf16":[60,33,45,45,32,34],"output":[{"Comment":{"data":" \""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_239() {
+fn test_0239() {
     tokenize(
         r##"{"description":"<!-- &","initialState":"Data","input":"<!-- &","inputUtf16":[60,33,45,45,32,38],"output":[{"Comment":{"data":" &"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_240() {
+fn test_0240() {
     tokenize(
         r##"{"description":"<!-- '","initialState":"Data","input":"<!-- '","inputUtf16":[60,33,45,45,32,39],"output":[{"Comment":{"data":" '"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_241() {
+fn test_0241() {
     tokenize(
         r##"{"description":"<!-- ,","initialState":"Data","input":"<!-- ,","inputUtf16":[60,33,45,45,32,44],"output":[{"Comment":{"data":" ,"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_242() {
+fn test_0242() {
     tokenize(
         r##"{"description":"<!-- -","initialState":"Data","input":"<!-- -","inputUtf16":[60,33,45,45,32,45],"output":[{"Comment":{"data":" "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_243() {
+fn test_0243() {
     tokenize(
         r##"{"description":"<!-- -\\u0000","initialState":"Data","input":"<!-- -\u0000","inputUtf16":[60,33,45,45,32,45,0],"output":[{"Comment":{"data":" -�"}}],"errors":[{"code":"UnexpectedNullCharacter","location":{"line":1,"column":7}},{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_244() {
+fn test_0244() {
     tokenize(
         r##"{"description":"<!-- -\\u0009","initialState":"Data","input":"<!-- -\t","inputUtf16":[60,33,45,45,32,45,9],"output":[{"Comment":{"data":" -\t"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_245() {
+fn test_0245() {
     tokenize(
         r##"{"description":"<!-- -\\u000A","initialState":"Data","input":"<!-- -\n","inputUtf16":[60,33,45,45,32,45,10],"output":[{"Comment":{"data":" -\n"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_246() {
+fn test_0246() {
     tokenize(
         r##"{"description":"<!-- -\\u000B","initialState":"Data","input":"<!-- -\u000b","inputUtf16":[60,33,45,45,32,45,11],"output":[{"Comment":{"data":" -\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":7}},{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_247() {
+fn test_0247() {
     tokenize(
         r##"{"description":"<!-- -\\u000C","initialState":"Data","input":"<!-- -\f","inputUtf16":[60,33,45,45,32,45,12],"output":[{"Comment":{"data":" -\f"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_248() {
+fn test_0248() {
     tokenize(
         r##"{"description":"<!-- - ","initialState":"Data","input":"<!-- - ","inputUtf16":[60,33,45,45,32,45,32],"output":[{"Comment":{"data":" - "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_249() {
+fn test_0249() {
     tokenize(
         r##"{"description":"<!-- -!","initialState":"Data","input":"<!-- -!","inputUtf16":[60,33,45,45,32,45,33],"output":[{"Comment":{"data":" -!"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_250() {
+fn test_0250() {
     tokenize(
         r##"{"description":"<!-- -\"","initialState":"Data","input":"<!-- -\"","inputUtf16":[60,33,45,45,32,45,34],"output":[{"Comment":{"data":" -\""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_251() {
+fn test_0251() {
     tokenize(
         r##"{"description":"<!-- -&","initialState":"Data","input":"<!-- -&","inputUtf16":[60,33,45,45,32,45,38],"output":[{"Comment":{"data":" -&"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_252() {
+fn test_0252() {
     tokenize(
         r##"{"description":"<!-- -'","initialState":"Data","input":"<!-- -'","inputUtf16":[60,33,45,45,32,45,39],"output":[{"Comment":{"data":" -'"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_253() {
+fn test_0253() {
     tokenize(
         r##"{"description":"<!-- -,","initialState":"Data","input":"<!-- -,","inputUtf16":[60,33,45,45,32,45,44],"output":[{"Comment":{"data":" -,"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_254() {
+fn test_0254() {
     tokenize(
         r##"{"description":"<!-- --","initialState":"Data","input":"<!-- --","inputUtf16":[60,33,45,45,32,45,45],"output":[{"Comment":{"data":" "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_255() {
+fn test_0255() {
     tokenize(
         r##"{"description":"<!-- -.","initialState":"Data","input":"<!-- -.","inputUtf16":[60,33,45,45,32,45,46],"output":[{"Comment":{"data":" -."}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_256() {
+fn test_0256() {
     tokenize(
         r##"{"description":"<!-- -/","initialState":"Data","input":"<!-- -/","inputUtf16":[60,33,45,45,32,45,47],"output":[{"Comment":{"data":" -/"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_257() {
+fn test_0257() {
     tokenize(
         r##"{"description":"<!-- -0","initialState":"Data","input":"<!-- -0","inputUtf16":[60,33,45,45,32,45,48],"output":[{"Comment":{"data":" -0"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_258() {
+fn test_0258() {
     tokenize(
         r##"{"description":"<!-- -1","initialState":"Data","input":"<!-- -1","inputUtf16":[60,33,45,45,32,45,49],"output":[{"Comment":{"data":" -1"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_259() {
+fn test_0259() {
     tokenize(
         r##"{"description":"<!-- -9","initialState":"Data","input":"<!-- -9","inputUtf16":[60,33,45,45,32,45,57],"output":[{"Comment":{"data":" -9"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_260() {
+fn test_0260() {
     tokenize(
         r##"{"description":"<!-- -<","initialState":"Data","input":"<!-- -<","inputUtf16":[60,33,45,45,32,45,60],"output":[{"Comment":{"data":" -<"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_261() {
+fn test_0261() {
     tokenize(
         r##"{"description":"<!-- -=","initialState":"Data","input":"<!-- -=","inputUtf16":[60,33,45,45,32,45,61],"output":[{"Comment":{"data":" -="}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_262() {
+fn test_0262() {
     tokenize(
         r##"{"description":"<!-- ->","initialState":"Data","input":"<!-- ->","inputUtf16":[60,33,45,45,32,45,62],"output":[{"Comment":{"data":" ->"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_263() {
+fn test_0263() {
     tokenize(
         r##"{"description":"<!-- -?","initialState":"Data","input":"<!-- -?","inputUtf16":[60,33,45,45,32,45,63],"output":[{"Comment":{"data":" -?"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_264() {
+fn test_0264() {
     tokenize(
         r##"{"description":"<!-- -@","initialState":"Data","input":"<!-- -@","inputUtf16":[60,33,45,45,32,45,64],"output":[{"Comment":{"data":" -@"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_265() {
+fn test_0265() {
     tokenize(
         r##"{"description":"<!-- -A","initialState":"Data","input":"<!-- -A","inputUtf16":[60,33,45,45,32,45,65],"output":[{"Comment":{"data":" -A"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_266() {
+fn test_0266() {
     tokenize(
         r##"{"description":"<!-- -B","initialState":"Data","input":"<!-- -B","inputUtf16":[60,33,45,45,32,45,66],"output":[{"Comment":{"data":" -B"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_267() {
+fn test_0267() {
     tokenize(
         r##"{"description":"<!-- -Y","initialState":"Data","input":"<!-- -Y","inputUtf16":[60,33,45,45,32,45,89],"output":[{"Comment":{"data":" -Y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_268() {
+fn test_0268() {
     tokenize(
         r##"{"description":"<!-- -Z","initialState":"Data","input":"<!-- -Z","inputUtf16":[60,33,45,45,32,45,90],"output":[{"Comment":{"data":" -Z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_269() {
+fn test_0269() {
     tokenize(
         r##"{"description":"<!-- -`","initialState":"Data","input":"<!-- -`","inputUtf16":[60,33,45,45,32,45,96],"output":[{"Comment":{"data":" -`"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_270() {
+fn test_0270() {
     tokenize(
         r##"{"description":"<!-- -a","initialState":"Data","input":"<!-- -a","inputUtf16":[60,33,45,45,32,45,97],"output":[{"Comment":{"data":" -a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_271() {
+fn test_0271() {
     tokenize(
         r##"{"description":"<!-- -b","initialState":"Data","input":"<!-- -b","inputUtf16":[60,33,45,45,32,45,98],"output":[{"Comment":{"data":" -b"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_272() {
+fn test_0272() {
     tokenize(
         r##"{"description":"<!-- -y","initialState":"Data","input":"<!-- -y","inputUtf16":[60,33,45,45,32,45,121],"output":[{"Comment":{"data":" -y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_273() {
+fn test_0273() {
     tokenize(
         r##"{"description":"<!-- -z","initialState":"Data","input":"<!-- -z","inputUtf16":[60,33,45,45,32,45,122],"output":[{"Comment":{"data":" -z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_274() {
+fn test_0274() {
     tokenize(
         r##"{"description":"<!-- -{","initialState":"Data","input":"<!-- -{","inputUtf16":[60,33,45,45,32,45,123],"output":[{"Comment":{"data":" -{"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_275() {
+fn test_0275() {
     tokenize(
         r##"{"description":"<!-- -\\uDBC0\\uDC00","initialState":"Data","input":"<!-- -􀀀","inputUtf16":[60,33,45,45,32,45,56256,56320],"output":[{"Comment":{"data":" -􀀀"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_276() {
+fn test_0276() {
     tokenize(
         r##"{"description":"<!-- .","initialState":"Data","input":"<!-- .","inputUtf16":[60,33,45,45,32,46],"output":[{"Comment":{"data":" ."}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_277() {
+fn test_0277() {
     tokenize(
         r##"{"description":"<!-- /","initialState":"Data","input":"<!-- /","inputUtf16":[60,33,45,45,32,47],"output":[{"Comment":{"data":" /"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_278() {
+fn test_0278() {
     tokenize(
         r##"{"description":"<!-- 0","initialState":"Data","input":"<!-- 0","inputUtf16":[60,33,45,45,32,48],"output":[{"Comment":{"data":" 0"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_279() {
+fn test_0279() {
     tokenize(
         r##"{"description":"<!-- 1","initialState":"Data","input":"<!-- 1","inputUtf16":[60,33,45,45,32,49],"output":[{"Comment":{"data":" 1"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_280() {
+fn test_0280() {
     tokenize(
         r##"{"description":"<!-- 9","initialState":"Data","input":"<!-- 9","inputUtf16":[60,33,45,45,32,57],"output":[{"Comment":{"data":" 9"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_281() {
+fn test_0281() {
     tokenize(
         r##"{"description":"<!-- <","initialState":"Data","input":"<!-- <","inputUtf16":[60,33,45,45,32,60],"output":[{"Comment":{"data":" <"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_282() {
+fn test_0282() {
     tokenize(
         r##"{"description":"<!-- =","initialState":"Data","input":"<!-- =","inputUtf16":[60,33,45,45,32,61],"output":[{"Comment":{"data":" ="}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_283() {
+fn test_0283() {
     tokenize(
         r##"{"description":"<!-- >","initialState":"Data","input":"<!-- >","inputUtf16":[60,33,45,45,32,62],"output":[{"Comment":{"data":" >"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_284() {
+fn test_0284() {
     tokenize(
         r##"{"description":"<!-- ?","initialState":"Data","input":"<!-- ?","inputUtf16":[60,33,45,45,32,63],"output":[{"Comment":{"data":" ?"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_285() {
+fn test_0285() {
     tokenize(
         r##"{"description":"<!-- @","initialState":"Data","input":"<!-- @","inputUtf16":[60,33,45,45,32,64],"output":[{"Comment":{"data":" @"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_286() {
+fn test_0286() {
     tokenize(
         r##"{"description":"<!-- A","initialState":"Data","input":"<!-- A","inputUtf16":[60,33,45,45,32,65],"output":[{"Comment":{"data":" A"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_287() {
+fn test_0287() {
     tokenize(
         r##"{"description":"<!-- B","initialState":"Data","input":"<!-- B","inputUtf16":[60,33,45,45,32,66],"output":[{"Comment":{"data":" B"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_288() {
+fn test_0288() {
     tokenize(
         r##"{"description":"<!-- Y","initialState":"Data","input":"<!-- Y","inputUtf16":[60,33,45,45,32,89],"output":[{"Comment":{"data":" Y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_289() {
+fn test_0289() {
     tokenize(
         r##"{"description":"<!-- Z","initialState":"Data","input":"<!-- Z","inputUtf16":[60,33,45,45,32,90],"output":[{"Comment":{"data":" Z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_290() {
+fn test_0290() {
     tokenize(
         r##"{"description":"<!-- `","initialState":"Data","input":"<!-- `","inputUtf16":[60,33,45,45,32,96],"output":[{"Comment":{"data":" `"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_291() {
+fn test_0291() {
     tokenize(
         r##"{"description":"<!-- a","initialState":"Data","input":"<!-- a","inputUtf16":[60,33,45,45,32,97],"output":[{"Comment":{"data":" a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_292() {
+fn test_0292() {
     tokenize(
         r##"{"description":"<!-- b","initialState":"Data","input":"<!-- b","inputUtf16":[60,33,45,45,32,98],"output":[{"Comment":{"data":" b"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_293() {
+fn test_0293() {
     tokenize(
         r##"{"description":"<!-- y","initialState":"Data","input":"<!-- y","inputUtf16":[60,33,45,45,32,121],"output":[{"Comment":{"data":" y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_294() {
+fn test_0294() {
     tokenize(
         r##"{"description":"<!-- z","initialState":"Data","input":"<!-- z","inputUtf16":[60,33,45,45,32,122],"output":[{"Comment":{"data":" z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_295() {
+fn test_0295() {
     tokenize(
         r##"{"description":"<!-- {","initialState":"Data","input":"<!-- {","inputUtf16":[60,33,45,45,32,123],"output":[{"Comment":{"data":" {"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_296() {
+fn test_0296() {
     tokenize(
         r##"{"description":"<!-- \\uDBC0\\uDC00","initialState":"Data","input":"<!-- 􀀀","inputUtf16":[60,33,45,45,32,56256,56320],"output":[{"Comment":{"data":" 􀀀"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_297() {
+fn test_0297() {
     tokenize(
         r##"{"description":"<!--!","initialState":"Data","input":"<!--!","inputUtf16":[60,33,45,45,33],"output":[{"Comment":{"data":"!"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_298() {
+fn test_0298() {
     tokenize(
         r##"{"description":"<!--\"","initialState":"Data","input":"<!--\"","inputUtf16":[60,33,45,45,34],"output":[{"Comment":{"data":"\""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_299() {
+fn test_0299() {
     tokenize(
         r##"{"description":"<!--&","initialState":"Data","input":"<!--&","inputUtf16":[60,33,45,45,38],"output":[{"Comment":{"data":"&"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_300() {
+fn test_0300() {
     tokenize(
         r##"{"description":"<!--'","initialState":"Data","input":"<!--'","inputUtf16":[60,33,45,45,39],"output":[{"Comment":{"data":"'"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_301() {
+fn test_0301() {
     tokenize(
         r##"{"description":"<!--,","initialState":"Data","input":"<!--,","inputUtf16":[60,33,45,45,44],"output":[{"Comment":{"data":","}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_302() {
+fn test_0302() {
     tokenize(
         r##"{"description":"<!---","initialState":"Data","input":"<!---","inputUtf16":[60,33,45,45,45],"output":[{"Comment":{"data":""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_303() {
+fn test_0303() {
     tokenize(
         r##"{"description":"<!---\\u0000","initialState":"Data","input":"<!---\u0000","inputUtf16":[60,33,45,45,45,0],"output":[{"Comment":{"data":"-�"}}],"errors":[{"code":"UnexpectedNullCharacter","location":{"line":1,"column":6}},{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_304() {
+fn test_0304() {
     tokenize(
         r##"{"description":"<!---\\u0009","initialState":"Data","input":"<!---\t","inputUtf16":[60,33,45,45,45,9],"output":[{"Comment":{"data":"-\t"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_305() {
+fn test_0305() {
     tokenize(
         r##"{"description":"<!---\\u000A","initialState":"Data","input":"<!---\n","inputUtf16":[60,33,45,45,45,10],"output":[{"Comment":{"data":"-\n"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_306() {
+fn test_0306() {
     tokenize(
         r##"{"description":"<!---\\u000B","initialState":"Data","input":"<!---\u000b","inputUtf16":[60,33,45,45,45,11],"output":[{"Comment":{"data":"-\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":6}},{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_307() {
+fn test_0307() {
     tokenize(
         r##"{"description":"<!---\\u000C","initialState":"Data","input":"<!---\f","inputUtf16":[60,33,45,45,45,12],"output":[{"Comment":{"data":"-\f"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_308() {
+fn test_0308() {
     tokenize(
         r##"{"description":"<!--- ","initialState":"Data","input":"<!--- ","inputUtf16":[60,33,45,45,45,32],"output":[{"Comment":{"data":"- "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_309() {
+fn test_0309() {
     tokenize(
         r##"{"description":"<!---!","initialState":"Data","input":"<!---!","inputUtf16":[60,33,45,45,45,33],"output":[{"Comment":{"data":"-!"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_310() {
+fn test_0310() {
     tokenize(
         r##"{"description":"<!---\"","initialState":"Data","input":"<!---\"","inputUtf16":[60,33,45,45,45,34],"output":[{"Comment":{"data":"-\""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_311() {
+fn test_0311() {
     tokenize(
         r##"{"description":"<!---&","initialState":"Data","input":"<!---&","inputUtf16":[60,33,45,45,45,38],"output":[{"Comment":{"data":"-&"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_312() {
+fn test_0312() {
     tokenize(
         r##"{"description":"<!---'","initialState":"Data","input":"<!---'","inputUtf16":[60,33,45,45,45,39],"output":[{"Comment":{"data":"-'"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_313() {
+fn test_0313() {
     tokenize(
         r##"{"description":"<!---,","initialState":"Data","input":"<!---,","inputUtf16":[60,33,45,45,45,44],"output":[{"Comment":{"data":"-,"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_314() {
+fn test_0314() {
     tokenize(
         r##"{"description":"<!----","initialState":"Data","input":"<!----","inputUtf16":[60,33,45,45,45,45],"output":[{"Comment":{"data":""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_315() {
+fn test_0315() {
     tokenize(
         r##"{"description":"<!----\\u0000","initialState":"Data","input":"<!----\u0000","inputUtf16":[60,33,45,45,45,45,0],"output":[{"Comment":{"data":"--�"}}],"errors":[{"code":"UnexpectedNullCharacter","location":{"line":1,"column":7}},{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_316() {
+fn test_0316() {
     tokenize(
         r##"{"description":"<!----\\u0009","initialState":"Data","input":"<!----\t","inputUtf16":[60,33,45,45,45,45,9],"output":[{"Comment":{"data":"--\t"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_317() {
+fn test_0317() {
     tokenize(
         r##"{"description":"<!----\\u000A","initialState":"Data","input":"<!----\n","inputUtf16":[60,33,45,45,45,45,10],"output":[{"Comment":{"data":"--\n"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_318() {
+fn test_0318() {
     tokenize(
         r##"{"description":"<!----\\u000B","initialState":"Data","input":"<!----\u000b","inputUtf16":[60,33,45,45,45,45,11],"output":[{"Comment":{"data":"--\u000b"}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":7}},{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_319() {
+fn test_0319() {
     tokenize(
         r##"{"description":"<!----\\u000C","initialState":"Data","input":"<!----\f","inputUtf16":[60,33,45,45,45,45,12],"output":[{"Comment":{"data":"--\f"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_320() {
+fn test_0320() {
     tokenize(
         r##"{"description":"<!---- ","initialState":"Data","input":"<!---- ","inputUtf16":[60,33,45,45,45,45,32],"output":[{"Comment":{"data":"-- "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_321() {
+fn test_0321() {
     tokenize(
         r##"{"description":"<!---- -","initialState":"Data","input":"<!---- -","inputUtf16":[60,33,45,45,45,45,32,45],"output":[{"Comment":{"data":"-- "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":9}}]}"##,
     );
 }
 
 #[test]
-fn test_322() {
+fn test_0322() {
     tokenize(
         r##"{"description":"<!---- --","initialState":"Data","input":"<!---- --","inputUtf16":[60,33,45,45,45,45,32,45,45],"output":[{"Comment":{"data":"-- "}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":10}}]}"##,
     );
 }
 
 #[test]
-fn test_323() {
+fn test_0323() {
     tokenize(
         r##"{"description":"<!---- -->","initialState":"Data","input":"<!---- -->","inputUtf16":[60,33,45,45,45,45,32,45,45,62],"output":[{"Comment":{"data":"-- "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_324() {
+fn test_0324() {
     tokenize(
         r##"{"description":"<!----  -->","initialState":"Data","input":"<!----  -->","inputUtf16":[60,33,45,45,45,45,32,32,45,45,62],"output":[{"Comment":{"data":"--  "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_325() {
+fn test_0325() {
     tokenize(
         r##"{"description":"<!---- a-->","initialState":"Data","input":"<!---- a-->","inputUtf16":[60,33,45,45,45,45,32,97,45,45,62],"output":[{"Comment":{"data":"-- a"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_326() {
+fn test_0326() {
     tokenize(
         r##"{"description":"<!----!","initialState":"Data","input":"<!----!","inputUtf16":[60,33,45,45,45,45,33],"output":[{"Comment":{"data":""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_327() {
+fn test_0327() {
     tokenize(
         r##"{"description":"<!----!>","initialState":"Data","input":"<!----!>","inputUtf16":[60,33,45,45,45,45,33,62],"output":[{"Comment":{"data":""}}],"errors":[{"code":"IncorrectlyClosedComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_328() {
+fn test_0328() {
     tokenize(
         r##"{"description":"<!----! >","initialState":"Data","input":"<!----! >","inputUtf16":[60,33,45,45,45,45,33,32,62],"output":[{"Comment":{"data":"--! >"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":10}}]}"##,
     );
 }
 
 #[test]
-fn test_329() {
+fn test_0329() {
     tokenize(
         r##"{"description":"<!----!LF>","initialState":"Data","input":"<!----!\n>","inputUtf16":[60,33,45,45,45,45,33,10,62],"output":[{"Comment":{"data":"--!\n>"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_330() {
+fn test_0330() {
     tokenize(
         r##"{"description":"<!----!CR>","initialState":"Data","input":"<!----!\r>","inputUtf16":[60,33,45,45,45,45,33,13,62],"output":[{"Comment":{"data":"--!\n>"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_331() {
+fn test_0331() {
     tokenize(
         r##"{"description":"<!----!CRLF>","initialState":"Data","input":"<!----!\r\n>","inputUtf16":[60,33,45,45,45,45,33,13,10,62],"output":[{"Comment":{"data":"--!\n>"}}],"errors":[{"code":"EofInComment","location":{"line":2,"column":2}}]}"##,
     );
 }
 
 #[test]
-fn test_332() {
+fn test_0332() {
     tokenize(
         r##"{"description":"<!----!a","initialState":"Data","input":"<!----!a","inputUtf16":[60,33,45,45,45,45,33,97],"output":[{"Comment":{"data":"--!a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":9}}]}"##,
     );
 }
 
 #[test]
-fn test_333() {
+fn test_0333() {
     tokenize(
         r##"{"description":"<!----!a-","initialState":"Data","input":"<!----!a-","inputUtf16":[60,33,45,45,45,45,33,97,45],"output":[{"Comment":{"data":"--!a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":10}}]}"##,
     );
 }
 
 #[test]
-fn test_334() {
+fn test_0334() {
     tokenize(
         r##"{"description":"<!----!a--","initialState":"Data","input":"<!----!a--","inputUtf16":[60,33,45,45,45,45,33,97,45,45],"output":[{"Comment":{"data":"--!a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_335() {
+fn test_0335() {
     tokenize(
         r##"{"description":"<!----!a-->","initialState":"Data","input":"<!----!a-->","inputUtf16":[60,33,45,45,45,45,33,97,45,45,62],"output":[{"Comment":{"data":"--!a"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_336() {
+fn test_0336() {
     tokenize(
         r##"{"description":"<!----!-","initialState":"Data","input":"<!----!-","inputUtf16":[60,33,45,45,45,45,33,45],"output":[{"Comment":{"data":"--!"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":9}}]}"##,
     );
 }
 
 #[test]
-fn test_337() {
+fn test_0337() {
     tokenize(
         r##"{"description":"<!----!--","initialState":"Data","input":"<!----!--","inputUtf16":[60,33,45,45,45,45,33,45,45],"output":[{"Comment":{"data":"--!"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":10}}]}"##,
     );
 }
 
 #[test]
-fn test_338() {
+fn test_0338() {
     tokenize(
         r##"{"description":"<!----!-->","initialState":"Data","input":"<!----!-->","inputUtf16":[60,33,45,45,45,45,33,45,45,62],"output":[{"Comment":{"data":"--!"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_339() {
+fn test_0339() {
     tokenize(
         r##"{"description":"<!----\"","initialState":"Data","input":"<!----\"","inputUtf16":[60,33,45,45,45,45,34],"output":[{"Comment":{"data":"--\""}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_340() {
+fn test_0340() {
     tokenize(
         r##"{"description":"<!----&","initialState":"Data","input":"<!----&","inputUtf16":[60,33,45,45,45,45,38],"output":[{"Comment":{"data":"--&"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_341() {
+fn test_0341() {
     tokenize(
         r##"{"description":"<!----'","initialState":"Data","input":"<!----'","inputUtf16":[60,33,45,45,45,45,39],"output":[{"Comment":{"data":"--'"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_342() {
+fn test_0342() {
     tokenize(
         r##"{"description":"<!----,","initialState":"Data","input":"<!----,","inputUtf16":[60,33,45,45,45,45,44],"output":[{"Comment":{"data":"--,"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_343() {
+fn test_0343() {
     tokenize(
         r##"{"description":"<!-----","initialState":"Data","input":"<!-----","inputUtf16":[60,33,45,45,45,45,45],"output":[{"Comment":{"data":"-"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_344() {
+fn test_0344() {
     tokenize(
         r##"{"description":"<!----.","initialState":"Data","input":"<!----.","inputUtf16":[60,33,45,45,45,45,46],"output":[{"Comment":{"data":"--."}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_345() {
+fn test_0345() {
     tokenize(
         r##"{"description":"<!----/","initialState":"Data","input":"<!----/","inputUtf16":[60,33,45,45,45,45,47],"output":[{"Comment":{"data":"--/"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_346() {
+fn test_0346() {
     tokenize(
         r##"{"description":"<!----0","initialState":"Data","input":"<!----0","inputUtf16":[60,33,45,45,45,45,48],"output":[{"Comment":{"data":"--0"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_347() {
+fn test_0347() {
     tokenize(
         r##"{"description":"<!----1","initialState":"Data","input":"<!----1","inputUtf16":[60,33,45,45,45,45,49],"output":[{"Comment":{"data":"--1"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_348() {
+fn test_0348() {
     tokenize(
         r##"{"description":"<!----9","initialState":"Data","input":"<!----9","inputUtf16":[60,33,45,45,45,45,57],"output":[{"Comment":{"data":"--9"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_349() {
+fn test_0349() {
     tokenize(
         r##"{"description":"<!----<","initialState":"Data","input":"<!----<","inputUtf16":[60,33,45,45,45,45,60],"output":[{"Comment":{"data":"--<"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_350() {
+fn test_0350() {
     tokenize(
         r##"{"description":"<!----=","initialState":"Data","input":"<!----=","inputUtf16":[60,33,45,45,45,45,61],"output":[{"Comment":{"data":"--="}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_351() {
+fn test_0351() {
     tokenize(
         r##"{"description":"<!---->","initialState":"Data","input":"<!---->","inputUtf16":[60,33,45,45,45,45,62],"output":[{"Comment":{"data":""}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_352() {
+fn test_0352() {
     tokenize(
         r##"{"description":"<!----?","initialState":"Data","input":"<!----?","inputUtf16":[60,33,45,45,45,45,63],"output":[{"Comment":{"data":"--?"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_353() {
+fn test_0353() {
     tokenize(
         r##"{"description":"<!----@","initialState":"Data","input":"<!----@","inputUtf16":[60,33,45,45,45,45,64],"output":[{"Comment":{"data":"--@"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_354() {
+fn test_0354() {
     tokenize(
         r##"{"description":"<!----A","initialState":"Data","input":"<!----A","inputUtf16":[60,33,45,45,45,45,65],"output":[{"Comment":{"data":"--A"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_355() {
+fn test_0355() {
     tokenize(
         r##"{"description":"<!----B","initialState":"Data","input":"<!----B","inputUtf16":[60,33,45,45,45,45,66],"output":[{"Comment":{"data":"--B"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_356() {
+fn test_0356() {
     tokenize(
         r##"{"description":"<!----Y","initialState":"Data","input":"<!----Y","inputUtf16":[60,33,45,45,45,45,89],"output":[{"Comment":{"data":"--Y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_357() {
+fn test_0357() {
     tokenize(
         r##"{"description":"<!----Z","initialState":"Data","input":"<!----Z","inputUtf16":[60,33,45,45,45,45,90],"output":[{"Comment":{"data":"--Z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_358() {
+fn test_0358() {
     tokenize(
         r##"{"description":"<!----`","initialState":"Data","input":"<!----`","inputUtf16":[60,33,45,45,45,45,96],"output":[{"Comment":{"data":"--`"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_359() {
+fn test_0359() {
     tokenize(
         r##"{"description":"<!----a","initialState":"Data","input":"<!----a","inputUtf16":[60,33,45,45,45,45,97],"output":[{"Comment":{"data":"--a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_360() {
+fn test_0360() {
     tokenize(
         r##"{"description":"<!----b","initialState":"Data","input":"<!----b","inputUtf16":[60,33,45,45,45,45,98],"output":[{"Comment":{"data":"--b"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_361() {
+fn test_0361() {
     tokenize(
         r##"{"description":"<!----y","initialState":"Data","input":"<!----y","inputUtf16":[60,33,45,45,45,45,121],"output":[{"Comment":{"data":"--y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_362() {
+fn test_0362() {
     tokenize(
         r##"{"description":"<!----z","initialState":"Data","input":"<!----z","inputUtf16":[60,33,45,45,45,45,122],"output":[{"Comment":{"data":"--z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_363() {
+fn test_0363() {
     tokenize(
         r##"{"description":"<!----{","initialState":"Data","input":"<!----{","inputUtf16":[60,33,45,45,45,45,123],"output":[{"Comment":{"data":"--{"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_364() {
+fn test_0364() {
     tokenize(
         r##"{"description":"<!----\\uDBC0\\uDC00","initialState":"Data","input":"<!----􀀀","inputUtf16":[60,33,45,45,45,45,56256,56320],"output":[{"Comment":{"data":"--􀀀"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_365() {
+fn test_0365() {
     tokenize(
         r##"{"description":"<!---.","initialState":"Data","input":"<!---.","inputUtf16":[60,33,45,45,45,46],"output":[{"Comment":{"data":"-."}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_366() {
+fn test_0366() {
     tokenize(
         r##"{"description":"<!---/","initialState":"Data","input":"<!---/","inputUtf16":[60,33,45,45,45,47],"output":[{"Comment":{"data":"-/"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_367() {
+fn test_0367() {
     tokenize(
         r##"{"description":"<!---0","initialState":"Data","input":"<!---0","inputUtf16":[60,33,45,45,45,48],"output":[{"Comment":{"data":"-0"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_368() {
+fn test_0368() {
     tokenize(
         r##"{"description":"<!---1","initialState":"Data","input":"<!---1","inputUtf16":[60,33,45,45,45,49],"output":[{"Comment":{"data":"-1"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_369() {
+fn test_0369() {
     tokenize(
         r##"{"description":"<!---9","initialState":"Data","input":"<!---9","inputUtf16":[60,33,45,45,45,57],"output":[{"Comment":{"data":"-9"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_370() {
+fn test_0370() {
     tokenize(
         r##"{"description":"<!---<","initialState":"Data","input":"<!---<","inputUtf16":[60,33,45,45,45,60],"output":[{"Comment":{"data":"-<"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_371() {
+fn test_0371() {
     tokenize(
         r##"{"description":"<!---=","initialState":"Data","input":"<!---=","inputUtf16":[60,33,45,45,45,61],"output":[{"Comment":{"data":"-="}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_372() {
+fn test_0372() {
     tokenize(
         r##"{"description":"<!---?","initialState":"Data","input":"<!---?","inputUtf16":[60,33,45,45,45,63],"output":[{"Comment":{"data":"-?"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_373() {
+fn test_0373() {
     tokenize(
         r##"{"description":"<!---@","initialState":"Data","input":"<!---@","inputUtf16":[60,33,45,45,45,64],"output":[{"Comment":{"data":"-@"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_374() {
+fn test_0374() {
     tokenize(
         r##"{"description":"<!---A","initialState":"Data","input":"<!---A","inputUtf16":[60,33,45,45,45,65],"output":[{"Comment":{"data":"-A"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_375() {
+fn test_0375() {
     tokenize(
         r##"{"description":"<!---B","initialState":"Data","input":"<!---B","inputUtf16":[60,33,45,45,45,66],"output":[{"Comment":{"data":"-B"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_376() {
+fn test_0376() {
     tokenize(
         r##"{"description":"<!---Y","initialState":"Data","input":"<!---Y","inputUtf16":[60,33,45,45,45,89],"output":[{"Comment":{"data":"-Y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_377() {
+fn test_0377() {
     tokenize(
         r##"{"description":"<!---Z","initialState":"Data","input":"<!---Z","inputUtf16":[60,33,45,45,45,90],"output":[{"Comment":{"data":"-Z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_378() {
+fn test_0378() {
     tokenize(
         r##"{"description":"<!---`","initialState":"Data","input":"<!---`","inputUtf16":[60,33,45,45,45,96],"output":[{"Comment":{"data":"-`"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_379() {
+fn test_0379() {
     tokenize(
         r##"{"description":"<!---a","initialState":"Data","input":"<!---a","inputUtf16":[60,33,45,45,45,97],"output":[{"Comment":{"data":"-a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_380() {
+fn test_0380() {
     tokenize(
         r##"{"description":"<!---b","initialState":"Data","input":"<!---b","inputUtf16":[60,33,45,45,45,98],"output":[{"Comment":{"data":"-b"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_381() {
+fn test_0381() {
     tokenize(
         r##"{"description":"<!---y","initialState":"Data","input":"<!---y","inputUtf16":[60,33,45,45,45,121],"output":[{"Comment":{"data":"-y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_382() {
+fn test_0382() {
     tokenize(
         r##"{"description":"<!---z","initialState":"Data","input":"<!---z","inputUtf16":[60,33,45,45,45,122],"output":[{"Comment":{"data":"-z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_383() {
+fn test_0383() {
     tokenize(
         r##"{"description":"<!---{","initialState":"Data","input":"<!---{","inputUtf16":[60,33,45,45,45,123],"output":[{"Comment":{"data":"-{"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_384() {
+fn test_0384() {
     tokenize(
         r##"{"description":"<!---\\uDBC0\\uDC00","initialState":"Data","input":"<!---􀀀","inputUtf16":[60,33,45,45,45,56256,56320],"output":[{"Comment":{"data":"-􀀀"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_385() {
+fn test_0385() {
     tokenize(
         r##"{"description":"<!--.","initialState":"Data","input":"<!--.","inputUtf16":[60,33,45,45,46],"output":[{"Comment":{"data":"."}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_386() {
+fn test_0386() {
     tokenize(
         r##"{"description":"<!--/","initialState":"Data","input":"<!--/","inputUtf16":[60,33,45,45,47],"output":[{"Comment":{"data":"/"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_387() {
+fn test_0387() {
     tokenize(
         r##"{"description":"<!--0","initialState":"Data","input":"<!--0","inputUtf16":[60,33,45,45,48],"output":[{"Comment":{"data":"0"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_388() {
+fn test_0388() {
     tokenize(
         r##"{"description":"<!--1","initialState":"Data","input":"<!--1","inputUtf16":[60,33,45,45,49],"output":[{"Comment":{"data":"1"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_389() {
+fn test_0389() {
     tokenize(
         r##"{"description":"<!--9","initialState":"Data","input":"<!--9","inputUtf16":[60,33,45,45,57],"output":[{"Comment":{"data":"9"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_390() {
+fn test_0390() {
     tokenize(
         r##"{"description":"<!--<","initialState":"Data","input":"<!--<","inputUtf16":[60,33,45,45,60],"output":[{"Comment":{"data":"<"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_391() {
+fn test_0391() {
     tokenize(
         r##"{"description":"<!--=","initialState":"Data","input":"<!--=","inputUtf16":[60,33,45,45,61],"output":[{"Comment":{"data":"="}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_392() {
+fn test_0392() {
     tokenize(
         r##"{"description":"<!--?","initialState":"Data","input":"<!--?","inputUtf16":[60,33,45,45,63],"output":[{"Comment":{"data":"?"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_393() {
+fn test_0393() {
     tokenize(
         r##"{"description":"<!--@","initialState":"Data","input":"<!--@","inputUtf16":[60,33,45,45,64],"output":[{"Comment":{"data":"@"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_394() {
+fn test_0394() {
     tokenize(
         r##"{"description":"<!--A","initialState":"Data","input":"<!--A","inputUtf16":[60,33,45,45,65],"output":[{"Comment":{"data":"A"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_395() {
+fn test_0395() {
     tokenize(
         r##"{"description":"<!--B","initialState":"Data","input":"<!--B","inputUtf16":[60,33,45,45,66],"output":[{"Comment":{"data":"B"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_396() {
+fn test_0396() {
     tokenize(
         r##"{"description":"<!--Y","initialState":"Data","input":"<!--Y","inputUtf16":[60,33,45,45,89],"output":[{"Comment":{"data":"Y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_397() {
+fn test_0397() {
     tokenize(
         r##"{"description":"<!--Z","initialState":"Data","input":"<!--Z","inputUtf16":[60,33,45,45,90],"output":[{"Comment":{"data":"Z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_398() {
+fn test_0398() {
     tokenize(
         r##"{"description":"<!--`","initialState":"Data","input":"<!--`","inputUtf16":[60,33,45,45,96],"output":[{"Comment":{"data":"`"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_399() {
+fn test_0399() {
     tokenize(
         r##"{"description":"<!--a","initialState":"Data","input":"<!--a","inputUtf16":[60,33,45,45,97],"output":[{"Comment":{"data":"a"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_400() {
+fn test_0400() {
     tokenize(
         r##"{"description":"<!--b","initialState":"Data","input":"<!--b","inputUtf16":[60,33,45,45,98],"output":[{"Comment":{"data":"b"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_401() {
+fn test_0401() {
     tokenize(
         r##"{"description":"<!--y","initialState":"Data","input":"<!--y","inputUtf16":[60,33,45,45,121],"output":[{"Comment":{"data":"y"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_402() {
+fn test_0402() {
     tokenize(
         r##"{"description":"<!--z","initialState":"Data","input":"<!--z","inputUtf16":[60,33,45,45,122],"output":[{"Comment":{"data":"z"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_403() {
+fn test_0403() {
     tokenize(
         r##"{"description":"<!--{","initialState":"Data","input":"<!--{","inputUtf16":[60,33,45,45,123],"output":[{"Comment":{"data":"{"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_404() {
+fn test_0404() {
     tokenize(
         r##"{"description":"<!--\\uDBC0\\uDC00","initialState":"Data","input":"<!--􀀀","inputUtf16":[60,33,45,45,56256,56320],"output":[{"Comment":{"data":"􀀀"}}],"errors":[{"code":"EofInComment","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_405() {
+fn test_0405() {
     tokenize(
         r##"{"description":"<!/","initialState":"Data","input":"<!/","inputUtf16":[60,33,47],"output":[{"Comment":{"data":"/"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_406() {
+fn test_0406() {
     tokenize(
         r##"{"description":"<!0","initialState":"Data","input":"<!0","inputUtf16":[60,33,48],"output":[{"Comment":{"data":"0"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_407() {
+fn test_0407() {
     tokenize(
         r##"{"description":"<!1","initialState":"Data","input":"<!1","inputUtf16":[60,33,49],"output":[{"Comment":{"data":"1"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_408() {
+fn test_0408() {
     tokenize(
         r##"{"description":"<!9","initialState":"Data","input":"<!9","inputUtf16":[60,33,57],"output":[{"Comment":{"data":"9"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_409() {
+fn test_0409() {
     tokenize(
         r##"{"description":"<!<","initialState":"Data","input":"<!<","inputUtf16":[60,33,60],"output":[{"Comment":{"data":"<"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_410() {
+fn test_0410() {
     tokenize(
         r##"{"description":"<!=","initialState":"Data","input":"<!=","inputUtf16":[60,33,61],"output":[{"Comment":{"data":"="}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_411() {
+fn test_0411() {
     tokenize(
         r##"{"description":"<!>","initialState":"Data","input":"<!>","inputUtf16":[60,33,62],"output":[{"Comment":{"data":""}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_412() {
+fn test_0412() {
     tokenize(
         r##"{"description":"<!?","initialState":"Data","input":"<!?","inputUtf16":[60,33,63],"output":[{"Comment":{"data":"?"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_413() {
+fn test_0413() {
     tokenize(
         r##"{"description":"<!@","initialState":"Data","input":"<!@","inputUtf16":[60,33,64],"output":[{"Comment":{"data":"@"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_414() {
+fn test_0414() {
     tokenize(
         r##"{"description":"<!A","initialState":"Data","input":"<!A","inputUtf16":[60,33,65],"output":[{"Comment":{"data":"A"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_415() {
+fn test_0415() {
     tokenize(
         r##"{"description":"<!B","initialState":"Data","input":"<!B","inputUtf16":[60,33,66],"output":[{"Comment":{"data":"B"}}],"errors":[{"code":"IncorrectlyOpenedComment","location":{"line":1,"column":3}}]}"##,
     );
 }
 
 #[test]
-fn test_416() {
+fn test_0416() {
     tokenize(
         r##"{"description":"<!DOCTYPE","initialState":"Data","input":"<!DOCTYPE","inputUtf16":[60,33,68,79,67,84,89,80,69],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":10}}]}"##,
     );
 }
 
 #[test]
-fn test_417() {
+fn test_0417() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u0000","initialState":"Data","input":"<!DOCTYPE\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,0],"output":[{"Doctype":{"name":"�","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_418() {
+fn test_0418() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u0008","initialState":"Data","input":"<!DOCTYPE\b","inputUtf16":[60,33,68,79,67,84,89,80,69,8],"output":[{"Doctype":{"name":"\b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":10}},{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_419() {
+fn test_0419() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u0009","initialState":"Data","input":"<!DOCTYPE\t","inputUtf16":[60,33,68,79,67,84,89,80,69,9],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_420() {
+fn test_0420() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u000A","initialState":"Data","input":"<!DOCTYPE\n","inputUtf16":[60,33,68,79,67,84,89,80,69,10],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_421() {
+fn test_0421() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u000B","initialState":"Data","input":"<!DOCTYPE\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,11],"output":[{"Doctype":{"name":"\u000b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":10}},{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_422() {
+fn test_0422() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u000C","initialState":"Data","input":"<!DOCTYPE\f","inputUtf16":[60,33,68,79,67,84,89,80,69,12],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_423() {
+fn test_0423() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u000D","initialState":"Data","input":"<!DOCTYPE\r","inputUtf16":[60,33,68,79,67,84,89,80,69,13],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_424() {
+fn test_0424() {
     tokenize(
         r##"{"description":"<!DOCTYPE\\u001F","initialState":"Data","input":"<!DOCTYPE\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,31],"output":[{"Doctype":{"name":"\u001f","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":10}},{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_425() {
+fn test_0425() {
     tokenize(
         r##"{"description":"<!DOCTYPE ","initialState":"Data","input":"<!DOCTYPE ","inputUtf16":[60,33,68,79,67,84,89,80,69,32],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_426() {
+fn test_0426() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u0000","initialState":"Data","input":"<!DOCTYPE \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,0],"output":[{"Doctype":{"name":"�","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"UnexpectedNullCharacter","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_427() {
+fn test_0427() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u0008","initialState":"Data","input":"<!DOCTYPE \b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,8],"output":[{"Doctype":{"name":"\b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_428() {
+fn test_0428() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u0009","initialState":"Data","input":"<!DOCTYPE \t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,9],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_429() {
+fn test_0429() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u000A","initialState":"Data","input":"<!DOCTYPE \n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,10],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_430() {
+fn test_0430() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u000B","initialState":"Data","input":"<!DOCTYPE \u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,11],"output":[{"Doctype":{"name":"\u000b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_431() {
+fn test_0431() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u000C","initialState":"Data","input":"<!DOCTYPE \f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,12],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_432() {
+fn test_0432() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u000D","initialState":"Data","input":"<!DOCTYPE \r","inputUtf16":[60,33,68,79,67,84,89,80,69,32,13],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_433() {
+fn test_0433() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\u001F","initialState":"Data","input":"<!DOCTYPE \u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,31],"output":[{"Doctype":{"name":"\u001f","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_434() {
+fn test_0434() {
     tokenize(
         r##"{"description":"<!DOCTYPE  ","initialState":"Data","input":"<!DOCTYPE  ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,32],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_435() {
+fn test_0435() {
     tokenize(
         r##"{"description":"<!DOCTYPE !","initialState":"Data","input":"<!DOCTYPE !","inputUtf16":[60,33,68,79,67,84,89,80,69,32,33],"output":[{"Doctype":{"name":"!","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_436() {
+fn test_0436() {
     tokenize(
         r##"{"description":"<!DOCTYPE \"","initialState":"Data","input":"<!DOCTYPE \"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,34],"output":[{"Doctype":{"name":"\"","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_437() {
+fn test_0437() {
     tokenize(
         r##"{"description":"<!DOCTYPE &","initialState":"Data","input":"<!DOCTYPE &","inputUtf16":[60,33,68,79,67,84,89,80,69,32,38],"output":[{"Doctype":{"name":"&","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_438() {
+fn test_0438() {
     tokenize(
         r##"{"description":"<!DOCTYPE '","initialState":"Data","input":"<!DOCTYPE '","inputUtf16":[60,33,68,79,67,84,89,80,69,32,39],"output":[{"Doctype":{"name":"'","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_439() {
+fn test_0439() {
     tokenize(
         r##"{"description":"<!DOCTYPE -","initialState":"Data","input":"<!DOCTYPE -","inputUtf16":[60,33,68,79,67,84,89,80,69,32,45],"output":[{"Doctype":{"name":"-","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_440() {
+fn test_0440() {
     tokenize(
         r##"{"description":"<!DOCTYPE /","initialState":"Data","input":"<!DOCTYPE /","inputUtf16":[60,33,68,79,67,84,89,80,69,32,47],"output":[{"Doctype":{"name":"/","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_441() {
+fn test_0441() {
     tokenize(
         r##"{"description":"<!DOCTYPE 0","initialState":"Data","input":"<!DOCTYPE 0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,48],"output":[{"Doctype":{"name":"0","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_442() {
+fn test_0442() {
     tokenize(
         r##"{"description":"<!DOCTYPE 1","initialState":"Data","input":"<!DOCTYPE 1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,49],"output":[{"Doctype":{"name":"1","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_443() {
+fn test_0443() {
     tokenize(
         r##"{"description":"<!DOCTYPE 9","initialState":"Data","input":"<!DOCTYPE 9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,57],"output":[{"Doctype":{"name":"9","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_444() {
+fn test_0444() {
     tokenize(
         r##"{"description":"<!DOCTYPE <","initialState":"Data","input":"<!DOCTYPE <","inputUtf16":[60,33,68,79,67,84,89,80,69,32,60],"output":[{"Doctype":{"name":"<","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_445() {
+fn test_0445() {
     tokenize(
         r##"{"description":"<!DOCTYPE =","initialState":"Data","input":"<!DOCTYPE =","inputUtf16":[60,33,68,79,67,84,89,80,69,32,61],"output":[{"Doctype":{"name":"=","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_446() {
+fn test_0446() {
     tokenize(
         r##"{"description":"<!DOCTYPE >","initialState":"Data","input":"<!DOCTYPE >","inputUtf16":[60,33,68,79,67,84,89,80,69,32,62],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingDoctypeName","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_447() {
+fn test_0447() {
     tokenize(
         r##"{"description":"<!DOCTYPE ?","initialState":"Data","input":"<!DOCTYPE ?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,63],"output":[{"Doctype":{"name":"?","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_448() {
+fn test_0448() {
     tokenize(
         r##"{"description":"<!DOCTYPE @","initialState":"Data","input":"<!DOCTYPE @","inputUtf16":[60,33,68,79,67,84,89,80,69,32,64],"output":[{"Doctype":{"name":"@","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_449() {
+fn test_0449() {
     tokenize(
         r##"{"description":"<!DOCTYPE A","initialState":"Data","input":"<!DOCTYPE A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_450() {
+fn test_0450() {
     tokenize(
         r##"{"description":"<!DOCTYPE B","initialState":"Data","input":"<!DOCTYPE B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,66],"output":[{"Doctype":{"name":"b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_451() {
+fn test_0451() {
     tokenize(
         r##"{"description":"<!DOCTYPE Y","initialState":"Data","input":"<!DOCTYPE Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,89],"output":[{"Doctype":{"name":"y","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_452() {
+fn test_0452() {
     tokenize(
         r##"{"description":"<!DOCTYPE Z","initialState":"Data","input":"<!DOCTYPE Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,90],"output":[{"Doctype":{"name":"z","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_453() {
+fn test_0453() {
     tokenize(
         r##"{"description":"<!DOCTYPE [","initialState":"Data","input":"<!DOCTYPE [","inputUtf16":[60,33,68,79,67,84,89,80,69,32,91],"output":[{"Doctype":{"name":"[","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_454() {
+fn test_0454() {
     tokenize(
         r##"{"description":"<!DOCTYPE `","initialState":"Data","input":"<!DOCTYPE `","inputUtf16":[60,33,68,79,67,84,89,80,69,32,96],"output":[{"Doctype":{"name":"`","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_455() {
+fn test_0455() {
     tokenize(
         r##"{"description":"<!DOCTYPE a","initialState":"Data","input":"<!DOCTYPE a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_456() {
+fn test_0456() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u0000","initialState":"Data","input":"<!DOCTYPE a\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,0],"output":[{"Doctype":{"name":"a�","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"UnexpectedNullCharacter","location":{"line":1,"column":12}},{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_457() {
+fn test_0457() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u0008","initialState":"Data","input":"<!DOCTYPE a\b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,8],"output":[{"Doctype":{"name":"a\b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":12}},{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_458() {
+fn test_0458() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u0009","initialState":"Data","input":"<!DOCTYPE a\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_459() {
+fn test_0459() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u000A","initialState":"Data","input":"<!DOCTYPE a\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_460() {
+fn test_0460() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u000B","initialState":"Data","input":"<!DOCTYPE a\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,11],"output":[{"Doctype":{"name":"a\u000b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":12}},{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_461() {
+fn test_0461() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u000C","initialState":"Data","input":"<!DOCTYPE a\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_462() {
+fn test_0462() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u000D","initialState":"Data","input":"<!DOCTYPE a\r","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_463() {
+fn test_0463() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\u001F","initialState":"Data","input":"<!DOCTYPE a\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,31],"output":[{"Doctype":{"name":"a\u001f","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":12}},{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_464() {
+fn test_0464() {
     tokenize(
         r##"{"description":"<!DOCTYPE a ","initialState":"Data","input":"<!DOCTYPE a ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_465() {
+fn test_0465() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u0000","initialState":"Data","input":"<!DOCTYPE a \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_466() {
+fn test_0466() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u0008","initialState":"Data","input":"<!DOCTYPE a \b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,8],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":13}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_467() {
+fn test_0467() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u0009","initialState":"Data","input":"<!DOCTYPE a \t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":14}}]}"##,
     );
 }
 
 #[test]
-fn test_468() {
+fn test_0468() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u000A","initialState":"Data","input":"<!DOCTYPE a \n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_469() {
+fn test_0469() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u000B","initialState":"Data","input":"<!DOCTYPE a \u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":13}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_470() {
+fn test_0470() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u000C","initialState":"Data","input":"<!DOCTYPE a \f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":14}}]}"##,
     );
 }
 
 #[test]
-fn test_471() {
+fn test_0471() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u000D","initialState":"Data","input":"<!DOCTYPE a \r","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_472() {
+fn test_0472() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\u001F","initialState":"Data","input":"<!DOCTYPE a \u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,31],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":13}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_473() {
+fn test_0473() {
     tokenize(
         r##"{"description":"<!DOCTYPE a  ","initialState":"Data","input":"<!DOCTYPE a  ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":14}}]}"##,
     );
 }
 
 #[test]
-fn test_474() {
+fn test_0474() {
     tokenize(
         r##"{"description":"<!DOCTYPE a !","initialState":"Data","input":"<!DOCTYPE a !","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_475() {
+fn test_0475() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \"","initialState":"Data","input":"<!DOCTYPE a \"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,34],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_476() {
+fn test_0476() {
     tokenize(
         r##"{"description":"<!DOCTYPE a &","initialState":"Data","input":"<!DOCTYPE a &","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_477() {
+fn test_0477() {
     tokenize(
         r##"{"description":"<!DOCTYPE a '","initialState":"Data","input":"<!DOCTYPE a '","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,39],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_478() {
+fn test_0478() {
     tokenize(
         r##"{"description":"<!DOCTYPE a -","initialState":"Data","input":"<!DOCTYPE a -","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_479() {
+fn test_0479() {
     tokenize(
         r##"{"description":"<!DOCTYPE a /","initialState":"Data","input":"<!DOCTYPE a /","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_480() {
+fn test_0480() {
     tokenize(
         r##"{"description":"<!DOCTYPE a 0","initialState":"Data","input":"<!DOCTYPE a 0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_481() {
+fn test_0481() {
     tokenize(
         r##"{"description":"<!DOCTYPE a 1","initialState":"Data","input":"<!DOCTYPE a 1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_482() {
+fn test_0482() {
     tokenize(
         r##"{"description":"<!DOCTYPE a 9","initialState":"Data","input":"<!DOCTYPE a 9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_483() {
+fn test_0483() {
     tokenize(
         r##"{"description":"<!DOCTYPE a <","initialState":"Data","input":"<!DOCTYPE a <","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_484() {
+fn test_0484() {
     tokenize(
         r##"{"description":"<!DOCTYPE a =","initialState":"Data","input":"<!DOCTYPE a =","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_485() {
+fn test_0485() {
     tokenize(
         r##"{"description":"<!DOCTYPE a >","initialState":"Data","input":"<!DOCTYPE a >","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":false}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_486() {
+fn test_0486() {
     tokenize(
         r##"{"description":"<!DOCTYPE a ?","initialState":"Data","input":"<!DOCTYPE a ?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_487() {
+fn test_0487() {
     tokenize(
         r##"{"description":"<!DOCTYPE a @","initialState":"Data","input":"<!DOCTYPE a @","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_488() {
+fn test_0488() {
     tokenize(
         r##"{"description":"<!DOCTYPE a A","initialState":"Data","input":"<!DOCTYPE a A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_489() {
+fn test_0489() {
     tokenize(
         r##"{"description":"<!DOCTYPE a B","initialState":"Data","input":"<!DOCTYPE a B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_490() {
+fn test_0490() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC","initialState":"Data","input":"<!DOCTYPE a PUBLIC","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_491() {
+fn test_0491() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_492() {
+fn test_0492() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u0008","initialState":"Data","input":"<!DOCTYPE a PUBLIC\b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,8],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_493() {
+fn test_0493() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u0009","initialState":"Data","input":"<!DOCTYPE a PUBLIC\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_494() {
+fn test_0494() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u000A","initialState":"Data","input":"<!DOCTYPE a PUBLIC\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_495() {
+fn test_0495() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u000B","initialState":"Data","input":"<!DOCTYPE a PUBLIC\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_496() {
+fn test_0496() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u000C","initialState":"Data","input":"<!DOCTYPE a PUBLIC\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_497() {
+fn test_0497() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u000D","initialState":"Data","input":"<!DOCTYPE a PUBLIC\r","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_498() {
+fn test_0498() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\u001F","initialState":"Data","input":"<!DOCTYPE a PUBLIC\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,31],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_499() {
+fn test_0499() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC ","initialState":"Data","input":"<!DOCTYPE a PUBLIC ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_500() {
+fn test_0500() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC!","initialState":"Data","input":"<!DOCTYPE a PUBLIC!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_501() {
+fn test_0501() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_502() {
+fn test_0502() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,0],"output":[{"Doctype":{"name":"a","public_id":"�","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_503() {
+fn test_0503() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\\u0009","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,9],"output":[{"Doctype":{"name":"a","public_id":"\t","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_504() {
+fn test_0504() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\\u000A","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,10],"output":[{"Doctype":{"name":"a","public_id":"\n","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_505() {
+fn test_0505() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\\u000B","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,11],"output":[{"Doctype":{"name":"a","public_id":"\u000b","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_506() {
+fn test_0506() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\\u000C","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,12],"output":[{"Doctype":{"name":"a","public_id":"\f","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_507() {
+fn test_0507() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\" ","initialState":"Data","input":"<!DOCTYPE a PUBLIC\" ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,32],"output":[{"Doctype":{"name":"a","public_id":" ","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_508() {
+fn test_0508() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"!","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,33],"output":[{"Doctype":{"name":"a","public_id":"!","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_509() {
+fn test_0509() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\"","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,34],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_510() {
+fn test_0510() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\"\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\"\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,34,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_511() {
+fn test_0511() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\" \\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"\" \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,34,32,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":22}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_512() {
+fn test_0512() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"#","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"#","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,35],"output":[{"Doctype":{"name":"a","public_id":"#","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_513() {
+fn test_0513() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"&","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,38],"output":[{"Doctype":{"name":"a","public_id":"&","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_514() {
+fn test_0514() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"'","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"'","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,39],"output":[{"Doctype":{"name":"a","public_id":"'","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_515() {
+fn test_0515() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"-","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,45],"output":[{"Doctype":{"name":"a","public_id":"-","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_516() {
+fn test_0516() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"/","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,47],"output":[{"Doctype":{"name":"a","public_id":"/","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_517() {
+fn test_0517() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"0","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,48],"output":[{"Doctype":{"name":"a","public_id":"0","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_518() {
+fn test_0518() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"1","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,49],"output":[{"Doctype":{"name":"a","public_id":"1","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_519() {
+fn test_0519() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"9","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,57],"output":[{"Doctype":{"name":"a","public_id":"9","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_520() {
+fn test_0520() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"<","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,60],"output":[{"Doctype":{"name":"a","public_id":"<","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_521() {
+fn test_0521() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"=","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,61],"output":[{"Doctype":{"name":"a","public_id":"=","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_522() {
+fn test_0522() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\">","initialState":"Data","input":"<!DOCTYPE a PUBLIC\">","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,62],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"AbruptDoctypePublicIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_523() {
+fn test_0523() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"?","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,63],"output":[{"Doctype":{"name":"a","public_id":"?","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_524() {
+fn test_0524() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"@","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,64],"output":[{"Doctype":{"name":"a","public_id":"@","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_525() {
+fn test_0525() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"A","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,65],"output":[{"Doctype":{"name":"a","public_id":"A","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_526() {
+fn test_0526() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"B","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,66],"output":[{"Doctype":{"name":"a","public_id":"B","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_527() {
+fn test_0527() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"Y","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,89],"output":[{"Doctype":{"name":"a","public_id":"Y","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_528() {
+fn test_0528() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"Z","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,90],"output":[{"Doctype":{"name":"a","public_id":"Z","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_529() {
+fn test_0529() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"`","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,96],"output":[{"Doctype":{"name":"a","public_id":"`","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_530() {
+fn test_0530() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"a","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,97],"output":[{"Doctype":{"name":"a","public_id":"a","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_531() {
+fn test_0531() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"b","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,98],"output":[{"Doctype":{"name":"a","public_id":"b","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_532() {
+fn test_0532() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"y","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,121],"output":[{"Doctype":{"name":"a","public_id":"y","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_533() {
+fn test_0533() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"z","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,122],"output":[{"Doctype":{"name":"a","public_id":"z","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_534() {
+fn test_0534() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"{","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,123],"output":[{"Doctype":{"name":"a","public_id":"{","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_535() {
+fn test_0535() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\"\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a PUBLIC\"􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,34,56256,56320],"output":[{"Doctype":{"name":"a","public_id":"􀀀","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_536() {
+fn test_0536() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC#","initialState":"Data","input":"<!DOCTYPE a PUBLIC#","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,35],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_537() {
+fn test_0537() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC&","initialState":"Data","input":"<!DOCTYPE a PUBLIC&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_538() {
+fn test_0538() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'","initialState":"Data","input":"<!DOCTYPE a PUBLIC'","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_539() {
+fn test_0539() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC'\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,0],"output":[{"Doctype":{"name":"a","public_id":"�","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_540() {
+fn test_0540() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'\\u0009","initialState":"Data","input":"<!DOCTYPE a PUBLIC'\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,9],"output":[{"Doctype":{"name":"a","public_id":"\t","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_541() {
+fn test_0541() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'\\u000A","initialState":"Data","input":"<!DOCTYPE a PUBLIC'\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,10],"output":[{"Doctype":{"name":"a","public_id":"\n","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_542() {
+fn test_0542() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'\\u000B","initialState":"Data","input":"<!DOCTYPE a PUBLIC'\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,11],"output":[{"Doctype":{"name":"a","public_id":"\u000b","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_543() {
+fn test_0543() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'\\u000C","initialState":"Data","input":"<!DOCTYPE a PUBLIC'\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,12],"output":[{"Doctype":{"name":"a","public_id":"\f","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_544() {
+fn test_0544() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC' ","initialState":"Data","input":"<!DOCTYPE a PUBLIC' ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,32],"output":[{"Doctype":{"name":"a","public_id":" ","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_545() {
+fn test_0545() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'!","initialState":"Data","input":"<!DOCTYPE a PUBLIC'!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,33],"output":[{"Doctype":{"name":"a","public_id":"!","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_546() {
+fn test_0546() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'\"","initialState":"Data","input":"<!DOCTYPE a PUBLIC'\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,34],"output":[{"Doctype":{"name":"a","public_id":"\"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_547() {
+fn test_0547() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'&","initialState":"Data","input":"<!DOCTYPE a PUBLIC'&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,38],"output":[{"Doctype":{"name":"a","public_id":"&","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_548() {
+fn test_0548() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''","initialState":"Data","input":"<!DOCTYPE a PUBLIC''","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_549() {
+fn test_0549() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_550() {
+fn test_0550() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u0008","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,8],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":21}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_551() {
+fn test_0551() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u0009","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,9],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_552() {
+fn test_0552() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u000A","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,10],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_553() {
+fn test_0553() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u000B","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,11],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":21}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_554() {
+fn test_0554() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u000C","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,12],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_555() {
+fn test_0555() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u000D","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\r","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,13],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_556() {
+fn test_0556() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\u001F","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,31],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":21}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_557() {
+fn test_0557() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'' ","initialState":"Data","input":"<!DOCTYPE a PUBLIC'' ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,32],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_558() {
+fn test_0558() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''!","initialState":"Data","input":"<!DOCTYPE a PUBLIC''!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,33],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_559() {
+fn test_0559() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\"","initialState":"Data","input":"<!DOCTYPE a PUBLIC''\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,34],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":21}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_560() {
+fn test_0560() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''#","initialState":"Data","input":"<!DOCTYPE a PUBLIC''#","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,35],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_561() {
+fn test_0561() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''&","initialState":"Data","input":"<!DOCTYPE a PUBLIC''&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,38],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_562() {
+fn test_0562() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'''","initialState":"Data","input":"<!DOCTYPE a PUBLIC'''","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,39],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":21}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_563() {
+fn test_0563() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''''\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC''''\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,39,39,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":21}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":23}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":23}}]}"##,
     );
 }
 
 #[test]
-fn test_564() {
+fn test_0564() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''''x\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC''''x\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,39,39,120,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":21}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":23}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":24}}]}"##,
     );
 }
 
 #[test]
-fn test_565() {
+fn test_0565() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'''' \\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC'''' \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,39,39,32,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":21}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":24}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":24}}]}"##,
     );
 }
 
 #[test]
-fn test_566() {
+fn test_0566() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'''' x\\u0000","initialState":"Data","input":"<!DOCTYPE a PUBLIC'''' x\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,39,39,32,120,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":21}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":24}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":25}}]}"##,
     );
 }
 
 #[test]
-fn test_567() {
+fn test_0567() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''(","initialState":"Data","input":"<!DOCTYPE a PUBLIC''(","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,40],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_568() {
+fn test_0568() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''-","initialState":"Data","input":"<!DOCTYPE a PUBLIC''-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,45],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_569() {
+fn test_0569() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''/","initialState":"Data","input":"<!DOCTYPE a PUBLIC''/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,47],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_570() {
+fn test_0570() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''0","initialState":"Data","input":"<!DOCTYPE a PUBLIC''0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,48],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_571() {
+fn test_0571() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''1","initialState":"Data","input":"<!DOCTYPE a PUBLIC''1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,49],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_572() {
+fn test_0572() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''9","initialState":"Data","input":"<!DOCTYPE a PUBLIC''9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,57],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_573() {
+fn test_0573() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''<","initialState":"Data","input":"<!DOCTYPE a PUBLIC''<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,60],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_574() {
+fn test_0574() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''=","initialState":"Data","input":"<!DOCTYPE a PUBLIC''=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,61],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_575() {
+fn test_0575() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''>","initialState":"Data","input":"<!DOCTYPE a PUBLIC''>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,62],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_576() {
+fn test_0576() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''?","initialState":"Data","input":"<!DOCTYPE a PUBLIC''?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,63],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_577() {
+fn test_0577() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''@","initialState":"Data","input":"<!DOCTYPE a PUBLIC''@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,64],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_578() {
+fn test_0578() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''A","initialState":"Data","input":"<!DOCTYPE a PUBLIC''A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,65],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_579() {
+fn test_0579() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''B","initialState":"Data","input":"<!DOCTYPE a PUBLIC''B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,66],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_580() {
+fn test_0580() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''Y","initialState":"Data","input":"<!DOCTYPE a PUBLIC''Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,89],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_581() {
+fn test_0581() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''Z","initialState":"Data","input":"<!DOCTYPE a PUBLIC''Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,90],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_582() {
+fn test_0582() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''`","initialState":"Data","input":"<!DOCTYPE a PUBLIC''`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,96],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_583() {
+fn test_0583() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''a","initialState":"Data","input":"<!DOCTYPE a PUBLIC''a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,97],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_584() {
+fn test_0584() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''b","initialState":"Data","input":"<!DOCTYPE a PUBLIC''b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,98],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_585() {
+fn test_0585() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''y","initialState":"Data","input":"<!DOCTYPE a PUBLIC''y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,121],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_586() {
+fn test_0586() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''z","initialState":"Data","input":"<!DOCTYPE a PUBLIC''z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,122],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_587() {
+fn test_0587() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''{","initialState":"Data","input":"<!DOCTYPE a PUBLIC''{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,123],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_588() {
+fn test_0588() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC''\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a PUBLIC''􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,39,56256,56320],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_589() {
+fn test_0589() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'(","initialState":"Data","input":"<!DOCTYPE a PUBLIC'(","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,40],"output":[{"Doctype":{"name":"a","public_id":"(","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_590() {
+fn test_0590() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'-","initialState":"Data","input":"<!DOCTYPE a PUBLIC'-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,45],"output":[{"Doctype":{"name":"a","public_id":"-","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_591() {
+fn test_0591() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'/","initialState":"Data","input":"<!DOCTYPE a PUBLIC'/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,47],"output":[{"Doctype":{"name":"a","public_id":"/","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_592() {
+fn test_0592() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'0","initialState":"Data","input":"<!DOCTYPE a PUBLIC'0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,48],"output":[{"Doctype":{"name":"a","public_id":"0","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_593() {
+fn test_0593() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'1","initialState":"Data","input":"<!DOCTYPE a PUBLIC'1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,49],"output":[{"Doctype":{"name":"a","public_id":"1","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_594() {
+fn test_0594() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'9","initialState":"Data","input":"<!DOCTYPE a PUBLIC'9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,57],"output":[{"Doctype":{"name":"a","public_id":"9","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_595() {
+fn test_0595() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'<","initialState":"Data","input":"<!DOCTYPE a PUBLIC'<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,60],"output":[{"Doctype":{"name":"a","public_id":"<","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_596() {
+fn test_0596() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'=","initialState":"Data","input":"<!DOCTYPE a PUBLIC'=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,61],"output":[{"Doctype":{"name":"a","public_id":"=","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_597() {
+fn test_0597() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'>","initialState":"Data","input":"<!DOCTYPE a PUBLIC'>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,62],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"AbruptDoctypePublicIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_598() {
+fn test_0598() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'?","initialState":"Data","input":"<!DOCTYPE a PUBLIC'?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,63],"output":[{"Doctype":{"name":"a","public_id":"?","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_599() {
+fn test_0599() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'@","initialState":"Data","input":"<!DOCTYPE a PUBLIC'@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,64],"output":[{"Doctype":{"name":"a","public_id":"@","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_600() {
+fn test_0600() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'A","initialState":"Data","input":"<!DOCTYPE a PUBLIC'A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,65],"output":[{"Doctype":{"name":"a","public_id":"A","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_601() {
+fn test_0601() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'B","initialState":"Data","input":"<!DOCTYPE a PUBLIC'B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,66],"output":[{"Doctype":{"name":"a","public_id":"B","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_602() {
+fn test_0602() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'Y","initialState":"Data","input":"<!DOCTYPE a PUBLIC'Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,89],"output":[{"Doctype":{"name":"a","public_id":"Y","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_603() {
+fn test_0603() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'Z","initialState":"Data","input":"<!DOCTYPE a PUBLIC'Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,90],"output":[{"Doctype":{"name":"a","public_id":"Z","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_604() {
+fn test_0604() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'`","initialState":"Data","input":"<!DOCTYPE a PUBLIC'`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,96],"output":[{"Doctype":{"name":"a","public_id":"`","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_605() {
+fn test_0605() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'a","initialState":"Data","input":"<!DOCTYPE a PUBLIC'a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,97],"output":[{"Doctype":{"name":"a","public_id":"a","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_606() {
+fn test_0606() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'b","initialState":"Data","input":"<!DOCTYPE a PUBLIC'b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,98],"output":[{"Doctype":{"name":"a","public_id":"b","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_607() {
+fn test_0607() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'y","initialState":"Data","input":"<!DOCTYPE a PUBLIC'y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,121],"output":[{"Doctype":{"name":"a","public_id":"y","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_608() {
+fn test_0608() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'z","initialState":"Data","input":"<!DOCTYPE a PUBLIC'z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,122],"output":[{"Doctype":{"name":"a","public_id":"z","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_609() {
+fn test_0609() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'{","initialState":"Data","input":"<!DOCTYPE a PUBLIC'{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,123],"output":[{"Doctype":{"name":"a","public_id":"{","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_610() {
+fn test_0610() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC'\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a PUBLIC'􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,39,56256,56320],"output":[{"Doctype":{"name":"a","public_id":"􀀀","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_611() {
+fn test_0611() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC(","initialState":"Data","input":"<!DOCTYPE a PUBLIC(","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,40],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_612() {
+fn test_0612() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC-","initialState":"Data","input":"<!DOCTYPE a PUBLIC-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_613() {
+fn test_0613() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC/","initialState":"Data","input":"<!DOCTYPE a PUBLIC/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_614() {
+fn test_0614() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC0","initialState":"Data","input":"<!DOCTYPE a PUBLIC0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_615() {
+fn test_0615() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC1","initialState":"Data","input":"<!DOCTYPE a PUBLIC1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_616() {
+fn test_0616() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC9","initialState":"Data","input":"<!DOCTYPE a PUBLIC9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_617() {
+fn test_0617() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC<","initialState":"Data","input":"<!DOCTYPE a PUBLIC<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_618() {
+fn test_0618() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC=","initialState":"Data","input":"<!DOCTYPE a PUBLIC=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_619() {
+fn test_0619() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC>","initialState":"Data","input":"<!DOCTYPE a PUBLIC>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_620() {
+fn test_0620() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC?","initialState":"Data","input":"<!DOCTYPE a PUBLIC?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_621() {
+fn test_0621() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC@","initialState":"Data","input":"<!DOCTYPE a PUBLIC@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_622() {
+fn test_0622() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICA","initialState":"Data","input":"<!DOCTYPE a PUBLICA","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_623() {
+fn test_0623() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICB","initialState":"Data","input":"<!DOCTYPE a PUBLICB","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_624() {
+fn test_0624() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICY","initialState":"Data","input":"<!DOCTYPE a PUBLICY","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,89],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_625() {
+fn test_0625() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICZ","initialState":"Data","input":"<!DOCTYPE a PUBLICZ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,90],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_626() {
+fn test_0626() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC`","initialState":"Data","input":"<!DOCTYPE a PUBLIC`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,96],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_627() {
+fn test_0627() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICa","initialState":"Data","input":"<!DOCTYPE a PUBLICa","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_628() {
+fn test_0628() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICb","initialState":"Data","input":"<!DOCTYPE a PUBLICb","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,98],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_629() {
+fn test_0629() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICy","initialState":"Data","input":"<!DOCTYPE a PUBLICy","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,121],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_630() {
+fn test_0630() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLICz","initialState":"Data","input":"<!DOCTYPE a PUBLICz","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,122],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_631() {
+fn test_0631() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC{","initialState":"Data","input":"<!DOCTYPE a PUBLIC{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,123],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_632() {
+fn test_0632() {
     tokenize(
         r##"{"description":"<!DOCTYPE a PUBLIC\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a PUBLIC􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,80,85,66,76,73,67,56256,56320],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_633() {
+fn test_0633() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM","initialState":"Data","input":"<!DOCTYPE a SYSTEM","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_634() {
+fn test_0634() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_635() {
+fn test_0635() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM \\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,32,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_636() {
+fn test_0636() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM x\\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,32,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_637() {
+fn test_0637() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u0008","initialState":"Data","input":"<!DOCTYPE a SYSTEM\b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,8],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_638() {
+fn test_0638() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u0009","initialState":"Data","input":"<!DOCTYPE a SYSTEM\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_639() {
+fn test_0639() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u000A","initialState":"Data","input":"<!DOCTYPE a SYSTEM\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_640() {
+fn test_0640() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u000B","initialState":"Data","input":"<!DOCTYPE a SYSTEM\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_641() {
+fn test_0641() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u000C","initialState":"Data","input":"<!DOCTYPE a SYSTEM\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_642() {
+fn test_0642() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u000D","initialState":"Data","input":"<!DOCTYPE a SYSTEM\r","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_643() {
+fn test_0643() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\u001F","initialState":"Data","input":"<!DOCTYPE a SYSTEM\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,31],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_644() {
+fn test_0644() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM ","initialState":"Data","input":"<!DOCTYPE a SYSTEM ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_645() {
+fn test_0645() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM!","initialState":"Data","input":"<!DOCTYPE a SYSTEM!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_646() {
+fn test_0646() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_647() {
+fn test_0647() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"\\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"�","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_648() {
+fn test_0648() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"\\u0009","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\t","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_649() {
+fn test_0649() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"\\u000A","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\n","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_650() {
+fn test_0650() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"\\u000B","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\u000b","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_651() {
+fn test_0651() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"\\u000C","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\f","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_652() {
+fn test_0652() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\" ","initialState":"Data","input":"<!DOCTYPE a SYSTEM\" ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":" ","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_653() {
+fn test_0653() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"!","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"!","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_654() {
+fn test_0654() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"\"","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,34],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_655() {
+fn test_0655() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"#","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"#","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,35],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"#","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_656() {
+fn test_0656() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"&","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"&","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_657() {
+fn test_0657() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"'","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"'","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,39],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"'","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_658() {
+fn test_0658() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"-","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"-","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_659() {
+fn test_0659() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"/","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"/","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_660() {
+fn test_0660() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"0","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"0","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_661() {
+fn test_0661() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"1","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"1","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_662() {
+fn test_0662() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"9","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"9","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_663() {
+fn test_0663() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"<","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"<","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_664() {
+fn test_0664() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"=","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"=","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_665() {
+fn test_0665() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\">","initialState":"Data","input":"<!DOCTYPE a SYSTEM\">","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"AbruptDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_666() {
+fn test_0666() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"?","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"?","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_667() {
+fn test_0667() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"@","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"@","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_668() {
+fn test_0668() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"A","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"A","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_669() {
+fn test_0669() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"B","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"B","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_670() {
+fn test_0670() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"Y","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,89],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"Y","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_671() {
+fn test_0671() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"Z","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,90],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"Z","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_672() {
+fn test_0672() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"`","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,96],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"`","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_673() {
+fn test_0673() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"a","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"a","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_674() {
+fn test_0674() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"b","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,98],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"b","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_675() {
+fn test_0675() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"y","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,121],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"y","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_676() {
+fn test_0676() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"z","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,122],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"z","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_677() {
+fn test_0677() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"{","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,123],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"{","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_678() {
+fn test_0678() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\"\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a SYSTEM\"􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,34,56256,56320],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"􀀀","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_679() {
+fn test_0679() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM#","initialState":"Data","input":"<!DOCTYPE a SYSTEM#","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,35],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_680() {
+fn test_0680() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM&","initialState":"Data","input":"<!DOCTYPE a SYSTEM&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_681() {
+fn test_0681() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'","initialState":"Data","input":"<!DOCTYPE a SYSTEM'","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_682() {
+fn test_0682() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'\\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM'\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"�","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_683() {
+fn test_0683() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'\\u0009","initialState":"Data","input":"<!DOCTYPE a SYSTEM'\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\t","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_684() {
+fn test_0684() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'\\u000A","initialState":"Data","input":"<!DOCTYPE a SYSTEM'\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\n","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_685() {
+fn test_0685() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'\\u000B","initialState":"Data","input":"<!DOCTYPE a SYSTEM'\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\u000b","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_686() {
+fn test_0686() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'\\u000C","initialState":"Data","input":"<!DOCTYPE a SYSTEM'\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\f","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_687() {
+fn test_0687() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM' ","initialState":"Data","input":"<!DOCTYPE a SYSTEM' ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":" ","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_688() {
+fn test_0688() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'!","initialState":"Data","input":"<!DOCTYPE a SYSTEM'!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"!","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_689() {
+fn test_0689() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'\"","initialState":"Data","input":"<!DOCTYPE a SYSTEM'\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,34],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"\"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_690() {
+fn test_0690() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'&","initialState":"Data","input":"<!DOCTYPE a SYSTEM'&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"&","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_691() {
+fn test_0691() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''","initialState":"Data","input":"<!DOCTYPE a SYSTEM''","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_692() {
+fn test_0692() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_693() {
+fn test_0693() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u0008","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,8],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":21}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_694() {
+fn test_0694() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u0009","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_695() {
+fn test_0695() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u000A","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_696() {
+fn test_0696() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u000B","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":21}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_697() {
+fn test_0697() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u000C","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_698() {
+fn test_0698() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u000D","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\r","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_699() {
+fn test_0699() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\u001F","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,31],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":21}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_700() {
+fn test_0700() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'' ","initialState":"Data","input":"<!DOCTYPE a SYSTEM'' ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_701() {
+fn test_0701() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'' \\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM'' \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,32,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":22}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":22}}]}"##,
     );
 }
 
 #[test]
-fn test_702() {
+fn test_0702() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'' x\\u0000","initialState":"Data","input":"<!DOCTYPE a SYSTEM'' x\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,32,120,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":22}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":23}}]}"##,
     );
 }
 
 #[test]
-fn test_703() {
+fn test_0703() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''!","initialState":"Data","input":"<!DOCTYPE a SYSTEM''!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_704() {
+fn test_0704() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\"","initialState":"Data","input":"<!DOCTYPE a SYSTEM''\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,34],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_705() {
+fn test_0705() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''&","initialState":"Data","input":"<!DOCTYPE a SYSTEM''&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_706() {
+fn test_0706() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'''","initialState":"Data","input":"<!DOCTYPE a SYSTEM'''","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,39],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_707() {
+fn test_0707() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''-","initialState":"Data","input":"<!DOCTYPE a SYSTEM''-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_708() {
+fn test_0708() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''/","initialState":"Data","input":"<!DOCTYPE a SYSTEM''/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_709() {
+fn test_0709() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''0","initialState":"Data","input":"<!DOCTYPE a SYSTEM''0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_710() {
+fn test_0710() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''1","initialState":"Data","input":"<!DOCTYPE a SYSTEM''1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_711() {
+fn test_0711() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''9","initialState":"Data","input":"<!DOCTYPE a SYSTEM''9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_712() {
+fn test_0712() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''<","initialState":"Data","input":"<!DOCTYPE a SYSTEM''<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_713() {
+fn test_0713() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''=","initialState":"Data","input":"<!DOCTYPE a SYSTEM''=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_714() {
+fn test_0714() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''>","initialState":"Data","input":"<!DOCTYPE a SYSTEM''>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_715() {
+fn test_0715() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''?","initialState":"Data","input":"<!DOCTYPE a SYSTEM''?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_716() {
+fn test_0716() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''@","initialState":"Data","input":"<!DOCTYPE a SYSTEM''@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_717() {
+fn test_0717() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''A","initialState":"Data","input":"<!DOCTYPE a SYSTEM''A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_718() {
+fn test_0718() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''B","initialState":"Data","input":"<!DOCTYPE a SYSTEM''B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_719() {
+fn test_0719() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''Y","initialState":"Data","input":"<!DOCTYPE a SYSTEM''Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,89],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_720() {
+fn test_0720() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''Z","initialState":"Data","input":"<!DOCTYPE a SYSTEM''Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,90],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_721() {
+fn test_0721() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''`","initialState":"Data","input":"<!DOCTYPE a SYSTEM''`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,96],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_722() {
+fn test_0722() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''a","initialState":"Data","input":"<!DOCTYPE a SYSTEM''a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_723() {
+fn test_0723() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''b","initialState":"Data","input":"<!DOCTYPE a SYSTEM''b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,98],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_724() {
+fn test_0724() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''y","initialState":"Data","input":"<!DOCTYPE a SYSTEM''y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,121],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_725() {
+fn test_0725() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''z","initialState":"Data","input":"<!DOCTYPE a SYSTEM''z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,122],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_726() {
+fn test_0726() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''{","initialState":"Data","input":"<!DOCTYPE a SYSTEM''{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,123],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_727() {
+fn test_0727() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM''\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a SYSTEM''􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,39,56256,56320],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":false}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"UnexpectedCharacterAfterDoctypeSystemIdentifier","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_728() {
+fn test_0728() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'(","initialState":"Data","input":"<!DOCTYPE a SYSTEM'(","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,40],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"(","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_729() {
+fn test_0729() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'-","initialState":"Data","input":"<!DOCTYPE a SYSTEM'-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"-","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_730() {
+fn test_0730() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'/","initialState":"Data","input":"<!DOCTYPE a SYSTEM'/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"/","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_731() {
+fn test_0731() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'0","initialState":"Data","input":"<!DOCTYPE a SYSTEM'0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"0","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_732() {
+fn test_0732() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'1","initialState":"Data","input":"<!DOCTYPE a SYSTEM'1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"1","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_733() {
+fn test_0733() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'9","initialState":"Data","input":"<!DOCTYPE a SYSTEM'9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"9","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_734() {
+fn test_0734() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'<","initialState":"Data","input":"<!DOCTYPE a SYSTEM'<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"<","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_735() {
+fn test_0735() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'=","initialState":"Data","input":"<!DOCTYPE a SYSTEM'=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"=","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_736() {
+fn test_0736() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'>","initialState":"Data","input":"<!DOCTYPE a SYSTEM'>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"AbruptDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_737() {
+fn test_0737() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'?","initialState":"Data","input":"<!DOCTYPE a SYSTEM'?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"?","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_738() {
+fn test_0738() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'@","initialState":"Data","input":"<!DOCTYPE a SYSTEM'@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"@","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_739() {
+fn test_0739() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'A","initialState":"Data","input":"<!DOCTYPE a SYSTEM'A","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"A","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_740() {
+fn test_0740() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'B","initialState":"Data","input":"<!DOCTYPE a SYSTEM'B","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"B","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_741() {
+fn test_0741() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'Y","initialState":"Data","input":"<!DOCTYPE a SYSTEM'Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,89],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"Y","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_742() {
+fn test_0742() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'Z","initialState":"Data","input":"<!DOCTYPE a SYSTEM'Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,90],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"Z","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_743() {
+fn test_0743() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'`","initialState":"Data","input":"<!DOCTYPE a SYSTEM'`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,96],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"`","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_744() {
+fn test_0744() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'a","initialState":"Data","input":"<!DOCTYPE a SYSTEM'a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"a","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_745() {
+fn test_0745() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'b","initialState":"Data","input":"<!DOCTYPE a SYSTEM'b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,98],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"b","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_746() {
+fn test_0746() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'y","initialState":"Data","input":"<!DOCTYPE a SYSTEM'y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,121],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"y","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_747() {
+fn test_0747() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'z","initialState":"Data","input":"<!DOCTYPE a SYSTEM'z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,122],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"z","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_748() {
+fn test_0748() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'{","initialState":"Data","input":"<!DOCTYPE a SYSTEM'{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,123],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"{","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_749() {
+fn test_0749() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM'\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a SYSTEM'􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,39,56256,56320],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":"􀀀","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceAfterDoctypeSystemKeyword","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_750() {
+fn test_0750() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM(","initialState":"Data","input":"<!DOCTYPE a SYSTEM(","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,40],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_751() {
+fn test_0751() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM-","initialState":"Data","input":"<!DOCTYPE a SYSTEM-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_752() {
+fn test_0752() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM/","initialState":"Data","input":"<!DOCTYPE a SYSTEM/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_753() {
+fn test_0753() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM0","initialState":"Data","input":"<!DOCTYPE a SYSTEM0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_754() {
+fn test_0754() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM1","initialState":"Data","input":"<!DOCTYPE a SYSTEM1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_755() {
+fn test_0755() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM9","initialState":"Data","input":"<!DOCTYPE a SYSTEM9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_756() {
+fn test_0756() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM<","initialState":"Data","input":"<!DOCTYPE a SYSTEM<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_757() {
+fn test_0757() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM=","initialState":"Data","input":"<!DOCTYPE a SYSTEM=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_758() {
+fn test_0758() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM>","initialState":"Data","input":"<!DOCTYPE a SYSTEM>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_759() {
+fn test_0759() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM?","initialState":"Data","input":"<!DOCTYPE a SYSTEM?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_760() {
+fn test_0760() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM@","initialState":"Data","input":"<!DOCTYPE a SYSTEM@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_761() {
+fn test_0761() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMA","initialState":"Data","input":"<!DOCTYPE a SYSTEMA","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_762() {
+fn test_0762() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMB","initialState":"Data","input":"<!DOCTYPE a SYSTEMB","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_763() {
+fn test_0763() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMY","initialState":"Data","input":"<!DOCTYPE a SYSTEMY","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,89],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_764() {
+fn test_0764() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMZ","initialState":"Data","input":"<!DOCTYPE a SYSTEMZ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,90],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_765() {
+fn test_0765() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM`","initialState":"Data","input":"<!DOCTYPE a SYSTEM`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,96],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_766() {
+fn test_0766() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMa","initialState":"Data","input":"<!DOCTYPE a SYSTEMa","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_767() {
+fn test_0767() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMb","initialState":"Data","input":"<!DOCTYPE a SYSTEMb","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,98],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_768() {
+fn test_0768() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMy","initialState":"Data","input":"<!DOCTYPE a SYSTEMy","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,121],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_769() {
+fn test_0769() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEMz","initialState":"Data","input":"<!DOCTYPE a SYSTEMz","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,122],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_770() {
+fn test_0770() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM{","initialState":"Data","input":"<!DOCTYPE a SYSTEM{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,123],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_771() {
+fn test_0771() {
     tokenize(
         r##"{"description":"<!DOCTYPE a SYSTEM\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a SYSTEM􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,83,89,83,84,69,77,56256,56320],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_772() {
+fn test_0772() {
     tokenize(
         r##"{"description":"<!DOCTYPE a Y","initialState":"Data","input":"<!DOCTYPE a Y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,89],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_773() {
+fn test_0773() {
     tokenize(
         r##"{"description":"<!DOCTYPE a Z","initialState":"Data","input":"<!DOCTYPE a Z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,90],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_774() {
+fn test_0774() {
     tokenize(
         r##"{"description":"<!DOCTYPE a `","initialState":"Data","input":"<!DOCTYPE a `","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,96],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_775() {
+fn test_0775() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a","initialState":"Data","input":"<!DOCTYPE a a","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_776() {
+fn test_0776() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a\\u0000","initialState":"Data","input":"<!DOCTYPE a a\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":14}}]}"##,
     );
 }
 
 #[test]
-fn test_777() {
+fn test_0777() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a\\u0009","initialState":"Data","input":"<!DOCTYPE a a\t","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_778() {
+fn test_0778() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a\\u000A","initialState":"Data","input":"<!DOCTYPE a a\n","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_779() {
+fn test_0779() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a\\u000B","initialState":"Data","input":"<!DOCTYPE a a\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":14}}]}"##,
     );
 }
 
 #[test]
-fn test_780() {
+fn test_0780() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a\\u000C","initialState":"Data","input":"<!DOCTYPE a a\f","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_781() {
+fn test_0781() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a ","initialState":"Data","input":"<!DOCTYPE a a ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_782() {
+fn test_0782() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a!","initialState":"Data","input":"<!DOCTYPE a a!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_783() {
+fn test_0783() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a\"","initialState":"Data","input":"<!DOCTYPE a a\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,34],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_784() {
+fn test_0784() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a&","initialState":"Data","input":"<!DOCTYPE a a&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_785() {
+fn test_0785() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a'","initialState":"Data","input":"<!DOCTYPE a a'","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,39],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_786() {
+fn test_0786() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a-","initialState":"Data","input":"<!DOCTYPE a a-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_787() {
+fn test_0787() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a/","initialState":"Data","input":"<!DOCTYPE a a/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_788() {
+fn test_0788() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a0","initialState":"Data","input":"<!DOCTYPE a a0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_789() {
+fn test_0789() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a1","initialState":"Data","input":"<!DOCTYPE a a1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_790() {
+fn test_0790() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a9","initialState":"Data","input":"<!DOCTYPE a a9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_791() {
+fn test_0791() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a<","initialState":"Data","input":"<!DOCTYPE a a<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_792() {
+fn test_0792() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a=","initialState":"Data","input":"<!DOCTYPE a a=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_793() {
+fn test_0793() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a>","initialState":"Data","input":"<!DOCTYPE a a>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_794() {
+fn test_0794() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a?","initialState":"Data","input":"<!DOCTYPE a a?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_795() {
+fn test_0795() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a@","initialState":"Data","input":"<!DOCTYPE a a@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_796() {
+fn test_0796() {
     tokenize(
         r##"{"description":"<!DOCTYPE a aA","initialState":"Data","input":"<!DOCTYPE a aA","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_797() {
+fn test_0797() {
     tokenize(
         r##"{"description":"<!DOCTYPE a aB","initialState":"Data","input":"<!DOCTYPE a aB","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_798() {
+fn test_0798() {
     tokenize(
         r##"{"description":"<!DOCTYPE a aY","initialState":"Data","input":"<!DOCTYPE a aY","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,89],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_799() {
+fn test_0799() {
     tokenize(
         r##"{"description":"<!DOCTYPE a aZ","initialState":"Data","input":"<!DOCTYPE a aZ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,90],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_800() {
+fn test_0800() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a`","initialState":"Data","input":"<!DOCTYPE a a`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,96],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_801() {
+fn test_0801() {
     tokenize(
         r##"{"description":"<!DOCTYPE a aa","initialState":"Data","input":"<!DOCTYPE a aa","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_802() {
+fn test_0802() {
     tokenize(
         r##"{"description":"<!DOCTYPE a ab","initialState":"Data","input":"<!DOCTYPE a ab","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,98],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_803() {
+fn test_0803() {
     tokenize(
         r##"{"description":"<!DOCTYPE a ay","initialState":"Data","input":"<!DOCTYPE a ay","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,121],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_804() {
+fn test_0804() {
     tokenize(
         r##"{"description":"<!DOCTYPE a az","initialState":"Data","input":"<!DOCTYPE a az","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,122],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_805() {
+fn test_0805() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a{","initialState":"Data","input":"<!DOCTYPE a a{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,123],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_806() {
+fn test_0806() {
     tokenize(
         r##"{"description":"<!DOCTYPE a a\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a a􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,97,56256,56320],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_807() {
+fn test_0807() {
     tokenize(
         r##"{"description":"<!DOCTYPE a b","initialState":"Data","input":"<!DOCTYPE a b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,98],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_808() {
+fn test_0808() {
     tokenize(
         r##"{"description":"<!DOCTYPE a y","initialState":"Data","input":"<!DOCTYPE a y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,121],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_809() {
+fn test_0809() {
     tokenize(
         r##"{"description":"<!DOCTYPE a z","initialState":"Data","input":"<!DOCTYPE a z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,122],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_810() {
+fn test_0810() {
     tokenize(
         r##"{"description":"<!DOCTYPE a {","initialState":"Data","input":"<!DOCTYPE a {","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,123],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_811() {
+fn test_0811() {
     tokenize(
         r##"{"description":"<!DOCTYPE a \\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a 􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,32,56256,56320],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_812() {
+fn test_0812() {
     tokenize(
         r##"{"description":"<!DOCTYPE a!","initialState":"Data","input":"<!DOCTYPE a!","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,33],"output":[{"Doctype":{"name":"a!","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_813() {
+fn test_0813() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\"","initialState":"Data","input":"<!DOCTYPE a\"","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,34],"output":[{"Doctype":{"name":"a\"","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_814() {
+fn test_0814() {
     tokenize(
         r##"{"description":"<!DOCTYPE a&","initialState":"Data","input":"<!DOCTYPE a&","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,38],"output":[{"Doctype":{"name":"a&","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_815() {
+fn test_0815() {
     tokenize(
         r##"{"description":"<!DOCTYPE a'","initialState":"Data","input":"<!DOCTYPE a'","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,39],"output":[{"Doctype":{"name":"a'","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_816() {
+fn test_0816() {
     tokenize(
         r##"{"description":"<!DOCTYPE a-","initialState":"Data","input":"<!DOCTYPE a-","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,45],"output":[{"Doctype":{"name":"a-","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_817() {
+fn test_0817() {
     tokenize(
         r##"{"description":"<!DOCTYPE a/","initialState":"Data","input":"<!DOCTYPE a/","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,47],"output":[{"Doctype":{"name":"a/","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_818() {
+fn test_0818() {
     tokenize(
         r##"{"description":"<!DOCTYPE a0","initialState":"Data","input":"<!DOCTYPE a0","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,48],"output":[{"Doctype":{"name":"a0","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_819() {
+fn test_0819() {
     tokenize(
         r##"{"description":"<!DOCTYPE a1","initialState":"Data","input":"<!DOCTYPE a1","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,49],"output":[{"Doctype":{"name":"a1","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_820() {
+fn test_0820() {
     tokenize(
         r##"{"description":"<!DOCTYPE a9","initialState":"Data","input":"<!DOCTYPE a9","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,57],"output":[{"Doctype":{"name":"a9","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_821() {
+fn test_0821() {
     tokenize(
         r##"{"description":"<!DOCTYPE a<","initialState":"Data","input":"<!DOCTYPE a<","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,60],"output":[{"Doctype":{"name":"a<","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_822() {
+fn test_0822() {
     tokenize(
         r##"{"description":"<!DOCTYPE a=","initialState":"Data","input":"<!DOCTYPE a=","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,61],"output":[{"Doctype":{"name":"a=","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_823() {
+fn test_0823() {
     tokenize(
         r##"{"description":"<!DOCTYPE a>","initialState":"Data","input":"<!DOCTYPE a>","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":false}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_824() {
+fn test_0824() {
     tokenize(
         r##"{"description":"<!DOCTYPE a?","initialState":"Data","input":"<!DOCTYPE a?","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,63],"output":[{"Doctype":{"name":"a?","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_825() {
+fn test_0825() {
     tokenize(
         r##"{"description":"<!DOCTYPE a@","initialState":"Data","input":"<!DOCTYPE a@","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,64],"output":[{"Doctype":{"name":"a@","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_826() {
+fn test_0826() {
     tokenize(
         r##"{"description":"<!DOCTYPE aA","initialState":"Data","input":"<!DOCTYPE aA","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,65],"output":[{"Doctype":{"name":"aa","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_827() {
+fn test_0827() {
     tokenize(
         r##"{"description":"<!DOCTYPE aB","initialState":"Data","input":"<!DOCTYPE aB","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,66],"output":[{"Doctype":{"name":"ab","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_828() {
+fn test_0828() {
     tokenize(
         r##"{"description":"<!DOCTYPE aY","initialState":"Data","input":"<!DOCTYPE aY","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,89],"output":[{"Doctype":{"name":"ay","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_829() {
+fn test_0829() {
     tokenize(
         r##"{"description":"<!DOCTYPE aZ","initialState":"Data","input":"<!DOCTYPE aZ","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,90],"output":[{"Doctype":{"name":"az","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_830() {
+fn test_0830() {
     tokenize(
         r##"{"description":"<!DOCTYPE a[","initialState":"Data","input":"<!DOCTYPE a[","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,91],"output":[{"Doctype":{"name":"a[","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_831() {
+fn test_0831() {
     tokenize(
         r##"{"description":"<!DOCTYPE a`","initialState":"Data","input":"<!DOCTYPE a`","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,96],"output":[{"Doctype":{"name":"a`","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_832() {
+fn test_0832() {
     tokenize(
         r##"{"description":"<!DOCTYPE aa","initialState":"Data","input":"<!DOCTYPE aa","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,97],"output":[{"Doctype":{"name":"aa","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_833() {
+fn test_0833() {
     tokenize(
         r##"{"description":"<!DOCTYPE ab","initialState":"Data","input":"<!DOCTYPE ab","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,98],"output":[{"Doctype":{"name":"ab","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_834() {
+fn test_0834() {
     tokenize(
         r##"{"description":"<!DOCTYPE ay","initialState":"Data","input":"<!DOCTYPE ay","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,121],"output":[{"Doctype":{"name":"ay","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_835() {
+fn test_0835() {
     tokenize(
         r##"{"description":"<!DOCTYPE az","initialState":"Data","input":"<!DOCTYPE az","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,122],"output":[{"Doctype":{"name":"az","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_836() {
+fn test_0836() {
     tokenize(
         r##"{"description":"<!DOCTYPE a{","initialState":"Data","input":"<!DOCTYPE a{","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,123],"output":[{"Doctype":{"name":"a{","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_837() {
+fn test_0837() {
     tokenize(
         r##"{"description":"<!DOCTYPE a\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE a􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,97,56256,56320],"output":[{"Doctype":{"name":"a􀀀","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_838() {
+fn test_0838() {
     tokenize(
         r##"{"description":"<!DOCTYPE b","initialState":"Data","input":"<!DOCTYPE b","inputUtf16":[60,33,68,79,67,84,89,80,69,32,98],"output":[{"Doctype":{"name":"b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_839() {
+fn test_0839() {
     tokenize(
         r##"{"description":"<!DOCTYPE y","initialState":"Data","input":"<!DOCTYPE y","inputUtf16":[60,33,68,79,67,84,89,80,69,32,121],"output":[{"Doctype":{"name":"y","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_840() {
+fn test_0840() {
     tokenize(
         r##"{"description":"<!DOCTYPE z","initialState":"Data","input":"<!DOCTYPE z","inputUtf16":[60,33,68,79,67,84,89,80,69,32,122],"output":[{"Doctype":{"name":"z","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_841() {
+fn test_0841() {
     tokenize(
         r##"{"description":"<!DOCTYPE {","initialState":"Data","input":"<!DOCTYPE {","inputUtf16":[60,33,68,79,67,84,89,80,69,32,123],"output":[{"Doctype":{"name":"{","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_842() {
+fn test_0842() {
     tokenize(
         r##"{"description":"<!DOCTYPE \\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPE 􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,32,56256,56320],"output":[{"Doctype":{"name":"􀀀","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_843() {
+fn test_0843() {
     tokenize(
         r##"{"description":"<!DOCTYPE!","initialState":"Data","input":"<!DOCTYPE!","inputUtf16":[60,33,68,79,67,84,89,80,69,33],"output":[{"Doctype":{"name":"!","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_844() {
+fn test_0844() {
     tokenize(
         r##"{"description":"<!DOCTYPE\"","initialState":"Data","input":"<!DOCTYPE\"","inputUtf16":[60,33,68,79,67,84,89,80,69,34],"output":[{"Doctype":{"name":"\"","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_845() {
+fn test_0845() {
     tokenize(
         r##"{"description":"<!DOCTYPE&","initialState":"Data","input":"<!DOCTYPE&","inputUtf16":[60,33,68,79,67,84,89,80,69,38],"output":[{"Doctype":{"name":"&","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_846() {
+fn test_0846() {
     tokenize(
         r##"{"description":"<!DOCTYPE'","initialState":"Data","input":"<!DOCTYPE'","inputUtf16":[60,33,68,79,67,84,89,80,69,39],"output":[{"Doctype":{"name":"'","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_847() {
+fn test_0847() {
     tokenize(
         r##"{"description":"<!DOCTYPE-","initialState":"Data","input":"<!DOCTYPE-","inputUtf16":[60,33,68,79,67,84,89,80,69,45],"output":[{"Doctype":{"name":"-","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_848() {
+fn test_0848() {
     tokenize(
         r##"{"description":"<!DOCTYPE/","initialState":"Data","input":"<!DOCTYPE/","inputUtf16":[60,33,68,79,67,84,89,80,69,47],"output":[{"Doctype":{"name":"/","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_849() {
+fn test_0849() {
     tokenize(
         r##"{"description":"<!DOCTYPE0","initialState":"Data","input":"<!DOCTYPE0","inputUtf16":[60,33,68,79,67,84,89,80,69,48],"output":[{"Doctype":{"name":"0","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_850() {
+fn test_0850() {
     tokenize(
         r##"{"description":"<!DOCTYPE1","initialState":"Data","input":"<!DOCTYPE1","inputUtf16":[60,33,68,79,67,84,89,80,69,49],"output":[{"Doctype":{"name":"1","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_851() {
+fn test_0851() {
     tokenize(
         r##"{"description":"<!DOCTYPE9","initialState":"Data","input":"<!DOCTYPE9","inputUtf16":[60,33,68,79,67,84,89,80,69,57],"output":[{"Doctype":{"name":"9","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_852() {
+fn test_0852() {
     tokenize(
         r##"{"description":"<!DOCTYPE<","initialState":"Data","input":"<!DOCTYPE<","inputUtf16":[60,33,68,79,67,84,89,80,69,60],"output":[{"Doctype":{"name":"<","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_853() {
+fn test_0853() {
     tokenize(
         r##"{"description":"<!DOCTYPE=","initialState":"Data","input":"<!DOCTYPE=","inputUtf16":[60,33,68,79,67,84,89,80,69,61],"output":[{"Doctype":{"name":"=","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_854() {
+fn test_0854() {
     tokenize(
         r##"{"description":"<!DOCTYPE>","initialState":"Data","input":"<!DOCTYPE>","inputUtf16":[60,33,68,79,67,84,89,80,69,62],"output":[{"Doctype":{"name":null,"public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingDoctypeName","location":{"line":1,"column":10}}]}"##,
     );
 }
 
 #[test]
-fn test_855() {
+fn test_0855() {
     tokenize(
         r##"{"description":"<!DOCTYPE?","initialState":"Data","input":"<!DOCTYPE?","inputUtf16":[60,33,68,79,67,84,89,80,69,63],"output":[{"Doctype":{"name":"?","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_856() {
+fn test_0856() {
     tokenize(
         r##"{"description":"<!DOCTYPE@","initialState":"Data","input":"<!DOCTYPE@","inputUtf16":[60,33,68,79,67,84,89,80,69,64],"output":[{"Doctype":{"name":"@","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_857() {
+fn test_0857() {
     tokenize(
         r##"{"description":"<!DOCTYPEA","initialState":"Data","input":"<!DOCTYPEA","inputUtf16":[60,33,68,79,67,84,89,80,69,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_858() {
+fn test_0858() {
     tokenize(
         r##"{"description":"<!DOCTYPEB","initialState":"Data","input":"<!DOCTYPEB","inputUtf16":[60,33,68,79,67,84,89,80,69,66],"output":[{"Doctype":{"name":"b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_859() {
+fn test_0859() {
     tokenize(
         r##"{"description":"<!DOCTYPEY","initialState":"Data","input":"<!DOCTYPEY","inputUtf16":[60,33,68,79,67,84,89,80,69,89],"output":[{"Doctype":{"name":"y","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_860() {
+fn test_0860() {
     tokenize(
         r##"{"description":"<!DOCTYPEZ","initialState":"Data","input":"<!DOCTYPEZ","inputUtf16":[60,33,68,79,67,84,89,80,69,90],"output":[{"Doctype":{"name":"z","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_861() {
+fn test_0861() {
     tokenize(
         r##"{"description":"<!DOCTYPE`","initialState":"Data","input":"<!DOCTYPE`","inputUtf16":[60,33,68,79,67,84,89,80,69,96],"output":[{"Doctype":{"name":"`","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_862() {
+fn test_0862() {
     tokenize(
         r##"{"description":"<!DOCTYPEa","initialState":"Data","input":"<!DOCTYPEa","inputUtf16":[60,33,68,79,67,84,89,80,69,97],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":11}}]}"##,
     );
 }
 
 #[test]
-fn test_863() {
+fn test_0863() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u0000","initialState":"Data","input":"<!DOCTYPEa\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,97,0],"output":[{"Doctype":{"name":"a�","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_864() {
+fn test_0864() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u0008","initialState":"Data","input":"<!DOCTYPEa\b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,8],"output":[{"Doctype":{"name":"a\b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_865() {
+fn test_0865() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u0009","initialState":"Data","input":"<!DOCTYPEa\t","inputUtf16":[60,33,68,79,67,84,89,80,69,97,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_866() {
+fn test_0866() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u000A","initialState":"Data","input":"<!DOCTYPEa\n","inputUtf16":[60,33,68,79,67,84,89,80,69,97,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_867() {
+fn test_0867() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u000B","initialState":"Data","input":"<!DOCTYPEa\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,11],"output":[{"Doctype":{"name":"a\u000b","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_868() {
+fn test_0868() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u000C","initialState":"Data","input":"<!DOCTYPEa\f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_869() {
+fn test_0869() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u000D","initialState":"Data","input":"<!DOCTYPEa\r","inputUtf16":[60,33,68,79,67,84,89,80,69,97,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_870() {
+fn test_0870() {
     tokenize(
         r##"{"description":"<!DOCTYPEa\\u001F","initialState":"Data","input":"<!DOCTYPEa\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,31],"output":[{"Doctype":{"name":"a\u001f","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":11}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_871() {
+fn test_0871() {
     tokenize(
         r##"{"description":"<!DOCTYPEa ","initialState":"Data","input":"<!DOCTYPEa ","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_872() {
+fn test_0872() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u0000","initialState":"Data","input":"<!DOCTYPEa \u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_873() {
+fn test_0873() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u0008","initialState":"Data","input":"<!DOCTYPEa \b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,8],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":12}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_874() {
+fn test_0874() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u0009","initialState":"Data","input":"<!DOCTYPEa \t","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_875() {
+fn test_0875() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u000A","initialState":"Data","input":"<!DOCTYPEa \n","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_876() {
+fn test_0876() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u000B","initialState":"Data","input":"<!DOCTYPEa \u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":12}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_877() {
+fn test_0877() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u000C","initialState":"Data","input":"<!DOCTYPEa \f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_878() {
+fn test_0878() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u000D","initialState":"Data","input":"<!DOCTYPEa \r","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_879() {
+fn test_0879() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \\u001F","initialState":"Data","input":"<!DOCTYPEa \u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,31],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":12}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_880() {
+fn test_0880() {
     tokenize(
         r##"{"description":"<!DOCTYPEa  ","initialState":"Data","input":"<!DOCTYPEa  ","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":13}}]}"##,
     );
 }
 
 #[test]
-fn test_881() {
+fn test_0881() {
     tokenize(
         r##"{"description":"<!DOCTYPEa !","initialState":"Data","input":"<!DOCTYPEa !","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_882() {
+fn test_0882() {
     tokenize(
         r##"{"description":"<!DOCTYPEa \"","initialState":"Data","input":"<!DOCTYPEa \"","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,34],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_883() {
+fn test_0883() {
     tokenize(
         r##"{"description":"<!DOCTYPEa &","initialState":"Data","input":"<!DOCTYPEa &","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_884() {
+fn test_0884() {
     tokenize(
         r##"{"description":"<!DOCTYPEa '","initialState":"Data","input":"<!DOCTYPEa '","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,39],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_885() {
+fn test_0885() {
     tokenize(
         r##"{"description":"<!DOCTYPEa -","initialState":"Data","input":"<!DOCTYPEa -","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,45],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_886() {
+fn test_0886() {
     tokenize(
         r##"{"description":"<!DOCTYPEa /","initialState":"Data","input":"<!DOCTYPEa /","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,47],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_887() {
+fn test_0887() {
     tokenize(
         r##"{"description":"<!DOCTYPEa 0","initialState":"Data","input":"<!DOCTYPEa 0","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,48],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_888() {
+fn test_0888() {
     tokenize(
         r##"{"description":"<!DOCTYPEa 1","initialState":"Data","input":"<!DOCTYPEa 1","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,49],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_889() {
+fn test_0889() {
     tokenize(
         r##"{"description":"<!DOCTYPEa 9","initialState":"Data","input":"<!DOCTYPEa 9","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,57],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_890() {
+fn test_0890() {
     tokenize(
         r##"{"description":"<!DOCTYPEa <","initialState":"Data","input":"<!DOCTYPEa <","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,60],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_891() {
+fn test_0891() {
     tokenize(
         r##"{"description":"<!DOCTYPEa =","initialState":"Data","input":"<!DOCTYPEa =","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,61],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_892() {
+fn test_0892() {
     tokenize(
         r##"{"description":"<!DOCTYPEa >","initialState":"Data","input":"<!DOCTYPEa >","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,62],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":false}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}}]}"##,
     );
 }
 
 #[test]
-fn test_893() {
+fn test_0893() {
     tokenize(
         r##"{"description":"<!DOCTYPEa ?","initialState":"Data","input":"<!DOCTYPEa ?","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,63],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_894() {
+fn test_0894() {
     tokenize(
         r##"{"description":"<!DOCTYPEa @","initialState":"Data","input":"<!DOCTYPEa @","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,64],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_895() {
+fn test_0895() {
     tokenize(
         r##"{"description":"<!DOCTYPEa A","initialState":"Data","input":"<!DOCTYPEa A","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,65],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_896() {
+fn test_0896() {
     tokenize(
         r##"{"description":"<!DOCTYPEa B","initialState":"Data","input":"<!DOCTYPEa B","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,66],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"InvalidCharacterSequenceAfterDoctypeName","location":{"line":1,"column":12}}]}"##,
     );
 }
 
 #[test]
-fn test_897() {
+fn test_0897() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC","initialState":"Data","input":"<!DOCTYPEa PUBLIC","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_898() {
+fn test_0898() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u0000","initialState":"Data","input":"<!DOCTYPEa PUBLIC\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,0],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":18}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_899() {
+fn test_0899() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u0008","initialState":"Data","input":"<!DOCTYPEa PUBLIC\b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,8],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_900() {
+fn test_0900() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u0009","initialState":"Data","input":"<!DOCTYPEa PUBLIC\t","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,9],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_901() {
+fn test_0901() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u000A","initialState":"Data","input":"<!DOCTYPEa PUBLIC\n","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,10],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_902() {
+fn test_0902() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u000B","initialState":"Data","input":"<!DOCTYPEa PUBLIC\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,11],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_903() {
+fn test_0903() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u000C","initialState":"Data","input":"<!DOCTYPEa PUBLIC\f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,12],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_904() {
+fn test_0904() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u000D","initialState":"Data","input":"<!DOCTYPEa PUBLIC\r","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,13],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_905() {
+fn test_0905() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\\u001F","initialState":"Data","input":"<!DOCTYPEa PUBLIC\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,31],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_906() {
+fn test_0906() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC ","initialState":"Data","input":"<!DOCTYPEa PUBLIC ","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,32],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"EofInDoctype","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_907() {
+fn test_0907() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC!","initialState":"Data","input":"<!DOCTYPEa PUBLIC!","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,33],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_908() {
+fn test_0908() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_909() {
+fn test_0909() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"\\u0000","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,0],"output":[{"Doctype":{"name":"a","public_id":"�","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_910() {
+fn test_0910() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"\\u0009","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"\t","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,9],"output":[{"Doctype":{"name":"a","public_id":"\t","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_911() {
+fn test_0911() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"\\u000A","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"\n","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,10],"output":[{"Doctype":{"name":"a","public_id":"\n","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_912() {
+fn test_0912() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"\\u000B","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,11],"output":[{"Doctype":{"name":"a","public_id":"\u000b","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_913() {
+fn test_0913() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"\\u000C","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"\f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,12],"output":[{"Doctype":{"name":"a","public_id":"\f","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_914() {
+fn test_0914() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\" ","initialState":"Data","input":"<!DOCTYPEa PUBLIC\" ","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,32],"output":[{"Doctype":{"name":"a","public_id":" ","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_915() {
+fn test_0915() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"!","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"!","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,33],"output":[{"Doctype":{"name":"a","public_id":"!","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_916() {
+fn test_0916() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"\"","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"\"","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,34],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_917() {
+fn test_0917() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"#","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"#","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,35],"output":[{"Doctype":{"name":"a","public_id":"#","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_918() {
+fn test_0918() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"&","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"&","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,38],"output":[{"Doctype":{"name":"a","public_id":"&","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_919() {
+fn test_0919() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"'","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"'","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,39],"output":[{"Doctype":{"name":"a","public_id":"'","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_920() {
+fn test_0920() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"-","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"-","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,45],"output":[{"Doctype":{"name":"a","public_id":"-","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_921() {
+fn test_0921() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"/","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"/","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,47],"output":[{"Doctype":{"name":"a","public_id":"/","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_922() {
+fn test_0922() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"0","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"0","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,48],"output":[{"Doctype":{"name":"a","public_id":"0","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_923() {
+fn test_0923() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"1","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"1","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,49],"output":[{"Doctype":{"name":"a","public_id":"1","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_924() {
+fn test_0924() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"9","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"9","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,57],"output":[{"Doctype":{"name":"a","public_id":"9","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_925() {
+fn test_0925() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"<","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"<","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,60],"output":[{"Doctype":{"name":"a","public_id":"<","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_926() {
+fn test_0926() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"=","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"=","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,61],"output":[{"Doctype":{"name":"a","public_id":"=","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_927() {
+fn test_0927() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\">","initialState":"Data","input":"<!DOCTYPEa PUBLIC\">","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,62],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"AbruptDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_928() {
+fn test_0928() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"?","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"?","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,63],"output":[{"Doctype":{"name":"a","public_id":"?","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_929() {
+fn test_0929() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"@","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"@","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,64],"output":[{"Doctype":{"name":"a","public_id":"@","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_930() {
+fn test_0930() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"A","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"A","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,65],"output":[{"Doctype":{"name":"a","public_id":"A","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_931() {
+fn test_0931() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"B","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"B","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,66],"output":[{"Doctype":{"name":"a","public_id":"B","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_932() {
+fn test_0932() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"Y","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"Y","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,89],"output":[{"Doctype":{"name":"a","public_id":"Y","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_933() {
+fn test_0933() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"Z","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"Z","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,90],"output":[{"Doctype":{"name":"a","public_id":"Z","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_934() {
+fn test_0934() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"`","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"`","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,96],"output":[{"Doctype":{"name":"a","public_id":"`","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_935() {
+fn test_0935() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"a","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"a","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,97],"output":[{"Doctype":{"name":"a","public_id":"a","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_936() {
+fn test_0936() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"b","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,98],"output":[{"Doctype":{"name":"a","public_id":"b","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_937() {
+fn test_0937() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"y","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"y","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,121],"output":[{"Doctype":{"name":"a","public_id":"y","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_938() {
+fn test_0938() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"z","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"z","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,122],"output":[{"Doctype":{"name":"a","public_id":"z","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_939() {
+fn test_0939() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"{","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"{","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,123],"output":[{"Doctype":{"name":"a","public_id":"{","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_940() {
+fn test_0940() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC\"\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPEa PUBLIC\"􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,34,56256,56320],"output":[{"Doctype":{"name":"a","public_id":"􀀀","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_941() {
+fn test_0941() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC#","initialState":"Data","input":"<!DOCTYPEa PUBLIC#","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,35],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_942() {
+fn test_0942() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC&","initialState":"Data","input":"<!DOCTYPEa PUBLIC&","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,38],"output":[{"Doctype":{"name":"a","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingQuoteBeforeDoctypePublicIdentifier","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_943() {
+fn test_0943() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'","initialState":"Data","input":"<!DOCTYPEa PUBLIC'","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_944() {
+fn test_0944() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'\\u0000","initialState":"Data","input":"<!DOCTYPEa PUBLIC'\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,0],"output":[{"Doctype":{"name":"a","public_id":"�","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_945() {
+fn test_0945() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'\\u0009","initialState":"Data","input":"<!DOCTYPEa PUBLIC'\t","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,9],"output":[{"Doctype":{"name":"a","public_id":"\t","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_946() {
+fn test_0946() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'\\u000A","initialState":"Data","input":"<!DOCTYPEa PUBLIC'\n","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,10],"output":[{"Doctype":{"name":"a","public_id":"\n","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_947() {
+fn test_0947() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'\\u000B","initialState":"Data","input":"<!DOCTYPEa PUBLIC'\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,11],"output":[{"Doctype":{"name":"a","public_id":"\u000b","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":19}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_948() {
+fn test_0948() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'\\u000C","initialState":"Data","input":"<!DOCTYPEa PUBLIC'\f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,12],"output":[{"Doctype":{"name":"a","public_id":"\f","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_949() {
+fn test_0949() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC' ","initialState":"Data","input":"<!DOCTYPEa PUBLIC' ","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,32],"output":[{"Doctype":{"name":"a","public_id":" ","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_950() {
+fn test_0950() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'!","initialState":"Data","input":"<!DOCTYPEa PUBLIC'!","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,33],"output":[{"Doctype":{"name":"a","public_id":"!","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_951() {
+fn test_0951() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'\"","initialState":"Data","input":"<!DOCTYPEa PUBLIC'\"","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,34],"output":[{"Doctype":{"name":"a","public_id":"\"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_952() {
+fn test_0952() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'&","initialState":"Data","input":"<!DOCTYPEa PUBLIC'&","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,38],"output":[{"Doctype":{"name":"a","public_id":"&","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_953() {
+fn test_0953() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''","initialState":"Data","input":"<!DOCTYPEa PUBLIC''","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_954() {
+fn test_0954() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u0000","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\u0000","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,0],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}},{"code":"UnexpectedNullCharacter","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_955() {
+fn test_0955() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u0008","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,8],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":20}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_956() {
+fn test_0956() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u0009","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\t","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,9],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_957() {
+fn test_0957() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u000A","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\n","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,10],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_958() {
+fn test_0958() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u000B","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\u000b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,11],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":20}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_959() {
+fn test_0959() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u000C","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,12],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_960() {
+fn test_0960() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u000D","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\r","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,13],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":2,"column":1}}]}"##,
     );
 }
 
 #[test]
-fn test_961() {
+fn test_0961() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\u001F","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\u001f","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,31],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"ControlCharacterInInputStream","location":{"line":1,"column":20}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_962() {
+fn test_0962() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'' ","initialState":"Data","input":"<!DOCTYPEa PUBLIC'' ","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,32],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_963() {
+fn test_0963() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''!","initialState":"Data","input":"<!DOCTYPEa PUBLIC''!","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,33],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_964() {
+fn test_0964() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\"","initialState":"Data","input":"<!DOCTYPEa PUBLIC''\"","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,34],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_965() {
+fn test_0965() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''#","initialState":"Data","input":"<!DOCTYPEa PUBLIC''#","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,35],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_966() {
+fn test_0966() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''&","initialState":"Data","input":"<!DOCTYPEa PUBLIC''&","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,38],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_967() {
+fn test_0967() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'''","initialState":"Data","input":"<!DOCTYPEa PUBLIC'''","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,39],"output":[{"Doctype":{"name":"a","public_id":"","system_id":"","force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingWhitespaceBetweenDoctypePublicAndSystemIdentifiers","location":{"line":1,"column":20}},{"code":"EofInDoctype","location":{"line":1,"column":21}}]}"##,
     );
 }
 
 #[test]
-fn test_968() {
+fn test_0968() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''(","initialState":"Data","input":"<!DOCTYPEa PUBLIC''(","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,40],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_969() {
+fn test_0969() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''-","initialState":"Data","input":"<!DOCTYPEa PUBLIC''-","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,45],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_970() {
+fn test_0970() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''/","initialState":"Data","input":"<!DOCTYPEa PUBLIC''/","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,47],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_971() {
+fn test_0971() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''0","initialState":"Data","input":"<!DOCTYPEa PUBLIC''0","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,48],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_972() {
+fn test_0972() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''1","initialState":"Data","input":"<!DOCTYPEa PUBLIC''1","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,49],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_973() {
+fn test_0973() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''9","initialState":"Data","input":"<!DOCTYPEa PUBLIC''9","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,57],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_974() {
+fn test_0974() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''<","initialState":"Data","input":"<!DOCTYPEa PUBLIC''<","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,60],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_975() {
+fn test_0975() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''=","initialState":"Data","input":"<!DOCTYPEa PUBLIC''=","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,61],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_976() {
+fn test_0976() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''>","initialState":"Data","input":"<!DOCTYPEa PUBLIC''>","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,62],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":false}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}}]}"##,
     );
 }
 
 #[test]
-fn test_977() {
+fn test_0977() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''?","initialState":"Data","input":"<!DOCTYPEa PUBLIC''?","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,63],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_978() {
+fn test_0978() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''@","initialState":"Data","input":"<!DOCTYPEa PUBLIC''@","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,64],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_979() {
+fn test_0979() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''A","initialState":"Data","input":"<!DOCTYPEa PUBLIC''A","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,65],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_980() {
+fn test_0980() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''B","initialState":"Data","input":"<!DOCTYPEa PUBLIC''B","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,66],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_981() {
+fn test_0981() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''Y","initialState":"Data","input":"<!DOCTYPEa PUBLIC''Y","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,89],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_982() {
+fn test_0982() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''Z","initialState":"Data","input":"<!DOCTYPEa PUBLIC''Z","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,90],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_983() {
+fn test_0983() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''`","initialState":"Data","input":"<!DOCTYPEa PUBLIC''`","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,96],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_984() {
+fn test_0984() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''a","initialState":"Data","input":"<!DOCTYPEa PUBLIC''a","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,97],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_985() {
+fn test_0985() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''b","initialState":"Data","input":"<!DOCTYPEa PUBLIC''b","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,98],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_986() {
+fn test_0986() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''y","initialState":"Data","input":"<!DOCTYPEa PUBLIC''y","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,121],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_987() {
+fn test_0987() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''z","initialState":"Data","input":"<!DOCTYPEa PUBLIC''z","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,122],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_988() {
+fn test_0988() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''{","initialState":"Data","input":"<!DOCTYPEa PUBLIC''{","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,123],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_989() {
+fn test_0989() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC''\\uDBC0\\uDC00","initialState":"Data","input":"<!DOCTYPEa PUBLIC''􀀀","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,39,56256,56320],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"MissingQuoteBeforeDoctypeSystemIdentifier","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_990() {
+fn test_0990() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'(","initialState":"Data","input":"<!DOCTYPEa PUBLIC'(","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,40],"output":[{"Doctype":{"name":"a","public_id":"(","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_991() {
+fn test_0991() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'-","initialState":"Data","input":"<!DOCTYPEa PUBLIC'-","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,45],"output":[{"Doctype":{"name":"a","public_id":"-","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_992() {
+fn test_0992() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'/","initialState":"Data","input":"<!DOCTYPEa PUBLIC'/","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,47],"output":[{"Doctype":{"name":"a","public_id":"/","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_993() {
+fn test_0993() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'0","initialState":"Data","input":"<!DOCTYPEa PUBLIC'0","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,48],"output":[{"Doctype":{"name":"a","public_id":"0","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_994() {
+fn test_0994() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'1","initialState":"Data","input":"<!DOCTYPEa PUBLIC'1","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,49],"output":[{"Doctype":{"name":"a","public_id":"1","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_995() {
+fn test_0995() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'9","initialState":"Data","input":"<!DOCTYPEa PUBLIC'9","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,57],"output":[{"Doctype":{"name":"a","public_id":"9","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_996() {
+fn test_0996() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'<","initialState":"Data","input":"<!DOCTYPEa PUBLIC'<","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,60],"output":[{"Doctype":{"name":"a","public_id":"<","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_997() {
+fn test_0997() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'=","initialState":"Data","input":"<!DOCTYPEa PUBLIC'=","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,61],"output":[{"Doctype":{"name":"a","public_id":"=","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );
 }
 
 #[test]
-fn test_998() {
+fn test_0998() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'>","initialState":"Data","input":"<!DOCTYPEa PUBLIC'>","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,62],"output":[{"Doctype":{"name":"a","public_id":"","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"AbruptDoctypePublicIdentifier","location":{"line":1,"column":19}}]}"##,
     );
 }
 
 #[test]
-fn test_999() {
+fn test_0999() {
     tokenize(
         r##"{"description":"<!DOCTYPEa PUBLIC'?","initialState":"Data","input":"<!DOCTYPEa PUBLIC'?","inputUtf16":[60,33,68,79,67,84,89,80,69,97,32,80,85,66,76,73,67,39,63],"output":[{"Doctype":{"name":"a","public_id":"?","system_id":null,"force_quirks":true}}],"errors":[{"code":"MissingWhitespaceBeforeDoctypeName","location":{"line":1,"column":10}},{"code":"MissingWhitespaceAfterDoctypePublicKeyword","location":{"line":1,"column":18}},{"code":"EofInDoctype","location":{"line":1,"column":20}}]}"##,
     );

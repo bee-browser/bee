@@ -50,7 +50,8 @@ src/tokenizer/%.json: data/tokenizer/%.test scripts/tokenizer.json.js
 TREE_CONSTRUCTION_TEST_NAMES := \
   comments01 \
   doctype01 \
-  entities01
+  entities01 \
+  entities02
 TREE_CONSTRUCTION_TESTS := $(addprefix src/tree_construction/,$(addsuffix _test.rs,$(TREE_CONSTRUCTION_TEST_NAMES)))
 
 .PHONY: codegen-tree-construction

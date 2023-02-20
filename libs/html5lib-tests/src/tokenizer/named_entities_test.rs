@@ -2,7000 +2,7000 @@
 use super::helper::tokenize;
 
 #[test]
-fn test_0() {
+fn test_0000() {
     tokenize(
         r##"{"description":"Named entity: AElig without a semi-colon","initialState":"Data","input":"&AElig","inputUtf16":[38,65,69,108,105,103],"output":[{"Character":{"data":"Æ"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_1() {
+fn test_0001() {
     tokenize(
         r##"{"description":"Named entity: AElig; with a semi-colon","initialState":"Data","input":"&AElig;","inputUtf16":[38,65,69,108,105,103,59],"output":[{"Character":{"data":"Æ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_2() {
+fn test_0002() {
     tokenize(
         r##"{"description":"Named entity: AMP without a semi-colon","initialState":"Data","input":"&AMP","inputUtf16":[38,65,77,80],"output":[{"Character":{"data":"&"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":5}}]}"##,
     );
 }
 
 #[test]
-fn test_3() {
+fn test_0003() {
     tokenize(
         r##"{"description":"Named entity: AMP; with a semi-colon","initialState":"Data","input":"&AMP;","inputUtf16":[38,65,77,80,59],"output":[{"Character":{"data":"&"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_4() {
+fn test_0004() {
     tokenize(
         r##"{"description":"Named entity: Aacute without a semi-colon","initialState":"Data","input":"&Aacute","inputUtf16":[38,65,97,99,117,116,101],"output":[{"Character":{"data":"Á"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_5() {
+fn test_0005() {
     tokenize(
         r##"{"description":"Named entity: Aacute; with a semi-colon","initialState":"Data","input":"&Aacute;","inputUtf16":[38,65,97,99,117,116,101,59],"output":[{"Character":{"data":"Á"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_6() {
+fn test_0006() {
     tokenize(
         r##"{"description":"Bad named entity: Abreve without a semi-colon","initialState":"Data","input":"&Abreve","inputUtf16":[38,65,98,114,101,118,101],"output":[{"Character":{"data":"&Abreve"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_7() {
+fn test_0007() {
     tokenize(
         r##"{"description":"Named entity: Abreve; with a semi-colon","initialState":"Data","input":"&Abreve;","inputUtf16":[38,65,98,114,101,118,101,59],"output":[{"Character":{"data":"Ă"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_8() {
+fn test_0008() {
     tokenize(
         r##"{"description":"Named entity: Acirc without a semi-colon","initialState":"Data","input":"&Acirc","inputUtf16":[38,65,99,105,114,99],"output":[{"Character":{"data":"Â"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_9() {
+fn test_0009() {
     tokenize(
         r##"{"description":"Named entity: Acirc; with a semi-colon","initialState":"Data","input":"&Acirc;","inputUtf16":[38,65,99,105,114,99,59],"output":[{"Character":{"data":"Â"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_10() {
+fn test_0010() {
     tokenize(
         r##"{"description":"Bad named entity: Acy without a semi-colon","initialState":"Data","input":"&Acy","inputUtf16":[38,65,99,121],"output":[{"Character":{"data":"&Acy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_11() {
+fn test_0011() {
     tokenize(
         r##"{"description":"Named entity: Acy; with a semi-colon","initialState":"Data","input":"&Acy;","inputUtf16":[38,65,99,121,59],"output":[{"Character":{"data":"А"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_12() {
+fn test_0012() {
     tokenize(
         r##"{"description":"Bad named entity: Afr without a semi-colon","initialState":"Data","input":"&Afr","inputUtf16":[38,65,102,114],"output":[{"Character":{"data":"&Afr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_13() {
+fn test_0013() {
     tokenize(
         r##"{"description":"Named entity: Afr; with a semi-colon","initialState":"Data","input":"&Afr;","inputUtf16":[38,65,102,114,59],"output":[{"Character":{"data":"𝔄"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_14() {
+fn test_0014() {
     tokenize(
         r##"{"description":"Named entity: Agrave without a semi-colon","initialState":"Data","input":"&Agrave","inputUtf16":[38,65,103,114,97,118,101],"output":[{"Character":{"data":"À"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_15() {
+fn test_0015() {
     tokenize(
         r##"{"description":"Named entity: Agrave; with a semi-colon","initialState":"Data","input":"&Agrave;","inputUtf16":[38,65,103,114,97,118,101,59],"output":[{"Character":{"data":"À"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_16() {
+fn test_0016() {
     tokenize(
         r##"{"description":"Bad named entity: Alpha without a semi-colon","initialState":"Data","input":"&Alpha","inputUtf16":[38,65,108,112,104,97],"output":[{"Character":{"data":"&Alpha"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_17() {
+fn test_0017() {
     tokenize(
         r##"{"description":"Named entity: Alpha; with a semi-colon","initialState":"Data","input":"&Alpha;","inputUtf16":[38,65,108,112,104,97,59],"output":[{"Character":{"data":"Α"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_18() {
+fn test_0018() {
     tokenize(
         r##"{"description":"Bad named entity: Amacr without a semi-colon","initialState":"Data","input":"&Amacr","inputUtf16":[38,65,109,97,99,114],"output":[{"Character":{"data":"&Amacr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_19() {
+fn test_0019() {
     tokenize(
         r##"{"description":"Named entity: Amacr; with a semi-colon","initialState":"Data","input":"&Amacr;","inputUtf16":[38,65,109,97,99,114,59],"output":[{"Character":{"data":"Ā"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_20() {
+fn test_0020() {
     tokenize(
         r##"{"description":"Bad named entity: And without a semi-colon","initialState":"Data","input":"&And","inputUtf16":[38,65,110,100],"output":[{"Character":{"data":"&And"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_21() {
+fn test_0021() {
     tokenize(
         r##"{"description":"Named entity: And; with a semi-colon","initialState":"Data","input":"&And;","inputUtf16":[38,65,110,100,59],"output":[{"Character":{"data":"⩓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_22() {
+fn test_0022() {
     tokenize(
         r##"{"description":"Bad named entity: Aogon without a semi-colon","initialState":"Data","input":"&Aogon","inputUtf16":[38,65,111,103,111,110],"output":[{"Character":{"data":"&Aogon"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_23() {
+fn test_0023() {
     tokenize(
         r##"{"description":"Named entity: Aogon; with a semi-colon","initialState":"Data","input":"&Aogon;","inputUtf16":[38,65,111,103,111,110,59],"output":[{"Character":{"data":"Ą"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_24() {
+fn test_0024() {
     tokenize(
         r##"{"description":"Bad named entity: Aopf without a semi-colon","initialState":"Data","input":"&Aopf","inputUtf16":[38,65,111,112,102],"output":[{"Character":{"data":"&Aopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_25() {
+fn test_0025() {
     tokenize(
         r##"{"description":"Named entity: Aopf; with a semi-colon","initialState":"Data","input":"&Aopf;","inputUtf16":[38,65,111,112,102,59],"output":[{"Character":{"data":"𝔸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_26() {
+fn test_0026() {
     tokenize(
         r##"{"description":"Bad named entity: ApplyFunction without a semi-colon","initialState":"Data","input":"&ApplyFunction","inputUtf16":[38,65,112,112,108,121,70,117,110,99,116,105,111,110],"output":[{"Character":{"data":"&ApplyFunction"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_27() {
+fn test_0027() {
     tokenize(
         r##"{"description":"Named entity: ApplyFunction; with a semi-colon","initialState":"Data","input":"&ApplyFunction;","inputUtf16":[38,65,112,112,108,121,70,117,110,99,116,105,111,110,59],"output":[{"Character":{"data":"⁡"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_28() {
+fn test_0028() {
     tokenize(
         r##"{"description":"Named entity: Aring without a semi-colon","initialState":"Data","input":"&Aring","inputUtf16":[38,65,114,105,110,103],"output":[{"Character":{"data":"Å"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_29() {
+fn test_0029() {
     tokenize(
         r##"{"description":"Named entity: Aring; with a semi-colon","initialState":"Data","input":"&Aring;","inputUtf16":[38,65,114,105,110,103,59],"output":[{"Character":{"data":"Å"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_30() {
+fn test_0030() {
     tokenize(
         r##"{"description":"Bad named entity: Ascr without a semi-colon","initialState":"Data","input":"&Ascr","inputUtf16":[38,65,115,99,114],"output":[{"Character":{"data":"&Ascr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_31() {
+fn test_0031() {
     tokenize(
         r##"{"description":"Named entity: Ascr; with a semi-colon","initialState":"Data","input":"&Ascr;","inputUtf16":[38,65,115,99,114,59],"output":[{"Character":{"data":"𝒜"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_32() {
+fn test_0032() {
     tokenize(
         r##"{"description":"Bad named entity: Assign without a semi-colon","initialState":"Data","input":"&Assign","inputUtf16":[38,65,115,115,105,103,110],"output":[{"Character":{"data":"&Assign"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_33() {
+fn test_0033() {
     tokenize(
         r##"{"description":"Named entity: Assign; with a semi-colon","initialState":"Data","input":"&Assign;","inputUtf16":[38,65,115,115,105,103,110,59],"output":[{"Character":{"data":"≔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_34() {
+fn test_0034() {
     tokenize(
         r##"{"description":"Named entity: Atilde without a semi-colon","initialState":"Data","input":"&Atilde","inputUtf16":[38,65,116,105,108,100,101],"output":[{"Character":{"data":"Ã"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_35() {
+fn test_0035() {
     tokenize(
         r##"{"description":"Named entity: Atilde; with a semi-colon","initialState":"Data","input":"&Atilde;","inputUtf16":[38,65,116,105,108,100,101,59],"output":[{"Character":{"data":"Ã"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_36() {
+fn test_0036() {
     tokenize(
         r##"{"description":"Named entity: Auml without a semi-colon","initialState":"Data","input":"&Auml","inputUtf16":[38,65,117,109,108],"output":[{"Character":{"data":"Ä"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_37() {
+fn test_0037() {
     tokenize(
         r##"{"description":"Named entity: Auml; with a semi-colon","initialState":"Data","input":"&Auml;","inputUtf16":[38,65,117,109,108,59],"output":[{"Character":{"data":"Ä"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_38() {
+fn test_0038() {
     tokenize(
         r##"{"description":"Bad named entity: Backslash without a semi-colon","initialState":"Data","input":"&Backslash","inputUtf16":[38,66,97,99,107,115,108,97,115,104],"output":[{"Character":{"data":"&Backslash"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_39() {
+fn test_0039() {
     tokenize(
         r##"{"description":"Named entity: Backslash; with a semi-colon","initialState":"Data","input":"&Backslash;","inputUtf16":[38,66,97,99,107,115,108,97,115,104,59],"output":[{"Character":{"data":"∖"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_40() {
+fn test_0040() {
     tokenize(
         r##"{"description":"Bad named entity: Barv without a semi-colon","initialState":"Data","input":"&Barv","inputUtf16":[38,66,97,114,118],"output":[{"Character":{"data":"&Barv"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_41() {
+fn test_0041() {
     tokenize(
         r##"{"description":"Named entity: Barv; with a semi-colon","initialState":"Data","input":"&Barv;","inputUtf16":[38,66,97,114,118,59],"output":[{"Character":{"data":"⫧"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_42() {
+fn test_0042() {
     tokenize(
         r##"{"description":"Bad named entity: Barwed without a semi-colon","initialState":"Data","input":"&Barwed","inputUtf16":[38,66,97,114,119,101,100],"output":[{"Character":{"data":"&Barwed"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_43() {
+fn test_0043() {
     tokenize(
         r##"{"description":"Named entity: Barwed; with a semi-colon","initialState":"Data","input":"&Barwed;","inputUtf16":[38,66,97,114,119,101,100,59],"output":[{"Character":{"data":"⌆"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_44() {
+fn test_0044() {
     tokenize(
         r##"{"description":"Bad named entity: Bcy without a semi-colon","initialState":"Data","input":"&Bcy","inputUtf16":[38,66,99,121],"output":[{"Character":{"data":"&Bcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_45() {
+fn test_0045() {
     tokenize(
         r##"{"description":"Named entity: Bcy; with a semi-colon","initialState":"Data","input":"&Bcy;","inputUtf16":[38,66,99,121,59],"output":[{"Character":{"data":"Б"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_46() {
+fn test_0046() {
     tokenize(
         r##"{"description":"Bad named entity: Because without a semi-colon","initialState":"Data","input":"&Because","inputUtf16":[38,66,101,99,97,117,115,101],"output":[{"Character":{"data":"&Because"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_47() {
+fn test_0047() {
     tokenize(
         r##"{"description":"Named entity: Because; with a semi-colon","initialState":"Data","input":"&Because;","inputUtf16":[38,66,101,99,97,117,115,101,59],"output":[{"Character":{"data":"∵"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_48() {
+fn test_0048() {
     tokenize(
         r##"{"description":"Bad named entity: Bernoullis without a semi-colon","initialState":"Data","input":"&Bernoullis","inputUtf16":[38,66,101,114,110,111,117,108,108,105,115],"output":[{"Character":{"data":"&Bernoullis"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_49() {
+fn test_0049() {
     tokenize(
         r##"{"description":"Named entity: Bernoullis; with a semi-colon","initialState":"Data","input":"&Bernoullis;","inputUtf16":[38,66,101,114,110,111,117,108,108,105,115,59],"output":[{"Character":{"data":"ℬ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_50() {
+fn test_0050() {
     tokenize(
         r##"{"description":"Bad named entity: Beta without a semi-colon","initialState":"Data","input":"&Beta","inputUtf16":[38,66,101,116,97],"output":[{"Character":{"data":"&Beta"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_51() {
+fn test_0051() {
     tokenize(
         r##"{"description":"Named entity: Beta; with a semi-colon","initialState":"Data","input":"&Beta;","inputUtf16":[38,66,101,116,97,59],"output":[{"Character":{"data":"Β"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_52() {
+fn test_0052() {
     tokenize(
         r##"{"description":"Bad named entity: Bfr without a semi-colon","initialState":"Data","input":"&Bfr","inputUtf16":[38,66,102,114],"output":[{"Character":{"data":"&Bfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_53() {
+fn test_0053() {
     tokenize(
         r##"{"description":"Named entity: Bfr; with a semi-colon","initialState":"Data","input":"&Bfr;","inputUtf16":[38,66,102,114,59],"output":[{"Character":{"data":"𝔅"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_54() {
+fn test_0054() {
     tokenize(
         r##"{"description":"Bad named entity: Bopf without a semi-colon","initialState":"Data","input":"&Bopf","inputUtf16":[38,66,111,112,102],"output":[{"Character":{"data":"&Bopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_55() {
+fn test_0055() {
     tokenize(
         r##"{"description":"Named entity: Bopf; with a semi-colon","initialState":"Data","input":"&Bopf;","inputUtf16":[38,66,111,112,102,59],"output":[{"Character":{"data":"𝔹"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_56() {
+fn test_0056() {
     tokenize(
         r##"{"description":"Bad named entity: Breve without a semi-colon","initialState":"Data","input":"&Breve","inputUtf16":[38,66,114,101,118,101],"output":[{"Character":{"data":"&Breve"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_57() {
+fn test_0057() {
     tokenize(
         r##"{"description":"Named entity: Breve; with a semi-colon","initialState":"Data","input":"&Breve;","inputUtf16":[38,66,114,101,118,101,59],"output":[{"Character":{"data":"˘"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_58() {
+fn test_0058() {
     tokenize(
         r##"{"description":"Bad named entity: Bscr without a semi-colon","initialState":"Data","input":"&Bscr","inputUtf16":[38,66,115,99,114],"output":[{"Character":{"data":"&Bscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_59() {
+fn test_0059() {
     tokenize(
         r##"{"description":"Named entity: Bscr; with a semi-colon","initialState":"Data","input":"&Bscr;","inputUtf16":[38,66,115,99,114,59],"output":[{"Character":{"data":"ℬ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_60() {
+fn test_0060() {
     tokenize(
         r##"{"description":"Bad named entity: Bumpeq without a semi-colon","initialState":"Data","input":"&Bumpeq","inputUtf16":[38,66,117,109,112,101,113],"output":[{"Character":{"data":"&Bumpeq"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_61() {
+fn test_0061() {
     tokenize(
         r##"{"description":"Named entity: Bumpeq; with a semi-colon","initialState":"Data","input":"&Bumpeq;","inputUtf16":[38,66,117,109,112,101,113,59],"output":[{"Character":{"data":"≎"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_62() {
+fn test_0062() {
     tokenize(
         r##"{"description":"Bad named entity: CHcy without a semi-colon","initialState":"Data","input":"&CHcy","inputUtf16":[38,67,72,99,121],"output":[{"Character":{"data":"&CHcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_63() {
+fn test_0063() {
     tokenize(
         r##"{"description":"Named entity: CHcy; with a semi-colon","initialState":"Data","input":"&CHcy;","inputUtf16":[38,67,72,99,121,59],"output":[{"Character":{"data":"Ч"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_64() {
+fn test_0064() {
     tokenize(
         r##"{"description":"Named entity: COPY without a semi-colon","initialState":"Data","input":"&COPY","inputUtf16":[38,67,79,80,89],"output":[{"Character":{"data":"©"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_65() {
+fn test_0065() {
     tokenize(
         r##"{"description":"Named entity: COPY; with a semi-colon","initialState":"Data","input":"&COPY;","inputUtf16":[38,67,79,80,89,59],"output":[{"Character":{"data":"©"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_66() {
+fn test_0066() {
     tokenize(
         r##"{"description":"Bad named entity: Cacute without a semi-colon","initialState":"Data","input":"&Cacute","inputUtf16":[38,67,97,99,117,116,101],"output":[{"Character":{"data":"&Cacute"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_67() {
+fn test_0067() {
     tokenize(
         r##"{"description":"Named entity: Cacute; with a semi-colon","initialState":"Data","input":"&Cacute;","inputUtf16":[38,67,97,99,117,116,101,59],"output":[{"Character":{"data":"Ć"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_68() {
+fn test_0068() {
     tokenize(
         r##"{"description":"Bad named entity: Cap without a semi-colon","initialState":"Data","input":"&Cap","inputUtf16":[38,67,97,112],"output":[{"Character":{"data":"&Cap"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_69() {
+fn test_0069() {
     tokenize(
         r##"{"description":"Named entity: Cap; with a semi-colon","initialState":"Data","input":"&Cap;","inputUtf16":[38,67,97,112,59],"output":[{"Character":{"data":"⋒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_70() {
+fn test_0070() {
     tokenize(
         r##"{"description":"Bad named entity: CapitalDifferentialD without a semi-colon","initialState":"Data","input":"&CapitalDifferentialD","inputUtf16":[38,67,97,112,105,116,97,108,68,105,102,102,101,114,101,110,116,105,97,108,68],"output":[{"Character":{"data":"&CapitalDifferentialD"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_71() {
+fn test_0071() {
     tokenize(
         r##"{"description":"Named entity: CapitalDifferentialD; with a semi-colon","initialState":"Data","input":"&CapitalDifferentialD;","inputUtf16":[38,67,97,112,105,116,97,108,68,105,102,102,101,114,101,110,116,105,97,108,68,59],"output":[{"Character":{"data":"ⅅ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_72() {
+fn test_0072() {
     tokenize(
         r##"{"description":"Bad named entity: Cayleys without a semi-colon","initialState":"Data","input":"&Cayleys","inputUtf16":[38,67,97,121,108,101,121,115],"output":[{"Character":{"data":"&Cayleys"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_73() {
+fn test_0073() {
     tokenize(
         r##"{"description":"Named entity: Cayleys; with a semi-colon","initialState":"Data","input":"&Cayleys;","inputUtf16":[38,67,97,121,108,101,121,115,59],"output":[{"Character":{"data":"ℭ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_74() {
+fn test_0074() {
     tokenize(
         r##"{"description":"Bad named entity: Ccaron without a semi-colon","initialState":"Data","input":"&Ccaron","inputUtf16":[38,67,99,97,114,111,110],"output":[{"Character":{"data":"&Ccaron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_75() {
+fn test_0075() {
     tokenize(
         r##"{"description":"Named entity: Ccaron; with a semi-colon","initialState":"Data","input":"&Ccaron;","inputUtf16":[38,67,99,97,114,111,110,59],"output":[{"Character":{"data":"Č"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_76() {
+fn test_0076() {
     tokenize(
         r##"{"description":"Named entity: Ccedil without a semi-colon","initialState":"Data","input":"&Ccedil","inputUtf16":[38,67,99,101,100,105,108],"output":[{"Character":{"data":"Ç"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_77() {
+fn test_0077() {
     tokenize(
         r##"{"description":"Named entity: Ccedil; with a semi-colon","initialState":"Data","input":"&Ccedil;","inputUtf16":[38,67,99,101,100,105,108,59],"output":[{"Character":{"data":"Ç"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_78() {
+fn test_0078() {
     tokenize(
         r##"{"description":"Bad named entity: Ccirc without a semi-colon","initialState":"Data","input":"&Ccirc","inputUtf16":[38,67,99,105,114,99],"output":[{"Character":{"data":"&Ccirc"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_79() {
+fn test_0079() {
     tokenize(
         r##"{"description":"Named entity: Ccirc; with a semi-colon","initialState":"Data","input":"&Ccirc;","inputUtf16":[38,67,99,105,114,99,59],"output":[{"Character":{"data":"Ĉ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_80() {
+fn test_0080() {
     tokenize(
         r##"{"description":"Bad named entity: Cconint without a semi-colon","initialState":"Data","input":"&Cconint","inputUtf16":[38,67,99,111,110,105,110,116],"output":[{"Character":{"data":"&Cconint"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_81() {
+fn test_0081() {
     tokenize(
         r##"{"description":"Named entity: Cconint; with a semi-colon","initialState":"Data","input":"&Cconint;","inputUtf16":[38,67,99,111,110,105,110,116,59],"output":[{"Character":{"data":"∰"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_82() {
+fn test_0082() {
     tokenize(
         r##"{"description":"Bad named entity: Cdot without a semi-colon","initialState":"Data","input":"&Cdot","inputUtf16":[38,67,100,111,116],"output":[{"Character":{"data":"&Cdot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_83() {
+fn test_0083() {
     tokenize(
         r##"{"description":"Named entity: Cdot; with a semi-colon","initialState":"Data","input":"&Cdot;","inputUtf16":[38,67,100,111,116,59],"output":[{"Character":{"data":"Ċ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_84() {
+fn test_0084() {
     tokenize(
         r##"{"description":"Bad named entity: Cedilla without a semi-colon","initialState":"Data","input":"&Cedilla","inputUtf16":[38,67,101,100,105,108,108,97],"output":[{"Character":{"data":"&Cedilla"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_85() {
+fn test_0085() {
     tokenize(
         r##"{"description":"Named entity: Cedilla; with a semi-colon","initialState":"Data","input":"&Cedilla;","inputUtf16":[38,67,101,100,105,108,108,97,59],"output":[{"Character":{"data":"¸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_86() {
+fn test_0086() {
     tokenize(
         r##"{"description":"Bad named entity: CenterDot without a semi-colon","initialState":"Data","input":"&CenterDot","inputUtf16":[38,67,101,110,116,101,114,68,111,116],"output":[{"Character":{"data":"&CenterDot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_87() {
+fn test_0087() {
     tokenize(
         r##"{"description":"Named entity: CenterDot; with a semi-colon","initialState":"Data","input":"&CenterDot;","inputUtf16":[38,67,101,110,116,101,114,68,111,116,59],"output":[{"Character":{"data":"·"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_88() {
+fn test_0088() {
     tokenize(
         r##"{"description":"Bad named entity: Cfr without a semi-colon","initialState":"Data","input":"&Cfr","inputUtf16":[38,67,102,114],"output":[{"Character":{"data":"&Cfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_89() {
+fn test_0089() {
     tokenize(
         r##"{"description":"Named entity: Cfr; with a semi-colon","initialState":"Data","input":"&Cfr;","inputUtf16":[38,67,102,114,59],"output":[{"Character":{"data":"ℭ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_90() {
+fn test_0090() {
     tokenize(
         r##"{"description":"Bad named entity: Chi without a semi-colon","initialState":"Data","input":"&Chi","inputUtf16":[38,67,104,105],"output":[{"Character":{"data":"&Chi"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_91() {
+fn test_0091() {
     tokenize(
         r##"{"description":"Named entity: Chi; with a semi-colon","initialState":"Data","input":"&Chi;","inputUtf16":[38,67,104,105,59],"output":[{"Character":{"data":"Χ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_92() {
+fn test_0092() {
     tokenize(
         r##"{"description":"Bad named entity: CircleDot without a semi-colon","initialState":"Data","input":"&CircleDot","inputUtf16":[38,67,105,114,99,108,101,68,111,116],"output":[{"Character":{"data":"&CircleDot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_93() {
+fn test_0093() {
     tokenize(
         r##"{"description":"Named entity: CircleDot; with a semi-colon","initialState":"Data","input":"&CircleDot;","inputUtf16":[38,67,105,114,99,108,101,68,111,116,59],"output":[{"Character":{"data":"⊙"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_94() {
+fn test_0094() {
     tokenize(
         r##"{"description":"Bad named entity: CircleMinus without a semi-colon","initialState":"Data","input":"&CircleMinus","inputUtf16":[38,67,105,114,99,108,101,77,105,110,117,115],"output":[{"Character":{"data":"&CircleMinus"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_95() {
+fn test_0095() {
     tokenize(
         r##"{"description":"Named entity: CircleMinus; with a semi-colon","initialState":"Data","input":"&CircleMinus;","inputUtf16":[38,67,105,114,99,108,101,77,105,110,117,115,59],"output":[{"Character":{"data":"⊖"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_96() {
+fn test_0096() {
     tokenize(
         r##"{"description":"Bad named entity: CirclePlus without a semi-colon","initialState":"Data","input":"&CirclePlus","inputUtf16":[38,67,105,114,99,108,101,80,108,117,115],"output":[{"Character":{"data":"&CirclePlus"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_97() {
+fn test_0097() {
     tokenize(
         r##"{"description":"Named entity: CirclePlus; with a semi-colon","initialState":"Data","input":"&CirclePlus;","inputUtf16":[38,67,105,114,99,108,101,80,108,117,115,59],"output":[{"Character":{"data":"⊕"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_98() {
+fn test_0098() {
     tokenize(
         r##"{"description":"Bad named entity: CircleTimes without a semi-colon","initialState":"Data","input":"&CircleTimes","inputUtf16":[38,67,105,114,99,108,101,84,105,109,101,115],"output":[{"Character":{"data":"&CircleTimes"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_99() {
+fn test_0099() {
     tokenize(
         r##"{"description":"Named entity: CircleTimes; with a semi-colon","initialState":"Data","input":"&CircleTimes;","inputUtf16":[38,67,105,114,99,108,101,84,105,109,101,115,59],"output":[{"Character":{"data":"⊗"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_100() {
+fn test_0100() {
     tokenize(
         r##"{"description":"Bad named entity: ClockwiseContourIntegral without a semi-colon","initialState":"Data","input":"&ClockwiseContourIntegral","inputUtf16":[38,67,108,111,99,107,119,105,115,101,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108],"output":[{"Character":{"data":"&ClockwiseContourIntegral"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_101() {
+fn test_0101() {
     tokenize(
         r##"{"description":"Named entity: ClockwiseContourIntegral; with a semi-colon","initialState":"Data","input":"&ClockwiseContourIntegral;","inputUtf16":[38,67,108,111,99,107,119,105,115,101,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108,59],"output":[{"Character":{"data":"∲"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_102() {
+fn test_0102() {
     tokenize(
         r##"{"description":"Bad named entity: CloseCurlyDoubleQuote without a semi-colon","initialState":"Data","input":"&CloseCurlyDoubleQuote","inputUtf16":[38,67,108,111,115,101,67,117,114,108,121,68,111,117,98,108,101,81,117,111,116,101],"output":[{"Character":{"data":"&CloseCurlyDoubleQuote"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_103() {
+fn test_0103() {
     tokenize(
         r##"{"description":"Named entity: CloseCurlyDoubleQuote; with a semi-colon","initialState":"Data","input":"&CloseCurlyDoubleQuote;","inputUtf16":[38,67,108,111,115,101,67,117,114,108,121,68,111,117,98,108,101,81,117,111,116,101,59],"output":[{"Character":{"data":"”"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_104() {
+fn test_0104() {
     tokenize(
         r##"{"description":"Bad named entity: CloseCurlyQuote without a semi-colon","initialState":"Data","input":"&CloseCurlyQuote","inputUtf16":[38,67,108,111,115,101,67,117,114,108,121,81,117,111,116,101],"output":[{"Character":{"data":"&CloseCurlyQuote"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_105() {
+fn test_0105() {
     tokenize(
         r##"{"description":"Named entity: CloseCurlyQuote; with a semi-colon","initialState":"Data","input":"&CloseCurlyQuote;","inputUtf16":[38,67,108,111,115,101,67,117,114,108,121,81,117,111,116,101,59],"output":[{"Character":{"data":"’"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_106() {
+fn test_0106() {
     tokenize(
         r##"{"description":"Bad named entity: Colon without a semi-colon","initialState":"Data","input":"&Colon","inputUtf16":[38,67,111,108,111,110],"output":[{"Character":{"data":"&Colon"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_107() {
+fn test_0107() {
     tokenize(
         r##"{"description":"Named entity: Colon; with a semi-colon","initialState":"Data","input":"&Colon;","inputUtf16":[38,67,111,108,111,110,59],"output":[{"Character":{"data":"∷"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_108() {
+fn test_0108() {
     tokenize(
         r##"{"description":"Bad named entity: Colone without a semi-colon","initialState":"Data","input":"&Colone","inputUtf16":[38,67,111,108,111,110,101],"output":[{"Character":{"data":"&Colone"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_109() {
+fn test_0109() {
     tokenize(
         r##"{"description":"Named entity: Colone; with a semi-colon","initialState":"Data","input":"&Colone;","inputUtf16":[38,67,111,108,111,110,101,59],"output":[{"Character":{"data":"⩴"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_110() {
+fn test_0110() {
     tokenize(
         r##"{"description":"Bad named entity: Congruent without a semi-colon","initialState":"Data","input":"&Congruent","inputUtf16":[38,67,111,110,103,114,117,101,110,116],"output":[{"Character":{"data":"&Congruent"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_111() {
+fn test_0111() {
     tokenize(
         r##"{"description":"Named entity: Congruent; with a semi-colon","initialState":"Data","input":"&Congruent;","inputUtf16":[38,67,111,110,103,114,117,101,110,116,59],"output":[{"Character":{"data":"≡"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_112() {
+fn test_0112() {
     tokenize(
         r##"{"description":"Bad named entity: Conint without a semi-colon","initialState":"Data","input":"&Conint","inputUtf16":[38,67,111,110,105,110,116],"output":[{"Character":{"data":"&Conint"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_113() {
+fn test_0113() {
     tokenize(
         r##"{"description":"Named entity: Conint; with a semi-colon","initialState":"Data","input":"&Conint;","inputUtf16":[38,67,111,110,105,110,116,59],"output":[{"Character":{"data":"∯"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_114() {
+fn test_0114() {
     tokenize(
         r##"{"description":"Bad named entity: ContourIntegral without a semi-colon","initialState":"Data","input":"&ContourIntegral","inputUtf16":[38,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108],"output":[{"Character":{"data":"&ContourIntegral"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_115() {
+fn test_0115() {
     tokenize(
         r##"{"description":"Named entity: ContourIntegral; with a semi-colon","initialState":"Data","input":"&ContourIntegral;","inputUtf16":[38,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108,59],"output":[{"Character":{"data":"∮"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_116() {
+fn test_0116() {
     tokenize(
         r##"{"description":"Bad named entity: Copf without a semi-colon","initialState":"Data","input":"&Copf","inputUtf16":[38,67,111,112,102],"output":[{"Character":{"data":"&Copf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_117() {
+fn test_0117() {
     tokenize(
         r##"{"description":"Named entity: Copf; with a semi-colon","initialState":"Data","input":"&Copf;","inputUtf16":[38,67,111,112,102,59],"output":[{"Character":{"data":"ℂ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_118() {
+fn test_0118() {
     tokenize(
         r##"{"description":"Bad named entity: Coproduct without a semi-colon","initialState":"Data","input":"&Coproduct","inputUtf16":[38,67,111,112,114,111,100,117,99,116],"output":[{"Character":{"data":"&Coproduct"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_119() {
+fn test_0119() {
     tokenize(
         r##"{"description":"Named entity: Coproduct; with a semi-colon","initialState":"Data","input":"&Coproduct;","inputUtf16":[38,67,111,112,114,111,100,117,99,116,59],"output":[{"Character":{"data":"∐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_120() {
+fn test_0120() {
     tokenize(
         r##"{"description":"Bad named entity: CounterClockwiseContourIntegral without a semi-colon","initialState":"Data","input":"&CounterClockwiseContourIntegral","inputUtf16":[38,67,111,117,110,116,101,114,67,108,111,99,107,119,105,115,101,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108],"output":[{"Character":{"data":"&CounterClockwiseContourIntegral"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_121() {
+fn test_0121() {
     tokenize(
         r##"{"description":"Named entity: CounterClockwiseContourIntegral; with a semi-colon","initialState":"Data","input":"&CounterClockwiseContourIntegral;","inputUtf16":[38,67,111,117,110,116,101,114,67,108,111,99,107,119,105,115,101,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108,59],"output":[{"Character":{"data":"∳"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_122() {
+fn test_0122() {
     tokenize(
         r##"{"description":"Bad named entity: Cross without a semi-colon","initialState":"Data","input":"&Cross","inputUtf16":[38,67,114,111,115,115],"output":[{"Character":{"data":"&Cross"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_123() {
+fn test_0123() {
     tokenize(
         r##"{"description":"Named entity: Cross; with a semi-colon","initialState":"Data","input":"&Cross;","inputUtf16":[38,67,114,111,115,115,59],"output":[{"Character":{"data":"⨯"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_124() {
+fn test_0124() {
     tokenize(
         r##"{"description":"Bad named entity: Cscr without a semi-colon","initialState":"Data","input":"&Cscr","inputUtf16":[38,67,115,99,114],"output":[{"Character":{"data":"&Cscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_125() {
+fn test_0125() {
     tokenize(
         r##"{"description":"Named entity: Cscr; with a semi-colon","initialState":"Data","input":"&Cscr;","inputUtf16":[38,67,115,99,114,59],"output":[{"Character":{"data":"𝒞"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_126() {
+fn test_0126() {
     tokenize(
         r##"{"description":"Bad named entity: Cup without a semi-colon","initialState":"Data","input":"&Cup","inputUtf16":[38,67,117,112],"output":[{"Character":{"data":"&Cup"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_127() {
+fn test_0127() {
     tokenize(
         r##"{"description":"Named entity: Cup; with a semi-colon","initialState":"Data","input":"&Cup;","inputUtf16":[38,67,117,112,59],"output":[{"Character":{"data":"⋓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_128() {
+fn test_0128() {
     tokenize(
         r##"{"description":"Bad named entity: CupCap without a semi-colon","initialState":"Data","input":"&CupCap","inputUtf16":[38,67,117,112,67,97,112],"output":[{"Character":{"data":"&CupCap"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_129() {
+fn test_0129() {
     tokenize(
         r##"{"description":"Named entity: CupCap; with a semi-colon","initialState":"Data","input":"&CupCap;","inputUtf16":[38,67,117,112,67,97,112,59],"output":[{"Character":{"data":"≍"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_130() {
+fn test_0130() {
     tokenize(
         r##"{"description":"Bad named entity: DD without a semi-colon","initialState":"Data","input":"&DD","inputUtf16":[38,68,68],"output":[{"Character":{"data":"&DD"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_131() {
+fn test_0131() {
     tokenize(
         r##"{"description":"Named entity: DD; with a semi-colon","initialState":"Data","input":"&DD;","inputUtf16":[38,68,68,59],"output":[{"Character":{"data":"ⅅ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_132() {
+fn test_0132() {
     tokenize(
         r##"{"description":"Bad named entity: DDotrahd without a semi-colon","initialState":"Data","input":"&DDotrahd","inputUtf16":[38,68,68,111,116,114,97,104,100],"output":[{"Character":{"data":"&DDotrahd"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_133() {
+fn test_0133() {
     tokenize(
         r##"{"description":"Named entity: DDotrahd; with a semi-colon","initialState":"Data","input":"&DDotrahd;","inputUtf16":[38,68,68,111,116,114,97,104,100,59],"output":[{"Character":{"data":"⤑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_134() {
+fn test_0134() {
     tokenize(
         r##"{"description":"Bad named entity: DJcy without a semi-colon","initialState":"Data","input":"&DJcy","inputUtf16":[38,68,74,99,121],"output":[{"Character":{"data":"&DJcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_135() {
+fn test_0135() {
     tokenize(
         r##"{"description":"Named entity: DJcy; with a semi-colon","initialState":"Data","input":"&DJcy;","inputUtf16":[38,68,74,99,121,59],"output":[{"Character":{"data":"Ђ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_136() {
+fn test_0136() {
     tokenize(
         r##"{"description":"Bad named entity: DScy without a semi-colon","initialState":"Data","input":"&DScy","inputUtf16":[38,68,83,99,121],"output":[{"Character":{"data":"&DScy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_137() {
+fn test_0137() {
     tokenize(
         r##"{"description":"Named entity: DScy; with a semi-colon","initialState":"Data","input":"&DScy;","inputUtf16":[38,68,83,99,121,59],"output":[{"Character":{"data":"Ѕ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_138() {
+fn test_0138() {
     tokenize(
         r##"{"description":"Bad named entity: DZcy without a semi-colon","initialState":"Data","input":"&DZcy","inputUtf16":[38,68,90,99,121],"output":[{"Character":{"data":"&DZcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_139() {
+fn test_0139() {
     tokenize(
         r##"{"description":"Named entity: DZcy; with a semi-colon","initialState":"Data","input":"&DZcy;","inputUtf16":[38,68,90,99,121,59],"output":[{"Character":{"data":"Џ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_140() {
+fn test_0140() {
     tokenize(
         r##"{"description":"Bad named entity: Dagger without a semi-colon","initialState":"Data","input":"&Dagger","inputUtf16":[38,68,97,103,103,101,114],"output":[{"Character":{"data":"&Dagger"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_141() {
+fn test_0141() {
     tokenize(
         r##"{"description":"Named entity: Dagger; with a semi-colon","initialState":"Data","input":"&Dagger;","inputUtf16":[38,68,97,103,103,101,114,59],"output":[{"Character":{"data":"‡"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_142() {
+fn test_0142() {
     tokenize(
         r##"{"description":"Bad named entity: Darr without a semi-colon","initialState":"Data","input":"&Darr","inputUtf16":[38,68,97,114,114],"output":[{"Character":{"data":"&Darr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_143() {
+fn test_0143() {
     tokenize(
         r##"{"description":"Named entity: Darr; with a semi-colon","initialState":"Data","input":"&Darr;","inputUtf16":[38,68,97,114,114,59],"output":[{"Character":{"data":"↡"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_144() {
+fn test_0144() {
     tokenize(
         r##"{"description":"Bad named entity: Dashv without a semi-colon","initialState":"Data","input":"&Dashv","inputUtf16":[38,68,97,115,104,118],"output":[{"Character":{"data":"&Dashv"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_145() {
+fn test_0145() {
     tokenize(
         r##"{"description":"Named entity: Dashv; with a semi-colon","initialState":"Data","input":"&Dashv;","inputUtf16":[38,68,97,115,104,118,59],"output":[{"Character":{"data":"⫤"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_146() {
+fn test_0146() {
     tokenize(
         r##"{"description":"Bad named entity: Dcaron without a semi-colon","initialState":"Data","input":"&Dcaron","inputUtf16":[38,68,99,97,114,111,110],"output":[{"Character":{"data":"&Dcaron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_147() {
+fn test_0147() {
     tokenize(
         r##"{"description":"Named entity: Dcaron; with a semi-colon","initialState":"Data","input":"&Dcaron;","inputUtf16":[38,68,99,97,114,111,110,59],"output":[{"Character":{"data":"Ď"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_148() {
+fn test_0148() {
     tokenize(
         r##"{"description":"Bad named entity: Dcy without a semi-colon","initialState":"Data","input":"&Dcy","inputUtf16":[38,68,99,121],"output":[{"Character":{"data":"&Dcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_149() {
+fn test_0149() {
     tokenize(
         r##"{"description":"Named entity: Dcy; with a semi-colon","initialState":"Data","input":"&Dcy;","inputUtf16":[38,68,99,121,59],"output":[{"Character":{"data":"Д"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_150() {
+fn test_0150() {
     tokenize(
         r##"{"description":"Bad named entity: Del without a semi-colon","initialState":"Data","input":"&Del","inputUtf16":[38,68,101,108],"output":[{"Character":{"data":"&Del"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_151() {
+fn test_0151() {
     tokenize(
         r##"{"description":"Named entity: Del; with a semi-colon","initialState":"Data","input":"&Del;","inputUtf16":[38,68,101,108,59],"output":[{"Character":{"data":"∇"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_152() {
+fn test_0152() {
     tokenize(
         r##"{"description":"Bad named entity: Delta without a semi-colon","initialState":"Data","input":"&Delta","inputUtf16":[38,68,101,108,116,97],"output":[{"Character":{"data":"&Delta"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_153() {
+fn test_0153() {
     tokenize(
         r##"{"description":"Named entity: Delta; with a semi-colon","initialState":"Data","input":"&Delta;","inputUtf16":[38,68,101,108,116,97,59],"output":[{"Character":{"data":"Δ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_154() {
+fn test_0154() {
     tokenize(
         r##"{"description":"Bad named entity: Dfr without a semi-colon","initialState":"Data","input":"&Dfr","inputUtf16":[38,68,102,114],"output":[{"Character":{"data":"&Dfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_155() {
+fn test_0155() {
     tokenize(
         r##"{"description":"Named entity: Dfr; with a semi-colon","initialState":"Data","input":"&Dfr;","inputUtf16":[38,68,102,114,59],"output":[{"Character":{"data":"𝔇"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_156() {
+fn test_0156() {
     tokenize(
         r##"{"description":"Bad named entity: DiacriticalAcute without a semi-colon","initialState":"Data","input":"&DiacriticalAcute","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,65,99,117,116,101],"output":[{"Character":{"data":"&DiacriticalAcute"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_157() {
+fn test_0157() {
     tokenize(
         r##"{"description":"Named entity: DiacriticalAcute; with a semi-colon","initialState":"Data","input":"&DiacriticalAcute;","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,65,99,117,116,101,59],"output":[{"Character":{"data":"´"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_158() {
+fn test_0158() {
     tokenize(
         r##"{"description":"Bad named entity: DiacriticalDot without a semi-colon","initialState":"Data","input":"&DiacriticalDot","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,68,111,116],"output":[{"Character":{"data":"&DiacriticalDot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_159() {
+fn test_0159() {
     tokenize(
         r##"{"description":"Named entity: DiacriticalDot; with a semi-colon","initialState":"Data","input":"&DiacriticalDot;","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,68,111,116,59],"output":[{"Character":{"data":"˙"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_160() {
+fn test_0160() {
     tokenize(
         r##"{"description":"Bad named entity: DiacriticalDoubleAcute without a semi-colon","initialState":"Data","input":"&DiacriticalDoubleAcute","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,68,111,117,98,108,101,65,99,117,116,101],"output":[{"Character":{"data":"&DiacriticalDoubleAcute"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_161() {
+fn test_0161() {
     tokenize(
         r##"{"description":"Named entity: DiacriticalDoubleAcute; with a semi-colon","initialState":"Data","input":"&DiacriticalDoubleAcute;","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,68,111,117,98,108,101,65,99,117,116,101,59],"output":[{"Character":{"data":"˝"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_162() {
+fn test_0162() {
     tokenize(
         r##"{"description":"Bad named entity: DiacriticalGrave without a semi-colon","initialState":"Data","input":"&DiacriticalGrave","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,71,114,97,118,101],"output":[{"Character":{"data":"&DiacriticalGrave"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_163() {
+fn test_0163() {
     tokenize(
         r##"{"description":"Named entity: DiacriticalGrave; with a semi-colon","initialState":"Data","input":"&DiacriticalGrave;","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,71,114,97,118,101,59],"output":[{"Character":{"data":"`"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_164() {
+fn test_0164() {
     tokenize(
         r##"{"description":"Bad named entity: DiacriticalTilde without a semi-colon","initialState":"Data","input":"&DiacriticalTilde","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,84,105,108,100,101],"output":[{"Character":{"data":"&DiacriticalTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_165() {
+fn test_0165() {
     tokenize(
         r##"{"description":"Named entity: DiacriticalTilde; with a semi-colon","initialState":"Data","input":"&DiacriticalTilde;","inputUtf16":[38,68,105,97,99,114,105,116,105,99,97,108,84,105,108,100,101,59],"output":[{"Character":{"data":"˜"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_166() {
+fn test_0166() {
     tokenize(
         r##"{"description":"Bad named entity: Diamond without a semi-colon","initialState":"Data","input":"&Diamond","inputUtf16":[38,68,105,97,109,111,110,100],"output":[{"Character":{"data":"&Diamond"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_167() {
+fn test_0167() {
     tokenize(
         r##"{"description":"Named entity: Diamond; with a semi-colon","initialState":"Data","input":"&Diamond;","inputUtf16":[38,68,105,97,109,111,110,100,59],"output":[{"Character":{"data":"⋄"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_168() {
+fn test_0168() {
     tokenize(
         r##"{"description":"Bad named entity: DifferentialD without a semi-colon","initialState":"Data","input":"&DifferentialD","inputUtf16":[38,68,105,102,102,101,114,101,110,116,105,97,108,68],"output":[{"Character":{"data":"&DifferentialD"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_169() {
+fn test_0169() {
     tokenize(
         r##"{"description":"Named entity: DifferentialD; with a semi-colon","initialState":"Data","input":"&DifferentialD;","inputUtf16":[38,68,105,102,102,101,114,101,110,116,105,97,108,68,59],"output":[{"Character":{"data":"ⅆ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_170() {
+fn test_0170() {
     tokenize(
         r##"{"description":"Bad named entity: Dopf without a semi-colon","initialState":"Data","input":"&Dopf","inputUtf16":[38,68,111,112,102],"output":[{"Character":{"data":"&Dopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_171() {
+fn test_0171() {
     tokenize(
         r##"{"description":"Named entity: Dopf; with a semi-colon","initialState":"Data","input":"&Dopf;","inputUtf16":[38,68,111,112,102,59],"output":[{"Character":{"data":"𝔻"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_172() {
+fn test_0172() {
     tokenize(
         r##"{"description":"Bad named entity: Dot without a semi-colon","initialState":"Data","input":"&Dot","inputUtf16":[38,68,111,116],"output":[{"Character":{"data":"&Dot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_173() {
+fn test_0173() {
     tokenize(
         r##"{"description":"Named entity: Dot; with a semi-colon","initialState":"Data","input":"&Dot;","inputUtf16":[38,68,111,116,59],"output":[{"Character":{"data":"¨"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_174() {
+fn test_0174() {
     tokenize(
         r##"{"description":"Bad named entity: DotDot without a semi-colon","initialState":"Data","input":"&DotDot","inputUtf16":[38,68,111,116,68,111,116],"output":[{"Character":{"data":"&DotDot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_175() {
+fn test_0175() {
     tokenize(
         r##"{"description":"Named entity: DotDot; with a semi-colon","initialState":"Data","input":"&DotDot;","inputUtf16":[38,68,111,116,68,111,116,59],"output":[{"Character":{"data":"⃜"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_176() {
+fn test_0176() {
     tokenize(
         r##"{"description":"Bad named entity: DotEqual without a semi-colon","initialState":"Data","input":"&DotEqual","inputUtf16":[38,68,111,116,69,113,117,97,108],"output":[{"Character":{"data":"&DotEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_177() {
+fn test_0177() {
     tokenize(
         r##"{"description":"Named entity: DotEqual; with a semi-colon","initialState":"Data","input":"&DotEqual;","inputUtf16":[38,68,111,116,69,113,117,97,108,59],"output":[{"Character":{"data":"≐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_178() {
+fn test_0178() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleContourIntegral without a semi-colon","initialState":"Data","input":"&DoubleContourIntegral","inputUtf16":[38,68,111,117,98,108,101,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108],"output":[{"Character":{"data":"&DoubleContourIntegral"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_179() {
+fn test_0179() {
     tokenize(
         r##"{"description":"Named entity: DoubleContourIntegral; with a semi-colon","initialState":"Data","input":"&DoubleContourIntegral;","inputUtf16":[38,68,111,117,98,108,101,67,111,110,116,111,117,114,73,110,116,101,103,114,97,108,59],"output":[{"Character":{"data":"∯"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_180() {
+fn test_0180() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleDot without a semi-colon","initialState":"Data","input":"&DoubleDot","inputUtf16":[38,68,111,117,98,108,101,68,111,116],"output":[{"Character":{"data":"&DoubleDot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_181() {
+fn test_0181() {
     tokenize(
         r##"{"description":"Named entity: DoubleDot; with a semi-colon","initialState":"Data","input":"&DoubleDot;","inputUtf16":[38,68,111,117,98,108,101,68,111,116,59],"output":[{"Character":{"data":"¨"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_182() {
+fn test_0182() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleDownArrow without a semi-colon","initialState":"Data","input":"&DoubleDownArrow","inputUtf16":[38,68,111,117,98,108,101,68,111,119,110,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleDownArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_183() {
+fn test_0183() {
     tokenize(
         r##"{"description":"Named entity: DoubleDownArrow; with a semi-colon","initialState":"Data","input":"&DoubleDownArrow;","inputUtf16":[38,68,111,117,98,108,101,68,111,119,110,65,114,114,111,119,59],"output":[{"Character":{"data":"⇓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_184() {
+fn test_0184() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleLeftArrow without a semi-colon","initialState":"Data","input":"&DoubleLeftArrow","inputUtf16":[38,68,111,117,98,108,101,76,101,102,116,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleLeftArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_185() {
+fn test_0185() {
     tokenize(
         r##"{"description":"Named entity: DoubleLeftArrow; with a semi-colon","initialState":"Data","input":"&DoubleLeftArrow;","inputUtf16":[38,68,111,117,98,108,101,76,101,102,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⇐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_186() {
+fn test_0186() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleLeftRightArrow without a semi-colon","initialState":"Data","input":"&DoubleLeftRightArrow","inputUtf16":[38,68,111,117,98,108,101,76,101,102,116,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleLeftRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_187() {
+fn test_0187() {
     tokenize(
         r##"{"description":"Named entity: DoubleLeftRightArrow; with a semi-colon","initialState":"Data","input":"&DoubleLeftRightArrow;","inputUtf16":[38,68,111,117,98,108,101,76,101,102,116,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⇔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_188() {
+fn test_0188() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleLeftTee without a semi-colon","initialState":"Data","input":"&DoubleLeftTee","inputUtf16":[38,68,111,117,98,108,101,76,101,102,116,84,101,101],"output":[{"Character":{"data":"&DoubleLeftTee"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_189() {
+fn test_0189() {
     tokenize(
         r##"{"description":"Named entity: DoubleLeftTee; with a semi-colon","initialState":"Data","input":"&DoubleLeftTee;","inputUtf16":[38,68,111,117,98,108,101,76,101,102,116,84,101,101,59],"output":[{"Character":{"data":"⫤"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_190() {
+fn test_0190() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleLongLeftArrow without a semi-colon","initialState":"Data","input":"&DoubleLongLeftArrow","inputUtf16":[38,68,111,117,98,108,101,76,111,110,103,76,101,102,116,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleLongLeftArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_191() {
+fn test_0191() {
     tokenize(
         r##"{"description":"Named entity: DoubleLongLeftArrow; with a semi-colon","initialState":"Data","input":"&DoubleLongLeftArrow;","inputUtf16":[38,68,111,117,98,108,101,76,111,110,103,76,101,102,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⟸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_192() {
+fn test_0192() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleLongLeftRightArrow without a semi-colon","initialState":"Data","input":"&DoubleLongLeftRightArrow","inputUtf16":[38,68,111,117,98,108,101,76,111,110,103,76,101,102,116,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleLongLeftRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_193() {
+fn test_0193() {
     tokenize(
         r##"{"description":"Named entity: DoubleLongLeftRightArrow; with a semi-colon","initialState":"Data","input":"&DoubleLongLeftRightArrow;","inputUtf16":[38,68,111,117,98,108,101,76,111,110,103,76,101,102,116,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⟺"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_194() {
+fn test_0194() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleLongRightArrow without a semi-colon","initialState":"Data","input":"&DoubleLongRightArrow","inputUtf16":[38,68,111,117,98,108,101,76,111,110,103,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleLongRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_195() {
+fn test_0195() {
     tokenize(
         r##"{"description":"Named entity: DoubleLongRightArrow; with a semi-colon","initialState":"Data","input":"&DoubleLongRightArrow;","inputUtf16":[38,68,111,117,98,108,101,76,111,110,103,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⟹"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_196() {
+fn test_0196() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleRightArrow without a semi-colon","initialState":"Data","input":"&DoubleRightArrow","inputUtf16":[38,68,111,117,98,108,101,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_197() {
+fn test_0197() {
     tokenize(
         r##"{"description":"Named entity: DoubleRightArrow; with a semi-colon","initialState":"Data","input":"&DoubleRightArrow;","inputUtf16":[38,68,111,117,98,108,101,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⇒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_198() {
+fn test_0198() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleRightTee without a semi-colon","initialState":"Data","input":"&DoubleRightTee","inputUtf16":[38,68,111,117,98,108,101,82,105,103,104,116,84,101,101],"output":[{"Character":{"data":"&DoubleRightTee"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_199() {
+fn test_0199() {
     tokenize(
         r##"{"description":"Named entity: DoubleRightTee; with a semi-colon","initialState":"Data","input":"&DoubleRightTee;","inputUtf16":[38,68,111,117,98,108,101,82,105,103,104,116,84,101,101,59],"output":[{"Character":{"data":"⊨"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_200() {
+fn test_0200() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleUpArrow without a semi-colon","initialState":"Data","input":"&DoubleUpArrow","inputUtf16":[38,68,111,117,98,108,101,85,112,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleUpArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_201() {
+fn test_0201() {
     tokenize(
         r##"{"description":"Named entity: DoubleUpArrow; with a semi-colon","initialState":"Data","input":"&DoubleUpArrow;","inputUtf16":[38,68,111,117,98,108,101,85,112,65,114,114,111,119,59],"output":[{"Character":{"data":"⇑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_202() {
+fn test_0202() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleUpDownArrow without a semi-colon","initialState":"Data","input":"&DoubleUpDownArrow","inputUtf16":[38,68,111,117,98,108,101,85,112,68,111,119,110,65,114,114,111,119],"output":[{"Character":{"data":"&DoubleUpDownArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_203() {
+fn test_0203() {
     tokenize(
         r##"{"description":"Named entity: DoubleUpDownArrow; with a semi-colon","initialState":"Data","input":"&DoubleUpDownArrow;","inputUtf16":[38,68,111,117,98,108,101,85,112,68,111,119,110,65,114,114,111,119,59],"output":[{"Character":{"data":"⇕"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_204() {
+fn test_0204() {
     tokenize(
         r##"{"description":"Bad named entity: DoubleVerticalBar without a semi-colon","initialState":"Data","input":"&DoubleVerticalBar","inputUtf16":[38,68,111,117,98,108,101,86,101,114,116,105,99,97,108,66,97,114],"output":[{"Character":{"data":"&DoubleVerticalBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_205() {
+fn test_0205() {
     tokenize(
         r##"{"description":"Named entity: DoubleVerticalBar; with a semi-colon","initialState":"Data","input":"&DoubleVerticalBar;","inputUtf16":[38,68,111,117,98,108,101,86,101,114,116,105,99,97,108,66,97,114,59],"output":[{"Character":{"data":"∥"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_206() {
+fn test_0206() {
     tokenize(
         r##"{"description":"Bad named entity: DownArrow without a semi-colon","initialState":"Data","input":"&DownArrow","inputUtf16":[38,68,111,119,110,65,114,114,111,119],"output":[{"Character":{"data":"&DownArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_207() {
+fn test_0207() {
     tokenize(
         r##"{"description":"Named entity: DownArrow; with a semi-colon","initialState":"Data","input":"&DownArrow;","inputUtf16":[38,68,111,119,110,65,114,114,111,119,59],"output":[{"Character":{"data":"↓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_208() {
+fn test_0208() {
     tokenize(
         r##"{"description":"Bad named entity: DownArrowBar without a semi-colon","initialState":"Data","input":"&DownArrowBar","inputUtf16":[38,68,111,119,110,65,114,114,111,119,66,97,114],"output":[{"Character":{"data":"&DownArrowBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_209() {
+fn test_0209() {
     tokenize(
         r##"{"description":"Named entity: DownArrowBar; with a semi-colon","initialState":"Data","input":"&DownArrowBar;","inputUtf16":[38,68,111,119,110,65,114,114,111,119,66,97,114,59],"output":[{"Character":{"data":"⤓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_210() {
+fn test_0210() {
     tokenize(
         r##"{"description":"Bad named entity: DownArrowUpArrow without a semi-colon","initialState":"Data","input":"&DownArrowUpArrow","inputUtf16":[38,68,111,119,110,65,114,114,111,119,85,112,65,114,114,111,119],"output":[{"Character":{"data":"&DownArrowUpArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_211() {
+fn test_0211() {
     tokenize(
         r##"{"description":"Named entity: DownArrowUpArrow; with a semi-colon","initialState":"Data","input":"&DownArrowUpArrow;","inputUtf16":[38,68,111,119,110,65,114,114,111,119,85,112,65,114,114,111,119,59],"output":[{"Character":{"data":"⇵"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_212() {
+fn test_0212() {
     tokenize(
         r##"{"description":"Bad named entity: DownBreve without a semi-colon","initialState":"Data","input":"&DownBreve","inputUtf16":[38,68,111,119,110,66,114,101,118,101],"output":[{"Character":{"data":"&DownBreve"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_213() {
+fn test_0213() {
     tokenize(
         r##"{"description":"Named entity: DownBreve; with a semi-colon","initialState":"Data","input":"&DownBreve;","inputUtf16":[38,68,111,119,110,66,114,101,118,101,59],"output":[{"Character":{"data":"̑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_214() {
+fn test_0214() {
     tokenize(
         r##"{"description":"Bad named entity: DownLeftRightVector without a semi-colon","initialState":"Data","input":"&DownLeftRightVector","inputUtf16":[38,68,111,119,110,76,101,102,116,82,105,103,104,116,86,101,99,116,111,114],"output":[{"Character":{"data":"&DownLeftRightVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_215() {
+fn test_0215() {
     tokenize(
         r##"{"description":"Named entity: DownLeftRightVector; with a semi-colon","initialState":"Data","input":"&DownLeftRightVector;","inputUtf16":[38,68,111,119,110,76,101,102,116,82,105,103,104,116,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_216() {
+fn test_0216() {
     tokenize(
         r##"{"description":"Bad named entity: DownLeftTeeVector without a semi-colon","initialState":"Data","input":"&DownLeftTeeVector","inputUtf16":[38,68,111,119,110,76,101,102,116,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&DownLeftTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_217() {
+fn test_0217() {
     tokenize(
         r##"{"description":"Named entity: DownLeftTeeVector; with a semi-colon","initialState":"Data","input":"&DownLeftTeeVector;","inputUtf16":[38,68,111,119,110,76,101,102,116,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥞"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_218() {
+fn test_0218() {
     tokenize(
         r##"{"description":"Bad named entity: DownLeftVector without a semi-colon","initialState":"Data","input":"&DownLeftVector","inputUtf16":[38,68,111,119,110,76,101,102,116,86,101,99,116,111,114],"output":[{"Character":{"data":"&DownLeftVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_219() {
+fn test_0219() {
     tokenize(
         r##"{"description":"Named entity: DownLeftVector; with a semi-colon","initialState":"Data","input":"&DownLeftVector;","inputUtf16":[38,68,111,119,110,76,101,102,116,86,101,99,116,111,114,59],"output":[{"Character":{"data":"↽"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_220() {
+fn test_0220() {
     tokenize(
         r##"{"description":"Bad named entity: DownLeftVectorBar without a semi-colon","initialState":"Data","input":"&DownLeftVectorBar","inputUtf16":[38,68,111,119,110,76,101,102,116,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&DownLeftVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_221() {
+fn test_0221() {
     tokenize(
         r##"{"description":"Named entity: DownLeftVectorBar; with a semi-colon","initialState":"Data","input":"&DownLeftVectorBar;","inputUtf16":[38,68,111,119,110,76,101,102,116,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥖"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_222() {
+fn test_0222() {
     tokenize(
         r##"{"description":"Bad named entity: DownRightTeeVector without a semi-colon","initialState":"Data","input":"&DownRightTeeVector","inputUtf16":[38,68,111,119,110,82,105,103,104,116,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&DownRightTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_223() {
+fn test_0223() {
     tokenize(
         r##"{"description":"Named entity: DownRightTeeVector; with a semi-colon","initialState":"Data","input":"&DownRightTeeVector;","inputUtf16":[38,68,111,119,110,82,105,103,104,116,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥟"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_224() {
+fn test_0224() {
     tokenize(
         r##"{"description":"Bad named entity: DownRightVector without a semi-colon","initialState":"Data","input":"&DownRightVector","inputUtf16":[38,68,111,119,110,82,105,103,104,116,86,101,99,116,111,114],"output":[{"Character":{"data":"&DownRightVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_225() {
+fn test_0225() {
     tokenize(
         r##"{"description":"Named entity: DownRightVector; with a semi-colon","initialState":"Data","input":"&DownRightVector;","inputUtf16":[38,68,111,119,110,82,105,103,104,116,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⇁"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_226() {
+fn test_0226() {
     tokenize(
         r##"{"description":"Bad named entity: DownRightVectorBar without a semi-colon","initialState":"Data","input":"&DownRightVectorBar","inputUtf16":[38,68,111,119,110,82,105,103,104,116,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&DownRightVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_227() {
+fn test_0227() {
     tokenize(
         r##"{"description":"Named entity: DownRightVectorBar; with a semi-colon","initialState":"Data","input":"&DownRightVectorBar;","inputUtf16":[38,68,111,119,110,82,105,103,104,116,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥗"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_228() {
+fn test_0228() {
     tokenize(
         r##"{"description":"Bad named entity: DownTee without a semi-colon","initialState":"Data","input":"&DownTee","inputUtf16":[38,68,111,119,110,84,101,101],"output":[{"Character":{"data":"&DownTee"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_229() {
+fn test_0229() {
     tokenize(
         r##"{"description":"Named entity: DownTee; with a semi-colon","initialState":"Data","input":"&DownTee;","inputUtf16":[38,68,111,119,110,84,101,101,59],"output":[{"Character":{"data":"⊤"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_230() {
+fn test_0230() {
     tokenize(
         r##"{"description":"Bad named entity: DownTeeArrow without a semi-colon","initialState":"Data","input":"&DownTeeArrow","inputUtf16":[38,68,111,119,110,84,101,101,65,114,114,111,119],"output":[{"Character":{"data":"&DownTeeArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_231() {
+fn test_0231() {
     tokenize(
         r##"{"description":"Named entity: DownTeeArrow; with a semi-colon","initialState":"Data","input":"&DownTeeArrow;","inputUtf16":[38,68,111,119,110,84,101,101,65,114,114,111,119,59],"output":[{"Character":{"data":"↧"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_232() {
+fn test_0232() {
     tokenize(
         r##"{"description":"Bad named entity: Downarrow without a semi-colon","initialState":"Data","input":"&Downarrow","inputUtf16":[38,68,111,119,110,97,114,114,111,119],"output":[{"Character":{"data":"&Downarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_233() {
+fn test_0233() {
     tokenize(
         r##"{"description":"Named entity: Downarrow; with a semi-colon","initialState":"Data","input":"&Downarrow;","inputUtf16":[38,68,111,119,110,97,114,114,111,119,59],"output":[{"Character":{"data":"⇓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_234() {
+fn test_0234() {
     tokenize(
         r##"{"description":"Bad named entity: Dscr without a semi-colon","initialState":"Data","input":"&Dscr","inputUtf16":[38,68,115,99,114],"output":[{"Character":{"data":"&Dscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_235() {
+fn test_0235() {
     tokenize(
         r##"{"description":"Named entity: Dscr; with a semi-colon","initialState":"Data","input":"&Dscr;","inputUtf16":[38,68,115,99,114,59],"output":[{"Character":{"data":"𝒟"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_236() {
+fn test_0236() {
     tokenize(
         r##"{"description":"Bad named entity: Dstrok without a semi-colon","initialState":"Data","input":"&Dstrok","inputUtf16":[38,68,115,116,114,111,107],"output":[{"Character":{"data":"&Dstrok"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_237() {
+fn test_0237() {
     tokenize(
         r##"{"description":"Named entity: Dstrok; with a semi-colon","initialState":"Data","input":"&Dstrok;","inputUtf16":[38,68,115,116,114,111,107,59],"output":[{"Character":{"data":"Đ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_238() {
+fn test_0238() {
     tokenize(
         r##"{"description":"Bad named entity: ENG without a semi-colon","initialState":"Data","input":"&ENG","inputUtf16":[38,69,78,71],"output":[{"Character":{"data":"&ENG"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_239() {
+fn test_0239() {
     tokenize(
         r##"{"description":"Named entity: ENG; with a semi-colon","initialState":"Data","input":"&ENG;","inputUtf16":[38,69,78,71,59],"output":[{"Character":{"data":"Ŋ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_240() {
+fn test_0240() {
     tokenize(
         r##"{"description":"Named entity: ETH without a semi-colon","initialState":"Data","input":"&ETH","inputUtf16":[38,69,84,72],"output":[{"Character":{"data":"Ð"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":5}}]}"##,
     );
 }
 
 #[test]
-fn test_241() {
+fn test_0241() {
     tokenize(
         r##"{"description":"Named entity: ETH; with a semi-colon","initialState":"Data","input":"&ETH;","inputUtf16":[38,69,84,72,59],"output":[{"Character":{"data":"Ð"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_242() {
+fn test_0242() {
     tokenize(
         r##"{"description":"Named entity: Eacute without a semi-colon","initialState":"Data","input":"&Eacute","inputUtf16":[38,69,97,99,117,116,101],"output":[{"Character":{"data":"É"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_243() {
+fn test_0243() {
     tokenize(
         r##"{"description":"Named entity: Eacute; with a semi-colon","initialState":"Data","input":"&Eacute;","inputUtf16":[38,69,97,99,117,116,101,59],"output":[{"Character":{"data":"É"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_244() {
+fn test_0244() {
     tokenize(
         r##"{"description":"Bad named entity: Ecaron without a semi-colon","initialState":"Data","input":"&Ecaron","inputUtf16":[38,69,99,97,114,111,110],"output":[{"Character":{"data":"&Ecaron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_245() {
+fn test_0245() {
     tokenize(
         r##"{"description":"Named entity: Ecaron; with a semi-colon","initialState":"Data","input":"&Ecaron;","inputUtf16":[38,69,99,97,114,111,110,59],"output":[{"Character":{"data":"Ě"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_246() {
+fn test_0246() {
     tokenize(
         r##"{"description":"Named entity: Ecirc without a semi-colon","initialState":"Data","input":"&Ecirc","inputUtf16":[38,69,99,105,114,99],"output":[{"Character":{"data":"Ê"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_247() {
+fn test_0247() {
     tokenize(
         r##"{"description":"Named entity: Ecirc; with a semi-colon","initialState":"Data","input":"&Ecirc;","inputUtf16":[38,69,99,105,114,99,59],"output":[{"Character":{"data":"Ê"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_248() {
+fn test_0248() {
     tokenize(
         r##"{"description":"Bad named entity: Ecy without a semi-colon","initialState":"Data","input":"&Ecy","inputUtf16":[38,69,99,121],"output":[{"Character":{"data":"&Ecy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_249() {
+fn test_0249() {
     tokenize(
         r##"{"description":"Named entity: Ecy; with a semi-colon","initialState":"Data","input":"&Ecy;","inputUtf16":[38,69,99,121,59],"output":[{"Character":{"data":"Э"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_250() {
+fn test_0250() {
     tokenize(
         r##"{"description":"Bad named entity: Edot without a semi-colon","initialState":"Data","input":"&Edot","inputUtf16":[38,69,100,111,116],"output":[{"Character":{"data":"&Edot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_251() {
+fn test_0251() {
     tokenize(
         r##"{"description":"Named entity: Edot; with a semi-colon","initialState":"Data","input":"&Edot;","inputUtf16":[38,69,100,111,116,59],"output":[{"Character":{"data":"Ė"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_252() {
+fn test_0252() {
     tokenize(
         r##"{"description":"Bad named entity: Efr without a semi-colon","initialState":"Data","input":"&Efr","inputUtf16":[38,69,102,114],"output":[{"Character":{"data":"&Efr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_253() {
+fn test_0253() {
     tokenize(
         r##"{"description":"Named entity: Efr; with a semi-colon","initialState":"Data","input":"&Efr;","inputUtf16":[38,69,102,114,59],"output":[{"Character":{"data":"𝔈"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_254() {
+fn test_0254() {
     tokenize(
         r##"{"description":"Named entity: Egrave without a semi-colon","initialState":"Data","input":"&Egrave","inputUtf16":[38,69,103,114,97,118,101],"output":[{"Character":{"data":"È"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_255() {
+fn test_0255() {
     tokenize(
         r##"{"description":"Named entity: Egrave; with a semi-colon","initialState":"Data","input":"&Egrave;","inputUtf16":[38,69,103,114,97,118,101,59],"output":[{"Character":{"data":"È"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_256() {
+fn test_0256() {
     tokenize(
         r##"{"description":"Bad named entity: Element without a semi-colon","initialState":"Data","input":"&Element","inputUtf16":[38,69,108,101,109,101,110,116],"output":[{"Character":{"data":"&Element"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_257() {
+fn test_0257() {
     tokenize(
         r##"{"description":"Named entity: Element; with a semi-colon","initialState":"Data","input":"&Element;","inputUtf16":[38,69,108,101,109,101,110,116,59],"output":[{"Character":{"data":"∈"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_258() {
+fn test_0258() {
     tokenize(
         r##"{"description":"Bad named entity: Emacr without a semi-colon","initialState":"Data","input":"&Emacr","inputUtf16":[38,69,109,97,99,114],"output":[{"Character":{"data":"&Emacr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_259() {
+fn test_0259() {
     tokenize(
         r##"{"description":"Named entity: Emacr; with a semi-colon","initialState":"Data","input":"&Emacr;","inputUtf16":[38,69,109,97,99,114,59],"output":[{"Character":{"data":"Ē"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_260() {
+fn test_0260() {
     tokenize(
         r##"{"description":"Bad named entity: EmptySmallSquare without a semi-colon","initialState":"Data","input":"&EmptySmallSquare","inputUtf16":[38,69,109,112,116,121,83,109,97,108,108,83,113,117,97,114,101],"output":[{"Character":{"data":"&EmptySmallSquare"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_261() {
+fn test_0261() {
     tokenize(
         r##"{"description":"Named entity: EmptySmallSquare; with a semi-colon","initialState":"Data","input":"&EmptySmallSquare;","inputUtf16":[38,69,109,112,116,121,83,109,97,108,108,83,113,117,97,114,101,59],"output":[{"Character":{"data":"◻"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_262() {
+fn test_0262() {
     tokenize(
         r##"{"description":"Bad named entity: EmptyVerySmallSquare without a semi-colon","initialState":"Data","input":"&EmptyVerySmallSquare","inputUtf16":[38,69,109,112,116,121,86,101,114,121,83,109,97,108,108,83,113,117,97,114,101],"output":[{"Character":{"data":"&EmptyVerySmallSquare"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_263() {
+fn test_0263() {
     tokenize(
         r##"{"description":"Named entity: EmptyVerySmallSquare; with a semi-colon","initialState":"Data","input":"&EmptyVerySmallSquare;","inputUtf16":[38,69,109,112,116,121,86,101,114,121,83,109,97,108,108,83,113,117,97,114,101,59],"output":[{"Character":{"data":"▫"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_264() {
+fn test_0264() {
     tokenize(
         r##"{"description":"Bad named entity: Eogon without a semi-colon","initialState":"Data","input":"&Eogon","inputUtf16":[38,69,111,103,111,110],"output":[{"Character":{"data":"&Eogon"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_265() {
+fn test_0265() {
     tokenize(
         r##"{"description":"Named entity: Eogon; with a semi-colon","initialState":"Data","input":"&Eogon;","inputUtf16":[38,69,111,103,111,110,59],"output":[{"Character":{"data":"Ę"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_266() {
+fn test_0266() {
     tokenize(
         r##"{"description":"Bad named entity: Eopf without a semi-colon","initialState":"Data","input":"&Eopf","inputUtf16":[38,69,111,112,102],"output":[{"Character":{"data":"&Eopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_267() {
+fn test_0267() {
     tokenize(
         r##"{"description":"Named entity: Eopf; with a semi-colon","initialState":"Data","input":"&Eopf;","inputUtf16":[38,69,111,112,102,59],"output":[{"Character":{"data":"𝔼"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_268() {
+fn test_0268() {
     tokenize(
         r##"{"description":"Bad named entity: Epsilon without a semi-colon","initialState":"Data","input":"&Epsilon","inputUtf16":[38,69,112,115,105,108,111,110],"output":[{"Character":{"data":"&Epsilon"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_269() {
+fn test_0269() {
     tokenize(
         r##"{"description":"Named entity: Epsilon; with a semi-colon","initialState":"Data","input":"&Epsilon;","inputUtf16":[38,69,112,115,105,108,111,110,59],"output":[{"Character":{"data":"Ε"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_270() {
+fn test_0270() {
     tokenize(
         r##"{"description":"Bad named entity: Equal without a semi-colon","initialState":"Data","input":"&Equal","inputUtf16":[38,69,113,117,97,108],"output":[{"Character":{"data":"&Equal"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_271() {
+fn test_0271() {
     tokenize(
         r##"{"description":"Named entity: Equal; with a semi-colon","initialState":"Data","input":"&Equal;","inputUtf16":[38,69,113,117,97,108,59],"output":[{"Character":{"data":"⩵"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_272() {
+fn test_0272() {
     tokenize(
         r##"{"description":"Bad named entity: EqualTilde without a semi-colon","initialState":"Data","input":"&EqualTilde","inputUtf16":[38,69,113,117,97,108,84,105,108,100,101],"output":[{"Character":{"data":"&EqualTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_273() {
+fn test_0273() {
     tokenize(
         r##"{"description":"Named entity: EqualTilde; with a semi-colon","initialState":"Data","input":"&EqualTilde;","inputUtf16":[38,69,113,117,97,108,84,105,108,100,101,59],"output":[{"Character":{"data":"≂"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_274() {
+fn test_0274() {
     tokenize(
         r##"{"description":"Bad named entity: Equilibrium without a semi-colon","initialState":"Data","input":"&Equilibrium","inputUtf16":[38,69,113,117,105,108,105,98,114,105,117,109],"output":[{"Character":{"data":"&Equilibrium"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_275() {
+fn test_0275() {
     tokenize(
         r##"{"description":"Named entity: Equilibrium; with a semi-colon","initialState":"Data","input":"&Equilibrium;","inputUtf16":[38,69,113,117,105,108,105,98,114,105,117,109,59],"output":[{"Character":{"data":"⇌"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_276() {
+fn test_0276() {
     tokenize(
         r##"{"description":"Bad named entity: Escr without a semi-colon","initialState":"Data","input":"&Escr","inputUtf16":[38,69,115,99,114],"output":[{"Character":{"data":"&Escr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_277() {
+fn test_0277() {
     tokenize(
         r##"{"description":"Named entity: Escr; with a semi-colon","initialState":"Data","input":"&Escr;","inputUtf16":[38,69,115,99,114,59],"output":[{"Character":{"data":"ℰ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_278() {
+fn test_0278() {
     tokenize(
         r##"{"description":"Bad named entity: Esim without a semi-colon","initialState":"Data","input":"&Esim","inputUtf16":[38,69,115,105,109],"output":[{"Character":{"data":"&Esim"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_279() {
+fn test_0279() {
     tokenize(
         r##"{"description":"Named entity: Esim; with a semi-colon","initialState":"Data","input":"&Esim;","inputUtf16":[38,69,115,105,109,59],"output":[{"Character":{"data":"⩳"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_280() {
+fn test_0280() {
     tokenize(
         r##"{"description":"Bad named entity: Eta without a semi-colon","initialState":"Data","input":"&Eta","inputUtf16":[38,69,116,97],"output":[{"Character":{"data":"&Eta"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_281() {
+fn test_0281() {
     tokenize(
         r##"{"description":"Named entity: Eta; with a semi-colon","initialState":"Data","input":"&Eta;","inputUtf16":[38,69,116,97,59],"output":[{"Character":{"data":"Η"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_282() {
+fn test_0282() {
     tokenize(
         r##"{"description":"Named entity: Euml without a semi-colon","initialState":"Data","input":"&Euml","inputUtf16":[38,69,117,109,108],"output":[{"Character":{"data":"Ë"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_283() {
+fn test_0283() {
     tokenize(
         r##"{"description":"Named entity: Euml; with a semi-colon","initialState":"Data","input":"&Euml;","inputUtf16":[38,69,117,109,108,59],"output":[{"Character":{"data":"Ë"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_284() {
+fn test_0284() {
     tokenize(
         r##"{"description":"Bad named entity: Exists without a semi-colon","initialState":"Data","input":"&Exists","inputUtf16":[38,69,120,105,115,116,115],"output":[{"Character":{"data":"&Exists"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_285() {
+fn test_0285() {
     tokenize(
         r##"{"description":"Named entity: Exists; with a semi-colon","initialState":"Data","input":"&Exists;","inputUtf16":[38,69,120,105,115,116,115,59],"output":[{"Character":{"data":"∃"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_286() {
+fn test_0286() {
     tokenize(
         r##"{"description":"Bad named entity: ExponentialE without a semi-colon","initialState":"Data","input":"&ExponentialE","inputUtf16":[38,69,120,112,111,110,101,110,116,105,97,108,69],"output":[{"Character":{"data":"&ExponentialE"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_287() {
+fn test_0287() {
     tokenize(
         r##"{"description":"Named entity: ExponentialE; with a semi-colon","initialState":"Data","input":"&ExponentialE;","inputUtf16":[38,69,120,112,111,110,101,110,116,105,97,108,69,59],"output":[{"Character":{"data":"ⅇ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_288() {
+fn test_0288() {
     tokenize(
         r##"{"description":"Bad named entity: Fcy without a semi-colon","initialState":"Data","input":"&Fcy","inputUtf16":[38,70,99,121],"output":[{"Character":{"data":"&Fcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_289() {
+fn test_0289() {
     tokenize(
         r##"{"description":"Named entity: Fcy; with a semi-colon","initialState":"Data","input":"&Fcy;","inputUtf16":[38,70,99,121,59],"output":[{"Character":{"data":"Ф"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_290() {
+fn test_0290() {
     tokenize(
         r##"{"description":"Bad named entity: Ffr without a semi-colon","initialState":"Data","input":"&Ffr","inputUtf16":[38,70,102,114],"output":[{"Character":{"data":"&Ffr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_291() {
+fn test_0291() {
     tokenize(
         r##"{"description":"Named entity: Ffr; with a semi-colon","initialState":"Data","input":"&Ffr;","inputUtf16":[38,70,102,114,59],"output":[{"Character":{"data":"𝔉"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_292() {
+fn test_0292() {
     tokenize(
         r##"{"description":"Bad named entity: FilledSmallSquare without a semi-colon","initialState":"Data","input":"&FilledSmallSquare","inputUtf16":[38,70,105,108,108,101,100,83,109,97,108,108,83,113,117,97,114,101],"output":[{"Character":{"data":"&FilledSmallSquare"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_293() {
+fn test_0293() {
     tokenize(
         r##"{"description":"Named entity: FilledSmallSquare; with a semi-colon","initialState":"Data","input":"&FilledSmallSquare;","inputUtf16":[38,70,105,108,108,101,100,83,109,97,108,108,83,113,117,97,114,101,59],"output":[{"Character":{"data":"◼"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_294() {
+fn test_0294() {
     tokenize(
         r##"{"description":"Bad named entity: FilledVerySmallSquare without a semi-colon","initialState":"Data","input":"&FilledVerySmallSquare","inputUtf16":[38,70,105,108,108,101,100,86,101,114,121,83,109,97,108,108,83,113,117,97,114,101],"output":[{"Character":{"data":"&FilledVerySmallSquare"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_295() {
+fn test_0295() {
     tokenize(
         r##"{"description":"Named entity: FilledVerySmallSquare; with a semi-colon","initialState":"Data","input":"&FilledVerySmallSquare;","inputUtf16":[38,70,105,108,108,101,100,86,101,114,121,83,109,97,108,108,83,113,117,97,114,101,59],"output":[{"Character":{"data":"▪"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_296() {
+fn test_0296() {
     tokenize(
         r##"{"description":"Bad named entity: Fopf without a semi-colon","initialState":"Data","input":"&Fopf","inputUtf16":[38,70,111,112,102],"output":[{"Character":{"data":"&Fopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_297() {
+fn test_0297() {
     tokenize(
         r##"{"description":"Named entity: Fopf; with a semi-colon","initialState":"Data","input":"&Fopf;","inputUtf16":[38,70,111,112,102,59],"output":[{"Character":{"data":"𝔽"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_298() {
+fn test_0298() {
     tokenize(
         r##"{"description":"Bad named entity: ForAll without a semi-colon","initialState":"Data","input":"&ForAll","inputUtf16":[38,70,111,114,65,108,108],"output":[{"Character":{"data":"&ForAll"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_299() {
+fn test_0299() {
     tokenize(
         r##"{"description":"Named entity: ForAll; with a semi-colon","initialState":"Data","input":"&ForAll;","inputUtf16":[38,70,111,114,65,108,108,59],"output":[{"Character":{"data":"∀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_300() {
+fn test_0300() {
     tokenize(
         r##"{"description":"Bad named entity: Fouriertrf without a semi-colon","initialState":"Data","input":"&Fouriertrf","inputUtf16":[38,70,111,117,114,105,101,114,116,114,102],"output":[{"Character":{"data":"&Fouriertrf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_301() {
+fn test_0301() {
     tokenize(
         r##"{"description":"Named entity: Fouriertrf; with a semi-colon","initialState":"Data","input":"&Fouriertrf;","inputUtf16":[38,70,111,117,114,105,101,114,116,114,102,59],"output":[{"Character":{"data":"ℱ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_302() {
+fn test_0302() {
     tokenize(
         r##"{"description":"Bad named entity: Fscr without a semi-colon","initialState":"Data","input":"&Fscr","inputUtf16":[38,70,115,99,114],"output":[{"Character":{"data":"&Fscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_303() {
+fn test_0303() {
     tokenize(
         r##"{"description":"Named entity: Fscr; with a semi-colon","initialState":"Data","input":"&Fscr;","inputUtf16":[38,70,115,99,114,59],"output":[{"Character":{"data":"ℱ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_304() {
+fn test_0304() {
     tokenize(
         r##"{"description":"Bad named entity: GJcy without a semi-colon","initialState":"Data","input":"&GJcy","inputUtf16":[38,71,74,99,121],"output":[{"Character":{"data":"&GJcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_305() {
+fn test_0305() {
     tokenize(
         r##"{"description":"Named entity: GJcy; with a semi-colon","initialState":"Data","input":"&GJcy;","inputUtf16":[38,71,74,99,121,59],"output":[{"Character":{"data":"Ѓ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_306() {
+fn test_0306() {
     tokenize(
         r##"{"description":"Named entity: GT without a semi-colon","initialState":"Data","input":"&GT","inputUtf16":[38,71,84],"output":[{"Character":{"data":">"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":4}}]}"##,
     );
 }
 
 #[test]
-fn test_307() {
+fn test_0307() {
     tokenize(
         r##"{"description":"Named entity: GT; with a semi-colon","initialState":"Data","input":"&GT;","inputUtf16":[38,71,84,59],"output":[{"Character":{"data":">"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_308() {
+fn test_0308() {
     tokenize(
         r##"{"description":"Bad named entity: Gamma without a semi-colon","initialState":"Data","input":"&Gamma","inputUtf16":[38,71,97,109,109,97],"output":[{"Character":{"data":"&Gamma"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_309() {
+fn test_0309() {
     tokenize(
         r##"{"description":"Named entity: Gamma; with a semi-colon","initialState":"Data","input":"&Gamma;","inputUtf16":[38,71,97,109,109,97,59],"output":[{"Character":{"data":"Γ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_310() {
+fn test_0310() {
     tokenize(
         r##"{"description":"Bad named entity: Gammad without a semi-colon","initialState":"Data","input":"&Gammad","inputUtf16":[38,71,97,109,109,97,100],"output":[{"Character":{"data":"&Gammad"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_311() {
+fn test_0311() {
     tokenize(
         r##"{"description":"Named entity: Gammad; with a semi-colon","initialState":"Data","input":"&Gammad;","inputUtf16":[38,71,97,109,109,97,100,59],"output":[{"Character":{"data":"Ϝ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_312() {
+fn test_0312() {
     tokenize(
         r##"{"description":"Bad named entity: Gbreve without a semi-colon","initialState":"Data","input":"&Gbreve","inputUtf16":[38,71,98,114,101,118,101],"output":[{"Character":{"data":"&Gbreve"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_313() {
+fn test_0313() {
     tokenize(
         r##"{"description":"Named entity: Gbreve; with a semi-colon","initialState":"Data","input":"&Gbreve;","inputUtf16":[38,71,98,114,101,118,101,59],"output":[{"Character":{"data":"Ğ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_314() {
+fn test_0314() {
     tokenize(
         r##"{"description":"Bad named entity: Gcedil without a semi-colon","initialState":"Data","input":"&Gcedil","inputUtf16":[38,71,99,101,100,105,108],"output":[{"Character":{"data":"&Gcedil"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_315() {
+fn test_0315() {
     tokenize(
         r##"{"description":"Named entity: Gcedil; with a semi-colon","initialState":"Data","input":"&Gcedil;","inputUtf16":[38,71,99,101,100,105,108,59],"output":[{"Character":{"data":"Ģ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_316() {
+fn test_0316() {
     tokenize(
         r##"{"description":"Bad named entity: Gcirc without a semi-colon","initialState":"Data","input":"&Gcirc","inputUtf16":[38,71,99,105,114,99],"output":[{"Character":{"data":"&Gcirc"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_317() {
+fn test_0317() {
     tokenize(
         r##"{"description":"Named entity: Gcirc; with a semi-colon","initialState":"Data","input":"&Gcirc;","inputUtf16":[38,71,99,105,114,99,59],"output":[{"Character":{"data":"Ĝ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_318() {
+fn test_0318() {
     tokenize(
         r##"{"description":"Bad named entity: Gcy without a semi-colon","initialState":"Data","input":"&Gcy","inputUtf16":[38,71,99,121],"output":[{"Character":{"data":"&Gcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_319() {
+fn test_0319() {
     tokenize(
         r##"{"description":"Named entity: Gcy; with a semi-colon","initialState":"Data","input":"&Gcy;","inputUtf16":[38,71,99,121,59],"output":[{"Character":{"data":"Г"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_320() {
+fn test_0320() {
     tokenize(
         r##"{"description":"Bad named entity: Gdot without a semi-colon","initialState":"Data","input":"&Gdot","inputUtf16":[38,71,100,111,116],"output":[{"Character":{"data":"&Gdot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_321() {
+fn test_0321() {
     tokenize(
         r##"{"description":"Named entity: Gdot; with a semi-colon","initialState":"Data","input":"&Gdot;","inputUtf16":[38,71,100,111,116,59],"output":[{"Character":{"data":"Ġ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_322() {
+fn test_0322() {
     tokenize(
         r##"{"description":"Bad named entity: Gfr without a semi-colon","initialState":"Data","input":"&Gfr","inputUtf16":[38,71,102,114],"output":[{"Character":{"data":"&Gfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_323() {
+fn test_0323() {
     tokenize(
         r##"{"description":"Named entity: Gfr; with a semi-colon","initialState":"Data","input":"&Gfr;","inputUtf16":[38,71,102,114,59],"output":[{"Character":{"data":"𝔊"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_324() {
+fn test_0324() {
     tokenize(
         r##"{"description":"Bad named entity: Gg without a semi-colon","initialState":"Data","input":"&Gg","inputUtf16":[38,71,103],"output":[{"Character":{"data":"&Gg"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_325() {
+fn test_0325() {
     tokenize(
         r##"{"description":"Named entity: Gg; with a semi-colon","initialState":"Data","input":"&Gg;","inputUtf16":[38,71,103,59],"output":[{"Character":{"data":"⋙"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_326() {
+fn test_0326() {
     tokenize(
         r##"{"description":"Bad named entity: Gopf without a semi-colon","initialState":"Data","input":"&Gopf","inputUtf16":[38,71,111,112,102],"output":[{"Character":{"data":"&Gopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_327() {
+fn test_0327() {
     tokenize(
         r##"{"description":"Named entity: Gopf; with a semi-colon","initialState":"Data","input":"&Gopf;","inputUtf16":[38,71,111,112,102,59],"output":[{"Character":{"data":"𝔾"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_328() {
+fn test_0328() {
     tokenize(
         r##"{"description":"Bad named entity: GreaterEqual without a semi-colon","initialState":"Data","input":"&GreaterEqual","inputUtf16":[38,71,114,101,97,116,101,114,69,113,117,97,108],"output":[{"Character":{"data":"&GreaterEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_329() {
+fn test_0329() {
     tokenize(
         r##"{"description":"Named entity: GreaterEqual; with a semi-colon","initialState":"Data","input":"&GreaterEqual;","inputUtf16":[38,71,114,101,97,116,101,114,69,113,117,97,108,59],"output":[{"Character":{"data":"≥"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_330() {
+fn test_0330() {
     tokenize(
         r##"{"description":"Bad named entity: GreaterEqualLess without a semi-colon","initialState":"Data","input":"&GreaterEqualLess","inputUtf16":[38,71,114,101,97,116,101,114,69,113,117,97,108,76,101,115,115],"output":[{"Character":{"data":"&GreaterEqualLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_331() {
+fn test_0331() {
     tokenize(
         r##"{"description":"Named entity: GreaterEqualLess; with a semi-colon","initialState":"Data","input":"&GreaterEqualLess;","inputUtf16":[38,71,114,101,97,116,101,114,69,113,117,97,108,76,101,115,115,59],"output":[{"Character":{"data":"⋛"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_332() {
+fn test_0332() {
     tokenize(
         r##"{"description":"Bad named entity: GreaterFullEqual without a semi-colon","initialState":"Data","input":"&GreaterFullEqual","inputUtf16":[38,71,114,101,97,116,101,114,70,117,108,108,69,113,117,97,108],"output":[{"Character":{"data":"&GreaterFullEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_333() {
+fn test_0333() {
     tokenize(
         r##"{"description":"Named entity: GreaterFullEqual; with a semi-colon","initialState":"Data","input":"&GreaterFullEqual;","inputUtf16":[38,71,114,101,97,116,101,114,70,117,108,108,69,113,117,97,108,59],"output":[{"Character":{"data":"≧"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_334() {
+fn test_0334() {
     tokenize(
         r##"{"description":"Bad named entity: GreaterGreater without a semi-colon","initialState":"Data","input":"&GreaterGreater","inputUtf16":[38,71,114,101,97,116,101,114,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&GreaterGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_335() {
+fn test_0335() {
     tokenize(
         r##"{"description":"Named entity: GreaterGreater; with a semi-colon","initialState":"Data","input":"&GreaterGreater;","inputUtf16":[38,71,114,101,97,116,101,114,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"⪢"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_336() {
+fn test_0336() {
     tokenize(
         r##"{"description":"Bad named entity: GreaterLess without a semi-colon","initialState":"Data","input":"&GreaterLess","inputUtf16":[38,71,114,101,97,116,101,114,76,101,115,115],"output":[{"Character":{"data":"&GreaterLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_337() {
+fn test_0337() {
     tokenize(
         r##"{"description":"Named entity: GreaterLess; with a semi-colon","initialState":"Data","input":"&GreaterLess;","inputUtf16":[38,71,114,101,97,116,101,114,76,101,115,115,59],"output":[{"Character":{"data":"≷"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_338() {
+fn test_0338() {
     tokenize(
         r##"{"description":"Bad named entity: GreaterSlantEqual without a semi-colon","initialState":"Data","input":"&GreaterSlantEqual","inputUtf16":[38,71,114,101,97,116,101,114,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&GreaterSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_339() {
+fn test_0339() {
     tokenize(
         r##"{"description":"Named entity: GreaterSlantEqual; with a semi-colon","initialState":"Data","input":"&GreaterSlantEqual;","inputUtf16":[38,71,114,101,97,116,101,114,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⩾"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_340() {
+fn test_0340() {
     tokenize(
         r##"{"description":"Bad named entity: GreaterTilde without a semi-colon","initialState":"Data","input":"&GreaterTilde","inputUtf16":[38,71,114,101,97,116,101,114,84,105,108,100,101],"output":[{"Character":{"data":"&GreaterTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_341() {
+fn test_0341() {
     tokenize(
         r##"{"description":"Named entity: GreaterTilde; with a semi-colon","initialState":"Data","input":"&GreaterTilde;","inputUtf16":[38,71,114,101,97,116,101,114,84,105,108,100,101,59],"output":[{"Character":{"data":"≳"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_342() {
+fn test_0342() {
     tokenize(
         r##"{"description":"Bad named entity: Gscr without a semi-colon","initialState":"Data","input":"&Gscr","inputUtf16":[38,71,115,99,114],"output":[{"Character":{"data":"&Gscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_343() {
+fn test_0343() {
     tokenize(
         r##"{"description":"Named entity: Gscr; with a semi-colon","initialState":"Data","input":"&Gscr;","inputUtf16":[38,71,115,99,114,59],"output":[{"Character":{"data":"𝒢"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_344() {
+fn test_0344() {
     tokenize(
         r##"{"description":"Bad named entity: Gt without a semi-colon","initialState":"Data","input":"&Gt","inputUtf16":[38,71,116],"output":[{"Character":{"data":"&Gt"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_345() {
+fn test_0345() {
     tokenize(
         r##"{"description":"Named entity: Gt; with a semi-colon","initialState":"Data","input":"&Gt;","inputUtf16":[38,71,116,59],"output":[{"Character":{"data":"≫"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_346() {
+fn test_0346() {
     tokenize(
         r##"{"description":"Bad named entity: HARDcy without a semi-colon","initialState":"Data","input":"&HARDcy","inputUtf16":[38,72,65,82,68,99,121],"output":[{"Character":{"data":"&HARDcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_347() {
+fn test_0347() {
     tokenize(
         r##"{"description":"Named entity: HARDcy; with a semi-colon","initialState":"Data","input":"&HARDcy;","inputUtf16":[38,72,65,82,68,99,121,59],"output":[{"Character":{"data":"Ъ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_348() {
+fn test_0348() {
     tokenize(
         r##"{"description":"Bad named entity: Hacek without a semi-colon","initialState":"Data","input":"&Hacek","inputUtf16":[38,72,97,99,101,107],"output":[{"Character":{"data":"&Hacek"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_349() {
+fn test_0349() {
     tokenize(
         r##"{"description":"Named entity: Hacek; with a semi-colon","initialState":"Data","input":"&Hacek;","inputUtf16":[38,72,97,99,101,107,59],"output":[{"Character":{"data":"ˇ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_350() {
+fn test_0350() {
     tokenize(
         r##"{"description":"Bad named entity: Hat without a semi-colon","initialState":"Data","input":"&Hat","inputUtf16":[38,72,97,116],"output":[{"Character":{"data":"&Hat"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_351() {
+fn test_0351() {
     tokenize(
         r##"{"description":"Named entity: Hat; with a semi-colon","initialState":"Data","input":"&Hat;","inputUtf16":[38,72,97,116,59],"output":[{"Character":{"data":"^"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_352() {
+fn test_0352() {
     tokenize(
         r##"{"description":"Bad named entity: Hcirc without a semi-colon","initialState":"Data","input":"&Hcirc","inputUtf16":[38,72,99,105,114,99],"output":[{"Character":{"data":"&Hcirc"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_353() {
+fn test_0353() {
     tokenize(
         r##"{"description":"Named entity: Hcirc; with a semi-colon","initialState":"Data","input":"&Hcirc;","inputUtf16":[38,72,99,105,114,99,59],"output":[{"Character":{"data":"Ĥ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_354() {
+fn test_0354() {
     tokenize(
         r##"{"description":"Bad named entity: Hfr without a semi-colon","initialState":"Data","input":"&Hfr","inputUtf16":[38,72,102,114],"output":[{"Character":{"data":"&Hfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_355() {
+fn test_0355() {
     tokenize(
         r##"{"description":"Named entity: Hfr; with a semi-colon","initialState":"Data","input":"&Hfr;","inputUtf16":[38,72,102,114,59],"output":[{"Character":{"data":"ℌ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_356() {
+fn test_0356() {
     tokenize(
         r##"{"description":"Bad named entity: HilbertSpace without a semi-colon","initialState":"Data","input":"&HilbertSpace","inputUtf16":[38,72,105,108,98,101,114,116,83,112,97,99,101],"output":[{"Character":{"data":"&HilbertSpace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_357() {
+fn test_0357() {
     tokenize(
         r##"{"description":"Named entity: HilbertSpace; with a semi-colon","initialState":"Data","input":"&HilbertSpace;","inputUtf16":[38,72,105,108,98,101,114,116,83,112,97,99,101,59],"output":[{"Character":{"data":"ℋ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_358() {
+fn test_0358() {
     tokenize(
         r##"{"description":"Bad named entity: Hopf without a semi-colon","initialState":"Data","input":"&Hopf","inputUtf16":[38,72,111,112,102],"output":[{"Character":{"data":"&Hopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_359() {
+fn test_0359() {
     tokenize(
         r##"{"description":"Named entity: Hopf; with a semi-colon","initialState":"Data","input":"&Hopf;","inputUtf16":[38,72,111,112,102,59],"output":[{"Character":{"data":"ℍ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_360() {
+fn test_0360() {
     tokenize(
         r##"{"description":"Bad named entity: HorizontalLine without a semi-colon","initialState":"Data","input":"&HorizontalLine","inputUtf16":[38,72,111,114,105,122,111,110,116,97,108,76,105,110,101],"output":[{"Character":{"data":"&HorizontalLine"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_361() {
+fn test_0361() {
     tokenize(
         r##"{"description":"Named entity: HorizontalLine; with a semi-colon","initialState":"Data","input":"&HorizontalLine;","inputUtf16":[38,72,111,114,105,122,111,110,116,97,108,76,105,110,101,59],"output":[{"Character":{"data":"─"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_362() {
+fn test_0362() {
     tokenize(
         r##"{"description":"Bad named entity: Hscr without a semi-colon","initialState":"Data","input":"&Hscr","inputUtf16":[38,72,115,99,114],"output":[{"Character":{"data":"&Hscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_363() {
+fn test_0363() {
     tokenize(
         r##"{"description":"Named entity: Hscr; with a semi-colon","initialState":"Data","input":"&Hscr;","inputUtf16":[38,72,115,99,114,59],"output":[{"Character":{"data":"ℋ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_364() {
+fn test_0364() {
     tokenize(
         r##"{"description":"Bad named entity: Hstrok without a semi-colon","initialState":"Data","input":"&Hstrok","inputUtf16":[38,72,115,116,114,111,107],"output":[{"Character":{"data":"&Hstrok"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_365() {
+fn test_0365() {
     tokenize(
         r##"{"description":"Named entity: Hstrok; with a semi-colon","initialState":"Data","input":"&Hstrok;","inputUtf16":[38,72,115,116,114,111,107,59],"output":[{"Character":{"data":"Ħ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_366() {
+fn test_0366() {
     tokenize(
         r##"{"description":"Bad named entity: HumpDownHump without a semi-colon","initialState":"Data","input":"&HumpDownHump","inputUtf16":[38,72,117,109,112,68,111,119,110,72,117,109,112],"output":[{"Character":{"data":"&HumpDownHump"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_367() {
+fn test_0367() {
     tokenize(
         r##"{"description":"Named entity: HumpDownHump; with a semi-colon","initialState":"Data","input":"&HumpDownHump;","inputUtf16":[38,72,117,109,112,68,111,119,110,72,117,109,112,59],"output":[{"Character":{"data":"≎"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_368() {
+fn test_0368() {
     tokenize(
         r##"{"description":"Bad named entity: HumpEqual without a semi-colon","initialState":"Data","input":"&HumpEqual","inputUtf16":[38,72,117,109,112,69,113,117,97,108],"output":[{"Character":{"data":"&HumpEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_369() {
+fn test_0369() {
     tokenize(
         r##"{"description":"Named entity: HumpEqual; with a semi-colon","initialState":"Data","input":"&HumpEqual;","inputUtf16":[38,72,117,109,112,69,113,117,97,108,59],"output":[{"Character":{"data":"≏"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_370() {
+fn test_0370() {
     tokenize(
         r##"{"description":"Bad named entity: IEcy without a semi-colon","initialState":"Data","input":"&IEcy","inputUtf16":[38,73,69,99,121],"output":[{"Character":{"data":"&IEcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_371() {
+fn test_0371() {
     tokenize(
         r##"{"description":"Named entity: IEcy; with a semi-colon","initialState":"Data","input":"&IEcy;","inputUtf16":[38,73,69,99,121,59],"output":[{"Character":{"data":"Е"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_372() {
+fn test_0372() {
     tokenize(
         r##"{"description":"Bad named entity: IJlig without a semi-colon","initialState":"Data","input":"&IJlig","inputUtf16":[38,73,74,108,105,103],"output":[{"Character":{"data":"&IJlig"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_373() {
+fn test_0373() {
     tokenize(
         r##"{"description":"Named entity: IJlig; with a semi-colon","initialState":"Data","input":"&IJlig;","inputUtf16":[38,73,74,108,105,103,59],"output":[{"Character":{"data":"Ĳ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_374() {
+fn test_0374() {
     tokenize(
         r##"{"description":"Bad named entity: IOcy without a semi-colon","initialState":"Data","input":"&IOcy","inputUtf16":[38,73,79,99,121],"output":[{"Character":{"data":"&IOcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_375() {
+fn test_0375() {
     tokenize(
         r##"{"description":"Named entity: IOcy; with a semi-colon","initialState":"Data","input":"&IOcy;","inputUtf16":[38,73,79,99,121,59],"output":[{"Character":{"data":"Ё"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_376() {
+fn test_0376() {
     tokenize(
         r##"{"description":"Named entity: Iacute without a semi-colon","initialState":"Data","input":"&Iacute","inputUtf16":[38,73,97,99,117,116,101],"output":[{"Character":{"data":"Í"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_377() {
+fn test_0377() {
     tokenize(
         r##"{"description":"Named entity: Iacute; with a semi-colon","initialState":"Data","input":"&Iacute;","inputUtf16":[38,73,97,99,117,116,101,59],"output":[{"Character":{"data":"Í"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_378() {
+fn test_0378() {
     tokenize(
         r##"{"description":"Named entity: Icirc without a semi-colon","initialState":"Data","input":"&Icirc","inputUtf16":[38,73,99,105,114,99],"output":[{"Character":{"data":"Î"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_379() {
+fn test_0379() {
     tokenize(
         r##"{"description":"Named entity: Icirc; with a semi-colon","initialState":"Data","input":"&Icirc;","inputUtf16":[38,73,99,105,114,99,59],"output":[{"Character":{"data":"Î"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_380() {
+fn test_0380() {
     tokenize(
         r##"{"description":"Bad named entity: Icy without a semi-colon","initialState":"Data","input":"&Icy","inputUtf16":[38,73,99,121],"output":[{"Character":{"data":"&Icy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_381() {
+fn test_0381() {
     tokenize(
         r##"{"description":"Named entity: Icy; with a semi-colon","initialState":"Data","input":"&Icy;","inputUtf16":[38,73,99,121,59],"output":[{"Character":{"data":"И"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_382() {
+fn test_0382() {
     tokenize(
         r##"{"description":"Bad named entity: Idot without a semi-colon","initialState":"Data","input":"&Idot","inputUtf16":[38,73,100,111,116],"output":[{"Character":{"data":"&Idot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_383() {
+fn test_0383() {
     tokenize(
         r##"{"description":"Named entity: Idot; with a semi-colon","initialState":"Data","input":"&Idot;","inputUtf16":[38,73,100,111,116,59],"output":[{"Character":{"data":"İ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_384() {
+fn test_0384() {
     tokenize(
         r##"{"description":"Bad named entity: Ifr without a semi-colon","initialState":"Data","input":"&Ifr","inputUtf16":[38,73,102,114],"output":[{"Character":{"data":"&Ifr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_385() {
+fn test_0385() {
     tokenize(
         r##"{"description":"Named entity: Ifr; with a semi-colon","initialState":"Data","input":"&Ifr;","inputUtf16":[38,73,102,114,59],"output":[{"Character":{"data":"ℑ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_386() {
+fn test_0386() {
     tokenize(
         r##"{"description":"Named entity: Igrave without a semi-colon","initialState":"Data","input":"&Igrave","inputUtf16":[38,73,103,114,97,118,101],"output":[{"Character":{"data":"Ì"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_387() {
+fn test_0387() {
     tokenize(
         r##"{"description":"Named entity: Igrave; with a semi-colon","initialState":"Data","input":"&Igrave;","inputUtf16":[38,73,103,114,97,118,101,59],"output":[{"Character":{"data":"Ì"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_388() {
+fn test_0388() {
     tokenize(
         r##"{"description":"Bad named entity: Im without a semi-colon","initialState":"Data","input":"&Im","inputUtf16":[38,73,109],"output":[{"Character":{"data":"&Im"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_389() {
+fn test_0389() {
     tokenize(
         r##"{"description":"Named entity: Im; with a semi-colon","initialState":"Data","input":"&Im;","inputUtf16":[38,73,109,59],"output":[{"Character":{"data":"ℑ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_390() {
+fn test_0390() {
     tokenize(
         r##"{"description":"Bad named entity: Imacr without a semi-colon","initialState":"Data","input":"&Imacr","inputUtf16":[38,73,109,97,99,114],"output":[{"Character":{"data":"&Imacr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_391() {
+fn test_0391() {
     tokenize(
         r##"{"description":"Named entity: Imacr; with a semi-colon","initialState":"Data","input":"&Imacr;","inputUtf16":[38,73,109,97,99,114,59],"output":[{"Character":{"data":"Ī"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_392() {
+fn test_0392() {
     tokenize(
         r##"{"description":"Bad named entity: ImaginaryI without a semi-colon","initialState":"Data","input":"&ImaginaryI","inputUtf16":[38,73,109,97,103,105,110,97,114,121,73],"output":[{"Character":{"data":"&ImaginaryI"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_393() {
+fn test_0393() {
     tokenize(
         r##"{"description":"Named entity: ImaginaryI; with a semi-colon","initialState":"Data","input":"&ImaginaryI;","inputUtf16":[38,73,109,97,103,105,110,97,114,121,73,59],"output":[{"Character":{"data":"ⅈ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_394() {
+fn test_0394() {
     tokenize(
         r##"{"description":"Bad named entity: Implies without a semi-colon","initialState":"Data","input":"&Implies","inputUtf16":[38,73,109,112,108,105,101,115],"output":[{"Character":{"data":"&Implies"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_395() {
+fn test_0395() {
     tokenize(
         r##"{"description":"Named entity: Implies; with a semi-colon","initialState":"Data","input":"&Implies;","inputUtf16":[38,73,109,112,108,105,101,115,59],"output":[{"Character":{"data":"⇒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_396() {
+fn test_0396() {
     tokenize(
         r##"{"description":"Bad named entity: Int without a semi-colon","initialState":"Data","input":"&Int","inputUtf16":[38,73,110,116],"output":[{"Character":{"data":"&Int"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_397() {
+fn test_0397() {
     tokenize(
         r##"{"description":"Named entity: Int; with a semi-colon","initialState":"Data","input":"&Int;","inputUtf16":[38,73,110,116,59],"output":[{"Character":{"data":"∬"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_398() {
+fn test_0398() {
     tokenize(
         r##"{"description":"Bad named entity: Integral without a semi-colon","initialState":"Data","input":"&Integral","inputUtf16":[38,73,110,116,101,103,114,97,108],"output":[{"Character":{"data":"&Integral"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_399() {
+fn test_0399() {
     tokenize(
         r##"{"description":"Named entity: Integral; with a semi-colon","initialState":"Data","input":"&Integral;","inputUtf16":[38,73,110,116,101,103,114,97,108,59],"output":[{"Character":{"data":"∫"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_400() {
+fn test_0400() {
     tokenize(
         r##"{"description":"Bad named entity: Intersection without a semi-colon","initialState":"Data","input":"&Intersection","inputUtf16":[38,73,110,116,101,114,115,101,99,116,105,111,110],"output":[{"Character":{"data":"&Intersection"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_401() {
+fn test_0401() {
     tokenize(
         r##"{"description":"Named entity: Intersection; with a semi-colon","initialState":"Data","input":"&Intersection;","inputUtf16":[38,73,110,116,101,114,115,101,99,116,105,111,110,59],"output":[{"Character":{"data":"⋂"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_402() {
+fn test_0402() {
     tokenize(
         r##"{"description":"Bad named entity: InvisibleComma without a semi-colon","initialState":"Data","input":"&InvisibleComma","inputUtf16":[38,73,110,118,105,115,105,98,108,101,67,111,109,109,97],"output":[{"Character":{"data":"&InvisibleComma"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_403() {
+fn test_0403() {
     tokenize(
         r##"{"description":"Named entity: InvisibleComma; with a semi-colon","initialState":"Data","input":"&InvisibleComma;","inputUtf16":[38,73,110,118,105,115,105,98,108,101,67,111,109,109,97,59],"output":[{"Character":{"data":"⁣"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_404() {
+fn test_0404() {
     tokenize(
         r##"{"description":"Bad named entity: InvisibleTimes without a semi-colon","initialState":"Data","input":"&InvisibleTimes","inputUtf16":[38,73,110,118,105,115,105,98,108,101,84,105,109,101,115],"output":[{"Character":{"data":"&InvisibleTimes"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_405() {
+fn test_0405() {
     tokenize(
         r##"{"description":"Named entity: InvisibleTimes; with a semi-colon","initialState":"Data","input":"&InvisibleTimes;","inputUtf16":[38,73,110,118,105,115,105,98,108,101,84,105,109,101,115,59],"output":[{"Character":{"data":"⁢"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_406() {
+fn test_0406() {
     tokenize(
         r##"{"description":"Bad named entity: Iogon without a semi-colon","initialState":"Data","input":"&Iogon","inputUtf16":[38,73,111,103,111,110],"output":[{"Character":{"data":"&Iogon"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_407() {
+fn test_0407() {
     tokenize(
         r##"{"description":"Named entity: Iogon; with a semi-colon","initialState":"Data","input":"&Iogon;","inputUtf16":[38,73,111,103,111,110,59],"output":[{"Character":{"data":"Į"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_408() {
+fn test_0408() {
     tokenize(
         r##"{"description":"Bad named entity: Iopf without a semi-colon","initialState":"Data","input":"&Iopf","inputUtf16":[38,73,111,112,102],"output":[{"Character":{"data":"&Iopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_409() {
+fn test_0409() {
     tokenize(
         r##"{"description":"Named entity: Iopf; with a semi-colon","initialState":"Data","input":"&Iopf;","inputUtf16":[38,73,111,112,102,59],"output":[{"Character":{"data":"𝕀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_410() {
+fn test_0410() {
     tokenize(
         r##"{"description":"Bad named entity: Iota without a semi-colon","initialState":"Data","input":"&Iota","inputUtf16":[38,73,111,116,97],"output":[{"Character":{"data":"&Iota"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_411() {
+fn test_0411() {
     tokenize(
         r##"{"description":"Named entity: Iota; with a semi-colon","initialState":"Data","input":"&Iota;","inputUtf16":[38,73,111,116,97,59],"output":[{"Character":{"data":"Ι"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_412() {
+fn test_0412() {
     tokenize(
         r##"{"description":"Bad named entity: Iscr without a semi-colon","initialState":"Data","input":"&Iscr","inputUtf16":[38,73,115,99,114],"output":[{"Character":{"data":"&Iscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_413() {
+fn test_0413() {
     tokenize(
         r##"{"description":"Named entity: Iscr; with a semi-colon","initialState":"Data","input":"&Iscr;","inputUtf16":[38,73,115,99,114,59],"output":[{"Character":{"data":"ℐ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_414() {
+fn test_0414() {
     tokenize(
         r##"{"description":"Bad named entity: Itilde without a semi-colon","initialState":"Data","input":"&Itilde","inputUtf16":[38,73,116,105,108,100,101],"output":[{"Character":{"data":"&Itilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_415() {
+fn test_0415() {
     tokenize(
         r##"{"description":"Named entity: Itilde; with a semi-colon","initialState":"Data","input":"&Itilde;","inputUtf16":[38,73,116,105,108,100,101,59],"output":[{"Character":{"data":"Ĩ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_416() {
+fn test_0416() {
     tokenize(
         r##"{"description":"Bad named entity: Iukcy without a semi-colon","initialState":"Data","input":"&Iukcy","inputUtf16":[38,73,117,107,99,121],"output":[{"Character":{"data":"&Iukcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_417() {
+fn test_0417() {
     tokenize(
         r##"{"description":"Named entity: Iukcy; with a semi-colon","initialState":"Data","input":"&Iukcy;","inputUtf16":[38,73,117,107,99,121,59],"output":[{"Character":{"data":"І"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_418() {
+fn test_0418() {
     tokenize(
         r##"{"description":"Named entity: Iuml without a semi-colon","initialState":"Data","input":"&Iuml","inputUtf16":[38,73,117,109,108],"output":[{"Character":{"data":"Ï"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_419() {
+fn test_0419() {
     tokenize(
         r##"{"description":"Named entity: Iuml; with a semi-colon","initialState":"Data","input":"&Iuml;","inputUtf16":[38,73,117,109,108,59],"output":[{"Character":{"data":"Ï"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_420() {
+fn test_0420() {
     tokenize(
         r##"{"description":"Bad named entity: Jcirc without a semi-colon","initialState":"Data","input":"&Jcirc","inputUtf16":[38,74,99,105,114,99],"output":[{"Character":{"data":"&Jcirc"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_421() {
+fn test_0421() {
     tokenize(
         r##"{"description":"Named entity: Jcirc; with a semi-colon","initialState":"Data","input":"&Jcirc;","inputUtf16":[38,74,99,105,114,99,59],"output":[{"Character":{"data":"Ĵ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_422() {
+fn test_0422() {
     tokenize(
         r##"{"description":"Bad named entity: Jcy without a semi-colon","initialState":"Data","input":"&Jcy","inputUtf16":[38,74,99,121],"output":[{"Character":{"data":"&Jcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_423() {
+fn test_0423() {
     tokenize(
         r##"{"description":"Named entity: Jcy; with a semi-colon","initialState":"Data","input":"&Jcy;","inputUtf16":[38,74,99,121,59],"output":[{"Character":{"data":"Й"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_424() {
+fn test_0424() {
     tokenize(
         r##"{"description":"Bad named entity: Jfr without a semi-colon","initialState":"Data","input":"&Jfr","inputUtf16":[38,74,102,114],"output":[{"Character":{"data":"&Jfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_425() {
+fn test_0425() {
     tokenize(
         r##"{"description":"Named entity: Jfr; with a semi-colon","initialState":"Data","input":"&Jfr;","inputUtf16":[38,74,102,114,59],"output":[{"Character":{"data":"𝔍"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_426() {
+fn test_0426() {
     tokenize(
         r##"{"description":"Bad named entity: Jopf without a semi-colon","initialState":"Data","input":"&Jopf","inputUtf16":[38,74,111,112,102],"output":[{"Character":{"data":"&Jopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_427() {
+fn test_0427() {
     tokenize(
         r##"{"description":"Named entity: Jopf; with a semi-colon","initialState":"Data","input":"&Jopf;","inputUtf16":[38,74,111,112,102,59],"output":[{"Character":{"data":"𝕁"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_428() {
+fn test_0428() {
     tokenize(
         r##"{"description":"Bad named entity: Jscr without a semi-colon","initialState":"Data","input":"&Jscr","inputUtf16":[38,74,115,99,114],"output":[{"Character":{"data":"&Jscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_429() {
+fn test_0429() {
     tokenize(
         r##"{"description":"Named entity: Jscr; with a semi-colon","initialState":"Data","input":"&Jscr;","inputUtf16":[38,74,115,99,114,59],"output":[{"Character":{"data":"𝒥"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_430() {
+fn test_0430() {
     tokenize(
         r##"{"description":"Bad named entity: Jsercy without a semi-colon","initialState":"Data","input":"&Jsercy","inputUtf16":[38,74,115,101,114,99,121],"output":[{"Character":{"data":"&Jsercy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_431() {
+fn test_0431() {
     tokenize(
         r##"{"description":"Named entity: Jsercy; with a semi-colon","initialState":"Data","input":"&Jsercy;","inputUtf16":[38,74,115,101,114,99,121,59],"output":[{"Character":{"data":"Ј"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_432() {
+fn test_0432() {
     tokenize(
         r##"{"description":"Bad named entity: Jukcy without a semi-colon","initialState":"Data","input":"&Jukcy","inputUtf16":[38,74,117,107,99,121],"output":[{"Character":{"data":"&Jukcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_433() {
+fn test_0433() {
     tokenize(
         r##"{"description":"Named entity: Jukcy; with a semi-colon","initialState":"Data","input":"&Jukcy;","inputUtf16":[38,74,117,107,99,121,59],"output":[{"Character":{"data":"Є"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_434() {
+fn test_0434() {
     tokenize(
         r##"{"description":"Bad named entity: KHcy without a semi-colon","initialState":"Data","input":"&KHcy","inputUtf16":[38,75,72,99,121],"output":[{"Character":{"data":"&KHcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_435() {
+fn test_0435() {
     tokenize(
         r##"{"description":"Named entity: KHcy; with a semi-colon","initialState":"Data","input":"&KHcy;","inputUtf16":[38,75,72,99,121,59],"output":[{"Character":{"data":"Х"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_436() {
+fn test_0436() {
     tokenize(
         r##"{"description":"Bad named entity: KJcy without a semi-colon","initialState":"Data","input":"&KJcy","inputUtf16":[38,75,74,99,121],"output":[{"Character":{"data":"&KJcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_437() {
+fn test_0437() {
     tokenize(
         r##"{"description":"Named entity: KJcy; with a semi-colon","initialState":"Data","input":"&KJcy;","inputUtf16":[38,75,74,99,121,59],"output":[{"Character":{"data":"Ќ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_438() {
+fn test_0438() {
     tokenize(
         r##"{"description":"Bad named entity: Kappa without a semi-colon","initialState":"Data","input":"&Kappa","inputUtf16":[38,75,97,112,112,97],"output":[{"Character":{"data":"&Kappa"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_439() {
+fn test_0439() {
     tokenize(
         r##"{"description":"Named entity: Kappa; with a semi-colon","initialState":"Data","input":"&Kappa;","inputUtf16":[38,75,97,112,112,97,59],"output":[{"Character":{"data":"Κ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_440() {
+fn test_0440() {
     tokenize(
         r##"{"description":"Bad named entity: Kcedil without a semi-colon","initialState":"Data","input":"&Kcedil","inputUtf16":[38,75,99,101,100,105,108],"output":[{"Character":{"data":"&Kcedil"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_441() {
+fn test_0441() {
     tokenize(
         r##"{"description":"Named entity: Kcedil; with a semi-colon","initialState":"Data","input":"&Kcedil;","inputUtf16":[38,75,99,101,100,105,108,59],"output":[{"Character":{"data":"Ķ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_442() {
+fn test_0442() {
     tokenize(
         r##"{"description":"Bad named entity: Kcy without a semi-colon","initialState":"Data","input":"&Kcy","inputUtf16":[38,75,99,121],"output":[{"Character":{"data":"&Kcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_443() {
+fn test_0443() {
     tokenize(
         r##"{"description":"Named entity: Kcy; with a semi-colon","initialState":"Data","input":"&Kcy;","inputUtf16":[38,75,99,121,59],"output":[{"Character":{"data":"К"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_444() {
+fn test_0444() {
     tokenize(
         r##"{"description":"Bad named entity: Kfr without a semi-colon","initialState":"Data","input":"&Kfr","inputUtf16":[38,75,102,114],"output":[{"Character":{"data":"&Kfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_445() {
+fn test_0445() {
     tokenize(
         r##"{"description":"Named entity: Kfr; with a semi-colon","initialState":"Data","input":"&Kfr;","inputUtf16":[38,75,102,114,59],"output":[{"Character":{"data":"𝔎"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_446() {
+fn test_0446() {
     tokenize(
         r##"{"description":"Bad named entity: Kopf without a semi-colon","initialState":"Data","input":"&Kopf","inputUtf16":[38,75,111,112,102],"output":[{"Character":{"data":"&Kopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_447() {
+fn test_0447() {
     tokenize(
         r##"{"description":"Named entity: Kopf; with a semi-colon","initialState":"Data","input":"&Kopf;","inputUtf16":[38,75,111,112,102,59],"output":[{"Character":{"data":"𝕂"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_448() {
+fn test_0448() {
     tokenize(
         r##"{"description":"Bad named entity: Kscr without a semi-colon","initialState":"Data","input":"&Kscr","inputUtf16":[38,75,115,99,114],"output":[{"Character":{"data":"&Kscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_449() {
+fn test_0449() {
     tokenize(
         r##"{"description":"Named entity: Kscr; with a semi-colon","initialState":"Data","input":"&Kscr;","inputUtf16":[38,75,115,99,114,59],"output":[{"Character":{"data":"𝒦"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_450() {
+fn test_0450() {
     tokenize(
         r##"{"description":"Bad named entity: LJcy without a semi-colon","initialState":"Data","input":"&LJcy","inputUtf16":[38,76,74,99,121],"output":[{"Character":{"data":"&LJcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_451() {
+fn test_0451() {
     tokenize(
         r##"{"description":"Named entity: LJcy; with a semi-colon","initialState":"Data","input":"&LJcy;","inputUtf16":[38,76,74,99,121,59],"output":[{"Character":{"data":"Љ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_452() {
+fn test_0452() {
     tokenize(
         r##"{"description":"Named entity: LT without a semi-colon","initialState":"Data","input":"&LT","inputUtf16":[38,76,84],"output":[{"Character":{"data":"<"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":4}}]}"##,
     );
 }
 
 #[test]
-fn test_453() {
+fn test_0453() {
     tokenize(
         r##"{"description":"Named entity: LT; with a semi-colon","initialState":"Data","input":"&LT;","inputUtf16":[38,76,84,59],"output":[{"Character":{"data":"<"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_454() {
+fn test_0454() {
     tokenize(
         r##"{"description":"Bad named entity: Lacute without a semi-colon","initialState":"Data","input":"&Lacute","inputUtf16":[38,76,97,99,117,116,101],"output":[{"Character":{"data":"&Lacute"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_455() {
+fn test_0455() {
     tokenize(
         r##"{"description":"Named entity: Lacute; with a semi-colon","initialState":"Data","input":"&Lacute;","inputUtf16":[38,76,97,99,117,116,101,59],"output":[{"Character":{"data":"Ĺ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_456() {
+fn test_0456() {
     tokenize(
         r##"{"description":"Bad named entity: Lambda without a semi-colon","initialState":"Data","input":"&Lambda","inputUtf16":[38,76,97,109,98,100,97],"output":[{"Character":{"data":"&Lambda"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_457() {
+fn test_0457() {
     tokenize(
         r##"{"description":"Named entity: Lambda; with a semi-colon","initialState":"Data","input":"&Lambda;","inputUtf16":[38,76,97,109,98,100,97,59],"output":[{"Character":{"data":"Λ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_458() {
+fn test_0458() {
     tokenize(
         r##"{"description":"Bad named entity: Lang without a semi-colon","initialState":"Data","input":"&Lang","inputUtf16":[38,76,97,110,103],"output":[{"Character":{"data":"&Lang"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_459() {
+fn test_0459() {
     tokenize(
         r##"{"description":"Named entity: Lang; with a semi-colon","initialState":"Data","input":"&Lang;","inputUtf16":[38,76,97,110,103,59],"output":[{"Character":{"data":"⟪"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_460() {
+fn test_0460() {
     tokenize(
         r##"{"description":"Bad named entity: Laplacetrf without a semi-colon","initialState":"Data","input":"&Laplacetrf","inputUtf16":[38,76,97,112,108,97,99,101,116,114,102],"output":[{"Character":{"data":"&Laplacetrf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_461() {
+fn test_0461() {
     tokenize(
         r##"{"description":"Named entity: Laplacetrf; with a semi-colon","initialState":"Data","input":"&Laplacetrf;","inputUtf16":[38,76,97,112,108,97,99,101,116,114,102,59],"output":[{"Character":{"data":"ℒ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_462() {
+fn test_0462() {
     tokenize(
         r##"{"description":"Bad named entity: Larr without a semi-colon","initialState":"Data","input":"&Larr","inputUtf16":[38,76,97,114,114],"output":[{"Character":{"data":"&Larr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_463() {
+fn test_0463() {
     tokenize(
         r##"{"description":"Named entity: Larr; with a semi-colon","initialState":"Data","input":"&Larr;","inputUtf16":[38,76,97,114,114,59],"output":[{"Character":{"data":"↞"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_464() {
+fn test_0464() {
     tokenize(
         r##"{"description":"Bad named entity: Lcaron without a semi-colon","initialState":"Data","input":"&Lcaron","inputUtf16":[38,76,99,97,114,111,110],"output":[{"Character":{"data":"&Lcaron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_465() {
+fn test_0465() {
     tokenize(
         r##"{"description":"Named entity: Lcaron; with a semi-colon","initialState":"Data","input":"&Lcaron;","inputUtf16":[38,76,99,97,114,111,110,59],"output":[{"Character":{"data":"Ľ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_466() {
+fn test_0466() {
     tokenize(
         r##"{"description":"Bad named entity: Lcedil without a semi-colon","initialState":"Data","input":"&Lcedil","inputUtf16":[38,76,99,101,100,105,108],"output":[{"Character":{"data":"&Lcedil"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_467() {
+fn test_0467() {
     tokenize(
         r##"{"description":"Named entity: Lcedil; with a semi-colon","initialState":"Data","input":"&Lcedil;","inputUtf16":[38,76,99,101,100,105,108,59],"output":[{"Character":{"data":"Ļ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_468() {
+fn test_0468() {
     tokenize(
         r##"{"description":"Bad named entity: Lcy without a semi-colon","initialState":"Data","input":"&Lcy","inputUtf16":[38,76,99,121],"output":[{"Character":{"data":"&Lcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_469() {
+fn test_0469() {
     tokenize(
         r##"{"description":"Named entity: Lcy; with a semi-colon","initialState":"Data","input":"&Lcy;","inputUtf16":[38,76,99,121,59],"output":[{"Character":{"data":"Л"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_470() {
+fn test_0470() {
     tokenize(
         r##"{"description":"Bad named entity: LeftAngleBracket without a semi-colon","initialState":"Data","input":"&LeftAngleBracket","inputUtf16":[38,76,101,102,116,65,110,103,108,101,66,114,97,99,107,101,116],"output":[{"Character":{"data":"&LeftAngleBracket"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_471() {
+fn test_0471() {
     tokenize(
         r##"{"description":"Named entity: LeftAngleBracket; with a semi-colon","initialState":"Data","input":"&LeftAngleBracket;","inputUtf16":[38,76,101,102,116,65,110,103,108,101,66,114,97,99,107,101,116,59],"output":[{"Character":{"data":"⟨"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_472() {
+fn test_0472() {
     tokenize(
         r##"{"description":"Bad named entity: LeftArrow without a semi-colon","initialState":"Data","input":"&LeftArrow","inputUtf16":[38,76,101,102,116,65,114,114,111,119],"output":[{"Character":{"data":"&LeftArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_473() {
+fn test_0473() {
     tokenize(
         r##"{"description":"Named entity: LeftArrow; with a semi-colon","initialState":"Data","input":"&LeftArrow;","inputUtf16":[38,76,101,102,116,65,114,114,111,119,59],"output":[{"Character":{"data":"←"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_474() {
+fn test_0474() {
     tokenize(
         r##"{"description":"Bad named entity: LeftArrowBar without a semi-colon","initialState":"Data","input":"&LeftArrowBar","inputUtf16":[38,76,101,102,116,65,114,114,111,119,66,97,114],"output":[{"Character":{"data":"&LeftArrowBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_475() {
+fn test_0475() {
     tokenize(
         r##"{"description":"Named entity: LeftArrowBar; with a semi-colon","initialState":"Data","input":"&LeftArrowBar;","inputUtf16":[38,76,101,102,116,65,114,114,111,119,66,97,114,59],"output":[{"Character":{"data":"⇤"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_476() {
+fn test_0476() {
     tokenize(
         r##"{"description":"Bad named entity: LeftArrowRightArrow without a semi-colon","initialState":"Data","input":"&LeftArrowRightArrow","inputUtf16":[38,76,101,102,116,65,114,114,111,119,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&LeftArrowRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_477() {
+fn test_0477() {
     tokenize(
         r##"{"description":"Named entity: LeftArrowRightArrow; with a semi-colon","initialState":"Data","input":"&LeftArrowRightArrow;","inputUtf16":[38,76,101,102,116,65,114,114,111,119,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⇆"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_478() {
+fn test_0478() {
     tokenize(
         r##"{"description":"Bad named entity: LeftCeiling without a semi-colon","initialState":"Data","input":"&LeftCeiling","inputUtf16":[38,76,101,102,116,67,101,105,108,105,110,103],"output":[{"Character":{"data":"&LeftCeiling"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_479() {
+fn test_0479() {
     tokenize(
         r##"{"description":"Named entity: LeftCeiling; with a semi-colon","initialState":"Data","input":"&LeftCeiling;","inputUtf16":[38,76,101,102,116,67,101,105,108,105,110,103,59],"output":[{"Character":{"data":"⌈"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_480() {
+fn test_0480() {
     tokenize(
         r##"{"description":"Bad named entity: LeftDoubleBracket without a semi-colon","initialState":"Data","input":"&LeftDoubleBracket","inputUtf16":[38,76,101,102,116,68,111,117,98,108,101,66,114,97,99,107,101,116],"output":[{"Character":{"data":"&LeftDoubleBracket"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_481() {
+fn test_0481() {
     tokenize(
         r##"{"description":"Named entity: LeftDoubleBracket; with a semi-colon","initialState":"Data","input":"&LeftDoubleBracket;","inputUtf16":[38,76,101,102,116,68,111,117,98,108,101,66,114,97,99,107,101,116,59],"output":[{"Character":{"data":"⟦"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_482() {
+fn test_0482() {
     tokenize(
         r##"{"description":"Bad named entity: LeftDownTeeVector without a semi-colon","initialState":"Data","input":"&LeftDownTeeVector","inputUtf16":[38,76,101,102,116,68,111,119,110,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftDownTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_483() {
+fn test_0483() {
     tokenize(
         r##"{"description":"Named entity: LeftDownTeeVector; with a semi-colon","initialState":"Data","input":"&LeftDownTeeVector;","inputUtf16":[38,76,101,102,116,68,111,119,110,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥡"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_484() {
+fn test_0484() {
     tokenize(
         r##"{"description":"Bad named entity: LeftDownVector without a semi-colon","initialState":"Data","input":"&LeftDownVector","inputUtf16":[38,76,101,102,116,68,111,119,110,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftDownVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_485() {
+fn test_0485() {
     tokenize(
         r##"{"description":"Named entity: LeftDownVector; with a semi-colon","initialState":"Data","input":"&LeftDownVector;","inputUtf16":[38,76,101,102,116,68,111,119,110,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⇃"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_486() {
+fn test_0486() {
     tokenize(
         r##"{"description":"Bad named entity: LeftDownVectorBar without a semi-colon","initialState":"Data","input":"&LeftDownVectorBar","inputUtf16":[38,76,101,102,116,68,111,119,110,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&LeftDownVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_487() {
+fn test_0487() {
     tokenize(
         r##"{"description":"Named entity: LeftDownVectorBar; with a semi-colon","initialState":"Data","input":"&LeftDownVectorBar;","inputUtf16":[38,76,101,102,116,68,111,119,110,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥙"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_488() {
+fn test_0488() {
     tokenize(
         r##"{"description":"Bad named entity: LeftFloor without a semi-colon","initialState":"Data","input":"&LeftFloor","inputUtf16":[38,76,101,102,116,70,108,111,111,114],"output":[{"Character":{"data":"&LeftFloor"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_489() {
+fn test_0489() {
     tokenize(
         r##"{"description":"Named entity: LeftFloor; with a semi-colon","initialState":"Data","input":"&LeftFloor;","inputUtf16":[38,76,101,102,116,70,108,111,111,114,59],"output":[{"Character":{"data":"⌊"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_490() {
+fn test_0490() {
     tokenize(
         r##"{"description":"Bad named entity: LeftRightArrow without a semi-colon","initialState":"Data","input":"&LeftRightArrow","inputUtf16":[38,76,101,102,116,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&LeftRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_491() {
+fn test_0491() {
     tokenize(
         r##"{"description":"Named entity: LeftRightArrow; with a semi-colon","initialState":"Data","input":"&LeftRightArrow;","inputUtf16":[38,76,101,102,116,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"↔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_492() {
+fn test_0492() {
     tokenize(
         r##"{"description":"Bad named entity: LeftRightVector without a semi-colon","initialState":"Data","input":"&LeftRightVector","inputUtf16":[38,76,101,102,116,82,105,103,104,116,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftRightVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_493() {
+fn test_0493() {
     tokenize(
         r##"{"description":"Named entity: LeftRightVector; with a semi-colon","initialState":"Data","input":"&LeftRightVector;","inputUtf16":[38,76,101,102,116,82,105,103,104,116,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥎"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_494() {
+fn test_0494() {
     tokenize(
         r##"{"description":"Bad named entity: LeftTee without a semi-colon","initialState":"Data","input":"&LeftTee","inputUtf16":[38,76,101,102,116,84,101,101],"output":[{"Character":{"data":"&LeftTee"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_495() {
+fn test_0495() {
     tokenize(
         r##"{"description":"Named entity: LeftTee; with a semi-colon","initialState":"Data","input":"&LeftTee;","inputUtf16":[38,76,101,102,116,84,101,101,59],"output":[{"Character":{"data":"⊣"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_496() {
+fn test_0496() {
     tokenize(
         r##"{"description":"Bad named entity: LeftTeeArrow without a semi-colon","initialState":"Data","input":"&LeftTeeArrow","inputUtf16":[38,76,101,102,116,84,101,101,65,114,114,111,119],"output":[{"Character":{"data":"&LeftTeeArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_497() {
+fn test_0497() {
     tokenize(
         r##"{"description":"Named entity: LeftTeeArrow; with a semi-colon","initialState":"Data","input":"&LeftTeeArrow;","inputUtf16":[38,76,101,102,116,84,101,101,65,114,114,111,119,59],"output":[{"Character":{"data":"↤"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_498() {
+fn test_0498() {
     tokenize(
         r##"{"description":"Bad named entity: LeftTeeVector without a semi-colon","initialState":"Data","input":"&LeftTeeVector","inputUtf16":[38,76,101,102,116,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_499() {
+fn test_0499() {
     tokenize(
         r##"{"description":"Named entity: LeftTeeVector; with a semi-colon","initialState":"Data","input":"&LeftTeeVector;","inputUtf16":[38,76,101,102,116,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥚"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_500() {
+fn test_0500() {
     tokenize(
         r##"{"description":"Bad named entity: LeftTriangle without a semi-colon","initialState":"Data","input":"&LeftTriangle","inputUtf16":[38,76,101,102,116,84,114,105,97,110,103,108,101],"output":[{"Character":{"data":"&LeftTriangle"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_501() {
+fn test_0501() {
     tokenize(
         r##"{"description":"Named entity: LeftTriangle; with a semi-colon","initialState":"Data","input":"&LeftTriangle;","inputUtf16":[38,76,101,102,116,84,114,105,97,110,103,108,101,59],"output":[{"Character":{"data":"⊲"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_502() {
+fn test_0502() {
     tokenize(
         r##"{"description":"Bad named entity: LeftTriangleBar without a semi-colon","initialState":"Data","input":"&LeftTriangleBar","inputUtf16":[38,76,101,102,116,84,114,105,97,110,103,108,101,66,97,114],"output":[{"Character":{"data":"&LeftTriangleBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_503() {
+fn test_0503() {
     tokenize(
         r##"{"description":"Named entity: LeftTriangleBar; with a semi-colon","initialState":"Data","input":"&LeftTriangleBar;","inputUtf16":[38,76,101,102,116,84,114,105,97,110,103,108,101,66,97,114,59],"output":[{"Character":{"data":"⧏"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_504() {
+fn test_0504() {
     tokenize(
         r##"{"description":"Bad named entity: LeftTriangleEqual without a semi-colon","initialState":"Data","input":"&LeftTriangleEqual","inputUtf16":[38,76,101,102,116,84,114,105,97,110,103,108,101,69,113,117,97,108],"output":[{"Character":{"data":"&LeftTriangleEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_505() {
+fn test_0505() {
     tokenize(
         r##"{"description":"Named entity: LeftTriangleEqual; with a semi-colon","initialState":"Data","input":"&LeftTriangleEqual;","inputUtf16":[38,76,101,102,116,84,114,105,97,110,103,108,101,69,113,117,97,108,59],"output":[{"Character":{"data":"⊴"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_506() {
+fn test_0506() {
     tokenize(
         r##"{"description":"Bad named entity: LeftUpDownVector without a semi-colon","initialState":"Data","input":"&LeftUpDownVector","inputUtf16":[38,76,101,102,116,85,112,68,111,119,110,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftUpDownVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_507() {
+fn test_0507() {
     tokenize(
         r##"{"description":"Named entity: LeftUpDownVector; with a semi-colon","initialState":"Data","input":"&LeftUpDownVector;","inputUtf16":[38,76,101,102,116,85,112,68,111,119,110,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_508() {
+fn test_0508() {
     tokenize(
         r##"{"description":"Bad named entity: LeftUpTeeVector without a semi-colon","initialState":"Data","input":"&LeftUpTeeVector","inputUtf16":[38,76,101,102,116,85,112,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftUpTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_509() {
+fn test_0509() {
     tokenize(
         r##"{"description":"Named entity: LeftUpTeeVector; with a semi-colon","initialState":"Data","input":"&LeftUpTeeVector;","inputUtf16":[38,76,101,102,116,85,112,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥠"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_510() {
+fn test_0510() {
     tokenize(
         r##"{"description":"Bad named entity: LeftUpVector without a semi-colon","initialState":"Data","input":"&LeftUpVector","inputUtf16":[38,76,101,102,116,85,112,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftUpVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_511() {
+fn test_0511() {
     tokenize(
         r##"{"description":"Named entity: LeftUpVector; with a semi-colon","initialState":"Data","input":"&LeftUpVector;","inputUtf16":[38,76,101,102,116,85,112,86,101,99,116,111,114,59],"output":[{"Character":{"data":"↿"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_512() {
+fn test_0512() {
     tokenize(
         r##"{"description":"Bad named entity: LeftUpVectorBar without a semi-colon","initialState":"Data","input":"&LeftUpVectorBar","inputUtf16":[38,76,101,102,116,85,112,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&LeftUpVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_513() {
+fn test_0513() {
     tokenize(
         r##"{"description":"Named entity: LeftUpVectorBar; with a semi-colon","initialState":"Data","input":"&LeftUpVectorBar;","inputUtf16":[38,76,101,102,116,85,112,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥘"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_514() {
+fn test_0514() {
     tokenize(
         r##"{"description":"Bad named entity: LeftVector without a semi-colon","initialState":"Data","input":"&LeftVector","inputUtf16":[38,76,101,102,116,86,101,99,116,111,114],"output":[{"Character":{"data":"&LeftVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_515() {
+fn test_0515() {
     tokenize(
         r##"{"description":"Named entity: LeftVector; with a semi-colon","initialState":"Data","input":"&LeftVector;","inputUtf16":[38,76,101,102,116,86,101,99,116,111,114,59],"output":[{"Character":{"data":"↼"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_516() {
+fn test_0516() {
     tokenize(
         r##"{"description":"Bad named entity: LeftVectorBar without a semi-colon","initialState":"Data","input":"&LeftVectorBar","inputUtf16":[38,76,101,102,116,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&LeftVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_517() {
+fn test_0517() {
     tokenize(
         r##"{"description":"Named entity: LeftVectorBar; with a semi-colon","initialState":"Data","input":"&LeftVectorBar;","inputUtf16":[38,76,101,102,116,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_518() {
+fn test_0518() {
     tokenize(
         r##"{"description":"Bad named entity: Leftarrow without a semi-colon","initialState":"Data","input":"&Leftarrow","inputUtf16":[38,76,101,102,116,97,114,114,111,119],"output":[{"Character":{"data":"&Leftarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_519() {
+fn test_0519() {
     tokenize(
         r##"{"description":"Named entity: Leftarrow; with a semi-colon","initialState":"Data","input":"&Leftarrow;","inputUtf16":[38,76,101,102,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⇐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_520() {
+fn test_0520() {
     tokenize(
         r##"{"description":"Bad named entity: Leftrightarrow without a semi-colon","initialState":"Data","input":"&Leftrightarrow","inputUtf16":[38,76,101,102,116,114,105,103,104,116,97,114,114,111,119],"output":[{"Character":{"data":"&Leftrightarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_521() {
+fn test_0521() {
     tokenize(
         r##"{"description":"Named entity: Leftrightarrow; with a semi-colon","initialState":"Data","input":"&Leftrightarrow;","inputUtf16":[38,76,101,102,116,114,105,103,104,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⇔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_522() {
+fn test_0522() {
     tokenize(
         r##"{"description":"Bad named entity: LessEqualGreater without a semi-colon","initialState":"Data","input":"&LessEqualGreater","inputUtf16":[38,76,101,115,115,69,113,117,97,108,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&LessEqualGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_523() {
+fn test_0523() {
     tokenize(
         r##"{"description":"Named entity: LessEqualGreater; with a semi-colon","initialState":"Data","input":"&LessEqualGreater;","inputUtf16":[38,76,101,115,115,69,113,117,97,108,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"⋚"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_524() {
+fn test_0524() {
     tokenize(
         r##"{"description":"Bad named entity: LessFullEqual without a semi-colon","initialState":"Data","input":"&LessFullEqual","inputUtf16":[38,76,101,115,115,70,117,108,108,69,113,117,97,108],"output":[{"Character":{"data":"&LessFullEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_525() {
+fn test_0525() {
     tokenize(
         r##"{"description":"Named entity: LessFullEqual; with a semi-colon","initialState":"Data","input":"&LessFullEqual;","inputUtf16":[38,76,101,115,115,70,117,108,108,69,113,117,97,108,59],"output":[{"Character":{"data":"≦"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_526() {
+fn test_0526() {
     tokenize(
         r##"{"description":"Bad named entity: LessGreater without a semi-colon","initialState":"Data","input":"&LessGreater","inputUtf16":[38,76,101,115,115,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&LessGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_527() {
+fn test_0527() {
     tokenize(
         r##"{"description":"Named entity: LessGreater; with a semi-colon","initialState":"Data","input":"&LessGreater;","inputUtf16":[38,76,101,115,115,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"≶"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_528() {
+fn test_0528() {
     tokenize(
         r##"{"description":"Bad named entity: LessLess without a semi-colon","initialState":"Data","input":"&LessLess","inputUtf16":[38,76,101,115,115,76,101,115,115],"output":[{"Character":{"data":"&LessLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_529() {
+fn test_0529() {
     tokenize(
         r##"{"description":"Named entity: LessLess; with a semi-colon","initialState":"Data","input":"&LessLess;","inputUtf16":[38,76,101,115,115,76,101,115,115,59],"output":[{"Character":{"data":"⪡"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_530() {
+fn test_0530() {
     tokenize(
         r##"{"description":"Bad named entity: LessSlantEqual without a semi-colon","initialState":"Data","input":"&LessSlantEqual","inputUtf16":[38,76,101,115,115,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&LessSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_531() {
+fn test_0531() {
     tokenize(
         r##"{"description":"Named entity: LessSlantEqual; with a semi-colon","initialState":"Data","input":"&LessSlantEqual;","inputUtf16":[38,76,101,115,115,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⩽"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_532() {
+fn test_0532() {
     tokenize(
         r##"{"description":"Bad named entity: LessTilde without a semi-colon","initialState":"Data","input":"&LessTilde","inputUtf16":[38,76,101,115,115,84,105,108,100,101],"output":[{"Character":{"data":"&LessTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_533() {
+fn test_0533() {
     tokenize(
         r##"{"description":"Named entity: LessTilde; with a semi-colon","initialState":"Data","input":"&LessTilde;","inputUtf16":[38,76,101,115,115,84,105,108,100,101,59],"output":[{"Character":{"data":"≲"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_534() {
+fn test_0534() {
     tokenize(
         r##"{"description":"Bad named entity: Lfr without a semi-colon","initialState":"Data","input":"&Lfr","inputUtf16":[38,76,102,114],"output":[{"Character":{"data":"&Lfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_535() {
+fn test_0535() {
     tokenize(
         r##"{"description":"Named entity: Lfr; with a semi-colon","initialState":"Data","input":"&Lfr;","inputUtf16":[38,76,102,114,59],"output":[{"Character":{"data":"𝔏"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_536() {
+fn test_0536() {
     tokenize(
         r##"{"description":"Bad named entity: Ll without a semi-colon","initialState":"Data","input":"&Ll","inputUtf16":[38,76,108],"output":[{"Character":{"data":"&Ll"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_537() {
+fn test_0537() {
     tokenize(
         r##"{"description":"Named entity: Ll; with a semi-colon","initialState":"Data","input":"&Ll;","inputUtf16":[38,76,108,59],"output":[{"Character":{"data":"⋘"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_538() {
+fn test_0538() {
     tokenize(
         r##"{"description":"Bad named entity: Lleftarrow without a semi-colon","initialState":"Data","input":"&Lleftarrow","inputUtf16":[38,76,108,101,102,116,97,114,114,111,119],"output":[{"Character":{"data":"&Lleftarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_539() {
+fn test_0539() {
     tokenize(
         r##"{"description":"Named entity: Lleftarrow; with a semi-colon","initialState":"Data","input":"&Lleftarrow;","inputUtf16":[38,76,108,101,102,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⇚"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_540() {
+fn test_0540() {
     tokenize(
         r##"{"description":"Bad named entity: Lmidot without a semi-colon","initialState":"Data","input":"&Lmidot","inputUtf16":[38,76,109,105,100,111,116],"output":[{"Character":{"data":"&Lmidot"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_541() {
+fn test_0541() {
     tokenize(
         r##"{"description":"Named entity: Lmidot; with a semi-colon","initialState":"Data","input":"&Lmidot;","inputUtf16":[38,76,109,105,100,111,116,59],"output":[{"Character":{"data":"Ŀ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_542() {
+fn test_0542() {
     tokenize(
         r##"{"description":"Bad named entity: LongLeftArrow without a semi-colon","initialState":"Data","input":"&LongLeftArrow","inputUtf16":[38,76,111,110,103,76,101,102,116,65,114,114,111,119],"output":[{"Character":{"data":"&LongLeftArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_543() {
+fn test_0543() {
     tokenize(
         r##"{"description":"Named entity: LongLeftArrow; with a semi-colon","initialState":"Data","input":"&LongLeftArrow;","inputUtf16":[38,76,111,110,103,76,101,102,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⟵"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_544() {
+fn test_0544() {
     tokenize(
         r##"{"description":"Bad named entity: LongLeftRightArrow without a semi-colon","initialState":"Data","input":"&LongLeftRightArrow","inputUtf16":[38,76,111,110,103,76,101,102,116,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&LongLeftRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_545() {
+fn test_0545() {
     tokenize(
         r##"{"description":"Named entity: LongLeftRightArrow; with a semi-colon","initialState":"Data","input":"&LongLeftRightArrow;","inputUtf16":[38,76,111,110,103,76,101,102,116,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⟷"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_546() {
+fn test_0546() {
     tokenize(
         r##"{"description":"Bad named entity: LongRightArrow without a semi-colon","initialState":"Data","input":"&LongRightArrow","inputUtf16":[38,76,111,110,103,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&LongRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_547() {
+fn test_0547() {
     tokenize(
         r##"{"description":"Named entity: LongRightArrow; with a semi-colon","initialState":"Data","input":"&LongRightArrow;","inputUtf16":[38,76,111,110,103,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⟶"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_548() {
+fn test_0548() {
     tokenize(
         r##"{"description":"Bad named entity: Longleftarrow without a semi-colon","initialState":"Data","input":"&Longleftarrow","inputUtf16":[38,76,111,110,103,108,101,102,116,97,114,114,111,119],"output":[{"Character":{"data":"&Longleftarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_549() {
+fn test_0549() {
     tokenize(
         r##"{"description":"Named entity: Longleftarrow; with a semi-colon","initialState":"Data","input":"&Longleftarrow;","inputUtf16":[38,76,111,110,103,108,101,102,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⟸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_550() {
+fn test_0550() {
     tokenize(
         r##"{"description":"Bad named entity: Longleftrightarrow without a semi-colon","initialState":"Data","input":"&Longleftrightarrow","inputUtf16":[38,76,111,110,103,108,101,102,116,114,105,103,104,116,97,114,114,111,119],"output":[{"Character":{"data":"&Longleftrightarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_551() {
+fn test_0551() {
     tokenize(
         r##"{"description":"Named entity: Longleftrightarrow; with a semi-colon","initialState":"Data","input":"&Longleftrightarrow;","inputUtf16":[38,76,111,110,103,108,101,102,116,114,105,103,104,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⟺"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_552() {
+fn test_0552() {
     tokenize(
         r##"{"description":"Bad named entity: Longrightarrow without a semi-colon","initialState":"Data","input":"&Longrightarrow","inputUtf16":[38,76,111,110,103,114,105,103,104,116,97,114,114,111,119],"output":[{"Character":{"data":"&Longrightarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_553() {
+fn test_0553() {
     tokenize(
         r##"{"description":"Named entity: Longrightarrow; with a semi-colon","initialState":"Data","input":"&Longrightarrow;","inputUtf16":[38,76,111,110,103,114,105,103,104,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⟹"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_554() {
+fn test_0554() {
     tokenize(
         r##"{"description":"Bad named entity: Lopf without a semi-colon","initialState":"Data","input":"&Lopf","inputUtf16":[38,76,111,112,102],"output":[{"Character":{"data":"&Lopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_555() {
+fn test_0555() {
     tokenize(
         r##"{"description":"Named entity: Lopf; with a semi-colon","initialState":"Data","input":"&Lopf;","inputUtf16":[38,76,111,112,102,59],"output":[{"Character":{"data":"𝕃"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_556() {
+fn test_0556() {
     tokenize(
         r##"{"description":"Bad named entity: LowerLeftArrow without a semi-colon","initialState":"Data","input":"&LowerLeftArrow","inputUtf16":[38,76,111,119,101,114,76,101,102,116,65,114,114,111,119],"output":[{"Character":{"data":"&LowerLeftArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_557() {
+fn test_0557() {
     tokenize(
         r##"{"description":"Named entity: LowerLeftArrow; with a semi-colon","initialState":"Data","input":"&LowerLeftArrow;","inputUtf16":[38,76,111,119,101,114,76,101,102,116,65,114,114,111,119,59],"output":[{"Character":{"data":"↙"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_558() {
+fn test_0558() {
     tokenize(
         r##"{"description":"Bad named entity: LowerRightArrow without a semi-colon","initialState":"Data","input":"&LowerRightArrow","inputUtf16":[38,76,111,119,101,114,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&LowerRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_559() {
+fn test_0559() {
     tokenize(
         r##"{"description":"Named entity: LowerRightArrow; with a semi-colon","initialState":"Data","input":"&LowerRightArrow;","inputUtf16":[38,76,111,119,101,114,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"↘"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_560() {
+fn test_0560() {
     tokenize(
         r##"{"description":"Bad named entity: Lscr without a semi-colon","initialState":"Data","input":"&Lscr","inputUtf16":[38,76,115,99,114],"output":[{"Character":{"data":"&Lscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_561() {
+fn test_0561() {
     tokenize(
         r##"{"description":"Named entity: Lscr; with a semi-colon","initialState":"Data","input":"&Lscr;","inputUtf16":[38,76,115,99,114,59],"output":[{"Character":{"data":"ℒ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_562() {
+fn test_0562() {
     tokenize(
         r##"{"description":"Bad named entity: Lsh without a semi-colon","initialState":"Data","input":"&Lsh","inputUtf16":[38,76,115,104],"output":[{"Character":{"data":"&Lsh"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_563() {
+fn test_0563() {
     tokenize(
         r##"{"description":"Named entity: Lsh; with a semi-colon","initialState":"Data","input":"&Lsh;","inputUtf16":[38,76,115,104,59],"output":[{"Character":{"data":"↰"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_564() {
+fn test_0564() {
     tokenize(
         r##"{"description":"Bad named entity: Lstrok without a semi-colon","initialState":"Data","input":"&Lstrok","inputUtf16":[38,76,115,116,114,111,107],"output":[{"Character":{"data":"&Lstrok"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_565() {
+fn test_0565() {
     tokenize(
         r##"{"description":"Named entity: Lstrok; with a semi-colon","initialState":"Data","input":"&Lstrok;","inputUtf16":[38,76,115,116,114,111,107,59],"output":[{"Character":{"data":"Ł"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_566() {
+fn test_0566() {
     tokenize(
         r##"{"description":"Bad named entity: Lt without a semi-colon","initialState":"Data","input":"&Lt","inputUtf16":[38,76,116],"output":[{"Character":{"data":"&Lt"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_567() {
+fn test_0567() {
     tokenize(
         r##"{"description":"Named entity: Lt; with a semi-colon","initialState":"Data","input":"&Lt;","inputUtf16":[38,76,116,59],"output":[{"Character":{"data":"≪"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_568() {
+fn test_0568() {
     tokenize(
         r##"{"description":"Bad named entity: Map without a semi-colon","initialState":"Data","input":"&Map","inputUtf16":[38,77,97,112],"output":[{"Character":{"data":"&Map"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_569() {
+fn test_0569() {
     tokenize(
         r##"{"description":"Named entity: Map; with a semi-colon","initialState":"Data","input":"&Map;","inputUtf16":[38,77,97,112,59],"output":[{"Character":{"data":"⤅"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_570() {
+fn test_0570() {
     tokenize(
         r##"{"description":"Bad named entity: Mcy without a semi-colon","initialState":"Data","input":"&Mcy","inputUtf16":[38,77,99,121],"output":[{"Character":{"data":"&Mcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_571() {
+fn test_0571() {
     tokenize(
         r##"{"description":"Named entity: Mcy; with a semi-colon","initialState":"Data","input":"&Mcy;","inputUtf16":[38,77,99,121,59],"output":[{"Character":{"data":"М"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_572() {
+fn test_0572() {
     tokenize(
         r##"{"description":"Bad named entity: MediumSpace without a semi-colon","initialState":"Data","input":"&MediumSpace","inputUtf16":[38,77,101,100,105,117,109,83,112,97,99,101],"output":[{"Character":{"data":"&MediumSpace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_573() {
+fn test_0573() {
     tokenize(
         r##"{"description":"Named entity: MediumSpace; with a semi-colon","initialState":"Data","input":"&MediumSpace;","inputUtf16":[38,77,101,100,105,117,109,83,112,97,99,101,59],"output":[{"Character":{"data":" "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_574() {
+fn test_0574() {
     tokenize(
         r##"{"description":"Bad named entity: Mellintrf without a semi-colon","initialState":"Data","input":"&Mellintrf","inputUtf16":[38,77,101,108,108,105,110,116,114,102],"output":[{"Character":{"data":"&Mellintrf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_575() {
+fn test_0575() {
     tokenize(
         r##"{"description":"Named entity: Mellintrf; with a semi-colon","initialState":"Data","input":"&Mellintrf;","inputUtf16":[38,77,101,108,108,105,110,116,114,102,59],"output":[{"Character":{"data":"ℳ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_576() {
+fn test_0576() {
     tokenize(
         r##"{"description":"Bad named entity: Mfr without a semi-colon","initialState":"Data","input":"&Mfr","inputUtf16":[38,77,102,114],"output":[{"Character":{"data":"&Mfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_577() {
+fn test_0577() {
     tokenize(
         r##"{"description":"Named entity: Mfr; with a semi-colon","initialState":"Data","input":"&Mfr;","inputUtf16":[38,77,102,114,59],"output":[{"Character":{"data":"𝔐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_578() {
+fn test_0578() {
     tokenize(
         r##"{"description":"Bad named entity: MinusPlus without a semi-colon","initialState":"Data","input":"&MinusPlus","inputUtf16":[38,77,105,110,117,115,80,108,117,115],"output":[{"Character":{"data":"&MinusPlus"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_579() {
+fn test_0579() {
     tokenize(
         r##"{"description":"Named entity: MinusPlus; with a semi-colon","initialState":"Data","input":"&MinusPlus;","inputUtf16":[38,77,105,110,117,115,80,108,117,115,59],"output":[{"Character":{"data":"∓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_580() {
+fn test_0580() {
     tokenize(
         r##"{"description":"Bad named entity: Mopf without a semi-colon","initialState":"Data","input":"&Mopf","inputUtf16":[38,77,111,112,102],"output":[{"Character":{"data":"&Mopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_581() {
+fn test_0581() {
     tokenize(
         r##"{"description":"Named entity: Mopf; with a semi-colon","initialState":"Data","input":"&Mopf;","inputUtf16":[38,77,111,112,102,59],"output":[{"Character":{"data":"𝕄"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_582() {
+fn test_0582() {
     tokenize(
         r##"{"description":"Bad named entity: Mscr without a semi-colon","initialState":"Data","input":"&Mscr","inputUtf16":[38,77,115,99,114],"output":[{"Character":{"data":"&Mscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_583() {
+fn test_0583() {
     tokenize(
         r##"{"description":"Named entity: Mscr; with a semi-colon","initialState":"Data","input":"&Mscr;","inputUtf16":[38,77,115,99,114,59],"output":[{"Character":{"data":"ℳ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_584() {
+fn test_0584() {
     tokenize(
         r##"{"description":"Bad named entity: Mu without a semi-colon","initialState":"Data","input":"&Mu","inputUtf16":[38,77,117],"output":[{"Character":{"data":"&Mu"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_585() {
+fn test_0585() {
     tokenize(
         r##"{"description":"Named entity: Mu; with a semi-colon","initialState":"Data","input":"&Mu;","inputUtf16":[38,77,117,59],"output":[{"Character":{"data":"Μ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_586() {
+fn test_0586() {
     tokenize(
         r##"{"description":"Bad named entity: NJcy without a semi-colon","initialState":"Data","input":"&NJcy","inputUtf16":[38,78,74,99,121],"output":[{"Character":{"data":"&NJcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_587() {
+fn test_0587() {
     tokenize(
         r##"{"description":"Named entity: NJcy; with a semi-colon","initialState":"Data","input":"&NJcy;","inputUtf16":[38,78,74,99,121,59],"output":[{"Character":{"data":"Њ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_588() {
+fn test_0588() {
     tokenize(
         r##"{"description":"Bad named entity: Nacute without a semi-colon","initialState":"Data","input":"&Nacute","inputUtf16":[38,78,97,99,117,116,101],"output":[{"Character":{"data":"&Nacute"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_589() {
+fn test_0589() {
     tokenize(
         r##"{"description":"Named entity: Nacute; with a semi-colon","initialState":"Data","input":"&Nacute;","inputUtf16":[38,78,97,99,117,116,101,59],"output":[{"Character":{"data":"Ń"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_590() {
+fn test_0590() {
     tokenize(
         r##"{"description":"Bad named entity: Ncaron without a semi-colon","initialState":"Data","input":"&Ncaron","inputUtf16":[38,78,99,97,114,111,110],"output":[{"Character":{"data":"&Ncaron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_591() {
+fn test_0591() {
     tokenize(
         r##"{"description":"Named entity: Ncaron; with a semi-colon","initialState":"Data","input":"&Ncaron;","inputUtf16":[38,78,99,97,114,111,110,59],"output":[{"Character":{"data":"Ň"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_592() {
+fn test_0592() {
     tokenize(
         r##"{"description":"Bad named entity: Ncedil without a semi-colon","initialState":"Data","input":"&Ncedil","inputUtf16":[38,78,99,101,100,105,108],"output":[{"Character":{"data":"&Ncedil"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_593() {
+fn test_0593() {
     tokenize(
         r##"{"description":"Named entity: Ncedil; with a semi-colon","initialState":"Data","input":"&Ncedil;","inputUtf16":[38,78,99,101,100,105,108,59],"output":[{"Character":{"data":"Ņ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_594() {
+fn test_0594() {
     tokenize(
         r##"{"description":"Bad named entity: Ncy without a semi-colon","initialState":"Data","input":"&Ncy","inputUtf16":[38,78,99,121],"output":[{"Character":{"data":"&Ncy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_595() {
+fn test_0595() {
     tokenize(
         r##"{"description":"Named entity: Ncy; with a semi-colon","initialState":"Data","input":"&Ncy;","inputUtf16":[38,78,99,121,59],"output":[{"Character":{"data":"Н"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_596() {
+fn test_0596() {
     tokenize(
         r##"{"description":"Bad named entity: NegativeMediumSpace without a semi-colon","initialState":"Data","input":"&NegativeMediumSpace","inputUtf16":[38,78,101,103,97,116,105,118,101,77,101,100,105,117,109,83,112,97,99,101],"output":[{"Character":{"data":"&NegativeMediumSpace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_597() {
+fn test_0597() {
     tokenize(
         r##"{"description":"Named entity: NegativeMediumSpace; with a semi-colon","initialState":"Data","input":"&NegativeMediumSpace;","inputUtf16":[38,78,101,103,97,116,105,118,101,77,101,100,105,117,109,83,112,97,99,101,59],"output":[{"Character":{"data":"​"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_598() {
+fn test_0598() {
     tokenize(
         r##"{"description":"Bad named entity: NegativeThickSpace without a semi-colon","initialState":"Data","input":"&NegativeThickSpace","inputUtf16":[38,78,101,103,97,116,105,118,101,84,104,105,99,107,83,112,97,99,101],"output":[{"Character":{"data":"&NegativeThickSpace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_599() {
+fn test_0599() {
     tokenize(
         r##"{"description":"Named entity: NegativeThickSpace; with a semi-colon","initialState":"Data","input":"&NegativeThickSpace;","inputUtf16":[38,78,101,103,97,116,105,118,101,84,104,105,99,107,83,112,97,99,101,59],"output":[{"Character":{"data":"​"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_600() {
+fn test_0600() {
     tokenize(
         r##"{"description":"Bad named entity: NegativeThinSpace without a semi-colon","initialState":"Data","input":"&NegativeThinSpace","inputUtf16":[38,78,101,103,97,116,105,118,101,84,104,105,110,83,112,97,99,101],"output":[{"Character":{"data":"&NegativeThinSpace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_601() {
+fn test_0601() {
     tokenize(
         r##"{"description":"Named entity: NegativeThinSpace; with a semi-colon","initialState":"Data","input":"&NegativeThinSpace;","inputUtf16":[38,78,101,103,97,116,105,118,101,84,104,105,110,83,112,97,99,101,59],"output":[{"Character":{"data":"​"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_602() {
+fn test_0602() {
     tokenize(
         r##"{"description":"Bad named entity: NegativeVeryThinSpace without a semi-colon","initialState":"Data","input":"&NegativeVeryThinSpace","inputUtf16":[38,78,101,103,97,116,105,118,101,86,101,114,121,84,104,105,110,83,112,97,99,101],"output":[{"Character":{"data":"&NegativeVeryThinSpace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_603() {
+fn test_0603() {
     tokenize(
         r##"{"description":"Named entity: NegativeVeryThinSpace; with a semi-colon","initialState":"Data","input":"&NegativeVeryThinSpace;","inputUtf16":[38,78,101,103,97,116,105,118,101,86,101,114,121,84,104,105,110,83,112,97,99,101,59],"output":[{"Character":{"data":"​"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_604() {
+fn test_0604() {
     tokenize(
         r##"{"description":"Bad named entity: NestedGreaterGreater without a semi-colon","initialState":"Data","input":"&NestedGreaterGreater","inputUtf16":[38,78,101,115,116,101,100,71,114,101,97,116,101,114,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&NestedGreaterGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_605() {
+fn test_0605() {
     tokenize(
         r##"{"description":"Named entity: NestedGreaterGreater; with a semi-colon","initialState":"Data","input":"&NestedGreaterGreater;","inputUtf16":[38,78,101,115,116,101,100,71,114,101,97,116,101,114,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"≫"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_606() {
+fn test_0606() {
     tokenize(
         r##"{"description":"Bad named entity: NestedLessLess without a semi-colon","initialState":"Data","input":"&NestedLessLess","inputUtf16":[38,78,101,115,116,101,100,76,101,115,115,76,101,115,115],"output":[{"Character":{"data":"&NestedLessLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_607() {
+fn test_0607() {
     tokenize(
         r##"{"description":"Named entity: NestedLessLess; with a semi-colon","initialState":"Data","input":"&NestedLessLess;","inputUtf16":[38,78,101,115,116,101,100,76,101,115,115,76,101,115,115,59],"output":[{"Character":{"data":"≪"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_608() {
+fn test_0608() {
     tokenize(
         r##"{"description":"Bad named entity: NewLine without a semi-colon","initialState":"Data","input":"&NewLine","inputUtf16":[38,78,101,119,76,105,110,101],"output":[{"Character":{"data":"&NewLine"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_609() {
+fn test_0609() {
     tokenize(
         r##"{"description":"Named entity: NewLine; with a semi-colon","initialState":"Data","input":"&NewLine;","inputUtf16":[38,78,101,119,76,105,110,101,59],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_610() {
+fn test_0610() {
     tokenize(
         r##"{"description":"Bad named entity: Nfr without a semi-colon","initialState":"Data","input":"&Nfr","inputUtf16":[38,78,102,114],"output":[{"Character":{"data":"&Nfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_611() {
+fn test_0611() {
     tokenize(
         r##"{"description":"Named entity: Nfr; with a semi-colon","initialState":"Data","input":"&Nfr;","inputUtf16":[38,78,102,114,59],"output":[{"Character":{"data":"𝔑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_612() {
+fn test_0612() {
     tokenize(
         r##"{"description":"Bad named entity: NoBreak without a semi-colon","initialState":"Data","input":"&NoBreak","inputUtf16":[38,78,111,66,114,101,97,107],"output":[{"Character":{"data":"&NoBreak"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_613() {
+fn test_0613() {
     tokenize(
         r##"{"description":"Named entity: NoBreak; with a semi-colon","initialState":"Data","input":"&NoBreak;","inputUtf16":[38,78,111,66,114,101,97,107,59],"output":[{"Character":{"data":"⁠"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_614() {
+fn test_0614() {
     tokenize(
         r##"{"description":"Bad named entity: NonBreakingSpace without a semi-colon","initialState":"Data","input":"&NonBreakingSpace","inputUtf16":[38,78,111,110,66,114,101,97,107,105,110,103,83,112,97,99,101],"output":[{"Character":{"data":"&NonBreakingSpace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_615() {
+fn test_0615() {
     tokenize(
         r##"{"description":"Named entity: NonBreakingSpace; with a semi-colon","initialState":"Data","input":"&NonBreakingSpace;","inputUtf16":[38,78,111,110,66,114,101,97,107,105,110,103,83,112,97,99,101,59],"output":[{"Character":{"data":" "}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_616() {
+fn test_0616() {
     tokenize(
         r##"{"description":"Bad named entity: Nopf without a semi-colon","initialState":"Data","input":"&Nopf","inputUtf16":[38,78,111,112,102],"output":[{"Character":{"data":"&Nopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_617() {
+fn test_0617() {
     tokenize(
         r##"{"description":"Named entity: Nopf; with a semi-colon","initialState":"Data","input":"&Nopf;","inputUtf16":[38,78,111,112,102,59],"output":[{"Character":{"data":"ℕ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_618() {
+fn test_0618() {
     tokenize(
         r##"{"description":"Bad named entity: Not without a semi-colon","initialState":"Data","input":"&Not","inputUtf16":[38,78,111,116],"output":[{"Character":{"data":"&Not"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_619() {
+fn test_0619() {
     tokenize(
         r##"{"description":"Named entity: Not; with a semi-colon","initialState":"Data","input":"&Not;","inputUtf16":[38,78,111,116,59],"output":[{"Character":{"data":"⫬"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_620() {
+fn test_0620() {
     tokenize(
         r##"{"description":"Bad named entity: NotCongruent without a semi-colon","initialState":"Data","input":"&NotCongruent","inputUtf16":[38,78,111,116,67,111,110,103,114,117,101,110,116],"output":[{"Character":{"data":"&NotCongruent"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_621() {
+fn test_0621() {
     tokenize(
         r##"{"description":"Named entity: NotCongruent; with a semi-colon","initialState":"Data","input":"&NotCongruent;","inputUtf16":[38,78,111,116,67,111,110,103,114,117,101,110,116,59],"output":[{"Character":{"data":"≢"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_622() {
+fn test_0622() {
     tokenize(
         r##"{"description":"Bad named entity: NotCupCap without a semi-colon","initialState":"Data","input":"&NotCupCap","inputUtf16":[38,78,111,116,67,117,112,67,97,112],"output":[{"Character":{"data":"&NotCupCap"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_623() {
+fn test_0623() {
     tokenize(
         r##"{"description":"Named entity: NotCupCap; with a semi-colon","initialState":"Data","input":"&NotCupCap;","inputUtf16":[38,78,111,116,67,117,112,67,97,112,59],"output":[{"Character":{"data":"≭"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_624() {
+fn test_0624() {
     tokenize(
         r##"{"description":"Bad named entity: NotDoubleVerticalBar without a semi-colon","initialState":"Data","input":"&NotDoubleVerticalBar","inputUtf16":[38,78,111,116,68,111,117,98,108,101,86,101,114,116,105,99,97,108,66,97,114],"output":[{"Character":{"data":"&NotDoubleVerticalBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_625() {
+fn test_0625() {
     tokenize(
         r##"{"description":"Named entity: NotDoubleVerticalBar; with a semi-colon","initialState":"Data","input":"&NotDoubleVerticalBar;","inputUtf16":[38,78,111,116,68,111,117,98,108,101,86,101,114,116,105,99,97,108,66,97,114,59],"output":[{"Character":{"data":"∦"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_626() {
+fn test_0626() {
     tokenize(
         r##"{"description":"Bad named entity: NotElement without a semi-colon","initialState":"Data","input":"&NotElement","inputUtf16":[38,78,111,116,69,108,101,109,101,110,116],"output":[{"Character":{"data":"&NotElement"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_627() {
+fn test_0627() {
     tokenize(
         r##"{"description":"Named entity: NotElement; with a semi-colon","initialState":"Data","input":"&NotElement;","inputUtf16":[38,78,111,116,69,108,101,109,101,110,116,59],"output":[{"Character":{"data":"∉"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_628() {
+fn test_0628() {
     tokenize(
         r##"{"description":"Bad named entity: NotEqual without a semi-colon","initialState":"Data","input":"&NotEqual","inputUtf16":[38,78,111,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_629() {
+fn test_0629() {
     tokenize(
         r##"{"description":"Named entity: NotEqual; with a semi-colon","initialState":"Data","input":"&NotEqual;","inputUtf16":[38,78,111,116,69,113,117,97,108,59],"output":[{"Character":{"data":"≠"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_630() {
+fn test_0630() {
     tokenize(
         r##"{"description":"Bad named entity: NotEqualTilde without a semi-colon","initialState":"Data","input":"&NotEqualTilde","inputUtf16":[38,78,111,116,69,113,117,97,108,84,105,108,100,101],"output":[{"Character":{"data":"&NotEqualTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_631() {
+fn test_0631() {
     tokenize(
         r##"{"description":"Named entity: NotEqualTilde; with a semi-colon","initialState":"Data","input":"&NotEqualTilde;","inputUtf16":[38,78,111,116,69,113,117,97,108,84,105,108,100,101,59],"output":[{"Character":{"data":"≂̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_632() {
+fn test_0632() {
     tokenize(
         r##"{"description":"Bad named entity: NotExists without a semi-colon","initialState":"Data","input":"&NotExists","inputUtf16":[38,78,111,116,69,120,105,115,116,115],"output":[{"Character":{"data":"&NotExists"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_633() {
+fn test_0633() {
     tokenize(
         r##"{"description":"Named entity: NotExists; with a semi-colon","initialState":"Data","input":"&NotExists;","inputUtf16":[38,78,111,116,69,120,105,115,116,115,59],"output":[{"Character":{"data":"∄"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_634() {
+fn test_0634() {
     tokenize(
         r##"{"description":"Bad named entity: NotGreater without a semi-colon","initialState":"Data","input":"&NotGreater","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&NotGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_635() {
+fn test_0635() {
     tokenize(
         r##"{"description":"Named entity: NotGreater; with a semi-colon","initialState":"Data","input":"&NotGreater;","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"≯"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_636() {
+fn test_0636() {
     tokenize(
         r##"{"description":"Bad named entity: NotGreaterEqual without a semi-colon","initialState":"Data","input":"&NotGreaterEqual","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,69,113,117,97,108],"output":[{"Character":{"data":"&NotGreaterEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_637() {
+fn test_0637() {
     tokenize(
         r##"{"description":"Named entity: NotGreaterEqual; with a semi-colon","initialState":"Data","input":"&NotGreaterEqual;","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,69,113,117,97,108,59],"output":[{"Character":{"data":"≱"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_638() {
+fn test_0638() {
     tokenize(
         r##"{"description":"Bad named entity: NotGreaterFullEqual without a semi-colon","initialState":"Data","input":"&NotGreaterFullEqual","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,70,117,108,108,69,113,117,97,108],"output":[{"Character":{"data":"&NotGreaterFullEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_639() {
+fn test_0639() {
     tokenize(
         r##"{"description":"Named entity: NotGreaterFullEqual; with a semi-colon","initialState":"Data","input":"&NotGreaterFullEqual;","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,70,117,108,108,69,113,117,97,108,59],"output":[{"Character":{"data":"≧̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_640() {
+fn test_0640() {
     tokenize(
         r##"{"description":"Bad named entity: NotGreaterGreater without a semi-colon","initialState":"Data","input":"&NotGreaterGreater","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&NotGreaterGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_641() {
+fn test_0641() {
     tokenize(
         r##"{"description":"Named entity: NotGreaterGreater; with a semi-colon","initialState":"Data","input":"&NotGreaterGreater;","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"≫̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_642() {
+fn test_0642() {
     tokenize(
         r##"{"description":"Bad named entity: NotGreaterLess without a semi-colon","initialState":"Data","input":"&NotGreaterLess","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,76,101,115,115],"output":[{"Character":{"data":"&NotGreaterLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_643() {
+fn test_0643() {
     tokenize(
         r##"{"description":"Named entity: NotGreaterLess; with a semi-colon","initialState":"Data","input":"&NotGreaterLess;","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,76,101,115,115,59],"output":[{"Character":{"data":"≹"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_644() {
+fn test_0644() {
     tokenize(
         r##"{"description":"Bad named entity: NotGreaterSlantEqual without a semi-colon","initialState":"Data","input":"&NotGreaterSlantEqual","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotGreaterSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_645() {
+fn test_0645() {
     tokenize(
         r##"{"description":"Named entity: NotGreaterSlantEqual; with a semi-colon","initialState":"Data","input":"&NotGreaterSlantEqual;","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⩾̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_646() {
+fn test_0646() {
     tokenize(
         r##"{"description":"Bad named entity: NotGreaterTilde without a semi-colon","initialState":"Data","input":"&NotGreaterTilde","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,84,105,108,100,101],"output":[{"Character":{"data":"&NotGreaterTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_647() {
+fn test_0647() {
     tokenize(
         r##"{"description":"Named entity: NotGreaterTilde; with a semi-colon","initialState":"Data","input":"&NotGreaterTilde;","inputUtf16":[38,78,111,116,71,114,101,97,116,101,114,84,105,108,100,101,59],"output":[{"Character":{"data":"≵"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_648() {
+fn test_0648() {
     tokenize(
         r##"{"description":"Bad named entity: NotHumpDownHump without a semi-colon","initialState":"Data","input":"&NotHumpDownHump","inputUtf16":[38,78,111,116,72,117,109,112,68,111,119,110,72,117,109,112],"output":[{"Character":{"data":"&NotHumpDownHump"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_649() {
+fn test_0649() {
     tokenize(
         r##"{"description":"Named entity: NotHumpDownHump; with a semi-colon","initialState":"Data","input":"&NotHumpDownHump;","inputUtf16":[38,78,111,116,72,117,109,112,68,111,119,110,72,117,109,112,59],"output":[{"Character":{"data":"≎̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_650() {
+fn test_0650() {
     tokenize(
         r##"{"description":"Bad named entity: NotHumpEqual without a semi-colon","initialState":"Data","input":"&NotHumpEqual","inputUtf16":[38,78,111,116,72,117,109,112,69,113,117,97,108],"output":[{"Character":{"data":"&NotHumpEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_651() {
+fn test_0651() {
     tokenize(
         r##"{"description":"Named entity: NotHumpEqual; with a semi-colon","initialState":"Data","input":"&NotHumpEqual;","inputUtf16":[38,78,111,116,72,117,109,112,69,113,117,97,108,59],"output":[{"Character":{"data":"≏̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_652() {
+fn test_0652() {
     tokenize(
         r##"{"description":"Bad named entity: NotLeftTriangle without a semi-colon","initialState":"Data","input":"&NotLeftTriangle","inputUtf16":[38,78,111,116,76,101,102,116,84,114,105,97,110,103,108,101],"output":[{"Character":{"data":"&NotLeftTriangle"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_653() {
+fn test_0653() {
     tokenize(
         r##"{"description":"Named entity: NotLeftTriangle; with a semi-colon","initialState":"Data","input":"&NotLeftTriangle;","inputUtf16":[38,78,111,116,76,101,102,116,84,114,105,97,110,103,108,101,59],"output":[{"Character":{"data":"⋪"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_654() {
+fn test_0654() {
     tokenize(
         r##"{"description":"Bad named entity: NotLeftTriangleBar without a semi-colon","initialState":"Data","input":"&NotLeftTriangleBar","inputUtf16":[38,78,111,116,76,101,102,116,84,114,105,97,110,103,108,101,66,97,114],"output":[{"Character":{"data":"&NotLeftTriangleBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_655() {
+fn test_0655() {
     tokenize(
         r##"{"description":"Named entity: NotLeftTriangleBar; with a semi-colon","initialState":"Data","input":"&NotLeftTriangleBar;","inputUtf16":[38,78,111,116,76,101,102,116,84,114,105,97,110,103,108,101,66,97,114,59],"output":[{"Character":{"data":"⧏̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_656() {
+fn test_0656() {
     tokenize(
         r##"{"description":"Bad named entity: NotLeftTriangleEqual without a semi-colon","initialState":"Data","input":"&NotLeftTriangleEqual","inputUtf16":[38,78,111,116,76,101,102,116,84,114,105,97,110,103,108,101,69,113,117,97,108],"output":[{"Character":{"data":"&NotLeftTriangleEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_657() {
+fn test_0657() {
     tokenize(
         r##"{"description":"Named entity: NotLeftTriangleEqual; with a semi-colon","initialState":"Data","input":"&NotLeftTriangleEqual;","inputUtf16":[38,78,111,116,76,101,102,116,84,114,105,97,110,103,108,101,69,113,117,97,108,59],"output":[{"Character":{"data":"⋬"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_658() {
+fn test_0658() {
     tokenize(
         r##"{"description":"Bad named entity: NotLess without a semi-colon","initialState":"Data","input":"&NotLess","inputUtf16":[38,78,111,116,76,101,115,115],"output":[{"Character":{"data":"&NotLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_659() {
+fn test_0659() {
     tokenize(
         r##"{"description":"Named entity: NotLess; with a semi-colon","initialState":"Data","input":"&NotLess;","inputUtf16":[38,78,111,116,76,101,115,115,59],"output":[{"Character":{"data":"≮"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_660() {
+fn test_0660() {
     tokenize(
         r##"{"description":"Bad named entity: NotLessEqual without a semi-colon","initialState":"Data","input":"&NotLessEqual","inputUtf16":[38,78,111,116,76,101,115,115,69,113,117,97,108],"output":[{"Character":{"data":"&NotLessEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_661() {
+fn test_0661() {
     tokenize(
         r##"{"description":"Named entity: NotLessEqual; with a semi-colon","initialState":"Data","input":"&NotLessEqual;","inputUtf16":[38,78,111,116,76,101,115,115,69,113,117,97,108,59],"output":[{"Character":{"data":"≰"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_662() {
+fn test_0662() {
     tokenize(
         r##"{"description":"Bad named entity: NotLessGreater without a semi-colon","initialState":"Data","input":"&NotLessGreater","inputUtf16":[38,78,111,116,76,101,115,115,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&NotLessGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_663() {
+fn test_0663() {
     tokenize(
         r##"{"description":"Named entity: NotLessGreater; with a semi-colon","initialState":"Data","input":"&NotLessGreater;","inputUtf16":[38,78,111,116,76,101,115,115,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"≸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_664() {
+fn test_0664() {
     tokenize(
         r##"{"description":"Bad named entity: NotLessLess without a semi-colon","initialState":"Data","input":"&NotLessLess","inputUtf16":[38,78,111,116,76,101,115,115,76,101,115,115],"output":[{"Character":{"data":"&NotLessLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_665() {
+fn test_0665() {
     tokenize(
         r##"{"description":"Named entity: NotLessLess; with a semi-colon","initialState":"Data","input":"&NotLessLess;","inputUtf16":[38,78,111,116,76,101,115,115,76,101,115,115,59],"output":[{"Character":{"data":"≪̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_666() {
+fn test_0666() {
     tokenize(
         r##"{"description":"Bad named entity: NotLessSlantEqual without a semi-colon","initialState":"Data","input":"&NotLessSlantEqual","inputUtf16":[38,78,111,116,76,101,115,115,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotLessSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_667() {
+fn test_0667() {
     tokenize(
         r##"{"description":"Named entity: NotLessSlantEqual; with a semi-colon","initialState":"Data","input":"&NotLessSlantEqual;","inputUtf16":[38,78,111,116,76,101,115,115,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⩽̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_668() {
+fn test_0668() {
     tokenize(
         r##"{"description":"Bad named entity: NotLessTilde without a semi-colon","initialState":"Data","input":"&NotLessTilde","inputUtf16":[38,78,111,116,76,101,115,115,84,105,108,100,101],"output":[{"Character":{"data":"&NotLessTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_669() {
+fn test_0669() {
     tokenize(
         r##"{"description":"Named entity: NotLessTilde; with a semi-colon","initialState":"Data","input":"&NotLessTilde;","inputUtf16":[38,78,111,116,76,101,115,115,84,105,108,100,101,59],"output":[{"Character":{"data":"≴"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_670() {
+fn test_0670() {
     tokenize(
         r##"{"description":"Bad named entity: NotNestedGreaterGreater without a semi-colon","initialState":"Data","input":"&NotNestedGreaterGreater","inputUtf16":[38,78,111,116,78,101,115,116,101,100,71,114,101,97,116,101,114,71,114,101,97,116,101,114],"output":[{"Character":{"data":"&NotNestedGreaterGreater"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_671() {
+fn test_0671() {
     tokenize(
         r##"{"description":"Named entity: NotNestedGreaterGreater; with a semi-colon","initialState":"Data","input":"&NotNestedGreaterGreater;","inputUtf16":[38,78,111,116,78,101,115,116,101,100,71,114,101,97,116,101,114,71,114,101,97,116,101,114,59],"output":[{"Character":{"data":"⪢̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_672() {
+fn test_0672() {
     tokenize(
         r##"{"description":"Bad named entity: NotNestedLessLess without a semi-colon","initialState":"Data","input":"&NotNestedLessLess","inputUtf16":[38,78,111,116,78,101,115,116,101,100,76,101,115,115,76,101,115,115],"output":[{"Character":{"data":"&NotNestedLessLess"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_673() {
+fn test_0673() {
     tokenize(
         r##"{"description":"Named entity: NotNestedLessLess; with a semi-colon","initialState":"Data","input":"&NotNestedLessLess;","inputUtf16":[38,78,111,116,78,101,115,116,101,100,76,101,115,115,76,101,115,115,59],"output":[{"Character":{"data":"⪡̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_674() {
+fn test_0674() {
     tokenize(
         r##"{"description":"Bad named entity: NotPrecedes without a semi-colon","initialState":"Data","input":"&NotPrecedes","inputUtf16":[38,78,111,116,80,114,101,99,101,100,101,115],"output":[{"Character":{"data":"&NotPrecedes"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_675() {
+fn test_0675() {
     tokenize(
         r##"{"description":"Named entity: NotPrecedes; with a semi-colon","initialState":"Data","input":"&NotPrecedes;","inputUtf16":[38,78,111,116,80,114,101,99,101,100,101,115,59],"output":[{"Character":{"data":"⊀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_676() {
+fn test_0676() {
     tokenize(
         r##"{"description":"Bad named entity: NotPrecedesEqual without a semi-colon","initialState":"Data","input":"&NotPrecedesEqual","inputUtf16":[38,78,111,116,80,114,101,99,101,100,101,115,69,113,117,97,108],"output":[{"Character":{"data":"&NotPrecedesEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_677() {
+fn test_0677() {
     tokenize(
         r##"{"description":"Named entity: NotPrecedesEqual; with a semi-colon","initialState":"Data","input":"&NotPrecedesEqual;","inputUtf16":[38,78,111,116,80,114,101,99,101,100,101,115,69,113,117,97,108,59],"output":[{"Character":{"data":"⪯̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_678() {
+fn test_0678() {
     tokenize(
         r##"{"description":"Bad named entity: NotPrecedesSlantEqual without a semi-colon","initialState":"Data","input":"&NotPrecedesSlantEqual","inputUtf16":[38,78,111,116,80,114,101,99,101,100,101,115,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotPrecedesSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_679() {
+fn test_0679() {
     tokenize(
         r##"{"description":"Named entity: NotPrecedesSlantEqual; with a semi-colon","initialState":"Data","input":"&NotPrecedesSlantEqual;","inputUtf16":[38,78,111,116,80,114,101,99,101,100,101,115,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⋠"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_680() {
+fn test_0680() {
     tokenize(
         r##"{"description":"Bad named entity: NotReverseElement without a semi-colon","initialState":"Data","input":"&NotReverseElement","inputUtf16":[38,78,111,116,82,101,118,101,114,115,101,69,108,101,109,101,110,116],"output":[{"Character":{"data":"&NotReverseElement"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_681() {
+fn test_0681() {
     tokenize(
         r##"{"description":"Named entity: NotReverseElement; with a semi-colon","initialState":"Data","input":"&NotReverseElement;","inputUtf16":[38,78,111,116,82,101,118,101,114,115,101,69,108,101,109,101,110,116,59],"output":[{"Character":{"data":"∌"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_682() {
+fn test_0682() {
     tokenize(
         r##"{"description":"Bad named entity: NotRightTriangle without a semi-colon","initialState":"Data","input":"&NotRightTriangle","inputUtf16":[38,78,111,116,82,105,103,104,116,84,114,105,97,110,103,108,101],"output":[{"Character":{"data":"&NotRightTriangle"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_683() {
+fn test_0683() {
     tokenize(
         r##"{"description":"Named entity: NotRightTriangle; with a semi-colon","initialState":"Data","input":"&NotRightTriangle;","inputUtf16":[38,78,111,116,82,105,103,104,116,84,114,105,97,110,103,108,101,59],"output":[{"Character":{"data":"⋫"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_684() {
+fn test_0684() {
     tokenize(
         r##"{"description":"Bad named entity: NotRightTriangleBar without a semi-colon","initialState":"Data","input":"&NotRightTriangleBar","inputUtf16":[38,78,111,116,82,105,103,104,116,84,114,105,97,110,103,108,101,66,97,114],"output":[{"Character":{"data":"&NotRightTriangleBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_685() {
+fn test_0685() {
     tokenize(
         r##"{"description":"Named entity: NotRightTriangleBar; with a semi-colon","initialState":"Data","input":"&NotRightTriangleBar;","inputUtf16":[38,78,111,116,82,105,103,104,116,84,114,105,97,110,103,108,101,66,97,114,59],"output":[{"Character":{"data":"⧐̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_686() {
+fn test_0686() {
     tokenize(
         r##"{"description":"Bad named entity: NotRightTriangleEqual without a semi-colon","initialState":"Data","input":"&NotRightTriangleEqual","inputUtf16":[38,78,111,116,82,105,103,104,116,84,114,105,97,110,103,108,101,69,113,117,97,108],"output":[{"Character":{"data":"&NotRightTriangleEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_687() {
+fn test_0687() {
     tokenize(
         r##"{"description":"Named entity: NotRightTriangleEqual; with a semi-colon","initialState":"Data","input":"&NotRightTriangleEqual;","inputUtf16":[38,78,111,116,82,105,103,104,116,84,114,105,97,110,103,108,101,69,113,117,97,108,59],"output":[{"Character":{"data":"⋭"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_688() {
+fn test_0688() {
     tokenize(
         r##"{"description":"Bad named entity: NotSquareSubset without a semi-colon","initialState":"Data","input":"&NotSquareSubset","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,98,115,101,116],"output":[{"Character":{"data":"&NotSquareSubset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_689() {
+fn test_0689() {
     tokenize(
         r##"{"description":"Named entity: NotSquareSubset; with a semi-colon","initialState":"Data","input":"&NotSquareSubset;","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,98,115,101,116,59],"output":[{"Character":{"data":"⊏̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_690() {
+fn test_0690() {
     tokenize(
         r##"{"description":"Bad named entity: NotSquareSubsetEqual without a semi-colon","initialState":"Data","input":"&NotSquareSubsetEqual","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,98,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotSquareSubsetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_691() {
+fn test_0691() {
     tokenize(
         r##"{"description":"Named entity: NotSquareSubsetEqual; with a semi-colon","initialState":"Data","input":"&NotSquareSubsetEqual;","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,98,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⋢"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_692() {
+fn test_0692() {
     tokenize(
         r##"{"description":"Bad named entity: NotSquareSuperset without a semi-colon","initialState":"Data","input":"&NotSquareSuperset","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,112,101,114,115,101,116],"output":[{"Character":{"data":"&NotSquareSuperset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_693() {
+fn test_0693() {
     tokenize(
         r##"{"description":"Named entity: NotSquareSuperset; with a semi-colon","initialState":"Data","input":"&NotSquareSuperset;","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,112,101,114,115,101,116,59],"output":[{"Character":{"data":"⊐̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_694() {
+fn test_0694() {
     tokenize(
         r##"{"description":"Bad named entity: NotSquareSupersetEqual without a semi-colon","initialState":"Data","input":"&NotSquareSupersetEqual","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,112,101,114,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotSquareSupersetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_695() {
+fn test_0695() {
     tokenize(
         r##"{"description":"Named entity: NotSquareSupersetEqual; with a semi-colon","initialState":"Data","input":"&NotSquareSupersetEqual;","inputUtf16":[38,78,111,116,83,113,117,97,114,101,83,117,112,101,114,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⋣"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_696() {
+fn test_0696() {
     tokenize(
         r##"{"description":"Bad named entity: NotSubset without a semi-colon","initialState":"Data","input":"&NotSubset","inputUtf16":[38,78,111,116,83,117,98,115,101,116],"output":[{"Character":{"data":"&NotSubset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_697() {
+fn test_0697() {
     tokenize(
         r##"{"description":"Named entity: NotSubset; with a semi-colon","initialState":"Data","input":"&NotSubset;","inputUtf16":[38,78,111,116,83,117,98,115,101,116,59],"output":[{"Character":{"data":"⊂⃒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_698() {
+fn test_0698() {
     tokenize(
         r##"{"description":"Bad named entity: NotSubsetEqual without a semi-colon","initialState":"Data","input":"&NotSubsetEqual","inputUtf16":[38,78,111,116,83,117,98,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotSubsetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_699() {
+fn test_0699() {
     tokenize(
         r##"{"description":"Named entity: NotSubsetEqual; with a semi-colon","initialState":"Data","input":"&NotSubsetEqual;","inputUtf16":[38,78,111,116,83,117,98,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⊈"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_700() {
+fn test_0700() {
     tokenize(
         r##"{"description":"Bad named entity: NotSucceeds without a semi-colon","initialState":"Data","input":"&NotSucceeds","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115],"output":[{"Character":{"data":"&NotSucceeds"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_701() {
+fn test_0701() {
     tokenize(
         r##"{"description":"Named entity: NotSucceeds; with a semi-colon","initialState":"Data","input":"&NotSucceeds;","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115,59],"output":[{"Character":{"data":"⊁"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_702() {
+fn test_0702() {
     tokenize(
         r##"{"description":"Bad named entity: NotSucceedsEqual without a semi-colon","initialState":"Data","input":"&NotSucceedsEqual","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115,69,113,117,97,108],"output":[{"Character":{"data":"&NotSucceedsEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_703() {
+fn test_0703() {
     tokenize(
         r##"{"description":"Named entity: NotSucceedsEqual; with a semi-colon","initialState":"Data","input":"&NotSucceedsEqual;","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115,69,113,117,97,108,59],"output":[{"Character":{"data":"⪰̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_704() {
+fn test_0704() {
     tokenize(
         r##"{"description":"Bad named entity: NotSucceedsSlantEqual without a semi-colon","initialState":"Data","input":"&NotSucceedsSlantEqual","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotSucceedsSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_705() {
+fn test_0705() {
     tokenize(
         r##"{"description":"Named entity: NotSucceedsSlantEqual; with a semi-colon","initialState":"Data","input":"&NotSucceedsSlantEqual;","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⋡"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_706() {
+fn test_0706() {
     tokenize(
         r##"{"description":"Bad named entity: NotSucceedsTilde without a semi-colon","initialState":"Data","input":"&NotSucceedsTilde","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115,84,105,108,100,101],"output":[{"Character":{"data":"&NotSucceedsTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_707() {
+fn test_0707() {
     tokenize(
         r##"{"description":"Named entity: NotSucceedsTilde; with a semi-colon","initialState":"Data","input":"&NotSucceedsTilde;","inputUtf16":[38,78,111,116,83,117,99,99,101,101,100,115,84,105,108,100,101,59],"output":[{"Character":{"data":"≿̸"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_708() {
+fn test_0708() {
     tokenize(
         r##"{"description":"Bad named entity: NotSuperset without a semi-colon","initialState":"Data","input":"&NotSuperset","inputUtf16":[38,78,111,116,83,117,112,101,114,115,101,116],"output":[{"Character":{"data":"&NotSuperset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_709() {
+fn test_0709() {
     tokenize(
         r##"{"description":"Named entity: NotSuperset; with a semi-colon","initialState":"Data","input":"&NotSuperset;","inputUtf16":[38,78,111,116,83,117,112,101,114,115,101,116,59],"output":[{"Character":{"data":"⊃⃒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_710() {
+fn test_0710() {
     tokenize(
         r##"{"description":"Bad named entity: NotSupersetEqual without a semi-colon","initialState":"Data","input":"&NotSupersetEqual","inputUtf16":[38,78,111,116,83,117,112,101,114,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&NotSupersetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_711() {
+fn test_0711() {
     tokenize(
         r##"{"description":"Named entity: NotSupersetEqual; with a semi-colon","initialState":"Data","input":"&NotSupersetEqual;","inputUtf16":[38,78,111,116,83,117,112,101,114,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⊉"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_712() {
+fn test_0712() {
     tokenize(
         r##"{"description":"Bad named entity: NotTilde without a semi-colon","initialState":"Data","input":"&NotTilde","inputUtf16":[38,78,111,116,84,105,108,100,101],"output":[{"Character":{"data":"&NotTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_713() {
+fn test_0713() {
     tokenize(
         r##"{"description":"Named entity: NotTilde; with a semi-colon","initialState":"Data","input":"&NotTilde;","inputUtf16":[38,78,111,116,84,105,108,100,101,59],"output":[{"Character":{"data":"≁"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_714() {
+fn test_0714() {
     tokenize(
         r##"{"description":"Bad named entity: NotTildeEqual without a semi-colon","initialState":"Data","input":"&NotTildeEqual","inputUtf16":[38,78,111,116,84,105,108,100,101,69,113,117,97,108],"output":[{"Character":{"data":"&NotTildeEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_715() {
+fn test_0715() {
     tokenize(
         r##"{"description":"Named entity: NotTildeEqual; with a semi-colon","initialState":"Data","input":"&NotTildeEqual;","inputUtf16":[38,78,111,116,84,105,108,100,101,69,113,117,97,108,59],"output":[{"Character":{"data":"≄"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_716() {
+fn test_0716() {
     tokenize(
         r##"{"description":"Bad named entity: NotTildeFullEqual without a semi-colon","initialState":"Data","input":"&NotTildeFullEqual","inputUtf16":[38,78,111,116,84,105,108,100,101,70,117,108,108,69,113,117,97,108],"output":[{"Character":{"data":"&NotTildeFullEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_717() {
+fn test_0717() {
     tokenize(
         r##"{"description":"Named entity: NotTildeFullEqual; with a semi-colon","initialState":"Data","input":"&NotTildeFullEqual;","inputUtf16":[38,78,111,116,84,105,108,100,101,70,117,108,108,69,113,117,97,108,59],"output":[{"Character":{"data":"≇"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_718() {
+fn test_0718() {
     tokenize(
         r##"{"description":"Bad named entity: NotTildeTilde without a semi-colon","initialState":"Data","input":"&NotTildeTilde","inputUtf16":[38,78,111,116,84,105,108,100,101,84,105,108,100,101],"output":[{"Character":{"data":"&NotTildeTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_719() {
+fn test_0719() {
     tokenize(
         r##"{"description":"Named entity: NotTildeTilde; with a semi-colon","initialState":"Data","input":"&NotTildeTilde;","inputUtf16":[38,78,111,116,84,105,108,100,101,84,105,108,100,101,59],"output":[{"Character":{"data":"≉"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_720() {
+fn test_0720() {
     tokenize(
         r##"{"description":"Bad named entity: NotVerticalBar without a semi-colon","initialState":"Data","input":"&NotVerticalBar","inputUtf16":[38,78,111,116,86,101,114,116,105,99,97,108,66,97,114],"output":[{"Character":{"data":"&NotVerticalBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_721() {
+fn test_0721() {
     tokenize(
         r##"{"description":"Named entity: NotVerticalBar; with a semi-colon","initialState":"Data","input":"&NotVerticalBar;","inputUtf16":[38,78,111,116,86,101,114,116,105,99,97,108,66,97,114,59],"output":[{"Character":{"data":"∤"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_722() {
+fn test_0722() {
     tokenize(
         r##"{"description":"Bad named entity: Nscr without a semi-colon","initialState":"Data","input":"&Nscr","inputUtf16":[38,78,115,99,114],"output":[{"Character":{"data":"&Nscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_723() {
+fn test_0723() {
     tokenize(
         r##"{"description":"Named entity: Nscr; with a semi-colon","initialState":"Data","input":"&Nscr;","inputUtf16":[38,78,115,99,114,59],"output":[{"Character":{"data":"𝒩"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_724() {
+fn test_0724() {
     tokenize(
         r##"{"description":"Named entity: Ntilde without a semi-colon","initialState":"Data","input":"&Ntilde","inputUtf16":[38,78,116,105,108,100,101],"output":[{"Character":{"data":"Ñ"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_725() {
+fn test_0725() {
     tokenize(
         r##"{"description":"Named entity: Ntilde; with a semi-colon","initialState":"Data","input":"&Ntilde;","inputUtf16":[38,78,116,105,108,100,101,59],"output":[{"Character":{"data":"Ñ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_726() {
+fn test_0726() {
     tokenize(
         r##"{"description":"Bad named entity: Nu without a semi-colon","initialState":"Data","input":"&Nu","inputUtf16":[38,78,117],"output":[{"Character":{"data":"&Nu"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_727() {
+fn test_0727() {
     tokenize(
         r##"{"description":"Named entity: Nu; with a semi-colon","initialState":"Data","input":"&Nu;","inputUtf16":[38,78,117,59],"output":[{"Character":{"data":"Ν"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_728() {
+fn test_0728() {
     tokenize(
         r##"{"description":"Bad named entity: OElig without a semi-colon","initialState":"Data","input":"&OElig","inputUtf16":[38,79,69,108,105,103],"output":[{"Character":{"data":"&OElig"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_729() {
+fn test_0729() {
     tokenize(
         r##"{"description":"Named entity: OElig; with a semi-colon","initialState":"Data","input":"&OElig;","inputUtf16":[38,79,69,108,105,103,59],"output":[{"Character":{"data":"Œ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_730() {
+fn test_0730() {
     tokenize(
         r##"{"description":"Named entity: Oacute without a semi-colon","initialState":"Data","input":"&Oacute","inputUtf16":[38,79,97,99,117,116,101],"output":[{"Character":{"data":"Ó"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_731() {
+fn test_0731() {
     tokenize(
         r##"{"description":"Named entity: Oacute; with a semi-colon","initialState":"Data","input":"&Oacute;","inputUtf16":[38,79,97,99,117,116,101,59],"output":[{"Character":{"data":"Ó"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_732() {
+fn test_0732() {
     tokenize(
         r##"{"description":"Named entity: Ocirc without a semi-colon","initialState":"Data","input":"&Ocirc","inputUtf16":[38,79,99,105,114,99],"output":[{"Character":{"data":"Ô"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_733() {
+fn test_0733() {
     tokenize(
         r##"{"description":"Named entity: Ocirc; with a semi-colon","initialState":"Data","input":"&Ocirc;","inputUtf16":[38,79,99,105,114,99,59],"output":[{"Character":{"data":"Ô"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_734() {
+fn test_0734() {
     tokenize(
         r##"{"description":"Bad named entity: Ocy without a semi-colon","initialState":"Data","input":"&Ocy","inputUtf16":[38,79,99,121],"output":[{"Character":{"data":"&Ocy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_735() {
+fn test_0735() {
     tokenize(
         r##"{"description":"Named entity: Ocy; with a semi-colon","initialState":"Data","input":"&Ocy;","inputUtf16":[38,79,99,121,59],"output":[{"Character":{"data":"О"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_736() {
+fn test_0736() {
     tokenize(
         r##"{"description":"Bad named entity: Odblac without a semi-colon","initialState":"Data","input":"&Odblac","inputUtf16":[38,79,100,98,108,97,99],"output":[{"Character":{"data":"&Odblac"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_737() {
+fn test_0737() {
     tokenize(
         r##"{"description":"Named entity: Odblac; with a semi-colon","initialState":"Data","input":"&Odblac;","inputUtf16":[38,79,100,98,108,97,99,59],"output":[{"Character":{"data":"Ő"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_738() {
+fn test_0738() {
     tokenize(
         r##"{"description":"Bad named entity: Ofr without a semi-colon","initialState":"Data","input":"&Ofr","inputUtf16":[38,79,102,114],"output":[{"Character":{"data":"&Ofr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_739() {
+fn test_0739() {
     tokenize(
         r##"{"description":"Named entity: Ofr; with a semi-colon","initialState":"Data","input":"&Ofr;","inputUtf16":[38,79,102,114,59],"output":[{"Character":{"data":"𝔒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_740() {
+fn test_0740() {
     tokenize(
         r##"{"description":"Named entity: Ograve without a semi-colon","initialState":"Data","input":"&Ograve","inputUtf16":[38,79,103,114,97,118,101],"output":[{"Character":{"data":"Ò"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_741() {
+fn test_0741() {
     tokenize(
         r##"{"description":"Named entity: Ograve; with a semi-colon","initialState":"Data","input":"&Ograve;","inputUtf16":[38,79,103,114,97,118,101,59],"output":[{"Character":{"data":"Ò"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_742() {
+fn test_0742() {
     tokenize(
         r##"{"description":"Bad named entity: Omacr without a semi-colon","initialState":"Data","input":"&Omacr","inputUtf16":[38,79,109,97,99,114],"output":[{"Character":{"data":"&Omacr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_743() {
+fn test_0743() {
     tokenize(
         r##"{"description":"Named entity: Omacr; with a semi-colon","initialState":"Data","input":"&Omacr;","inputUtf16":[38,79,109,97,99,114,59],"output":[{"Character":{"data":"Ō"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_744() {
+fn test_0744() {
     tokenize(
         r##"{"description":"Bad named entity: Omega without a semi-colon","initialState":"Data","input":"&Omega","inputUtf16":[38,79,109,101,103,97],"output":[{"Character":{"data":"&Omega"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_745() {
+fn test_0745() {
     tokenize(
         r##"{"description":"Named entity: Omega; with a semi-colon","initialState":"Data","input":"&Omega;","inputUtf16":[38,79,109,101,103,97,59],"output":[{"Character":{"data":"Ω"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_746() {
+fn test_0746() {
     tokenize(
         r##"{"description":"Bad named entity: Omicron without a semi-colon","initialState":"Data","input":"&Omicron","inputUtf16":[38,79,109,105,99,114,111,110],"output":[{"Character":{"data":"&Omicron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_747() {
+fn test_0747() {
     tokenize(
         r##"{"description":"Named entity: Omicron; with a semi-colon","initialState":"Data","input":"&Omicron;","inputUtf16":[38,79,109,105,99,114,111,110,59],"output":[{"Character":{"data":"Ο"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_748() {
+fn test_0748() {
     tokenize(
         r##"{"description":"Bad named entity: Oopf without a semi-colon","initialState":"Data","input":"&Oopf","inputUtf16":[38,79,111,112,102],"output":[{"Character":{"data":"&Oopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_749() {
+fn test_0749() {
     tokenize(
         r##"{"description":"Named entity: Oopf; with a semi-colon","initialState":"Data","input":"&Oopf;","inputUtf16":[38,79,111,112,102,59],"output":[{"Character":{"data":"𝕆"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_750() {
+fn test_0750() {
     tokenize(
         r##"{"description":"Bad named entity: OpenCurlyDoubleQuote without a semi-colon","initialState":"Data","input":"&OpenCurlyDoubleQuote","inputUtf16":[38,79,112,101,110,67,117,114,108,121,68,111,117,98,108,101,81,117,111,116,101],"output":[{"Character":{"data":"&OpenCurlyDoubleQuote"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_751() {
+fn test_0751() {
     tokenize(
         r##"{"description":"Named entity: OpenCurlyDoubleQuote; with a semi-colon","initialState":"Data","input":"&OpenCurlyDoubleQuote;","inputUtf16":[38,79,112,101,110,67,117,114,108,121,68,111,117,98,108,101,81,117,111,116,101,59],"output":[{"Character":{"data":"“"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_752() {
+fn test_0752() {
     tokenize(
         r##"{"description":"Bad named entity: OpenCurlyQuote without a semi-colon","initialState":"Data","input":"&OpenCurlyQuote","inputUtf16":[38,79,112,101,110,67,117,114,108,121,81,117,111,116,101],"output":[{"Character":{"data":"&OpenCurlyQuote"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_753() {
+fn test_0753() {
     tokenize(
         r##"{"description":"Named entity: OpenCurlyQuote; with a semi-colon","initialState":"Data","input":"&OpenCurlyQuote;","inputUtf16":[38,79,112,101,110,67,117,114,108,121,81,117,111,116,101,59],"output":[{"Character":{"data":"‘"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_754() {
+fn test_0754() {
     tokenize(
         r##"{"description":"Bad named entity: Or without a semi-colon","initialState":"Data","input":"&Or","inputUtf16":[38,79,114],"output":[{"Character":{"data":"&Or"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_755() {
+fn test_0755() {
     tokenize(
         r##"{"description":"Named entity: Or; with a semi-colon","initialState":"Data","input":"&Or;","inputUtf16":[38,79,114,59],"output":[{"Character":{"data":"⩔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_756() {
+fn test_0756() {
     tokenize(
         r##"{"description":"Bad named entity: Oscr without a semi-colon","initialState":"Data","input":"&Oscr","inputUtf16":[38,79,115,99,114],"output":[{"Character":{"data":"&Oscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_757() {
+fn test_0757() {
     tokenize(
         r##"{"description":"Named entity: Oscr; with a semi-colon","initialState":"Data","input":"&Oscr;","inputUtf16":[38,79,115,99,114,59],"output":[{"Character":{"data":"𝒪"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_758() {
+fn test_0758() {
     tokenize(
         r##"{"description":"Named entity: Oslash without a semi-colon","initialState":"Data","input":"&Oslash","inputUtf16":[38,79,115,108,97,115,104],"output":[{"Character":{"data":"Ø"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_759() {
+fn test_0759() {
     tokenize(
         r##"{"description":"Named entity: Oslash; with a semi-colon","initialState":"Data","input":"&Oslash;","inputUtf16":[38,79,115,108,97,115,104,59],"output":[{"Character":{"data":"Ø"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_760() {
+fn test_0760() {
     tokenize(
         r##"{"description":"Named entity: Otilde without a semi-colon","initialState":"Data","input":"&Otilde","inputUtf16":[38,79,116,105,108,100,101],"output":[{"Character":{"data":"Õ"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":8}}]}"##,
     );
 }
 
 #[test]
-fn test_761() {
+fn test_0761() {
     tokenize(
         r##"{"description":"Named entity: Otilde; with a semi-colon","initialState":"Data","input":"&Otilde;","inputUtf16":[38,79,116,105,108,100,101,59],"output":[{"Character":{"data":"Õ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_762() {
+fn test_0762() {
     tokenize(
         r##"{"description":"Bad named entity: Otimes without a semi-colon","initialState":"Data","input":"&Otimes","inputUtf16":[38,79,116,105,109,101,115],"output":[{"Character":{"data":"&Otimes"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_763() {
+fn test_0763() {
     tokenize(
         r##"{"description":"Named entity: Otimes; with a semi-colon","initialState":"Data","input":"&Otimes;","inputUtf16":[38,79,116,105,109,101,115,59],"output":[{"Character":{"data":"⨷"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_764() {
+fn test_0764() {
     tokenize(
         r##"{"description":"Named entity: Ouml without a semi-colon","initialState":"Data","input":"&Ouml","inputUtf16":[38,79,117,109,108],"output":[{"Character":{"data":"Ö"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_765() {
+fn test_0765() {
     tokenize(
         r##"{"description":"Named entity: Ouml; with a semi-colon","initialState":"Data","input":"&Ouml;","inputUtf16":[38,79,117,109,108,59],"output":[{"Character":{"data":"Ö"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_766() {
+fn test_0766() {
     tokenize(
         r##"{"description":"Bad named entity: OverBar without a semi-colon","initialState":"Data","input":"&OverBar","inputUtf16":[38,79,118,101,114,66,97,114],"output":[{"Character":{"data":"&OverBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_767() {
+fn test_0767() {
     tokenize(
         r##"{"description":"Named entity: OverBar; with a semi-colon","initialState":"Data","input":"&OverBar;","inputUtf16":[38,79,118,101,114,66,97,114,59],"output":[{"Character":{"data":"‾"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_768() {
+fn test_0768() {
     tokenize(
         r##"{"description":"Bad named entity: OverBrace without a semi-colon","initialState":"Data","input":"&OverBrace","inputUtf16":[38,79,118,101,114,66,114,97,99,101],"output":[{"Character":{"data":"&OverBrace"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_769() {
+fn test_0769() {
     tokenize(
         r##"{"description":"Named entity: OverBrace; with a semi-colon","initialState":"Data","input":"&OverBrace;","inputUtf16":[38,79,118,101,114,66,114,97,99,101,59],"output":[{"Character":{"data":"⏞"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_770() {
+fn test_0770() {
     tokenize(
         r##"{"description":"Bad named entity: OverBracket without a semi-colon","initialState":"Data","input":"&OverBracket","inputUtf16":[38,79,118,101,114,66,114,97,99,107,101,116],"output":[{"Character":{"data":"&OverBracket"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_771() {
+fn test_0771() {
     tokenize(
         r##"{"description":"Named entity: OverBracket; with a semi-colon","initialState":"Data","input":"&OverBracket;","inputUtf16":[38,79,118,101,114,66,114,97,99,107,101,116,59],"output":[{"Character":{"data":"⎴"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_772() {
+fn test_0772() {
     tokenize(
         r##"{"description":"Bad named entity: OverParenthesis without a semi-colon","initialState":"Data","input":"&OverParenthesis","inputUtf16":[38,79,118,101,114,80,97,114,101,110,116,104,101,115,105,115],"output":[{"Character":{"data":"&OverParenthesis"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_773() {
+fn test_0773() {
     tokenize(
         r##"{"description":"Named entity: OverParenthesis; with a semi-colon","initialState":"Data","input":"&OverParenthesis;","inputUtf16":[38,79,118,101,114,80,97,114,101,110,116,104,101,115,105,115,59],"output":[{"Character":{"data":"⏜"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_774() {
+fn test_0774() {
     tokenize(
         r##"{"description":"Bad named entity: PartialD without a semi-colon","initialState":"Data","input":"&PartialD","inputUtf16":[38,80,97,114,116,105,97,108,68],"output":[{"Character":{"data":"&PartialD"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_775() {
+fn test_0775() {
     tokenize(
         r##"{"description":"Named entity: PartialD; with a semi-colon","initialState":"Data","input":"&PartialD;","inputUtf16":[38,80,97,114,116,105,97,108,68,59],"output":[{"Character":{"data":"∂"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_776() {
+fn test_0776() {
     tokenize(
         r##"{"description":"Bad named entity: Pcy without a semi-colon","initialState":"Data","input":"&Pcy","inputUtf16":[38,80,99,121],"output":[{"Character":{"data":"&Pcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_777() {
+fn test_0777() {
     tokenize(
         r##"{"description":"Named entity: Pcy; with a semi-colon","initialState":"Data","input":"&Pcy;","inputUtf16":[38,80,99,121,59],"output":[{"Character":{"data":"П"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_778() {
+fn test_0778() {
     tokenize(
         r##"{"description":"Bad named entity: Pfr without a semi-colon","initialState":"Data","input":"&Pfr","inputUtf16":[38,80,102,114],"output":[{"Character":{"data":"&Pfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_779() {
+fn test_0779() {
     tokenize(
         r##"{"description":"Named entity: Pfr; with a semi-colon","initialState":"Data","input":"&Pfr;","inputUtf16":[38,80,102,114,59],"output":[{"Character":{"data":"𝔓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_780() {
+fn test_0780() {
     tokenize(
         r##"{"description":"Bad named entity: Phi without a semi-colon","initialState":"Data","input":"&Phi","inputUtf16":[38,80,104,105],"output":[{"Character":{"data":"&Phi"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_781() {
+fn test_0781() {
     tokenize(
         r##"{"description":"Named entity: Phi; with a semi-colon","initialState":"Data","input":"&Phi;","inputUtf16":[38,80,104,105,59],"output":[{"Character":{"data":"Φ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_782() {
+fn test_0782() {
     tokenize(
         r##"{"description":"Bad named entity: Pi without a semi-colon","initialState":"Data","input":"&Pi","inputUtf16":[38,80,105],"output":[{"Character":{"data":"&Pi"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_783() {
+fn test_0783() {
     tokenize(
         r##"{"description":"Named entity: Pi; with a semi-colon","initialState":"Data","input":"&Pi;","inputUtf16":[38,80,105,59],"output":[{"Character":{"data":"Π"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_784() {
+fn test_0784() {
     tokenize(
         r##"{"description":"Bad named entity: PlusMinus without a semi-colon","initialState":"Data","input":"&PlusMinus","inputUtf16":[38,80,108,117,115,77,105,110,117,115],"output":[{"Character":{"data":"&PlusMinus"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_785() {
+fn test_0785() {
     tokenize(
         r##"{"description":"Named entity: PlusMinus; with a semi-colon","initialState":"Data","input":"&PlusMinus;","inputUtf16":[38,80,108,117,115,77,105,110,117,115,59],"output":[{"Character":{"data":"±"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_786() {
+fn test_0786() {
     tokenize(
         r##"{"description":"Bad named entity: Poincareplane without a semi-colon","initialState":"Data","input":"&Poincareplane","inputUtf16":[38,80,111,105,110,99,97,114,101,112,108,97,110,101],"output":[{"Character":{"data":"&Poincareplane"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_787() {
+fn test_0787() {
     tokenize(
         r##"{"description":"Named entity: Poincareplane; with a semi-colon","initialState":"Data","input":"&Poincareplane;","inputUtf16":[38,80,111,105,110,99,97,114,101,112,108,97,110,101,59],"output":[{"Character":{"data":"ℌ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_788() {
+fn test_0788() {
     tokenize(
         r##"{"description":"Bad named entity: Popf without a semi-colon","initialState":"Data","input":"&Popf","inputUtf16":[38,80,111,112,102],"output":[{"Character":{"data":"&Popf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_789() {
+fn test_0789() {
     tokenize(
         r##"{"description":"Named entity: Popf; with a semi-colon","initialState":"Data","input":"&Popf;","inputUtf16":[38,80,111,112,102,59],"output":[{"Character":{"data":"ℙ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_790() {
+fn test_0790() {
     tokenize(
         r##"{"description":"Bad named entity: Pr without a semi-colon","initialState":"Data","input":"&Pr","inputUtf16":[38,80,114],"output":[{"Character":{"data":"&Pr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_791() {
+fn test_0791() {
     tokenize(
         r##"{"description":"Named entity: Pr; with a semi-colon","initialState":"Data","input":"&Pr;","inputUtf16":[38,80,114,59],"output":[{"Character":{"data":"⪻"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_792() {
+fn test_0792() {
     tokenize(
         r##"{"description":"Bad named entity: Precedes without a semi-colon","initialState":"Data","input":"&Precedes","inputUtf16":[38,80,114,101,99,101,100,101,115],"output":[{"Character":{"data":"&Precedes"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_793() {
+fn test_0793() {
     tokenize(
         r##"{"description":"Named entity: Precedes; with a semi-colon","initialState":"Data","input":"&Precedes;","inputUtf16":[38,80,114,101,99,101,100,101,115,59],"output":[{"Character":{"data":"≺"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_794() {
+fn test_0794() {
     tokenize(
         r##"{"description":"Bad named entity: PrecedesEqual without a semi-colon","initialState":"Data","input":"&PrecedesEqual","inputUtf16":[38,80,114,101,99,101,100,101,115,69,113,117,97,108],"output":[{"Character":{"data":"&PrecedesEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_795() {
+fn test_0795() {
     tokenize(
         r##"{"description":"Named entity: PrecedesEqual; with a semi-colon","initialState":"Data","input":"&PrecedesEqual;","inputUtf16":[38,80,114,101,99,101,100,101,115,69,113,117,97,108,59],"output":[{"Character":{"data":"⪯"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_796() {
+fn test_0796() {
     tokenize(
         r##"{"description":"Bad named entity: PrecedesSlantEqual without a semi-colon","initialState":"Data","input":"&PrecedesSlantEqual","inputUtf16":[38,80,114,101,99,101,100,101,115,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&PrecedesSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_797() {
+fn test_0797() {
     tokenize(
         r##"{"description":"Named entity: PrecedesSlantEqual; with a semi-colon","initialState":"Data","input":"&PrecedesSlantEqual;","inputUtf16":[38,80,114,101,99,101,100,101,115,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"≼"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_798() {
+fn test_0798() {
     tokenize(
         r##"{"description":"Bad named entity: PrecedesTilde without a semi-colon","initialState":"Data","input":"&PrecedesTilde","inputUtf16":[38,80,114,101,99,101,100,101,115,84,105,108,100,101],"output":[{"Character":{"data":"&PrecedesTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_799() {
+fn test_0799() {
     tokenize(
         r##"{"description":"Named entity: PrecedesTilde; with a semi-colon","initialState":"Data","input":"&PrecedesTilde;","inputUtf16":[38,80,114,101,99,101,100,101,115,84,105,108,100,101,59],"output":[{"Character":{"data":"≾"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_800() {
+fn test_0800() {
     tokenize(
         r##"{"description":"Bad named entity: Prime without a semi-colon","initialState":"Data","input":"&Prime","inputUtf16":[38,80,114,105,109,101],"output":[{"Character":{"data":"&Prime"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_801() {
+fn test_0801() {
     tokenize(
         r##"{"description":"Named entity: Prime; with a semi-colon","initialState":"Data","input":"&Prime;","inputUtf16":[38,80,114,105,109,101,59],"output":[{"Character":{"data":"″"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_802() {
+fn test_0802() {
     tokenize(
         r##"{"description":"Bad named entity: Product without a semi-colon","initialState":"Data","input":"&Product","inputUtf16":[38,80,114,111,100,117,99,116],"output":[{"Character":{"data":"&Product"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_803() {
+fn test_0803() {
     tokenize(
         r##"{"description":"Named entity: Product; with a semi-colon","initialState":"Data","input":"&Product;","inputUtf16":[38,80,114,111,100,117,99,116,59],"output":[{"Character":{"data":"∏"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_804() {
+fn test_0804() {
     tokenize(
         r##"{"description":"Bad named entity: Proportion without a semi-colon","initialState":"Data","input":"&Proportion","inputUtf16":[38,80,114,111,112,111,114,116,105,111,110],"output":[{"Character":{"data":"&Proportion"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_805() {
+fn test_0805() {
     tokenize(
         r##"{"description":"Named entity: Proportion; with a semi-colon","initialState":"Data","input":"&Proportion;","inputUtf16":[38,80,114,111,112,111,114,116,105,111,110,59],"output":[{"Character":{"data":"∷"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_806() {
+fn test_0806() {
     tokenize(
         r##"{"description":"Bad named entity: Proportional without a semi-colon","initialState":"Data","input":"&Proportional","inputUtf16":[38,80,114,111,112,111,114,116,105,111,110,97,108],"output":[{"Character":{"data":"&Proportional"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_807() {
+fn test_0807() {
     tokenize(
         r##"{"description":"Named entity: Proportional; with a semi-colon","initialState":"Data","input":"&Proportional;","inputUtf16":[38,80,114,111,112,111,114,116,105,111,110,97,108,59],"output":[{"Character":{"data":"∝"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_808() {
+fn test_0808() {
     tokenize(
         r##"{"description":"Bad named entity: Pscr without a semi-colon","initialState":"Data","input":"&Pscr","inputUtf16":[38,80,115,99,114],"output":[{"Character":{"data":"&Pscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_809() {
+fn test_0809() {
     tokenize(
         r##"{"description":"Named entity: Pscr; with a semi-colon","initialState":"Data","input":"&Pscr;","inputUtf16":[38,80,115,99,114,59],"output":[{"Character":{"data":"𝒫"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_810() {
+fn test_0810() {
     tokenize(
         r##"{"description":"Bad named entity: Psi without a semi-colon","initialState":"Data","input":"&Psi","inputUtf16":[38,80,115,105],"output":[{"Character":{"data":"&Psi"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_811() {
+fn test_0811() {
     tokenize(
         r##"{"description":"Named entity: Psi; with a semi-colon","initialState":"Data","input":"&Psi;","inputUtf16":[38,80,115,105,59],"output":[{"Character":{"data":"Ψ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_812() {
+fn test_0812() {
     tokenize(
         r##"{"description":"Named entity: QUOT without a semi-colon","initialState":"Data","input":"&QUOT","inputUtf16":[38,81,85,79,84],"output":[{"Character":{"data":"\""}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":6}}]}"##,
     );
 }
 
 #[test]
-fn test_813() {
+fn test_0813() {
     tokenize(
         r##"{"description":"Named entity: QUOT; with a semi-colon","initialState":"Data","input":"&QUOT;","inputUtf16":[38,81,85,79,84,59],"output":[{"Character":{"data":"\""}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_814() {
+fn test_0814() {
     tokenize(
         r##"{"description":"Bad named entity: Qfr without a semi-colon","initialState":"Data","input":"&Qfr","inputUtf16":[38,81,102,114],"output":[{"Character":{"data":"&Qfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_815() {
+fn test_0815() {
     tokenize(
         r##"{"description":"Named entity: Qfr; with a semi-colon","initialState":"Data","input":"&Qfr;","inputUtf16":[38,81,102,114,59],"output":[{"Character":{"data":"𝔔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_816() {
+fn test_0816() {
     tokenize(
         r##"{"description":"Bad named entity: Qopf without a semi-colon","initialState":"Data","input":"&Qopf","inputUtf16":[38,81,111,112,102],"output":[{"Character":{"data":"&Qopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_817() {
+fn test_0817() {
     tokenize(
         r##"{"description":"Named entity: Qopf; with a semi-colon","initialState":"Data","input":"&Qopf;","inputUtf16":[38,81,111,112,102,59],"output":[{"Character":{"data":"ℚ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_818() {
+fn test_0818() {
     tokenize(
         r##"{"description":"Bad named entity: Qscr without a semi-colon","initialState":"Data","input":"&Qscr","inputUtf16":[38,81,115,99,114],"output":[{"Character":{"data":"&Qscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_819() {
+fn test_0819() {
     tokenize(
         r##"{"description":"Named entity: Qscr; with a semi-colon","initialState":"Data","input":"&Qscr;","inputUtf16":[38,81,115,99,114,59],"output":[{"Character":{"data":"𝒬"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_820() {
+fn test_0820() {
     tokenize(
         r##"{"description":"Bad named entity: RBarr without a semi-colon","initialState":"Data","input":"&RBarr","inputUtf16":[38,82,66,97,114,114],"output":[{"Character":{"data":"&RBarr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_821() {
+fn test_0821() {
     tokenize(
         r##"{"description":"Named entity: RBarr; with a semi-colon","initialState":"Data","input":"&RBarr;","inputUtf16":[38,82,66,97,114,114,59],"output":[{"Character":{"data":"⤐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_822() {
+fn test_0822() {
     tokenize(
         r##"{"description":"Named entity: REG without a semi-colon","initialState":"Data","input":"&REG","inputUtf16":[38,82,69,71],"output":[{"Character":{"data":"®"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":5}}]}"##,
     );
 }
 
 #[test]
-fn test_823() {
+fn test_0823() {
     tokenize(
         r##"{"description":"Named entity: REG; with a semi-colon","initialState":"Data","input":"&REG;","inputUtf16":[38,82,69,71,59],"output":[{"Character":{"data":"®"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_824() {
+fn test_0824() {
     tokenize(
         r##"{"description":"Bad named entity: Racute without a semi-colon","initialState":"Data","input":"&Racute","inputUtf16":[38,82,97,99,117,116,101],"output":[{"Character":{"data":"&Racute"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_825() {
+fn test_0825() {
     tokenize(
         r##"{"description":"Named entity: Racute; with a semi-colon","initialState":"Data","input":"&Racute;","inputUtf16":[38,82,97,99,117,116,101,59],"output":[{"Character":{"data":"Ŕ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_826() {
+fn test_0826() {
     tokenize(
         r##"{"description":"Bad named entity: Rang without a semi-colon","initialState":"Data","input":"&Rang","inputUtf16":[38,82,97,110,103],"output":[{"Character":{"data":"&Rang"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_827() {
+fn test_0827() {
     tokenize(
         r##"{"description":"Named entity: Rang; with a semi-colon","initialState":"Data","input":"&Rang;","inputUtf16":[38,82,97,110,103,59],"output":[{"Character":{"data":"⟫"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_828() {
+fn test_0828() {
     tokenize(
         r##"{"description":"Bad named entity: Rarr without a semi-colon","initialState":"Data","input":"&Rarr","inputUtf16":[38,82,97,114,114],"output":[{"Character":{"data":"&Rarr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_829() {
+fn test_0829() {
     tokenize(
         r##"{"description":"Named entity: Rarr; with a semi-colon","initialState":"Data","input":"&Rarr;","inputUtf16":[38,82,97,114,114,59],"output":[{"Character":{"data":"↠"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_830() {
+fn test_0830() {
     tokenize(
         r##"{"description":"Bad named entity: Rarrtl without a semi-colon","initialState":"Data","input":"&Rarrtl","inputUtf16":[38,82,97,114,114,116,108],"output":[{"Character":{"data":"&Rarrtl"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_831() {
+fn test_0831() {
     tokenize(
         r##"{"description":"Named entity: Rarrtl; with a semi-colon","initialState":"Data","input":"&Rarrtl;","inputUtf16":[38,82,97,114,114,116,108,59],"output":[{"Character":{"data":"⤖"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_832() {
+fn test_0832() {
     tokenize(
         r##"{"description":"Bad named entity: Rcaron without a semi-colon","initialState":"Data","input":"&Rcaron","inputUtf16":[38,82,99,97,114,111,110],"output":[{"Character":{"data":"&Rcaron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_833() {
+fn test_0833() {
     tokenize(
         r##"{"description":"Named entity: Rcaron; with a semi-colon","initialState":"Data","input":"&Rcaron;","inputUtf16":[38,82,99,97,114,111,110,59],"output":[{"Character":{"data":"Ř"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_834() {
+fn test_0834() {
     tokenize(
         r##"{"description":"Bad named entity: Rcedil without a semi-colon","initialState":"Data","input":"&Rcedil","inputUtf16":[38,82,99,101,100,105,108],"output":[{"Character":{"data":"&Rcedil"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_835() {
+fn test_0835() {
     tokenize(
         r##"{"description":"Named entity: Rcedil; with a semi-colon","initialState":"Data","input":"&Rcedil;","inputUtf16":[38,82,99,101,100,105,108,59],"output":[{"Character":{"data":"Ŗ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_836() {
+fn test_0836() {
     tokenize(
         r##"{"description":"Bad named entity: Rcy without a semi-colon","initialState":"Data","input":"&Rcy","inputUtf16":[38,82,99,121],"output":[{"Character":{"data":"&Rcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_837() {
+fn test_0837() {
     tokenize(
         r##"{"description":"Named entity: Rcy; with a semi-colon","initialState":"Data","input":"&Rcy;","inputUtf16":[38,82,99,121,59],"output":[{"Character":{"data":"Р"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_838() {
+fn test_0838() {
     tokenize(
         r##"{"description":"Bad named entity: Re without a semi-colon","initialState":"Data","input":"&Re","inputUtf16":[38,82,101],"output":[{"Character":{"data":"&Re"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_839() {
+fn test_0839() {
     tokenize(
         r##"{"description":"Named entity: Re; with a semi-colon","initialState":"Data","input":"&Re;","inputUtf16":[38,82,101,59],"output":[{"Character":{"data":"ℜ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_840() {
+fn test_0840() {
     tokenize(
         r##"{"description":"Bad named entity: ReverseElement without a semi-colon","initialState":"Data","input":"&ReverseElement","inputUtf16":[38,82,101,118,101,114,115,101,69,108,101,109,101,110,116],"output":[{"Character":{"data":"&ReverseElement"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_841() {
+fn test_0841() {
     tokenize(
         r##"{"description":"Named entity: ReverseElement; with a semi-colon","initialState":"Data","input":"&ReverseElement;","inputUtf16":[38,82,101,118,101,114,115,101,69,108,101,109,101,110,116,59],"output":[{"Character":{"data":"∋"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_842() {
+fn test_0842() {
     tokenize(
         r##"{"description":"Bad named entity: ReverseEquilibrium without a semi-colon","initialState":"Data","input":"&ReverseEquilibrium","inputUtf16":[38,82,101,118,101,114,115,101,69,113,117,105,108,105,98,114,105,117,109],"output":[{"Character":{"data":"&ReverseEquilibrium"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_843() {
+fn test_0843() {
     tokenize(
         r##"{"description":"Named entity: ReverseEquilibrium; with a semi-colon","initialState":"Data","input":"&ReverseEquilibrium;","inputUtf16":[38,82,101,118,101,114,115,101,69,113,117,105,108,105,98,114,105,117,109,59],"output":[{"Character":{"data":"⇋"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_844() {
+fn test_0844() {
     tokenize(
         r##"{"description":"Bad named entity: ReverseUpEquilibrium without a semi-colon","initialState":"Data","input":"&ReverseUpEquilibrium","inputUtf16":[38,82,101,118,101,114,115,101,85,112,69,113,117,105,108,105,98,114,105,117,109],"output":[{"Character":{"data":"&ReverseUpEquilibrium"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_845() {
+fn test_0845() {
     tokenize(
         r##"{"description":"Named entity: ReverseUpEquilibrium; with a semi-colon","initialState":"Data","input":"&ReverseUpEquilibrium;","inputUtf16":[38,82,101,118,101,114,115,101,85,112,69,113,117,105,108,105,98,114,105,117,109,59],"output":[{"Character":{"data":"⥯"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_846() {
+fn test_0846() {
     tokenize(
         r##"{"description":"Bad named entity: Rfr without a semi-colon","initialState":"Data","input":"&Rfr","inputUtf16":[38,82,102,114],"output":[{"Character":{"data":"&Rfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_847() {
+fn test_0847() {
     tokenize(
         r##"{"description":"Named entity: Rfr; with a semi-colon","initialState":"Data","input":"&Rfr;","inputUtf16":[38,82,102,114,59],"output":[{"Character":{"data":"ℜ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_848() {
+fn test_0848() {
     tokenize(
         r##"{"description":"Bad named entity: Rho without a semi-colon","initialState":"Data","input":"&Rho","inputUtf16":[38,82,104,111],"output":[{"Character":{"data":"&Rho"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_849() {
+fn test_0849() {
     tokenize(
         r##"{"description":"Named entity: Rho; with a semi-colon","initialState":"Data","input":"&Rho;","inputUtf16":[38,82,104,111,59],"output":[{"Character":{"data":"Ρ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_850() {
+fn test_0850() {
     tokenize(
         r##"{"description":"Bad named entity: RightAngleBracket without a semi-colon","initialState":"Data","input":"&RightAngleBracket","inputUtf16":[38,82,105,103,104,116,65,110,103,108,101,66,114,97,99,107,101,116],"output":[{"Character":{"data":"&RightAngleBracket"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_851() {
+fn test_0851() {
     tokenize(
         r##"{"description":"Named entity: RightAngleBracket; with a semi-colon","initialState":"Data","input":"&RightAngleBracket;","inputUtf16":[38,82,105,103,104,116,65,110,103,108,101,66,114,97,99,107,101,116,59],"output":[{"Character":{"data":"⟩"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_852() {
+fn test_0852() {
     tokenize(
         r##"{"description":"Bad named entity: RightArrow without a semi-colon","initialState":"Data","input":"&RightArrow","inputUtf16":[38,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&RightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_853() {
+fn test_0853() {
     tokenize(
         r##"{"description":"Named entity: RightArrow; with a semi-colon","initialState":"Data","input":"&RightArrow;","inputUtf16":[38,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"→"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_854() {
+fn test_0854() {
     tokenize(
         r##"{"description":"Bad named entity: RightArrowBar without a semi-colon","initialState":"Data","input":"&RightArrowBar","inputUtf16":[38,82,105,103,104,116,65,114,114,111,119,66,97,114],"output":[{"Character":{"data":"&RightArrowBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_855() {
+fn test_0855() {
     tokenize(
         r##"{"description":"Named entity: RightArrowBar; with a semi-colon","initialState":"Data","input":"&RightArrowBar;","inputUtf16":[38,82,105,103,104,116,65,114,114,111,119,66,97,114,59],"output":[{"Character":{"data":"⇥"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_856() {
+fn test_0856() {
     tokenize(
         r##"{"description":"Bad named entity: RightArrowLeftArrow without a semi-colon","initialState":"Data","input":"&RightArrowLeftArrow","inputUtf16":[38,82,105,103,104,116,65,114,114,111,119,76,101,102,116,65,114,114,111,119],"output":[{"Character":{"data":"&RightArrowLeftArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_857() {
+fn test_0857() {
     tokenize(
         r##"{"description":"Named entity: RightArrowLeftArrow; with a semi-colon","initialState":"Data","input":"&RightArrowLeftArrow;","inputUtf16":[38,82,105,103,104,116,65,114,114,111,119,76,101,102,116,65,114,114,111,119,59],"output":[{"Character":{"data":"⇄"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_858() {
+fn test_0858() {
     tokenize(
         r##"{"description":"Bad named entity: RightCeiling without a semi-colon","initialState":"Data","input":"&RightCeiling","inputUtf16":[38,82,105,103,104,116,67,101,105,108,105,110,103],"output":[{"Character":{"data":"&RightCeiling"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_859() {
+fn test_0859() {
     tokenize(
         r##"{"description":"Named entity: RightCeiling; with a semi-colon","initialState":"Data","input":"&RightCeiling;","inputUtf16":[38,82,105,103,104,116,67,101,105,108,105,110,103,59],"output":[{"Character":{"data":"⌉"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_860() {
+fn test_0860() {
     tokenize(
         r##"{"description":"Bad named entity: RightDoubleBracket without a semi-colon","initialState":"Data","input":"&RightDoubleBracket","inputUtf16":[38,82,105,103,104,116,68,111,117,98,108,101,66,114,97,99,107,101,116],"output":[{"Character":{"data":"&RightDoubleBracket"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_861() {
+fn test_0861() {
     tokenize(
         r##"{"description":"Named entity: RightDoubleBracket; with a semi-colon","initialState":"Data","input":"&RightDoubleBracket;","inputUtf16":[38,82,105,103,104,116,68,111,117,98,108,101,66,114,97,99,107,101,116,59],"output":[{"Character":{"data":"⟧"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_862() {
+fn test_0862() {
     tokenize(
         r##"{"description":"Bad named entity: RightDownTeeVector without a semi-colon","initialState":"Data","input":"&RightDownTeeVector","inputUtf16":[38,82,105,103,104,116,68,111,119,110,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&RightDownTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_863() {
+fn test_0863() {
     tokenize(
         r##"{"description":"Named entity: RightDownTeeVector; with a semi-colon","initialState":"Data","input":"&RightDownTeeVector;","inputUtf16":[38,82,105,103,104,116,68,111,119,110,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥝"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_864() {
+fn test_0864() {
     tokenize(
         r##"{"description":"Bad named entity: RightDownVector without a semi-colon","initialState":"Data","input":"&RightDownVector","inputUtf16":[38,82,105,103,104,116,68,111,119,110,86,101,99,116,111,114],"output":[{"Character":{"data":"&RightDownVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_865() {
+fn test_0865() {
     tokenize(
         r##"{"description":"Named entity: RightDownVector; with a semi-colon","initialState":"Data","input":"&RightDownVector;","inputUtf16":[38,82,105,103,104,116,68,111,119,110,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⇂"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_866() {
+fn test_0866() {
     tokenize(
         r##"{"description":"Bad named entity: RightDownVectorBar without a semi-colon","initialState":"Data","input":"&RightDownVectorBar","inputUtf16":[38,82,105,103,104,116,68,111,119,110,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&RightDownVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_867() {
+fn test_0867() {
     tokenize(
         r##"{"description":"Named entity: RightDownVectorBar; with a semi-colon","initialState":"Data","input":"&RightDownVectorBar;","inputUtf16":[38,82,105,103,104,116,68,111,119,110,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥕"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_868() {
+fn test_0868() {
     tokenize(
         r##"{"description":"Bad named entity: RightFloor without a semi-colon","initialState":"Data","input":"&RightFloor","inputUtf16":[38,82,105,103,104,116,70,108,111,111,114],"output":[{"Character":{"data":"&RightFloor"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_869() {
+fn test_0869() {
     tokenize(
         r##"{"description":"Named entity: RightFloor; with a semi-colon","initialState":"Data","input":"&RightFloor;","inputUtf16":[38,82,105,103,104,116,70,108,111,111,114,59],"output":[{"Character":{"data":"⌋"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_870() {
+fn test_0870() {
     tokenize(
         r##"{"description":"Bad named entity: RightTee without a semi-colon","initialState":"Data","input":"&RightTee","inputUtf16":[38,82,105,103,104,116,84,101,101],"output":[{"Character":{"data":"&RightTee"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_871() {
+fn test_0871() {
     tokenize(
         r##"{"description":"Named entity: RightTee; with a semi-colon","initialState":"Data","input":"&RightTee;","inputUtf16":[38,82,105,103,104,116,84,101,101,59],"output":[{"Character":{"data":"⊢"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_872() {
+fn test_0872() {
     tokenize(
         r##"{"description":"Bad named entity: RightTeeArrow without a semi-colon","initialState":"Data","input":"&RightTeeArrow","inputUtf16":[38,82,105,103,104,116,84,101,101,65,114,114,111,119],"output":[{"Character":{"data":"&RightTeeArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_873() {
+fn test_0873() {
     tokenize(
         r##"{"description":"Named entity: RightTeeArrow; with a semi-colon","initialState":"Data","input":"&RightTeeArrow;","inputUtf16":[38,82,105,103,104,116,84,101,101,65,114,114,111,119,59],"output":[{"Character":{"data":"↦"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_874() {
+fn test_0874() {
     tokenize(
         r##"{"description":"Bad named entity: RightTeeVector without a semi-colon","initialState":"Data","input":"&RightTeeVector","inputUtf16":[38,82,105,103,104,116,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&RightTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_875() {
+fn test_0875() {
     tokenize(
         r##"{"description":"Named entity: RightTeeVector; with a semi-colon","initialState":"Data","input":"&RightTeeVector;","inputUtf16":[38,82,105,103,104,116,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥛"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_876() {
+fn test_0876() {
     tokenize(
         r##"{"description":"Bad named entity: RightTriangle without a semi-colon","initialState":"Data","input":"&RightTriangle","inputUtf16":[38,82,105,103,104,116,84,114,105,97,110,103,108,101],"output":[{"Character":{"data":"&RightTriangle"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_877() {
+fn test_0877() {
     tokenize(
         r##"{"description":"Named entity: RightTriangle; with a semi-colon","initialState":"Data","input":"&RightTriangle;","inputUtf16":[38,82,105,103,104,116,84,114,105,97,110,103,108,101,59],"output":[{"Character":{"data":"⊳"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_878() {
+fn test_0878() {
     tokenize(
         r##"{"description":"Bad named entity: RightTriangleBar without a semi-colon","initialState":"Data","input":"&RightTriangleBar","inputUtf16":[38,82,105,103,104,116,84,114,105,97,110,103,108,101,66,97,114],"output":[{"Character":{"data":"&RightTriangleBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_879() {
+fn test_0879() {
     tokenize(
         r##"{"description":"Named entity: RightTriangleBar; with a semi-colon","initialState":"Data","input":"&RightTriangleBar;","inputUtf16":[38,82,105,103,104,116,84,114,105,97,110,103,108,101,66,97,114,59],"output":[{"Character":{"data":"⧐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_880() {
+fn test_0880() {
     tokenize(
         r##"{"description":"Bad named entity: RightTriangleEqual without a semi-colon","initialState":"Data","input":"&RightTriangleEqual","inputUtf16":[38,82,105,103,104,116,84,114,105,97,110,103,108,101,69,113,117,97,108],"output":[{"Character":{"data":"&RightTriangleEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_881() {
+fn test_0881() {
     tokenize(
         r##"{"description":"Named entity: RightTriangleEqual; with a semi-colon","initialState":"Data","input":"&RightTriangleEqual;","inputUtf16":[38,82,105,103,104,116,84,114,105,97,110,103,108,101,69,113,117,97,108,59],"output":[{"Character":{"data":"⊵"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_882() {
+fn test_0882() {
     tokenize(
         r##"{"description":"Bad named entity: RightUpDownVector without a semi-colon","initialState":"Data","input":"&RightUpDownVector","inputUtf16":[38,82,105,103,104,116,85,112,68,111,119,110,86,101,99,116,111,114],"output":[{"Character":{"data":"&RightUpDownVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_883() {
+fn test_0883() {
     tokenize(
         r##"{"description":"Named entity: RightUpDownVector; with a semi-colon","initialState":"Data","input":"&RightUpDownVector;","inputUtf16":[38,82,105,103,104,116,85,112,68,111,119,110,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥏"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_884() {
+fn test_0884() {
     tokenize(
         r##"{"description":"Bad named entity: RightUpTeeVector without a semi-colon","initialState":"Data","input":"&RightUpTeeVector","inputUtf16":[38,82,105,103,104,116,85,112,84,101,101,86,101,99,116,111,114],"output":[{"Character":{"data":"&RightUpTeeVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_885() {
+fn test_0885() {
     tokenize(
         r##"{"description":"Named entity: RightUpTeeVector; with a semi-colon","initialState":"Data","input":"&RightUpTeeVector;","inputUtf16":[38,82,105,103,104,116,85,112,84,101,101,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⥜"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_886() {
+fn test_0886() {
     tokenize(
         r##"{"description":"Bad named entity: RightUpVector without a semi-colon","initialState":"Data","input":"&RightUpVector","inputUtf16":[38,82,105,103,104,116,85,112,86,101,99,116,111,114],"output":[{"Character":{"data":"&RightUpVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_887() {
+fn test_0887() {
     tokenize(
         r##"{"description":"Named entity: RightUpVector; with a semi-colon","initialState":"Data","input":"&RightUpVector;","inputUtf16":[38,82,105,103,104,116,85,112,86,101,99,116,111,114,59],"output":[{"Character":{"data":"↾"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_888() {
+fn test_0888() {
     tokenize(
         r##"{"description":"Bad named entity: RightUpVectorBar without a semi-colon","initialState":"Data","input":"&RightUpVectorBar","inputUtf16":[38,82,105,103,104,116,85,112,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&RightUpVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_889() {
+fn test_0889() {
     tokenize(
         r##"{"description":"Named entity: RightUpVectorBar; with a semi-colon","initialState":"Data","input":"&RightUpVectorBar;","inputUtf16":[38,82,105,103,104,116,85,112,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_890() {
+fn test_0890() {
     tokenize(
         r##"{"description":"Bad named entity: RightVector without a semi-colon","initialState":"Data","input":"&RightVector","inputUtf16":[38,82,105,103,104,116,86,101,99,116,111,114],"output":[{"Character":{"data":"&RightVector"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_891() {
+fn test_0891() {
     tokenize(
         r##"{"description":"Named entity: RightVector; with a semi-colon","initialState":"Data","input":"&RightVector;","inputUtf16":[38,82,105,103,104,116,86,101,99,116,111,114,59],"output":[{"Character":{"data":"⇀"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_892() {
+fn test_0892() {
     tokenize(
         r##"{"description":"Bad named entity: RightVectorBar without a semi-colon","initialState":"Data","input":"&RightVectorBar","inputUtf16":[38,82,105,103,104,116,86,101,99,116,111,114,66,97,114],"output":[{"Character":{"data":"&RightVectorBar"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_893() {
+fn test_0893() {
     tokenize(
         r##"{"description":"Named entity: RightVectorBar; with a semi-colon","initialState":"Data","input":"&RightVectorBar;","inputUtf16":[38,82,105,103,104,116,86,101,99,116,111,114,66,97,114,59],"output":[{"Character":{"data":"⥓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_894() {
+fn test_0894() {
     tokenize(
         r##"{"description":"Bad named entity: Rightarrow without a semi-colon","initialState":"Data","input":"&Rightarrow","inputUtf16":[38,82,105,103,104,116,97,114,114,111,119],"output":[{"Character":{"data":"&Rightarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_895() {
+fn test_0895() {
     tokenize(
         r##"{"description":"Named entity: Rightarrow; with a semi-colon","initialState":"Data","input":"&Rightarrow;","inputUtf16":[38,82,105,103,104,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⇒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_896() {
+fn test_0896() {
     tokenize(
         r##"{"description":"Bad named entity: Ropf without a semi-colon","initialState":"Data","input":"&Ropf","inputUtf16":[38,82,111,112,102],"output":[{"Character":{"data":"&Ropf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_897() {
+fn test_0897() {
     tokenize(
         r##"{"description":"Named entity: Ropf; with a semi-colon","initialState":"Data","input":"&Ropf;","inputUtf16":[38,82,111,112,102,59],"output":[{"Character":{"data":"ℝ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_898() {
+fn test_0898() {
     tokenize(
         r##"{"description":"Bad named entity: RoundImplies without a semi-colon","initialState":"Data","input":"&RoundImplies","inputUtf16":[38,82,111,117,110,100,73,109,112,108,105,101,115],"output":[{"Character":{"data":"&RoundImplies"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_899() {
+fn test_0899() {
     tokenize(
         r##"{"description":"Named entity: RoundImplies; with a semi-colon","initialState":"Data","input":"&RoundImplies;","inputUtf16":[38,82,111,117,110,100,73,109,112,108,105,101,115,59],"output":[{"Character":{"data":"⥰"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_900() {
+fn test_0900() {
     tokenize(
         r##"{"description":"Bad named entity: Rrightarrow without a semi-colon","initialState":"Data","input":"&Rrightarrow","inputUtf16":[38,82,114,105,103,104,116,97,114,114,111,119],"output":[{"Character":{"data":"&Rrightarrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_901() {
+fn test_0901() {
     tokenize(
         r##"{"description":"Named entity: Rrightarrow; with a semi-colon","initialState":"Data","input":"&Rrightarrow;","inputUtf16":[38,82,114,105,103,104,116,97,114,114,111,119,59],"output":[{"Character":{"data":"⇛"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_902() {
+fn test_0902() {
     tokenize(
         r##"{"description":"Bad named entity: Rscr without a semi-colon","initialState":"Data","input":"&Rscr","inputUtf16":[38,82,115,99,114],"output":[{"Character":{"data":"&Rscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_903() {
+fn test_0903() {
     tokenize(
         r##"{"description":"Named entity: Rscr; with a semi-colon","initialState":"Data","input":"&Rscr;","inputUtf16":[38,82,115,99,114,59],"output":[{"Character":{"data":"ℛ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_904() {
+fn test_0904() {
     tokenize(
         r##"{"description":"Bad named entity: Rsh without a semi-colon","initialState":"Data","input":"&Rsh","inputUtf16":[38,82,115,104],"output":[{"Character":{"data":"&Rsh"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_905() {
+fn test_0905() {
     tokenize(
         r##"{"description":"Named entity: Rsh; with a semi-colon","initialState":"Data","input":"&Rsh;","inputUtf16":[38,82,115,104,59],"output":[{"Character":{"data":"↱"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_906() {
+fn test_0906() {
     tokenize(
         r##"{"description":"Bad named entity: RuleDelayed without a semi-colon","initialState":"Data","input":"&RuleDelayed","inputUtf16":[38,82,117,108,101,68,101,108,97,121,101,100],"output":[{"Character":{"data":"&RuleDelayed"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_907() {
+fn test_0907() {
     tokenize(
         r##"{"description":"Named entity: RuleDelayed; with a semi-colon","initialState":"Data","input":"&RuleDelayed;","inputUtf16":[38,82,117,108,101,68,101,108,97,121,101,100,59],"output":[{"Character":{"data":"⧴"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_908() {
+fn test_0908() {
     tokenize(
         r##"{"description":"Bad named entity: SHCHcy without a semi-colon","initialState":"Data","input":"&SHCHcy","inputUtf16":[38,83,72,67,72,99,121],"output":[{"Character":{"data":"&SHCHcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_909() {
+fn test_0909() {
     tokenize(
         r##"{"description":"Named entity: SHCHcy; with a semi-colon","initialState":"Data","input":"&SHCHcy;","inputUtf16":[38,83,72,67,72,99,121,59],"output":[{"Character":{"data":"Щ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_910() {
+fn test_0910() {
     tokenize(
         r##"{"description":"Bad named entity: SHcy without a semi-colon","initialState":"Data","input":"&SHcy","inputUtf16":[38,83,72,99,121],"output":[{"Character":{"data":"&SHcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_911() {
+fn test_0911() {
     tokenize(
         r##"{"description":"Named entity: SHcy; with a semi-colon","initialState":"Data","input":"&SHcy;","inputUtf16":[38,83,72,99,121,59],"output":[{"Character":{"data":"Ш"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_912() {
+fn test_0912() {
     tokenize(
         r##"{"description":"Bad named entity: SOFTcy without a semi-colon","initialState":"Data","input":"&SOFTcy","inputUtf16":[38,83,79,70,84,99,121],"output":[{"Character":{"data":"&SOFTcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_913() {
+fn test_0913() {
     tokenize(
         r##"{"description":"Named entity: SOFTcy; with a semi-colon","initialState":"Data","input":"&SOFTcy;","inputUtf16":[38,83,79,70,84,99,121,59],"output":[{"Character":{"data":"Ь"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_914() {
+fn test_0914() {
     tokenize(
         r##"{"description":"Bad named entity: Sacute without a semi-colon","initialState":"Data","input":"&Sacute","inputUtf16":[38,83,97,99,117,116,101],"output":[{"Character":{"data":"&Sacute"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_915() {
+fn test_0915() {
     tokenize(
         r##"{"description":"Named entity: Sacute; with a semi-colon","initialState":"Data","input":"&Sacute;","inputUtf16":[38,83,97,99,117,116,101,59],"output":[{"Character":{"data":"Ś"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_916() {
+fn test_0916() {
     tokenize(
         r##"{"description":"Bad named entity: Sc without a semi-colon","initialState":"Data","input":"&Sc","inputUtf16":[38,83,99],"output":[{"Character":{"data":"&Sc"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_917() {
+fn test_0917() {
     tokenize(
         r##"{"description":"Named entity: Sc; with a semi-colon","initialState":"Data","input":"&Sc;","inputUtf16":[38,83,99,59],"output":[{"Character":{"data":"⪼"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_918() {
+fn test_0918() {
     tokenize(
         r##"{"description":"Bad named entity: Scaron without a semi-colon","initialState":"Data","input":"&Scaron","inputUtf16":[38,83,99,97,114,111,110],"output":[{"Character":{"data":"&Scaron"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_919() {
+fn test_0919() {
     tokenize(
         r##"{"description":"Named entity: Scaron; with a semi-colon","initialState":"Data","input":"&Scaron;","inputUtf16":[38,83,99,97,114,111,110,59],"output":[{"Character":{"data":"Š"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_920() {
+fn test_0920() {
     tokenize(
         r##"{"description":"Bad named entity: Scedil without a semi-colon","initialState":"Data","input":"&Scedil","inputUtf16":[38,83,99,101,100,105,108],"output":[{"Character":{"data":"&Scedil"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_921() {
+fn test_0921() {
     tokenize(
         r##"{"description":"Named entity: Scedil; with a semi-colon","initialState":"Data","input":"&Scedil;","inputUtf16":[38,83,99,101,100,105,108,59],"output":[{"Character":{"data":"Ş"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_922() {
+fn test_0922() {
     tokenize(
         r##"{"description":"Bad named entity: Scirc without a semi-colon","initialState":"Data","input":"&Scirc","inputUtf16":[38,83,99,105,114,99],"output":[{"Character":{"data":"&Scirc"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_923() {
+fn test_0923() {
     tokenize(
         r##"{"description":"Named entity: Scirc; with a semi-colon","initialState":"Data","input":"&Scirc;","inputUtf16":[38,83,99,105,114,99,59],"output":[{"Character":{"data":"Ŝ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_924() {
+fn test_0924() {
     tokenize(
         r##"{"description":"Bad named entity: Scy without a semi-colon","initialState":"Data","input":"&Scy","inputUtf16":[38,83,99,121],"output":[{"Character":{"data":"&Scy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_925() {
+fn test_0925() {
     tokenize(
         r##"{"description":"Named entity: Scy; with a semi-colon","initialState":"Data","input":"&Scy;","inputUtf16":[38,83,99,121,59],"output":[{"Character":{"data":"С"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_926() {
+fn test_0926() {
     tokenize(
         r##"{"description":"Bad named entity: Sfr without a semi-colon","initialState":"Data","input":"&Sfr","inputUtf16":[38,83,102,114],"output":[{"Character":{"data":"&Sfr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_927() {
+fn test_0927() {
     tokenize(
         r##"{"description":"Named entity: Sfr; with a semi-colon","initialState":"Data","input":"&Sfr;","inputUtf16":[38,83,102,114,59],"output":[{"Character":{"data":"𝔖"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_928() {
+fn test_0928() {
     tokenize(
         r##"{"description":"Bad named entity: ShortDownArrow without a semi-colon","initialState":"Data","input":"&ShortDownArrow","inputUtf16":[38,83,104,111,114,116,68,111,119,110,65,114,114,111,119],"output":[{"Character":{"data":"&ShortDownArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_929() {
+fn test_0929() {
     tokenize(
         r##"{"description":"Named entity: ShortDownArrow; with a semi-colon","initialState":"Data","input":"&ShortDownArrow;","inputUtf16":[38,83,104,111,114,116,68,111,119,110,65,114,114,111,119,59],"output":[{"Character":{"data":"↓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_930() {
+fn test_0930() {
     tokenize(
         r##"{"description":"Bad named entity: ShortLeftArrow without a semi-colon","initialState":"Data","input":"&ShortLeftArrow","inputUtf16":[38,83,104,111,114,116,76,101,102,116,65,114,114,111,119],"output":[{"Character":{"data":"&ShortLeftArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_931() {
+fn test_0931() {
     tokenize(
         r##"{"description":"Named entity: ShortLeftArrow; with a semi-colon","initialState":"Data","input":"&ShortLeftArrow;","inputUtf16":[38,83,104,111,114,116,76,101,102,116,65,114,114,111,119,59],"output":[{"Character":{"data":"←"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_932() {
+fn test_0932() {
     tokenize(
         r##"{"description":"Bad named entity: ShortRightArrow without a semi-colon","initialState":"Data","input":"&ShortRightArrow","inputUtf16":[38,83,104,111,114,116,82,105,103,104,116,65,114,114,111,119],"output":[{"Character":{"data":"&ShortRightArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_933() {
+fn test_0933() {
     tokenize(
         r##"{"description":"Named entity: ShortRightArrow; with a semi-colon","initialState":"Data","input":"&ShortRightArrow;","inputUtf16":[38,83,104,111,114,116,82,105,103,104,116,65,114,114,111,119,59],"output":[{"Character":{"data":"→"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_934() {
+fn test_0934() {
     tokenize(
         r##"{"description":"Bad named entity: ShortUpArrow without a semi-colon","initialState":"Data","input":"&ShortUpArrow","inputUtf16":[38,83,104,111,114,116,85,112,65,114,114,111,119],"output":[{"Character":{"data":"&ShortUpArrow"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_935() {
+fn test_0935() {
     tokenize(
         r##"{"description":"Named entity: ShortUpArrow; with a semi-colon","initialState":"Data","input":"&ShortUpArrow;","inputUtf16":[38,83,104,111,114,116,85,112,65,114,114,111,119,59],"output":[{"Character":{"data":"↑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_936() {
+fn test_0936() {
     tokenize(
         r##"{"description":"Bad named entity: Sigma without a semi-colon","initialState":"Data","input":"&Sigma","inputUtf16":[38,83,105,103,109,97],"output":[{"Character":{"data":"&Sigma"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_937() {
+fn test_0937() {
     tokenize(
         r##"{"description":"Named entity: Sigma; with a semi-colon","initialState":"Data","input":"&Sigma;","inputUtf16":[38,83,105,103,109,97,59],"output":[{"Character":{"data":"Σ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_938() {
+fn test_0938() {
     tokenize(
         r##"{"description":"Bad named entity: SmallCircle without a semi-colon","initialState":"Data","input":"&SmallCircle","inputUtf16":[38,83,109,97,108,108,67,105,114,99,108,101],"output":[{"Character":{"data":"&SmallCircle"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_939() {
+fn test_0939() {
     tokenize(
         r##"{"description":"Named entity: SmallCircle; with a semi-colon","initialState":"Data","input":"&SmallCircle;","inputUtf16":[38,83,109,97,108,108,67,105,114,99,108,101,59],"output":[{"Character":{"data":"∘"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_940() {
+fn test_0940() {
     tokenize(
         r##"{"description":"Bad named entity: Sopf without a semi-colon","initialState":"Data","input":"&Sopf","inputUtf16":[38,83,111,112,102],"output":[{"Character":{"data":"&Sopf"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_941() {
+fn test_0941() {
     tokenize(
         r##"{"description":"Named entity: Sopf; with a semi-colon","initialState":"Data","input":"&Sopf;","inputUtf16":[38,83,111,112,102,59],"output":[{"Character":{"data":"𝕊"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_942() {
+fn test_0942() {
     tokenize(
         r##"{"description":"Bad named entity: Sqrt without a semi-colon","initialState":"Data","input":"&Sqrt","inputUtf16":[38,83,113,114,116],"output":[{"Character":{"data":"&Sqrt"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_943() {
+fn test_0943() {
     tokenize(
         r##"{"description":"Named entity: Sqrt; with a semi-colon","initialState":"Data","input":"&Sqrt;","inputUtf16":[38,83,113,114,116,59],"output":[{"Character":{"data":"√"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_944() {
+fn test_0944() {
     tokenize(
         r##"{"description":"Bad named entity: Square without a semi-colon","initialState":"Data","input":"&Square","inputUtf16":[38,83,113,117,97,114,101],"output":[{"Character":{"data":"&Square"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_945() {
+fn test_0945() {
     tokenize(
         r##"{"description":"Named entity: Square; with a semi-colon","initialState":"Data","input":"&Square;","inputUtf16":[38,83,113,117,97,114,101,59],"output":[{"Character":{"data":"□"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_946() {
+fn test_0946() {
     tokenize(
         r##"{"description":"Bad named entity: SquareIntersection without a semi-colon","initialState":"Data","input":"&SquareIntersection","inputUtf16":[38,83,113,117,97,114,101,73,110,116,101,114,115,101,99,116,105,111,110],"output":[{"Character":{"data":"&SquareIntersection"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_947() {
+fn test_0947() {
     tokenize(
         r##"{"description":"Named entity: SquareIntersection; with a semi-colon","initialState":"Data","input":"&SquareIntersection;","inputUtf16":[38,83,113,117,97,114,101,73,110,116,101,114,115,101,99,116,105,111,110,59],"output":[{"Character":{"data":"⊓"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_948() {
+fn test_0948() {
     tokenize(
         r##"{"description":"Bad named entity: SquareSubset without a semi-colon","initialState":"Data","input":"&SquareSubset","inputUtf16":[38,83,113,117,97,114,101,83,117,98,115,101,116],"output":[{"Character":{"data":"&SquareSubset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_949() {
+fn test_0949() {
     tokenize(
         r##"{"description":"Named entity: SquareSubset; with a semi-colon","initialState":"Data","input":"&SquareSubset;","inputUtf16":[38,83,113,117,97,114,101,83,117,98,115,101,116,59],"output":[{"Character":{"data":"⊏"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_950() {
+fn test_0950() {
     tokenize(
         r##"{"description":"Bad named entity: SquareSubsetEqual without a semi-colon","initialState":"Data","input":"&SquareSubsetEqual","inputUtf16":[38,83,113,117,97,114,101,83,117,98,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&SquareSubsetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_951() {
+fn test_0951() {
     tokenize(
         r##"{"description":"Named entity: SquareSubsetEqual; with a semi-colon","initialState":"Data","input":"&SquareSubsetEqual;","inputUtf16":[38,83,113,117,97,114,101,83,117,98,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⊑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_952() {
+fn test_0952() {
     tokenize(
         r##"{"description":"Bad named entity: SquareSuperset without a semi-colon","initialState":"Data","input":"&SquareSuperset","inputUtf16":[38,83,113,117,97,114,101,83,117,112,101,114,115,101,116],"output":[{"Character":{"data":"&SquareSuperset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_953() {
+fn test_0953() {
     tokenize(
         r##"{"description":"Named entity: SquareSuperset; with a semi-colon","initialState":"Data","input":"&SquareSuperset;","inputUtf16":[38,83,113,117,97,114,101,83,117,112,101,114,115,101,116,59],"output":[{"Character":{"data":"⊐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_954() {
+fn test_0954() {
     tokenize(
         r##"{"description":"Bad named entity: SquareSupersetEqual without a semi-colon","initialState":"Data","input":"&SquareSupersetEqual","inputUtf16":[38,83,113,117,97,114,101,83,117,112,101,114,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&SquareSupersetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_955() {
+fn test_0955() {
     tokenize(
         r##"{"description":"Named entity: SquareSupersetEqual; with a semi-colon","initialState":"Data","input":"&SquareSupersetEqual;","inputUtf16":[38,83,113,117,97,114,101,83,117,112,101,114,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⊒"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_956() {
+fn test_0956() {
     tokenize(
         r##"{"description":"Bad named entity: SquareUnion without a semi-colon","initialState":"Data","input":"&SquareUnion","inputUtf16":[38,83,113,117,97,114,101,85,110,105,111,110],"output":[{"Character":{"data":"&SquareUnion"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_957() {
+fn test_0957() {
     tokenize(
         r##"{"description":"Named entity: SquareUnion; with a semi-colon","initialState":"Data","input":"&SquareUnion;","inputUtf16":[38,83,113,117,97,114,101,85,110,105,111,110,59],"output":[{"Character":{"data":"⊔"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_958() {
+fn test_0958() {
     tokenize(
         r##"{"description":"Bad named entity: Sscr without a semi-colon","initialState":"Data","input":"&Sscr","inputUtf16":[38,83,115,99,114],"output":[{"Character":{"data":"&Sscr"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_959() {
+fn test_0959() {
     tokenize(
         r##"{"description":"Named entity: Sscr; with a semi-colon","initialState":"Data","input":"&Sscr;","inputUtf16":[38,83,115,99,114,59],"output":[{"Character":{"data":"𝒮"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_960() {
+fn test_0960() {
     tokenize(
         r##"{"description":"Bad named entity: Star without a semi-colon","initialState":"Data","input":"&Star","inputUtf16":[38,83,116,97,114],"output":[{"Character":{"data":"&Star"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_961() {
+fn test_0961() {
     tokenize(
         r##"{"description":"Named entity: Star; with a semi-colon","initialState":"Data","input":"&Star;","inputUtf16":[38,83,116,97,114,59],"output":[{"Character":{"data":"⋆"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_962() {
+fn test_0962() {
     tokenize(
         r##"{"description":"Bad named entity: Sub without a semi-colon","initialState":"Data","input":"&Sub","inputUtf16":[38,83,117,98],"output":[{"Character":{"data":"&Sub"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_963() {
+fn test_0963() {
     tokenize(
         r##"{"description":"Named entity: Sub; with a semi-colon","initialState":"Data","input":"&Sub;","inputUtf16":[38,83,117,98,59],"output":[{"Character":{"data":"⋐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_964() {
+fn test_0964() {
     tokenize(
         r##"{"description":"Bad named entity: Subset without a semi-colon","initialState":"Data","input":"&Subset","inputUtf16":[38,83,117,98,115,101,116],"output":[{"Character":{"data":"&Subset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_965() {
+fn test_0965() {
     tokenize(
         r##"{"description":"Named entity: Subset; with a semi-colon","initialState":"Data","input":"&Subset;","inputUtf16":[38,83,117,98,115,101,116,59],"output":[{"Character":{"data":"⋐"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_966() {
+fn test_0966() {
     tokenize(
         r##"{"description":"Bad named entity: SubsetEqual without a semi-colon","initialState":"Data","input":"&SubsetEqual","inputUtf16":[38,83,117,98,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&SubsetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_967() {
+fn test_0967() {
     tokenize(
         r##"{"description":"Named entity: SubsetEqual; with a semi-colon","initialState":"Data","input":"&SubsetEqual;","inputUtf16":[38,83,117,98,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⊆"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_968() {
+fn test_0968() {
     tokenize(
         r##"{"description":"Bad named entity: Succeeds without a semi-colon","initialState":"Data","input":"&Succeeds","inputUtf16":[38,83,117,99,99,101,101,100,115],"output":[{"Character":{"data":"&Succeeds"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_969() {
+fn test_0969() {
     tokenize(
         r##"{"description":"Named entity: Succeeds; with a semi-colon","initialState":"Data","input":"&Succeeds;","inputUtf16":[38,83,117,99,99,101,101,100,115,59],"output":[{"Character":{"data":"≻"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_970() {
+fn test_0970() {
     tokenize(
         r##"{"description":"Bad named entity: SucceedsEqual without a semi-colon","initialState":"Data","input":"&SucceedsEqual","inputUtf16":[38,83,117,99,99,101,101,100,115,69,113,117,97,108],"output":[{"Character":{"data":"&SucceedsEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_971() {
+fn test_0971() {
     tokenize(
         r##"{"description":"Named entity: SucceedsEqual; with a semi-colon","initialState":"Data","input":"&SucceedsEqual;","inputUtf16":[38,83,117,99,99,101,101,100,115,69,113,117,97,108,59],"output":[{"Character":{"data":"⪰"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_972() {
+fn test_0972() {
     tokenize(
         r##"{"description":"Bad named entity: SucceedsSlantEqual without a semi-colon","initialState":"Data","input":"&SucceedsSlantEqual","inputUtf16":[38,83,117,99,99,101,101,100,115,83,108,97,110,116,69,113,117,97,108],"output":[{"Character":{"data":"&SucceedsSlantEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_973() {
+fn test_0973() {
     tokenize(
         r##"{"description":"Named entity: SucceedsSlantEqual; with a semi-colon","initialState":"Data","input":"&SucceedsSlantEqual;","inputUtf16":[38,83,117,99,99,101,101,100,115,83,108,97,110,116,69,113,117,97,108,59],"output":[{"Character":{"data":"≽"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_974() {
+fn test_0974() {
     tokenize(
         r##"{"description":"Bad named entity: SucceedsTilde without a semi-colon","initialState":"Data","input":"&SucceedsTilde","inputUtf16":[38,83,117,99,99,101,101,100,115,84,105,108,100,101],"output":[{"Character":{"data":"&SucceedsTilde"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_975() {
+fn test_0975() {
     tokenize(
         r##"{"description":"Named entity: SucceedsTilde; with a semi-colon","initialState":"Data","input":"&SucceedsTilde;","inputUtf16":[38,83,117,99,99,101,101,100,115,84,105,108,100,101,59],"output":[{"Character":{"data":"≿"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_976() {
+fn test_0976() {
     tokenize(
         r##"{"description":"Bad named entity: SuchThat without a semi-colon","initialState":"Data","input":"&SuchThat","inputUtf16":[38,83,117,99,104,84,104,97,116],"output":[{"Character":{"data":"&SuchThat"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_977() {
+fn test_0977() {
     tokenize(
         r##"{"description":"Named entity: SuchThat; with a semi-colon","initialState":"Data","input":"&SuchThat;","inputUtf16":[38,83,117,99,104,84,104,97,116,59],"output":[{"Character":{"data":"∋"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_978() {
+fn test_0978() {
     tokenize(
         r##"{"description":"Bad named entity: Sum without a semi-colon","initialState":"Data","input":"&Sum","inputUtf16":[38,83,117,109],"output":[{"Character":{"data":"&Sum"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_979() {
+fn test_0979() {
     tokenize(
         r##"{"description":"Named entity: Sum; with a semi-colon","initialState":"Data","input":"&Sum;","inputUtf16":[38,83,117,109,59],"output":[{"Character":{"data":"∑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_980() {
+fn test_0980() {
     tokenize(
         r##"{"description":"Bad named entity: Sup without a semi-colon","initialState":"Data","input":"&Sup","inputUtf16":[38,83,117,112],"output":[{"Character":{"data":"&Sup"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_981() {
+fn test_0981() {
     tokenize(
         r##"{"description":"Named entity: Sup; with a semi-colon","initialState":"Data","input":"&Sup;","inputUtf16":[38,83,117,112,59],"output":[{"Character":{"data":"⋑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_982() {
+fn test_0982() {
     tokenize(
         r##"{"description":"Bad named entity: Superset without a semi-colon","initialState":"Data","input":"&Superset","inputUtf16":[38,83,117,112,101,114,115,101,116],"output":[{"Character":{"data":"&Superset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_983() {
+fn test_0983() {
     tokenize(
         r##"{"description":"Named entity: Superset; with a semi-colon","initialState":"Data","input":"&Superset;","inputUtf16":[38,83,117,112,101,114,115,101,116,59],"output":[{"Character":{"data":"⊃"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_984() {
+fn test_0984() {
     tokenize(
         r##"{"description":"Bad named entity: SupersetEqual without a semi-colon","initialState":"Data","input":"&SupersetEqual","inputUtf16":[38,83,117,112,101,114,115,101,116,69,113,117,97,108],"output":[{"Character":{"data":"&SupersetEqual"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_985() {
+fn test_0985() {
     tokenize(
         r##"{"description":"Named entity: SupersetEqual; with a semi-colon","initialState":"Data","input":"&SupersetEqual;","inputUtf16":[38,83,117,112,101,114,115,101,116,69,113,117,97,108,59],"output":[{"Character":{"data":"⊇"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_986() {
+fn test_0986() {
     tokenize(
         r##"{"description":"Bad named entity: Supset without a semi-colon","initialState":"Data","input":"&Supset","inputUtf16":[38,83,117,112,115,101,116],"output":[{"Character":{"data":"&Supset"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_987() {
+fn test_0987() {
     tokenize(
         r##"{"description":"Named entity: Supset; with a semi-colon","initialState":"Data","input":"&Supset;","inputUtf16":[38,83,117,112,115,101,116,59],"output":[{"Character":{"data":"⋑"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_988() {
+fn test_0988() {
     tokenize(
         r##"{"description":"Named entity: THORN without a semi-colon","initialState":"Data","input":"&THORN","inputUtf16":[38,84,72,79,82,78],"output":[{"Character":{"data":"Þ"}}],"errors":[{"code":"MissingSemicolonAfterCharacterReference","location":{"line":1,"column":7}}]}"##,
     );
 }
 
 #[test]
-fn test_989() {
+fn test_0989() {
     tokenize(
         r##"{"description":"Named entity: THORN; with a semi-colon","initialState":"Data","input":"&THORN;","inputUtf16":[38,84,72,79,82,78,59],"output":[{"Character":{"data":"Þ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_990() {
+fn test_0990() {
     tokenize(
         r##"{"description":"Bad named entity: TRADE without a semi-colon","initialState":"Data","input":"&TRADE","inputUtf16":[38,84,82,65,68,69],"output":[{"Character":{"data":"&TRADE"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_991() {
+fn test_0991() {
     tokenize(
         r##"{"description":"Named entity: TRADE; with a semi-colon","initialState":"Data","input":"&TRADE;","inputUtf16":[38,84,82,65,68,69,59],"output":[{"Character":{"data":"™"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_992() {
+fn test_0992() {
     tokenize(
         r##"{"description":"Bad named entity: TSHcy without a semi-colon","initialState":"Data","input":"&TSHcy","inputUtf16":[38,84,83,72,99,121],"output":[{"Character":{"data":"&TSHcy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_993() {
+fn test_0993() {
     tokenize(
         r##"{"description":"Named entity: TSHcy; with a semi-colon","initialState":"Data","input":"&TSHcy;","inputUtf16":[38,84,83,72,99,121,59],"output":[{"Character":{"data":"Ћ"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_994() {
+fn test_0994() {
     tokenize(
         r##"{"description":"Bad named entity: TScy without a semi-colon","initialState":"Data","input":"&TScy","inputUtf16":[38,84,83,99,121],"output":[{"Character":{"data":"&TScy"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_995() {
+fn test_0995() {
     tokenize(
         r##"{"description":"Named entity: TScy; with a semi-colon","initialState":"Data","input":"&TScy;","inputUtf16":[38,84,83,99,121,59],"output":[{"Character":{"data":"Ц"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_996() {
+fn test_0996() {
     tokenize(
         r##"{"description":"Bad named entity: Tab without a semi-colon","initialState":"Data","input":"&Tab","inputUtf16":[38,84,97,98],"output":[{"Character":{"data":"&Tab"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_997() {
+fn test_0997() {
     tokenize(
         r##"{"description":"Named entity: Tab; with a semi-colon","initialState":"Data","input":"&Tab;","inputUtf16":[38,84,97,98,59],"output":[{"Character":{"data":"\t"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_998() {
+fn test_0998() {
     tokenize(
         r##"{"description":"Bad named entity: Tau without a semi-colon","initialState":"Data","input":"&Tau","inputUtf16":[38,84,97,117],"output":[{"Character":{"data":"&Tau"}}],"errors":[]}"##,
     );
 }
 
 #[test]
-fn test_999() {
+fn test_0999() {
     tokenize(
         r##"{"description":"Named entity: Tau; with a semi-colon","initialState":"Data","input":"&Tau;","inputUtf16":[38,84,97,117,59],"output":[{"Character":{"data":"Τ"}}],"errors":[]}"##,
     );
