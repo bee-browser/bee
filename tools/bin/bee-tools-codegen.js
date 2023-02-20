@@ -53,7 +53,7 @@ Custom @data:
 
 Helpers:
   * json as JSON.stringify
-  * 'pad' from https://deno.land/std/strings/mod.ts
+  * padStart, padEnd
   * https://deno.land/x/case/mod.ts
   * escapeForRust
   * escapeUnicodeForRust
@@ -76,6 +76,14 @@ async function run(args, options) {
 }
 
 function registerHelpers() {
+  Handlebars.registerHelper('padStart', (v, n, pad) => {
+    return v.toString().padStart(n, pad);
+  });
+
+  Handlebars.registerHelper('padEnd', (v, n, pad) => {
+    return v.toString().padEnd(n, pad);
+  });
+
   Handlebars.registerHelper('json', JSON.stringify);
 
   for (var name in changeCase) {
@@ -85,6 +93,7 @@ function registerHelpers() {
   Handlebars.registerHelper("escapeForRust", (str) => {
     const CHARMAP = {
       '\0': '\\0',
+      '\n': '\\n',
       '\r': '\\r',
       '\\': '\\\\',
       "'": "\\'",

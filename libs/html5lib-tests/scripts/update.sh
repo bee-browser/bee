@@ -31,11 +31,21 @@ mv $TEMP_DIR/tree-construction $DATA_DIR/tree_construction
 mv $TEMP_DIR/LICENSE $DATA_DIR/
 
 rm -f $DATA_DIR/tokenizer/xmlViolation.test  # excluded
-for file in $DATA_DIR/tokenizer/*.test
+
+for file in $(cd $DATA_DIR/tokenizer; ls -1 *.test)
 do
   snake_case="$(echo $file | sed -e 's/\([A-Z]\)/_\L\1/g')"
   if [ "$file" != "$snake_case" ]
   then
-    mv -f "$file" "$snake_case"
+    mv -f "$DATA_DIR/tokenizer/$file" "$DATA_DIR/tokenizer/$snake_case"
+  fi
+done
+
+for file in $(cd $DATA_DIR/tree_construction; ls -1 *.dat)
+do
+  snake_case="$(echo $file | tr '-' '_')"
+  if [ "$file" != "$snake_case" ]
+  then
+    mv -f "$DATA_DIR/tree_construction/$file" "$DATA_DIR/tree_construction/$snake_case"
   fi
 done

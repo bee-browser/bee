@@ -22,6 +22,9 @@ pub trait DocumentWriter {
     /// and push it onto the stack.
     fn push_element(&mut self, tag: &Tag<'_>);
 
+    /// Removes a node.
+    fn remove_element(&mut self);
+
     /// Pops a node from the stack.
     fn pop(&mut self);
 
@@ -37,12 +40,18 @@ pub trait DocumentWriter {
 
 pub struct TreeBuilder<W> {
     writer: W,
-    insertion_mode: InsertionMode,
-    original_insertion_mode: Option<InsertionMode>,
+    mode: InsertionMode,
+    original_mode: Option<InsertionMode>,
+    quirks_mode: QuirksMode,
     text: String,
+
+    iframe_srcdoc: bool,
+    quirks_mode_changeable: bool,
+    frameset_ok: bool,
 }
 
 pub enum Control {
+    Reprocess,
     Continue,
     SwitchTo(bee_htmltokenizer::InitialState),
     Done,
@@ -57,9 +66,13 @@ where
     pub fn new(writer: W) -> Self {
         TreeBuilder {
             writer,
-            insertion_mode: InsertionMode::Initial,
-            original_insertion_mode: None,
+            mode: mode!(Initial),
+            original_mode: None,
+            quirks_mode: QuirksMode::NoQuirks,
             text: String::with_capacity(INITIAL_TEXT_CAPACITY),
+            iframe_srcdoc: false,
+            quirks_mode_changeable: true,
+            frameset_ok: true,
         }
     }
 
@@ -97,37 +110,37 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn handle_end(&mut self) -> Control {
         loop {
-            tracing::debug!(?self.insertion_mode);
-            match self.insertion_mode {
-                InsertionMode::Initial => {
-                    self.switch_to(InsertionMode::BeforeHtml);
+            tracing::debug!(?self.mode);
+            match self.mode {
+                mode!(Initial) => {
+                    self.switch_to(mode!(BeforeHtml));
                 }
-                InsertionMode::BeforeHtml => {
+                mode!(BeforeHtml) => {
                     self.push_element(&Tag::with_html_tag(HtmlTag::HTML));
-                    self.switch_to(InsertionMode::BeforeHead);
+                    self.switch_to(mode!(BeforeHead));
                 }
-                InsertionMode::BeforeHead => {
+                mode!(BeforeHead) => {
                     self.push_element(&Tag::with_html_tag(HtmlTag::HEAD));
-                    self.switch_to(InsertionMode::InHead);
+                    self.switch_to(mode!(InHead));
                 }
-                InsertionMode::InHead => {
+                mode!(InHead) => {
                     self.pop();
-                    self.switch_to(InsertionMode::AfterHead);
+                    self.switch_to(mode!(AfterHead));
                 }
-                InsertionMode::AfterHead => {
+                mode!(AfterHead) => {
                     self.push_element(&Tag::with_html_tag(HtmlTag::BODY));
-                    self.switch_to(InsertionMode::InBody);
+                    self.switch_to(mode!(InBody));
                 }
-                InsertionMode::InBody => {
+                mode!(InBody) => {
                     break;
                 }
-                InsertionMode::Text => {
+                mode!(Text) => {
                     // TODO: Parse error.
                     // TODO: If the current node is a script element, then set its already started to true.
                     self.pop();
                     self.switch_to_original_mode();
                 }
-                InsertionMode::AfterBody => {
+                mode!(AfterBody) => {
                     // TODO: Parse error. Switch the insertion mode to "in body" and reprocess the token.
                     break;
                 }
@@ -138,20 +151,121 @@ where
         Control::Done
     }
 
+    // common rules
+
+    fn handle_anything_else(&mut self) -> Control {
+        match self.mode {
+            mode!(Initial) => {
+                if !self.iframe_srcdoc {
+                    // TODO: parse error
+                }
+                self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
+                self.reprocess_on(mode!(BeforeHtml))
+            }
+            mode!(BeforeHtml) => {
+                // TODO: Create an html element whose node document is the Document object.
+                // TODO: Append it to the Document object.
+                // TODO: Put this element in the stack of open elements.
+                self.push_element(&Tag::with_html_tag(HtmlTag::HTML));
+                self.switch_to(mode!(BeforeHead));
+                Control::Reprocess
+            }
+            mode!(BeforeHead) => {
+                // TODO: Insert an HTML element for a "head" start tag token with no attributes.
+                self.push_element(&Tag::with_html_tag(HtmlTag::HEAD));
+                // TODO: Set the head element pointer to the newly created head element.
+                self.switch_to(mode!(InHead));
+                Control::Reprocess
+            }
+            mode!(InHead) => {
+                // TODO: Pop the current node (which will be the head element) off the stack of open elements.
+                self.pop();
+                self.switch_to(mode!(AfterHead));
+                Control::Reprocess
+            }
+            mode!(InHeadNoscript) => {
+                // TODO: Parse error.
+                // TODO: Pop the current node (which will be a noscript element) from the stack of open elements; the new current node will be a head element.
+                self.switch_to(mode!(InHead));
+                Control::Reprocess
+            }
+            mode!(AfterHead) => {
+                // TODO: Insert an HTML element for a "body" start tag token with no attributes.
+                self.push_element(&Tag::with_html_tag(HtmlTag::BODY));
+                self.switch_to(mode!(InBody));
+                Control::Reprocess
+            }
+            mode!(InColumnGroup) => {
+                // TODO: If the current node is not a colgroup element, then this is a parse error; ignore the token.
+                // TODO: Otherwise, pop the current node from the stack of open elements.
+                self.switch_to(mode!(InTable));
+                Control::Reprocess
+            }
+            mode!(InSelect, InSelectInTable, InFrameset, AfterFrameset, AfterAfterFrameset) => {
+                // TODO: Parse error.
+                // Ignore the token.
+                Control::Continue
+            }
+            mode!(AfterBody, AfterAfterBody) => {
+                // TODO: Parse error.
+                self.switch_to(mode!(InBody));
+                Control::Reprocess
+            }
+            mode!(
+                InBody,
+                Text,
+                InTable,
+                InTableText,
+                InCaption,
+                InTableBody,
+                InRow,
+                InCell,
+                InTemplate,
+                InForeignContent
+            ) => {
+                unreachable!("{:?}", self.mode);
+            }
+        }
+    }
+
+    fn reprocess_on(&mut self, mode: InsertionMode) -> Control {
+        self.switch_to(mode);
+        Control::Reprocess
+    }
+
+    fn ignore_token(&mut self) -> Control {
+        // TODO: Parse error.
+        // Ignore the token.
+        Control::Continue
+    }
+
+    // helpers
+
     #[tracing::instrument(level = "debug", skip_all)]
-    fn switch_to(&mut self, insertion_mode: InsertionMode) {
-        self.insertion_mode = insertion_mode;
+    fn switch_to(&mut self, mode: InsertionMode) {
+        self.mode = mode;
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn save_and_switch_to(&mut self, insertion_mode: InsertionMode) {
-        self.original_insertion_mode = Some(self.insertion_mode);
-        self.insertion_mode = insertion_mode;
+    fn save_and_switch_to(&mut self, mode: InsertionMode) {
+        self.original_mode = Some(self.mode);
+        self.mode = mode;
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn switch_to_original_mode(&mut self) {
-        self.insertion_mode = self.original_insertion_mode.take().unwrap();
+        self.mode = self.original_mode.take().unwrap();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn change_quirks_mode_if_changeable(&mut self, quirks_mode: QuirksMode) {
+        if self.quirks_mode_changeable {
+            tracing::debug!(
+                old_quirks_mode = ?self.quirks_mode,
+                new_quirks_mode = ?quirks_mode
+            );
+            self.quirks_mode = quirks_mode;
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -164,6 +278,12 @@ where
     fn push_element(&mut self, tag: &Tag<'_>) {
         self.append_text_if_exists();
         self.writer.push_element(tag);
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn remove_element(&mut self) {
+        self.append_text_if_exists();
+        self.writer.remove_element();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -224,4 +344,11 @@ enum InsertionMode {
     AfterAfterBody,
     AfterAfterFrameset,
     InForeignContent,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum QuirksMode {
+    NoQuirks,
+    Quirks,
+    LimitedQuirks,
 }

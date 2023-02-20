@@ -3,237 +3,232 @@ use super::helper::parse;
 use super::helper::Test;
 
 #[test]
-fn test_0() {
+fn test_0000() {
     parse(Test {
-        data: r#"FOO<!-- BAR -->BAZ"#,
+        data: "FOO<!-- BAR -->BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  BAR  -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR  -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_1() {
+fn test_0001() {
     parse(Test {
-        data: r#"FOO<!-- BAR --!>BAZ"#,
+        data: "FOO<!-- BAR --!>BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  BAR  -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR  -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_2() {
+fn test_0002() {
     parse(Test {
-        data: r#"FOO<!-- BAR --! >BAZ"#,
+        data: "FOO<!-- BAR --! >BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  BAR --! >BAZ -->"#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR --! >BAZ -->"),
         ],
     });
 }
 
 #[test]
-fn test_3() {
+fn test_0003() {
     parse(Test {
-        data: r#"FOO<!-- BAR --!
->BAZ"#,
+        data: "FOO<!-- BAR --!\n>BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (
-                2,
-                r#"<!--  BAR --!
->BAZ -->"#,
-            ),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR --!\n>BAZ -->"),
         ],
     });
 }
 
 #[test]
-fn test_4() {
+fn test_0004() {
     parse(Test {
-        data: r#"FOO<!-- BAR --   >BAZ"#,
+        data: "FOO<!-- BAR --   >BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  BAR --   >BAZ -->"#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR --   >BAZ -->"),
         ],
     });
 }
 
 #[test]
-fn test_5() {
+fn test_0005() {
     parse(Test {
-        data: r#"FOO<!-- BAR -- <QUX> -- MUX -->BAZ"#,
+        data: "FOO<!-- BAR -- <QUX> -- MUX -->BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  BAR -- <QUX> -- MUX  -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR -- <QUX> -- MUX  -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_6() {
+fn test_0006() {
     parse(Test {
-        data: r#"FOO<!-- BAR -- <QUX> -- MUX --!>BAZ"#,
+        data: "FOO<!-- BAR -- <QUX> -- MUX --!>BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  BAR -- <QUX> -- MUX  -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR -- <QUX> -- MUX  -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_7() {
+fn test_0007() {
     parse(Test {
-        data: r#"FOO<!-- BAR -- <QUX> -- MUX -- >BAZ"#,
+        data: "FOO<!-- BAR -- <QUX> -- MUX -- >BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  BAR -- <QUX> -- MUX -- >BAZ -->"#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  BAR -- <QUX> -- MUX -- >BAZ -->"),
         ],
     });
 }
 
 #[test]
-fn test_8() {
+fn test_0008() {
     parse(Test {
-        data: r#"FOO<!---->BAZ"#,
+        data: "FOO<!---->BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_9() {
+fn test_0009() {
     parse(Test {
-        data: r#"FOO<!--->BAZ"#,
+        data: "FOO<!--->BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_10() {
+fn test_0010() {
     parse(Test {
-        data: r#"FOO<!-->BAZ"#,
+        data: "FOO<!-->BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!--  -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!--  -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_11() {
+fn test_0011() {
     parse(Test {
-        data: r#"<?xml version="1.0">Hi"#,
+        data: "<?xml version=\"1.0\">Hi",
         document: vec![
-            (0, r#"<!-- ?xml version="1.0" -->"#),
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""Hi""#),
+            (0, "<!-- ?xml version=\"1.0\" -->"),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"Hi\""),
         ],
     });
 }
 
 #[test]
-fn test_12() {
+fn test_0012() {
     parse(Test {
-        data: r#"<?xml version="1.0">"#,
+        data: "<?xml version=\"1.0\">",
         document: vec![
-            (0, r#"<!-- ?xml version="1.0" -->"#),
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
+            (0, "<!-- ?xml version=\"1.0\" -->"),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
         ],
     });
 }
 
 #[test]
-fn test_13() {
+fn test_0013() {
     parse(Test {
-        data: r#"<?xml version"#,
+        data: "<?xml version",
         document: vec![
-            (0, r#"<!-- ?xml version -->"#),
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
+            (0, "<!-- ?xml version -->"),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
         ],
     });
 }
 
 #[test]
-fn test_14() {
+fn test_0014() {
     parse(Test {
-        data: r#"FOO<!----->BAZ"#,
+        data: "FOO<!----->BAZ",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<head>"#),
-            (1, r#"<body>"#),
-            (2, r#""FOO""#),
-            (2, r#"<!-- - -->"#),
-            (2, r#""BAZ""#),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "\"FOO\""),
+            (2, "<!-- - -->"),
+            (2, "\"BAZ\""),
         ],
     });
 }
 
 #[test]
-fn test_15() {
+fn test_0015() {
     parse(Test {
-        data: r#"<html><!-- comment --><title>Comment before head</title>"#,
+        data: "<html><!-- comment --><title>Comment before head</title>",
         document: vec![
-            (0, r#"<html>"#),
-            (1, r#"<!--  comment  -->"#),
-            (1, r#"<head>"#),
-            (2, r#"<title>"#),
-            (3, r#""Comment before head""#),
-            (1, r#"<body>"#),
+            (0, "<html>"),
+            (1, "<!--  comment  -->"),
+            (1, "<head>"),
+            (2, "<title>"),
+            (3, "\"Comment before head\""),
+            (1, "<body>"),
         ],
     });
 }

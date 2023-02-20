@@ -4,12 +4,12 @@ use super::helper::Test;
 {{#each tests}}
 
 #[test]
-fn test_{{{@index}}}() {
+fn test_{{{padStart @index 4 '0'}}}() {
     parse(Test {
-        data: r#"{{{data}}}"#,
+        data: "{{{escapeForRust data}}}",
         document: vec![
             {{#each document}}
-            ({{{this.[0]}}}, r#"{{{this.[1]}}}"#),
+            ({{{this.[0]}}}, "{{{escapeForRust this.[1]}}}"),
             {{/each}}
         ],
     });

@@ -106,6 +106,21 @@ impl<'a> TreeValidator<'a> {
             t => unreachable!("{:?}", t),
         }
     }
+
+    fn remove(&mut self, node_index: usize) {
+        let parent_index = *self.stack.last().unwrap();
+        let index = match self.nodes.get_mut(parent_index).unwrap() {
+            Node::Document {
+                ref mut child_nodes,
+            } => child_nodes.pop().unwrap(),
+            Node::Element {
+                ref mut child_nodes,
+                ..
+            } => child_nodes.pop().unwrap(),
+            t => unreachable!("{:?}", t),
+        };
+        assert_eq!(index, node_index);
+    }
 }
 
 impl<'a> DocumentWriter for TreeValidator<'a> {
@@ -134,6 +149,11 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         });
         self.append(index);
         self.stack.push(index);
+    }
+
+    fn remove_element(&mut self) {
+        let index = self.stack.pop().unwrap();
+        self.remove(index);
     }
 
     fn pop(&mut self) {

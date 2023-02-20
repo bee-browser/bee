@@ -38,6 +38,7 @@ where
                 Control::Continue => (),
                 Control::SwitchTo(state) => self.tokenizer.set_initial_state(state),
                 Control::Done => break,
+                Control::Reprocess => unreachable!(),
             }
         }
     }
