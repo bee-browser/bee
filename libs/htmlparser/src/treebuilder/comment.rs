@@ -7,6 +7,7 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_comment(&mut self, comment: Comment<'_>) -> Control {
         tracing::debug!(mode = ?self.mode, ?comment);
+        self.ignore_lf = false;
         match self.mode {
             mode!(
                 BeforeHead,
@@ -24,8 +25,7 @@ where
                 InSelectInTable,
                 InTemplate,
                 InFrameset,
-                AfterFrameset,
-                InForeignContent
+                AfterFrameset
             ) => {
                 self.insert_comment(&comment);
             }

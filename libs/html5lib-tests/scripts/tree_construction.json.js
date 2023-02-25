@@ -29,7 +29,7 @@ let test = new Test();
 let tests = [];
 
 for (const line of dat.split('\n')) {
-  const trimed = line.trim();
+  const trimed = line.replace('\n', '');
   switch (trimed) {
   case '':
     if (test.hasData()) {

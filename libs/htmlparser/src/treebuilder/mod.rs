@@ -4,11 +4,43 @@ mod macros;
 mod comment;
 mod doctype;
 mod end_tag;
+mod foreign;
 mod start_tag;
 mod text;
 
+use crate::local_names::LocalName;
 use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
+
+#[derive(Clone, Copy, Debug)]
+pub enum Namespace {
+    Html,
+    MathMl,
+    Svg,
+}
+
+#[derive(Clone, Debug)]
+pub struct TreeBuildContext {
+    namespace: Namespace,
+    local_name: LocalName,
+    mathml_text_integration_point: bool,
+    svg_integration_point: bool,
+    svg_script: bool,
+    html_integration_pont: bool,
+}
+
+impl Default for TreeBuildContext {
+    fn default() -> Self {
+        TreeBuildContext {
+            namespace: Namespace::Html,
+            local_name: LocalName::Unknown,
+            mathml_text_integration_point: false,
+            svg_integration_point: false,
+            svg_script: false,
+            html_integration_pont: false,
+        }
+    }
+}
 
 /// A trait to operate on a Document object.
 ///
@@ -20,13 +52,15 @@ pub trait DocumentWriter {
 
     /// Creates a node for a tag as a child node of the current node
     /// and push it onto the stack.
-    fn push_element(&mut self, tag: &Tag<'_>);
+    fn push_element(&mut self, name: &str, namespace: Namespace, context: TreeBuildContext);
+
+    fn set_attribute(&mut self, name: &str, value: &str);
 
     /// Removes a node.
-    fn remove_element(&mut self);
+    fn remove_element(&mut self) -> TreeBuildContext;
 
     /// Pops a node from the stack.
-    fn pop(&mut self);
+    fn pop(&mut self) -> TreeBuildContext;
 
     /// Creates a node for a text and append it as a child node.
     fn append_text(&mut self, text: &str);
@@ -43,11 +77,14 @@ pub struct TreeBuilder<W> {
     mode: InsertionMode,
     original_mode: Option<InsertionMode>,
     quirks_mode: QuirksMode,
+
+    context: TreeBuildContext,
     text: String,
 
     iframe_srcdoc: bool,
     quirks_mode_changeable: bool,
     frameset_ok: bool,
+    ignore_lf: bool,
 }
 
 pub enum Control {
@@ -69,35 +106,41 @@ where
             mode: mode!(Initial),
             original_mode: None,
             quirks_mode: QuirksMode::NoQuirks,
+            context: Default::default(),
             text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             iframe_srcdoc: false,
             quirks_mode_changeable: true,
             frameset_ok: true,
+            ignore_lf: false,
         }
     }
 
     pub fn handle_token(&mut self, token: Token<'_>) -> Control {
-        // Many implementation call the handler of each insertion mode, then
-        // branch for each token type in each handle.  This is the same way
-        // the HTML5 specification does.
-        //
-        // However, our implementation calls the handler of each token type
-        // first, then branch for each insertion mode in each handler.
-        //
-        // The reasons are listed below:
-        //
-        // * The insertion mode may be changed while handling the same token,
-        //   but the token type is never changed
-        // * The token may be changed in an insertion mode and reused in other
-        //   insertion modes
-        match token {
-            Token::Doctype(doctype) => self.handle_doctype(doctype),
-            Token::StartTag(tag) => self.handle_start_tag(tag),
-            Token::EndTag(tag) => self.handle_end_tag(tag),
-            Token::Text(text) => self.handle_text(text),
-            Token::Comment(comment) => self.handle_comment(comment),
-            Token::Error(error) => self.handle_error(error),
-            Token::End => self.handle_end(),
+        if self.is_in_foreign_content(&token) {
+            self.handle_foreign(token)
+        } else {
+            // Many implementation call the handler of each insertion mode, then
+            // branch for each token type in each handle.  This is the same way
+            // the HTML5 specification does.
+            //
+            // However, our implementation calls the handler of each token type
+            // first, then branch for each insertion mode in each handler.
+            //
+            // The reasons are listed below:
+            //
+            // * The insertion mode may be changed while handling the same token,
+            //   but the token type is never changed
+            // * The token may be changed in an insertion mode and reused in other
+            //   insertion modes
+            match token {
+                Token::Doctype(doctype) => self.handle_doctype(doctype),
+                Token::StartTag(tag) => self.handle_start_tag(tag),
+                Token::EndTag(tag) => self.handle_end_tag(tag),
+                Token::Text(text) => self.handle_text(text),
+                Token::Comment(comment) => self.handle_comment(comment),
+                Token::Error(error) => self.handle_error(error),
+                Token::End => self.handle_end(),
+            }
         }
     }
 
@@ -109,6 +152,7 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn handle_end(&mut self) -> Control {
+        self.ignore_lf = false;
         loop {
             tracing::debug!(?self.mode);
             match self.mode {
@@ -116,11 +160,11 @@ where
                     self.switch_to(mode!(BeforeHtml));
                 }
                 mode!(BeforeHtml) => {
-                    self.push_element(&Tag::with_html_tag(HtmlTag::HTML));
+                    self.push_html_element(&Tag::with_no_attrs("html"));
                     self.switch_to(mode!(BeforeHead));
                 }
                 mode!(BeforeHead) => {
-                    self.push_element(&Tag::with_html_tag(HtmlTag::HEAD));
+                    self.push_html_element(&Tag::with_no_attrs("head"));
                     self.switch_to(mode!(InHead));
                 }
                 mode!(InHead) => {
@@ -128,10 +172,12 @@ where
                     self.switch_to(mode!(AfterHead));
                 }
                 mode!(AfterHead) => {
-                    self.push_element(&Tag::with_html_tag(HtmlTag::BODY));
+                    self.push_html_element(&Tag::with_no_attrs("body"));
                     self.switch_to(mode!(InBody));
                 }
-                mode!(InBody) => {
+                mode!(InBody, InTable, InRow, InCell) => {
+                    // TODO: If the stack of template insertion modes is not empty, then process the token using the rules for the "in template" insertion mode.
+                    // TODO: Otherwise, follow these steps:
                     break;
                 }
                 mode!(Text) => {
@@ -140,8 +186,13 @@ where
                     self.pop();
                     self.switch_to_original_mode();
                 }
-                mode!(AfterBody) => {
-                    // TODO: Parse error. Switch the insertion mode to "in body" and reprocess the token.
+                mode!(AfterBody, AfterFrameset, AfterAfterBody, AfterAfterFrameset) => {
+                    // TODO: Stop parsing
+                    break;
+                }
+                mode!(InFrameset) => {
+                    // TODO: If the current node is not the root html element, then this is a parse error.
+                    // TODO: Stop parsing
                     break;
                 }
                 _ => unimplemented!(),
@@ -153,6 +204,7 @@ where
 
     // common rules
 
+    #[tracing::instrument(level = "debug", skip_all)]
     fn handle_anything_else(&mut self) -> Control {
         match self.mode {
             mode!(Initial) => {
@@ -166,13 +218,13 @@ where
                 // TODO: Create an html element whose node document is the Document object.
                 // TODO: Append it to the Document object.
                 // TODO: Put this element in the stack of open elements.
-                self.push_element(&Tag::with_html_tag(HtmlTag::HTML));
+                self.push_html_element(&Tag::with_no_attrs("html"));
                 self.switch_to(mode!(BeforeHead));
                 Control::Reprocess
             }
             mode!(BeforeHead) => {
                 // TODO: Insert an HTML element for a "head" start tag token with no attributes.
-                self.push_element(&Tag::with_html_tag(HtmlTag::HEAD));
+                self.push_html_element(&Tag::with_no_attrs("head"));
                 // TODO: Set the head element pointer to the newly created head element.
                 self.switch_to(mode!(InHead));
                 Control::Reprocess
@@ -191,7 +243,7 @@ where
             }
             mode!(AfterHead) => {
                 // TODO: Insert an HTML element for a "body" start tag token with no attributes.
-                self.push_element(&Tag::with_html_tag(HtmlTag::BODY));
+                self.push_html_element(&Tag::with_no_attrs("body"));
                 self.switch_to(mode!(InBody));
                 Control::Reprocess
             }
@@ -201,7 +253,13 @@ where
                 self.switch_to(mode!(InTable));
                 Control::Reprocess
             }
-            mode!(InSelect, InSelectInTable, InFrameset, AfterFrameset, AfterAfterFrameset) => {
+            mode!(
+                InSelect,
+                InSelectInTable,
+                InFrameset,
+                AfterFrameset,
+                AfterAfterFrameset
+            ) => {
                 // TODO: Parse error.
                 // Ignore the token.
                 Control::Continue
@@ -220,8 +278,7 @@ where
                 InTableBody,
                 InRow,
                 InCell,
-                InTemplate,
-                InForeignContent
+                InTemplate
             ) => {
                 unreachable!("{:?}", self.mode);
             }
@@ -243,6 +300,7 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn switch_to(&mut self, mode: InsertionMode) {
+        tracing::debug!(old_mode = ?self.mode, new_mode = ?mode);
         self.mode = mode;
     }
 
@@ -275,21 +333,98 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn push_element(&mut self, tag: &Tag<'_>) {
+    fn push_html_element(&mut self, tag: &Tag<'_>) {
         self.append_text_if_exists();
-        self.writer.push_element(tag);
+        self.writer
+            .push_element(tag.name, Namespace::Html, self.context.clone());
+        for (name, value) in tag.attrs() {
+            self.writer.set_attribute(name, value);
+        }
+        self.context.namespace = Namespace::Html;
+        self.context.local_name = LocalName::lookup(tag.name);
+        self.context.mathml_text_integration_point = false;
+        self.context.svg_integration_point = false;
+        self.context.svg_script = false;
+        self.context.html_integration_pont = false;
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn push_mathml_element(&mut self, tag: &Tag<'_>) {
+        self.append_text_if_exists();
+        self.writer
+            .push_element(tag.name, Namespace::MathMl, self.context.clone());
+        for (name, value) in tag.attrs() {
+            // TODO: adjust MathML attributes
+            // TODO: adjust foreign attributes
+            self.writer.set_attribute(name, value);
+        }
+        self.context.namespace = Namespace::MathMl;
+        self.context.local_name = LocalName::lookup(tag.name);
+        match self.context.local_name {
+            tag!(mathml: Mi, Mo, Mn, Ms, Mtext) => {
+                self.context.mathml_text_integration_point = true;
+                self.context.svg_integration_point = false;
+                self.context.svg_script = false;
+                self.context.html_integration_pont = false;
+            }
+            tag!(mathml: AnnotationXml) => {
+                self.context.mathml_text_integration_point = false;
+                self.context.svg_integration_point = true;
+                self.context.svg_script = false;
+                self.context.html_integration_pont = false;
+            }
+            _ => {
+                self.context.mathml_text_integration_point = false;
+                self.context.svg_integration_point = false;
+                self.context.svg_script = false;
+                self.context.html_integration_pont = false;
+            }
+        }
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn push_svg_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
+        self.append_text_if_exists();
+        let tag_name = match local_name {
+            LocalName::Unknown => tag.name,
+            _ => local_name.name(),
+        };
+        self.writer
+            .push_element(tag_name, Namespace::Svg, self.context.clone());
+        for (name, value) in tag.attrs() {
+            // TODO: adjust foreign attributes
+            self.writer.set_attribute(name, value);
+        }
+        self.context.namespace = Namespace::Svg;
+        self.context.local_name = LocalName::lookup(tag.name);
+        self.context.mathml_text_integration_point = false;
+        self.context.svg_integration_point = false;
+        match self.context.local_name {
+            tag!(svg: Script) => {
+                self.context.svg_script = true;
+                self.context.html_integration_pont = false;
+            }
+            tag!(svg: ForeignObject, Desc, Title) => {
+                self.context.svg_script = false;
+                self.context.html_integration_pont = true;
+            }
+            _ => {
+                self.context.svg_script = false;
+                self.context.html_integration_pont = false;
+            }
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn remove_element(&mut self) {
         self.append_text_if_exists();
-        self.writer.remove_element();
+        self.context = self.writer.remove_element();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn pop(&mut self) {
         self.append_text_if_exists();
-        self.writer.pop();
+        self.context = self.writer.pop();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -343,10 +478,9 @@ enum InsertionMode {
     AfterFrameset,
     AfterAfterBody,
     AfterAfterFrameset,
-    InForeignContent,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum QuirksMode {
     NoQuirks,
     Quirks,

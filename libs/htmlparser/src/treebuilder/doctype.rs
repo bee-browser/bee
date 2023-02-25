@@ -7,6 +7,7 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_doctype(&mut self, doctype: Doctype<'_>) -> Control {
         tracing::debug!(mode = ?self.mode, ?doctype);
+        self.ignore_lf = false;
         match self.mode {
             mode!(Initial) => {
                 if let Some("html") = doctype.name {
@@ -42,8 +43,7 @@ where
                 InFrameset,
                 AfterFrameset,
                 AfterAfterBody,
-                AfterAfterFrameset,
-                InForeignContent
+                AfterAfterFrameset
             ) => {
                 // TODO: Parse error.
                 // Ignore the token.

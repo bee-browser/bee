@@ -16,7 +16,7 @@ pub fn parse(test: Test) {
 struct TreeValidator<'a> {
     test: &'a Test,
     nodes: Vec<Node>,
-    stack: Vec<usize>,
+    stack: Vec<(usize, TreeBuildContext)>,
 }
 
 impl<'a> TreeValidator<'a> {
@@ -26,7 +26,7 @@ impl<'a> TreeValidator<'a> {
             nodes: vec![Node::Document {
                 child_nodes: vec![],
             }],
-            stack: vec![0],
+            stack: vec![(0, Default::default())],
         }
     }
 
@@ -57,10 +57,15 @@ impl<'a> TreeValidator<'a> {
                 name,
                 attrs,
                 child_nodes,
+                namespace,
             } => {
                 v.push(LinearNode {
                     depth,
-                    repr: format!("<{}>", name),
+                    repr: match namespace {
+                        Namespace::Html => format!("<{}>", name),
+                        Namespace::MathMl => format!("<math {}>", name),
+                        Namespace::Svg => format!("<svg {}>", name),
+                    },
                 });
                 for (name, value) in attrs.iter() {
                     v.push(LinearNode {
@@ -90,7 +95,7 @@ impl<'a> TreeValidator<'a> {
 
 impl<'a> TreeValidator<'a> {
     fn append(&mut self, node_index: usize) {
-        let parent_index = *self.stack.last().unwrap();
+        let parent_index = self.stack.last().unwrap().0;
         match self.nodes.get_mut(parent_index).unwrap() {
             Node::Document {
                 ref mut child_nodes,
@@ -108,7 +113,7 @@ impl<'a> TreeValidator<'a> {
     }
 
     fn remove(&mut self, node_index: usize) {
-        let parent_index = *self.stack.last().unwrap();
+        let parent_index = self.stack.last().unwrap().0;
         let index = match self.nodes.get_mut(parent_index).unwrap() {
             Node::Document {
                 ref mut child_nodes,
@@ -136,30 +141,40 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         self.append(index);
     }
 
-    fn push_element(&mut self, tag: &Tag<'_>) {
-        tracing::debug!(?tag);
+    fn push_element(&mut self, name: &str, namespace: Namespace, context: TreeBuildContext) {
+        tracing::debug!(?name, ?namespace);
         let index = self.nodes.len();
         self.nodes.push(Node::Element {
-            name: tag.name().into(),
-            attrs: tag
-                .attrs()
-                .map(|(name, value)| (name.to_string(), value.to_string()))
-                .collect(),
+            name: name.into(),
+            attrs: vec![],
             child_nodes: vec![],
+            namespace,
         });
         self.append(index);
-        self.stack.push(index);
+        self.stack.push((index, context));
     }
 
-    fn remove_element(&mut self) {
-        let index = self.stack.pop().unwrap();
+    fn set_attribute(&mut self, name: &str, value: &str) {
+        tracing::debug!(?name, ?value);
+        let (index, _) = self.stack.last().unwrap();
+        if let Some(Node::Element { ref mut attrs, .. }) = self.nodes.get_mut(*index) {
+            attrs.push((name.to_string(), value.to_string()));
+        }
+    }
+
+    fn remove_element(&mut self) -> TreeBuildContext {
+        let (index, context) = self.stack.pop().unwrap();
         self.remove(index);
-    }
-
-    fn pop(&mut self) {
-        let index = self.stack.pop().unwrap();
         let node = self.nodes.get(index).unwrap();
         tracing::debug!(?node);
+        context
+    }
+
+    fn pop(&mut self) -> TreeBuildContext {
+        let (index, context) = self.stack.pop().unwrap();
+        let node = self.nodes.get(index).unwrap();
+        tracing::debug!(?node);
+        context
     }
 
     fn append_text(&mut self, text: &str) {
@@ -199,6 +214,7 @@ enum Node {
         name: String,
         attrs: Vec<(String, String)>,
         child_nodes: Vec<usize>,
+        namespace: Namespace,
     },
     Text(String),
     Comment(String),

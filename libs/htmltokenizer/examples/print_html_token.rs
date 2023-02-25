@@ -38,17 +38,13 @@ fn main() -> Result<()> {
                     .unwrap();
                 }
                 if tag.self_closing {
-                    println!(r#"<{}{}/>"#, tag.name().escape_debug(), attrs_str);
+                    println!(r#"<{}{}/>"#, tag.name.escape_debug(), attrs_str);
                 } else {
-                    println!(r#"<{}{}>"#, tag.name().escape_debug(), attrs_str);
+                    println!(r#"<{}{}>"#, tag.name.escape_debug(), attrs_str);
                 }
             }
             Token::EndTag(tag) => {
-                let name = match tag.name {
-                    TagKind::Html(htmltag) => htmltag.name(),
-                    TagKind::Other(name) => name,
-                };
-                println!(r#"</{}>"#, name.escape_debug());
+                println!(r#"</{}>"#, tag.name.escape_debug());
             }
             Token::Text(text) => {
                 println!(r#"#text:"{}""#, text.data.escape_debug());

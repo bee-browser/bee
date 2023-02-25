@@ -1,7 +1,5 @@
 use std::ops::Range;
 
-pub use bee_htmltags::HtmlTag;
-
 use crate::error::Error;
 
 #[derive(Debug)]
@@ -54,56 +52,31 @@ impl<'a> Doctype<'a> {
 
 #[derive(Debug)]
 pub struct Tag<'a> {
-    pub name: TagKind<'a>,
+    pub name: &'a str,
     attrs: AttrsHolder<'a>,
     pub self_closing: bool,
 }
 
 impl<'a> Tag<'a> {
     fn new(tag: TagRange, buf: &'a str) -> Self {
-        let name = &buf[tag.name];
-        let name = match HtmlTag::lookup(name) {
-            Some(htmltag) => TagKind::Html(htmltag),
-            None => TagKind::Other(name),
-        };
         Tag {
-            name,
+            name: &buf[tag.name],
             attrs: AttrsHolder::new(buf, tag.attrs),
             self_closing: tag.self_closing,
         }
     }
 
-    pub fn with_html_tag(name: HtmlTag) -> Self {
+    pub fn with_no_attrs(name: &'a str) -> Self {
         Tag {
-            name: TagKind::Html(name),
+            name,
             attrs: AttrsHolder::empty(),
             self_closing: false,
-        }
-    }
-
-    pub fn is_html_tag(&self) -> bool {
-        match self.name {
-            TagKind::Html(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn name(&self) -> &'a str {
-        match self.name {
-            TagKind::Html(htmltag) => htmltag.name(),
-            TagKind::Other(name) => name,
         }
     }
 
     pub fn attrs(&self) -> Attrs<'a, '_> {
         Attrs::new(self.attrs.buffer, &self.attrs.attrs)
     }
-}
-
-#[derive(Debug)]
-pub enum TagKind<'a> {
-    Html(HtmlTag),
-    Other(&'a str),
 }
 
 #[derive(Debug)]

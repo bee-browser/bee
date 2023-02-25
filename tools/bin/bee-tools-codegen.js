@@ -76,6 +76,14 @@ async function run(args, options) {
 }
 
 function registerHelpers() {
+  Handlebars.registerHelper('length', (v) => {
+    if (typeof v.length === 'number') {
+      return v.length;
+    } else {
+      return Object.keys(v).length;
+    }
+  });
+
   Handlebars.registerHelper('padStart', (v, n, pad) => {
     return v.toString().padStart(n, pad);
   });
@@ -170,11 +178,11 @@ async function depsgen(src, input, options) {
 }
 
 async function loadJson(input, options) {
-  if (!input) {
-    return {};
-  }
   if (options.inputStdin) {
     return JSON.parse(await readAllText(Deno.stdin));
+  }
+  if (!input) {
+    return {};
   }
   if (options.inputInline) {
     return JSON.parse(input);

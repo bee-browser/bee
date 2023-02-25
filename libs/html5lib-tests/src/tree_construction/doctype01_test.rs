@@ -369,7 +369,7 @@ fn test_0025() {
 #[test]
 fn test_0026() {
     parse(Test {
-        data: "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\"http://www.w3.org/TR/html4/strict.dtd\">Hello",
+        data: "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n   \"http://www.w3.org/TR/html4/strict.dtd\">Hello",
         document: vec![
             (0, "<!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"),
             (0, "<html>"),
@@ -423,7 +423,7 @@ fn test_0029() {
 #[test]
 fn test_0030() {
     parse(Test {
-        data: "<!DOCTYPE root-element [SYSTEM OR PUBLIC FPI] \"uri\" [\n<!-- internal declarations -->\n]>",
+        data: "<!DOCTYPE root-element [SYSTEM OR PUBLIC FPI] \"uri\" [ \n<!-- internal declarations -->\n]>",
         document: vec![
             (0, "<!DOCTYPE root-element>"),
             (0, "<html>"),
@@ -437,7 +437,7 @@ fn test_0030() {
 #[test]
 fn test_0031() {
     parse(Test {
-        data: "<!DOCTYPE html PUBLIC\n\"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\"\n\"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">",
+        data: "<!DOCTYPE html PUBLIC\n  \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\"\n    \"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">",
         document: vec![
             (0, "<!DOCTYPE html \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\" \"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">"),
             (0, "<html>"),

@@ -63,7 +63,7 @@ impl<'a> Validator<'a> {
 
     fn handle_start_tag(&mut self, tag: Tag) {
         self.output.push(Output::StartTag {
-            name: tag.name().to_string(),
+            name: tag.name.to_string(),
             attrs: HashMap::from_iter(
                 tag.attrs()
                     .map(|(name, value)| (name.to_string(), value.to_string())),
@@ -74,7 +74,7 @@ impl<'a> Validator<'a> {
 
     fn handle_end_tag(&mut self, tag: Tag) {
         self.output.push(Output::EndTag {
-            name: tag.name().to_string(),
+            name: tag.name.to_string(),
         });
     }
 
