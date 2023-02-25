@@ -2,7 +2,7 @@
 
 > Browser Engine for Embedding
 
-[![ci-status](https://github.com/bee-browser/prototype/workflows/CI/badge.svg)](https://github.com/bee-browser/prototype/actions?workflow=CI)
+[![ci-status](https://github.com/bee-browser/prototype/workflows/ci/badge.svg)](https://github.com/bee-browser/prototype/actions?workflow=ci)
 [![codecov](https://codecov.io/gh/bee-browser/prototype/branch/main/graph/badge.svg?token=ZU1I8W30M9)](https://codecov.io/gh/bee-browser/prototype)
 
 ## What's BEE?
@@ -16,7 +16,7 @@ Install the following software:
 * Rust
   * stable
   * nightly (used for generating a coverage report of tests)
-* deno 1.9.0
+* deno 1.30
 * GNU make
 
 Then:
@@ -33,9 +33,6 @@ make debug-test
 # Coverage.
 make coverage
 make coverage-html
-
-# Update workflows for GitHub Actions.
-make github-workflows
 ```
 
 Worked only on Linux and macOS at this point.  Windows will be supported in the future.

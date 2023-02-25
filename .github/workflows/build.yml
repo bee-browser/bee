@@ -1,0 +1,59 @@
+name: build
+
+on:
+  workflow_call:
+
+env:
+  DENO_DIR: /tmp/deno
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        runner:
+          - macos-latest
+          - ubuntu-latest
+        rust:
+          - stable
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Cache for cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            $CARGO_HOME/registry
+            $CARGO_HOME/git
+            target
+          key: |
+            ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ matrix.rust }}-
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - name: Cache for deno
+        uses: actions/cache@v3
+        with:
+          path: |
+            $DENO_DIR
+          key: |
+            ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
+          restore-keys: |
+            ${{ runner.os }}-deno-
+      - name: Prepare GitHub CI
+        run: |
+          make github-ci
+      - name: Build
+        run: |
+          make
+        env:
+          CARGO_TERM_VERBOSE: true
+      - name: Run tests
+        run: |
+          make test
+        env:
+          CARGO_TERM_VERBOSE: true

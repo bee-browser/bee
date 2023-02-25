@@ -1,11 +1,16 @@
+# See https://github.com/dependabot/dependabot-core/issues/2268#issuecomment-831376155
 name: auto-merge
 
 on:
   workflow_run:
     workflows:
-      - ci
+      - pull-request
     types:
       - completed
+
+env:
+  ALLOWED_USER: 'dependabot[bot]'
+  ALLOWED_TITLE_PREFIX: 'build(deps):'
 
 jobs:
   auto-merge:
@@ -16,11 +21,8 @@ jobs:
     steps:
       - uses: actions/github-script@v6
         with:
-          # Use a Personal Access Token instead of GITHUB_TOKEN.
-          #
-          # Scripts using GITHUB_TOKEN cannot trigger new workflow runs.
-          # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#triggering-new-workflows-using-a-personal-access-token
-          github-token: ${{secrets.GH_TOKEN}}
+          # Use PAT in order to invoke other workflows.
+          github-token: ${{ secrets.BOT_GITHUB_TOKEN }}
           script: |
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
