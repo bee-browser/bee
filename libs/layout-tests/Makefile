@@ -37,7 +37,13 @@ tests: clean
 	@$(MAKE) -s -j $(shell nproc) codegen
 
 .PHONY: codegen
-codegen: html/index.html src/tests.rs
+codegen: codegen-html codegen-rust
+
+.PHONY: codegen-html
+codegen-html: html/index.html
+
+.PHONY: codegen-rust
+codegen-rust: src/tests.rs
 
 -include $(DEPS)
 
