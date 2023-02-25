@@ -38,6 +38,9 @@ CLEAN_TARGETS = $(addprefix clean-,\
 
 CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/htmltokenizer \
+  libs/htmlparser \
+  libs/html5lib-tests \
+  libs/layout-tests \
 )
 
 UPDATE_DEPS_TARGETS = $(addprefix update-deps-,\
