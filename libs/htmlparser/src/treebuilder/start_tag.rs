@@ -6,17 +6,27 @@ where
 {
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_start_tag(&mut self, tag: Tag<'_>) -> Control {
-        match tag.name {
-            tag!(HTML) => self.handle_start_html(&tag),
-            tag!(HEAD) => self.handle_start_head(&tag),
-            tag!(BODY) => self.handle_start_body(&tag),
-            tag!(TITLE) => self.handle_start_title(&tag),
+        self.ignore_lf = false;
+        match LocalName::lookup(tag.name) {
+            tag!(Html) => self.handle_start_html(&tag),
+            tag!(Head) => self.handle_start_head(&tag),
+            tag!(Body) => self.handle_start_body(&tag),
+            tag!(Title) => self.handle_start_title(&tag),
+            tag!(Pre) => self.handle_start_pre(&tag),
+            tag!(Table) => self.handle_start_table(&tag),
+            tag!(Tr) => self.handle_start_tr(&tag),
+            tag!(Td) => self.handle_start_td(&tag),
+            tag!(Plaintext) => self.handle_start_plaintext(&tag),
+            tag!(Frameset) => self.handle_start_frameset(&tag),
+            local_name @ tag!(svg: Svg) => self.handle_start_svg(&tag, local_name),
+            tag!(mathml: Math) => self.handle_start_math(&tag),
             _ => loop {
-                match self.handle_any_other_start_tag(&tag) {
+                tracing::debug!(mode = ?self.mode, ?tag);
+                match self.handle_any_other_start_tag(&tag, Namespace::Html) {
                     Control::Reprocess => (),
                     ctrl => return ctrl,
                 }
-            }
+            },
         }
     }
 
@@ -27,7 +37,7 @@ where
                 mode!(BeforeHtml) => {
                     // TODO: Create an element for the token in the HTML namespace, with the Document as the intended parent.
                     // TODO: Append it to the Document object. Put this element in the stack of open elements.
-                    self.push_element(&tag);
+                    self.push_html_element(&tag);
                     self.switch_to(mode!(BeforeHead));
                     return Control::Continue;
                 }
@@ -53,20 +63,21 @@ where
                     // TODO: Otherwise, for each attribute on the token, check to see if the attribute is already present on the top element of the stack of open elements. If it is not, add the attribute and its corresponding value to that element.
                     return Control::Continue;
                 }
-                _ => match self.handle_any_other_start_tag(tag) {
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
                     Control::Reprocess => (),
                     ctrl => return ctrl,
-                }
+                },
             };
         }
     }
 
     fn handle_start_head(&mut self, tag: &Tag<'_>) -> Control {
         loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(BeforeHead) => {
                     // TODO: Insert an HTML element for the token.
-                    self.push_element(&tag);
+                    self.push_html_element(&tag);
                     // TODO: Set the head element pointer to the newly created head element.
                     self.switch_to(mode!(InHead));
                     return Control::Continue;
@@ -84,22 +95,23 @@ where
                     return self.ignore_token();
                 }
                 mode!(InTable, InTableBody, InRow) => {
-                    return self.apply_any_other_start_tag_rule_on_in_table(tag);
+                    return self.apply_any_other_start_tag_rule_on_in_table(tag, Namespace::Html);
                 }
-                _ => match self.handle_any_other_start_tag(tag) {
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
                     Control::Reprocess => (),
                     ctrl => return ctrl,
-                }
+                },
             }
         }
     }
 
     fn handle_start_body(&mut self, tag: &Tag<'_>) -> Control {
         loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(AfterHead) => {
                     // TODO: Insert an HTML element for the token.
-                    self.push_element(&tag);
+                    self.push_html_element(&tag);
                     self.frameset_ok = false;
                     self.switch_to(mode!(InBody));
                     return Control::Continue;
@@ -111,16 +123,17 @@ where
                     self.frameset_ok = false;
                     return Control::Continue;
                 }
-                _ => match self.handle_any_other_start_tag(tag) {
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
                     Control::Reprocess => (),
                     ctrl => return ctrl,
-                }
+                },
             }
         }
     }
 
     fn handle_start_title(&mut self, tag: &Tag<'_>) -> Control {
         loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InHead, InBody) => {
                     return self.apply_generic_rcdata_element_rule(tag);
@@ -132,43 +145,337 @@ where
                     // TODO: Remove the node pointed to by the head element pointer from the stack of open elements. (It might not be the current node at this point.)
                     return Control::Continue;
                 }
-                _ => match self.handle_any_other_start_tag(tag) {
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
                     Control::Reprocess => (),
                     ctrl => return ctrl,
-                }
+                },
             }
         }
     }
 
-    fn handle_any_other_start_tag(&mut self, tag: &Tag<'_>) -> Control {
+    fn handle_start_pre(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TODO: If the stack of open elements has a p element in button scope, then close a p element.
+                    // TODO: Insert an HTML element for the token.
+                    self.push_html_element(tag);
+                    self.ignore_lf = true;
+                    self.frameset_ok = false;
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_table(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    if self.quirks_mode != QuirksMode::Quirks {
+                        self.close_p_element_in_button_scope();
+                    }
+                    self.push_html_element(tag);
+                    self.frameset_ok = false;
+                    self.switch_to(mode!(InTable));
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn close_p_element_in_button_scope(&mut self) {
+        // TODO
+    }
+
+    fn handle_start_tr(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TOOD: Parse error.
+                    // Ignore the token.
+                    return Control::Continue;
+                }
+                mode!(InTable) => {
+                    self.clear_stack_back_to_table_context();
+                    self.push_html_element(&Tag::with_no_attrs("tbody"));
+                    self.switch_to(mode!(InTableBody));
+                    // Reprocess the token.
+                }
+                mode!(InCaption) => {
+                    // TODO: If the stack of open elements does not have a caption element in table scope, this is a parse error; ignore the token. (fragment case)
+                    // TODO: Generate implied end tags.
+                    // TODO: Now, if the current node is not a caption element, then this is a parse error.
+                    // TODO: Pop elements from this stack until a caption element has been popped from the stack.
+                    // TODO: Clear the list of active formatting elements up to the last marker.
+                    self.switch_to(mode!(InTable));
+                    // Reprocess the token.
+                }
+                mode!(InTableBody) => {
+                    self.clear_stack_back_to_table_body_context();
+                    // TODO: Insert an HTML element for the token
+                    self.push_html_element(tag);
+                    self.switch_to(mode!(InRow));
+                    return Control::Continue;
+                }
+                mode!(InRow) => {
+                    // TODO: If the stack of open elements does not have a tr element in table scope, this is a parse error; ignore the token.
+                    self.clear_stack_back_to_table_row_context();
+                    self.pop();
+                    self.switch_to(mode!(InTableBody));
+                    // Reprocess the token.
+                }
+                mode!(InCell) => {
+                    // TODO: If the stack of open elements does not have a td or th element in table scope, then this is a parse error; ignore the token. (fragment case)
+                    self.close_cell();
+                    // Reprocess the token.
+                }
+                mode!(InSelectInTable) => {
+                    // TODO: Parse error.
+                    loop {
+                        match self.context.local_name {
+                            tag!(Select) => {
+                                self.pop();
+                                break;
+                            }
+                            _ => {
+                                self.pop();
+                            }
+                        }
+                    }
+                    self.reset_insertion_mode_appropriately();
+                    // Reprocess the token.
+                }
+                mode!(InTemplate) => {
+                    // TODO
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_td(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InRow) => {
+                    self.clear_stack_back_to_table_row_context();
+                    self.push_html_element(tag);
+                    self.switch_to(mode!(InCell));
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn reset_insertion_mode_appropriately(&mut self) {
+        // TODO: Reset the insertion mode appropriately.
+    }
+
+    fn clear_stack_back_to_table_context(&mut self) {
+        loop {
+            match self.context.local_name {
+                tag!(Html, Table, Template) => break,
+                _ => self.remove_element(),
+            }
+        }
+    }
+
+    fn clear_stack_back_to_table_body_context(&mut self) {
+        loop {
+            match self.context.local_name {
+                tag!(Tbody, Tfoot, Thead) => break,
+                _ => self.remove_element(),
+            }
+        }
+    }
+
+    fn clear_stack_back_to_table_row_context(&mut self) {
+        loop {
+            match self.context.local_name {
+                tag!(Html, Template, Tr) => break,
+                _ => self.remove_element(),
+            }
+        }
+    }
+
+    fn close_cell(&mut self) {
+        // TODO: Generate implied end tags.
+        loop {
+            match self.context.local_name {
+                tag!(Td, Th) => {
+                    self.pop();
+                    break;
+                }
+                _ => {
+                    // TODO: Parse error.
+                    self.pop();
+                }
+            }
+        }
+        // TODO: Clear the list of active formatting elements up to the last marker.
+        self.switch_to(mode!(InRow));
+    }
+
+    fn handle_start_plaintext(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TODO: If the stack of open elements has a p element in button scope, then close a p element.
+                    self.push_html_element(tag);
+                    return Control::SwitchTo(bee_htmltokenizer::InitialState::Plaintext);
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_frameset(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(AfterHead) => {
+                    // TODO: Insert an HTML element for the token.
+                    self.push_html_element(tag);
+                    self.switch_to(mode!(InFrameset));
+                    return Control::Continue;
+                }
+                mode!(InBody, InCaption, InCell) => {
+                    // TODO: Parse error.
+                    // TODO: Ignore the token (fragment case)
+                    if !self.frameset_ok {
+                        // Ignore the token
+                        return Control::Continue;
+                    }
+                    // TODO: Otherwise, run the following steps:
+                    loop {
+                        if let LocalName::Html = self.context.local_name {
+                            break;
+                        }
+                        self.remove_element();
+                    }
+                    self.push_html_element(tag);
+                    self.switch_to(mode!(InFrameset));
+                    return Control::Continue;
+                }
+                mode!(InFrameset) => {
+                    self.push_html_element(tag);
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_math(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TODO: Reconstruct the active formatting elements, if any.
+                    // TODO: Adjust MathML attributes for the token. (This fixes the case of MathML attributes that are not all lowercase.)
+                    // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink.)
+                    // TODO: Insert a foreign element for the token, in the MathML namespace.
+                    self.push_mathml_element(tag);
+                    // TODO: If the token has its self-closing flag set, pop the current node off the stack of open elements and acknowledge the token's self-closing flag.
+                    if tag.self_closing {
+                        self.pop();
+                    }
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::MathMl) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_svg(&mut self, tag: &Tag<'_>, local_name: LocalName) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TODO: Reconstruct the active formatting elements, if any.
+                    // TODO: Adjust SVG attributes for the token. (This fixes the case of SVG attributes that are not all lowercase.)
+                    // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
+                    // TODO: Insert a foreign element for the token, in the SVG namespace.
+                    self.push_svg_element(tag, local_name);
+                    // TODO: If the token has its self-closing flag set, pop the current node off the stack of open elements and acknowledge the token's self-closing flag.
+                    if tag.self_closing {
+                        self.pop();
+                    }
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Svg) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_any_other_start_tag(&mut self, tag: &Tag<'_>, namespace: Namespace) -> Control {
         match self.mode {
             mode!(InBody, InCaption, InCell) => {
-                self.apply_any_other_start_tag_rule_on_in_body(tag)
+                self.apply_any_other_start_tag_rule_on_in_body(tag, namespace)
             }
             mode!(InTable, InTableBody, InRow) => {
-                self.apply_any_other_start_tag_rule_on_in_table(tag)
+                self.apply_any_other_start_tag_rule_on_in_table(tag, namespace)
             }
-            mode!(InTemplate) => {
-                self.apply_any_other_start_tag_rule_on_in_template()
-            }
-            mode!(InForeignContent) => {
-                self.apply_any_other_start_tag_rule_on_in_foreign_content()
-            }
+            mode!(InTemplate) => self.apply_any_other_start_tag_rule_on_in_template(),
             _ => self.handle_anything_else(),
         }
     }
 
-    fn apply_any_other_start_tag_rule_on_in_body(&mut self, tag: &Tag<'_>) -> Control {
+    fn apply_any_other_start_tag_rule_on_in_body(
+        &mut self,
+        tag: &Tag<'_>,
+        namespace: Namespace,
+    ) -> Control {
         // TODO: Reconstruct the active formatting elements, if any.
         // TODO: Insert an HTML element for the token.
-        self.push_element(&tag);
+        match namespace {
+            Namespace::Html => self.push_html_element(tag),
+            Namespace::MathMl => self.push_mathml_element(tag),
+            Namespace::Svg => self.push_svg_element(tag, LocalName::Svg),
+        }
         Control::Continue
     }
 
-    fn apply_any_other_start_tag_rule_on_in_table(&mut self, tag: &Tag<'_>) -> Control {
+    fn apply_any_other_start_tag_rule_on_in_table(
+        &mut self,
+        tag: &Tag<'_>,
+        namespace: Namespace,
+    ) -> Control {
         // TODO: Parse error.
         // TODO: Enable foster parenting,
-        let ctrl = self.apply_any_other_start_tag_rule_on_in_body(tag);
+        let ctrl = self.apply_any_other_start_tag_rule_on_in_body(tag, namespace);
         // TODO: and then disable foster parenting.
         ctrl
     }
@@ -180,13 +487,8 @@ where
         Control::Reprocess
     }
 
-    fn apply_any_other_start_tag_rule_on_in_foreign_content(&mut self) -> Control {
-        // TODO
-        Control::Continue
-    }
-
     fn apply_generic_rcdata_element_rule(&mut self, tag: &Tag<'_>) -> Control {
-        self.push_element(tag);
+        self.push_html_element(tag);
         self.save_and_switch_to(mode!(Text));
         Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata)
     }

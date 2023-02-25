@@ -1,0 +1,621 @@
+# properties:
+#
+#   category
+#   obsolete [default: false]
+#
+
+# html5
+
+a:
+  category: formatting
+
+abbr:
+  category: ordinary
+
+address:
+  category: special
+
+area:
+  category: special
+
+article:
+  category: special
+
+aside:
+  category: special
+
+audio:
+  category: ordinary
+
+b:
+  category: formatting
+
+base:
+  category: special
+
+bdi:
+  category: ordinary
+
+bdo:
+  category: ordinary
+
+blockquote:
+  category: special
+
+body:
+  category: special
+
+br:
+  category: special
+
+button:
+  category: special
+
+canvas:
+  category: ordinary
+
+caption:
+  category: special
+
+cite:
+  category: ordinary
+
+code:
+  category: formatting
+
+col:
+  category: special
+
+colgroup:
+  category: special
+
+data:
+  category: ordinary
+
+datalist:
+  category: ordinary
+
+dd:
+  category: special
+
+del:
+  category: ordinary
+
+details:
+  category: special
+
+dfn:
+  category: ordinary
+
+dialog:
+  category: ordinary
+
+div:
+  category: special
+
+dl:
+  category: special
+
+dt:
+  category: special
+
+em:
+  category: formatting
+
+embed:
+  category: special
+
+fieldset:
+  category: special
+
+figcaption:
+  category: special
+
+figure:
+  category: special
+
+footer:
+  category: special
+
+form:
+  category: special
+
+h1:
+  category: special
+
+h2:
+  category: special
+
+h3:
+  category: special
+
+h4:
+  category: special
+
+h5:
+  category: special
+
+h6:
+  category: special
+
+head:
+  category: special
+
+header:
+  category: special
+
+hr:
+  category: special
+
+html:
+  category: special
+
+i:
+  category: formatting
+
+iframe:
+  category: special
+
+img:
+  category: special
+
+input:
+  category: special
+
+ins:
+  category: ordinary
+
+kbd:
+  category: ordinary
+
+label:
+  category: ordinary
+
+legend:
+  category: ordinary
+
+li:
+  category: special
+
+link:
+  category: special
+
+main:
+  category: special
+
+map:
+  category: ordinary
+
+mark:
+  category: ordinary
+
+menu:
+  category: special
+
+meta:
+  category: special
+
+meter:
+  category: ordinary
+
+nav:
+  category: special
+
+noscript:
+  category: special
+
+object:
+  category: special
+
+ol:
+  category: special
+
+optgroup:
+  category: ordinary
+
+option:
+  category: ordinary
+
+output:
+  category: ordinary
+
+p:
+  category: special
+
+picture:
+  category: ordinary
+
+pre:
+  category: special
+
+progress:
+  category: ordinary
+
+q:
+  category: ordinary
+
+rp:
+  category: ordinary
+
+rt:
+  category: ordinary
+
+ruby:
+  category: ordinary
+
+s:
+  category: formatting
+
+samp:
+  category: ordinary
+
+sarcasm:
+  category: ordinary
+
+script:
+  category: special
+
+section:
+  category: special
+
+select:
+  category: special
+
+slot:
+  category: ordinary
+
+small:
+  category: formatting
+
+source:
+  category: special
+
+span:
+  category: ordinary
+
+strong:
+  category: formatting
+
+style:
+  category: special
+
+sub:
+  category: ordinary
+
+summary:
+  category: special
+
+sup:
+  category: ordinary
+
+table:
+  category: special
+
+tbody:
+  category: special
+
+td:
+  category: special
+
+template:
+  category: special
+
+textarea:
+  category: special
+
+tfoot:
+  category: special
+
+th:
+  category: special
+
+thead:
+  category: special
+
+time:
+  category: ordinary
+
+title:
+  category: special
+
+tr:
+  category: special
+
+track:
+  category: special
+
+u:
+  category: formatting
+
+ul:
+  category: special
+
+var:
+  category: ordinary
+
+video:
+  category: ordinary
+
+wbr:
+  category: special
+
+
+# html5 non-conforming local names
+
+acronym:
+  category: ordinary
+  obsolete: true
+
+applet:
+  category: special
+  obsolete: true
+
+basefont:
+  category: special
+  obsolete: true
+
+bgsound:
+  category: special
+  obsolete: true
+
+big:
+  category: formatting
+  obsolete: true
+
+blink:
+  category: ordinary
+  obsolete: true
+
+center:
+  category: special
+  obsolete: true
+
+content:
+  category: ordinary
+  obsolete: true
+
+dir:
+  category: special
+  obsolete: true
+
+font:
+  category: formatting
+  obsolete: true
+
+frame:
+  category: special
+  obsolete: true
+
+frameset:
+  category: special
+  obsolete: true
+
+hgroup:
+  category: special
+  obsolete: true
+
+isindex:
+  category: ordinary
+  obsolete: true
+
+keygen:
+  category: special
+  obsolete: true
+
+listing:
+  category: special
+  obsolete: true
+
+marquee:
+  category: special
+  obsolete: true
+
+menuitem:
+  category: ordinary
+  obsolete: true
+
+multicol:
+  category: ordinary
+  obsolete: true
+
+nextid:
+  category: ordinary
+  obsolete: true
+
+nobr:
+  category: formatting
+  obsolete: true
+
+noembed:
+  category: special
+  obsolete: true
+
+noframes:
+  category: special
+  obsolete: true
+
+param:
+  category: special
+  obsolete: true
+
+plaintext:
+  category: special
+  obsolete: true
+
+rb:
+  category: ordinary
+  obsolete: true
+
+rtc:
+  category: ordinary
+  obsolete: true
+
+shadow:
+  category: ordinary
+  obsolete: true
+
+spacer:
+  category: ordinary
+  obsolete: true
+
+strike:
+  category: formatting
+  obsolete: true
+
+tt:
+  category: formatting
+  obsolete: true
+
+xmp:
+  category: special
+  obsolete: true
+
+
+# foreign names
+
+math:
+  category: ordinary
+
+annotation-xml:
+  category: special
+
+mi:
+  category: special
+
+mo:
+  category: special
+
+mn:
+  category: special
+
+ms:
+  category: special
+
+mtext:
+  category: special
+
+svg:
+  category: ordinary
+
+foreignObject:
+  category: special
+
+desc:
+  category: special
+
+# Local names defined outside the HTML namespace.
+# Listed only ones mentioned in the HTML5 specification.
+
+altGlyph:
+  category: ordinary
+
+altGlyphDef:
+  category: ordinary
+
+altGlyphItem:
+  category: ordinary
+
+animateColor:
+  category: ordinary
+
+animateMotion:
+  category: ordinary
+
+animateTransform:
+  category: ordinary
+
+clipPath:
+  category: ordinary
+
+feBlend:
+  category: ordinary
+
+feColorMatrix:
+  category: ordinary
+
+feComponentTransfer:
+  category: ordinary
+
+feComposite:
+  category: ordinary
+
+feConvolveMatrix:
+  category: ordinary
+
+feDiffuseLighting:
+  category: ordinary
+
+feDisplacementMap:
+  category: ordinary
+
+feDistantLight:
+  category: ordinary
+
+feDropShadow:
+  category: ordinary
+
+feFlood:
+  category: ordinary
+
+feFuncA:
+  category: ordinary
+
+feFuncB:
+  category: ordinary
+
+feFuncG:
+  category: ordinary
+
+feFuncR:
+  category: ordinary
+
+feGaussianBlur:
+  category: ordinary
+
+feImage:
+  category: ordinary
+
+feMerge:
+  category: ordinary
+
+feMergeNode:
+  category: ordinary
+
+feMorphology:
+  category: ordinary
+
+feOffset:
+  category: ordinary
+
+fePointLight:
+  category: ordinary
+
+feSpecularLighting:
+  category: ordinary
+
+feSpotLight:
+  category: ordinary
+
+feTile:
+  category: ordinary
+
+feTurbulence:
+  category: ordinary
+
+glyphRef:
+  category: ordinary
+
+linearGradient:
+  category: ordinary
+
+radialGradient:
+  category: ordinary
+
+textPath:
+  category: ordinary
+
+mglyph:
+  category: ordinary
+
+malignmark:
+  category: ordinary

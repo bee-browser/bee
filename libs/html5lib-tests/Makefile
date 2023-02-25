@@ -51,7 +51,8 @@ TREE_CONSTRUCTION_TEST_NAMES := \
   comments01 \
   doctype01 \
   entities01 \
-  entities02
+  entities02 \
+  plain_text_unsafe
 TREE_CONSTRUCTION_TESTS := $(addprefix src/tree_construction/,$(addsuffix _test.rs,$(TREE_CONSTRUCTION_TEST_NAMES)))
 
 .PHONY: codegen-tree-construction
