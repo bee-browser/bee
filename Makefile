@@ -56,7 +56,9 @@ GRCOV_COMMON_ARGS = \
   --ignore '*/src/main.rs' \
   --excl-line '<coverage:exclude/>|unimplemented!|unreachable!' \
   --excl-start '<coverage:exclude>' \
-  --excl-stop '</coverage:exclude>'
+  --excl-stop '</coverage:exclude>' \
+  --excl-br-start '<coverage:exclude>' \
+  --excl-br-stop '</coverage:exclude>'
 
 .PHONY: all
 all: build
