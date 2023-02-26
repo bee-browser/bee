@@ -16,7 +16,18 @@ pub fn parse(test: Test) {
 struct TreeValidator<'a> {
     test: &'a Test,
     nodes: Vec<Node>,
-    stack: Vec<(usize, TreeBuildContext)>,
+    stack: Vec<(usize, OpenContext)>,
+    head_index: Option<usize>,
+    last_table_parent_index: Option<usize>,
+}
+
+enum OpenContext {
+    Document,
+    Normal {
+        context: TreeBuildContext,
+        last_table_parent_index: Option<usize>,
+    },
+    Reopen,
 }
 
 impl<'a> TreeValidator<'a> {
@@ -26,7 +37,9 @@ impl<'a> TreeValidator<'a> {
             nodes: vec![Node::Document {
                 child_nodes: vec![],
             }],
-            stack: vec![(0, Default::default())],
+            stack: vec![(0, OpenContext::Document)],
+            head_index: None,
+            last_table_parent_index: None,
         }
     }
 
@@ -95,8 +108,8 @@ impl<'a> TreeValidator<'a> {
 
 impl<'a> TreeValidator<'a> {
     fn append(&mut self, node_index: usize) {
-        let parent_index = self.stack.last().unwrap().0;
-        match self.nodes.get_mut(parent_index).unwrap() {
+        let (parent_index, context) = self.stack.last().unwrap();
+        match self.nodes.get_mut(*parent_index).unwrap() {
             Node::Document {
                 ref mut child_nodes,
             } => {
@@ -109,6 +122,9 @@ impl<'a> TreeValidator<'a> {
                 child_nodes.push(node_index);
             }
             t => unreachable!("{:?}", t),
+        }
+        if let OpenContext::Reopen = context {
+            self.stack.pop();
         }
     }
 
@@ -143,6 +159,7 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
 
     fn push_element(&mut self, name: &str, namespace: Namespace, context: TreeBuildContext) {
         tracing::debug!(?name, ?namespace);
+        let parent_index = self.stack.last().unwrap().0;
         let index = self.nodes.len();
         self.nodes.push(Node::Element {
             name: name.into(),
@@ -151,7 +168,23 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
             namespace,
         });
         self.append(index);
-        self.stack.push((index, context));
+        self.stack.push((
+            index,
+            OpenContext::Normal {
+                context,
+                last_table_parent_index: self.last_table_parent_index,
+            },
+        ));
+        match name {
+            "head" => {
+                assert!(self.head_index.is_none());
+                self.head_index = Some(index);
+            }
+            "table" => {
+                self.last_table_parent_index = Some(parent_index);
+            }
+            _ => (),
+        }
     }
 
     fn set_attribute(&mut self, name: &str, value: &str) {
@@ -162,19 +195,43 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         }
     }
 
+    fn reopen_head_element(&mut self) {
+        assert!(self.head_index.is_some());
+        let index = self.head_index.unwrap();
+        self.stack.push((index, OpenContext::Reopen));
+    }
+
     fn remove_element(&mut self) -> TreeBuildContext {
         let (index, context) = self.stack.pop().unwrap();
         self.remove(index);
         let node = self.nodes.get(index).unwrap();
         tracing::debug!(?node);
-        context
+        match context {
+            OpenContext::Normal {
+                context,
+                last_table_parent_index,
+            } => {
+                self.last_table_parent_index = last_table_parent_index;
+                context
+            }
+            _ => panic!(),
+        }
     }
 
-    fn pop(&mut self) -> TreeBuildContext {
+    fn pop_element(&mut self) -> TreeBuildContext {
         let (index, context) = self.stack.pop().unwrap();
         let node = self.nodes.get(index).unwrap();
         tracing::debug!(?node);
-        context
+        match context {
+            OpenContext::Normal {
+                context,
+                last_table_parent_index,
+            } => {
+                self.last_table_parent_index = last_table_parent_index;
+                context
+            }
+            _ => panic!(),
+        }
     }
 
     fn append_text(&mut self, text: &str) {
@@ -182,6 +239,25 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         let index = self.nodes.len();
         self.nodes.push(Node::Text(text.to_string()));
         self.append(index);
+    }
+
+    fn insert_text_to_foster_parent(&mut self, text: &str) {
+        tracing::debug!(?text);
+        assert!(self.last_table_parent_index.is_some());
+        let index = self.nodes.len();
+        self.nodes.push(Node::Text(text.to_string()));
+        let parent_index = self.last_table_parent_index.unwrap();
+        match self.nodes.get_mut(parent_index).unwrap() {
+            Node::Element {
+                ref mut child_nodes,
+                ..
+            } => {
+                assert!(!child_nodes.is_empty());
+                let insertion_point = child_nodes.len() - 1;
+                child_nodes.insert(insertion_point, index);
+            }
+            _ => unreachable!(),
+        }
     }
 
     fn append_comment(&mut self, comment: &Comment<'_>) {

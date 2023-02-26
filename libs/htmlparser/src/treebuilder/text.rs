@@ -93,6 +93,7 @@ where
             }
             mode!(InTableText) => {
                 // TODO: Append the character token to the pending table character tokens list.
+                self.append_char(c);
             }
         }
     }
@@ -113,11 +114,12 @@ where
                     return;
                 }
                 mode!(InTable, InTableBody, InRow) => {
-                    // TODO
-                    return;
+                    self.save_and_switch_to(mode!(InTableText));
+                    // Reprocess the character.
                 }
                 mode!(InTableText) => {
                     // TODO: Append the character token to the pending table character tokens list.
+                    self.append_char(c);
                     return;
                 }
                 mode!(InSelect, InSelectInTable) => {
