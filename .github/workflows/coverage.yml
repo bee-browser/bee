@@ -1,7 +1,12 @@
 name: coverage
 
 on:
-  workflow_call:
+  workflow_run:
+    workflows:
+      - ci
+      - pull-request
+    types:
+      - completed
 
 env:
   DENO_DIR: /tmp/deno
@@ -9,7 +14,8 @@ env:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    if: |
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
