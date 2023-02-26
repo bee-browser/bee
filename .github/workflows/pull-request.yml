@@ -11,8 +11,3 @@ jobs:
   build:
     uses: bee-browser/prototype/.github/workflows/build.yml@main
     secrets: inherit
-  coverage:
-    needs:
-      - build
-    uses: bee-browser/prototype/.github/workflows/coverage.yml@main
-    secrets: inherit
