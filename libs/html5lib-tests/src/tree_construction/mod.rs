@@ -1,6 +1,7 @@
 //<coverage:exclude>
 mod comments01_test;
 mod doctype01_test;
+mod domjs_unsafe_test;
 mod entities01_test;
 mod entities02_test;
 mod helper;

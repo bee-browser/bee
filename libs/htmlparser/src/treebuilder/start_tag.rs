@@ -10,10 +10,12 @@ where
         match LocalName::lookup(tag.name) {
             tag!(Html) => self.handle_start_html(&tag),
             tag!(Head) => self.handle_start_head(&tag),
-            tag!(Body) => self.handle_start_body(&tag),
             tag!(Title) => self.handle_start_title(&tag),
+            tag!(Script) => self.handle_start_script(&tag),
+            tag!(Body) => self.handle_start_body(&tag),
             tag!(Pre) => self.handle_start_pre(&tag),
             tag!(Table) => self.handle_start_table(&tag),
+            tag!(Colgroup) => self.handle_start_colgroup(&tag),
             tag!(Tr) => self.handle_start_tr(&tag),
             tag!(Td) => self.handle_start_td(&tag),
             tag!(Plaintext) => self.handle_start_plaintext(&tag),
@@ -105,6 +107,69 @@ where
         }
     }
 
+    fn handle_start_title(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InHead, InBody) => {
+                    return self.apply_generic_rcdata_element_rule(tag);
+                }
+                mode!(AfterHead) => {
+                    // TODO: Parse error.
+                    // TODO: Push the node pointed to by the head element pointer onto the stack of open elements.
+                    // TODO: Process the token using the rules for the "in head" insertion mode.
+                    // TODO: Remove the node pointed to by the head element pointer from the stack of open elements. (It might not be the current node at this point.)
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_script(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InHead) => {
+                    // In the "in head" insertion mode, the "appropriate place for
+                    // inserting a node" is always after the last child node of
+                    // the "head" at this point.  This means that we can simply
+                    // call `self.push_html_element(tag)`.
+                    //
+                    // We don't take care of the "script" element's "parser
+                    // document" and "force async" properties here.  They will
+                    // be set appropriately in push_html_element().
+                    self.push_html_element(tag);
+                    // TODO: If the parser was created as part of the HTML fragment parsing algorithm, then set the script element's already started to true. (fragment case)
+                    // TODO: If the parser was invoked via the document.write() or document.writeln() methods, then optionally set the script element's already started to true. (For example, the user agent might use this clause to prevent execution of cross-origin scripts inserted via document.write() under slow network conditions, or when the page has already taken a long time to load.)
+                    self.save_and_switch_to(mode!(Text));
+                    return Control::SwitchTo(InitialState::ScriptData);
+                }
+                mode!(AfterHead) => {
+                    // TODO: Parse error.
+                    self.reopen_head_element();
+                    // Process the token using the rules for the "in head" insertion mode.
+                    self.push_html_element(tag);
+                    self.save_and_switch_to(mode!(Text));
+                    return Control::SwitchTo(InitialState::ScriptData);
+                }
+                mode!(InBody, InTable, InSelect, InTemplate) => {
+                    // Process the token using the rules for the "in head" insertion mode.
+                    self.push_html_element(tag);
+                    self.save_and_switch_to(mode!(Text));
+                    return Control::SwitchTo(InitialState::ScriptData);
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
     fn handle_start_body(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
@@ -121,28 +186,6 @@ where
                     // TODO: If the second element on the stack of open elements is not a body element, if the stack of open elements has only one node on it, or if there is a template element on the stack of open elements, then ignore the token. (fragment case)
                     // TODO: Otherwise, set the frameset-ok flag to "not ok"; then, for each attribute on the token, check to see if the attribute is already present on the body element (the second element) on the stack of open elements, and if it is not, add the attribute and its corresponding value to that element.
                     self.frameset_ok = false;
-                    return Control::Continue;
-                }
-                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
-                    Control::Reprocess => (),
-                    ctrl => return ctrl,
-                },
-            }
-        }
-    }
-
-    fn handle_start_title(&mut self, tag: &Tag<'_>) -> Control {
-        loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
-            match self.mode {
-                mode!(InHead, InBody) => {
-                    return self.apply_generic_rcdata_element_rule(tag);
-                }
-                mode!(AfterHead) => {
-                    // TODO: Parse error.
-                    // TODO: Push the node pointed to by the head element pointer onto the stack of open elements.
-                    // TODO: Process the token using the rules for the "in head" insertion mode.
-                    // TODO: Remove the node pointed to by the head element pointer from the stack of open elements. (It might not be the current node at this point.)
                     return Control::Continue;
                 }
                 _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
@@ -198,6 +241,58 @@ where
         // TODO
     }
 
+    fn handle_start_colgroup(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TOOD: Parse error.
+                    // Ignore the token.
+                    return Control::Continue;
+                }
+                mode!(InTable) => {
+                    self.clear_stack_back_to_table_context();
+                    self.push_html_element(tag);
+                    self.switch_to(mode!(InColumnGroup));
+                    return Control::Continue;
+                }
+                mode!(InCaption) => {
+                    // TODO
+                    self.switch_to(mode!(InTable));
+                    // Reprocess the token.
+                }
+                mode!(InTableBody) => {
+                    // TODO
+                    self.clear_stack_back_to_table_body_context();
+                    self.pop_element();
+                    self.switch_to(mode!(InTable));
+                    // Reprocess the token.
+                }
+                mode!(InRow) => {
+                    // TODO
+                    self.clear_stack_back_to_table_row_context();
+                    self.pop_element();
+                    self.switch_to(mode!(InTableBody));
+                    // Reprocess the token.
+                }
+                mode!(InCell) => {
+                    // TODO
+                    self.close_cell();
+                    // Reprocess the token.
+                }
+                mode!(InTemplate) => {
+                    // TODO
+                    self.switch_to(mode!(InTable));
+                    // Reprocess the token.
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
     fn handle_start_tr(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
@@ -217,7 +312,7 @@ where
                     // TODO: If the stack of open elements does not have a caption element in table scope, this is a parse error; ignore the token. (fragment case)
                     // TODO: Generate implied end tags.
                     // TODO: Now, if the current node is not a caption element, then this is a parse error.
-                    // TODO: Pop elements from this stack until a caption element has been popped from the stack.
+                    // TODO: Pop elements from this stack until a caption element has been pop_elementped from the stack.
                     // TODO: Clear the list of active formatting elements up to the last marker.
                     self.switch_to(mode!(InTable));
                     // Reprocess the token.
@@ -232,7 +327,7 @@ where
                 mode!(InRow) => {
                     // TODO: If the stack of open elements does not have a tr element in table scope, this is a parse error; ignore the token.
                     self.clear_stack_back_to_table_row_context();
-                    self.pop();
+                    self.pop_element();
                     self.switch_to(mode!(InTableBody));
                     // Reprocess the token.
                 }
@@ -246,11 +341,11 @@ where
                     loop {
                         match self.context.local_name {
                             tag!(Select) => {
-                                self.pop();
+                                self.pop_element();
                                 break;
                             }
                             _ => {
-                                self.pop();
+                                self.pop_element();
                             }
                         }
                     }
@@ -322,12 +417,12 @@ where
         loop {
             match self.context.local_name {
                 tag!(Td, Th) => {
-                    self.pop();
+                    self.pop_element();
                     break;
                 }
                 _ => {
                     // TODO: Parse error.
-                    self.pop();
+                    self.pop_element();
                 }
             }
         }
@@ -402,9 +497,9 @@ where
                     // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink.)
                     // TODO: Insert a foreign element for the token, in the MathML namespace.
                     self.push_mathml_element(tag);
-                    // TODO: If the token has its self-closing flag set, pop the current node off the stack of open elements and acknowledge the token's self-closing flag.
+                    // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
                     if tag.self_closing {
-                        self.pop();
+                        self.pop_element();
                     }
                     return Control::Continue;
                 }
@@ -426,9 +521,9 @@ where
                     // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
                     // TODO: Insert a foreign element for the token, in the SVG namespace.
                     self.push_svg_element(tag, local_name);
-                    // TODO: If the token has its self-closing flag set, pop the current node off the stack of open elements and acknowledge the token's self-closing flag.
+                    // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
                     if tag.self_closing {
-                        self.pop();
+                        self.pop_element();
                     }
                     return Control::Continue;
                 }
@@ -474,9 +569,9 @@ where
         namespace: Namespace,
     ) -> Control {
         // TODO: Parse error.
-        // TODO: Enable foster parenting,
+        self.foster_parenting = true;
         let ctrl = self.apply_any_other_start_tag_rule_on_in_body(tag, namespace);
-        // TODO: and then disable foster parenting.
+        self.foster_parenting = false;
         ctrl
     }
 

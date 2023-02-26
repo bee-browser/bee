@@ -50,6 +50,7 @@ src/tokenizer/%.json: data/tokenizer/%.test scripts/tokenizer.json.js
 TREE_CONSTRUCTION_TEST_NAMES := \
   comments01 \
   doctype01 \
+  domjs_unsafe \
   entities01 \
   entities02 \
   plain_text_unsafe

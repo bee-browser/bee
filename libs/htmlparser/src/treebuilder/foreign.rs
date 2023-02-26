@@ -70,12 +70,29 @@ where
                         if self.context.html_integration_pont {
                             break;
                         }
-                        self.remove_element();
+                        self.pop_element();
                     }
                     // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
                     self.handle_start_tag(tag)
                 }
-                tag!(Font) => Control::Continue,
+                tag!(Font) if tag.has_any_attributes(&["color", "face", "size"]) => {
+                    // TODO: Parse error.
+                    // TODO: While the current node is not a MathML text integration point, an HTML integration point, or an element in the HTML namespace, pop elements from the stack of open elements.
+                    loop {
+                        if let Namespace::Html = self.context.namespace {
+                            break;
+                        }
+                        if self.context.mathml_text_integration_point {
+                            break;
+                        }
+                        if self.context.html_integration_pont {
+                            break;
+                        }
+                        self.pop_element();
+                    }
+                    // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
+                    self.handle_start_tag(tag)
+                }
                 local_name => {
                     // TODO
                     match self.context.namespace {
@@ -100,18 +117,18 @@ where
                         if self.context.html_integration_pont {
                             break;
                         }
-                        self.pop();
+                        self.pop_element();
                     }
                     // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
                     self.handle_start_tag(tag)
                 }
                 tag!(Script) if self.context.svg_script => {
-                    self.pop();
+                    self.pop_element();
                     // TODO
                     Control::Continue
                 }
                 _ => {
-                    self.pop();
+                    self.pop_element();
                     // TODO
                     Control::Continue
                 }

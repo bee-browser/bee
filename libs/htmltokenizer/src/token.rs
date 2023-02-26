@@ -74,6 +74,10 @@ impl<'a> Tag<'a> {
         }
     }
 
+    pub fn has_any_attributes(&self, names: &[&str]) -> bool {
+        self.attrs().any(|(name, _)| names.contains(&name))
+    }
+
     pub fn attrs(&self) -> Attrs<'a, '_> {
         Attrs::new(self.attrs.buffer, &self.attrs.attrs)
     }

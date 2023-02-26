@@ -11,6 +11,7 @@ mod text;
 use crate::local_names::LocalName;
 use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
+use bee_htmltokenizer::InitialState;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Namespace {
@@ -56,14 +57,19 @@ pub trait DocumentWriter {
 
     fn set_attribute(&mut self, name: &str, value: &str);
 
+    /// Reopen the "head" element which has already been closed.
+    fn reopen_head_element(&mut self);
+
     /// Removes a node.
     fn remove_element(&mut self) -> TreeBuildContext;
 
     /// Pops a node from the stack.
-    fn pop(&mut self) -> TreeBuildContext;
+    fn pop_element(&mut self) -> TreeBuildContext;
 
     /// Creates a node for a text and append it as a child node.
     fn append_text(&mut self, text: &str);
+
+    fn insert_text_to_foster_parent(&mut self, text: &str);
 
     /// Creates a node for a comment and append it as a child node.
     fn append_comment(&mut self, comment: &Comment<'_>);
@@ -85,12 +91,14 @@ pub struct TreeBuilder<W> {
     quirks_mode_changeable: bool,
     frameset_ok: bool,
     ignore_lf: bool,
+    foster_parenting: bool,
 }
 
 pub enum Control {
     Reprocess,
     Continue,
     SwitchTo(bee_htmltokenizer::InitialState),
+    ExecuteScript,
     Done,
 }
 
@@ -112,6 +120,7 @@ where
             quirks_mode_changeable: true,
             frameset_ok: true,
             ignore_lf: false,
+            foster_parenting: false,
         }
     }
 
@@ -168,7 +177,7 @@ where
                     self.switch_to(mode!(InHead));
                 }
                 mode!(InHead) => {
-                    self.pop();
+                    self.pop_element();
                     self.switch_to(mode!(AfterHead));
                 }
                 mode!(AfterHead) => {
@@ -183,7 +192,7 @@ where
                 mode!(Text) => {
                     // TODO: Parse error.
                     // TODO: If the current node is a script element, then set its already started to true.
-                    self.pop();
+                    self.pop_element();
                     self.switch_to_original_mode();
                 }
                 mode!(AfterBody, AfterFrameset, AfterAfterBody, AfterAfterFrameset) => {
@@ -231,7 +240,7 @@ where
             }
             mode!(InHead) => {
                 // TODO: Pop the current node (which will be the head element) off the stack of open elements.
-                self.pop();
+                self.pop_element();
                 self.switch_to(mode!(AfterHead));
                 Control::Reprocess
             }
@@ -247,11 +256,27 @@ where
                 self.switch_to(mode!(InBody));
                 Control::Reprocess
             }
-            mode!(InColumnGroup) => {
-                // TODO: If the current node is not a colgroup element, then this is a parse error; ignore the token.
-                // TODO: Otherwise, pop the current node from the stack of open elements.
-                self.switch_to(mode!(InTable));
+            mode!(InTableText) => {
+                // TODO
+                if !self.text.is_empty() {
+                    self.insert_text_to_foster_parent();
+                }
+                self.switch_to_original_mode();
                 Control::Reprocess
+            }
+            mode!(InColumnGroup) => {
+                match self.context.local_name {
+                    LocalName::Colgroup => {
+                        self.pop_element();
+                        self.switch_to(mode!(InTable));
+                        Control::Reprocess
+                    }
+                    _ => {
+                        // TODO: Parse error.
+                        // Ignore the token.
+                        Control::Continue
+                    }
+                }
             }
             mode!(
                 InSelect,
@@ -273,7 +298,6 @@ where
                 InBody,
                 Text,
                 InTable,
-                InTableText,
                 InCaption,
                 InTableBody,
                 InRow,
@@ -416,15 +440,21 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
+    fn reopen_head_element(&mut self) {
+        self.append_text_if_exists();
+        self.reopen_head_element();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
     fn remove_element(&mut self) {
         self.append_text_if_exists();
         self.context = self.writer.remove_element();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn pop(&mut self) {
+    fn pop_element(&mut self) {
         self.append_text_if_exists();
-        self.context = self.writer.pop();
+        self.context = self.writer.pop_element();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -450,6 +480,13 @@ where
             self.writer.append_text(self.text.as_str());
             self.text.clear();
         }
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn insert_text_to_foster_parent(&mut self) {
+        debug_assert!(!self.text.is_empty());
+        self.writer.insert_text_to_foster_parent(self.text.as_str());
+        self.text.clear();
     }
 }
 

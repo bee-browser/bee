@@ -10,7 +10,9 @@ where
         match LocalName::lookup(tag.name) {
             tag!(Html) => self.handle_end_html(&tag),
             tag!(Head) => self.handle_end_head(&tag),
+            tag!(Script) => self.handle_end_script(&tag),
             tag!(Body) => self.handle_end_body(&tag),
+            tag!(Colgroup) => self.handle_end_colgroup(&tag),
             tag!(Frameset) => self.handle_end_frameset(&tag),
             _ => loop {
                 tracing::debug!(mode = ?self.mode, ?tag);
@@ -46,9 +48,27 @@ where
             match self.mode {
                 mode!(InHead) => {
                     // TODO: Pop the current node (which will be the head element) off the stack of open elements.
-                    self.pop();
+                    self.pop_element();
                     self.switch_to(mode!(AfterHead));
                     return Control::Continue;
+                }
+                _ => match self.handle_any_other_end_tag(tag) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_end_script(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(Text) => {
+                    // TODO: If the active speculative HTML parser is null and the JavaScript execution context stack is empty, then perform a microtask checkpoint.
+                    self.pop_element();
+                    self.switch_to_original_mode();
+                    return Control::ExecuteScript;
                 }
                 _ => match self.handle_any_other_end_tag(tag) {
                     Control::Reprocess => (),
@@ -65,8 +85,38 @@ where
                 mode!(InBody) => {
                     // TODO: If the stack of open elements does not have a body element in scope, this is a parse error; ignore the token.
                     // TODO: Otherwise
-                    self.pop();
+                    self.pop_element();
                     self.switch_to(mode!(AfterBody));
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_end_tag(tag) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_end_colgroup(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InTable, InCaption, InTableBody, InRow, InCell) => {
+                    // TODO: Parse error.
+                    // Ignore the token.
+                    return Control::Continue;
+                }
+                mode!(InColumnGroup) => {
+                    match self.context.local_name {
+                        LocalName::Colgroup => {
+                            self.pop_element();
+                            self.switch_to(mode!(InTable));
+                        }
+                        _ => {
+                            // TODO: Parse error.
+                            // Ignore the token.
+                        }
+                    }
                     return Control::Continue;
                 }
                 _ => match self.handle_any_other_end_tag(tag) {
@@ -83,7 +133,7 @@ where
             match self.mode {
                 mode!(InFrameset) => {
                     // TODO: If the current node is the root html element, then this is a parse error; ignore the token. (fragment case)
-                    self.pop();
+                    self.pop_element();
                     // TODO: If the parser was not created as part of the HTML fragment parsing algorithm (fragment case), and the current node is no longer a frameset element, then switch the insertion mode to "after frameset".
                     self.switch_to(mode!(AfterFrameset));
                     return Control::Continue;
@@ -112,11 +162,11 @@ where
             }
             mode!(InBody, InCaption, InCell) => {
                 // TODO
-                self.pop();
+                self.pop_element();
                 return Control::Continue;
             }
             mode!(Text) => {
-                self.pop();
+                self.pop_element();
                 self.switch_to_original_mode();
                 return Control::Continue;
             }
@@ -125,7 +175,7 @@ where
                 // TODO: Enable foster parenting,
                 // TODO: process the token using the rules for the "in body" insertion mode,
                 // TODO: and then disable foster parenting.
-                self.pop();
+                self.pop_element();
                 return Control::Continue;
             }
             _ => self.handle_anything_else(),
