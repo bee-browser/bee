@@ -4,10 +4,11 @@ on:
   pull_request:
     branches:
       - main
+      - release
     paths-ignore:
       - '**.md'
 
 jobs:
   build:
-    uses: bee-browser/prototype/.github/workflows/build.yml@main
+    uses: ./.github/workflows/build.yml
     secrets: inherit
