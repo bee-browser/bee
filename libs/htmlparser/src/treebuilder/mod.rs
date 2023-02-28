@@ -22,23 +22,29 @@ pub enum Namespace {
 
 #[derive(Clone, Debug)]
 pub struct TreeBuildContext {
+    reset_mode: InsertionMode,
     namespace: Namespace,
     local_name: LocalName,
     mathml_text_integration_point: bool,
     svg_integration_point: bool,
     svg_script: bool,
     html_integration_pont: bool,
+    has_p_element_in_button_scope: bool,
+    has_select_element_in_select_scope: bool,
 }
 
 impl Default for TreeBuildContext {
     fn default() -> Self {
         TreeBuildContext {
+            reset_mode: mode!(InBody),
             namespace: Namespace::Html,
             local_name: LocalName::Unknown,
             mathml_text_integration_point: false,
             svg_integration_point: false,
             svg_script: false,
             html_integration_pont: false,
+            has_p_element_in_button_scope: false,
+            has_select_element_in_select_scope: false,
         }
     }
 }
@@ -370,6 +376,67 @@ where
         self.context.svg_integration_point = false;
         self.context.svg_script = false;
         self.context.html_integration_pont = false;
+        match self.context.local_name {
+            tag!(Applet) => {
+                self.context.has_p_element_in_button_scope = false;
+            }
+            tag!(Body) => {
+                self.context.reset_mode = mode!(InBody);
+            }
+            tag!(Caption) => {
+                self.context.reset_mode = mode!(InCaption);
+                self.context.has_p_element_in_button_scope = false;
+            }
+            tag!(Colgroup) => {
+                self.context.reset_mode = mode!(InColumnGroup);
+            }
+            tag!(Select) => {
+                // TODO
+                self.context.reset_mode = mode!(InSelect);
+                self.context.has_select_element_in_select_scope = true;
+            }
+            tag!(Table) => {
+                self.context.reset_mode = mode!(InTable);
+                self.context.has_p_element_in_button_scope = false;
+            }
+            tag!(Td, Th) => {
+                self.context.reset_mode = mode!(InCell);
+                self.context.has_p_element_in_button_scope = false;
+            }
+            tag!(Template) => {
+                // TODO: switch the insertion mode to the current template insertion mode
+                self.context.has_p_element_in_button_scope = false;
+            }
+            tag!(Tr) => {
+                self.context.reset_mode = mode!(InRow);
+            }
+            tag!(Tbody, Thead, Tfoot) => {
+                self.context.reset_mode = mode!(InTableBody);
+            }
+            tag!(Marquee) => {
+                self.context.has_p_element_in_button_scope = false;
+            }
+            tag!(Head) => {
+                self.context.reset_mode = mode!(InHead);
+            }
+            tag!(Optgroup) => {
+                self.context.has_select_element_in_select_scope = false;
+            }
+            tag!(Option) => {
+                self.context.has_select_element_in_select_scope = false;
+            }
+            tag!(P) => {
+                self.context.has_p_element_in_button_scope = true;
+            }
+            tag!(Frameset) => {
+                self.context.reset_mode = mode!(InFrameset);
+            }
+            tag!(Html) => {
+                self.context.reset_mode = mode!(AfterHead);
+                self.context.has_p_element_in_button_scope = false;
+            }
+            _ => {}
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -390,6 +457,7 @@ where
                 self.context.svg_integration_point = false;
                 self.context.svg_script = false;
                 self.context.html_integration_pont = false;
+                self.context.has_p_element_in_button_scope = false;
             }
             tag!(mathml: AnnotationXml) => {
                 self.context.mathml_text_integration_point = false;
@@ -431,6 +499,7 @@ where
             tag!(svg: ForeignObject, Desc, Title) => {
                 self.context.svg_script = false;
                 self.context.html_integration_pont = true;
+                self.context.has_p_element_in_button_scope = false;
             }
             _ => {
                 self.context.svg_script = false;
@@ -443,6 +512,26 @@ where
     fn reopen_head_element(&mut self) {
         self.append_text_if_exists();
         self.reopen_head_element();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn close_p_element(&mut self) {
+        const NAMES: &[LocalName] = &tags![Dd, Dt, Li, Optgroup, Option, Rb, Rp, Rt, Rtc];
+        self.close_elements(NAMES);
+        if self.context.local_name != LocalName::P {
+            // TODO: Parse error.
+        }
+        while self.context.local_name != LocalName::P {
+            self.pop_element();
+        }
+        self.pop_element(); // pop a <p>
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn close_elements(&mut self, names: &[LocalName]) {
+        while names.contains(&self.context.local_name) {
+            self.pop_element();
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]

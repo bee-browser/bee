@@ -12,6 +12,7 @@ where
             tag!(Head) => self.handle_end_head(&tag),
             tag!(Script) => self.handle_end_script(&tag),
             tag!(Body) => self.handle_end_body(&tag),
+            tag!(P) => self.handle_end_p(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
             tag!(Frameset) => self.handle_end_frameset(&tag),
             _ => loop {
@@ -87,6 +88,26 @@ where
                     // TODO: Otherwise
                     self.pop_element();
                     self.switch_to(mode!(AfterBody));
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_end_tag(tag) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_end_p(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    if self.context.has_p_element_in_button_scope {
+                        // TODO: Parse error.
+                        self.push_html_element(&Tag::with_no_attrs("p"));
+                    }
+                    self.close_p_element();
                     return Control::Continue;
                 }
                 _ => match self.handle_any_other_end_tag(tag) {

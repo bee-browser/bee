@@ -146,8 +146,8 @@ impl<'a> TreeValidator<'a> {
 
 impl<'a> DocumentWriter for TreeValidator<'a> {
     fn append_doctype(&mut self, doctype: &Doctype<'_>) {
-        tracing::debug!(?doctype);
         let index = self.nodes.len();
+        tracing::debug!(index, ?doctype);
         self.nodes.push(Node::DocumentType {
             name: doctype.name.map(str::to_string),
             public_id: doctype.public_id.map(str::to_string),
@@ -158,9 +158,9 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
     }
 
     fn push_element(&mut self, name: &str, namespace: Namespace, context: TreeBuildContext) {
-        tracing::debug!(?name, ?namespace);
         let parent_index = self.stack.last().unwrap().0;
         let index = self.nodes.len();
+        tracing::debug!(index, parent_index, ?name, ?namespace);
         self.nodes.push(Node::Element {
             name: name.into(),
             attrs: vec![],
@@ -188,8 +188,8 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
     }
 
     fn set_attribute(&mut self, name: &str, value: &str) {
-        tracing::debug!(?name, ?value);
         let (index, _) = self.stack.last().unwrap();
+        tracing::debug!(index, attr.name = ?name, attr.value = ?value);
         if let Some(Node::Element { ref mut attrs, .. }) = self.nodes.get_mut(*index) {
             attrs.push((name.to_string(), value.to_string()));
         }
@@ -205,7 +205,7 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         let (index, context) = self.stack.pop().unwrap();
         self.remove(index);
         let node = self.nodes.get(index).unwrap();
-        tracing::debug!(?node);
+        tracing::debug!(index, ?node);
         match context {
             OpenContext::Normal {
                 context,
@@ -221,7 +221,7 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
     fn pop_element(&mut self) -> TreeBuildContext {
         let (index, context) = self.stack.pop().unwrap();
         let node = self.nodes.get(index).unwrap();
-        tracing::debug!(?node);
+        tracing::debug!(index, ?node);
         match context {
             OpenContext::Normal {
                 context,
@@ -235,18 +235,18 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
     }
 
     fn append_text(&mut self, text: &str) {
-        tracing::debug!(?text);
         let index = self.nodes.len();
+        tracing::debug!(index, ?text);
         self.nodes.push(Node::Text(text.to_string()));
         self.append(index);
     }
 
     fn insert_text_to_foster_parent(&mut self, text: &str) {
-        tracing::debug!(?text);
         assert!(self.last_table_parent_index.is_some());
         let index = self.nodes.len();
         self.nodes.push(Node::Text(text.to_string()));
         let parent_index = self.last_table_parent_index.unwrap();
+        tracing::debug!(index, parent_index, ?text);
         match self.nodes.get_mut(parent_index).unwrap() {
             Node::Element {
                 ref mut child_nodes,

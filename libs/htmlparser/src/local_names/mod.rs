@@ -8,7 +8,7 @@
 use phf::phf_map;
 use phf::Map;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LocalName {
     A,
     Abbr,

@@ -80,7 +80,7 @@ build: format codegen $(BUILD_TARGETS)
 
 .PHONY: test
 test: format codegen install-nextest
-	cargo nextest run --release --all-features
+	cargo nextest run --all-features
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
@@ -89,10 +89,6 @@ clean: $(CLEAN_TARGETS)
 .PHONY: debug-build
 debug-build: format codegen $(BUILD_TARGETS)
 	cargo build
-
-.PHONY: debug-test
-debug-test: format codegen install-nextest
-	cargo nextest run --all-features
 
 .PHONY: coverage-test
 coverage-test: format codegen
@@ -138,19 +134,19 @@ github-workflows:
 
 .PHONY: $(BUILD_TARGETS)
 $(BUILD_TARGETS):
-	@make -C $(subst build-,,$@) build
+	@make -s -C $(subst build-,,$@) build
 
 .PHONY: $(CODEGEN_TARGETS)
 $(CODEGEN_TARGETS):
-	@make -C $(subst codegen-,,$@) codegen
+	@make -s -C $(subst codegen-,,$@) codegen
 
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):
-	@make -C $(subst clean-,,$@) clean
+	@make -s -C $(subst clean-,,$@) clean
 
 .PHONY: $(UPDATE_DEPS_TARGETS)
 $(UPDATE_DEPS_TARGETS):
-	@make -C $(subst update-deps-,,$@) update-deps
+	@make -s -C $(subst update-deps-,,$@) update-deps
 
 $(PROJDIR)/target/coverage:
 	@mkdir -p $@

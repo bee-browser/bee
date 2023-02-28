@@ -11,9 +11,14 @@ where
             tag!(Html) => self.handle_start_html(&tag),
             tag!(Head) => self.handle_start_head(&tag),
             tag!(Title) => self.handle_start_title(&tag),
+            tag!(Style) => self.handle_start_style(&tag),
             tag!(Script) => self.handle_start_script(&tag),
             tag!(Body) => self.handle_start_body(&tag),
+            tag!(B) => self.handle_start_b(&tag),
+            tag!(P) => self.handle_start_p(&tag),
             tag!(Pre) => self.handle_start_pre(&tag),
+            tag!(Input) => self.handle_start_input(&tag),
+            tag!(Textarea) => self.handle_start_textarea(&tag),
             tag!(Table) => self.handle_start_table(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
             tag!(Tr) => self.handle_start_tr(&tag),
@@ -129,6 +134,27 @@ where
         }
     }
 
+    fn handle_start_style(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InHead, InHeadNoscript, InBody, InTable, InTemplate) => {
+                    return self.apply_generic_raw_text_element_rule(tag);
+                }
+                mode!(AfterHead) => {
+                    // TODO: Parse error.
+                    self.reopen_head_element();
+                    // Process the token using the rules for the "in head" insertion mode.
+                    return self.apply_generic_raw_text_element_rule(tag);
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
     fn handle_start_script(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
@@ -196,6 +222,46 @@ where
         }
     }
 
+    fn handle_start_b(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    if self.context.has_p_element_in_button_scope {
+                        self.close_p_element();
+                    }
+                    // TODO: Insert an HTML element for the token.
+                    self.push_html_element(tag);
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_p(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    if self.context.has_p_element_in_button_scope {
+                        self.close_p_element();
+                    }
+                    // TODO: Insert an HTML element for the token.
+                    self.push_html_element(tag);
+                    return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
     fn handle_start_pre(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
@@ -207,6 +273,118 @@ where
                     self.ignore_lf = true;
                     self.frameset_ok = false;
                     return Control::Continue;
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn handle_start_input(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TODO: Reconstruct the active formatting elements, if any.
+                    // TODO: Insert an HTML element for the token.
+                    self.push_html_element(tag);
+                    self.pop_element();
+                    if Self::is_visible_input(tag) {
+                        self.frameset_ok = false;
+                    }
+                    return Control::Continue;
+                }
+                mode!(InTable) => {
+                    if Self::is_visible_input(tag) {
+                        // act as described in the "anything else" entry below.
+                        self.foster_parenting = true;
+                        // TODO: Reconstruct the active formatting elements, if any.
+                        // TODO: Insert an HTML element for the token.
+                        self.push_html_element(tag);
+                        self.pop_element();
+                        self.frameset_ok = false;
+                        self.foster_parenting = false;
+                        return Control::Continue;
+                    }
+                    // TODO: Parse error.
+                    self.push_html_element(tag);
+                    self.pop_element();
+                    if tag.self_closing {
+                        // TODO: Acknowledge the token's self-closing flag
+                    }
+                    return Control::Continue;
+                }
+                mode!(InSelect) => {
+                    // TODO: Parse error.
+                    if !self.context.has_select_element_in_select_scope {
+                        // Ignore the token.
+                        return Control::Continue;
+                    }
+                    loop {
+                        match self.context.local_name {
+                            tag!(Select) => {
+                                self.pop_element();
+                                break;
+                            }
+                            _ => {
+                                self.pop_element();
+                            }
+                        }
+                    }
+                    self.reset_insertion_mode_appropriately();
+                    // Reprocess the token.
+                }
+                _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
+                    Control::Reprocess => (),
+                    ctrl => return ctrl,
+                },
+            }
+        }
+    }
+
+    fn is_visible_input(tag: &Tag<'_>) -> bool {
+        debug_assert!(tag.name == "input");
+        for (name, value) in tag.attrs() {
+            if name == "type" {
+                if value.eq_ignore_ascii_case("hidden") {
+                    return false;
+                }
+                return true;
+            }
+        }
+        true
+    }
+
+    fn handle_start_textarea(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                mode!(InBody) => {
+                    // TODO: Insert an HTML element for the token.
+                    self.push_html_element(tag);
+                    self.ignore_lf = true;
+                    self.frameset_ok = false;
+                    self.save_and_switch_to(mode!(Text));
+                    return Control::SwitchTo(InitialState::Rcdata);
+                }
+                mode!(InSelect) => {
+                    // TODO: Parse error.
+                    // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
+                    loop {
+                        match self.context.local_name {
+                            LocalName::Select => {
+                                self.pop_element();
+                                break;
+                            }
+                            _ => {
+                                self.pop_element();
+                            }
+                        }
+                    }
+                    self.reset_insertion_mode_appropriately();
+                    // Reprocess the token.
                 }
                 _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
                     Control::Reprocess => (),
@@ -382,7 +560,7 @@ where
     }
 
     fn reset_insertion_mode_appropriately(&mut self) {
-        // TODO: Reset the insertion mode appropriately.
+        self.switch_to(self.context.reset_mode);
     }
 
     fn clear_stack_back_to_table_context(&mut self) {
@@ -586,5 +764,11 @@ where
         self.push_html_element(tag);
         self.save_and_switch_to(mode!(Text));
         Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata)
+    }
+
+    fn apply_generic_raw_text_element_rule(&mut self, tag: &Tag<'_>) -> Control {
+        self.push_html_element(tag);
+        self.save_and_switch_to(mode!(Text));
+        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext)
     }
 }
