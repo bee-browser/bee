@@ -28,6 +28,18 @@ macro_rules! tag {
     };
 }
 
+macro_rules! tags {
+    ($tag:ident) => {
+        tag!($tag)
+    };
+    ($($tags:ident,)+) => {
+        tags!($($tags:ident),+)
+    };
+    ($($tags:ident),+) => {
+        [$(tags!($tags)),+]
+    };
+}
+
 macro_rules! char_class {
     ($c:literal) => {
         $c

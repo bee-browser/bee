@@ -1,4 +1,4 @@
-BEE_TOOLS_CODEGEN := ../../tools/bin/bee-tools-codegen
+BEE_TOOLS := ../../tools/bin/bee-tools
 
 .PHONY: all
 all: update
@@ -31,10 +31,7 @@ codegen-tokenizer: src/tokenizer/mod.rs $(TOKENIZER_TESTS)
 
 src/tokenizer/mod.rs: FORCE
 	@echo 'Generating $(abspath $@)...'
-	@echo '//<coverage:exclude>' >$@
-	@echo 'mod helper;' >>$@
-	@for name in $(TOKENIZER_TEST_NAMES); do echo "mod $${name}_test;" >>$@; done
-	@echo '//</coverage:exclude>' >>$@
+	@echo -n $(TOKENIZER_TEST_NAMES) | jq -Rsc 'split(" ")' | $(BEE_TOOLS) codegen --input-stdin src/tokenizer/mod.rs.hbs | $(BEE_TOOLS) update-file $@
 
 src/tokenizer/%_test.rs: src/tokenizer/%.json scripts/tokenizer.rs.hbs
 	@echo 'Generating $(abspath $@)...'
@@ -53,6 +50,7 @@ TREE_CONSTRUCTION_TEST_NAMES := \
   domjs_unsafe \
   entities01 \
   entities02 \
+  html5test_com \
   plain_text_unsafe
 TREE_CONSTRUCTION_TESTS := $(addprefix src/tree_construction/,$(addsuffix _test.rs,$(TREE_CONSTRUCTION_TEST_NAMES)))
 
@@ -61,14 +59,11 @@ codegen-tree-construction: src/tree_construction/mod.rs $(TREE_CONSTRUCTION_TEST
 
 src/tree_construction/mod.rs: FORCE
 	@echo 'Generating $(abspath $@)...'
-	@echo '//<coverage:exclude>' >$@
-	@echo 'mod helper;' >>$@
-	@for name in $(TREE_CONSTRUCTION_TEST_NAMES); do echo "mod $${name}_test;" >>$@; done
-	@echo '//</coverage:exclude>' >>$@
+	@echo -n $(TREE_CONSTRUCTION_TEST_NAMES) | jq -Rsc 'split(" ")' | $(BEE_TOOLS) codegen --input-stdin src/tree_construction/mod.rs.hbs | $(BEE_TOOLS) update-file $@
 
 src/tree_construction/%_test.rs: src/tree_construction/%.json scripts/tree_construction.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS_CODEGEN) scripts/tree_construction.rs.hbs $< >$@
+	@$(BEE_TOOLS) codegen scripts/tree_construction.rs.hbs $< >$@
 
 .PRECIOUS: src/tree_construction/%.json
 src/tree_construction/%.json: data/tree_construction/%.dat scripts/tree_construction.json.js
