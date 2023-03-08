@@ -140,7 +140,7 @@ where
                             // TODO: Parse error.
                             self.append_char('\u{FFFD}');
                         }
-                        whitespace!() => {
+                        char_class!(whitespace) => {
                             self.append_char(c);
                         }
                         _ => {

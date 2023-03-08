@@ -86,10 +86,7 @@ if (test.hasData()) {
   tests.push(test);
 }
 
-console.log(JSON.stringify({
-  name,
-  tests,
-}));
+console.log(JSON.stringify({ name, tests }, null, 2));
 
 // helper functions
 
