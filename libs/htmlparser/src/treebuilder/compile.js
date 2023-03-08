@@ -43,16 +43,6 @@ async function main(options, name, ...tokens) {
   console.log(JSON.stringify(data));
 }
 
-function getLabelFromToken(token) {
-  let label = token;
-  if (token.startsWith('</')) {
-    label = 'endTag';
-  } else if (token.startsWith('<')) {
-    label = 'startTag';
-  }
-  return label;
-}
-
 function normalize(spec) {
   let modes = {};
   for (let mode of spec.modes) {
@@ -190,7 +180,29 @@ function render(spec, modes, ids, token, run, arrow) {
     noEscape: true,
     strict: true,
   });
-  return template();
+  return template({
+    TAG_NAME: getTagNameFromToken(token),
+  });
+}
+
+function getLabelFromToken(token) {
+  if (token.startsWith('</')) {
+    return 'endTag';
+  }
+  if (token.startsWith('<')) {
+    return 'startTag';
+  }
+  return token;
+}
+
+function getTagNameFromToken(token) {
+  if (token.startsWith('</')) {
+    return token.slice(2, -1);
+  }
+  if (token.startsWith('<')) {
+    return token.slice(1, -1);
+  }
+  return undefined;
 }
 
 function logRule(rule) {

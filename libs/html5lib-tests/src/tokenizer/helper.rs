@@ -15,7 +15,7 @@ pub fn tokenize(json: &'static str) {
     let mut tokenizer = Tokenizer::new();
     tokenizer.set_initial_state(test.initial_state);
     if let Some(ref tag_name) = test.last_start_tag {
-        tokenizer.set_last_start_tag(tag_name.clone());
+        tokenizer.set_last_start_tag(tag_name.as_str());
     }
     tokenizer.feed_data(test.input_utf16.clone());
     tokenizer.feed_end();
