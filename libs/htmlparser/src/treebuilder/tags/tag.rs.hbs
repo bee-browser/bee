@@ -1,0 +1,54 @@
+use super::*;
+
+impl<W> TreeBuilder<W>
+where
+    W: DocumentWriter,
+{
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub fn handle_start_{{{name}}}(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                {{#each tokens.startTag}}
+                mode!({{{ join modes ', '}}}) => {
+                    {{#if run}}
+                    let ctrl = {
+                        {{{run}}}
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return ctrl,
+                    }
+                    {{else}}
+                    unreachable!();
+                    {{/if}}
+                }
+                {{/each}}
+            }
+        }
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    pub fn handle_end_{{{name}}}(&mut self, tag: &Tag<'_>) -> Control {
+        loop {
+            tracing::debug!(mode = ?self.mode, ?tag);
+            match self.mode {
+                {{#each tokens.endTag}}
+                mode!({{{ join modes ', '}}}) => {
+                    {{#if run}}
+                    let ctrl = {
+                        {{{run}}}
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return ctrl,
+                    }
+                    {{else}}
+                    unreachable!();
+                    {{/if}}
+                }
+                {{/each}}
+            }
+        }
+    }
+}

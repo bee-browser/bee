@@ -19,6 +19,7 @@ struct TreeValidator<'a> {
     stack: Vec<(usize, OpenContext)>,
     head_index: Option<usize>,
     last_table_parent_index: Option<usize>,
+    foster_parenting: bool,
 }
 
 enum OpenContext {
@@ -40,6 +41,7 @@ impl<'a> TreeValidator<'a> {
             stack: vec![(0, OpenContext::Document)],
             head_index: None,
             last_table_parent_index: None,
+            foster_parenting: false,
         }
     }
 
@@ -145,6 +147,14 @@ impl<'a> TreeValidator<'a> {
 }
 
 impl<'a> DocumentWriter for TreeValidator<'a> {
+    fn enable_foster_parenting(&mut self) {
+        self.foster_parenting = true;
+    }
+
+    fn disable_foster_parenting(&mut self) {
+        self.foster_parenting = false;
+    }
+
     fn append_doctype(&mut self, doctype: &Doctype<'_>) {
         let index = self.nodes.len();
         tracing::debug!(index, ?doctype);
@@ -239,25 +249,6 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         tracing::debug!(index, ?text);
         self.nodes.push(Node::Text(text.to_string()));
         self.append(index);
-    }
-
-    fn insert_text_to_foster_parent(&mut self, text: &str) {
-        assert!(self.last_table_parent_index.is_some());
-        let index = self.nodes.len();
-        self.nodes.push(Node::Text(text.to_string()));
-        let parent_index = self.last_table_parent_index.unwrap();
-        tracing::debug!(index, parent_index, ?text);
-        match self.nodes.get_mut(parent_index).unwrap() {
-            Node::Element {
-                ref mut child_nodes,
-                ..
-            } => {
-                assert!(!child_nodes.is_empty());
-                let insertion_point = child_nodes.len() - 1;
-                child_nodes.insert(insertion_point, index);
-            }
-            _ => unreachable!(),
-        }
     }
 
     fn append_comment(&mut self, comment: &Comment<'_>) {

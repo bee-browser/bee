@@ -12,6 +12,9 @@ max_line_length = 99
 [*.rs]
 indent_size = 4
 
+[*.rs.hbs]
+indent_size = 4
+
 [*.html.hbs]
 emacs_mode = html
 

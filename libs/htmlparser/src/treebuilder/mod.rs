@@ -3,9 +3,9 @@ mod macros;
 
 mod comment;
 mod doctype;
-mod end_tag;
+mod eof;
 mod foreign;
-mod start_tag;
+mod tags;
 mod text;
 
 use crate::local_names::LocalName;
@@ -54,6 +54,14 @@ impl Default for TreeBuildContext {
 /// The instance implementing this trait needs to implement some kind of stack
 /// machine that supports the following operations
 pub trait DocumentWriter {
+    /// Enable the foster parenting.
+    ///
+    /// Initially, the foster parenting is disabled.
+    fn enable_foster_parenting(&mut self);
+
+    /// Disable the foster parenting.
+    fn disable_foster_parenting(&mut self);
+
     /// Creates a node for a doctype and append it as a child node.
     fn append_doctype(&mut self, doctype: &Doctype<'_>);
 
@@ -75,8 +83,6 @@ pub trait DocumentWriter {
     /// Creates a node for a text and append it as a child node.
     fn append_text(&mut self, text: &str);
 
-    fn insert_text_to_foster_parent(&mut self, text: &str);
-
     /// Creates a node for a comment and append it as a child node.
     fn append_comment(&mut self, comment: &Comment<'_>);
 
@@ -97,7 +103,6 @@ pub struct TreeBuilder<W> {
     quirks_mode_changeable: bool,
     frameset_ok: bool,
     ignore_lf: bool,
-    foster_parenting: bool,
 }
 
 pub enum Control {
@@ -126,7 +131,6 @@ where
             quirks_mode_changeable: true,
             frameset_ok: true,
             ignore_lf: false,
-            foster_parenting: false,
         }
     }
 
@@ -154,175 +158,14 @@ where
                 Token::Text(text) => self.handle_text(text),
                 Token::Comment(comment) => self.handle_comment(comment),
                 Token::Error(error) => self.handle_error(error),
-                Token::End => self.handle_end(),
+                Token::End => self.handle_eof(),
             }
         }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn handle_error(&mut self, error: Error) -> Control {
-        // TODO
-        Control::Continue
-    }
-
-    #[tracing::instrument(level = "debug", skip_all)]
-    fn handle_end(&mut self) -> Control {
-        self.ignore_lf = false;
-        loop {
-            tracing::debug!(?self.mode);
-            match self.mode {
-                mode!(Initial) => {
-                    self.switch_to(mode!(BeforeHtml));
-                }
-                mode!(BeforeHtml) => {
-                    self.push_html_element(&Tag::with_no_attrs("html"));
-                    self.switch_to(mode!(BeforeHead));
-                }
-                mode!(BeforeHead) => {
-                    self.push_html_element(&Tag::with_no_attrs("head"));
-                    self.switch_to(mode!(InHead));
-                }
-                mode!(InHead) => {
-                    self.pop_element();
-                    self.switch_to(mode!(AfterHead));
-                }
-                mode!(AfterHead) => {
-                    self.push_html_element(&Tag::with_no_attrs("body"));
-                    self.switch_to(mode!(InBody));
-                }
-                mode!(InBody, InTable, InRow, InCell) => {
-                    // TODO: If the stack of template insertion modes is not empty, then process the token using the rules for the "in template" insertion mode.
-                    // TODO: Otherwise, follow these steps:
-                    break;
-                }
-                mode!(Text) => {
-                    // TODO: Parse error.
-                    // TODO: If the current node is a script element, then set its already started to true.
-                    self.pop_element();
-                    self.switch_to_original_mode();
-                }
-                mode!(AfterBody, AfterFrameset, AfterAfterBody, AfterAfterFrameset) => {
-                    // TODO: Stop parsing
-                    break;
-                }
-                mode!(InFrameset) => {
-                    // TODO: If the current node is not the root html element, then this is a parse error.
-                    // TODO: Stop parsing
-                    break;
-                }
-                _ => unimplemented!(),
-            }
-        }
-        self.end();
-        Control::Done
-    }
-
-    // common rules
-
-    #[tracing::instrument(level = "debug", skip_all)]
-    fn handle_anything_else(&mut self) -> Control {
-        match self.mode {
-            mode!(Initial) => {
-                if !self.iframe_srcdoc {
-                    // TODO: parse error
-                }
-                self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
-                self.reprocess_on(mode!(BeforeHtml))
-            }
-            mode!(BeforeHtml) => {
-                // TODO: Create an html element whose node document is the Document object.
-                // TODO: Append it to the Document object.
-                // TODO: Put this element in the stack of open elements.
-                self.push_html_element(&Tag::with_no_attrs("html"));
-                self.switch_to(mode!(BeforeHead));
-                Control::Reprocess
-            }
-            mode!(BeforeHead) => {
-                // TODO: Insert an HTML element for a "head" start tag token with no attributes.
-                self.push_html_element(&Tag::with_no_attrs("head"));
-                // TODO: Set the head element pointer to the newly created head element.
-                self.switch_to(mode!(InHead));
-                Control::Reprocess
-            }
-            mode!(InHead) => {
-                // TODO: Pop the current node (which will be the head element) off the stack of open elements.
-                self.pop_element();
-                self.switch_to(mode!(AfterHead));
-                Control::Reprocess
-            }
-            mode!(InHeadNoscript) => {
-                // TODO: Parse error.
-                // TODO: Pop the current node (which will be a noscript element) from the stack of open elements; the new current node will be a head element.
-                self.switch_to(mode!(InHead));
-                Control::Reprocess
-            }
-            mode!(AfterHead) => {
-                // TODO: Insert an HTML element for a "body" start tag token with no attributes.
-                self.push_html_element(&Tag::with_no_attrs("body"));
-                self.switch_to(mode!(InBody));
-                Control::Reprocess
-            }
-            mode!(InTableText) => {
-                // TODO
-                if !self.text.is_empty() {
-                    self.insert_text_to_foster_parent();
-                }
-                self.switch_to_original_mode();
-                Control::Reprocess
-            }
-            mode!(InColumnGroup) => {
-                match self.context.local_name {
-                    LocalName::Colgroup => {
-                        self.pop_element();
-                        self.switch_to(mode!(InTable));
-                        Control::Reprocess
-                    }
-                    _ => {
-                        // TODO: Parse error.
-                        // Ignore the token.
-                        Control::Continue
-                    }
-                }
-            }
-            mode!(
-                InSelect,
-                InSelectInTable,
-                InFrameset,
-                AfterFrameset,
-                AfterAfterFrameset
-            ) => {
-                // TODO: Parse error.
-                // Ignore the token.
-                Control::Continue
-            }
-            mode!(AfterBody, AfterAfterBody) => {
-                // TODO: Parse error.
-                self.switch_to(mode!(InBody));
-                Control::Reprocess
-            }
-            mode!(
-                InBody,
-                Text,
-                InTable,
-                InCaption,
-                InTableBody,
-                InRow,
-                InCell,
-                InTemplate
-            ) => {
-                unreachable!("{:?}", self.mode);
-            }
-        }
-    }
-
-    fn reprocess_on(&mut self, mode: InsertionMode) -> Control {
-        self.switch_to(mode);
-        Control::Reprocess
-    }
-
-    fn ignore_token(&mut self) -> Control {
-        // TODO: Parse error.
-        // Ignore the token.
+    fn handle_error(&mut self, _error: Error) -> Control {
+        // Ignore the error.
         Control::Continue
     }
 
@@ -337,12 +180,23 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn save_and_switch_to(&mut self, mode: InsertionMode) {
         self.original_mode = Some(self.mode);
-        self.mode = mode;
+        self.switch_to(mode);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn switch_to_original_mode(&mut self) {
-        self.mode = self.original_mode.take().unwrap();
+        let mode = self.original_mode.take().unwrap();
+        self.switch_to(mode);
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn enable_foster_parenting(&mut self) {
+        self.writer.enable_foster_parenting();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn disable_foster_parenting(&mut self) {
+        self.writer.disable_foster_parenting();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -571,11 +425,11 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn insert_text_to_foster_parent(&mut self) {
         debug_assert!(!self.text.is_empty());
-        self.writer.insert_text_to_foster_parent(self.text.as_str());
-        self.text.clear();
+        self.enable_foster_parenting();
+        self.append_text_if_exists();
+        self.disable_foster_parenting();
     }
 }
 

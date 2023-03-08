@@ -76,6 +76,10 @@ async function run(args, options) {
 }
 
 function registerHelpers() {
+  Handlebars.registerHelper('join', (v, sep) => {
+    return v.join(sep);
+  });
+
   Handlebars.registerHelper('length', (v) => {
     if (typeof v.length === 'number') {
       return v.length;

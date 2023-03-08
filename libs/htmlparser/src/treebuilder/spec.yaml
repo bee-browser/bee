@@ -1,0 +1,1371 @@
+html5-spec:
+  # You can create the permalink to the description of each insertion mode with
+  # the following format:
+  #
+  #   ${html5-spec.url}/commit-snapshots/${html5-spec.version}/#${modes[].ref}
+  #
+  url: https://html.spec.whatwg.org
+  # Change the commit-hash if you update this file based on another version.
+  version: 1257236bd7b301d1510bafbc072519d6355cee3f
+
+# Manually converted definitions of tree construction rules.
+# Almost all rules are the same as ones defined in the HTML5 specification.
+#
+# * The guard condition in the rule for `<noscript>` in the `in-head` insertion
+#   mode is expanded inside the Rust code in the `run` property.
+modes:
+  - name: initial
+    ref: the-initial-insertion-mode
+    rules:
+      - match: whitespace
+        run: |
+          {{{ use '$ignore-token' }}}
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          if let Some("html") = doctype.name {
+              {{{ use '$parse-error' }}}
+          } else if let Some(_) = doctype.public_id {
+              {{{ use '$parse-error' }}}
+          } else if let Some(system_id) = doctype.system_id {
+              if system_id != "about:legacy-compat" {
+                  {{{ use '$parse-error' }}}
+              }
+          }
+          self.append_doctype(&doctype);
+          self.determine_quirks_mode(&doctype);
+          self.switch_to(mode!(BeforeHtml));
+          Control::Continue
+      - match: any
+        run: |
+          if !self.iframe_srcdoc {
+              {{{ use '$parse-error' }}}
+          }
+          self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
+          self.switch_to(mode!(BeforeHtml));
+          Control::Reprocess
+
+  - name: before-html
+    ref: the-before-html-insertion-mode
+    rules:
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: comment
+        run: |
+          //debug_assert!(self.writer.is_empty());
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: whitespace
+        run: |
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          //debug_assert!(self.writer.is_empty());
+          self.push_html_element(tag);
+          self.switch_to(mode!(BeforeHead));
+          Control::Continue
+      - match: </head> </body> </html> </br>
+        run: |
+          {{{ use 'anything-else' }}}
+      - match: </>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        id: anything-else
+        run: |
+          //debug_assert!(self.writer.is_empty());
+          self.push_html_element(&Tag::with_no_attrs("html"));
+          self.switch_to(mode!(BeforeHead));
+          Control::Reprocess
+
+  - name: before-head
+    ref: the-before-head-insertion-mode
+    rules:
+      - match: whitespace
+        run: |
+          {{{ use '$ignore-token' }}}
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: <head>
+        run: |
+          self.push_html_element(tag);
+          // TODO: Set the head element pointer to the newly created head element.
+          self.switch_to(mode!(InHead));
+          Control::Continue
+      - match: </head> </body> </html> </br>
+        run: |
+          {{{ use 'anything-else' }}}
+      - match: </>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        id: anything-else
+        run: |
+          self.push_html_element(&Tag::with_no_attrs("head"));
+          // TODO: Set the head element pointer to the newly created head element.
+          self.switch_to(mode!(InHead));
+          Control::Reprocess
+
+  - name: in-head
+    ref: parsing-main-inhead
+    rules:
+      - match: whitespace
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: <base> <basefont> <bgsound> <link>
+        run: |
+          self.push_html_element(tag);
+          self.pop_element();
+          self.acknowledge_self_closing(tag);
+          Control::Continue
+      - match: <meta>
+        run: |
+          self.push_html_element(tag);
+          self.pop_element();
+          self.acknowledge_self_closing(tag);
+          // TODO: If the active speculative HTML parser is null
+          Control::Continue
+      - match: <title>
+        run: |
+          {{{ use '$generic-rcdata-element-parsing-algorithm' }}}
+      - match: <noscript>
+        run: |
+          if self.scripting {
+              {{{ use '$generic-raw-text-element-parsing-algorithm' }}}
+          } else {
+              self.push_html_element(tag);
+              self.switch_to(mode!(InHeadNoscript));
+              Control::Continue
+          }
+      - match: <noframes> <style>
+        run: |
+          {{{ use '$generic-raw-text-element-parsing-algorithm' }}}
+      - match: <script>
+        run: |
+          // TODO
+          self.push_html_element(tag);
+          self.save_and_switch_to(mode!(Text));
+          Control::SwitchTo(InitialState::ScriptData)
+      - match: </head>
+        run: |
+          debug_assert!(self.context.local_name == LocalName::Head);
+          self.pop_element();
+          self.switch_to(mode!(AfterHead));
+          Control::Continue
+      - match: </body> </html> </br>
+        run: |
+          {{{ use 'anything-else' }}}
+      - match: <template>
+        run: |
+          // TODO
+          {{{ use 'anything-else' }}}
+      - match: </template>
+        run: |
+          // TODO
+          {{{ use 'anything-else' }}}
+      - match: <head> </>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        id: anything-else
+        run: |
+          debug_assert!(self.context.local_name == LocalName::Head);
+          self.pop_element();
+          self.switch_to(mode!(AfterHead));
+          Control::Reprocess
+
+  - name: in-head-noscript
+    ref: parsing-main-inheadnoscript
+    rules:
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: </noscript>
+        run: |
+          debug_assert!(self.context.local_name == LocalName::Noscript);
+          self.pop_element();
+          debug_assert!(self.context.local_name == LocalName::Head);
+          self.switch_to(mode!(InHead));
+          Control::Continue
+      - match: >-
+          whitespace comment <basefont> <bgsound> <link> <meta> <noframes>
+          <style>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: </br>
+        run: |
+          {{{ use 'anything-else' }}}
+      - match: <head> <noscript> </>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        id: anything-else
+        run: |
+          {{{ use '$parse-error' }}}
+          debug_assert!(self.context.local_name == LocalName::Noscript);
+          self.pop_element();
+          debug_assert!(self.context.local_name == LocalName::Head);
+          self.switch_to(mode!(InHead));
+          Control::Reprocess
+
+  - name: after-head
+    ref: the-after-head-insertion-mode
+    rules:
+      - match: whitespace
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: <body>
+        run: |
+          self.push_html_element(tag);
+          self.frameset_ok = false;
+          self.switch_to(mode!(InBody));
+          Control::Continue
+      - match: <frameset>
+        run: |
+          self.push_html_element(tag);
+          self.switch_to(mode!(InFrameset));
+          Control::Continue
+      - match: >-
+          <base> <basefont> <bgsound> <link> <meta> <noframes> <script> <style>
+          <template> <title>
+        run: |
+          {{{ use '$parse-error' }}}
+          self.reopen_head_element();
+          {{{ use '@in-head' }}}
+        pre_conditions:
+          has_head_element_pointer: true
+        post_conditions:
+          has_head_element_pointer: true
+      - match: </template>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: </body> </html> </br>
+        run: |
+          {{{ use 'anything-else' }}}
+      - match: <head> </>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        id: anything-else
+        run: |
+          self.push_html_element(&Tag::with_no_attrs("body"));
+          self.switch_to(mode!(InBody));
+          Control::Reprocess
+
+  - name: in-body
+    ref: parsing-main-inbody
+    rules:
+      # Using `null` causes some issues.
+      # So, we use `nul` as a simple solution.
+      - match: nul
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: whitespace
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.append_char(c);
+          Control::Continue
+      # character: !(null or whitespace)
+      - match: character
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.append_char(c);
+          self.frameset_ok = false;
+          Control::Continue
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '$parse-error' }}}
+          if self.has_template_element() {
+              // Ignore the token.
+          } else {
+              self.set_attributes_to_html_element(tag);
+          }
+          Control::Continue
+      - match: >-
+          <base> <basefont> <bgsound> <link> <meta> <noframes> <script> <style>
+          <template> <title> </template>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: <body>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: Ignore the token (fragment case).
+          self.frameset_ok = false;
+          self.set_attributes_to_body_element(tag);
+          Control::Continue
+      - match: <frameset>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: Ignore the token (fragment case).
+          if !self.frameset_ok {
+              // Ignore the token.
+          } else {
+              while self.context.local_name != LocalName::Html {
+                  self.remove_element();
+              }
+              self.push_html_element(tag);
+              self.switch_to(mode!(InFrameset));
+          }
+          Control::Continue
+      - match: eof
+        run: |
+          // TODO
+          Control::Done
+      - match: </body>
+        run: |
+          // TODO
+          self.switch_to(mode!(AfterBody));
+          Control::Continue
+      - match: </html>
+        run: |
+          // TODO
+          self.switch_to(mode!(AfterBody));
+          Control::Reprocess
+      - match: >-
+          <address> <article> <aside> <blockquote> <center> <details> <dialog>
+          <dir> <div> <dl> <fieldset> <figcaption> <figure> <footer> <header>
+          <hgroup> <main> <menu> <nav> <ol> <p> <section> <summary> <ul>
+        run: |
+          if self.context.has_p_element_in_button_scope {
+              self.close_p_element();
+          }
+          self.push_html_element(tag);
+          Control::Continue
+      - match: <h1> <h2> <h3> <h4> <h5> <h6>
+        run: |
+          if self.context.has_p_element_in_button_scope {
+              self.close_p_element();
+          }
+          // TODO: check namespace
+          match self.context.local_name {
+              tag!(H1, H2, H3, H4, H5, H6) => {
+                  {{{ use '$parse-error' }}}
+                  self.pop_element();
+              }
+          }
+          self.push_html_element(tag);
+          Control::Continue
+      - match: <pre> <listing>
+        run: |
+          if self.context.has_p_element_in_button_scope {
+              self.close_p_element();
+          }
+          self.push_html_element(tag);
+          self.ignore_lf = true;
+          self.frameset_ok = false;
+          Control::Continue
+      - match: <form>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: <li>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: <dd> <dt>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: <plaintext>
+        run: |
+          if self.context.has_p_element_in_button_scope {
+              self.close_p_element();
+          }
+          self.push_html_element(tag);
+          Control::SwitchTo(InitialState::Plaintext)
+      - match: <button>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: >-
+          </address> </article> </aside> </blockquote> </button> </center>
+          </details> </dialog> </dir> </div> </dl> </fieldset> </figcaption>
+          </figure> </footer> </header> </hgroup> </listing> </main> </menu>
+          </nav> </ol> </pre> </section> </summary> </ul>
+        run: |
+          // TODO
+          {{{ use 'any-other-end-tag' }}}
+      - match: </form>
+        run: |
+          // TODO
+          {{{ use 'any-other-end-tag' }}}
+      - match: </p>
+        run: |
+          if !self.context.has_p_element_in_button_scope {
+              {{{ use '$parse-error' }}}
+              self.push_html_element(&Tag::with_no_attrs("p"));
+          }
+          self.close_p_element();
+          Control::Continue
+      - match: </li>
+        run: |
+          // TODO
+          {{{ use 'any-other-end-tag' }}}
+      - match: </dd> </dt>
+        run: |
+          // TODO
+          {{{ use 'any-other-end-tag' }}}
+      - match: </h1> </h2> </h3> </h4> </h5> </h6>
+        run: |
+          // TODO
+          {{{ use 'any-other-end-tag' }}}
+      - match: </sarcasm>
+        run: |
+          // TODO: Take a deep breath.
+          {{{ use 'any-other-end-tag' }}}
+      - match: <a>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: >-
+          <b> <big> <code> <em> <font> <i> <s> <small> <strike> <strong> <tt>
+          <u>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: <nobr>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: >-
+          </a> </b> </big> </code> </em> </font> </i> </nobr> </s> </small>
+          </strike> </strong> </tt> </u>
+        run: |
+          // TODO
+          {{{ use 'any-other-end-tag' }}}
+      - match: <applet> <marquee> <object>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: </applet> </marquee> </object>
+        run: |
+          // TODO
+          {{{ use 'any-other-end-tag' }}}
+      - match: <table>
+        run: |
+          if self.quirks_mode != QuirksMode::Quirks {
+              self.close_p_element_in_button_scope();
+          }
+          self.push_html_element(tag);
+          self.frameset_ok = false;
+          self.switch_to(mode!(InTable));
+          Control::Continue
+      - match: </br>
+        # TODO
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: Drop the attributes from the token.
+          // TODO: act as if this was a "br" start tag token with no attributes
+          Control::Continue
+      - match: <area> <br> <embed> <img> <keygen> <wbr>
+        # TODO
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.push_html_element(tag);
+          self.pop_element();
+          if tag.self_closing {
+              // TODO: Acknowledge the token's self-closing flag
+          }
+          self.frameset_ok = false;
+          Control::Continue
+      - match: <input>
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.push_html_element(tag);
+          self.pop_element();
+          if Self::is_visible_input(tag) {
+              self.frameset_ok = false;
+          }
+          Control::Continue
+      - match: <param> <source> <track>
+        run: |
+          self.push_html_element(tag);
+          self.pop_element();
+          if tag.self_closing {
+              // TODO: Acknowledge the token's self-closing flag
+          }
+          Control::Continue
+      - match: <hr>
+        run: |
+          if self.context.has_p_element_in_button_scope {
+              self.close_p_element();
+          }
+          self.push_html_element(tag);
+          self.pop_element();
+          if tag.self_closing {
+              // TODO: Acknowledge the token's self-closing flag
+          }
+          self.frameset_ok = false;
+          Control::Continue
+      - match: <image>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: Change the token's tag name to "img" and reprocess it.
+          Control::Continue
+      - match: <textarea>
+        run: |
+          self.push_html_element(tag);
+          self.ignore_lf = true;
+          self.frameset_ok = false;
+          self.save_and_switch_to(mode!(Text));
+          Control::SwitchTo(InitialState::Rcdata)
+      - match: <xmp>
+        run: |
+          if self.context.has_p_element_in_button_scope {
+              self.close_p_element();
+          }
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.frameset_ok = false;
+          {{{ use '$generic-raw-text-element-parsing-algorithm' }}}
+      - match: <iframe>
+        run: |
+          self.frameset_ok = false;
+          {{{ use '$generic-raw-text-element-parsing-algorithm' }}}
+      - match: <noembed>
+        run: |
+          {{{ use '$generic-raw-text-element-parsing-algorithm' }}}
+      # The corresponding rule in the HTML5 specification is expressed with a
+      # guard condition.  But we moves it into the `run` expression in order
+      # to simplify the format of this YAML file.
+      - match: <noscript>
+        run: |
+          if self.scripting {
+              {{{ use '$generic-raw-text-element-parsing-algorithm' }}}
+          } else {
+              {{{ use 'any-other-start-tag' }}}
+          }
+      - match: <select>
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.push_html_element(tag);
+          self.frameset_ok = false;
+          self.switch_to(match self.mode {
+              mode!(InTable, InCaption, InTableBody, InRow, InCell) => mode!(InSelectInTable),
+              _ => mode!(InSelect),
+          });
+          Control::Continue
+      - match: <optgroup> <option>
+        run: |
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Option {
+              self.pop_element();
+          }
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.push_html_element(tag);
+          Control::Continue
+      - match: <rb> <rtc>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: <rp> <rt>
+        run: |
+          // TODO
+          {{{ use 'any-other-start-tag' }}}
+      - match: <math>
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          // TODO: Adjust MathML attributes for the token. (This fixes the case of MathML attributes that are not all lowercase.)
+          // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink.)
+          // TODO: Insert a foreign element for the token, in the MathML namespace.
+          self.push_mathml_element(tag);
+          // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
+          if tag.self_closing {
+              self.pop_element();
+          }
+          Control::Continue
+      - match: <svg>
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          // TODO: Adjust SVG attributes for the token. (This fixes the case of SVG attributes that are not all lowercase.)
+          // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
+          // TODO: Insert a foreign element for the token, in the SVG namespace.
+          self.push_svg_element(tag, LocalName::Svg);
+          // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
+          if tag.self_closing {
+              self.pop_element();
+          }
+          Control::Continue
+      - match: >-
+          <caption> <col> <colgroup> <frame> <head> <tbody> <td> <tfoot> <th>
+          <thead> <tr>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <>
+        id: any-other-start-tag
+        run: |
+          // TODO: Reconstruct the active formatting elements, if any.
+          self.push_html_element(tag);
+          Control::Continue
+      - match: </>
+        id: any-other-end-tag
+        run: |
+          // TODO
+          self.pop_element();
+          Control::Continue
+
+  - name: text
+    ref: parsing-main-incdata
+    rules:
+      - match: nul whitespace character
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: eof
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Script {
+              // TODO: set its already started to true.
+          }
+          self.pop_element();
+          self.switch_to_original_mode();
+          Control::Reprocess
+      - match: </script>
+        run: |
+          // TODO: If the active speculative HTML parser is null and the JavaScript execution context stack is empty, then perform a microtask checkpoint.
+          self.pop_element();
+          self.switch_to_original_mode();
+          Control::ExecuteScript
+      - match: </>
+        run: |
+          self.pop_element();
+          self.switch_to_original_mode();
+          Control::Continue
+
+  - name: in-table
+    ref: parsing-main-intable
+    rules:
+      - match: nul whitespace character
+        run: |
+          match self.context.local_name {
+              tag!(Table, Tbody, Template, Tfoot, Thead, Tr) => {
+                  // TODO: Let the pending table character tokens be an empty list of tokens.
+                  self.save_and_switch_to(mode!(InTableText));
+                  Control::Reprocess
+              }
+              _ => {
+                  {{{ use 'anything-else' }}}
+              }
+          }
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <caption>
+        run: |
+          self.clear_stack_back_to_table_context();
+          // TODO: Insert a marker at the end of the list of active formatting elements.
+          self.push_html_element(tag);
+          self.switch_to(mode!(InCaption));
+          Control::Continue
+      - match: <colgroup>
+        run: |
+          self.clear_stack_back_to_table_context();
+          self.push_html_element(tag);
+          self.switch_to(mode!(InColumnGroup));
+          Control::Continue
+      - match: <col>
+        run: |
+          self.clear_stack_back_to_table_context();
+          self.push_html_element(&Tag::with_no_attrs("colgroup"));
+          self.switch_to(mode!(InColumnGroup));
+          Control::Reprocess
+      - match: <tbody> <tfoot> <thead>
+        run: |
+          self.clear_stack_back_to_table_context();
+          self.push_html_element(tag);
+          self.switch_to(mode!(InTableBody));
+          Control::Continue
+      - match: <td> <th> <tr>
+        run: |
+          self.clear_stack_back_to_table_context();
+          self.push_html_element(&Tag::with_no_attrs("tbody"));
+          self.switch_to(mode!(InTableBody));
+          Control::Reprocess
+      - match: <table>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: If the stack of open elements does not have a table element in table scope, ignore the token.
+          // TODO: Otherwise
+          // TODO: Pop elements from this stack until a table element has been popped from the stack.
+          // TODO: Reset the insertion mode appropriately.
+          // TODO: Reprocess the token.
+          Control::Continue
+      - match: </table>
+        run: |
+          // TODO
+          {{{ use 'anything-else' }}}
+      - match: >-
+          </body> </caption> </col> </colgroup> </html> </tbody> </td> </tfoot>
+          </th> </thead> </tr>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <style> <script> <template> </template>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: <input>
+        run: |
+          if Self::is_visible_input(tag) {
+              {{{ use 'anything-else' }}}
+          } else {
+              {{{ use '$parse-error' }}}
+              self.push_html_element(tag);
+              self.pop_element();
+              if tag.self_closing {
+                  // TODO: Acknowledge the token's self-closing flag
+              }
+              Control::Continue
+          }
+      - match: <form>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: If there is a template element on the stack of open elements, or if the form element pointer is not null, ignore the token.
+          // TODO: Otherwise
+          self.push_html_element(tag);
+          // TODO: set the form element pointer to point to the element created.
+          self.pop_element();
+          Control::Continue
+      - match: eof
+        run: |
+          {{{ use '@in-body' }}}
+      - match: any
+        id: anything-else
+        run: |
+          {{{ use '$parse-error' }}}
+          self.enable_foster_parenting();
+          let ctrl = {
+              {{{ use '@in-body' }}}
+          };
+          self.disable_foster_parenting();
+          ctrl
+
+  - name: in-table-text
+    ref: parsing-main-intabletext
+    rules:
+      - match: nul
+        run: |
+          {{{ use '$ignore-token' }}}
+      - match: whitespace character
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: any
+        run: |
+          // TODO
+          if !self.text.is_empty() {
+              self.insert_text_to_foster_parent();
+          }
+          self.switch_to_original_mode();
+          Control::Reprocess
+
+  - name: in-caption
+    ref: parsing-main-incaption
+    rules:
+      - match: </caption>
+        run: |
+          // TODO
+          self.pop_element();
+          self.switch_to(mode!(InTable));
+          Control::Continue
+      - match: >-
+          <caption> <col> <colgroup> <tbody> <td> <tfoot> <th> <thead> <tr>
+          </table>
+        run: |
+          // TODO
+          self.switch_to(mode!(InTable));
+          Control::Reprocess
+      - match: >-
+          </body> </col> </colgroup> </html> </tbody> </td> </tfoot> </th>
+          </thead> </tr>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        run: |
+          {{{ use '@in-body' }}}
+
+  - name: in-column-group
+    ref: parsing-main-incolgroup
+    rules:
+      - match: whitespace
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: <col>
+        run: |
+          self.push_html_element(tag);
+          self.pop_element();
+          if tag.self_closing {
+              // TODO: Acknowledge the token's self-closing flag
+          }
+          Control::Continue
+      - match: </colgroup>
+        run: |
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Colgroup {
+              {{{ use '$parse-error' }}}
+              // Ignore the token.
+          } else {
+              self.pop_element();
+              self.switch_to(mode!(InTable));
+          }
+          Control::Continue
+      - match: </col>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <template> </template>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: eof
+        run: |
+          {{{ use '@in-body' }}}
+      - match: any
+        run: |
+          if self.context.local_name == LocalName::Colgroup {
+              {{{ use '$parse-error' }}}
+              {{{ use '$ignore-token' }}}
+          } else {
+              self.pop_element();
+              self.switch_to(mode!(InTable));
+              Control::Reprocess
+          }
+
+  - name: in-table-body
+    ref: parsing-main-intbody
+    rules:
+      - match: <tr>
+        run: |
+          self.clear_stack_back_to_table_body_context();
+          self.push_html_element(tag);
+          self.switch_to(mode!(InRow));
+          Control::Continue
+      - match: <th> <td>
+        run: |
+          {{{ use '$parse-error' }}}
+          self.clear_stack_back_to_table_body_context();
+          self.push_html_element(&Tag::with_no_attrs("tr"));
+          self.switch_to(mode!(InRow));
+          Control::Reprocess
+      - match: </tbody> </tfoot> </thead>
+        run: |
+          // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as the token, this is a parse error; ignore the token.
+          self.clear_stack_back_to_table_body_context();
+          self.pop_element();
+          self.switch_to(mode!(InTable));
+          Control::Continue
+      - match: <caption> <col> <colgroup> <tbody> <tfoot> <thead> </table>
+        run: |
+          // TODO: If the stack of open elements does not have a tbody, thead, or tfoot element in table scope, this is a parse error; ignore the token.
+          self.clear_stack_back_to_table_body_context();
+          self.pop_element();
+          self.switch_to(mode!(InTable));
+          Control::Reprocess
+      - match: </body> </caption> </col> </colgroup> </html> </td> </th> </tr>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        run: |
+          {{{ use '@in-table' }}}
+
+  - name: in-row
+    ref: parsing-main-intr
+    rules:
+      - match: <th> <td>
+        run: |
+          self.clear_stack_back_to_table_row_context();
+          self.push_html_element(tag);
+          self.switch_to(mode!(InCell));
+          Control::Continue
+      - match: </tr>
+        run: |
+          // TODO: If the stack of open elements does not have a tr element in table scope, this is a parse error; ignore the token.
+          self.clear_stack_back_to_table_row_context();
+          debug_assert_eq!(self.context.local_name, LocalName::Tr);
+          self.pop_element();
+          self.switch_to(mode!(InTableBody));
+          Control::Continue
+      - match: <caption> <col> <colgroup> <tbody> <tfoot> <thead> <tr> </table>
+        run: |
+          // TODO: If the stack of open elements does not have a tr element in table scope, this is a parse error; ignore the token.
+          self.clear_stack_back_to_table_row_context();
+          debug_assert_eq!(self.context.local_name, LocalName::Tr);
+          self.pop_element();
+          self.switch_to(mode!(InTableBody));
+          Control::Reprocess
+      - match: </tbody> </tfoot> </thead>
+        run: |
+          // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as the token, this is a parse error; ignore the token.
+          // TODO: If the stack of open elements does not have a tr element in table scope, ignore the token.
+          self.clear_stack_back_to_table_row_context();
+          debug_assert_eq!(self.context.local_name, LocalName::Tr);
+          self.pop_element();
+          self.switch_to(mode!(InTableBody));
+          Control::Reprocess
+      - match: </body> </caption> </col> </colgroup> </html> </td> </th>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: any
+        run: |
+          {{{ use '@in-table' }}}
+
+  - name: in-cell
+    ref: parsing-main-intd
+    rules:
+      - match: </td> </th>
+        run: |
+          // TODO
+          self.pop_element();
+          self.switch_to(mode!(InRow));
+          Control::Continue
+      - match: <caption> <col> <colgroup> <tbody> <td> <tfoot> <th> <thead> <tr>
+        run: |
+          // TODO
+          Control::Continue
+      - match: </body> </caption> </col> </colgroup> </html>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: </table> </tbody> </tfoot> </thead> </tr>
+        run: |
+          // TODO
+          self.pop_element();
+          Control::Continue
+      - match: any
+        run: |
+          {{{ use '@in-body' }}}
+
+  - name: in-select
+    ref: parsing-main-inselect
+    rules:
+      - match: nul
+        run: |
+          {{{ use '$ignore-token' }}}
+      - match: whitespace character
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: <option>
+        run: |
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Option {
+              self.pop_element();
+          }
+          self.push_html_element(tag);
+          Control::Continue
+      - match: <optgroup>
+        run: |
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Option {
+              self.pop_element();
+          }
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Optgroup {
+              self.pop_element();
+          }
+          self.push_html_element(tag);
+          Control::Continue
+      - match: </optgroup>
+        run: |
+          // TODO: First, if the current node is an option element, and the node immediately before it in the stack of open elements is an optgroup element, then pop the current node from the stack of open elements.
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Optgroup {
+              self.pop_element();
+          } else {
+              {{{ use '$parse-error' }}}
+              // Ignore the token.
+          }
+          Control::Continue
+      - match: </option>
+        run: |
+          // TODO: check namespace
+          if self.context.local_name == LocalName::Option {
+              self.pop_element();
+          } else {
+              {{{ use '$parse-error' }}}
+              // Ignore the token.
+          }
+          Control::Continue
+      - match: </select>
+        run: |
+          // TODO: If the stack of open elements does not have a select element in select scope, this is a parse error; ignore the token. (fragment case)
+          while self.context.local_name != LocalName::Select {
+              self.pop_element();
+          }
+          self.pop_element();
+          self.reset_insertion_mode_appropriately();
+          Control::Continue
+      - match: <select>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
+          while self.context.local_name != LocalName::Select {
+              self.pop_element();
+          }
+          self.pop_element();
+          self.reset_insertion_mode_appropriately();
+          Control::Continue
+      - match: <input> <keygen> <textarea>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
+          while self.context.local_name != LocalName::Select {
+              self.pop_element();
+          }
+          self.pop_element();
+          self.reset_insertion_mode_appropriately();
+          Control::Reprocess
+      - match: <script> <template> </template>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: eof
+        run: |
+          {{{ use '@in-body' }}}
+      - match: any
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+
+  - name: in-select-in-table
+    ref: parsing-main-inselectintable
+    rules:
+      - match: <caption> <table> <tbody> <tfoot> <thead> <tr> <td> <th>
+        run: |
+          {{{ use '$parse-error' }}}
+          while self.context.local_name != LocalName::Select {
+              self.pop_element();
+          }
+          self.pop_element();
+          self.reset_insertion_mode_appropriately();
+          Control::Reprocess
+      - match: </caption> </table> </tbody> </tfoot> </thead> </tr> </td> </th>
+        run: |
+          {{{ use '$parse-error' }}}
+          // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as that of the token, then ignore the token.
+          while self.context.local_name != LocalName::Select {
+              self.pop_element();
+          }
+          self.pop_element();
+          self.reset_insertion_mode_appropriately();
+          Control::Reprocess
+      - match: any
+        run: |
+          {{{ use '@in-select' }}}
+
+  - name: in-template
+    ref: parsing-main-intemplate
+    rules:
+      - match: nul whitespace character comment doctype
+        run: |
+          {{{ use '@in-body' }}}
+      - match: >-
+          <base> <basefont> <bgsound> <link> <meta> <noframes> <script> <style>
+          <template> <title> </template>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: <caption> <colgroup> <tbody> <tfoot> <thead>
+        run: |
+          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
+          // TODO: Push "in table" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.switch_to(mode!(InTable));
+          Control::Reprocess
+      - match: <col>
+        run: |
+          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
+          // TODO: Push "in column group" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.switch_to(mode!(InColumnGroup));
+          Control::Reprocess
+      - match: <tr>
+        run: |
+          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
+          // TODO: Push "in table body" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.switch_to(mode!(InTableBody));
+          Control::Reprocess
+      - match: <td> <th>
+        run: |
+          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
+          // TODO: Push "in row" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.switch_to(mode!(InRow));
+          Control::Reprocess
+      - match: <>
+        run: |
+          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
+          // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.switch_to(mode!(InBody));
+          Control::Reprocess
+      - match: </>
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: eof
+        run: |
+          // TODO
+          Control::Done
+
+  - name: after-body
+    ref: parsing-main-afterbody
+    rules:
+      - match: whitespace
+        run: |
+          {{{ use '@in-body' }}}
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: </html>
+        run: |
+          // TODO: If the parser was created as part of the HTML fragment parsing algorithm, this is a parse error; ignore the token. (fragment case)
+          self.switch_to(mode!(AfterAfterBody));
+          Control::Continue
+      - match: eof
+        run: |
+          Control::Done
+      - match: any
+        run: |
+          {{{ use '$parse-error' }}}
+          self.switch_to(mode!(InBody));
+          Control::Reprocess
+
+  - name: in-frameset
+    ref: parsing-main-inframeset
+    rules:
+      - match: whitespace
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: <frameset>
+        run: |
+          self.push_html_element(tag);
+          Control::Continue
+      - match: </frameset>
+        run: |
+          if self.context.local_name == LocalName::Html {
+              {{{ use '$parse-error' }}}
+              // Ignore the token.
+          } else {
+              self.pop_element();
+              // TODO: If the parser was not created as part of the HTML fragment parsing algorithm (fragment case)
+              if self.context.local_name != LocalName::Frameset {
+                  self.switch_to(mode!(AfterFrameset));
+              }
+          }
+          Control::Continue
+      - match: <frame>
+        run: |
+          self.push_html_element(tag);
+          self.pop_element();
+          if tag.self_closing {
+              // TODO: Acknowledge the token's self-closing flag
+          }
+          Control::Continue
+      - match: <noframes>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: eof
+        run: |
+          if self.context.local_name != LocalName::Html {
+              {{{ use '$parse-error' }}}
+          }
+          Control::Done
+      - match: any
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+
+  - name: after-frameset
+    ref: parsing-main-afterframeset
+    rules:
+      - match: whitespace
+        run: |
+          self.append_char(c);
+          Control::Continue
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+      - match: <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: </html>
+        run: |
+          self.switch_to(mode!(AfterAfterFrameset));
+          Control::Continue
+      - match: <noframes>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: eof
+        run: |
+          Control::Done
+      - match: any
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+
+  - name: after-after-body
+    ref: the-after-after-body-insertion-mode
+    rules:
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype whitespace <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: eof
+        run: |
+          Control::Done
+      - match: any
+        run: |
+          {{{ use '$parse-error' }}}
+          self.switch_to(mode!(InBody));
+          Control::Reprocess
+
+  - name: after-after-frameset
+    ref: the-after-after-frameset-insertion-mode
+    rules:
+      - match: comment
+        run: |
+          self.insert_comment(&comment);
+          Control::Continue
+      - match: doctype whitespace <html>
+        run: |
+          {{{ use '@in-body' }}}
+      - match: eof
+        run: |
+          Control::Done
+      - match: <noframes>
+        run: |
+          {{{ use '@in-head' }}}
+      - match: any
+        run: |
+          {{{ use '$parse-error' }}}
+          {{{ use '$ignore-token' }}}
+
+# Code snippets that can be referred by `$<snipetts.name>` from `run`.
+snippets:
+  ignore-token:
+    code: |
+      // Ignore the token.
+      Control::Continue
+  parse-error:
+    if: enable-parse-error
+    code: |
+      // TODO: Parse error.
+  generic-rcdata-element-parsing-algorithm:
+    code: |
+      self.push_html_element(tag);
+      self.save_and_switch_to(mode!(Text));
+      Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata)
+  generic-raw-text-element-parsing-algorithm:
+    code: |
+      self.push_html_element(tag);
+      self.save_and_switch_to(mode!(Text));
+      Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext)

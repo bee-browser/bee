@@ -20,18 +20,22 @@ Deno.exit(await run(args, options));
 
 // TODO: slow...
 async function run(args, options) {
-  const oldContent = await Deno.readFile(args.file);
   const newContent = await Deno.readAll(Deno.stdin);
-  if (oldContent.length != newContent.length) {
-    console.log("Size changed");
-    await Deno.writeFile(args.file, newContent);
-    return;
-  }
-  for (let i = 0; i < newContent.length; ++i) {
-    if (oldContent[i] !== newContent[i]) {
-      console.log("Content changed");
+  try {
+    const oldContent = await Deno.readFile(args.file);
+    if (oldContent.length != newContent.length) {
+      console.log("Size changed");
       await Deno.writeFile(args.file, newContent);
       return;
     }
+    for (let i = 0; i < newContent.length; ++i) {
+      if (oldContent[i] !== newContent[i]) {
+        console.log("Content changed");
+        await Deno.writeFile(args.file, newContent);
+        return;
+      }
+    }
+  } catch (e) {
+    await Deno.writeFile(args.file, newContent);
   }
 }
