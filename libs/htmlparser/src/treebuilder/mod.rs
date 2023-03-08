@@ -13,7 +13,7 @@ use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
 use bee_htmltokenizer::InitialState;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Namespace {
     Html,
     MathMl,
@@ -108,7 +108,7 @@ pub struct TreeBuilder<W> {
 pub enum Control {
     Reprocess,
     Continue,
-    SwitchTo(bee_htmltokenizer::InitialState),
+    SwitchTo(bee_htmltokenizer::InitialState, &'static str),
     ExecuteScript,
     Done,
 }
@@ -132,6 +132,10 @@ where
             frameset_ok: true,
             ignore_lf: false,
         }
+    }
+
+    pub fn in_html_namespace(&self) -> bool {
+        self.context.namespace == Namespace::Html
     }
 
     pub fn handle_token(&mut self, token: Token<'_>) -> Control {

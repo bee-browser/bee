@@ -5,7 +5,7 @@ use crate::treebuilder::TreeBuilder;
 use crate::DocumentWriter;
 
 pub struct Parser<W> {
-    tokenizer: Tokenizer,
+    tokenizer: Tokenizer<'static>,
     tree_builder: TreeBuilder<W>,
 }
 
@@ -31,15 +31,28 @@ where
 
     pub fn parse(&mut self) {
         loop {
+            self.tokenizer
+                .set_in_html_namespace(self.tree_builder.in_html_namespace());
             let token = self.tokenizer.next_token();
             tracing::debug!(?token);
             let ctrl = self.tree_builder.handle_token(token);
             match ctrl {
-                Control::Continue => (),
-                Control::SwitchTo(state) => self.tokenizer.set_initial_state(state),
-                Control::Done => break,
                 Control::Reprocess => unreachable!(),
-                Control::ExecuteScript => (),
+                Control::Continue => {
+                    // TODO: Perform something if any.
+                    continue;
+                }
+                Control::SwitchTo(state, tag_name) => {
+                    self.tokenizer.set_initial_state(state);
+                    self.tokenizer.set_last_start_tag(tag_name);
+                }
+                Control::ExecuteScript => {
+                    // TODO: Execute the script.
+                }
+                Control::Done => {
+                    // TODO: Perform something if any.
+                    break;
+                }
             }
         }
     }

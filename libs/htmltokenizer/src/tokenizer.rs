@@ -14,7 +14,7 @@ use std::collections::VecDeque;
 ///
 /// The `Tokenizer` type implements the tokenization state machine described in
 /// "13.2.5 Tokenization" in the WHATWG HTML specification.
-pub struct Tokenizer {
+pub struct Tokenizer<'a> {
     state: State,
     return_state: State,
     input_stream: InputStream,
@@ -22,14 +22,17 @@ pub struct Tokenizer {
     next_code_point: Option<(CodePoint, Location)>,
     char_buffer: String,
     temp_buffer: String,
-    last_start_tag: Option<String>,
+    // Set when switching to the Rcdata, Rawtext or ScriptData state.
+    // Reset in the Data state.
+    last_start_tag: Option<&'a str>,
     char_ref_code: u32,
     char_ref_resolver: CharRefResolver,
     tokens: VecDeque<TokenRange>,
     current_token: Option<TokenRange>,
+    in_html_namespace: bool,
 }
 
-impl Tokenizer {
+impl<'a> Tokenizer<'a> {
     const INITIAL_BUFFER_SIZE: usize = 4096;
 
     pub fn new() -> Self {
@@ -46,6 +49,7 @@ impl Tokenizer {
             char_ref_resolver: Default::default(),
             tokens: VecDeque::with_capacity(3),
             current_token: None,
+            in_html_namespace: true,
         }
     }
 
@@ -80,7 +84,9 @@ impl Tokenizer {
         self.input_stream.feed_end();
     }
 
+    #[tracing::instrument(level = "trace", skip_all)]
     pub fn set_initial_state(&mut self, state: InitialState) {
+        tracing::trace!(?state);
         self.state = match state {
             InitialState::Data => State::Data,
             InitialState::Rcdata => State::Rcdata,
@@ -91,8 +97,16 @@ impl Tokenizer {
         };
     }
 
-    pub fn set_last_start_tag(&mut self, tag_name: String) {
+    #[tracing::instrument(level = "trace", skip_all)]
+    pub fn set_last_start_tag(&mut self, tag_name: &'a str) {
+        tracing::trace!(tag_name);
         self.last_start_tag = Some(tag_name);
+    }
+
+    #[tracing::instrument(level = "trace", skip_all)]
+    pub fn set_in_html_namespace(&mut self, in_html_namespace: bool) {
+        tracing::trace!(in_html_namespace);
+        self.in_html_namespace = in_html_namespace;
     }
 
     fn tokenize(&mut self) {
@@ -233,6 +247,7 @@ impl Tokenizer {
 
     // https://html.spec.whatwg.org/multipage/parsing.html#data-state
     fn tokenize_data(&mut self) {
+        self.last_start_tag = None;
         loop {
             let ch = self.next_char();
             match ch {
@@ -2662,7 +2677,7 @@ impl Tokenizer {
         let ch = self.next_char();
         match ch {
             Char(Some('['), location) => {
-                if self.last_start_tag.is_none() {
+                if self.in_html_namespace {
                     self.emit_error(ErrorCode::CdataInHtmlContent, location);
                     // TODO: Create a comment token whose data is the empty string
                     self.append_temp_to_comment();
@@ -3192,9 +3207,7 @@ impl Tokenizer {
         match self.current_token.take() {
             Some(token) => {
                 if let TokenRange::Tag(ref tag) = token {
-                    if tag.start_tag {
-                        self.last_start_tag = Some(self.char_buffer[tag.name.clone()].to_string());
-                    } else {
+                    if !tag.start_tag {
                         if !tag.attrs.is_empty() {
                             self.emit_error(ErrorCode::EndTagWithAttributes, location);
                         }
@@ -3434,7 +3447,7 @@ impl Tokenizer {
     }
 
     fn is_appropriate_end_tag(&self) -> bool {
-        if let Some(ref tag_name) = self.last_start_tag {
+        if let Some(tag_name) = self.last_start_tag {
             match self.current_token {
                 Some(TokenRange::Tag(ref tag)) => {
                     if &self.char_buffer[tag.name.clone()] == tag_name {

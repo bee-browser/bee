@@ -90,7 +90,7 @@ where
                         self.ignore_lf = true;
                         self.frameset_ok = false;
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(InitialState::Rcdata)
+                        Control::SwitchTo(InitialState::Rcdata, "textarea")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -106,7 +106,7 @@ where
                             self.ignore_lf = true;
                             self.frameset_ok = false;
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(InitialState::Rcdata)
+                            Control::SwitchTo(InitialState::Rcdata, "textarea")
                         };
                         self.disable_foster_parenting();
                         ctrl

@@ -63,7 +63,7 @@ where
                         // TODO
                         self.push_html_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(InitialState::ScriptData)
+                        Control::SwitchTo(InitialState::ScriptData, "script")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -91,7 +91,7 @@ where
                         // TODO
                         self.push_html_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(InitialState::ScriptData)
+                        Control::SwitchTo(InitialState::ScriptData, "script")
                     };
                     match ctrl {
                         Control::Reprocess => continue,

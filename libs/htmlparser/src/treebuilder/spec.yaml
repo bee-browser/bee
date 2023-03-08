@@ -173,7 +173,7 @@ modes:
           // TODO
           self.push_html_element(tag);
           self.save_and_switch_to(mode!(Text));
-          Control::SwitchTo(InitialState::ScriptData)
+          Control::SwitchTo(InitialState::ScriptData, "script")
       - match: </head>
         run: |
           debug_assert!(self.context.local_name == LocalName::Head);
@@ -428,7 +428,7 @@ modes:
               self.close_p_element();
           }
           self.push_html_element(tag);
-          Control::SwitchTo(InitialState::Plaintext)
+          Control::SwitchTo(InitialState::Plaintext, "plaintext")
       - match: <button>
         run: |
           // TODO
@@ -564,7 +564,7 @@ modes:
           self.ignore_lf = true;
           self.frameset_ok = false;
           self.save_and_switch_to(mode!(Text));
-          Control::SwitchTo(InitialState::Rcdata)
+          Control::SwitchTo(InitialState::Rcdata, "textarea")
       - match: <xmp>
         run: |
           if self.context.has_p_element_in_button_scope {
@@ -1363,9 +1363,9 @@ snippets:
     code: |
       self.push_html_element(tag);
       self.save_and_switch_to(mode!(Text));
-      Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata)
+      Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "{{{ TAG_NAME }}}")
   generic-raw-text-element-parsing-algorithm:
     code: |
       self.push_html_element(tag);
       self.save_and_switch_to(mode!(Text));
-      Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext)
+      Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "{{{ TAG_NAME }}}")

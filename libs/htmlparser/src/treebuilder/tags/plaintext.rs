@@ -90,7 +90,7 @@ where
                             self.close_p_element();
                         }
                         self.push_html_element(tag);
-                        Control::SwitchTo(InitialState::Plaintext)
+                        Control::SwitchTo(InitialState::Plaintext, "plaintext")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -106,7 +106,7 @@ where
                                 self.close_p_element();
                             }
                             self.push_html_element(tag);
-                            Control::SwitchTo(InitialState::Plaintext)
+                            Control::SwitchTo(InitialState::Plaintext, "plaintext")
                         };
                         self.disable_foster_parenting();
                         ctrl
