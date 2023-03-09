@@ -895,7 +895,7 @@ modes:
           {{{ use '@in-body' }}}
       - match: any
         run: |
-          if self.context.local_name == LocalName::Colgroup {
+          if self.context.local_name != LocalName::Colgroup {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {

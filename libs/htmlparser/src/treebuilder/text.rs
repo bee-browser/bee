@@ -169,7 +169,7 @@ where
                 }
                 mode!(InColumnGroup) => {
                     let ctrl = {
-                        if self.context.local_name == LocalName::Colgroup {
+                        if self.context.local_name != LocalName::Colgroup {
                             // TODO: Parse error.
                             // Ignore the token.
                             Control::Continue
@@ -419,7 +419,7 @@ where
                 }
                 mode!(InColumnGroup) => {
                     let ctrl = {
-                        if self.context.local_name == LocalName::Colgroup {
+                        if self.context.local_name != LocalName::Colgroup {
                             // TODO: Parse error.
                             // Ignore the token.
                             Control::Continue
