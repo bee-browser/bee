@@ -18,15 +18,22 @@ struct TreeValidator<'a> {
     nodes: Vec<Node>,
     stack: Vec<(usize, OpenContext)>,
     head_index: Option<usize>,
-    last_table_parent_index: Option<usize>,
     foster_parenting: bool,
+    foster_parenting_insertion_point: FosterParentingInsertionPoint,
+}
+
+#[derive(Clone, Copy)]
+enum FosterParentingInsertionPoint {
+    None,
+    LastChild(usize),
+    Before(usize, usize),
 }
 
 enum OpenContext {
     Document,
     Normal {
         context: TreeBuildContext,
-        last_table_parent_index: Option<usize>,
+        foster_parenting_insertion_point: FosterParentingInsertionPoint,
     },
     Reopen,
 }
@@ -40,8 +47,8 @@ impl<'a> TreeValidator<'a> {
             }],
             stack: vec![(0, OpenContext::Document)],
             head_index: None,
-            last_table_parent_index: None,
             foster_parenting: false,
+            foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
         }
     }
 
@@ -110,23 +117,53 @@ impl<'a> TreeValidator<'a> {
 
 impl<'a> TreeValidator<'a> {
     fn append(&mut self, node_index: usize) {
-        let (parent_index, context) = self.stack.last().unwrap();
-        match self.nodes.get_mut(*parent_index).unwrap() {
-            Node::Document {
-                ref mut child_nodes,
-            } => {
-                child_nodes.push(node_index);
+        if self.foster_parenting {
+            match self.foster_parenting_insertion_point {
+                FosterParentingInsertionPoint::None => unreachable!(),
+                FosterParentingInsertionPoint::LastChild(index) => {
+                    match self.nodes.get_mut(index).unwrap() {
+                        Node::Element {
+                            ref mut child_nodes,
+                            ..
+                        } => {
+                            child_nodes.push(node_index);
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+                FosterParentingInsertionPoint::Before(parent_index, table_index) => {
+                    match self.nodes.get_mut(parent_index).unwrap() {
+                        Node::Element {
+                            ref mut child_nodes,
+                            ..
+                        } => {
+                            let pos = child_nodes.iter().position(|&i| i == table_index).unwrap();
+                            child_nodes.insert(pos, node_index);
+                        }
+                        _ => unreachable!(),
+                    }
+                }
             }
-            Node::Element {
-                ref mut child_nodes,
-                ..
-            } => {
-                child_nodes.push(node_index);
+        } else {
+            // TODO: compute an appropriate place for inserting a node.
+            let (parent_index, context) = self.stack.last().unwrap();
+            match self.nodes.get_mut(*parent_index).unwrap() {
+                Node::Document {
+                    ref mut child_nodes,
+                } => {
+                    child_nodes.push(node_index);
+                }
+                Node::Element {
+                    ref mut child_nodes,
+                    ..
+                } => {
+                    child_nodes.push(node_index);
+                }
+                t => unreachable!("{:?}", t),
             }
-            t => unreachable!("{:?}", t),
-        }
-        if let OpenContext::Reopen = context {
-            self.stack.pop();
+            if let OpenContext::Reopen = context {
+                self.stack.pop();
+            }
         }
     }
 
@@ -182,16 +219,25 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
             index,
             OpenContext::Normal {
                 context,
-                last_table_parent_index: self.last_table_parent_index,
+                foster_parenting_insertion_point: self.foster_parenting_insertion_point,
             },
         ));
         match name {
+            "html" => {
+                self.foster_parenting_insertion_point =
+                    FosterParentingInsertionPoint::LastChild(index);
+            }
             "head" => {
                 assert!(self.head_index.is_none());
                 self.head_index = Some(index);
             }
             "table" => {
-                self.last_table_parent_index = Some(parent_index);
+                self.foster_parenting_insertion_point =
+                    FosterParentingInsertionPoint::Before(parent_index, index);
+            }
+            "template" => {
+                self.foster_parenting_insertion_point =
+                    FosterParentingInsertionPoint::LastChild(index);
             }
             _ => (),
         }
@@ -219,9 +265,9 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         match context {
             OpenContext::Normal {
                 context,
-                last_table_parent_index,
+                foster_parenting_insertion_point,
             } => {
-                self.last_table_parent_index = last_table_parent_index;
+                self.foster_parenting_insertion_point = foster_parenting_insertion_point;
                 context
             }
             _ => panic!(),
@@ -235,9 +281,9 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         match context {
             OpenContext::Normal {
                 context,
-                last_table_parent_index,
+                foster_parenting_insertion_point,
             } => {
-                self.last_table_parent_index = last_table_parent_index;
+                self.foster_parenting_insertion_point = foster_parenting_insertion_point;
                 context
             }
             _ => panic!(),
