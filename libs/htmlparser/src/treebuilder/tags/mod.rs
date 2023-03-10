@@ -26,9 +26,9 @@ mod tr;
 
 use super::*;
 
-impl<W> TreeBuilder<W>
+impl<T> TreeBuilder<T>
 where
-    W: DocumentWriter,
+    T: DomTreeBuilder,
 {
     pub fn handle_start_tag(&mut self, tag: Tag<'_>) -> Control {
         self.ignore_lf = false;

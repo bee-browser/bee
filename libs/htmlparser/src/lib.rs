@@ -1,11 +1,11 @@
-mod local_names;
+mod localnames;
 mod parser;
 mod treebuilder;
 
 pub use crate::parser::Parser;
-pub use crate::treebuilder::DocumentWriter;
+pub use crate::treebuilder::DomTreeBuildContext;
+pub use crate::treebuilder::DomTreeBuilder;
 pub use crate::treebuilder::Namespace;
-pub use crate::treebuilder::TreeBuildContext;
 
 pub use bee_htmltokenizer::token::Comment;
 pub use bee_htmltokenizer::token::Doctype;

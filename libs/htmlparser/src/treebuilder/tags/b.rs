@@ -1,8 +1,8 @@
 use super::*;
 
-impl<W> TreeBuilder<W>
+impl<T> TreeBuilder<T>
 where
-    W: DocumentWriter,
+    T: DomTreeBuilder,
 {
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_start_b(&mut self, tag: &Tag<'_>) -> Control {

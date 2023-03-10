@@ -9,7 +9,7 @@ macro_rules! mode {
 
 macro_rules! tag {
     ($tag:ident) => {
-        crate::local_names::LocalName::$tag
+        crate::localnames::LocalName::$tag
     };
     ($tag:ident, $($more:ident),+) => {
         tag!($tag) | tag!($($more),+)

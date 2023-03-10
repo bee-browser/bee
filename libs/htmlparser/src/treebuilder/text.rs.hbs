@@ -5,9 +5,9 @@
 
 use super::*;
 
-impl<W> TreeBuilder<W>
+impl<T> TreeBuilder<T>
 where
-    W: DocumentWriter,
+    T: DomTreeBuilder,
 {
     // TODO: Tokenizing the text in the following groups can improve the
     // performance.
