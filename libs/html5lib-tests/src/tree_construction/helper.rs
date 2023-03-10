@@ -32,7 +32,7 @@ enum FosterParentingInsertionPoint {
 enum OpenContext {
     Document,
     Normal {
-        context: TreeBuildContext,
+        context: DomTreeBuildContext,
         foster_parenting_insertion_point: FosterParentingInsertionPoint,
     },
     Reopen,
@@ -183,7 +183,7 @@ impl<'a> TreeValidator<'a> {
     }
 }
 
-impl<'a> DocumentWriter for TreeValidator<'a> {
+impl<'a> DomTreeBuilder for TreeValidator<'a> {
     fn enable_foster_parenting(&mut self) {
         self.foster_parenting = true;
     }
@@ -204,7 +204,7 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         self.append(index);
     }
 
-    fn push_element(&mut self, name: &str, namespace: Namespace, context: TreeBuildContext) {
+    fn push_element(&mut self, name: &str, namespace: Namespace, context: DomTreeBuildContext) {
         let parent_index = self.stack.last().unwrap().0;
         let index = self.nodes.len();
         tracing::debug!(index, parent_index, ?name, ?namespace);
@@ -257,7 +257,7 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         self.stack.push((index, OpenContext::Reopen));
     }
 
-    fn remove_element(&mut self) -> TreeBuildContext {
+    fn remove_element(&mut self) -> DomTreeBuildContext {
         let (index, context) = self.stack.pop().unwrap();
         self.remove(index);
         let node = self.nodes.get(index).unwrap();
@@ -274,7 +274,7 @@ impl<'a> DocumentWriter for TreeValidator<'a> {
         }
     }
 
-    fn pop_element(&mut self) -> TreeBuildContext {
+    fn pop_element(&mut self) -> DomTreeBuildContext {
         let (index, context) = self.stack.pop().unwrap();
         let node = self.nodes.get(index).unwrap();
         tracing::debug!(index, ?node);

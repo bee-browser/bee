@@ -1,22 +1,22 @@
 use bee_htmltokenizer::Tokenizer;
 
 use crate::treebuilder::Control;
+use crate::treebuilder::DomTreeBuilder;
 use crate::treebuilder::TreeBuilder;
-use crate::DocumentWriter;
 
 pub struct Parser<W> {
     tokenizer: Tokenizer<'static>,
     tree_builder: TreeBuilder<W>,
 }
 
-impl<W> Parser<W>
+impl<T> Parser<T>
 where
-    W: DocumentWriter,
+    T: DomTreeBuilder,
 {
-    pub fn new(writer: W) -> Parser<W> {
+    pub fn new(builder: T) -> Parser<T> {
         Parser {
             tokenizer: Tokenizer::new(),
-            tree_builder: TreeBuilder::new(writer),
+            tree_builder: TreeBuilder::new(builder),
         }
     }
 

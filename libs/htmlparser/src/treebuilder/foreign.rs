@@ -1,8 +1,8 @@
 use super::*;
 
-impl<W> TreeBuilder<W>
+impl<T> TreeBuilder<T>
 where
-    W: DocumentWriter,
+    T: DomTreeBuilder,
 {
     pub fn is_in_foreign_content(&self, token: &Token<'_>) -> bool {
         if let Token::End = token {

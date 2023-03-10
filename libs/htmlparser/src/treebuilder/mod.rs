@@ -8,7 +8,7 @@ mod foreign;
 mod tags;
 mod text;
 
-use crate::local_names::LocalName;
+use crate::localnames::LocalName;
 use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
 use bee_htmltokenizer::InitialState;
@@ -21,7 +21,7 @@ pub enum Namespace {
 }
 
 #[derive(Clone, Debug)]
-pub struct TreeBuildContext {
+pub struct DomTreeBuildContext {
     reset_mode: InsertionMode,
     namespace: Namespace,
     local_name: LocalName,
@@ -33,9 +33,9 @@ pub struct TreeBuildContext {
     has_select_element_in_select_scope: bool,
 }
 
-impl Default for TreeBuildContext {
+impl Default for DomTreeBuildContext {
     fn default() -> Self {
-        TreeBuildContext {
+        DomTreeBuildContext {
             reset_mode: mode!(InBody),
             namespace: Namespace::Html,
             local_name: LocalName::Unknown,
@@ -49,11 +49,11 @@ impl Default for TreeBuildContext {
     }
 }
 
-/// A trait to operate on a Document object.
+/// A trait used for building a DOM tree.
 ///
 /// The instance implementing this trait needs to implement some kind of stack
 /// machine that supports the following operations
-pub trait DocumentWriter {
+pub trait DomTreeBuilder {
     /// Enable the foster parenting.
     ///
     /// Initially, the foster parenting is disabled.
@@ -67,7 +67,7 @@ pub trait DocumentWriter {
 
     /// Creates a node for a tag as a child node of the current node
     /// and push it onto the stack.
-    fn push_element(&mut self, name: &str, namespace: Namespace, context: TreeBuildContext);
+    fn push_element(&mut self, name: &str, namespace: Namespace, context: DomTreeBuildContext);
 
     fn set_attribute(&mut self, name: &str, value: &str);
 
@@ -75,10 +75,10 @@ pub trait DocumentWriter {
     fn reopen_head_element(&mut self);
 
     /// Removes a node.
-    fn remove_element(&mut self) -> TreeBuildContext;
+    fn remove_element(&mut self) -> DomTreeBuildContext;
 
     /// Pops a node from the stack.
-    fn pop_element(&mut self) -> TreeBuildContext;
+    fn pop_element(&mut self) -> DomTreeBuildContext;
 
     /// Creates a node for a text and append it as a child node.
     fn append_text(&mut self, text: &str);
@@ -90,13 +90,13 @@ pub trait DocumentWriter {
     fn end(&mut self);
 }
 
-pub struct TreeBuilder<W> {
-    writer: W,
+pub struct TreeBuilder<T> {
+    inner: T,
     mode: InsertionMode,
     original_mode: Option<InsertionMode>,
     quirks_mode: QuirksMode,
 
-    context: TreeBuildContext,
+    context: DomTreeBuildContext,
     text: String,
 
     iframe_srcdoc: bool,
@@ -115,13 +115,13 @@ pub enum Control {
 
 const INITIAL_TEXT_CAPACITY: usize = 4096;
 
-impl<W> TreeBuilder<W>
+impl<T> TreeBuilder<T>
 where
-    W: DocumentWriter,
+    T: DomTreeBuilder,
 {
-    pub fn new(writer: W) -> Self {
+    pub fn new(inner: T) -> Self {
         TreeBuilder {
-            writer,
+            inner,
             mode: mode!(Initial),
             original_mode: None,
             quirks_mode: QuirksMode::NoQuirks,
@@ -195,12 +195,12 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn enable_foster_parenting(&mut self) {
-        self.writer.enable_foster_parenting();
+        self.inner.enable_foster_parenting();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn disable_foster_parenting(&mut self) {
-        self.writer.disable_foster_parenting();
+        self.inner.disable_foster_parenting();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -217,16 +217,16 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn append_doctype(&mut self, doctype: &Doctype<'_>) {
         self.append_text_if_exists();
-        self.writer.append_doctype(doctype);
+        self.inner.append_doctype(doctype);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn push_html_element(&mut self, tag: &Tag<'_>) {
         self.append_text_if_exists();
-        self.writer
+        self.inner
             .push_element(tag.name, Namespace::Html, self.context.clone());
         for (name, value) in tag.attrs() {
-            self.writer.set_attribute(name, value);
+            self.inner.set_attribute(name, value);
         }
         self.context.namespace = Namespace::Html;
         self.context.local_name = LocalName::lookup(tag.name);
@@ -300,12 +300,12 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn push_mathml_element(&mut self, tag: &Tag<'_>) {
         self.append_text_if_exists();
-        self.writer
+        self.inner
             .push_element(tag.name, Namespace::MathMl, self.context.clone());
         for (name, value) in tag.attrs() {
             // TODO: adjust MathML attributes
             // TODO: adjust foreign attributes
-            self.writer.set_attribute(name, value);
+            self.inner.set_attribute(name, value);
         }
         self.context.namespace = Namespace::MathMl;
         self.context.local_name = LocalName::lookup(tag.name);
@@ -339,11 +339,11 @@ where
             LocalName::Unknown => tag.name,
             _ => local_name.name(),
         };
-        self.writer
+        self.inner
             .push_element(tag_name, Namespace::Svg, self.context.clone());
         for (name, value) in tag.attrs() {
             // TODO: adjust foreign attributes
-            self.writer.set_attribute(name, value);
+            self.inner.set_attribute(name, value);
         }
         self.context.namespace = Namespace::Svg;
         self.context.local_name = LocalName::lookup(tag.name);
@@ -395,13 +395,13 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn remove_element(&mut self) {
         self.append_text_if_exists();
-        self.context = self.writer.remove_element();
+        self.context = self.inner.remove_element();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn pop_element(&mut self) {
         self.append_text_if_exists();
-        self.context = self.writer.pop_element();
+        self.context = self.inner.pop_element();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -412,19 +412,19 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn append_comment(&mut self, comment: &Comment<'_>) {
         self.append_text_if_exists();
-        self.writer.append_comment(comment);
+        self.inner.append_comment(comment);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn end(&mut self) {
         self.append_text_if_exists();
-        self.writer.end();
+        self.inner.end();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn append_text_if_exists(&mut self) {
         if !self.text.is_empty() {
-            self.writer.append_text(self.text.as_str());
+            self.inner.append_text(self.text.as_str());
             self.text.clear();
         }
     }
