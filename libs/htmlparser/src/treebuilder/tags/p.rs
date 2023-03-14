@@ -26,7 +26,7 @@ where
                 mode!(BeforeHtml) => {
                     let ctrl = {
                         //debug_assert!(self.writer.is_empty());
-                        self.push_html_element(&Tag::with_no_attrs("html"));
+                        self.push_html_html_element(&Tag::with_no_attrs("html"));
                         self.switch_to(mode!(BeforeHead));
                         Control::Reprocess
                     };
@@ -37,7 +37,7 @@ where
                 }
                 mode!(BeforeHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("head"));
+                        self.push_html_head_element(&Tag::with_no_attrs("head"));
                         // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
@@ -75,7 +75,7 @@ where
                 }
                 mode!(AfterHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("body"));
+                        self.push_html_body_element(&Tag::with_no_attrs("body"));
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -86,10 +86,10 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        if self.context.has_p_element_in_button_scope {
+                        if self.context.has_p_element_in_button_scope() {
                             self.close_p_element();
                         }
-                        self.push_html_element(tag);
+                        self.push_html_p_element(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -102,10 +102,10 @@ where
                         // TODO: Parse error.
                         self.enable_foster_parenting();
                         let ctrl = {
-                            if self.context.has_p_element_in_button_scope {
+                            if self.context.has_p_element_in_button_scope() {
                                 self.close_p_element();
                             }
-                            self.push_html_element(tag);
+                            self.push_html_p_element(tag);
                             Control::Continue
                         };
                         self.disable_foster_parenting();
@@ -238,9 +238,9 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        if !self.context.has_p_element_in_button_scope {
+                        if !self.context.has_p_element_in_button_scope() {
                             // TODO: Parse error.
-                            self.push_html_element(&Tag::with_no_attrs("p"));
+                            self.push_html_p_element(&Tag::with_no_attrs("p"));
                         }
                         self.close_p_element();
                         Control::Continue
@@ -266,9 +266,9 @@ where
                         // TODO: Parse error.
                         self.enable_foster_parenting();
                         let ctrl = {
-                            if !self.context.has_p_element_in_button_scope {
+                            if !self.context.has_p_element_in_button_scope() {
                                 // TODO: Parse error.
-                                self.push_html_element(&Tag::with_no_attrs("p"));
+                                self.push_html_p_element(&Tag::with_no_attrs("p"));
                             }
                             self.close_p_element();
                             Control::Continue

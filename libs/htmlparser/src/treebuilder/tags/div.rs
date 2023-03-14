@@ -5,7 +5,7 @@ where
     T: DomTreeBuilder,
 {
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn handle_start_b(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_div(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
@@ -86,9 +86,10 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        self.reconstruct_active_formatting_elements();
-                        self.push_html_b_element(tag);
-                        self.push_element_to_active_formatting_element_list();
+                        if self.context.has_p_element_in_button_scope() {
+                            self.close_p_element();
+                        }
+                        self.push_html_div_element(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -101,9 +102,10 @@ where
                         // TODO: Parse error.
                         self.enable_foster_parenting();
                         let ctrl = {
-                            self.reconstruct_active_formatting_elements();
-                            self.push_html_b_element(tag);
-                            self.push_element_to_active_formatting_element_list();
+                            if self.context.has_p_element_in_button_scope() {
+                                self.close_p_element();
+                            }
+                            self.push_html_div_element(tag);
                             Control::Continue
                         };
                         self.disable_foster_parenting();
@@ -193,7 +195,7 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn handle_end_b(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_div(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
@@ -236,7 +238,19 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        self.run_adoption_agency_algorithm(tag);
+                        if !self.context.has_div_element_in_scope() {
+                            // TODO: Parse error.
+                            // Ignore the token.
+                        } else {
+                            self.close_implied_tags();
+                            if self.context.local_name != LocalName::Div {
+                                // TODO: Parse error.
+                            }
+                            while self.context.local_name != LocalName::Div {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop a div element
+                        }
                         Control::Continue
                     };
                     match ctrl {
@@ -260,7 +274,19 @@ where
                         // TODO: Parse error.
                         self.enable_foster_parenting();
                         let ctrl = {
-                            self.run_adoption_agency_algorithm(tag);
+                            if !self.context.has_div_element_in_scope() {
+                                // TODO: Parse error.
+                                // Ignore the token.
+                            } else {
+                                self.close_implied_tags();
+                                if self.context.local_name != LocalName::Div {
+                                    // TODO: Parse error.
+                                }
+                                while self.context.local_name != LocalName::Div {
+                                    self.pop_element();
+                                }
+                                self.pop_element(); // pop a div element
+                            }
                             Control::Continue
                         };
                         self.disable_foster_parenting();

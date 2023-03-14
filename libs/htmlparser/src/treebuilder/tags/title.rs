@@ -26,7 +26,7 @@ where
                 mode!(BeforeHtml) => {
                     let ctrl = {
                         //debug_assert!(self.writer.is_empty());
-                        self.push_html_element(&Tag::with_no_attrs("html"));
+                        self.push_html_html_element(&Tag::with_no_attrs("html"));
                         self.switch_to(mode!(BeforeHead));
                         Control::Reprocess
                     };
@@ -37,7 +37,7 @@ where
                 }
                 mode!(BeforeHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("head"));
+                        self.push_html_head_element(&Tag::with_no_attrs("head"));
                         // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
@@ -49,7 +49,7 @@ where
                 }
                 mode!(InHead, InBody, InCaption, InCell, InTemplate) => {
                     let ctrl = {
-                        self.push_html_element(tag);
+                        self.push_html_title_element(tag);
                         self.save_and_switch_to(mode!(Text));
                         Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "title")
                     };
@@ -76,7 +76,7 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         self.reopen_head_element();
-                        self.push_html_element(tag);
+                        self.push_html_title_element(tag);
                         self.save_and_switch_to(mode!(Text));
                         Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "title")
                     };
@@ -90,7 +90,7 @@ where
                         // TODO: Parse error.
                         self.enable_foster_parenting();
                         let ctrl = {
-                            self.push_html_element(tag);
+                            self.push_html_title_element(tag);
                             self.save_and_switch_to(mode!(Text));
                             Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "title")
                         };

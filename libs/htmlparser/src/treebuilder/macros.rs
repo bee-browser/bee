@@ -7,6 +7,15 @@ macro_rules! mode {
     };
 }
 
+macro_rules! flags {
+    ($flag:ident) => {
+        DomTreeBuildContextFlags::$flag
+    };
+    ($flag:ident, $($more:ident),+) => {
+        flags!($flag) | flags!($($more),+)
+    };
+}
+
 macro_rules! tag {
     ($tag:ident) => {
         crate::localnames::LocalName::$tag

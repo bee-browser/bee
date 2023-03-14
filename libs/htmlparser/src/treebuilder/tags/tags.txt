@@ -1,9 +1,12 @@
 b
 body
 colgroup
+div
+form
 frameset
 head
 html
+i
 input
 math
 p

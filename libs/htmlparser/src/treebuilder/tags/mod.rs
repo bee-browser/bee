@@ -7,9 +7,12 @@ mod any_other;
 mod b;
 mod body;
 mod colgroup;
+mod div;
+mod form;
 mod frameset;
 mod head;
 mod html;
+mod i;
 mod input;
 mod math;
 mod p;
@@ -36,9 +39,12 @@ where
             tag!(B) => self.handle_start_b(&tag),
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
+            tag!(Div) => self.handle_start_div(&tag),
+            tag!(Form) => self.handle_start_form(&tag),
             tag!(Frameset) => self.handle_start_frameset(&tag),
             tag!(Head) => self.handle_start_head(&tag),
             tag!(Html) => self.handle_start_html(&tag),
+            tag!(I) => self.handle_start_i(&tag),
             tag!(Input) => self.handle_start_input(&tag),
             tag!(Math) => self.handle_start_math(&tag),
             tag!(P) => self.handle_start_p(&tag),
@@ -62,9 +68,12 @@ where
             tag!(B) => self.handle_end_b(&tag),
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
+            tag!(Div) => self.handle_end_div(&tag),
+            tag!(Form) => self.handle_end_form(&tag),
             tag!(Frameset) => self.handle_end_frameset(&tag),
             tag!(Head) => self.handle_end_head(&tag),
             tag!(Html) => self.handle_end_html(&tag),
+            tag!(I) => self.handle_end_i(&tag),
             tag!(Input) => self.handle_end_input(&tag),
             tag!(Math) => self.handle_end_math(&tag),
             tag!(P) => self.handle_end_p(&tag),

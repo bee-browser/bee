@@ -5,7 +5,7 @@ where
     T: DomTreeBuilder,
 {
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn handle_start_b(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_i(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
@@ -87,7 +87,7 @@ where
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
                         self.reconstruct_active_formatting_elements();
-                        self.push_html_b_element(tag);
+                        self.push_html_i_element(tag);
                         self.push_element_to_active_formatting_element_list();
                         Control::Continue
                     };
@@ -102,7 +102,7 @@ where
                         self.enable_foster_parenting();
                         let ctrl = {
                             self.reconstruct_active_formatting_elements();
-                            self.push_html_b_element(tag);
+                            self.push_html_i_element(tag);
                             self.push_element_to_active_formatting_element_list();
                             Control::Continue
                         };
@@ -193,7 +193,7 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn handle_end_b(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_i(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {

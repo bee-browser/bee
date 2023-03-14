@@ -26,7 +26,7 @@ where
                 mode!(BeforeHtml) => {
                     let ctrl = {
                         //debug_assert!(self.writer.is_empty());
-                        self.push_html_element(&Tag::with_no_attrs("html"));
+                        self.push_html_html_element(&Tag::with_no_attrs("html"));
                         self.switch_to(mode!(BeforeHead));
                         Control::Reprocess
                     };
@@ -37,7 +37,7 @@ where
                 }
                 mode!(BeforeHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("head"));
+                        self.push_html_head_element(&Tag::with_no_attrs("head"));
                         // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
@@ -75,7 +75,7 @@ where
                 }
                 mode!(AfterHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("body"));
+                        self.push_html_body_element(&Tag::with_no_attrs("body"));
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -104,7 +104,7 @@ where
                 mode!(InTable) => {
                     let ctrl = {
                         self.clear_stack_back_to_table_context();
-                        self.push_html_element(&Tag::with_no_attrs("tbody"));
+                        self.push_html_tbody_element(&Tag::with_no_attrs("tbody"));
                         self.switch_to(mode!(InTableBody));
                         Control::Reprocess
                     };
@@ -129,9 +129,23 @@ where
                 }
                 mode!(InCaption) => {
                     let ctrl = {
-                        // TODO
-                        self.switch_to(mode!(InTable));
-                        Control::Reprocess
+                        if !self.context.has_caption_element_in_table_scope() {
+                            // TODO: Parse error.
+                            // Ignore the token.
+                            Control::Continue
+                        } else {
+                            self.close_implied_tags();
+                            if self.context.local_name != LocalName::Caption {
+                                // TODO: Parse error.
+                            }
+                            while self.context.local_name != LocalName::Caption {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop a caption element
+                            self.pop_active_formatting_elements_up_to_marker();
+                            self.switch_to(mode!(InTable));
+                            Control::Reprocess
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -159,7 +173,7 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         self.clear_stack_back_to_table_body_context();
-                        self.push_html_element(&Tag::with_no_attrs("tr"));
+                        self.push_html_tr_element(&Tag::with_no_attrs("tr"));
                         self.switch_to(mode!(InRow));
                         Control::Reprocess
                     };
@@ -171,7 +185,8 @@ where
                 mode!(InRow) => {
                     let ctrl = {
                         self.clear_stack_back_to_table_row_context();
-                        self.push_html_element(tag);
+                        self.push_html_td_element(tag);
+                        self.push_marker_to_active_formatting_element_list();
                         self.switch_to(mode!(InCell));
                         Control::Continue
                     };
@@ -182,8 +197,14 @@ where
                 }
                 mode!(InCell) => {
                     let ctrl = {
-                        // TODO
-                        Control::Continue
+                        if !self.context.has_cell_element_in_table_scope() {
+                            // TODO: Parse error.
+                            // Ignore the token.
+                            Control::Continue
+                        } else {
+                            self.close_cell();
+                            Control::Reprocess
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -335,10 +356,23 @@ where
                 }
                 mode!(InCell) => {
                     let ctrl = {
-                        // TODO
-                        self.pop_element();
-                        self.switch_to(mode!(InRow));
-                        Control::Continue
+                        if !self.context.has_td_element_in_table_scope() {
+                            // TODO: Parse error.
+                            // Ignore the token.
+                            Control::Continue
+                        } else {
+                            self.close_implied_tags();
+                            if self.context.local_name != LocalName::Td {
+                                // TODO: Parse error.
+                            }
+                            while self.context.local_name != LocalName::Td {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop a td element
+                            self.pop_active_formatting_elements_up_to_marker();
+                            self.switch_to(mode!(InRow));
+                            Control::Continue
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,

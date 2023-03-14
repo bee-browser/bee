@@ -26,7 +26,7 @@ where
                 mode!(BeforeHtml) => {
                     let ctrl = {
                         //debug_assert!(self.writer.is_empty());
-                        self.push_html_element(&Tag::with_no_attrs("html"));
+                        self.push_html_html_element(&Tag::with_no_attrs("html"));
                         self.switch_to(mode!(BeforeHead));
                         Control::Reprocess
                     };
@@ -37,7 +37,7 @@ where
                 }
                 mode!(BeforeHead) => {
                     let ctrl = {
-                        self.push_html_element(tag);
+                        self.push_html_head_element(tag);
                         // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Continue
@@ -170,7 +170,7 @@ where
                 mode!(BeforeHtml) => {
                     let ctrl = {
                         //debug_assert!(self.writer.is_empty());
-                        self.push_html_element(&Tag::with_no_attrs("html"));
+                        self.push_html_html_element(&Tag::with_no_attrs("html"));
                         self.switch_to(mode!(BeforeHead));
                         Control::Reprocess
                     };
@@ -181,7 +181,7 @@ where
                 }
                 mode!(BeforeHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("head"));
+                        self.push_html_head_element(&Tag::with_no_attrs("head"));
                         // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess

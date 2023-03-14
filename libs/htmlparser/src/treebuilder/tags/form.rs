@@ -5,7 +5,7 @@ where
     T: DomTreeBuilder,
 {
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn handle_start_b(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_form(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
@@ -86,9 +86,9 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
+                        // TODO
                         self.reconstruct_active_formatting_elements();
-                        self.push_html_b_element(tag);
-                        self.push_element_to_active_formatting_element_list();
+                        self.push_html_form_element(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -99,15 +99,12 @@ where
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
                         // TODO: Parse error.
-                        self.enable_foster_parenting();
-                        let ctrl = {
-                            self.reconstruct_active_formatting_elements();
-                            self.push_html_b_element(tag);
-                            self.push_element_to_active_formatting_element_list();
-                            Control::Continue
-                        };
-                        self.disable_foster_parenting();
-                        ctrl
+                        // TODO: If there is a template element on the stack of open elements, or if the form element pointer is not null, ignore the token.
+                        // TODO: Otherwise
+                        self.push_html_form_element(tag);
+                        // TODO: set the form element pointer to point to the element created.
+                        self.pop_element();
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -193,7 +190,7 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn handle_end_b(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_form(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             tracing::debug!(mode = ?self.mode, ?tag);
             match self.mode {
@@ -236,7 +233,20 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        self.run_adoption_agency_algorithm(tag);
+                        // TODO
+                        if !self.context.has_form_element_in_scope() {
+                            // TODO: Parse error.
+                            // Ignore the token.
+                        } else {
+                            self.close_implied_tags();
+                            if self.context.local_name != LocalName::Form {
+                                // TODO: Parse error.
+                            }
+                            while self.context.local_name != LocalName::Form {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop a form element
+                        }
                         Control::Continue
                     };
                     match ctrl {
@@ -260,7 +270,20 @@ where
                         // TODO: Parse error.
                         self.enable_foster_parenting();
                         let ctrl = {
-                            self.run_adoption_agency_algorithm(tag);
+                            // TODO
+                            if !self.context.has_form_element_in_scope() {
+                                // TODO: Parse error.
+                                // Ignore the token.
+                            } else {
+                                self.close_implied_tags();
+                                if self.context.local_name != LocalName::Form {
+                                    // TODO: Parse error.
+                                }
+                                while self.context.local_name != LocalName::Form {
+                                    self.pop_element();
+                                }
+                                self.pop_element(); // pop a form element
+                            }
                             Control::Continue
                         };
                         self.disable_foster_parenting();

@@ -26,7 +26,7 @@ where
                 mode!(BeforeHtml) => {
                     let ctrl = {
                         //debug_assert!(self.writer.is_empty());
-                        self.push_html_element(&Tag::with_no_attrs("html"));
+                        self.push_html_html_element(&Tag::with_no_attrs("html"));
                         self.switch_to(mode!(BeforeHead));
                         Control::Reprocess
                     };
@@ -37,7 +37,7 @@ where
                 }
                 mode!(BeforeHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("head"));
+                        self.push_html_head_element(&Tag::with_no_attrs("head"));
                         // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
@@ -75,7 +75,7 @@ where
                 }
                 mode!(AfterHead) => {
                     let ctrl = {
-                        self.push_html_element(&Tag::with_no_attrs("body"));
+                        self.push_html_body_element(&Tag::with_no_attrs("body"));
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -86,7 +86,7 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        // TODO: Reconstruct the active formatting elements, if any.
+                        self.reconstruct_active_formatting_elements();
                         // TODO: Adjust SVG attributes for the token. (This fixes the case of SVG attributes that are not all lowercase.)
                         // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
                         // TODO: Insert a foreign element for the token, in the SVG namespace.
@@ -107,7 +107,7 @@ where
                         // TODO: Parse error.
                         self.enable_foster_parenting();
                         let ctrl = {
-                            // TODO: Reconstruct the active formatting elements, if any.
+                            self.reconstruct_active_formatting_elements();
                             // TODO: Adjust SVG attributes for the token. (This fixes the case of SVG attributes that are not all lowercase.)
                             // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
                             // TODO: Insert a foreign element for the token, in the SVG namespace.
