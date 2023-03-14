@@ -18,8 +18,14 @@ struct TreeValidator<'a> {
     nodes: Vec<Node>,
     stack: Vec<(usize, OpenContext)>,
     head_index: Option<usize>,
+    active_formatting_elements: Vec<ActiveFormattingElement>,
     foster_parenting: bool,
     foster_parenting_insertion_point: FosterParentingInsertionPoint,
+}
+
+enum ActiveFormattingElement {
+    Marker,
+    Element(usize),
 }
 
 #[derive(Clone, Copy)]
@@ -47,6 +53,7 @@ impl<'a> TreeValidator<'a> {
             }],
             stack: vec![(0, OpenContext::Document)],
             head_index: None,
+            active_formatting_elements: vec![],
             foster_parenting: false,
             foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
         }
@@ -190,6 +197,35 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
 
     fn disable_foster_parenting(&mut self) {
         self.foster_parenting = false;
+    }
+
+    fn push_marker_to_active_formatting_element_list(&mut self) {
+        self.active_formatting_elements
+            .push(ActiveFormattingElement::Marker);
+    }
+
+    fn push_element_to_active_formatting_element_list(&mut self) {
+        let index = self.stack.last().unwrap().0;
+        self.active_formatting_elements
+            .push(ActiveFormattingElement::Element(index));
+    }
+
+    fn reconstruct_active_formatting_elements(&mut self) {
+        // TODO: changing the basic design is needed.
+        // The procedure requires "Insert an HTML element", but it's implemented
+        // by the caller.
+    }
+
+    fn pop_active_formatting_elements_up_to_marker(&mut self) {
+        while let Some(element) = self.active_formatting_elements.pop() {
+            if let ActiveFormattingElement::Marker = element {
+                break;
+            }
+        }
+    }
+
+    fn run_adoption_agency_algorithm(&mut self, tag: &Tag<'_>) {
+        // TODO
     }
 
     fn append_doctype(&mut self, doctype: &Doctype<'_>) {

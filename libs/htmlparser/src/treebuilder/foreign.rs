@@ -13,16 +13,16 @@ where
         }
         match token {
             Token::StartTag(ref tag) => {
-                if self.context.html_integration_pont {
+                if self.context.is_html_integration_point() {
                     return false;
                 }
                 let local_name = LocalName::lookup(tag.name);
-                if self.context.svg_integration_point {
+                if self.context.is_svg_integration_point() {
                     if let tag!(svg: Svg) = local_name {
                         return false;
                     }
                 }
-                if self.context.mathml_text_integration_point {
+                if self.context.is_mathml_text_integration_point() {
                     match local_name {
                         tag!(mathml: Mglyph, Malignmark) => (),
                         _ => return false,
@@ -30,10 +30,10 @@ where
                 }
             }
             Token::Text(_) => {
-                if self.context.html_integration_pont {
+                if self.context.is_html_integration_point() {
                     return false;
                 }
-                if self.context.mathml_text_integration_point {
+                if self.context.is_mathml_text_integration_point() {
                     return false;
                 }
             }
@@ -64,10 +64,10 @@ where
                         if let Namespace::Html = self.context.namespace {
                             break;
                         }
-                        if self.context.mathml_text_integration_point {
+                        if self.context.is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context.html_integration_pont {
+                        if self.context.is_html_integration_point() {
                             break;
                         }
                         self.pop_element();
@@ -82,10 +82,10 @@ where
                         if let Namespace::Html = self.context.namespace {
                             break;
                         }
-                        if self.context.mathml_text_integration_point {
+                        if self.context.is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context.html_integration_pont {
+                        if self.context.is_html_integration_point() {
                             break;
                         }
                         self.pop_element();
@@ -111,10 +111,10 @@ where
                         if let Namespace::Html = self.context.namespace {
                             break;
                         }
-                        if self.context.mathml_text_integration_point {
+                        if self.context.is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context.html_integration_pont {
+                        if self.context.is_html_integration_point() {
                             break;
                         }
                         self.pop_element();
@@ -122,7 +122,7 @@ where
                     // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
                     self.handle_start_tag(tag)
                 }
-                tag!(Script) if self.context.svg_script => {
+                tag!(Script) if self.context.is_svg_script() => {
                     self.pop_element();
                     // TODO
                     Control::Continue

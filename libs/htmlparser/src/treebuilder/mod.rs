@@ -8,10 +8,11 @@ mod foreign;
 mod tags;
 mod text;
 
-use crate::localnames::LocalName;
 use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
 use bee_htmltokenizer::InitialState;
+
+use crate::localnames::LocalName;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Namespace {
@@ -20,17 +21,143 @@ pub enum Namespace {
     Svg,
 }
 
+flagset::flags! {
+    enum DomTreeBuildContextFlags: u64 {
+        MathmlTextIntegrationPoint,
+        SvgIntegrationPoint,
+        SvgScript,
+        HtmlIntegrationPoint,
+        HasTemplateElement,
+        HasDivElementInScope,
+        HasFormElementInScope,
+        HasPreElementInScope,
+        HasPElementInButtonScope,
+        HasSelectElementInSelectScope,
+        HasTableElementInTableScope,
+        HasCaptionElementInTableScope,
+        HasTbodyElementInTableScope,
+        HasTfootElementInTableScope,
+        HasTheadElementInTableScope,
+        HasTrElementInTableScope,
+        HasTdElementInTableScope,
+        HasThElementInTableScope,
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct DomTreeBuildContext {
     reset_mode: InsertionMode,
     namespace: Namespace,
     local_name: LocalName,
-    mathml_text_integration_point: bool,
-    svg_integration_point: bool,
-    svg_script: bool,
-    html_integration_pont: bool,
-    has_p_element_in_button_scope: bool,
-    has_select_element_in_select_scope: bool,
+    flags: flagset::FlagSet<DomTreeBuildContextFlags>,
+}
+
+impl DomTreeBuildContext {
+    #[inline(always)]
+    fn is_mathml_text_integration_point(&self) -> bool {
+        self.flags.contains(flags!(MathmlTextIntegrationPoint))
+    }
+
+    #[inline(always)]
+    fn is_svg_integration_point(&self) -> bool {
+        self.flags.contains(flags!(SvgIntegrationPoint))
+    }
+
+    #[inline(always)]
+    fn is_svg_script(&self) -> bool {
+        self.flags.contains(flags!(SvgScript))
+    }
+
+    #[inline(always)]
+    fn is_html_integration_point(&self) -> bool {
+        self.flags.contains(flags!(HtmlIntegrationPoint))
+    }
+
+    #[inline(always)]
+    fn has_template_element(&self) -> bool {
+        self.flags.contains(flags!(HasTemplateElement))
+    }
+
+    #[inline(always)]
+    fn has_div_element_in_scope(&self) -> bool {
+        self.flags.contains(flags!(HasDivElementInScope))
+    }
+
+    #[inline(always)]
+    fn has_form_element_in_scope(&self) -> bool {
+        self.flags.contains(flags!(HasFormElementInScope))
+    }
+
+    #[inline(always)]
+    fn has_pre_element_in_scope(&self) -> bool {
+        self.flags.contains(flags!(HasPreElementInScope))
+    }
+
+    #[inline(always)]
+    fn has_p_element_in_button_scope(&self) -> bool {
+        self.flags.contains(flags!(HasPElementInButtonScope))
+    }
+
+    #[inline(always)]
+    fn has_select_element_in_select_scope(&self) -> bool {
+        self.flags.contains(flags!(HasSelectElementInSelectScope))
+    }
+
+    #[inline(always)]
+    fn has_table_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasTableElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_caption_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasCaptionElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_rowgroup_element_in_table_scope(&self) -> bool {
+        !self.flags.is_disjoint(flags!(
+            HasTbodyElementInTableScope,
+            HasTfootElementInTableScope,
+            HasTheadElementInTableScope
+        ))
+    }
+
+    #[inline(always)]
+    fn has_tbody_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasTbodyElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_tfoot_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasTfootElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_thead_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasTheadElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_tr_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasTrElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_cell_element_in_table_scope(&self) -> bool {
+        !self
+            .flags
+            .is_disjoint(flags!(HasTdElementInTableScope, HasThElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_td_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasTdElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_th_element_in_table_scope(&self) -> bool {
+        self.flags.contains(flags!(HasThElementInTableScope))
+    }
 }
 
 impl Default for DomTreeBuildContext {
@@ -39,12 +166,7 @@ impl Default for DomTreeBuildContext {
             reset_mode: mode!(InBody),
             namespace: Namespace::Html,
             local_name: LocalName::Unknown,
-            mathml_text_integration_point: false,
-            svg_integration_point: false,
-            svg_script: false,
-            html_integration_pont: false,
-            has_p_element_in_button_scope: false,
-            has_select_element_in_select_scope: false,
+            flags: Default::default(),
         }
     }
 }
@@ -61,6 +183,21 @@ pub trait DomTreeBuilder {
 
     /// Disable the foster parenting.
     fn disable_foster_parenting(&mut self);
+
+    //
+    fn push_marker_to_active_formatting_element_list(&mut self);
+
+    //
+    fn push_element_to_active_formatting_element_list(&mut self);
+
+    //
+    fn reconstruct_active_formatting_elements(&mut self);
+
+    //
+    fn pop_active_formatting_elements_up_to_marker(&mut self);
+
+    //
+    fn run_adoption_agency_algorithm(&mut self, tag: &Tag<'_>);
 
     /// Creates a node for a doctype and append it as a child node.
     fn append_doctype(&mut self, doctype: &Doctype<'_>);
@@ -204,6 +341,31 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
+    fn push_marker_to_active_formatting_element_list(&mut self) {
+        self.inner.push_marker_to_active_formatting_element_list();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn push_element_to_active_formatting_element_list(&mut self) {
+        self.inner.push_element_to_active_formatting_element_list();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn reconstruct_active_formatting_elements(&mut self) {
+        self.inner.reconstruct_active_formatting_elements();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn pop_active_formatting_elements_up_to_marker(&mut self) {
+        self.inner.pop_active_formatting_elements_up_to_marker();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn run_adoption_agency_algorithm(&mut self, tag: &Tag<'_>) {
+        self.inner.run_adoption_agency_algorithm(tag);
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
     fn change_quirks_mode_if_changeable(&mut self, quirks_mode: QuirksMode) {
         if self.quirks_mode_changeable {
             tracing::debug!(
@@ -220,6 +382,262 @@ where
         self.inner.append_doctype(doctype);
     }
 
+    #[inline(always)]
+    fn push_html_applet_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.flags -= flags!(HasPElementInButtonScope);
+    }
+
+    #[inline(always)]
+    fn push_html_b_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_body_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InBody);
+    }
+
+    #[inline(always)]
+    fn push_html_caption_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InCaption);
+        self.context.flags -= flags!(
+            HasDivElementInScope,
+            HasFormElementInScope,
+            HasPreElementInScope,
+            HasPElementInButtonScope
+        );
+        self.context.flags |= flags!(HasCaptionElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html_colgroup_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InColumnGroup);
+    }
+
+    #[inline(always)]
+    fn push_html_div_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_form_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_frameset_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InFrameset);
+    }
+
+    #[inline(always)]
+    fn push_html_head_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InHead);
+    }
+
+    #[inline(always)]
+    fn push_html_html_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(AfterHead);
+        self.context.flags -= flags!(
+            HasDivElementInScope,
+            HasFormElementInScope,
+            HasPreElementInScope,
+            HasPElementInButtonScope,
+            HasTableElementInTableScope,
+            HasCaptionElementInTableScope,
+            HasTbodyElementInTableScope,
+            HasTfootElementInTableScope,
+            HasTheadElementInTableScope,
+            HasTrElementInTableScope,
+            HasTdElementInTableScope,
+            HasThElementInTableScope
+        );
+    }
+
+    #[inline(always)]
+    fn push_html_i_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_input_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_marquee_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.flags |= flags!(
+            HasDivElementInScope,
+            HasFormElementInScope,
+            HasPreElementInScope,
+            HasPElementInButtonScope
+        );
+    }
+
+    #[inline(always)]
+    fn push_html_optgroup_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.flags -= flags!(HasSelectElementInSelectScope);
+    }
+
+    #[inline(always)]
+    fn push_html_option_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.flags -= flags!(HasSelectElementInSelectScope);
+    }
+
+    #[inline(always)]
+    fn push_html_p_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.flags |= flags!(HasPElementInButtonScope);
+    }
+
+    #[inline(always)]
+    fn push_html_plaintext_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_pre_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.flags |= flags!(HasPreElementInScope);
+    }
+
+    #[inline(always)]
+    fn push_html_script_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_select_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        // TODO
+        self.context.reset_mode = mode!(InSelect);
+        self.context.flags |= flags!(HasSelectElementInSelectScope);
+    }
+
+    #[inline(always)]
+    fn push_html_style_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_table_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InTable);
+        self.context.flags -= flags!(
+            HasDivElementInScope,
+            HasFormElementInScope,
+            HasPreElementInScope,
+            HasPElementInButtonScope,
+            HasCaptionElementInTableScope,
+            HasTbodyElementInTableScope,
+            HasTfootElementInTableScope,
+            HasTheadElementInTableScope,
+            HasTrElementInTableScope,
+            HasTdElementInTableScope,
+            HasThElementInTableScope
+        );
+        self.context.flags |= flags!(HasTableElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html_tbody_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InTableBody);
+        self.context.flags |= flags!(HasTbodyElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html_td_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InCell);
+        self.context.flags -= flags!(
+            HasDivElementInScope,
+            HasFormElementInScope,
+            HasPreElementInScope,
+            HasPElementInButtonScope
+        );
+        self.context.flags |= flags!(HasTdElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html_template_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        // TODO: switch the insertion mode to the current template insertion mode
+        self.context.flags -= flags!(
+            HasDivElementInScope,
+            HasFormElementInScope,
+            HasPreElementInScope,
+            HasPElementInButtonScope,
+            HasTableElementInTableScope,
+            HasCaptionElementInTableScope,
+            HasTbodyElementInTableScope,
+            HasTfootElementInTableScope,
+            HasTheadElementInTableScope,
+            HasTrElementInTableScope,
+            HasTdElementInTableScope,
+            HasThElementInTableScope
+        );
+        self.context.flags |= flags!(HasTemplateElement);
+    }
+
+    #[inline(always)]
+    fn push_html_textarea_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_tfoot_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InTableBody);
+        self.context.flags |= flags!(HasTfootElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html_th_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InCell);
+        self.context.flags -= flags!(
+            HasDivElementInScope,
+            HasFormElementInScope,
+            HasPreElementInScope,
+            HasPElementInButtonScope
+        );
+        self.context.flags |= flags!(HasThElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html_thead_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InTableBody);
+        self.context.flags |= flags!(HasTheadElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html_title_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
+    #[inline(always)]
+    fn push_html_tr_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+        self.context.reset_mode = mode!(InRow);
+        self.context.flags |= flags!(HasTrElementInTableScope);
+    }
+
+    #[inline(always)]
+    fn push_html__element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag);
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     fn push_html_element(&mut self, tag: &Tag<'_>) {
         self.append_text_if_exists();
@@ -230,71 +648,12 @@ where
         }
         self.context.namespace = Namespace::Html;
         self.context.local_name = LocalName::lookup(tag.name);
-        self.context.mathml_text_integration_point = false;
-        self.context.svg_integration_point = false;
-        self.context.svg_script = false;
-        self.context.html_integration_pont = false;
-        match self.context.local_name {
-            tag!(Applet) => {
-                self.context.has_p_element_in_button_scope = false;
-            }
-            tag!(Body) => {
-                self.context.reset_mode = mode!(InBody);
-            }
-            tag!(Caption) => {
-                self.context.reset_mode = mode!(InCaption);
-                self.context.has_p_element_in_button_scope = false;
-            }
-            tag!(Colgroup) => {
-                self.context.reset_mode = mode!(InColumnGroup);
-            }
-            tag!(Select) => {
-                // TODO
-                self.context.reset_mode = mode!(InSelect);
-                self.context.has_select_element_in_select_scope = true;
-            }
-            tag!(Table) => {
-                self.context.reset_mode = mode!(InTable);
-                self.context.has_p_element_in_button_scope = false;
-            }
-            tag!(Td, Th) => {
-                self.context.reset_mode = mode!(InCell);
-                self.context.has_p_element_in_button_scope = false;
-            }
-            tag!(Template) => {
-                // TODO: switch the insertion mode to the current template insertion mode
-                self.context.has_p_element_in_button_scope = false;
-            }
-            tag!(Tr) => {
-                self.context.reset_mode = mode!(InRow);
-            }
-            tag!(Tbody, Thead, Tfoot) => {
-                self.context.reset_mode = mode!(InTableBody);
-            }
-            tag!(Marquee) => {
-                self.context.has_p_element_in_button_scope = false;
-            }
-            tag!(Head) => {
-                self.context.reset_mode = mode!(InHead);
-            }
-            tag!(Optgroup) => {
-                self.context.has_select_element_in_select_scope = false;
-            }
-            tag!(Option) => {
-                self.context.has_select_element_in_select_scope = false;
-            }
-            tag!(P) => {
-                self.context.has_p_element_in_button_scope = true;
-            }
-            tag!(Frameset) => {
-                self.context.reset_mode = mode!(InFrameset);
-            }
-            tag!(Html) => {
-                self.context.reset_mode = mode!(AfterHead);
-                self.context.has_p_element_in_button_scope = false;
-            }
-            _ => {}
-        }
+        self.context.flags -= flags!(
+            MathmlTextIntegrationPoint,
+            SvgIntegrationPoint,
+            SvgScript,
+            HtmlIntegrationPoint
+        );
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -311,23 +670,26 @@ where
         self.context.local_name = LocalName::lookup(tag.name);
         match self.context.local_name {
             tag!(mathml: Mi, Mo, Mn, Ms, Mtext) => {
-                self.context.mathml_text_integration_point = true;
-                self.context.svg_integration_point = false;
-                self.context.svg_script = false;
-                self.context.html_integration_pont = false;
-                self.context.has_p_element_in_button_scope = false;
+                self.context.flags |= flags!(MathmlTextIntegrationPoint);
+                self.context.flags -= flags!(
+                    SvgIntegrationPoint,
+                    SvgScript,
+                    HtmlIntegrationPoint,
+                    HasPElementInButtonScope
+                );
             }
             tag!(mathml: AnnotationXml) => {
-                self.context.mathml_text_integration_point = false;
-                self.context.svg_integration_point = true;
-                self.context.svg_script = false;
-                self.context.html_integration_pont = false;
+                self.context.flags |= flags!(SvgIntegrationPoint);
+                self.context.flags -=
+                    flags!(MathmlTextIntegrationPoint, SvgScript, HtmlIntegrationPoint);
             }
             _ => {
-                self.context.mathml_text_integration_point = false;
-                self.context.svg_integration_point = false;
-                self.context.svg_script = false;
-                self.context.html_integration_pont = false;
+                self.context.flags -= flags!(
+                    MathmlTextIntegrationPoint,
+                    SvgIntegrationPoint,
+                    SvgScript,
+                    HtmlIntegrationPoint
+                );
             }
         }
     }
@@ -347,21 +709,18 @@ where
         }
         self.context.namespace = Namespace::Svg;
         self.context.local_name = LocalName::lookup(tag.name);
-        self.context.mathml_text_integration_point = false;
-        self.context.svg_integration_point = false;
+        self.context.flags -= flags!(MathmlTextIntegrationPoint, SvgIntegrationPoint);
         match self.context.local_name {
             tag!(svg: Script) => {
-                self.context.svg_script = true;
-                self.context.html_integration_pont = false;
+                self.context.flags |= flags!(SvgScript);
+                self.context.flags -= flags!(HtmlIntegrationPoint);
             }
             tag!(svg: ForeignObject, Desc, Title) => {
-                self.context.svg_script = false;
-                self.context.html_integration_pont = true;
-                self.context.has_p_element_in_button_scope = false;
+                self.context.flags |= flags!(HtmlIntegrationPoint);
+                self.context.flags -= flags!(SvgScript, HasPElementInButtonScope);
             }
             _ => {
-                self.context.svg_script = false;
-                self.context.html_integration_pont = false;
+                self.context.flags -= flags!(SvgScript, HtmlIntegrationPoint);
             }
         }
     }
@@ -370,6 +729,21 @@ where
     fn reopen_head_element(&mut self) {
         self.append_text_if_exists();
         self.reopen_head_element();
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn close_implied_tags(&mut self) {
+        // TODO
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn close_implied_tags_except_for(&mut self, local_name: LocalName) {
+        // TODO
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn close_all_implied_tags(&mut self) {
+        // TODO
     }
 
     #[tracing::instrument(level = "debug", skip_all)]

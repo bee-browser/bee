@@ -180,8 +180,10 @@ function render(spec, modes, ids, token, run, arrow) {
     noEscape: true,
     strict: true,
   });
+  let tag_name = getTagNameFromToken(token);
   return template({
-    TAG_NAME: getTagNameFromToken(token),
+    tag_name,
+    TagName: pascalCase(tag_name),
   });
 }
 
