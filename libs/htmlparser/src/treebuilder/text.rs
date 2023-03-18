@@ -67,7 +67,7 @@ where
                 }
                 mode!(InHead) => {
                     let ctrl = {
-                        debug_assert!(self.context.local_name == LocalName::Head);
+                        debug_assert!(self.context().local_name() == LocalName::Head);
                         self.pop_element();
                         self.switch_to(mode!(AfterHead));
                         Control::Reprocess
@@ -80,9 +80,9 @@ where
                 mode!(InHeadNoscript) => {
                     let ctrl = {
                         // TODO: Parse error.
-                        debug_assert!(self.context.local_name == LocalName::Noscript);
+                        debug_assert!(self.context().local_name() == LocalName::Noscript);
                         self.pop_element();
-                        debug_assert!(self.context.local_name == LocalName::Head);
+                        debug_assert!(self.context().local_name() == LocalName::Head);
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -133,7 +133,7 @@ where
                 }
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
-                        match self.context.local_name {
+                        match self.context().local_name() {
                             tag!(Table, Tbody, Template, Tfoot, Thead, Tr) => {
                                 // TODO: Let the pending table character tokens be an empty list of tokens.
                                 self.save_and_switch_to(mode!(InTableText));
@@ -169,7 +169,7 @@ where
                 }
                 mode!(InColumnGroup) => {
                     let ctrl = {
-                        if self.context.local_name != LocalName::Colgroup {
+                        if self.context().local_name() != LocalName::Colgroup {
                             // TODO: Parse error.
                             // Ignore the token.
                             Control::Continue
@@ -260,7 +260,7 @@ where
                 }
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
-                        match self.context.local_name {
+                        match self.context().local_name() {
                             tag!(Table, Tbody, Template, Tfoot, Thead, Tr) => {
                                 // TODO: Let the pending table character tokens be an empty list of tokens.
                                 self.save_and_switch_to(mode!(InTableText));
@@ -333,7 +333,7 @@ where
                 }
                 mode!(InHead) => {
                     let ctrl = {
-                        debug_assert!(self.context.local_name == LocalName::Head);
+                        debug_assert!(self.context().local_name() == LocalName::Head);
                         self.pop_element();
                         self.switch_to(mode!(AfterHead));
                         Control::Reprocess
@@ -346,9 +346,9 @@ where
                 mode!(InHeadNoscript) => {
                     let ctrl = {
                         // TODO: Parse error.
-                        debug_assert!(self.context.local_name == LocalName::Noscript);
+                        debug_assert!(self.context().local_name() == LocalName::Noscript);
                         self.pop_element();
-                        debug_assert!(self.context.local_name == LocalName::Head);
+                        debug_assert!(self.context().local_name() == LocalName::Head);
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -392,7 +392,7 @@ where
                 }
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
-                        match self.context.local_name {
+                        match self.context().local_name() {
                             tag!(Table, Tbody, Template, Tfoot, Thead, Tr) => {
                                 // TODO: Let the pending table character tokens be an empty list of tokens.
                                 self.save_and_switch_to(mode!(InTableText));
@@ -419,7 +419,7 @@ where
                 }
                 mode!(InColumnGroup) => {
                     let ctrl = {
-                        if self.context.local_name != LocalName::Colgroup {
+                        if self.context().local_name() != LocalName::Colgroup {
                             // TODO: Parse error.
                             // Ignore the token.
                             Control::Continue

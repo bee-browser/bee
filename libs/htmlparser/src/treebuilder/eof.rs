@@ -54,7 +54,7 @@ where
                 }
                 mode!(InHead) => {
                     let ctrl = {
-                        debug_assert!(self.context.local_name == LocalName::Head);
+                        debug_assert!(self.context().local_name() == LocalName::Head);
                         self.pop_element();
                         self.switch_to(mode!(AfterHead));
                         Control::Reprocess
@@ -67,9 +67,9 @@ where
                 mode!(InHeadNoscript) => {
                     let ctrl = {
                         // TODO: Parse error.
-                        debug_assert!(self.context.local_name == LocalName::Noscript);
+                        debug_assert!(self.context().local_name() == LocalName::Noscript);
                         self.pop_element();
-                        debug_assert!(self.context.local_name == LocalName::Head);
+                        debug_assert!(self.context().local_name() == LocalName::Head);
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -113,8 +113,8 @@ where
                 mode!(Text) => {
                     let ctrl = {
                         // TODO: Parse error.
-                        // TODO: check namespace
-                        if self.context.local_name == LocalName::Script {
+                        let context = self.context();
+                        if context.is_html() && context.local_name() == tag!(Script) {
                             // TODO: set its already started to true.
                         }
                         self.pop_element();
@@ -149,7 +149,7 @@ where
                 }
                 mode!(InFrameset) => {
                     let ctrl = {
-                        if self.context.local_name != LocalName::Html {
+                        if self.context().local_name() != LocalName::Html {
                             // TODO: Parse error.
                         }
                         Control::Done

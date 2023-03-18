@@ -35,7 +35,8 @@ where
 {
     pub fn handle_start_tag(&mut self, tag: Tag<'_>) -> Control {
         self.ignore_lf = false;
-        match LocalName::lookup(tag.name) {
+        let local_name = LocalName::lookup(tag.name);
+        match local_name {
             tag!(B) => self.handle_start_b(&tag),
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
@@ -64,7 +65,8 @@ where
 
     pub fn handle_end_tag(&mut self, tag: Tag<'_>) -> Control {
         self.ignore_lf = false;
-        match LocalName::lookup(tag.name) {
+        let local_name = LocalName::lookup(tag.name);
+        match local_name {
             tag!(B) => self.handle_end_b(&tag),
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
@@ -105,12 +107,12 @@ where
     }
 
     fn reset_insertion_mode_appropriately(&mut self) {
-        self.switch_to(self.context.reset_mode);
+        self.switch_to(self.context().reset_mode);
     }
 
     fn clear_stack_back_to_table_context(&mut self) {
         loop {
-            match self.context.local_name {
+            match self.context().open_element.local_name {
                 tag!(Html, Table, Template) => break,
                 _ => self.remove_element(),
             }
@@ -119,7 +121,7 @@ where
 
     fn clear_stack_back_to_table_body_context(&mut self) {
         loop {
-            match self.context.local_name {
+            match self.context().open_element.local_name {
                 tag!(Tbody, Tfoot, Thead) => break,
                 _ => self.remove_element(),
             }
@@ -128,7 +130,7 @@ where
 
     fn clear_stack_back_to_table_row_context(&mut self) {
         loop {
-            match self.context.local_name {
+            match self.context().open_element.local_name {
                 tag!(Html, Template, Tr) => break,
                 _ => self.remove_element(),
             }
@@ -138,7 +140,7 @@ where
     fn close_cell(&mut self) {
         // TODO: Generate implied end tags.
         loop {
-            match self.context.local_name {
+            match self.context().open_element.local_name {
                 tag!(Td, Th) => {
                     self.pop_element();
                     break;

@@ -8,21 +8,21 @@ where
         if let Token::End = token {
             return false;
         }
-        if let Namespace::Html = self.context.namespace {
+        if self.context().is_html() {
             return false;
         }
         match token {
             Token::StartTag(ref tag) => {
-                if self.context.is_html_integration_point() {
+                if self.context().is_html_integration_point() {
                     return false;
                 }
                 let local_name = LocalName::lookup(tag.name);
-                if self.context.is_svg_integration_point() {
+                if self.context().is_svg_integration_point() {
                     if let tag!(svg: Svg) = local_name {
                         return false;
                     }
                 }
-                if self.context.is_mathml_text_integration_point() {
+                if self.context().is_mathml_text_integration_point() {
                     match local_name {
                         tag!(mathml: Mglyph, Malignmark) => (),
                         _ => return false,
@@ -30,10 +30,10 @@ where
                 }
             }
             Token::Text(_) => {
-                if self.context.is_html_integration_point() {
+                if self.context().is_html_integration_point() {
                     return false;
                 }
-                if self.context.is_mathml_text_integration_point() {
+                if self.context().is_mathml_text_integration_point() {
                     return false;
                 }
             }
@@ -61,13 +61,13 @@ where
                     // TODO: Parse error.
                     // TODO: While the current node is not a MathML text integration point, an HTML integration point, or an element in the HTML namespace, pop elements from the stack of open elements.
                     loop {
-                        if let Namespace::Html = self.context.namespace {
+                        if self.context().is_html() {
                             break;
                         }
-                        if self.context.is_mathml_text_integration_point() {
+                        if self.context().is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context.is_html_integration_point() {
+                        if self.context().is_html_integration_point() {
                             break;
                         }
                         self.pop_element();
@@ -79,13 +79,13 @@ where
                     // TODO: Parse error.
                     // TODO: While the current node is not a MathML text integration point, an HTML integration point, or an element in the HTML namespace, pop elements from the stack of open elements.
                     loop {
-                        if let Namespace::Html = self.context.namespace {
+                        if self.context().is_html() {
                             break;
                         }
-                        if self.context.is_mathml_text_integration_point() {
+                        if self.context().is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context.is_html_integration_point() {
+                        if self.context().is_html_integration_point() {
                             break;
                         }
                         self.pop_element();
@@ -95,8 +95,8 @@ where
                 }
                 local_name => {
                     // TODO
-                    match self.context.namespace {
-                        Namespace::MathMl => self.push_mathml_element(&tag),
+                    match self.context().open_element.namespace {
+                        Namespace::MathMl => self.push_mathml_element(&tag, local_name),
                         Namespace::Svg => self.push_svg_element(&tag, local_name),
                         _ => unreachable!(),
                     }
@@ -108,13 +108,13 @@ where
                     // TODO: Parse error.
                     // TODO: While the current node is not a MathML text integration point, an HTML integration point, or an element in the HTML namespace, pop elements from the stack of open elements.
                     loop {
-                        if let Namespace::Html = self.context.namespace {
+                        if self.context().is_html() {
                             break;
                         }
-                        if self.context.is_mathml_text_integration_point() {
+                        if self.context().is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context.is_html_integration_point() {
+                        if self.context().is_html_integration_point() {
                             break;
                         }
                         self.pop_element();
@@ -122,7 +122,7 @@ where
                     // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
                     self.handle_start_tag(tag)
                 }
-                tag!(Script) if self.context.is_svg_script() => {
+                tag!(Script) if self.context().is_svg_script() => {
                     self.pop_element();
                     // TODO
                     Control::Continue

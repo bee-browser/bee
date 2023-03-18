@@ -4,9 +4,12 @@ use crate::treebuilder::Control;
 use crate::treebuilder::DomTreeBuilder;
 use crate::treebuilder::TreeBuilder;
 
-pub struct Parser<W> {
+pub struct Parser<T>
+where
+    T: DomTreeBuilder,
+{
     tokenizer: Tokenizer<'static>,
-    tree_builder: TreeBuilder<W>,
+    tree_builder: TreeBuilder<T>,
 }
 
 impl<T> Parser<T>

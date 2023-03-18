@@ -176,7 +176,7 @@ modes:
           Control::SwitchTo(InitialState::ScriptData, "script")
       - match: </head>
         run: |
-          debug_assert!(self.context.local_name == LocalName::Head);
+          debug_assert!(self.context().local_name() == LocalName::Head);
           self.pop_element();
           self.switch_to(mode!(AfterHead));
           Control::Continue
@@ -186,23 +186,23 @@ modes:
       - match: <template>
         run: |
           self.push_html_template_element(tag);
-          self.push_marker_to_active_formatting_element_list();
-          self.context.flags |= flags!(HasTemplateElement);
+          self.push_marker_to_active_formatting_contexts();
+          self.context_mut().flags |= flags!(HasTemplateElement);
           self.frameset_ok = false;
           self.switch_to(mode!(InTemplate));
           // TODO: Push "in template" onto the stack of template insertion modes so that it is the new current template insertion mode
           Control::Continue
       - match: </template>
         run: |
-          if !self.context.has_template_element() {
+          if !self.context().has_template_element() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_all_implied_tags();
-              if self.context.local_name != LocalName::template {
+              if self.context().local_name() != LocalName::template {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::template {
+              while self.context().local_name() != LocalName::template {
                   self.pop_element();
               }
               self.pop_element(); // pop a template element
@@ -218,7 +218,7 @@ modes:
       - match: any
         id: anything-else
         run: |
-          debug_assert!(self.context.local_name == LocalName::Head);
+          debug_assert!(self.context().local_name() == LocalName::Head);
           self.pop_element();
           self.switch_to(mode!(AfterHead));
           Control::Reprocess
@@ -235,9 +235,9 @@ modes:
           {{{ use '@in-body' }}}
       - match: </noscript>
         run: |
-          debug_assert!(self.context.local_name == LocalName::Noscript);
+          debug_assert!(self.context().local_name() == LocalName::Noscript);
           self.pop_element();
-          debug_assert!(self.context.local_name == LocalName::Head);
+          debug_assert!(self.context().local_name() == LocalName::Head);
           self.switch_to(mode!(InHead));
           Control::Continue
       - match: >-
@@ -256,9 +256,9 @@ modes:
         id: anything-else
         run: |
           {{{ use '$parse-error' }}}
-          debug_assert!(self.context.local_name == LocalName::Noscript);
+          debug_assert!(self.context().local_name() == LocalName::Noscript);
           self.pop_element();
-          debug_assert!(self.context.local_name == LocalName::Head);
+          debug_assert!(self.context().local_name() == LocalName::Head);
           self.switch_to(mode!(InHead));
           Control::Reprocess
 
@@ -351,7 +351,7 @@ modes:
       - match: <html>
         run: |
           {{{ use '$parse-error' }}}
-          if self.context.has_template_element() {
+          if self.context().has_template_element() {
               // Ignore the token.
           } else {
               self.set_attributes_to_html_element(tag);
@@ -376,7 +376,7 @@ modes:
           if !self.frameset_ok {
               // Ignore the token.
           } else {
-              while self.context.local_name != LocalName::Html {
+              while self.context().local_name() != LocalName::Html {
                   self.remove_element();
               }
               self.push_html_frameset_element(tag);
@@ -402,18 +402,18 @@ modes:
           <dir> <div> <dl> <fieldset> <figcaption> <figure> <footer> <header>
           <hgroup> <main> <menu> <nav> <ol> <p> <section> <summary> <ul>
         run: |
-          if self.context.has_p_element_in_button_scope() {
+          if self.context().has_p_element_in_button_scope() {
               self.close_p_element();
           }
           self.push_html_{{{ tag_name }}}_element(tag);
           Control::Continue
       - match: <h1> <h2> <h3> <h4> <h5> <h6>
         run: |
-          if self.context.has_p_element_in_button_scope() {
+          if self.context().has_p_element_in_button_scope() {
               self.close_p_element();
           }
           // TODO: check namespace
-          match self.context.local_name {
+          match self.context().local_name() {
               tag!(H1, H2, H3, H4, H5, H6) => {
                   {{{ use '$parse-error' }}}
                   self.pop_element();
@@ -423,7 +423,7 @@ modes:
           Control::Continue
       - match: <pre> <listing>
         run: |
-          if self.context.has_p_element_in_button_scope() {
+          if self.context().has_p_element_in_button_scope() {
               self.close_p_element();
           }
           self.push_html_{{{ tag_name }}}_element(tag);
@@ -444,17 +444,17 @@ modes:
           {{{ use 'any-other-start-tag' }}}
       - match: <plaintext>
         run: |
-          if self.context.has_p_element_in_button_scope() {
+          if self.context().has_p_element_in_button_scope() {
               self.close_p_element();
           }
           self.push_html_plaintext_element(tag);
           Control::SwitchTo(InitialState::Plaintext, "plaintext")
       - match: <button>
         run: |
-          if self.context.has_button_element_in_scope() {
+          if self.context().has_button_element_in_scope() {
               {{{ use '$parse-error' }}}
               self.close_implied_tags();
-              while self.context.local_name != LocalName::Button {
+              while self.context().local_name() != LocalName::Button {
                   self.pop_element();
               }
               self.pop_element(); // pop a button element
@@ -469,15 +469,15 @@ modes:
           </figure> </footer> </header> </hgroup> </listing> </main> </menu>
           </nav> </ol> </pre> </section> </summary> </ul>
         run: |
-          if !self.context.has_{{{ tag_name }}}_element_in_scope() {
+          if !self.context().has_{{{ tag_name }}}_element_in_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_implied_tags();
-              if self.context.local_name != LocalName::{{{ TagName }}} {
+              if self.context().local_name() != LocalName::{{{ TagName }}} {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::{{{ TagName }}} {
+              while self.context().local_name() != LocalName::{{{ TagName }}} {
                   self.pop_element();
               }
               self.pop_element(); // pop a {{{ tag_name }}} element
@@ -486,15 +486,15 @@ modes:
       - match: </form>
         run: |
           // TODO
-          if !self.context.has_form_element_in_scope() {
+          if !self.context().has_form_element_in_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_implied_tags();
-              if self.context.local_name != LocalName::Form {
+              if self.context().local_name() != LocalName::Form {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::Form {
+              while self.context().local_name() != LocalName::Form {
                   self.pop_element();
               }
               self.pop_element(); // pop a form element
@@ -502,7 +502,7 @@ modes:
           Control::Continue
       - match: </p>
         run: |
-          if !self.context.has_p_element_in_button_scope() {
+          if !self.context().has_p_element_in_button_scope() {
               {{{ use '$parse-error' }}}
               self.push_html_p_element(&Tag::with_no_attrs("p"));
           }
@@ -510,15 +510,15 @@ modes:
           Control::Continue
       - match: </li>
         run: |
-          if !self.context.has_li_element_in_list_item_scope() {
+          if !self.context().has_li_element_in_list_item_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_implied_tags_except_for(LocalName::Li);
-              if self.context.local_name != LocalName::Li {
+              if self.context().local_name() != LocalName::Li {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::Li {
+              while self.context().local_name() != LocalName::Li {
                   self.pop_element();
               }
               self.pop_element(); // pop a li element
@@ -526,15 +526,15 @@ modes:
           Control::Continue
       - match: </dd> </dt>
         run: |
-          if !self.context.has_{{{ tag_name }}}_element_in_scope() {
+          if !self.context().has_{{{ tag_name }}}_element_in_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_implied_tags_except_for(LocalName::{{{ TagName }}});
-              if self.context.local_name != LocalName::{{{ TagName }}} {
+              if self.context().local_name() != LocalName::{{{ TagName }}} {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::{{{ TagName }}} {
+              while self.context().local_name() != LocalName::{{{ TagName }}} {
                   self.pop_element();
               }
               self.pop_element(); // pop a {{{ TagName }}} element
@@ -542,16 +542,16 @@ modes:
           Control::Continue
       - match: </h1> </h2> </h3> </h4> </h5> </h6>
         run: |
-          if !self.context.has_heading_element_in_scope() {
+          if !self.context().has_heading_element_in_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_implied_tags();
-              if self.context.local_name != LocalName::{{{ TagName }}} {
+              if self.context().local_name() != LocalName::{{{ TagName }}} {
                   {{{ use '$parse-error' }}}
               }
               loop {
-                  match self.context.local_name {
+                  match self.context().local_name() {
                       tag!(H1, H2, H3, H4, H5, H6) => break,
                       _ => continue,
                   }
@@ -566,13 +566,13 @@ modes:
           {{{ use 'any-other-end-tag' }}}
       - match: <a>
         run: |
-          if !self.context.has_a_element_in_active_formatting_elements() {
+          if !self.context().has_a_element_in_active_formatting_elements() {
               {{{ use '$parse-error' }}}
-              self.run_adoption_agency_algorithm(tag);
+              self.perform_adoption_agency_algorithm(tag);
           }
           self.reconstruct_active_formatting_elements();
           self.push_html_a_element(tag);
-          self.push_element_to_active_formatting_element_list();
+          self.push_element_to_active_formatting_context();
           Control::Continue
       - match: >-
           <b> <big> <code> <em> <font> <i> <s> <small> <strike> <strong> <tt>
@@ -580,43 +580,43 @@ modes:
         run: |
           self.reconstruct_active_formatting_elements();
           self.push_html_{{{ tag_name }}}_element(tag);
-          self.push_element_to_active_formatting_element_list();
+          self.push_element_to_active_formatting_contexts();
           Control::Continue
       - match: <nobr>
         run: |
           self.reconstruct_active_formatting_elements();
-          if self.context.has_nobr_element_in_scope() {
+          if self.context().has_nobr_element_in_scope() {
               {{{ use '$parse-error' }}}
-              self.run_adoption_agency_algorithm(tag);
+              self.perform_adoption_agency_algorithm(tag);
               self.reconstruct_active_formatting_elements();
           }
           self.push_html_nobr_element(tag);
-          self.push_element_to_active_formatting_element_list();
+          self.push_element_to_active_formatting_contexts();
           Control::Continue
       - match: >-
           </a> </b> </big> </code> </em> </font> </i> </nobr> </s> </small>
           </strike> </strong> </tt> </u>
         run: |
-          self.run_adoption_agency_algorithm(tag);
+          self.perform_adoption_agency_algorithm(tag);
           Control::Continue
       - match: <applet> <marquee> <object>
         run: |
           self.reconstruct_active_formatting_elements();
           self.push_html_{{{ tag_name }}}_element(tag);
-          self.push_marker_to_active_formatting_element_list();
+          self.push_marker_to_active_formatting_contexts();
           self.frameset_ok = false;
           Control::Continue
       - match: </applet> </marquee> </object>
         run: |
-          if !self.context.has_{{{ tag_name }}}_element_in_scope() {
+          if !self.context().has_{{{ tag_name }}}_element_in_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_implied_tags();
-              if self.context.local_name != LocalName::{{{ TagName }}} {
+              if self.context().local_name() != LocalName::{{{ TagName }}} {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::{{{ TagName }}} {
+              while self.context().local_name() != LocalName::{{{ TagName }}} {
                   self.pop_element();
               }
               self.pop_element(); // pop a {{{ tag_name }}} element
@@ -667,7 +667,7 @@ modes:
           Control::Continue
       - match: <hr>
         run: |
-          if self.context.has_p_element_in_button_scope() {
+          if self.context().has_p_element_in_button_scope() {
               self.close_p_element();
           }
           self.push_html_hr_element(tag);
@@ -762,7 +762,7 @@ modes:
           // TODO: Adjust MathML attributes for the token. (This fixes the case of MathML attributes that are not all lowercase.)
           // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink.)
           // TODO: Insert a foreign element for the token, in the MathML namespace.
-          self.push_mathml_element(tag);
+          self.push_mathml_element(tag, LocalName::Math);
           // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
           if tag.self_closing {
               self.pop_element();
@@ -809,8 +809,8 @@ modes:
       - match: eof
         run: |
           {{{ use '$parse-error' }}}
-          // TODO: check namespace
-          if self.context.local_name == LocalName::Script {
+          let context = self.context();
+          if context.is_html() && context.local_name() == tag!(Script) {
               // TODO: set its already started to true.
           }
           self.pop_element();
@@ -833,7 +833,7 @@ modes:
     rules:
       - match: nul whitespace character
         run: |
-          match self.context.local_name {
+          match self.context().local_name() {
               tag!(Table, Tbody, Template, Tfoot, Thead, Tr) => {
                   // TODO: Let the pending table character tokens be an empty list of tokens.
                   self.save_and_switch_to(mode!(InTableText));
@@ -855,7 +855,7 @@ modes:
         run: |
           self.clear_stack_back_to_table_context();
           self.push_html_caption_element(tag);
-          self.push_marker_to_active_formatting_element_list();
+          self.push_marker_to_active_formatting_contexts();
           self.switch_to(mode!(InCaption));
           Control::Continue
       - match: <colgroup>
@@ -964,15 +964,15 @@ modes:
     rules:
       - match: </caption>
         run: |
-          if !self.context.has_caption_element_in_table_scope() {
+          if !self.context().has_caption_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.close_implied_tags();
-              if self.context.local_name != LocalName::Caption {
+              if self.context().local_name() != LocalName::Caption {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::Caption {
+              while self.context().local_name() != LocalName::Caption {
                   self.pop_element();
               }
               self.pop_element(); // pop a caption element
@@ -984,15 +984,15 @@ modes:
           <caption> <col> <colgroup> <tbody> <td> <tfoot> <th> <thead> <tr>
           </table>
         run: |
-          if !self.context.has_caption_element_in_table_scope() {
+          if !self.context().has_caption_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
               self.close_implied_tags();
-              if self.context.local_name != LocalName::Caption {
+              if self.context().local_name() != LocalName::Caption {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::Caption {
+              while self.context().local_name() != LocalName::Caption {
                   self.pop_element();
               }
               self.pop_element(); // pop a caption element
@@ -1039,7 +1039,7 @@ modes:
       - match: </colgroup>
         run: |
           // TODO: check namespace
-          if self.context.local_name == LocalName::Colgroup {
+          if self.context().local_name() == LocalName::Colgroup {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
@@ -1059,7 +1059,7 @@ modes:
           {{{ use '@in-body' }}}
       - match: any
         run: |
-          if self.context.local_name != LocalName::Colgroup {
+          if self.context().local_name() != LocalName::Colgroup {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
@@ -1086,7 +1086,7 @@ modes:
           Control::Reprocess
       - match: </tbody> </tfoot> </thead>
         run: |
-          if !self.context.has_{{{ tag_name }}}_element_in_table_scope() {
+          if !self.context().has_{{{ tag_name }}}_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
@@ -1097,7 +1097,7 @@ modes:
           Control::Continue
       - match: <caption> <col> <colgroup> <tbody> <tfoot> <thead> </table>
         run: |
-          if !self.context.has_rowgroup_element_in_table_scope() {
+          if !self.context().has_rowgroup_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
@@ -1121,43 +1121,43 @@ modes:
         run: |
           self.clear_stack_back_to_table_row_context();
           self.push_html_{{{ tag_name }}}_element(tag);
-          self.push_marker_to_active_formatting_element_list();
+          self.push_marker_to_active_formatting_contexts();
           self.switch_to(mode!(InCell));
           Control::Continue
       - match: </tr>
         run: |
-          if !self.context.has_tr_element_in_table_scope() {
+          if !self.context().has_tr_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
               self.clear_stack_back_to_table_row_context();
-              debug_assert_eq!(self.context.local_name, LocalName::Tr);
+              debug_assert_eq!(self.context().local_name(), LocalName::Tr);
               self.pop_element();
               self.switch_to(mode!(InTableBody));
               Control::Continue
           }
       - match: <caption> <col> <colgroup> <tbody> <tfoot> <thead> <tr> </table>
         run: |
-          if !self.context.has_tr_element_in_table_scope() {
+          if !self.context().has_tr_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
               self.clear_stack_back_to_table_row_context();
-              debug_assert_eq!(self.context.local_name, LocalName::Tr);
+              debug_assert_eq!(self.context().local_name(), LocalName::Tr);
               self.pop_element();
               self.switch_to(mode!(InTableBody));
               Control::Reprocess
           }
       - match: </tbody> </tfoot> </thead>
         run: |
-          if !self.context.has_{{{ tag_name }}}_element_in_table_scope() {
+          if !self.context().has_{{{ tag_name }}}_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
-          } else if !self.context.has_tr_element_in_table_scope() {
+          } else if !self.context().has_tr_element_in_table_scope() {
               {{{ use '$ignore-token' }}}
           } else {
               self.clear_stack_back_to_table_row_context();
-              debug_assert_eq!(self.context.local_name, LocalName::Tr);
+              debug_assert_eq!(self.context().local_name(), LocalName::Tr);
               self.pop_element();
               self.switch_to(mode!(InTableBody));
               Control::Reprocess
@@ -1175,15 +1175,15 @@ modes:
     rules:
       - match: </td> </th>
         run: |
-          if !self.context.has_{{{ tag_name }}}_element_in_table_scope() {
+          if !self.context().has_{{{ tag_name }}}_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
               self.close_implied_tags();
-              if self.context.local_name != LocalName::{{{ TagName }}} {
+              if self.context().local_name() != LocalName::{{{ TagName }}} {
                   {{{ use '$parse-error' }}}
               }
-              while self.context.local_name != LocalName::{{{ TagName }}} {
+              while self.context().local_name() != LocalName::{{{ TagName }}} {
                   self.pop_element();
               }
               self.pop_element(); // pop a {{{ tag_name }}} element
@@ -1193,7 +1193,7 @@ modes:
           }
       - match: <caption> <col> <colgroup> <tbody> <td> <tfoot> <th> <thead> <tr>
         run: |
-          if !self.context.has_cell_element_in_table_scope() {
+          if !self.context().has_cell_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
@@ -1206,7 +1206,7 @@ modes:
           {{{ use '$ignore-token' }}}
       - match: </table> </tbody> </tfoot> </thead> </tr>
         run: |
-          if !self.context.has_{{{ tag_name }}}_element_in_table_scope() {
+          if !self.context().has_{{{ tag_name }}}_element_in_table_scope() {
               {{{ use '$parse-error' }}}
               {{{ use '$ignore-token' }}}
           } else {
@@ -1241,7 +1241,7 @@ modes:
       - match: <option>
         run: |
           // TODO: check namespace
-          if self.context.local_name == LocalName::Option {
+          if self.context().local_name() == LocalName::Option {
               self.pop_element();
           }
           self.push_html_option_element(tag);
@@ -1249,11 +1249,11 @@ modes:
       - match: <optgroup>
         run: |
           // TODO: check namespace
-          if self.context.local_name == LocalName::Option {
+          if self.context().local_name() == LocalName::Option {
               self.pop_element();
           }
           // TODO: check namespace
-          if self.context.local_name == LocalName::Optgroup {
+          if self.context().local_name() == LocalName::Optgroup {
               self.pop_element();
           }
           self.push_html_optgroup_element(tag);
@@ -1262,7 +1262,7 @@ modes:
         run: |
           // TODO: First, if the current node is an option element, and the node immediately before it in the stack of open elements is an optgroup element, then pop the current node from the stack of open elements.
           // TODO: check namespace
-          if self.context.local_name == LocalName::Optgroup {
+          if self.context().local_name() == LocalName::Optgroup {
               self.pop_element();
           } else {
               {{{ use '$parse-error' }}}
@@ -1272,7 +1272,7 @@ modes:
       - match: </option>
         run: |
           // TODO: check namespace
-          if self.context.local_name == LocalName::Option {
+          if self.context().local_name() == LocalName::Option {
               self.pop_element();
           } else {
               {{{ use '$parse-error' }}}
@@ -1282,7 +1282,7 @@ modes:
       - match: </select>
         run: |
           // TODO: If the stack of open elements does not have a select element in select scope, this is a parse error; ignore the token. (fragment case)
-          while self.context.local_name != LocalName::Select {
+          while self.context().local_name() != LocalName::Select {
               self.pop_element();
           }
           self.pop_element();
@@ -1292,7 +1292,7 @@ modes:
         run: |
           {{{ use '$parse-error' }}}
           // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
-          while self.context.local_name != LocalName::Select {
+          while self.context().local_name() != LocalName::Select {
               self.pop_element();
           }
           self.pop_element();
@@ -1302,7 +1302,7 @@ modes:
         run: |
           {{{ use '$parse-error' }}}
           // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
-          while self.context.local_name != LocalName::Select {
+          while self.context().local_name() != LocalName::Select {
               self.pop_element();
           }
           self.pop_element();
@@ -1325,7 +1325,7 @@ modes:
       - match: <caption> <table> <tbody> <tfoot> <thead> <tr> <td> <th>
         run: |
           {{{ use '$parse-error' }}}
-          while self.context.local_name != LocalName::Select {
+          while self.context().local_name() != LocalName::Select {
               self.pop_element();
           }
           self.pop_element();
@@ -1335,7 +1335,7 @@ modes:
         run: |
           {{{ use '$parse-error' }}}
           // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as that of the token, then ignore the token.
-          while self.context.local_name != LocalName::Select {
+          while self.context().local_name() != LocalName::Select {
               self.pop_element();
           }
           self.pop_element();
@@ -1450,13 +1450,13 @@ modes:
           Control::Continue
       - match: </frameset>
         run: |
-          if self.context.local_name == LocalName::Html {
+          if self.context().local_name() == LocalName::Html {
               {{{ use '$parse-error' }}}
               // Ignore the token.
           } else {
               self.pop_element();
               // TODO: If the parser was not created as part of the HTML fragment parsing algorithm (fragment case)
-              if self.context.local_name != LocalName::Frameset {
+              if self.context().local_name() != LocalName::Frameset {
                   self.switch_to(mode!(AfterFrameset));
               }
           }
@@ -1474,7 +1474,7 @@ modes:
           {{{ use '@in-head' }}}
       - match: eof
         run: |
-          if self.context.local_name != LocalName::Html {
+          if self.context().local_name() != LocalName::Html {
               {{{ use '$parse-error' }}}
           }
           Control::Done
