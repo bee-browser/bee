@@ -16,32 +16,6 @@ pub fn parse(test: Test) {
 struct TreeValidator<'a> {
     test: &'a Test,
     nodes: Vec<Node>,
-    stack: Vec<(usize, OpenContext)>,
-    head_index: Option<usize>,
-    active_formatting_elements: Vec<ActiveFormattingElement>,
-    foster_parenting: bool,
-    foster_parenting_insertion_point: FosterParentingInsertionPoint,
-}
-
-enum ActiveFormattingElement {
-    Marker,
-    Element(usize),
-}
-
-#[derive(Clone, Copy)]
-enum FosterParentingInsertionPoint {
-    None,
-    LastChild(usize),
-    Before(usize, usize),
-}
-
-enum OpenContext {
-    Document,
-    Normal {
-        context: DomTreeBuildContext,
-        foster_parenting_insertion_point: FosterParentingInsertionPoint,
-    },
-    Reopen,
 }
 
 impl<'a> TreeValidator<'a> {
@@ -51,11 +25,6 @@ impl<'a> TreeValidator<'a> {
             nodes: vec![Node::Document {
                 child_nodes: vec![],
             }],
-            stack: vec![(0, OpenContext::Document)],
-            head_index: None,
-            active_formatting_elements: vec![],
-            foster_parenting: false,
-            foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
         }
     }
 
@@ -123,221 +92,188 @@ impl<'a> TreeValidator<'a> {
 }
 
 impl<'a> TreeValidator<'a> {
-    fn append(&mut self, node_index: usize) {
-        if self.foster_parenting {
-            match self.foster_parenting_insertion_point {
-                FosterParentingInsertionPoint::None => unreachable!(),
-                FosterParentingInsertionPoint::LastChild(index) => {
-                    match self.nodes.get_mut(index).unwrap() {
-                        Node::Element {
-                            ref mut child_nodes,
-                            ..
-                        } => {
-                            child_nodes.push(node_index);
-                        }
-                        _ => unreachable!(),
-                    }
-                }
-                FosterParentingInsertionPoint::Before(parent_index, table_index) => {
-                    match self.nodes.get_mut(parent_index).unwrap() {
-                        Node::Element {
-                            ref mut child_nodes,
-                            ..
-                        } => {
-                            let pos = child_nodes.iter().position(|&i| i == table_index).unwrap();
-                            child_nodes.insert(pos, node_index);
-                        }
-                        _ => unreachable!(),
-                    }
-                }
-            }
-        } else {
-            // TODO: compute an appropriate place for inserting a node.
-            let (parent_index, context) = self.stack.last().unwrap();
-            match self.nodes.get_mut(*parent_index).unwrap() {
-                Node::Document {
-                    ref mut child_nodes,
-                } => {
-                    child_nodes.push(node_index);
-                }
-                Node::Element {
-                    ref mut child_nodes,
-                    ..
-                } => {
-                    child_nodes.push(node_index);
-                }
-                t => unreachable!("{:?}", t),
-            }
-            if let OpenContext::Reopen = context {
-                self.stack.pop();
-            }
-        }
-    }
-
-    fn remove(&mut self, node_index: usize) {
-        let parent_index = self.stack.last().unwrap().0;
-        let index = match self.nodes.get_mut(parent_index).unwrap() {
-            Node::Document {
+    fn take_child_nodes(&mut self, node: usize) -> Vec<usize> {
+        debug_assert!(self.nodes.get(node).is_some());
+        let child_nodes = match self.nodes.get_mut(node) {
+            Some(Node::Document {
                 ref mut child_nodes,
-            } => child_nodes.pop().unwrap(),
-            Node::Element {
+            }) => child_nodes,
+            Some(Node::Element {
                 ref mut child_nodes,
                 ..
-            } => child_nodes.pop().unwrap(),
-            t => unreachable!("{:?}", t),
+            }) => child_nodes,
+            _ => unreachable!(),
         };
-        assert_eq!(index, node_index);
+        std::mem::replace(child_nodes, vec![])
+    }
+
+    fn child_nodes_mut(&mut self, node: usize) -> &mut Vec<usize> {
+        debug_assert!(self.nodes.get(node).is_some());
+        match self.nodes.get_mut(node) {
+            Some(Node::Document {
+                ref mut child_nodes,
+            }) => child_nodes,
+            Some(Node::Element {
+                ref mut child_nodes,
+                ..
+            }) => child_nodes,
+            _ => unreachable!(),
+        }
     }
 }
 
 impl<'a> DomTreeBuilder for TreeValidator<'a> {
-    fn enable_foster_parenting(&mut self) {
-        self.foster_parenting = true;
+    type Node = usize;
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn get_root(&mut self) -> Self::Node {
+        0
     }
 
-    fn disable_foster_parenting(&mut self) {
-        self.foster_parenting = false;
-    }
-
-    fn push_marker_to_active_formatting_element_list(&mut self) {
-        self.active_formatting_elements
-            .push(ActiveFormattingElement::Marker);
-    }
-
-    fn push_element_to_active_formatting_element_list(&mut self) {
-        let index = self.stack.last().unwrap().0;
-        self.active_formatting_elements
-            .push(ActiveFormattingElement::Element(index));
-    }
-
-    fn reconstruct_active_formatting_elements(&mut self) {
-        // TODO: changing the basic design is needed.
-        // The procedure requires "Insert an HTML element", but it's implemented
-        // by the caller.
-    }
-
-    fn pop_active_formatting_elements_up_to_marker(&mut self) {
-        while let Some(element) = self.active_formatting_elements.pop() {
-            if let ActiveFormattingElement::Marker = element {
-                break;
-            }
-        }
-    }
-
-    fn run_adoption_agency_algorithm(&mut self, tag: &Tag<'_>) {
-        // TODO
-    }
-
-    fn append_doctype(&mut self, doctype: &Doctype<'_>) {
-        let index = self.nodes.len();
-        tracing::debug!(index, ?doctype);
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::Node {
+        let node = self.nodes.len();
+        tracing::debug!(node, ?doctype);
         self.nodes.push(Node::DocumentType {
             name: doctype.name.map(str::to_string),
             public_id: doctype.public_id.map(str::to_string),
             system_id: doctype.system_id.map(str::to_string),
             force_quirks: doctype.force_quirks,
         });
-        self.append(index);
+        node
     }
 
-    fn push_element(&mut self, name: &str, namespace: Namespace, context: DomTreeBuildContext) {
-        let parent_index = self.stack.last().unwrap().0;
-        let index = self.nodes.len();
-        tracing::debug!(index, parent_index, ?name, ?namespace);
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn create_element(&mut self, name: &str, ns: Namespace) -> Self::Node {
+        let node = self.nodes.len();
+        tracing::debug!(node, ?name, ?ns);
         self.nodes.push(Node::Element {
-            name: name.into(),
+            name: name.to_string(),
             attrs: vec![],
             child_nodes: vec![],
-            namespace,
+            namespace: ns,
         });
-        self.append(index);
-        self.stack.push((
-            index,
-            OpenContext::Normal {
-                context,
-                foster_parenting_insertion_point: self.foster_parenting_insertion_point,
+        node
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn create_text(&mut self, data: &str) -> Self::Node {
+        let node = self.nodes.len();
+        tracing::debug!(node, ?data);
+        self.nodes.push(Node::Text(data.to_string()));
+        node
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn create_comment(&mut self, data: &str) -> Self::Node {
+        let node = self.nodes.len();
+        tracing::debug!(node, ?data);
+        self.nodes.push(Node::Comment(data.to_string()));
+        node
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn set_attribute(&mut self, node: Self::Node, name: &str, value: &str) {
+        tracing::debug!(node, name, value);
+        debug_assert!(self.nodes.get(node).is_some());
+        let attrs = match self.nodes.get_mut(node).unwrap() {
+            Node::Element { ref mut attrs, .. } => attrs,
+            _ => unreachable!(),
+        };
+        attrs.push((name.to_string(), value.to_string()));
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn clone_node(&mut self, node: Self::Node) -> Self::Node {
+        debug_assert!(self.nodes.get(node).is_some());
+        let vnode = match self.nodes[node] {
+            Node::Element {
+                ref name,
+                ref attrs,
+                namespace,
+                ..
+            } => Node::Element {
+                name: name.clone(),
+                attrs: attrs.clone(),
+                namespace,
+                child_nodes: vec![],
             },
-        ));
-        match name {
-            "html" => {
-                self.foster_parenting_insertion_point =
-                    FosterParentingInsertionPoint::LastChild(index);
-            }
-            "head" => {
-                assert!(self.head_index.is_none());
-                self.head_index = Some(index);
-            }
-            "table" => {
-                self.foster_parenting_insertion_point =
-                    FosterParentingInsertionPoint::Before(parent_index, index);
-            }
-            "template" => {
-                self.foster_parenting_insertion_point =
-                    FosterParentingInsertionPoint::LastChild(index);
-            }
-            _ => (),
-        }
+            _ => unreachable!(),
+        };
+        let cloned = self.nodes.len();
+        self.nodes.push(vnode);
+        tracing::debug!(
+            node.index = node,
+            node.node = ?self.nodes[node],
+            cloned.index = cloned,
+            cloned.node = ?self.nodes[cloned],
+        );
+        cloned
     }
 
-    fn set_attribute(&mut self, name: &str, value: &str) {
-        let (index, _) = self.stack.last().unwrap();
-        tracing::debug!(index, attr.name = ?name, attr.value = ?value);
-        if let Some(Node::Element { ref mut attrs, .. }) = self.nodes.get_mut(*index) {
-            attrs.push((name.to_string(), value.to_string()));
-        }
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn append_child(&mut self, parent: Self::Node, node: Self::Node) {
+        debug_assert!(self.nodes.get(parent).is_some());
+        debug_assert!(self.nodes.get(node).is_some());
+        self.child_nodes_mut(parent).push(node);
+        tracing::debug!(
+            parent.index = parent,
+            parent.node = ?self.nodes[parent],
+            node.index = node,
+            node.node = ?self.nodes[node],
+        );
     }
 
-    fn reopen_head_element(&mut self) {
-        assert!(self.head_index.is_some());
-        let index = self.head_index.unwrap();
-        self.stack.push((index, OpenContext::Reopen));
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn insert_before(&mut self, parent: Self::Node, node: Self::Node, sibling: Self::Node) {
+        debug_assert!(self.nodes.get(parent).is_some());
+        debug_assert!(self.nodes.get(node).is_some());
+        debug_assert!(self.nodes.get(sibling).is_some());
+        let child_nodes = self.child_nodes_mut(parent);
+        debug_assert!(child_nodes.contains(&sibling));
+        let pos = child_nodes
+            .iter()
+            .position(|&child| child == sibling)
+            .unwrap();
+        child_nodes.insert(pos, node);
+        tracing::debug!(
+            parent.index = parent,
+            parent.node = ?self.nodes[parent],
+            node.index = node,
+            node.node = ?self.nodes[node],
+            sibling.index = sibling,
+            sibling.node = ?self.nodes[sibling],
+        );
     }
 
-    fn remove_element(&mut self) -> DomTreeBuildContext {
-        let (index, context) = self.stack.pop().unwrap();
-        self.remove(index);
-        let node = self.nodes.get(index).unwrap();
-        tracing::debug!(index, ?node);
-        match context {
-            OpenContext::Normal {
-                context,
-                foster_parenting_insertion_point,
-            } => {
-                self.foster_parenting_insertion_point = foster_parenting_insertion_point;
-                context
-            }
-            _ => panic!(),
-        }
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn remove_child(&mut self, parent: Self::Node, node: Self::Node) {
+        debug_assert!(self.nodes.get(parent).is_some());
+        debug_assert!(self.nodes.get(node).is_some());
+        let child_nodes = self.child_nodes_mut(parent);
+        debug_assert!(child_nodes.contains(&node));
+        child_nodes.retain(|&n| n != node);
+        tracing::debug!(
+            parent.index = parent,
+            parent.node = ?self.nodes[parent],
+            node.index = node,
+            node.node = ?self.nodes[node],
+        );
     }
 
-    fn pop_element(&mut self) -> DomTreeBuildContext {
-        let (index, context) = self.stack.pop().unwrap();
-        let node = self.nodes.get(index).unwrap();
-        tracing::debug!(index, ?node);
-        match context {
-            OpenContext::Normal {
-                context,
-                foster_parenting_insertion_point,
-            } => {
-                self.foster_parenting_insertion_point = foster_parenting_insertion_point;
-                context
-            }
-            _ => panic!(),
-        }
-    }
-
-    fn append_text(&mut self, text: &str) {
-        let index = self.nodes.len();
-        tracing::debug!(index, ?text);
-        self.nodes.push(Node::Text(text.to_string()));
-        self.append(index);
-    }
-
-    fn append_comment(&mut self, comment: &Comment<'_>) {
-        tracing::debug!(?comment);
-        let index = self.nodes.len();
-        self.nodes.push(Node::Comment(comment.data.into()));
-        self.append(index);
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn move_child_nodes(&mut self, node: Self::Node, new_parent: Self::Node) {
+        debug_assert!(self.nodes.get(node).is_some());
+        debug_assert!(self.nodes.get(new_parent).is_some());
+        let mut child_nodes = self.take_child_nodes(node);
+        let new_child_nodes = self.child_nodes_mut(new_parent);
+        new_child_nodes.append(&mut child_nodes);
+        tracing::debug!(
+            node.index = node,
+            node.node = ?self.nodes[node],
+            new_parent.index = new_parent,
+            new_parent.node = ?self.nodes[new_parent],
+        );
     }
 
     fn end(&mut self) {
@@ -345,9 +281,15 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
         self.flatten(0, 0, &mut v);
         assert_eq!(v, self.test.document, "{}", self.test.data);
     }
+
+    fn print_tree(&self) {
+        let mut v = vec![];
+        self.flatten(0, 0, &mut v);
+        tracing::debug!("{:?}", v);
+    }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Node {
     Document {
         child_nodes: Vec<usize>,

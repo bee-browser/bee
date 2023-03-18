@@ -8,238 +8,81 @@ mod foreign;
 mod tags;
 mod text;
 
+use std::fmt::Debug;
+
 use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
 use bee_htmltokenizer::InitialState;
 
 use crate::localnames::LocalName;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Namespace {
-    Html,
-    MathMl,
-    Svg,
-}
-
-flagset::flags! {
-    enum DomTreeBuildContextFlags: u64 {
-        MathmlTextIntegrationPoint,
-        SvgIntegrationPoint,
-        SvgScript,
-        HtmlIntegrationPoint,
-        HasTemplateElement,
-        HasDivElementInScope,
-        HasFormElementInScope,
-        HasPreElementInScope,
-        HasPElementInButtonScope,
-        HasSelectElementInSelectScope,
-        HasTableElementInTableScope,
-        HasCaptionElementInTableScope,
-        HasTbodyElementInTableScope,
-        HasTfootElementInTableScope,
-        HasTheadElementInTableScope,
-        HasTrElementInTableScope,
-        HasTdElementInTableScope,
-        HasThElementInTableScope,
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct DomTreeBuildContext {
-    reset_mode: InsertionMode,
-    namespace: Namespace,
-    local_name: LocalName,
-    flags: flagset::FlagSet<DomTreeBuildContextFlags>,
-}
-
-impl DomTreeBuildContext {
-    #[inline(always)]
-    fn is_mathml_text_integration_point(&self) -> bool {
-        self.flags.contains(flags!(MathmlTextIntegrationPoint))
-    }
-
-    #[inline(always)]
-    fn is_svg_integration_point(&self) -> bool {
-        self.flags.contains(flags!(SvgIntegrationPoint))
-    }
-
-    #[inline(always)]
-    fn is_svg_script(&self) -> bool {
-        self.flags.contains(flags!(SvgScript))
-    }
-
-    #[inline(always)]
-    fn is_html_integration_point(&self) -> bool {
-        self.flags.contains(flags!(HtmlIntegrationPoint))
-    }
-
-    #[inline(always)]
-    fn has_template_element(&self) -> bool {
-        self.flags.contains(flags!(HasTemplateElement))
-    }
-
-    #[inline(always)]
-    fn has_div_element_in_scope(&self) -> bool {
-        self.flags.contains(flags!(HasDivElementInScope))
-    }
-
-    #[inline(always)]
-    fn has_form_element_in_scope(&self) -> bool {
-        self.flags.contains(flags!(HasFormElementInScope))
-    }
-
-    #[inline(always)]
-    fn has_pre_element_in_scope(&self) -> bool {
-        self.flags.contains(flags!(HasPreElementInScope))
-    }
-
-    #[inline(always)]
-    fn has_p_element_in_button_scope(&self) -> bool {
-        self.flags.contains(flags!(HasPElementInButtonScope))
-    }
-
-    #[inline(always)]
-    fn has_select_element_in_select_scope(&self) -> bool {
-        self.flags.contains(flags!(HasSelectElementInSelectScope))
-    }
-
-    #[inline(always)]
-    fn has_table_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasTableElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_caption_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasCaptionElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_rowgroup_element_in_table_scope(&self) -> bool {
-        !self.flags.is_disjoint(flags!(
-            HasTbodyElementInTableScope,
-            HasTfootElementInTableScope,
-            HasTheadElementInTableScope
-        ))
-    }
-
-    #[inline(always)]
-    fn has_tbody_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasTbodyElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_tfoot_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasTfootElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_thead_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasTheadElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_tr_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasTrElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_cell_element_in_table_scope(&self) -> bool {
-        !self
-            .flags
-            .is_disjoint(flags!(HasTdElementInTableScope, HasThElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_td_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasTdElementInTableScope))
-    }
-
-    #[inline(always)]
-    fn has_th_element_in_table_scope(&self) -> bool {
-        self.flags.contains(flags!(HasThElementInTableScope))
-    }
-}
-
-impl Default for DomTreeBuildContext {
-    fn default() -> Self {
-        DomTreeBuildContext {
-            reset_mode: mode!(InBody),
-            namespace: Namespace::Html,
-            local_name: LocalName::Unknown,
-            flags: Default::default(),
-        }
-    }
-}
-
 /// A trait used for building a DOM tree.
 ///
 /// The instance implementing this trait needs to implement some kind of stack
 /// machine that supports the following operations
 pub trait DomTreeBuilder {
-    /// Enable the foster parenting.
-    ///
-    /// Initially, the foster parenting is disabled.
-    fn enable_foster_parenting(&mut self);
+    type Node: Clone + Copy + Debug + Eq + PartialEq;
 
-    /// Disable the foster parenting.
-    fn disable_foster_parenting(&mut self);
+    /// Gets the root node.
+    fn get_root(&mut self) -> Self::Node;
 
-    //
-    fn push_marker_to_active_formatting_element_list(&mut self);
+    /// Creates a DocumentType node.
+    fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::Node;
 
-    //
-    fn push_element_to_active_formatting_element_list(&mut self);
+    /// Creates an Element node.
+    fn create_element(&mut self, name: &str, ns: Namespace) -> Self::Node;
 
-    //
-    fn reconstruct_active_formatting_elements(&mut self);
+    /// Create a Text node.
+    fn create_text(&mut self, data: &str) -> Self::Node;
 
-    //
-    fn pop_active_formatting_elements_up_to_marker(&mut self);
+    /// Create a Comment node.
+    fn create_comment(&mut self, data: &str) -> Self::Node;
 
-    //
-    fn run_adoption_agency_algorithm(&mut self, tag: &Tag<'_>);
+    /// Sets an attribute to a node.
+    fn set_attribute(&mut self, node: Self::Node, name: &str, value: &str);
 
-    /// Creates a node for a doctype and append it as a child node.
-    fn append_doctype(&mut self, doctype: &Doctype<'_>);
+    /// Clones a node.
+    fn clone_node(&mut self, node: Self::Node) -> Self::Node;
 
-    /// Creates a node for a tag as a child node of the current node
-    /// and push it onto the stack.
-    fn push_element(&mut self, name: &str, namespace: Namespace, context: DomTreeBuildContext);
+    /// Appends a node as a last child node of a parent node.
+    fn append_child(&mut self, parent: Self::Node, node: Self::Node);
 
-    fn set_attribute(&mut self, name: &str, value: &str);
+    /// Inserts a node before a sibling node into the child node list of a parent node.
+    fn insert_before(&mut self, parent: Self::Node, node: Self::Node, sibling: Self::Node);
 
-    /// Reopen the "head" element which has already been closed.
-    fn reopen_head_element(&mut self);
+    /// Removes a node from the child node list of a parent node.
+    fn remove_child(&mut self, parent: Self::Node, node: Self::Node);
 
-    /// Removes a node.
-    fn remove_element(&mut self) -> DomTreeBuildContext;
-
-    /// Pops a node from the stack.
-    fn pop_element(&mut self) -> DomTreeBuildContext;
-
-    /// Creates a node for a text and append it as a child node.
-    fn append_text(&mut self, text: &str);
-
-    /// Creates a node for a comment and append it as a child node.
-    fn append_comment(&mut self, comment: &Comment<'_>);
+    /// Moves all child nodes of a node to a new parent node.
+    fn move_child_nodes(&mut self, node: Self::Node, new_parent: Self::Node);
 
     ///
     fn end(&mut self);
+
+    ///
+    fn print_tree(&self);
 }
 
-pub struct TreeBuilder<T> {
+pub struct TreeBuilder<T>
+where
+    T: DomTreeBuilder,
+{
     inner: T,
     mode: InsertionMode,
     original_mode: Option<InsertionMode>,
     quirks_mode: QuirksMode,
 
-    context: DomTreeBuildContext,
     text: String,
+    head_element: Option<T::Node>,
+
+    context_stack: Vec<TreeBuildContext<T::Node>>,
+    active_formatting_element_list: ActiveFormattingElementList<T::Node>,
 
     iframe_srcdoc: bool,
     quirks_mode_changeable: bool,
     frameset_ok: bool,
     ignore_lf: bool,
+    foster_parenting: bool,
 }
 
 pub enum Control {
@@ -256,23 +99,28 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn new(inner: T) -> Self {
+    pub fn new(mut inner: T) -> Self {
+        let open_element = OpenElement::with_html(LocalName::Unknown, inner.get_root());
+        let context = TreeBuildContext::new(open_element);
         TreeBuilder {
             inner,
             mode: mode!(Initial),
             original_mode: None,
             quirks_mode: QuirksMode::NoQuirks,
-            context: Default::default(),
             text: String::with_capacity(INITIAL_TEXT_CAPACITY),
+            head_element: None,
+            context_stack: vec![context],
+            active_formatting_element_list: Default::default(),
             iframe_srcdoc: false,
             quirks_mode_changeable: true,
             frameset_ok: true,
             ignore_lf: false,
+            foster_parenting: false,
         }
     }
 
     pub fn in_html_namespace(&self) -> bool {
-        self.context.namespace == Namespace::Html
+        self.context().is_html()
     }
 
     pub fn handle_token(&mut self, token: Token<'_>) -> Control {
@@ -332,37 +180,391 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn enable_foster_parenting(&mut self) {
-        self.inner.enable_foster_parenting();
+        self.foster_parenting = true;
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn disable_foster_parenting(&mut self) {
-        self.inner.disable_foster_parenting();
+        self.foster_parenting = false;
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn push_marker_to_active_formatting_element_list(&mut self) {
-        self.inner.push_marker_to_active_formatting_element_list();
+    fn push_marker_to_active_formatting_contexts(&mut self) {
+        self.active_formatting_element_list.push_marker();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn push_element_to_active_formatting_element_list(&mut self) {
-        self.inner.push_element_to_active_formatting_element_list();
+    fn push_element_to_active_formatting_contexts(&mut self) {
+        let open_element = &self.context().open_element;
+        self.active_formatting_element_list
+            .push_element(open_element.local_name, open_element.node);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn reconstruct_active_formatting_elements(&mut self) {
-        self.inner.reconstruct_active_formatting_elements();
+        if self.active_formatting_element_list.is_empty() {
+            return;
+        }
+        let mut i = self.active_formatting_element_list.len() - 1; // last
+        match self.active_formatting_element_list.get(i) {
+            ActiveFormattingContext::Marker => return,
+            ActiveFormattingContext::Element { ref node, .. } => {
+                if self.find_element_in_stack(*node).is_some() {
+                    return;
+                }
+            }
+            ActiveFormattingContext::Removed => unreachable!(),
+        }
+        while i > 0 {
+            i -= 1;
+            match self.active_formatting_element_list.get(i) {
+                ActiveFormattingContext::Marker => break,
+                ActiveFormattingContext::Element { ref node, .. } => {
+                    if self.find_element_in_stack(*node).is_some() {
+                        break;
+                    }
+                }
+                ActiveFormattingContext::Removed => unreachable!(),
+            }
+        }
+        i += 1;
+        while i < self.active_formatting_element_list.len() {
+            let node = self.active_formatting_element_list.get_element(i);
+            let local_name = self.active_formatting_element_list.get_local_name(i);
+            let new_node = self.inner.clone_node(node);
+            self.insert_html_element(OpenElement::with_html(local_name, new_node));
+            self.active_formatting_element_list.set_element(i, new_node);
+            i += 1;
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn pop_active_formatting_elements_up_to_marker(&mut self) {
-        self.inner.pop_active_formatting_elements_up_to_marker();
+        self.active_formatting_element_list
+            .clear_up_to_last_marker();
     }
 
+    // A naive implementation of the adoption agency algorithm.
     #[tracing::instrument(level = "debug", skip_all)]
-    fn run_adoption_agency_algorithm(&mut self, tag: &Tag<'_>) {
-        self.inner.run_adoption_agency_algorithm(tag);
+    fn perform_adoption_agency_algorithm(&mut self, tag: &Tag<'_>) {
+        self.append_text_if_exists();
+
+        self.inner.print_tree();
+
+        const MAX_OUTER_ITERATIONS: usize = 8;
+        const MAX_INNER_ITERATIONS: usize = 3;
+
+        let subject = LocalName::lookup(tag.name);
+        tracing::debug!(?subject, "step#1");
+
+        // step#2
+        let context = self.context();
+        let step2_cond = context.is_html()
+            && context.open_element.local_name == subject
+            && self
+                .active_formatting_element_list
+                .find_element(context.open_element.node)
+                .is_none();
+        tracing::debug!(
+            step2_cond,
+            ?context.open_element.namespace,
+            ?context.open_element.local_name,
+            ?context.open_element.node,
+            "step#2"
+        );
+        if step2_cond {
+            self.pop_element();
+            return;
+        }
+
+        for outer_loop_counter in 0..MAX_OUTER_ITERATIONS {
+            // step#4.3
+            let list_pos = match self
+                .active_formatting_element_list
+                .find_last_element(subject)
+            {
+                Some(i) => i,
+                None => {
+                    let _ = self.handle_end_any_other(tag);
+                    break;
+                }
+            };
+            let element = self.active_formatting_element_list.get_element(list_pos);
+            tracing::debug!(outer_loop_counter, list_pos, ?element, "step#4.3");
+
+            let stack_pos = match self.find_element_in_scope(element) {
+                Err(false) => {
+                    // step#4.4
+                    // TODO: Parse error.
+                    self.active_formatting_element_list.remove(list_pos);
+                    tracing::debug!(outer_loop_counter, list_pos, "step#4.4");
+                    break;
+                }
+                Err(true) => {
+                    // step#4.5
+                    // TODO: Parse error.
+                    tracing::debug!(outer_loop_counter, "step#4.5");
+                    break;
+                }
+                Ok(pos) => {
+                    // step#4.6
+                    tracing::debug!(
+                        outer_loop_counter,
+                        context.open_element.node = ?self.context().open_element.node,
+                        ?element,
+                        stack_pos = pos,
+                        "step#4.6"
+                    );
+                    if self.context().open_element.node != element {
+                        // TODO: Parse error.
+                    }
+                    pos
+                }
+            };
+
+            // step#4.7
+            let furthest_block_pos = match self.find_furthest_block(stack_pos) {
+                Some(pos) => pos,
+                None => {
+                    //  step#4.8
+                    tracing::debug!(outer_loop_counter, "step#4.8");
+                    self.context_stack.truncate(stack_pos);
+                    self.active_formatting_element_list.remove(list_pos);
+                    break;
+                }
+            };
+            let furthest_block = self.context_stack[furthest_block_pos].open_element.node;
+            tracing::debug!(
+                outer_loop_counter,
+                furthest_block_pos,
+                ?furthest_block,
+                "step#4.7"
+            );
+
+            // The furthest block will be always reparented.
+            let furthest_block_parent =
+                self.context_stack[furthest_block_pos - 1].open_element.node;
+            self.inner
+                .remove_child(furthest_block_parent, furthest_block);
+
+            // step#4.9
+            let common_ancestor_stack_pos = stack_pos - 1;
+            tracing::debug!(outer_loop_counter, common_ancestor_stack_pos, "step#4.9");
+
+            // step#4.10
+            let mut bookmark = list_pos;
+            tracing::debug!(outer_loop_counter, bookmark, "step#4.10");
+
+            // step#4.11
+            let mut node_stack_pos = furthest_block_pos;
+            let mut last_node = furthest_block;
+            tracing::debug!(outer_loop_counter, node_stack_pos, ?last_node, "step#4.11");
+
+            // step#4.12
+            let mut inner_loop_counter = 0;
+
+            loop {
+                // step#4.13.1
+                inner_loop_counter += 1;
+                tracing::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.1");
+
+                // step#4.13.2
+                node_stack_pos -= 1;
+                let node = self.context_stack[node_stack_pos].open_element.node;
+                tracing::debug!(
+                    outer_loop_counter,
+                    inner_loop_counter,
+                    node_stack_pos,
+                    ?node,
+                    "step#4.13.2"
+                );
+
+                // step#4.13.3
+                if node_stack_pos == stack_pos {
+                    tracing::debug!(
+                        outer_loop_counter,
+                        inner_loop_counter,
+                        node_stack_pos,
+                        stack_pos,
+                        "step#4.13.3"
+                    );
+                    break;
+                }
+
+                let node_list_pos = match self.active_formatting_element_list.find_element(node) {
+                    Some(pos) => {
+                        // step#4.13.4
+                        tracing::debug!(
+                            outer_loop_counter,
+                            inner_loop_counter,
+                            node_list_pos = pos,
+                            "step#4.13.4"
+                        );
+                        if inner_loop_counter > MAX_INNER_ITERATIONS {
+                            self.active_formatting_element_list.remove(pos);
+                        }
+                        pos
+                    }
+                    None => {
+                        // step#4.13.5
+                        tracing::debug!(
+                            outer_loop_counter,
+                            inner_loop_counter,
+                            node_stack_pos,
+                            "step#4.13.5"
+                        );
+                        self.context_stack[node_stack_pos].flags |= flags!(Removed);
+                        continue;
+                    }
+                };
+
+                // step#4.13.6
+                //
+                // The HTML5 specification requires to keep the original token
+                // for which the element node was created.  But we simply clone
+                // the element node.
+                let cloned = self.inner.clone_node(node);
+                self.active_formatting_element_list
+                    .set_element(node_list_pos, cloned);
+                self.context_stack[node_stack_pos].open_element.node = cloned;
+                let node = cloned;
+                tracing::debug!(
+                    outer_loop_counter,
+                    inner_loop_counter,
+                    ?node,
+                    node_stack_pos,
+                    node_list_pos,
+                    "step#4.13.6"
+                );
+
+                // step#4.13.7
+                if last_node == furthest_block {
+                    bookmark = node_list_pos + 1;
+                    tracing::debug!(
+                        outer_loop_counter,
+                        inner_loop_counter,
+                        bookmark,
+                        "step#4.13.7"
+                    );
+                }
+
+                // step#4.13.8
+                tracing::debug!(
+                    outer_loop_counter,
+                    inner_loop_counter,
+                    ?node,
+                    ?last_node,
+                    "step#4.13.8"
+                );
+                self.inner.append_child(node, last_node);
+
+                // step#4.13.9
+                last_node = node;
+                tracing::debug!(
+                    outer_loop_counter,
+                    inner_loop_counter,
+                    ?last_node,
+                    "step#4.13.9"
+                );
+            }
+
+            // step#4.14
+            tracing::debug!(
+                outer_loop_counter,
+                ?last_node,
+                common_ancestor_stack_pos,
+                "step#4.14"
+            );
+            self.insert_node_with_context(last_node, common_ancestor_stack_pos);
+
+            // step#4.15
+            let new_element = self.inner.clone_node(element);
+            tracing::debug!(outer_loop_counter, ?element, ?new_element, "step#4.15");
+
+            // step#4.16
+            tracing::debug!(
+                outer_loop_counter,
+                ?furthest_block,
+                ?new_element,
+                "step#4.16"
+            );
+            self.inner.move_child_nodes(furthest_block, new_element);
+
+            // step#4.17
+            tracing::debug!(
+                outer_loop_counter,
+                ?new_element,
+                ?furthest_block_pos,
+                "step#4.17"
+            );
+            self.insert_node_with_context(new_element, furthest_block_pos);
+
+            // step#4.18
+            tracing::debug!(outer_loop_counter, list_pos, bookmark, "step#4.18");
+            self.active_formatting_element_list.remove(list_pos);
+            self.active_formatting_element_list
+                .insert_element(bookmark, subject, new_element);
+
+            // step#4.19
+            tracing::debug!(outer_loop_counter, stack_pos, "step#4.19");
+            let mut context = self.context_stack[stack_pos].clone();
+            context.open_element.node = new_element;
+            context.reset_mode = self.context_stack[furthest_block_pos].reset_mode;
+            context.foster_parenting_insertion_point =
+                self.context_stack[furthest_block_pos].foster_parenting_insertion_point;
+            context.flags = self.context_stack[furthest_block_pos].flags;
+            self.context_stack[stack_pos].flags |= flags!(Removed);
+            self.context_stack.insert(furthest_block_pos + 1, context);
+
+            self.inner.print_tree();
+        }
+
+        self.context_stack
+            .retain(|context| !context.flags.contains(flags!(Removed)));
+        self.active_formatting_element_list.clean();
+    }
+
+    fn find_element_in_stack(&self, element: T::Node) -> Option<usize> {
+        self.context_stack
+            .iter()
+            .rposition(|context| !context.is_removed() && context.open_element.node == element)
+    }
+
+    fn find_element_in_scope(&self, element: T::Node) -> Result<usize, bool> {
+        for (i, context) in self.context_stack.iter().enumerate().rev() {
+            if context.is_removed() {
+                continue;
+            }
+            if context.open_element.node == element {
+                return Ok(i);
+            }
+            match context.open_element.namespace {
+                Namespace::Html => match context.open_element.local_name {
+                    tag!(Applet, Caption, Html, Table, Td, Th, Marquee, Object, Template) => {
+                        return Err(true)
+                    }
+                    _ => (),
+                },
+                Namespace::MathMl => match context.open_element.local_name {
+                    tag!(Mi, Mo, Mn, Ms, Mtext, AnnotationXml) => return Err(true),
+                    _ => (),
+                },
+                Namespace::Svg => match context.open_element.local_name {
+                    tag!(ForeignObject, Desc, Title) => return Err(true),
+                    _ => (),
+                },
+            }
+        }
+        Err(false)
+    }
+
+    fn find_furthest_block(&self, pos: usize) -> Option<usize> {
+        self.context_stack
+            .iter()
+            .enumerate()
+            .skip(pos + 1)
+            .find(|(_, context)| !context.is_removed() && context.local_name().is_special())
+            .map(|(i, _)| i)
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -379,72 +581,80 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn append_doctype(&mut self, doctype: &Doctype<'_>) {
         self.append_text_if_exists();
-        self.inner.append_doctype(doctype);
+        let node = self.inner.create_doctype(doctype);
+        self.inner
+            .append_child(self.context().open_element.node, node);
     }
 
     #[inline(always)]
     fn push_html_applet_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.flags -= flags!(HasPElementInButtonScope);
+        self.push_html_element(tag, LocalName::Applet);
+        self.context_mut().flags -= flags!(HasPElementInButtonScope);
     }
 
     #[inline(always)]
     fn push_html_b_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::B);
     }
 
     #[inline(always)]
     fn push_html_body_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InBody);
+        self.push_html_element(tag, LocalName::Body);
+        self.context_mut().reset_mode = mode!(InBody);
     }
 
     #[inline(always)]
     fn push_html_caption_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InCaption);
-        self.context.flags -= flags!(
+        self.push_html_element(tag, LocalName::Caption);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InCaption);
+        context.flags -= flags!(
             HasDivElementInScope,
             HasFormElementInScope,
             HasPreElementInScope,
             HasPElementInButtonScope
         );
-        self.context.flags |= flags!(HasCaptionElementInTableScope);
+        context.flags |= flags!(HasCaptionElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html_colgroup_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InColumnGroup);
+        self.push_html_element(tag, LocalName::Colgroup);
+        self.context_mut().reset_mode = mode!(InColumnGroup);
     }
 
     #[inline(always)]
     fn push_html_div_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Div);
     }
 
     #[inline(always)]
     fn push_html_form_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Form);
     }
 
     #[inline(always)]
     fn push_html_frameset_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InFrameset);
+        self.push_html_element(tag, LocalName::Frameset);
+        self.context_mut().reset_mode = mode!(InFrameset);
     }
 
     #[inline(always)]
     fn push_html_head_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InHead);
+        self.push_html_element(tag, LocalName::Head);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InHead);
+        self.head_element = Some(context.open_element.node);
     }
 
     #[inline(always)]
     fn push_html_html_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(AfterHead);
-        self.context.flags -= flags!(
+        self.push_html_element(tag, LocalName::Html);
+        let context = self.context_mut();
+        context.reset_mode = mode!(AfterHead);
+        context.foster_parenting_insertion_point =
+            FosterParentingInsertionPoint::LastChild(context.open_element.node);
+        context.flags -= flags!(
             HasDivElementInScope,
             HasFormElementInScope,
             HasPreElementInScope,
@@ -462,18 +672,18 @@ where
 
     #[inline(always)]
     fn push_html_i_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::I);
     }
 
     #[inline(always)]
     fn push_html_input_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Input);
     }
 
     #[inline(always)]
     fn push_html_marquee_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.flags |= flags!(
+        self.push_html_element(tag, LocalName::Marquee);
+        self.context_mut().flags |= flags!(
             HasDivElementInScope,
             HasFormElementInScope,
             HasPreElementInScope,
@@ -483,56 +693,61 @@ where
 
     #[inline(always)]
     fn push_html_optgroup_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.flags -= flags!(HasSelectElementInSelectScope);
+        self.push_html_element(tag, LocalName::Optgroup);
+        self.context_mut().flags -= flags!(HasSelectElementInSelectScope);
     }
 
     #[inline(always)]
     fn push_html_option_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.flags -= flags!(HasSelectElementInSelectScope);
+        self.push_html_element(tag, LocalName::Option);
+        self.context_mut().flags -= flags!(HasSelectElementInSelectScope);
     }
 
     #[inline(always)]
     fn push_html_p_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.flags |= flags!(HasPElementInButtonScope);
+        self.push_html_element(tag, LocalName::P);
+        self.context_mut().flags |= flags!(HasPElementInButtonScope);
     }
 
     #[inline(always)]
     fn push_html_plaintext_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Plaintext);
     }
 
     #[inline(always)]
     fn push_html_pre_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.flags |= flags!(HasPreElementInScope);
+        self.push_html_element(tag, LocalName::Pre);
+        self.context_mut().flags |= flags!(HasPreElementInScope);
     }
 
     #[inline(always)]
     fn push_html_script_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Script);
     }
 
     #[inline(always)]
     fn push_html_select_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Select);
         // TODO
-        self.context.reset_mode = mode!(InSelect);
-        self.context.flags |= flags!(HasSelectElementInSelectScope);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InSelect);
+        context.flags |= flags!(HasSelectElementInSelectScope);
     }
 
     #[inline(always)]
     fn push_html_style_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Style);
     }
 
     #[inline(always)]
     fn push_html_table_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InTable);
-        self.context.flags -= flags!(
+        let parent = self.context().open_element.node;
+        self.push_html_element(tag, LocalName::Table);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InTable);
+        context.foster_parenting_insertion_point =
+            FosterParentingInsertionPoint::Before(parent, context.open_element.node);
+        context.flags -= flags!(
             HasDivElementInScope,
             HasFormElementInScope,
             HasPreElementInScope,
@@ -545,34 +760,39 @@ where
             HasTdElementInTableScope,
             HasThElementInTableScope
         );
-        self.context.flags |= flags!(HasTableElementInTableScope);
+        context.flags |= flags!(HasTableElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html_tbody_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InTableBody);
-        self.context.flags |= flags!(HasTbodyElementInTableScope);
+        self.push_html_element(tag, LocalName::Tbody);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InTableBody);
+        context.flags |= flags!(HasTbodyElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html_td_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InCell);
-        self.context.flags -= flags!(
+        self.push_html_element(tag, LocalName::Td);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InCell);
+        context.flags -= flags!(
             HasDivElementInScope,
             HasFormElementInScope,
             HasPreElementInScope,
             HasPElementInButtonScope
         );
-        self.context.flags |= flags!(HasTdElementInTableScope);
+        context.flags |= flags!(HasTdElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html_template_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Template);
         // TODO: switch the insertion mode to the current template insertion mode
-        self.context.flags -= flags!(
+        let context = self.context_mut();
+        context.foster_parenting_insertion_point =
+            FosterParentingInsertionPoint::LastChild(context.open_element.node);
+        context.flags -= flags!(
             HasDivElementInScope,
             HasFormElementInScope,
             HasPreElementInScope,
@@ -586,69 +806,109 @@ where
             HasTdElementInTableScope,
             HasThElementInTableScope
         );
-        self.context.flags |= flags!(HasTemplateElement);
+        context.flags |= flags!(HasTemplateElement);
     }
 
     #[inline(always)]
     fn push_html_textarea_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Textarea);
     }
 
     #[inline(always)]
     fn push_html_tfoot_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InTableBody);
-        self.context.flags |= flags!(HasTfootElementInTableScope);
+        self.push_html_element(tag, LocalName::Tfoot);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InTableBody);
+        context.flags |= flags!(HasTfootElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html_th_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InCell);
-        self.context.flags -= flags!(
+        self.push_html_element(tag, LocalName::Th);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InCell);
+        context.flags -= flags!(
             HasDivElementInScope,
             HasFormElementInScope,
             HasPreElementInScope,
             HasPElementInButtonScope
         );
-        self.context.flags |= flags!(HasThElementInTableScope);
+        context.flags |= flags!(HasThElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html_thead_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InTableBody);
-        self.context.flags |= flags!(HasTheadElementInTableScope);
+        self.push_html_element(tag, LocalName::Thead);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InTableBody);
+        context.flags |= flags!(HasTheadElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html_title_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::Title);
     }
 
     #[inline(always)]
     fn push_html_tr_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
-        self.context.reset_mode = mode!(InRow);
-        self.context.flags |= flags!(HasTrElementInTableScope);
+        self.push_html_element(tag, LocalName::Tr);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InRow);
+        context.flags |= flags!(HasTrElementInTableScope);
     }
 
     #[inline(always)]
     fn push_html__element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag);
+        self.push_html_element(tag, LocalName::lookup(tag.name));
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn push_html_element(&mut self, tag: &Tag<'_>) {
+    fn push_html_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
         self.append_text_if_exists();
-        self.inner
-            .push_element(tag.name, Namespace::Html, self.context.clone());
+        let node = self.inner.create_element(tag.name, Namespace::Html);
         for (name, value) in tag.attrs() {
-            self.inner.set_attribute(name, value);
+            self.inner.set_attribute(node, name, value);
         }
-        self.context.namespace = Namespace::Html;
-        self.context.local_name = LocalName::lookup(tag.name);
-        self.context.flags -= flags!(
+        self.insert_html_element(OpenElement::with_html(local_name, node))
+    }
+
+    #[inline(always)]
+    fn context(&self) -> &TreeBuildContext<T::Node> {
+        self.nth_context(0)
+    }
+
+    #[inline(always)]
+    fn parent_context(&self) -> &TreeBuildContext<T::Node> {
+        self.nth_context(1)
+    }
+
+    #[inline(always)]
+    fn nth_context(&self, n: usize) -> &TreeBuildContext<T::Node> {
+        debug_assert!(n < self.context_stack.len());
+        let pos = self.context_stack.len() - 1 - n;
+        &self.context_stack[pos]
+    }
+
+    #[inline(always)]
+    fn context_mut(&mut self) -> &mut TreeBuildContext<T::Node> {
+        self.nth_context_mut(0)
+    }
+
+    #[inline(always)]
+    fn parent_context_mut(&mut self) -> &mut TreeBuildContext<T::Node> {
+        self.nth_context_mut(1)
+    }
+
+    #[inline(always)]
+    fn nth_context_mut(&mut self, n: usize) -> &mut TreeBuildContext<T::Node> {
+        debug_assert!(n < self.context_stack.len());
+        let pos = self.context_stack.len() - 1 - n;
+        &mut self.context_stack[pos]
+    }
+
+    fn insert_html_element(&mut self, open_element: OpenElement<T::Node>) {
+        self.insert_element(open_element);
+        self.context_mut().flags -= flags!(
             MathmlTextIntegrationPoint,
             SvgIntegrationPoint,
             SvgScript,
@@ -656,22 +916,53 @@ where
         );
     }
 
+    fn insert_element(&mut self, open_element: OpenElement<T::Node>) {
+        self.insert_node(open_element.node);
+        let context = self.context();
+        self.context_stack.push(TreeBuildContext {
+            open_element,
+            reset_mode: context.reset_mode,
+            foster_parenting_insertion_point: context.foster_parenting_insertion_point,
+            flags: context.flags,
+        });
+    }
+
+    fn insert_node(&mut self, node: T::Node) {
+        self.insert_node_with_context(node, self.context_stack.len() - 1);
+    }
+
+    fn insert_node_with_context(&mut self, node: T::Node, stack_pos: usize) {
+        let context = &self.context_stack[stack_pos];
+        if self.foster_parenting {
+            match context.foster_parenting_insertion_point {
+                FosterParentingInsertionPoint::None => unreachable!(),
+                FosterParentingInsertionPoint::LastChild(parent) => {
+                    self.inner.append_child(parent, node);
+                }
+                FosterParentingInsertionPoint::Before(parent, sibling) => {
+                    self.inner.insert_before(parent, node, sibling);
+                }
+            }
+        } else {
+            self.inner.append_child(context.open_element.node, node);
+        }
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
-    fn push_mathml_element(&mut self, tag: &Tag<'_>) {
+    fn push_mathml_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
         self.append_text_if_exists();
-        self.inner
-            .push_element(tag.name, Namespace::MathMl, self.context.clone());
+        let node = self.inner.create_element(tag.name, Namespace::MathMl);
         for (name, value) in tag.attrs() {
             // TODO: adjust MathML attributes
             // TODO: adjust foreign attributes
-            self.inner.set_attribute(name, value);
+            self.inner.set_attribute(node, name, value);
         }
-        self.context.namespace = Namespace::MathMl;
-        self.context.local_name = LocalName::lookup(tag.name);
-        match self.context.local_name {
+        self.insert_element(OpenElement::with_mathml(local_name, node));
+        let context = self.context_mut();
+        match local_name {
             tag!(mathml: Mi, Mo, Mn, Ms, Mtext) => {
-                self.context.flags |= flags!(MathmlTextIntegrationPoint);
-                self.context.flags -= flags!(
+                context.flags |= flags!(MathmlTextIntegrationPoint);
+                context.flags -= flags!(
                     SvgIntegrationPoint,
                     SvgScript,
                     HtmlIntegrationPoint,
@@ -679,12 +970,12 @@ where
                 );
             }
             tag!(mathml: AnnotationXml) => {
-                self.context.flags |= flags!(SvgIntegrationPoint);
-                self.context.flags -=
+                context.flags |= flags!(SvgIntegrationPoint);
+                context.flags -=
                     flags!(MathmlTextIntegrationPoint, SvgScript, HtmlIntegrationPoint);
             }
             _ => {
-                self.context.flags -= flags!(
+                context.flags -= flags!(
                     MathmlTextIntegrationPoint,
                     SvgIntegrationPoint,
                     SvgScript,
@@ -701,26 +992,25 @@ where
             LocalName::Unknown => tag.name,
             _ => local_name.name(),
         };
-        self.inner
-            .push_element(tag_name, Namespace::Svg, self.context.clone());
+        let node = self.inner.create_element(tag_name, Namespace::Svg);
         for (name, value) in tag.attrs() {
             // TODO: adjust foreign attributes
-            self.inner.set_attribute(name, value);
+            self.inner.set_attribute(node, name, value);
         }
-        self.context.namespace = Namespace::Svg;
-        self.context.local_name = LocalName::lookup(tag.name);
-        self.context.flags -= flags!(MathmlTextIntegrationPoint, SvgIntegrationPoint);
-        match self.context.local_name {
+        self.insert_element(OpenElement::with_svg(local_name, node));
+        let context = self.context_mut();
+        context.flags -= flags!(MathmlTextIntegrationPoint, SvgIntegrationPoint);
+        match local_name {
             tag!(svg: Script) => {
-                self.context.flags |= flags!(SvgScript);
-                self.context.flags -= flags!(HtmlIntegrationPoint);
+                context.flags |= flags!(SvgScript);
+                context.flags -= flags!(HtmlIntegrationPoint);
             }
             tag!(svg: ForeignObject, Desc, Title) => {
-                self.context.flags |= flags!(HtmlIntegrationPoint);
-                self.context.flags -= flags!(SvgScript, HasPElementInButtonScope);
+                context.flags |= flags!(HtmlIntegrationPoint);
+                context.flags -= flags!(SvgScript, HasPElementInButtonScope);
             }
             _ => {
-                self.context.flags -= flags!(SvgScript, HtmlIntegrationPoint);
+                context.flags -= flags!(SvgScript, HtmlIntegrationPoint);
             }
         }
     }
@@ -728,7 +1018,8 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn reopen_head_element(&mut self) {
         self.append_text_if_exists();
-        self.reopen_head_element();
+        debug_assert!(self.head_element.is_some());
+        // TODO
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -750,10 +1041,10 @@ where
     fn close_p_element(&mut self) {
         const NAMES: &[LocalName] = &tags![Dd, Dt, Li, Optgroup, Option, Rb, Rp, Rt, Rtc];
         self.close_elements(NAMES);
-        if self.context.local_name != LocalName::P {
+        if self.context().local_name() != LocalName::P {
             // TODO: Parse error.
         }
-        while self.context.local_name != LocalName::P {
+        while self.context().local_name() != LocalName::P {
             self.pop_element();
         }
         self.pop_element(); // pop a <p>
@@ -761,7 +1052,7 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn close_elements(&mut self, names: &[LocalName]) {
-        while names.contains(&self.context.local_name) {
+        while names.contains(&self.context().local_name()) {
             self.pop_element();
         }
     }
@@ -769,13 +1060,16 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn remove_element(&mut self) {
         self.append_text_if_exists();
-        self.context = self.inner.remove_element();
+        let node = self.context().open_element.node;
+        self.context_stack.pop();
+        self.inner
+            .remove_child(self.context().open_element.node, node);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn pop_element(&mut self) {
         self.append_text_if_exists();
-        self.context = self.inner.pop_element();
+        self.context_stack.pop();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -786,7 +1080,8 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn append_comment(&mut self, comment: &Comment<'_>) {
         self.append_text_if_exists();
-        self.inner.append_comment(comment);
+        let node = self.inner.create_comment(comment.data);
+        self.insert_node(node);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -798,7 +1093,8 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn append_text_if_exists(&mut self) {
         if !self.text.is_empty() {
-            self.inner.append_text(self.text.as_str());
+            let node = self.inner.create_text(self.text.as_str());
+            self.insert_node(node);
             self.text.clear();
         }
     }
@@ -808,6 +1104,367 @@ where
         self.enable_foster_parenting();
         self.append_text_if_exists();
         self.disable_foster_parenting();
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Namespace {
+    Html,
+    MathMl,
+    Svg,
+}
+
+#[derive(Clone, Debug)]
+struct TreeBuildContext<T> {
+    open_element: OpenElement<T>,
+    reset_mode: InsertionMode,
+    foster_parenting_insertion_point: FosterParentingInsertionPoint<T>,
+    flags: flagset::FlagSet<TreeBuildFlags>,
+}
+
+impl<T> TreeBuildContext<T>
+where
+    T: Clone + Copy + Debug + Eq + PartialEq,
+{
+    fn new(open_element: OpenElement<T>) -> Self {
+        TreeBuildContext {
+            open_element,
+            reset_mode: mode!(InBody),
+            flags: Default::default(),
+            foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
+        }
+    }
+
+    #[inline(always)]
+    fn local_name(&self) -> LocalName {
+        self.open_element.local_name
+    }
+
+    #[inline(always)]
+    fn is_html(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.open_element.is_html()
+    }
+
+    #[inline(always)]
+    fn is_removed(&self) -> bool {
+        self.flags.contains(flags!(Removed))
+    }
+
+    #[inline(always)]
+    fn is_mathml_text_integration_point(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(MathmlTextIntegrationPoint))
+    }
+
+    #[inline(always)]
+    fn is_svg_integration_point(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(SvgIntegrationPoint))
+    }
+
+    #[inline(always)]
+    fn is_svg_script(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(SvgScript))
+    }
+
+    #[inline(always)]
+    fn is_html_integration_point(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HtmlIntegrationPoint))
+    }
+
+    #[inline(always)]
+    fn has_template_element(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasTemplateElement))
+    }
+
+    #[inline(always)]
+    fn has_div_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasDivElementInScope))
+    }
+
+    #[inline(always)]
+    fn has_form_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasFormElementInScope))
+    }
+
+    #[inline(always)]
+    fn has_pre_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasPreElementInScope))
+    }
+
+    #[inline(always)]
+    fn has_p_element_in_button_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasPElementInButtonScope))
+    }
+
+    #[inline(always)]
+    fn has_select_element_in_select_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasSelectElementInSelectScope))
+    }
+
+    #[inline(always)]
+    fn has_table_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasTableElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_caption_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasCaptionElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_rowgroup_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        !self.flags.is_disjoint(flags!(
+            HasTbodyElementInTableScope,
+            HasTfootElementInTableScope,
+            HasTheadElementInTableScope
+        ))
+    }
+
+    #[inline(always)]
+    fn has_tbody_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasTbodyElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_tfoot_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasTfootElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_thead_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasTheadElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_tr_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasTrElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_cell_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        !self
+            .flags
+            .is_disjoint(flags!(HasTdElementInTableScope, HasThElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_td_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasTdElementInTableScope))
+    }
+
+    #[inline(always)]
+    fn has_th_element_in_table_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.flags.contains(flags!(HasThElementInTableScope))
+    }
+}
+
+#[derive(Clone, Debug)]
+struct OpenElement<T> {
+    namespace: Namespace,
+    local_name: LocalName,
+    node: T,
+}
+
+impl<T> OpenElement<T> {
+    fn with_html(local_name: LocalName, node: T) -> Self {
+        OpenElement {
+            namespace: Namespace::Html,
+            local_name,
+            node,
+        }
+    }
+
+    fn with_mathml(local_name: LocalName, node: T) -> Self {
+        OpenElement {
+            namespace: Namespace::MathMl,
+            local_name,
+            node,
+        }
+    }
+
+    fn with_svg(local_name: LocalName, node: T) -> Self {
+        OpenElement {
+            namespace: Namespace::Svg,
+            local_name,
+            node,
+        }
+    }
+
+    #[inline(always)]
+    fn is_html(&self) -> bool {
+        self.namespace == Namespace::Html
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+enum FosterParentingInsertionPoint<T> {
+    None,
+    LastChild(T),
+    Before(T, T),
+}
+
+flagset::flags! {
+    enum TreeBuildFlags: u64 {
+        Removed,
+        MathmlTextIntegrationPoint,
+        SvgIntegrationPoint,
+        SvgScript,
+        HtmlIntegrationPoint,
+        HasTemplateElement,
+        HasDivElementInScope,
+        HasFormElementInScope,
+        HasPreElementInScope,
+        HasPElementInButtonScope,
+        HasSelectElementInSelectScope,
+        HasTableElementInTableScope,
+        HasCaptionElementInTableScope,
+        HasTbodyElementInTableScope,
+        HasTfootElementInTableScope,
+        HasTheadElementInTableScope,
+        HasTrElementInTableScope,
+        HasTdElementInTableScope,
+        HasThElementInTableScope,
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum ActiveFormattingContext<T> {
+    Marker,
+    Element { local_name: LocalName, node: T },
+    Removed,
+}
+
+struct ActiveFormattingElementList<T>(Vec<ActiveFormattingContext<T>>);
+
+impl<T> ActiveFormattingElementList<T>
+where
+    T: Clone + Copy + Eq + PartialEq,
+{
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn remove(&mut self, i: usize) {
+        self.0[i] = ActiveFormattingContext::Removed;
+    }
+
+    fn clean(&mut self) {
+        self.0.retain(|context| match context {
+            ActiveFormattingContext::Removed => false,
+            _ => true,
+        });
+    }
+
+    fn get(&self, i: usize) -> &ActiveFormattingContext<T> {
+        self.0.get(i).unwrap()
+    }
+
+    fn clear_up_to_last_marker(&mut self) {
+        while let Some(context) = self.0.pop() {
+            if let ActiveFormattingContext::Marker = context {
+                break;
+            }
+        }
+    }
+
+    fn set_element(&mut self, i: usize, element: T) {
+        match self.0.get_mut(i).unwrap() {
+            ActiveFormattingContext::Marker => unreachable!(),
+            ActiveFormattingContext::Element { ref mut node, .. } => *node = element,
+            ActiveFormattingContext::Removed => (),
+        }
+    }
+
+    fn get_element(&self, i: usize) -> T {
+        match self.0.get(i).unwrap() {
+            ActiveFormattingContext::Element { node, .. } => *node,
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_local_name(&self, i: usize) -> LocalName {
+        match self.0.get(i).unwrap() {
+            ActiveFormattingContext::Element { local_name, .. } => *local_name,
+            _ => unreachable!(),
+        }
+    }
+
+    fn insert_element(&mut self, i: usize, local_name: LocalName, node: T) {
+        self.0
+            .insert(i, ActiveFormattingContext::Element { local_name, node });
+    }
+
+    fn push_marker(&mut self) {
+        self.0.push(ActiveFormattingContext::Marker);
+    }
+
+    fn push_element(&mut self, local_name: LocalName, node: T) {
+        self.0
+            .push(ActiveFormattingContext::Element { local_name, node });
+    }
+
+    fn find_element(&self, element: T) -> Option<usize> {
+        for (i, context) in self.0.iter().enumerate().rev() {
+            match context {
+                ActiveFormattingContext::Marker => {
+                    return None;
+                }
+                ActiveFormattingContext::Element { node: v, .. } => {
+                    if element == *v {
+                        return Some(i);
+                    }
+                }
+                ActiveFormattingContext::Removed => continue,
+            }
+        }
+        None
+    }
+
+    fn find_last_element(&self, local_name: LocalName) -> Option<usize> {
+        for (i, context) in self.0.iter().enumerate().rev() {
+            match context {
+                ActiveFormattingContext::Marker => {
+                    return None;
+                }
+                ActiveFormattingContext::Element { local_name: v, .. } => {
+                    if local_name == *v {
+                        return Some(i);
+                    }
+                }
+                ActiveFormattingContext::Removed => continue,
+            }
+        }
+        None
+    }
+}
+
+impl<T> Default for ActiveFormattingElementList<T> {
+    fn default() -> Self {
+        ActiveFormattingElementList(vec![])
     }
 }
 

@@ -9,7 +9,7 @@ macro_rules! mode {
 
 macro_rules! flags {
     ($flag:ident) => {
-        DomTreeBuildContextFlags::$flag
+        TreeBuildFlags::$flag
     };
     ($flag:ident, $($more:ident),+) => {
         flags!($flag) | flags!($($more),+)

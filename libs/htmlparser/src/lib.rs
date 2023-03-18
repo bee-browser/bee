@@ -3,7 +3,6 @@ mod parser;
 mod treebuilder;
 
 pub use crate::parser::Parser;
-pub use crate::treebuilder::DomTreeBuildContext;
 pub use crate::treebuilder::DomTreeBuilder;
 pub use crate::treebuilder::Namespace;
 
