@@ -1,10 +1,10 @@
 BEE_TOOLS := ../../../../../tools/bin/bee-tools
 SPEC_YAML := ../spec.yaml
-COMPILE_JS := ../compile.js
+COLLECT_JS := ../collect.js
 
 TAGS := $(shell cat tags.txt | tr '\n' ' ')
 SRCS := mod.rs any_other.rs $(addsuffix .rs,$(TAGS))
-DEPS := $(SPEC_YAML) $(COMPILE_JS)
+DEPS := $(SPEC_YAML) $(COLLECT_JS)
 
 .PHONY: codegen
 codegen: $(SRCS)
@@ -17,13 +17,13 @@ mod.rs: mod.rs.hbs tags.txt
 
 any_other.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
-	@deno run --allow-read $(COMPILE_JS) -s $(SPEC_YAML) any_other '<_>' '</_>' | \
+	@deno run --allow-read $(COLLECT_JS) rules -s $(SPEC_YAML) any_other '<_>' '</_>' | \
 	  $(BEE_TOOLS) codegen --no-escape --input-stdin $< | \
 	  rustfmt --emit=stdout >$@
 
 %.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
-	@deno run --allow-read $(COMPILE_JS) -s $(SPEC_YAML) $(subst .rs,,$@) \
+	@deno run --allow-read $(COLLECT_JS) rules -s $(SPEC_YAML) $(subst .rs,,$@) \
 	  '<$(subst .rs,,$@)>' '</$(subst .rs,,$@)>' | \
 	  $(BEE_TOOLS) codegen --no-escape --input-stdin $< | \
 	  rustfmt --emit=stdout >$@

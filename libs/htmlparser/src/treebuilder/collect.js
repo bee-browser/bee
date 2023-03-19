@@ -6,24 +6,33 @@ import Handlebars from 'npm:handlebars@4.7.7';
 import * as log from '../../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(Deno.mainModule);
-const BASE_DIR = path.dirname(Deno.mainModule);
+
+const rulesCommand = new Command()
+  .description('Collect rules for tokens')
+  .arguments('<name> <tokens...>')
+  .action(collectRules);
+
+const tagsCommand = new Command()
+  .description('Collect tag names')
+  .action(collectTags);
 
 await new Command()
   .name(PROGNAME)
-  .option(
+  .globalOption(
     '-s, --spec-yaml=<spec.yaml>',
     'Path to spec.yaml.',
+    { required: true },
   )
-  .option(
+  .globalOption(
     '-l, --log-level=<level>',
     'Log level',
     { default: undefined },
   )
-  .arguments('<name> <tokens...>')
-  .action(main)
+  .command('rules', rulesCommand)
+  .command('tags', tagsCommand)
   .parse();
 
-async function main(options, name, ...tokens) {
+async function collectRules(options, name, ...tokens) {
   await log.setup(options.logLevel);
 
   const specYaml = await Deno.realPath(options.specYaml);
@@ -41,6 +50,33 @@ async function main(options, name, ...tokens) {
 
   log.debug(`Generating JSON for ${name}...`);
   console.log(JSON.stringify(data));
+}
+
+async function collectTags(options) {
+  await log.setup(options.logLevel);
+
+  const specYaml = await Deno.realPath(options.specYaml);
+
+  log.debug(`Loading ${specYaml}...`);
+  const spec = yaml.parse(await Deno.readTextFile(specYaml));
+
+  log.debug('Collecting tag names...');
+  let tagNames = new Set();
+  for (let mode of spec.modes) {
+    for (let rule of mode.rules) {
+      for (let token of rule.match.split(' ')) {
+        if (!token.startsWith('<')) {
+          continue;
+        }
+        const tagName = getTagNameFromToken(token)
+        if (tagName !== '_') {
+          tagNames.add(tagName);
+        }
+      }
+    }
+  }
+
+  console.log(JSON.stringify(Array.from(tagNames).sort()));
 }
 
 function normalize(spec) {
