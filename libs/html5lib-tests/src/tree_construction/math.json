@@ -1,0 +1,212 @@
+{
+  "name": "math.json",
+  "tests": [
+    {
+      "data": "<math><tr><td><mo><tr>",
+      "errors": [
+        "(1,22): unexpected-start-tag",
+        "(1,23): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "td"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math tr>"
+        ],
+        [
+          2,
+          "<math td>"
+        ],
+        [
+          3,
+          "<math mo>"
+        ]
+      ]
+    },
+    {
+      "data": "<math><tr><td><mo><tr>",
+      "errors": [
+        "(1,6): foster-parenting-start-tag",
+        "(1,22): expected-tr-in-table-scope",
+        "(1,23): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "tr"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math tr>"
+        ],
+        [
+          2,
+          "<math td>"
+        ],
+        [
+          3,
+          "<math mo>"
+        ]
+      ]
+    },
+    {
+      "data": "<math><thead><mo><tbody>",
+      "errors": [
+        "(1,6): foster-parenting-start-tag",
+        "(1,24): expected-table-part-in-table-scope",
+        "(1,25): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "thead"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math thead>"
+        ],
+        [
+          2,
+          "<math mo>"
+        ]
+      ]
+    },
+    {
+      "data": "<math><tfoot><mo><tbody>",
+      "errors": [
+        "(1,6): foster-parenting-start-tag",
+        "(1,24): expected-table-part-in-table-scope",
+        "(1,25): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "tfoot"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math tfoot>"
+        ],
+        [
+          2,
+          "<math mo>"
+        ]
+      ]
+    },
+    {
+      "data": "<math><tbody><mo><tfoot>",
+      "errors": [
+        "(1,6): foster-parenting-start-tag",
+        "(1,24): expected-table-part-in-table-scope",
+        "(1,25): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math tbody>"
+        ],
+        [
+          2,
+          "<math mo>"
+        ]
+      ]
+    },
+    {
+      "data": "<math><tbody><mo></table>",
+      "errors": [
+        "(1,6): foster-parenting-start-tag",
+        "(1,25): unexpected-end-tag-in-math",
+        "(1,26): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math tbody>"
+        ],
+        [
+          2,
+          "<math mo>"
+        ]
+      ]
+    },
+    {
+      "data": "<math><thead><mo></table>",
+      "errors": [
+        "(1,6): foster-parenting-start-tag",
+        "(1,25): unexpected-end-tag-in-math",
+        "(1,26): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math thead>"
+        ],
+        [
+          2,
+          "<math mo>"
+        ]
+      ]
+    },
+    {
+      "data": "<math><tfoot><mo></table>",
+      "errors": [
+        "(1,6): foster-parenting-start-tag",
+        "(1,25): unexpected-end-tag-in-math",
+        "(1,26): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math math>"
+        ],
+        [
+          1,
+          "<math tfoot>"
+        ],
+        [
+          2,
+          "<math mo>"
+        ]
+      ]
+    }
+  ]
+}

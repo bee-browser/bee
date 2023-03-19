@@ -1,0 +1,1158 @@
+{
+  "name": "tests7.json",
+  "tests": [
+    {
+      "data": "<!doctype html><body><title>X</title>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table><title>X</title></table>",
+      "errors": [
+        "(1,29): unexpected-start-tag-implies-table-voodoo"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"X\""
+        ],
+        [
+          2,
+          "<table>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><head></head><title>X</title>",
+      "errors": [
+        "(1,35): unexpected-start-tag-out-of-my-head"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"X\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html></head><title>X</title>",
+      "errors": [
+        "(1,29): unexpected-start-tag-out-of-my-head"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"X\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table><meta></table>",
+      "errors": [
+        "(1,28): unexpected-start-tag-implies-table-voodoo"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<meta>"
+        ],
+        [
+          2,
+          "<table>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table>X<tr><td><table> <meta></table></table>",
+      "errors": [
+        "unexpected text in table",
+        "(1,45): unexpected-start-tag-implies-table-voodoo"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"X\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "<meta>"
+        ],
+        [
+          6,
+          "<table>"
+        ],
+        [
+          7,
+          "\" \""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><html> <head>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html> <head>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table><style> <tr>x </style> </table>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<style>"
+        ],
+        [
+          4,
+          "\" <tr>x \""
+        ],
+        [
+          3,
+          "\" \""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table><TBODY><script> <tr>x </script> </table>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<script>"
+        ],
+        [
+          5,
+          "\" <tr>x \""
+        ],
+        [
+          4,
+          "\" \""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><p><applet><p>X</p></applet>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<applet>"
+        ],
+        [
+          4,
+          "<p>"
+        ],
+        [
+          5,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><p><object type=\"application/x-non-existant-plugin\"><p>X</p></object>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<object>"
+        ],
+        [
+          4,
+          "type=\"application/x-non-existant-plugin\""
+        ],
+        [
+          4,
+          "<p>"
+        ],
+        [
+          5,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><listing>\nX</listing>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<listing>"
+        ],
+        [
+          3,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><select><input>X",
+      "errors": [
+        "(1,30): unexpected-input-in-select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          2,
+          "<input>"
+        ],
+        [
+          2,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><select><select>X",
+      "errors": [
+        "(1,31): unexpected-select-in-select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          2,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table><input type=hidDEN></table>",
+      "errors": [
+        "(1,41): unexpected-hidden-input-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<input>"
+        ],
+        [
+          4,
+          "type=\"hidDEN\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table>X<input type=hidDEN></table>",
+      "errors": [
+        "(1,23): foster-parenting-character",
+        "(1,42): unexpected-hidden-input-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"X\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<input>"
+        ],
+        [
+          4,
+          "type=\"hidDEN\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table>  <input type=hidDEN></table>",
+      "errors": [
+        "(1,43): unexpected-hidden-input-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "\"  \""
+        ],
+        [
+          3,
+          "<input>"
+        ],
+        [
+          4,
+          "type=\"hidDEN\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table>  <input type='hidDEN'></table>",
+      "errors": [
+        "(1,45): unexpected-hidden-input-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "\"  \""
+        ],
+        [
+          3,
+          "<input>"
+        ],
+        [
+          4,
+          "type=\"hidDEN\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table><input type=\" hidden\"><input type=hidDEN></table>",
+      "errors": [
+        "(1,44): unexpected-start-tag-implies-table-voodoo",
+        "(1,63): unexpected-hidden-input-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<input>"
+        ],
+        [
+          3,
+          "type=\" hidden\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<input>"
+        ],
+        [
+          4,
+          "type=\"hidDEN\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><table><select>X<tr>",
+      "errors": [
+        "(1,30): unexpected-start-tag-implies-table-voodoo",
+        "(1,35): unexpected-table-element-start-tag-in-select-in-table",
+        "(1,35): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "\"X\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><select>X</select>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE hTmL><html></html>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE HTML><html></html>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<body>X</body></body>",
+      "errors": [
+        "(1,21): unexpected-end-tag-after-body",
+        "#document-fragment",
+        "html"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<head>"
+        ],
+        [
+          0,
+          "<body>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<div><p>a</x> b",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,13): unexpected-end-tag",
+        "(1,15): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "\"a b\""
+        ]
+      ]
+    },
+    {
+      "data": "<table><tr><td><code></code> </table>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "<code>"
+        ],
+        [
+          6,
+          "\" \""
+        ]
+      ]
+    },
+    {
+      "data": "<table><b><tr><td>aaa</td></tr>bbb</table>ccc",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,10): foster-parenting-start-tag",
+        "(1,32): foster-parenting-character",
+        "(1,33): foster-parenting-character",
+        "(1,34): foster-parenting-character",
+        "(1,45): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"bbb\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "\"aaa\""
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"ccc\""
+        ]
+      ]
+    },
+    {
+      "data": "A<table><tr> B</tr> B</table>",
+      "errors": [
+        "(1,1): expected-doctype-but-got-chars",
+        "(1,13): foster-parenting-character",
+        "(1,14): foster-parenting-character",
+        "(1,20): foster-parenting-character",
+        "(1,21): foster-parenting-character"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"A B B\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "A<table><tr> B</tr> </em>C</table>",
+      "errors": [
+        "(1,1): expected-doctype-but-got-chars",
+        "(1,13): foster-parenting-character",
+        "(1,14): foster-parenting-character",
+        "(1,25): unexpected-end-tag",
+        "(1,25): unexpected-end-tag-in-special-element",
+        "(1,26): foster-parenting-character"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"A BC\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "\" \""
+        ]
+      ]
+    },
+    {
+      "data": "<select><keygen>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,16): unexpected-input-in-select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          2,
+          "<keygen>"
+        ]
+      ]
+    }
+  ]
+}

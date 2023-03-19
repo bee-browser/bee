@@ -1,15 +1,14 @@
 BEE_TOOLS := ../../../../tools/bin/bee-tools
 DATA_DIR := ../../data/tree_construction
 DATA_FILES := $(wildcard $(DATA_DIR)/*.dat)
-#TEST_NAMES := $(subst .dat,,$(notdir $(DATA_FILES)))
-TEST_NAMES := $(shell cat tests.txt | tr '\n' ' ')
+TEST_NAMES := $(subst .dat,,$(notdir $(DATA_FILES)))
 TEST_FILES := $(addsuffix _test.rs,$(TEST_NAMES))
 SRCS := mod.rs $(TEST_FILES)
 
 .PHONY: codegen
 codegen: $(SRCS)
 
-mod.rs: mod.rs.hbs $(DATA_FILES) tests.txt
+mod.rs: mod.rs.hbs $(DATA_FILES)
 	@echo 'Generating $(abspath $@)...'
 	@echo -n $(TEST_NAMES) | \
 	  jq -Rsc 'split(" ")' | \

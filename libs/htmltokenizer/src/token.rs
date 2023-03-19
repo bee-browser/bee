@@ -2,7 +2,6 @@ use std::ops::Range;
 
 use crate::error::Error;
 
-#[derive(Debug)]
 pub enum Token<'a> {
     Doctype(Doctype<'a>),
     StartTag(Tag<'a>),
@@ -27,6 +26,43 @@ impl<'a> Token<'a> {
             TokenRange::Text(data) => Token::Text(Text::new(data, buf)),
             TokenRange::Comment(data) => Token::Comment(Comment::new(data, buf)),
             TokenRange::Error(err) => Token::Error(err),
+        }
+    }
+}
+
+impl<'a> std::fmt::Debug for Token<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Doctype(ref doctype) => {
+                write!(f, "<!DOCTYPE")?;
+                if let Some(name) = doctype.name {
+                    write!(f, " {}", name)?;
+                }
+                write!(f, ">")
+            }
+            Token::StartTag(ref tag) => {
+                write!(f, "<{}", tag.name)?;
+                if tag.self_closing {
+                    write!(f, "/>")
+                } else {
+                    write!(f, ">")
+                }
+            }
+            Token::EndTag(ref tag) => {
+                write!(f, "</{}>", tag.name)
+            }
+            Token::Text(ref text) => {
+                write!(f, "#text:{}", text.data)
+            }
+            Token::Comment(ref comment) => {
+                write!(f, "#comment:{}", comment.data)
+            }
+            Token::Error(ref err) => {
+                write!(f, "{:?}", err)
+            }
+            Token::End => {
+                write!(f, "eof")
+            }
         }
     }
 }

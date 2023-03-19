@@ -1,0 +1,1202 @@
+{
+  "name": "foreign_fragment.json",
+  "tests": [
+    {
+      "data": "<nobr>X",
+      "errors": [
+        "6: HTML start tag “nobr” in a foreign namespace context.",
+        "7: End of file seen and there were open elements.",
+        "#document-fragment",
+        "svg path"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<nobr>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<font color></font>X",
+      "errors": [
+        "12: HTML start tag “font” in a foreign namespace context.",
+        "#document-fragment",
+        "svg path"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<font>"
+        ],
+        [
+          1,
+          "color=\"\""
+        ],
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<font></font>X",
+      "errors": [
+        "#document-fragment",
+        "svg path"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg font>"
+        ],
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<g></path>X",
+      "errors": [
+        "10: End tag “path” did not match the name of the current open element (“g”).",
+        "11: End of file seen and there were open elements.",
+        "#document-fragment",
+        "svg path"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg g>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</path>X",
+      "errors": [
+        "5: Stray end tag “path”.",
+        "#document-fragment",
+        "svg path"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</foreignObject>X",
+      "errors": [
+        "5: Stray end tag “foreignobject”.",
+        "#document-fragment",
+        "svg foreignObject"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</desc>X",
+      "errors": [
+        "5: Stray end tag “desc”.",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</title>X",
+      "errors": [
+        "5: Stray end tag “title”.",
+        "#document-fragment",
+        "svg title"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</svg>X",
+      "errors": [
+        "5: Stray end tag “svg”.",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</mfenced>X",
+      "errors": [
+        "5: Stray end tag “mfenced”.",
+        "#document-fragment",
+        "math mfenced"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</malignmark>X",
+      "errors": [
+        "5: Stray end tag “malignmark”.",
+        "#document-fragment",
+        "math malignmark"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</math>X",
+      "errors": [
+        "5: Stray end tag “math”.",
+        "#document-fragment",
+        "math math"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</annotation-xml>X",
+      "errors": [
+        "5: Stray end tag “annotation-xml”.",
+        "#document-fragment",
+        "math annotation-xml"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</mtext>X",
+      "errors": [
+        "5: Stray end tag “mtext”.",
+        "#document-fragment",
+        "math mtext"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</mi>X",
+      "errors": [
+        "5: Stray end tag “mi”.",
+        "#document-fragment",
+        "math mi"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</mo>X",
+      "errors": [
+        "5: Stray end tag “mo”.",
+        "#document-fragment",
+        "math mo"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</mn>X",
+      "errors": [
+        "5: Stray end tag “mn”.",
+        "#document-fragment",
+        "math mn"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "</ms>X",
+      "errors": [
+        "5: Stray end tag “ms”.",
+        "#document-fragment",
+        "math ms"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<b></b><mglyph/><i></i><malignmark/><u></u><ms/>X",
+      "errors": [
+        "51: Self-closing syntax (“/>”) used on a non-void HTML element. Ignoring the slash and treating as a start tag.",
+        "52: End of file seen and there were open elements."
+      ],
+      "newErrors": [
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
+        "#document-fragment",
+        "math ms"
+      ],
+      "document": [
+        [
+          0,
+          "<b>"
+        ],
+        [
+          0,
+          "<math mglyph>"
+        ],
+        [
+          0,
+          "<i>"
+        ],
+        [
+          0,
+          "<math malignmark>"
+        ],
+        [
+          0,
+          "<u>"
+        ],
+        [
+          0,
+          "<ms>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<malignmark></malignmark>",
+      "errors": [
+        "#document-fragment",
+        "math ms"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math malignmark>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "math ms"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "math ms"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mn/>X",
+      "errors": [
+        "51: Self-closing syntax (“/>”) used on a non-void HTML element. Ignoring the slash and treating as a start tag.",
+        "52: End of file seen and there were open elements."
+      ],
+      "newErrors": [
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
+        "#document-fragment",
+        "math mn"
+      ],
+      "document": [
+        [
+          0,
+          "<b>"
+        ],
+        [
+          0,
+          "<math mglyph>"
+        ],
+        [
+          0,
+          "<i>"
+        ],
+        [
+          0,
+          "<math malignmark>"
+        ],
+        [
+          0,
+          "<u>"
+        ],
+        [
+          0,
+          "<mn>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<malignmark></malignmark>",
+      "errors": [
+        "#document-fragment",
+        "math mn"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math malignmark>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "math mn"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "math mn"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mo/>X",
+      "errors": [
+        "51: Self-closing syntax (“/>”) used on a non-void HTML element. Ignoring the slash and treating as a start tag.",
+        "52: End of file seen and there were open elements."
+      ],
+      "newErrors": [
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
+        "#document-fragment",
+        "math mo"
+      ],
+      "document": [
+        [
+          0,
+          "<b>"
+        ],
+        [
+          0,
+          "<math mglyph>"
+        ],
+        [
+          0,
+          "<i>"
+        ],
+        [
+          0,
+          "<math malignmark>"
+        ],
+        [
+          0,
+          "<u>"
+        ],
+        [
+          0,
+          "<mo>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<malignmark></malignmark>",
+      "errors": [
+        "#document-fragment",
+        "math mo"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math malignmark>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "math mo"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "math mo"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mi/>X",
+      "errors": [
+        "51: Self-closing syntax (“/>”) used on a non-void HTML element. Ignoring the slash and treating as a start tag.",
+        "52: End of file seen and there were open elements."
+      ],
+      "newErrors": [
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
+        "#document-fragment",
+        "math mi"
+      ],
+      "document": [
+        [
+          0,
+          "<b>"
+        ],
+        [
+          0,
+          "<math mglyph>"
+        ],
+        [
+          0,
+          "<i>"
+        ],
+        [
+          0,
+          "<math malignmark>"
+        ],
+        [
+          0,
+          "<u>"
+        ],
+        [
+          0,
+          "<mi>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<malignmark></malignmark>",
+      "errors": [
+        "#document-fragment",
+        "math mi"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math malignmark>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "math mi"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "math mi"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mtext/>X",
+      "errors": [
+        "51: Self-closing syntax (“/>”) used on a non-void HTML element. Ignoring the slash and treating as a start tag.",
+        "52: End of file seen and there were open elements."
+      ],
+      "newErrors": [
+        "(1:44-1:52) non-void-html-element-start-tag-with-trailing-solidus",
+        "#document-fragment",
+        "math mtext"
+      ],
+      "document": [
+        [
+          0,
+          "<b>"
+        ],
+        [
+          0,
+          "<math mglyph>"
+        ],
+        [
+          0,
+          "<i>"
+        ],
+        [
+          0,
+          "<math malignmark>"
+        ],
+        [
+          0,
+          "<u>"
+        ],
+        [
+          0,
+          "<mtext>"
+        ],
+        [
+          1,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<malignmark></malignmark>",
+      "errors": [
+        "#document-fragment",
+        "math mtext"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math malignmark>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "math mtext"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "math mtext"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "5: HTML start tag “div” in a foreign namespace context.",
+        "#document-fragment",
+        "math annotation-xml"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "math annotation-xml"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "5: HTML start tag “div” in a foreign namespace context.",
+        "#document-fragment",
+        "math math"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "math math"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<math figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "svg foreignObject"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "svg foreignObject"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "svg title"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "svg title"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<div><h1>X</h1></div>",
+      "errors": [
+        "5: HTML start tag “div” in a foreign namespace context.",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ],
+        [
+          1,
+          "<h1>"
+        ],
+        [
+          2,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "5: HTML start tag “div” in a foreign namespace context.",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<div></div>",
+      "errors": [
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<figure></figure>",
+      "errors": [
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<figure>"
+        ]
+      ]
+    },
+    {
+      "data": "<plaintext><foo>",
+      "errors": [
+        "(1,16): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<plaintext>"
+        ],
+        [
+          1,
+          "\"<foo>\""
+        ]
+      ]
+    },
+    {
+      "data": "<frameset>X",
+      "errors": [
+        "6: Stray start tag “frameset”.",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<head>X",
+      "errors": [
+        "6: Stray start tag “head”.",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<body>X",
+      "errors": [
+        "6: Stray start tag “body”.",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<html>X",
+      "errors": [
+        "6: Stray start tag “html”.",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<html class=\"foo\">X",
+      "errors": [
+        "6: Stray start tag “html”.",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<body class=\"foo\">X",
+      "errors": [
+        "6: Stray start tag “body”.",
+        "#document-fragment",
+        "svg desc"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"X\""
+        ]
+      ]
+    },
+    {
+      "data": "<svg><p>",
+      "errors": [
+        "8: HTML start tag “p” in a foreign namespace context.",
+        "#document-fragment",
+        "div"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          0,
+          "<p>"
+        ]
+      ]
+    },
+    {
+      "data": "<p>",
+      "errors": [
+        "3: HTML start tag “p” in a foreign namespace context.",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<p>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg></p><foo>",
+      "errors": [
+        "9: HTML end tag “p” in a foreign namespace context.",
+        "(1:6) Unexpected </p> from in body insertion mode",
+        "(1:15) Unexpected EOF",
+        "#document-fragment",
+        "div"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          0,
+          "<p>"
+        ],
+        [
+          0,
+          "<foo>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg></br><foo>",
+      "errors": [
+        "10: HTML end tag “br” in a foreign namespace context.",
+        "(1:6) Unexpected </br> from in body insertion mode",
+        "(1:16) Unexpected EOF",
+        "#document-fragment",
+        "div"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          0,
+          "<br>"
+        ],
+        [
+          0,
+          "<foo>"
+        ]
+      ]
+    },
+    {
+      "data": "</p><foo>",
+      "errors": [
+        "4: HTML end tag “p” in a foreign namespace context.",
+        "(1:1) Unexpected </p> from in body insertion mode",
+        "(1:10) Unexpected EOF",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<p>"
+        ],
+        [
+          0,
+          "<svg foo>"
+        ]
+      ]
+    },
+    {
+      "data": "</br><foo>",
+      "errors": [
+        "5: HTML end tag “br” in a foreign namespace context.",
+        "(1:1) Unexpected </br> from in body insertion mode",
+        "(1:11) Unexpected EOF",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<br>"
+        ],
+        [
+          0,
+          "<svg foo>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><foo>",
+      "errors": [
+        "6: HTML start tag “body” in a foreign namespace context.",
+        "(1:1) Unexpected <body> from in body insertion mode",
+        "(1:12) Unexpected EOF",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg foo>"
+        ]
+      ]
+    },
+    {
+      "data": "<p><foo>",
+      "errors": [
+        "3: HTML start tag “p” in a foreign namespace context.",
+        "(1:9) Unexpected EOF",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<p>"
+        ],
+        [
+          1,
+          "<foo>"
+        ]
+      ]
+    },
+    {
+      "data": "<p></p><foo>",
+      "errors": [
+        "3: HTML start tag “p” in a foreign namespace context.",
+        "(1:13) Unexpected EOF",
+        "#document-fragment",
+        "svg svg"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<p>"
+        ],
+        [
+          0,
+          "<svg foo>"
+        ]
+      ]
+    }
+  ]
+}

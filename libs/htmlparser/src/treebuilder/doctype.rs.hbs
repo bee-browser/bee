@@ -11,12 +11,12 @@ where
 {
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_doctype(&mut self, doctype: Doctype<'_>) -> Control {
-        tracing::debug!(mode = ?self.mode, ?doctype);
         self.ignore_lf = false;
         loop {
+            tracing::debug!(mode = ?self.mode);
             match self.mode {
                 {{#each tokens.doctype}}
-                mode!({{{ join modes ', '}}}) => {
+                mode!({{join modes ', '}}) => {
                     {{#if run}}
                     let ctrl = {
                         {{{run}}}

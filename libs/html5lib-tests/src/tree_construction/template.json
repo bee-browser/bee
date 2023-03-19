@@ -1,0 +1,4547 @@
+{
+  "name": "template.json",
+  "tests": [
+    {
+      "data": "<body><template>Hello</template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "\"Hello\""
+        ]
+      ]
+    },
+    {
+      "data": "<template>Hello</template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "\"Hello\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template></template><div></div>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<html><template>Hello</template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "\"Hello\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<head><template><div></div></template></head>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<div><template><div><span></template><b>",
+      "errors": [
+        " * (1,6) missing DOCTYPE",
+        " * (1,38) mismatched template end tag",
+        " * (1,41) unexpected end of file"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<div>"
+        ],
+        [
+          6,
+          "<span>"
+        ],
+        [
+          3,
+          "<b>"
+        ]
+      ]
+    },
+    {
+      "data": "<div><template></div>Hello",
+      "errors": [
+        " * (1,6) missing DOCTYPE",
+        " * (1,22) unexpected token in template",
+        " * (1,27) unexpected end of file in template",
+        " * (1,27) unexpected end of file"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "\"Hello\""
+        ]
+      ]
+    },
+    {
+      "data": "<div></template></div>",
+      "errors": [
+        " * (1,6) missing DOCTYPE",
+        " * (1,17) unexpected template end tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template></template></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template></template></div>",
+      "errors": [
+        " * (1,8) missing DOCTYPE",
+        " * (1,35) unexpected token in table - foster parenting",
+        " * (1,35) unexpected end tag",
+        " * (1,35) unexpected end of file"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table><div><template></template></div>",
+      "errors": [
+        " * (1,8) missing DOCTYPE",
+        " * (1,13) unexpected token in table - foster parenting",
+        " * (1,40) unexpected token in table - foster parenting",
+        " * (1,40) unexpected end of file"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          2,
+          "<table>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template></template><div></div>",
+      "errors": [
+        "no doctype",
+        "bad div in table",
+        "bad /div in table",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table>   <template></template></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "\"   \""
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tbody><template></template></tbody>",
+      "errors": [
+        "no doctype",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tbody><template></tbody></template>",
+      "errors": [
+        "no doctype",
+        "bad /tbody",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tbody><template></template></tbody></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table><thead><template></template></thead>",
+      "errors": [
+        "no doctype",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<thead>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tfoot><template></template></tfoot>",
+      "errors": [
+        "no doctype",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tfoot>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<select><template></template></select>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<select><template><option></option></template></select>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<option>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><option></option></select><option></option></template>",
+      "errors": [
+        "no doctype",
+        "bad /select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<option>"
+        ],
+        [
+          4,
+          "<option>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<select><template></template><option></select>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          3,
+          "<option>"
+        ]
+      ]
+    },
+    {
+      "data": "<select><option><template></template></select>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<select><template>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<select><option></option><template>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<select><option></option><template><option>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<option>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><thead><template><td></template></table>",
+      "errors": [
+        " * (1,8) missing DOCTYPE"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<thead>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template><thead></template></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<thead>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><table><template><td></tr><div></template></table>",
+      "errors": [
+        "no doctype",
+        "bad </tr>",
+        "missing </div>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template><thead></template></thead></table>",
+      "errors": [
+        "no doctype",
+        "bad /thead after /template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<thead>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><thead><template><tr></template></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<thead>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template><tr></template></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tr><template><td>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<template>"
+        ],
+        [
+          6,
+          "content"
+        ],
+        [
+          7,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template><tr><template><td></template></tr></template></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<template>"
+        ],
+        [
+          7,
+          "content"
+        ],
+        [
+          8,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template><tr><template><td></td></template></tr></template></table>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<template>"
+        ],
+        [
+          7,
+          "content"
+        ],
+        [
+          8,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><template><td></template>",
+      "errors": [
+        "no doctype",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><td></td></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><template><tr></tr></template><td></td></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<tr>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><colgroup><template><col>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<frameset><template><frame></frame></template></frameset>",
+      "errors": [
+        " * (1,11) missing DOCTYPE",
+        " * (1,21) unexpected start tag token",
+        " * (1,36) unexpected end tag token",
+        " * (1,47) unexpected end tag token"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          2,
+          "<frame>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><frame></frame></frameset><frame></frame></template>",
+      "errors": [
+        " * (1,11) missing DOCTYPE",
+        " * (1,18) unexpected start tag",
+        " * (1,26) unexpected end tag",
+        " * (1,37) unexpected end tag",
+        " * (1,44) unexpected start tag",
+        " * (1,52) unexpected end tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><div><frameset><span></span></div><span></span></template>",
+      "errors": [
+        "no doctype",
+        "bad frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          5,
+          "<span>"
+        ],
+        [
+          4,
+          "<span>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><div><frameset><span></span></div><span></span></template></body>",
+      "errors": [
+        "no doctype",
+        "bad frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          5,
+          "<span>"
+        ],
+        [
+          4,
+          "<span>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><script>var i = 1;</script><td></td></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<script>"
+        ],
+        [
+          5,
+          "\"var i = 1;\""
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><tr><div></div></tr></template>",
+      "errors": [
+        "no doctype",
+        "foster-parented div",
+        "foster-parented /div"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><tr></tr><td></td></template>",
+      "errors": [
+        "no doctype",
+        "unexpected <td>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><td></td></tr><td></td></template>",
+      "errors": [
+        "no doctype",
+        "bad </tr>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<td>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><td></td><tbody><td></td></template>",
+      "errors": [
+        "no doctype",
+        "bad <tbody>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<td>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><td></td><caption></caption><td></td></template>",
+      "errors": [
+        " * (1,7) missing DOCTYPE",
+        " * (1,35) unexpected start tag in table row",
+        " * (1,45) unexpected end tag in table row"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<td>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><td></td><colgroup></caption><td></td></template>",
+      "errors": [
+        " * (1,7) missing DOCTYPE",
+        " * (1,36) unexpected start tag in table row",
+        " * (1,46) unexpected end tag in table row"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<td>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><td></td></table><td></td></template>",
+      "errors": [
+        "no doctype",
+        "bad </table>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<td>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><tr></tr><tbody><tr></tr></template>",
+      "errors": [
+        "no doctype",
+        "bad <tbody>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><tr></tr><caption><tr></tr></template>",
+      "errors": [
+        "no doctype",
+        "bad <caption>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><tr></tr></table><tr></tr></template>",
+      "errors": [
+        "no doctype",
+        "bad </table>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><thead></thead><caption></caption><tbody></tbody></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<thead>"
+        ],
+        [
+          4,
+          "<caption>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><thead></thead></table><tbody></tbody></template></body>",
+      "errors": [
+        "no doctype",
+        "bad </table>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<thead>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><div><tr></tr></div></template>",
+      "errors": [
+        "no doctype",
+        "bad tr",
+        "bad /tr"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><em>Hello</em></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<em>"
+        ],
+        [
+          5,
+          "\"Hello\""
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><!--comment--></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<!-- comment -->"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><style></style><td></td></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<style>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><meta><td></td></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<meta>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><link><td></td></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<link>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><template><tr></tr></template><td></td></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<tr>"
+        ],
+        [
+          4,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><table><colgroup><template><col></col></template></colgroup></table></body>",
+      "errors": [
+        "no doctype",
+        "bad /col"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<body a=b><template><div></div><body c=d><div></div></body></template></body>",
+      "errors": [
+        "no doctype",
+        "bad <body>",
+        "bad </body>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "a=\"b\""
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<html a=b><template><div><html b=c><span></template>",
+      "errors": [
+        "no doctype",
+        "bad <html>",
+        "missing end tags in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "a=\"b\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          5,
+          "<span>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<html a=b><template><col></col><html b=c><col></col></template>",
+      "errors": [
+        "no doctype",
+        "bad /col",
+        "bad html",
+        "bad /col"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "a=\"b\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<html a=b><template><frame></frame><html b=c><frame></frame></template>",
+      "errors": [
+        "no doctype",
+        "bad frame",
+        "bad /frame",
+        "bad html",
+        "bad frame",
+        "bad /frame"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "a=\"b\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><tr></tr><template></template><td></td></template>",
+      "errors": [
+        "no doctype",
+        "unexpected <td>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><thead></thead><template><tr></tr></template><tr></tr><tfoot></tfoot></template>",
+      "errors": [
+        "no doctype"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<thead>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<tr>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          4,
+          "<tfoot>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><template><b><template></template></template>text</template>",
+      "errors": [
+        "no doctype",
+        "missing </b>"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<b>"
+        ],
+        [
+          7,
+          "<template>"
+        ],
+        [
+          8,
+          "content"
+        ],
+        [
+          4,
+          "\"text\""
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><col><colgroup>",
+      "errors": [
+        "no doctype",
+        "bad colgroup",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><col></colgroup>",
+      "errors": [
+        "no doctype",
+        "bogus /colgroup",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><col><colgroup></template></body>",
+      "errors": [
+        "no doctype",
+        "bad colgroup"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><col><div>",
+      "errors": [
+        " * (1,7) missing DOCTYPE",
+        " * (1,27) unexpected token",
+        " * (1,27) unexpected end of file in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><col></div>",
+      "errors": [
+        "no doctype",
+        "bad /div",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><col>Hello",
+      "errors": [
+        "no doctype",
+        "(1,27): foster-parenting-character",
+        "(1,27): foster-parenting-character",
+        "(1,27): foster-parenting-character",
+        "(1,27): foster-parenting-character",
+        "(1,27): foster-parenting-character",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><template><i><menu>Foo</i>",
+      "errors": [
+        "no doctype",
+        "mising /menu",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          4,
+          "<menu>"
+        ],
+        [
+          5,
+          "<i>"
+        ],
+        [
+          6,
+          "\"Foo\""
+        ]
+      ]
+    },
+    {
+      "data": "<body><template></div><div>Foo</div><template></template><tr></tr>",
+      "errors": [
+        "no doctype",
+        "bogus /div",
+        "bogus tr",
+        "bogus /tr",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          5,
+          "\"Foo\""
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<body><div><template></div><tr><td>Foo</td></tr></template>",
+      "errors": [
+        " * (1,7) missing DOCTYPE",
+        " * (1,28) unexpected token in template",
+        " * (1,60) unexpected end of file"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "\"Foo\""
+        ]
+      ]
+    },
+    {
+      "data": "<template></figcaption><sub><table></table>",
+      "errors": [
+        "no doctype",
+        "bad /figcaption",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<sub>"
+        ],
+        [
+          5,
+          "<table>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><div>",
+      "errors": [
+        "no doctype",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><div>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<div>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><table>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<table>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><tbody>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<tbody>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><tr>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<tr>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><td>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><caption>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<caption>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><colgroup>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<colgroup>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><col>",
+      "errors": [
+        "no doctype",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<col>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><tbody><select>",
+      "errors": [
+        " * (1,11) missing DOCTYPE",
+        " * (1,36) unexpected token in table - foster parenting",
+        " * (1,36) unexpected end of file in template",
+        " * (1,36) unexpected end of file in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<tbody>"
+        ],
+        [
+          6,
+          "<select>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><table>Foo",
+      "errors": [
+        "no doctype",
+        "foster-parenting text F",
+        "foster-parenting text o",
+        "foster-parenting text o",
+        "eof",
+        "eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "\"Foo\""
+        ],
+        [
+          6,
+          "<table>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><frame>",
+      "errors": [
+        "no doctype",
+        "bad tag",
+        "eof",
+        "eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><script>var i",
+      "errors": [
+        "no doctype",
+        "eof in script",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<script>"
+        ],
+        [
+          7,
+          "\"var i\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><template><style>var i",
+      "errors": [
+        "no doctype",
+        "eof in style",
+        "eof in template",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<style>"
+        ],
+        [
+          7,
+          "\"var i\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><table></template><body><span>Foo",
+      "errors": [
+        "no doctype",
+        "missing /table",
+        "bad eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<table>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<span>"
+        ],
+        [
+          3,
+          "\"Foo\""
+        ]
+      ]
+    },
+    {
+      "data": "<template><td></template><body><span>Foo",
+      "errors": [
+        "no doctype",
+        "bad eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<td>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<span>"
+        ],
+        [
+          3,
+          "\"Foo\""
+        ]
+      ]
+    },
+    {
+      "data": "<template><object></template><body><span>Foo",
+      "errors": [
+        "no doctype",
+        "missing /object",
+        "bad eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<object>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<span>"
+        ],
+        [
+          3,
+          "\"Foo\""
+        ]
+      ]
+    },
+    {
+      "data": "<template><svg><template>",
+      "errors": [
+        "no doctype",
+        "eof in template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<svg svg>"
+        ],
+        [
+          5,
+          "<svg template>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><svg><foo><template><foreignObject><div></template><div>",
+      "errors": [
+        "no doctype",
+        "ugly template closure",
+        "bad eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<svg svg>"
+        ],
+        [
+          5,
+          "<svg foo>"
+        ],
+        [
+          6,
+          "<svg template>"
+        ],
+        [
+          7,
+          "<svg foreignObject>"
+        ],
+        [
+          8,
+          "<div>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<dummy><template><span></dummy>",
+      "errors": [
+        "no doctype",
+        "bad end tag </dummy>",
+        "eof in template",
+        "eof in dummy"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<dummy>"
+        ],
+        [
+          3,
+          "<template>"
+        ],
+        [
+          4,
+          "content"
+        ],
+        [
+          5,
+          "<span>"
+        ]
+      ]
+    },
+    {
+      "data": "<body><table><tr><td><select><template>Foo</template><caption>A</table>",
+      "errors": [
+        "no doctype",
+        "(1,62): unexpected-caption-in-select-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "<select>"
+        ],
+        [
+          7,
+          "<template>"
+        ],
+        [
+          8,
+          "content"
+        ],
+        [
+          9,
+          "\"Foo\""
+        ],
+        [
+          3,
+          "<caption>"
+        ],
+        [
+          4,
+          "\"A\""
+        ]
+      ]
+    },
+    {
+      "data": "<body></body><template>",
+      "errors": [
+        "no doctype",
+        "(1,23): template-after-body",
+        "(1,24): eof-in-template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ]
+      ]
+    },
+    {
+      "data": "<head></head><template>",
+      "errors": [
+        "no doctype",
+        "(1,23): template-after-head",
+        "(1,24): eof-in-template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<head></head><template>Foo</template>",
+      "errors": [
+        "no doctype",
+        "(1,23): template-after-head"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "\"Foo\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE HTML><dummy><table><template><table><template><table><script>",
+      "errors": [
+        "eof script",
+        "eof template",
+        "eof template",
+        "eof table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<dummy>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<template>"
+        ],
+        [
+          5,
+          "content"
+        ],
+        [
+          6,
+          "<table>"
+        ],
+        [
+          7,
+          "<template>"
+        ],
+        [
+          8,
+          "content"
+        ],
+        [
+          9,
+          "<table>"
+        ],
+        [
+          10,
+          "<script>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><a><table><a>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(1,23): foster-parenting-start-tag",
+        "(1,23): unexpected-start-tag",
+        "(1,23): formatting-element-not-in-scope",
+        "(1,24): eof-in-template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<a>"
+        ],
+        [
+          5,
+          "<a>"
+        ],
+        [
+          5,
+          "<table>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<template><form><input name=\"q\"></form><div>second</div></template>",
+      "errors": [
+        "#document-fragment",
+        "template"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<template>"
+        ],
+        [
+          1,
+          "content"
+        ],
+        [
+          2,
+          "<form>"
+        ],
+        [
+          3,
+          "<input>"
+        ],
+        [
+          4,
+          "name=\"q\""
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\"second\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE HTML><template><tr><td>cell</td></tr></template>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "\"cell\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE HTML><template> <tr> <td>cell</td> </tr> </template>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "\" \""
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "\" \""
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "\"cell\""
+        ],
+        [
+          5,
+          "\" \""
+        ],
+        [
+          4,
+          "\" \""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE HTML><template><tr><td>cell</td></tr>a</template>",
+      "errors": [
+        "(1,59): foster-parenting-character"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<template>"
+        ],
+        [
+          3,
+          "content"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "\"cell\""
+        ],
+        [
+          4,
+          "\"a\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    }
+  ]
+}

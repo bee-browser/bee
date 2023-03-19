@@ -37,7 +37,6 @@ where
             self.tokenizer
                 .set_in_html_namespace(self.tree_builder.in_html_namespace());
             let token = self.tokenizer.next_token();
-            tracing::debug!(?token);
             let ctrl = self.tree_builder.handle_token(token);
             match ctrl {
                 Control::Reprocess => unreachable!(),

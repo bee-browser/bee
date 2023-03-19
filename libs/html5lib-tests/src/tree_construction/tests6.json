@@ -1,0 +1,1432 @@
+{
+  "name": "tests6.json",
+  "tests": [
+    {
+      "data": "<!doctype html></head> <head>",
+      "errors": [
+        "(1,29): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "\" \""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><form><div></form><div>",
+      "errors": [
+        "(1,33): end-tag-too-early-ignored",
+        "(1,38): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<form>"
+        ],
+        [
+          3,
+          "<div>"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><title>&amp;</title>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"&\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><title><!--&amp;--></title>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"<!--&-->\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype>",
+      "errors": [
+        "(1,10): expected-doctype-name-but-got-right-bracket",
+        "(1,10): unknown-doctype"
+      ],
+      "newErrors": [
+        "(1:10) missing-doctype-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE >"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<!---x",
+      "errors": [
+        "(1,6): eof-in-comment",
+        "(1,6): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:7) eof-in-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- -x -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<body>\n<div>",
+      "errors": [
+        "(1,6): unexpected-start-tag",
+        "(2,5): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "div"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "\"\n\""
+        ],
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<frameset></frameset>\nfoo",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(2,1): unexpected-char-after-frameset",
+        "(2,2): unexpected-char-after-frameset",
+        "(2,3): unexpected-char-after-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          1,
+          "\"\n\""
+        ]
+      ]
+    },
+    {
+      "data": "<frameset></frameset>\n<noframes>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(2,10): expected-named-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          1,
+          "\"\n\""
+        ],
+        [
+          1,
+          "<noframes>"
+        ]
+      ]
+    },
+    {
+      "data": "<frameset></frameset>\n<div>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(2,5): unexpected-start-tag-after-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          1,
+          "\"\n\""
+        ]
+      ]
+    },
+    {
+      "data": "<frameset></frameset>\n</html>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          1,
+          "\"\n\""
+        ]
+      ]
+    },
+    {
+      "data": "<frameset></frameset>\n</div>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(2,6): unexpected-end-tag-after-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          1,
+          "\"\n\""
+        ]
+      ]
+    },
+    {
+      "data": "<form><form>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,12): unexpected-start-tag",
+        "(1,12): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<form>"
+        ]
+      ]
+    },
+    {
+      "data": "<button><button>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,16): unexpected-start-tag-implies-end-tag",
+        "(1,16): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<button>"
+        ],
+        [
+          2,
+          "<button>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tr><td></th>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,20): unexpected-end-tag",
+        "(1,20): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><caption><td>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,20): unexpected-cell-in-table-body",
+        "(1,20): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<caption>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><caption><div>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,21): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<caption>"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "</caption><div>",
+      "errors": [
+        "(1,10): XXX-undefined-error",
+        "(1,15): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "caption"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><caption><div></caption>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,31): expected-one-end-tag-but-got-another",
+        "(1,31): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<caption>"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><caption></table>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<caption>"
+        ]
+      ]
+    },
+    {
+      "data": "</table><div>",
+      "errors": [
+        "(1,8): unexpected-end-tag",
+        "(1,13): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "caption"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><caption></body></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,23): unexpected-end-tag",
+        "(1,29): unexpected-end-tag",
+        "(1,40): unexpected-end-tag",
+        "(1,47): unexpected-end-tag",
+        "(1,55): unexpected-end-tag",
+        "(1,60): unexpected-end-tag",
+        "(1,68): unexpected-end-tag",
+        "(1,73): unexpected-end-tag",
+        "(1,81): unexpected-end-tag",
+        "(1,86): unexpected-end-tag",
+        "(1,86): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<caption>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><caption><div></div>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,27): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<caption>"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tr><td></body></caption></col></colgroup></html>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,22): unexpected-end-tag",
+        "(1,32): unexpected-end-tag",
+        "(1,38): unexpected-end-tag",
+        "(1,49): unexpected-end-tag",
+        "(1,56): unexpected-end-tag",
+        "(1,56): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "</table></tbody></tfoot></thead></tr><div>",
+      "errors": [
+        "(1,8): unexpected-end-tag",
+        "(1,16): unexpected-end-tag",
+        "(1,24): unexpected-end-tag",
+        "(1,32): unexpected-end-tag",
+        "(1,37): unexpected-end-tag",
+        "(1,42): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "td"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><colgroup>foo",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,18): foster-parenting-character-in-table",
+        "(1,19): foster-parenting-character-in-table",
+        "(1,20): foster-parenting-character-in-table",
+        "(1,20): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"foo\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ]
+      ]
+    },
+    {
+      "data": "foo<col>",
+      "errors": [
+        "(1,1): unexpected-character-in-colgroup",
+        "(1,2): unexpected-character-in-colgroup",
+        "(1,3): unexpected-character-in-colgroup",
+        "#document-fragment",
+        "colgroup"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<col>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><colgroup></col>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,23): no-end-tag",
+        "(1,23): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ]
+      ]
+    },
+    {
+      "data": "<frameset><div>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(1,15): unexpected-start-tag-in-frameset",
+        "(1,15): eof-in-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ]
+    },
+    {
+      "data": "</frameset><frame>",
+      "errors": [
+        "(1,11): unexpected-frameset-in-frameset-innerhtml",
+        "#document-fragment",
+        "frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<frame>"
+        ]
+      ]
+    },
+    {
+      "data": "<frameset></div>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(1,16): unexpected-end-tag-in-frameset",
+        "(1,16): eof-in-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ]
+    },
+    {
+      "data": "</body><div>",
+      "errors": [
+        "(1,7): unexpected-close-tag",
+        "(1,12): expected-closing-tag-but-got-eof",
+        "#document-fragment",
+        "body"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<div>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tr><div>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,16): unexpected-start-tag-implies-table-voodoo",
+        "(1,16): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "</tr><td>",
+      "errors": [
+        "(1,5): unexpected-end-tag",
+        "#document-fragment",
+        "tr"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "</tbody></tfoot></thead><td>",
+      "errors": [
+        "(1,8): unexpected-end-tag",
+        "(1,16): unexpected-end-tag",
+        "(1,24): unexpected-end-tag",
+        "#document-fragment",
+        "tr"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tr><div><td>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,16): foster-parenting-start-tag",
+        "(1,20): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ]
+    },
+    {
+      "data": "<caption><col><colgroup><tbody><tfoot><thead><tr>",
+      "errors": [
+        "(1,9): unexpected-start-tag",
+        "(1,14): unexpected-start-tag",
+        "(1,24): unexpected-start-tag",
+        "(1,31): unexpected-start-tag",
+        "(1,38): unexpected-start-tag",
+        "(1,45): unexpected-start-tag",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tbody></thead>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,22): unexpected-end-tag-in-table-body",
+        "(1,22): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ]
+      ]
+    },
+    {
+      "data": "</table><tr>",
+      "errors": [
+        "(1,8): unexpected-end-tag",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tbody></body></caption></col></colgroup></html></td></th></tr>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,21): unexpected-end-tag-in-table-body",
+        "(1,31): unexpected-end-tag-in-table-body",
+        "(1,37): unexpected-end-tag-in-table-body",
+        "(1,48): unexpected-end-tag-in-table-body",
+        "(1,55): unexpected-end-tag-in-table-body",
+        "(1,60): unexpected-end-tag-in-table-body",
+        "(1,65): unexpected-end-tag-in-table-body",
+        "(1,70): unexpected-end-tag-in-table-body",
+        "(1,70): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><tbody></div>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,20): unexpected-end-tag-implies-table-voodoo",
+        "(1,20): end-tag-too-early",
+        "(1,20): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ]
+      ]
+    },
+    {
+      "data": "<table><table>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-start-tag-implies-end-tag",
+        "(1,14): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          2,
+          "<table>"
+        ]
+      ]
+    },
+    {
+      "data": "<table></body></caption></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-end-tag",
+        "(1,24): unexpected-end-tag",
+        "(1,30): unexpected-end-tag",
+        "(1,41): unexpected-end-tag",
+        "(1,48): unexpected-end-tag",
+        "(1,56): unexpected-end-tag",
+        "(1,61): unexpected-end-tag",
+        "(1,69): unexpected-end-tag",
+        "(1,74): unexpected-end-tag",
+        "(1,82): unexpected-end-tag",
+        "(1,87): unexpected-end-tag",
+        "(1,87): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ]
+      ]
+    },
+    {
+      "data": "</table><tr>",
+      "errors": [
+        "(1,8): unexpected-end-tag",
+        "#document-fragment",
+        "table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<tbody>"
+        ],
+        [
+          1,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<body></body></html>",
+      "errors": [
+        "(1,20): unexpected-end-tag-after-body-innerhtml",
+        "#document-fragment",
+        "html"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<head>"
+        ],
+        [
+          0,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<html><frameset></frameset></html> ",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          1,
+          "\" \""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\"><html></html>",
+      "errors": [
+        "(1,50): doctype-has-public-identifier"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html \"-//W3C//DTD HTML 4.01//EN\" \"\">"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ]
+    },
+    {
+      "data": "<param><frameset></frameset>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,17): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ]
+    },
+    {
+      "data": "<source><frameset></frameset>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,18): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ]
+    },
+    {
+      "data": "<track><frameset></frameset>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,17): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ]
+    },
+    {
+      "data": "</html><frameset></frameset>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-end-tag",
+        "(1,17): expected-eof-but-got-start-tag",
+        "(1,17): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ]
+    },
+    {
+      "data": "</body><frameset></frameset>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-end-tag",
+        "(1,17): unexpected-start-tag-after-body",
+        "(1,17): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ]
+    }
+  ]
+}

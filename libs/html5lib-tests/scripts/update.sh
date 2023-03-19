@@ -26,11 +26,13 @@ rm -rf $DATA_DIR
 mkdir -p $DATA_DIR
 echo $COMMIT_HASH >$DATA_DIR/commit_hash
 
+# Excluded test files
+rm -f $TEMP_DIR/tokenizer/xmlViolation.test
+rm -f $TEMP_DIR/tree-construction/search-element.dat
+
 mv $TEMP_DIR/tokenizer $DATA_DIR/
 mv $TEMP_DIR/tree-construction $DATA_DIR/tree_construction
 mv $TEMP_DIR/LICENSE $DATA_DIR/
-
-rm -f $DATA_DIR/tokenizer/xmlViolation.test  # excluded
 
 for file in $(cd $DATA_DIR/tokenizer; ls -1 *.test)
 do
@@ -49,3 +51,6 @@ do
     mv -f "$DATA_DIR/tree_construction/$file" "$DATA_DIR/tree_construction/$snake_case"
   fi
 done
+# special cases
+mv -f $DATA_DIR/tree_construction/tests_innerHTML_1.dat \
+  $DATA_DIR/tree_construction/tests_inner_html_1.dat
