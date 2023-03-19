@@ -119,11 +119,11 @@ function lookupRun(mode, token, arrow) {
   }
   let match;
   if (token.startsWith('</')) {
-    match = '</>';
-    rule = mode.rules['</>'];
+    match = '</_>';
+    rule = mode.rules['</_>'];
   } else if (token.startsWith('<')) {
-    match = '<>';
-    rule = mode.rules['<>'];
+    match = '<_>';
+    rule = mode.rules['<_>'];
   }
   if (rule) {
     log.debug(`${arrow} match ${match}`);
@@ -181,6 +181,9 @@ function render(spec, modes, ids, token, run, arrow) {
     strict: true,
   });
   let tag_name = getTagNameFromToken(token);
+  if (tag_name === '_') {
+    tag_name = 'unknown';
+  }
   return template({
     tag_name,
     TagName: pascalCase(tag_name),

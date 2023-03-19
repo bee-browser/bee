@@ -17,7 +17,7 @@ mod.rs: mod.rs.hbs tags.txt
 
 any_other.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
-	@deno run --allow-read $(COMPILE_JS) -s $(SPEC_YAML) any_other '<>' '</>' | \
+	@deno run --allow-read $(COMPILE_JS) -s $(SPEC_YAML) any_other '<_>' '</_>' | \
 	  $(BEE_TOOLS) codegen --no-escape --input-stdin $< | \
 	  rustfmt --emit=stdout >$@
 

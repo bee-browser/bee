@@ -92,7 +92,7 @@ where
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
                         self.reconstruct_active_formatting_elements();
-                        self.push_html__element(tag);
+                        self.push_html_unknown_element(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -106,7 +106,7 @@ where
                         self.enable_foster_parenting();
                         let ctrl = {
                             self.reconstruct_active_formatting_elements();
-                            self.push_html__element(tag);
+                            self.push_html_unknown_element(tag);
                             Control::Continue
                         };
                         self.disable_foster_parenting();
@@ -246,7 +246,7 @@ where
                             let context = &self.context_stack[context_pos];
                             let element = context.open_element.node;
                             if context.is_html() && self.inner.has_same_name(element, tag.name) {
-                                self.close_implied_tags_except_for(tag!()); // TODO
+                                self.close_implied_tags_except_for(tag!(Unknown)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
                                 }
@@ -293,7 +293,7 @@ where
                                 let element = context.open_element.node;
                                 if context.is_html() && self.inner.has_same_name(element, tag.name)
                                 {
-                                    self.close_implied_tags_except_for(tag!()); // TODO
+                                    self.close_implied_tags_except_for(tag!(Unknown)); // TODO
                                     if element != self.context().open_element.node {
                                         // TODO: Parse error.
                                     }
