@@ -939,7 +939,7 @@ where
     }
 
     #[inline(always)]
-    fn push_html__element(&mut self, tag: &Tag<'_>) {
+    fn push_html_unknown_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::lookup(tag.name));
     }
 

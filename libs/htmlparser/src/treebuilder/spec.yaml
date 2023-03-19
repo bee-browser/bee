@@ -72,7 +72,7 @@ modes:
       - match: </head> </body> </html> </br>
         run: |
           {{use 'anything-else'}}
-      - match: </>
+      - match: </_>
         run: |
           {{use '$parse-error'}}
           {{use '$ignore-token'}}
@@ -110,7 +110,7 @@ modes:
       - match: </head> </body> </html> </br>
         run: |
           {{use 'anything-else'}}
-      - match: </>
+      - match: </_>
         run: |
           {{use '$parse-error'}}
           {{use '$ignore-token'}}
@@ -211,7 +211,7 @@ modes:
               self.reset_insertion_mode_appropriately();
           }
           Control::Continue
-      - match: <head> </>
+      - match: <head> </_>
         run: |
           {{use '$parse-error'}}
           {{use '$ignore-token'}}
@@ -248,7 +248,7 @@ modes:
       - match: </br>
         run: |
           {{use 'anything-else'}}
-      - match: <head> <noscript> </>
+      - match: <head> <noscript> </_>
         run: |
           {{use '$parse-error'}}
           {{use '$ignore-token'}}
@@ -308,7 +308,7 @@ modes:
       - match: </body> </html> </br>
         run: |
           {{use 'anything-else'}}
-      - match: <head> </>
+      - match: <head> </_>
         run: |
           {{use '$parse-error'}}
           {{use '$ignore-token'}}
@@ -804,13 +804,13 @@ modes:
         run: |
           {{use '$parse-error'}}
           {{use '$ignore-token'}}
-      - match: <>
+      - match: <_>
         id: any-other-start-tag
         run: |
           self.reconstruct_active_formatting_elements();
           self.push_html_{{tag_name}}_element(tag);
           Control::Continue
-      - match: </>
+      - match: </_>
         id: any-other-end-tag
         run: |
           self.append_text_if_exists();
@@ -860,7 +860,7 @@ modes:
           self.pop_element();
           self.switch_to_original_mode();
           Control::ExecuteScript
-      - match: </>
+      - match: </_>
         run: |
           self.pop_element();
           self.switch_to_original_mode();
@@ -1417,13 +1417,13 @@ modes:
           // TODO: Push "in row" onto the stack of template insertion modes so that it is the new current template insertion mode.
           self.switch_to(mode!(InRow));
           Control::Reprocess
-      - match: <>
+      - match: <_>
         run: |
           // TODO: Pop the current template insertion mode off the stack of template insertion modes.
           // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
           self.switch_to(mode!(InBody));
           Control::Reprocess
-      - match: </>
+      - match: </_>
         run: |
           {{use '$parse-error'}}
           {{use '$ignore-token'}}

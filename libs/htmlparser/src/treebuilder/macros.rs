@@ -20,9 +20,6 @@ macro_rules! flags {
 }
 
 macro_rules! tag {
-    () => {
-        crate::localnames::LocalName::Unknown
-    };
     ($tag:ident) => {
         crate::localnames::LocalName::$tag
     };
