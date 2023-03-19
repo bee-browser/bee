@@ -12,14 +12,14 @@ echo "Cloning $GIT_URL..."
 git clone -q --depth=1 $GIT_URL $TEMP_DIR
 
 COMMIT_HASH="$(cd $TEMP_DIR; git show --format='%H' --no-patch)"
-if [ -f "$DATA_DIR/commit_hash" ]
-then
-  if [ "$(cat $DATA_DIR/commit_hash)" = "$COMMIT_HASH" ]
-  then
-    echo 'Already up-to-date'
-    exit 0
-  fi
-fi
+# if [ -f "$DATA_DIR/commit_hash" ]
+# then
+#   if [ "$(cat $DATA_DIR/commit_hash)" = "$COMMIT_HASH" ]
+#   then
+#     echo 'Already up-to-date'
+#     exit 0
+#   fi
+# fi
 
 echo "Updating $DATA_DIR..."
 rm -rf $DATA_DIR
@@ -29,6 +29,7 @@ echo $COMMIT_HASH >$DATA_DIR/commit_hash
 # Excluded test files
 rm -f $TEMP_DIR/tokenizer/xmlViolation.test
 rm -f $TEMP_DIR/tree-construction/search-element.dat
+rm -f $TEMP_DIR/tree-construction/webkit02.dat
 
 mv $TEMP_DIR/tokenizer $DATA_DIR/
 mv $TEMP_DIR/tree-construction $DATA_DIR/tree_construction

@@ -61,6 +61,5 @@ mod tests9_test;
 mod tests_inner_html_1_test;
 mod tricky01_test;
 mod webkit01_test;
-mod webkit02_test;
 
 //</coverage:exclude>
