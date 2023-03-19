@@ -11,12 +11,12 @@ where
 {
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_comment(&mut self, comment: Comment<'_>) -> Control {
-        tracing::debug!(mode = ?self.mode, ?comment);
         self.ignore_lf = false;
         loop {
+            tracing::debug!(mode = ?self.mode);
             match self.mode {
                 {{#each tokens.comment}}
-                mode!({{{ join modes ', '}}}) => {
+                mode!({{join modes ', '}}) => {
                     {{#if run}}
                     let ctrl = {
                         {{{run}}}

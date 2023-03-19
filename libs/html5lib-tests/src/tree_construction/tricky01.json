@@ -1,0 +1,816 @@
+{
+  "name": "tricky01.json",
+  "tests": [
+    {
+      "data": "<b><p>Bold </b> Not bold</p>\nAlso not bold.",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,15): adoption-agency-1.3"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\"Bold \""
+        ],
+        [
+          3,
+          "\" Not bold\""
+        ],
+        [
+          2,
+          "\"\nAlso not bold.\""
+        ]
+      ]
+    },
+    {
+      "data": "<html>\n<font color=red><i>Italic and Red<p>Italic and Red </font> Just italic.</p> Italic only.</i> Plain\n<p>I should not be red. <font color=red>Red. <i>Italic and red.</p>\n<p>Italic and red. </i> Red.</font> I should not be red.</p>\n<b>Bold <i>Bold and italic</b> Only Italic </i> Plain",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(2,58): adoption-agency-1.3",
+        "(3,67): unexpected-end-tag",
+        "(4,23): adoption-agency-1.3",
+        "(4,35): adoption-agency-1.3",
+        "(5,30): adoption-agency-1.3"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "color=\"red\""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          4,
+          "\"Italic and Red\""
+        ],
+        [
+          2,
+          "<i>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "<font>"
+        ],
+        [
+          5,
+          "color=\"red\""
+        ],
+        [
+          5,
+          "\"Italic and Red \""
+        ],
+        [
+          4,
+          "\" Just italic.\""
+        ],
+        [
+          3,
+          "\" Italic only.\""
+        ],
+        [
+          2,
+          "\" Plain\n\""
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "\"I should not be red. \""
+        ],
+        [
+          3,
+          "<font>"
+        ],
+        [
+          4,
+          "color=\"red\""
+        ],
+        [
+          4,
+          "\"Red. \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\"Italic and red.\""
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "color=\"red\""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          4,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<font>"
+        ],
+        [
+          4,
+          "color=\"red\""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\"Italic and red. \""
+        ],
+        [
+          4,
+          "\" Red.\""
+        ],
+        [
+          3,
+          "\" I should not be red.\""
+        ],
+        [
+          2,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"Bold \""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          4,
+          "\"Bold and italic\""
+        ],
+        [
+          2,
+          "<i>"
+        ],
+        [
+          3,
+          "\" Only Italic \""
+        ],
+        [
+          2,
+          "\" Plain\""
+        ]
+      ]
+    },
+    {
+      "data": "<html><body>\n<p><font size=\"7\">First paragraph.</p>\n<p>Second paragraph.</p></font>\n<b><p><i>Bold and Italic</b> Italic</p>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(2,38): unexpected-end-tag",
+        "(4,28): adoption-agency-1.3",
+        "(4,28): adoption-agency-1.3",
+        "(4,39): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<font>"
+        ],
+        [
+          4,
+          "size=\"7\""
+        ],
+        [
+          4,
+          "\"First paragraph.\""
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "size=\"7\""
+        ],
+        [
+          3,
+          "\"\n\""
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "\"Second paragraph.\""
+        ],
+        [
+          2,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\"Bold and Italic\""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          4,
+          "\" Italic\""
+        ]
+      ]
+    },
+    {
+      "data": "<html>\n<dl>\n<dt><b>Boo\n<dd>Goo?\n</dl>\n</html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(4,4): end-tag-too-early",
+        "(5,5): end-tag-too-early",
+        "(6,7): expected-one-end-tag-but-got-another"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<dl>"
+        ],
+        [
+          3,
+          "\"\n\""
+        ],
+        [
+          3,
+          "<dt>"
+        ],
+        [
+          4,
+          "<b>"
+        ],
+        [
+          5,
+          "\"Boo\n\""
+        ],
+        [
+          3,
+          "<dd>"
+        ],
+        [
+          4,
+          "<b>"
+        ],
+        [
+          5,
+          "\"Goo?\n\""
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"\n\""
+        ]
+      ]
+    },
+    {
+      "data": "<html><body>\n<label><a><div>Hello<div>World</div></a></label>  \n</body></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(2,40): adoption-agency-1.3",
+        "(2,48): unexpected-end-tag",
+        "(3,7): expected-one-end-tag-but-got-another"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<label>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          3,
+          "<div>"
+        ],
+        [
+          4,
+          "<a>"
+        ],
+        [
+          5,
+          "\"Hello\""
+        ],
+        [
+          5,
+          "<div>"
+        ],
+        [
+          6,
+          "\"World\""
+        ],
+        [
+          4,
+          "\"  \n\""
+        ]
+      ]
+    },
+    {
+      "data": "<table><center> <font>a</center> <img> <tr><td> </td> </tr> </table>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,15): foster-parenting-start-tag",
+        "(1,16): foster-parenting-character",
+        "(1,22): foster-parenting-start-tag",
+        "(1,23): foster-parenting-character",
+        "(1,32): foster-parenting-end-tag",
+        "(1,32): end-tag-too-early",
+        "(1,33): foster-parenting-character",
+        "(1,38): foster-parenting-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<center>"
+        ],
+        [
+          3,
+          "\" \""
+        ],
+        [
+          3,
+          "<font>"
+        ],
+        [
+          4,
+          "\"a\""
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "<img>"
+        ],
+        [
+          3,
+          "\" \""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "\" \""
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "\" \""
+        ],
+        [
+          5,
+          "\" \""
+        ],
+        [
+          4,
+          "\" \""
+        ]
+      ]
+    },
+    {
+      "data": "<table><tr><p><a><p>You should see this text.",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-start-tag-implies-table-voodoo",
+        "(1,17): unexpected-start-tag-implies-table-voodoo",
+        "(1,20): unexpected-start-tag-implies-table-voodoo",
+        "(1,20): closing-non-current-p-element",
+        "(1,21): foster-parenting-character",
+        "(1,22): foster-parenting-character",
+        "(1,23): foster-parenting-character",
+        "(1,24): foster-parenting-character",
+        "(1,25): foster-parenting-character",
+        "(1,26): foster-parenting-character",
+        "(1,27): foster-parenting-character",
+        "(1,28): foster-parenting-character",
+        "(1,29): foster-parenting-character",
+        "(1,30): foster-parenting-character",
+        "(1,31): foster-parenting-character",
+        "(1,32): foster-parenting-character",
+        "(1,33): foster-parenting-character",
+        "(1,34): foster-parenting-character",
+        "(1,35): foster-parenting-character",
+        "(1,36): foster-parenting-character",
+        "(1,37): foster-parenting-character",
+        "(1,38): foster-parenting-character",
+        "(1,39): foster-parenting-character",
+        "(1,40): foster-parenting-character",
+        "(1,41): foster-parenting-character",
+        "(1,42): foster-parenting-character",
+        "(1,43): foster-parenting-character",
+        "(1,44): foster-parenting-character",
+        "(1,45): foster-parenting-character",
+        "(1,45): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          4,
+          "\"You should see this text.\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ]
+    },
+    {
+      "data": "<TABLE>\n<TR>\n<CENTER><CENTER><TD></TD></TR><TR>\n<FONT>\n<TABLE><tr></tr></TABLE>\n</P>\n<a></font><font></a>\nThis page contains an insanely badly-nested tag sequence.",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(3,8): unexpected-start-tag-implies-table-voodoo",
+        "(3,16): unexpected-start-tag-implies-table-voodoo",
+        "(4,6): unexpected-start-tag-implies-table-voodoo",
+        "(4,6): unexpected character token in table (the newline)",
+        "(5,7): unexpected-start-tag-implies-end-tag",
+        "(6,4): unexpected p end tag",
+        "(7,10): adoption-agency-1.3",
+        "(7,20): adoption-agency-1.3",
+        "(8,57): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<center>"
+        ],
+        [
+          3,
+          "<center>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "\"\n\""
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "\"\n\""
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "\"\n\""
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          3,
+          "\"\n\""
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "<font>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "\"\nThis page contains an insanely badly-nested tag sequence.\""
+        ]
+      ]
+    },
+    {
+      "data": "<html>\n<body>\n<b><nobr><div>This text is in a div inside a nobr</nobr>More text that should not be in the nobr, i.e., the\nnobr should have closed the div inside it implicitly. </b><pre>A pre tag outside everything else.</pre>\n</body>\n</html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(3,56): adoption-agency-1.3",
+        "(4,58): adoption-agency-1.3",
+        "(5,7): expected-one-end-tag-but-got-another"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"\n\""
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "<nobr>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "<nobr>"
+        ],
+        [
+          5,
+          "\"This text is in a div inside a nobr\""
+        ],
+        [
+          4,
+          "\"More text that should not be in the nobr, i.e., the\nnobr should have closed the div inside it implicitly. \""
+        ],
+        [
+          3,
+          "<pre>"
+        ],
+        [
+          4,
+          "\"A pre tag outside everything else.\""
+        ],
+        [
+          3,
+          "\""
+        ]
+      ]
+    }
+  ]
+}

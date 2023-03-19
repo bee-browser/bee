@@ -14,9 +14,15 @@ macro_rules! flags {
     ($flag:ident, $($more:ident),+) => {
         flags!($flag) | flags!($($more),+)
     };
+    ($($more:ident),+ $(,)?) => {
+        flags!($($more),+)
+    };
 }
 
 macro_rules! tag {
+    () => {
+        crate::localnames::LocalName::Unknown
+    };
     ($tag:ident) => {
         crate::localnames::LocalName::$tag
     };

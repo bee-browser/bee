@@ -15,7 +15,7 @@ where
             tracing::debug!(mode = ?self.mode);
             match self.mode {
                 {{#each tokens.eof}}
-                mode!({{{ join modes ', '}}}) => {
+                mode!({{join modes ', '}}) => {
                     {{#if run}}
                     let ctrl = {
                         {{{run}}}

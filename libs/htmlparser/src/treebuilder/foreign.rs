@@ -47,7 +47,7 @@ where
         tracing::debug!(?token);
         self.ignore_lf = false;
         match token {
-            Token::Doctype(doctype) => {
+            Token::Doctype(_) => {
                 // TODO: Parse error.
                 // Ignore the token.
                 Control::Continue
@@ -59,38 +59,36 @@ where
                     Ruby, S, Small, Span, Strong, Strike, Sub, Sup, Table, Tt, U, Ul, Var
                 ) => {
                     // TODO: Parse error.
-                    // TODO: While the current node is not a MathML text integration point, an HTML integration point, or an element in the HTML namespace, pop elements from the stack of open elements.
                     loop {
-                        if self.context().is_html() {
+                        let context = self.context();
+                        if context.is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context().is_mathml_text_integration_point() {
+                        if context.is_html_integration_point() {
                             break;
                         }
-                        if self.context().is_html_integration_point() {
+                        if context.is_html() {
                             break;
                         }
                         self.pop_element();
                     }
-                    // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
                     self.handle_start_tag(tag)
                 }
                 tag!(Font) if tag.has_any_attributes(&["color", "face", "size"]) => {
                     // TODO: Parse error.
-                    // TODO: While the current node is not a MathML text integration point, an HTML integration point, or an element in the HTML namespace, pop elements from the stack of open elements.
                     loop {
-                        if self.context().is_html() {
+                        let context = self.context();
+                        if context.is_mathml_text_integration_point() {
                             break;
                         }
-                        if self.context().is_mathml_text_integration_point() {
+                        if context.is_html_integration_point() {
                             break;
                         }
-                        if self.context().is_html_integration_point() {
+                        if context.is_html() {
                             break;
                         }
                         self.pop_element();
                     }
-                    // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
                     self.handle_start_tag(tag)
                 }
                 local_name => {
@@ -119,8 +117,7 @@ where
                         }
                         self.pop_element();
                     }
-                    // TODO: Reprocess the token according to the rules given in the section corresponding to the current insertion mode in HTML content.
-                    self.handle_start_tag(tag)
+                    self.handle_end_tag(tag)
                 }
                 tag!(Script) if self.context().is_svg_script() => {
                     self.pop_element();
@@ -128,8 +125,23 @@ where
                     Control::Continue
                 }
                 _ => {
-                    self.pop_element();
-                    // TODO
+                    self.append_text_if_exists();
+                    let mut stack_pos = self.context_stack.len() - 1;
+                    let mut node = self.context_stack[stack_pos].open_element.node;
+                    if !self.inner.has_same_name(node, tag.name) {
+                        // TODO: Parser error.
+                    }
+                    while stack_pos > 0 {
+                        if self.inner.has_same_name(node, tag.name) {
+                            self.context_stack.truncate(stack_pos);
+                            break;
+                        }
+                        stack_pos -= 1;
+                        if self.context_stack[stack_pos].is_html() {
+                            return self.handle_end_tag(tag);
+                        }
+                        node = self.context_stack[stack_pos].open_element.node;
+                    }
                     Control::Continue
                 }
             },

@@ -1,4 +1,6 @@
 //<coverage:exclude>
+use std::{collections::BTreeMap, fmt::Debug};
+
 use bee_htmlparser::*;
 
 #[ctor::ctor]
@@ -23,14 +25,15 @@ impl<'a> TreeValidator<'a> {
         TreeValidator {
             test,
             nodes: vec![Node::Document {
+                id: 0,
                 child_nodes: vec![],
             }],
         }
     }
 
     fn flatten(&self, depth: usize, index: usize, v: &mut Vec<LinearNode>) {
-        match self.nodes.get(index).unwrap() {
-            Node::Document { child_nodes } => {
+        match &self.nodes[index] {
+            Node::Document { child_nodes, .. } => {
                 for &child_index in child_nodes.iter() {
                     self.flatten(depth, child_index, v);
                 }
@@ -56,6 +59,7 @@ impl<'a> TreeValidator<'a> {
                 attrs,
                 child_nodes,
                 namespace,
+                ..
             } => {
                 v.push(LinearNode {
                     depth,
@@ -75,16 +79,16 @@ impl<'a> TreeValidator<'a> {
                     self.flatten(depth + 1, child_index, v);
                 }
             }
-            Node::Text(s) => {
+            Node::Text { data, .. } => {
                 v.push(LinearNode {
                     depth,
-                    repr: format!(r#""{}""#, s),
+                    repr: format!(r#""{}""#, data),
                 });
             }
-            Node::Comment(s) => {
+            Node::Comment { data, .. } => {
                 v.push(LinearNode {
                     depth,
-                    repr: format!(r#"<!-- {} -->"#, s),
+                    repr: format!(r#"<!-- {} -->"#, data),
                 });
             }
         }
@@ -97,6 +101,7 @@ impl<'a> TreeValidator<'a> {
         let child_nodes = match self.nodes.get_mut(node) {
             Some(Node::Document {
                 ref mut child_nodes,
+                ..
             }) => child_nodes,
             Some(Node::Element {
                 ref mut child_nodes,
@@ -112,6 +117,7 @@ impl<'a> TreeValidator<'a> {
         match self.nodes.get_mut(node) {
             Some(Node::Document {
                 ref mut child_nodes,
+                ..
             }) => child_nodes,
             Some(Node::Element {
                 ref mut child_nodes,
@@ -132,148 +138,144 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::Node {
-        let node = self.nodes.len();
-        tracing::debug!(node, ?doctype);
-        self.nodes.push(Node::DocumentType {
+        let id = self.nodes.len();
+        let node = Node::DocumentType {
+            id,
             name: doctype.name.map(str::to_string),
             public_id: doctype.public_id.map(str::to_string),
             system_id: doctype.system_id.map(str::to_string),
             force_quirks: doctype.force_quirks,
-        });
-        node
+        };
+        tracing::debug!(?node);
+        self.nodes.push(node);
+        id
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn create_element(&mut self, name: &str, ns: Namespace) -> Self::Node {
-        let node = self.nodes.len();
-        tracing::debug!(node, ?name, ?ns);
-        self.nodes.push(Node::Element {
+        let id = self.nodes.len();
+        let node = Node::Element {
+            id,
             name: name.to_string(),
-            attrs: vec![],
+            attrs: Default::default(),
             child_nodes: vec![],
             namespace: ns,
-        });
-        node
+        };
+        tracing::debug!(?node);
+        self.nodes.push(node);
+        id
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn create_text(&mut self, data: &str) -> Self::Node {
-        let node = self.nodes.len();
-        tracing::debug!(node, ?data);
-        self.nodes.push(Node::Text(data.to_string()));
-        node
+        let id = self.nodes.len();
+        let node = Node::Text {
+            id,
+            data: data.to_string(),
+        };
+        tracing::debug!(?node);
+        self.nodes.push(node);
+        id
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn create_comment(&mut self, data: &str) -> Self::Node {
-        let node = self.nodes.len();
-        tracing::debug!(node, ?data);
-        self.nodes.push(Node::Comment(data.to_string()));
-        node
+        let id = self.nodes.len();
+        let node = Node::Comment {
+            id,
+            data: data.to_string(),
+        };
+        tracing::debug!(?node);
+        self.nodes.push(node);
+        id
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn set_attribute(&mut self, node: Self::Node, name: &str, value: &str) {
-        tracing::debug!(node, name, value);
-        debug_assert!(self.nodes.get(node).is_some());
-        let attrs = match self.nodes.get_mut(node).unwrap() {
+    fn set_attribute<'b, I>(&mut self, node_id: Self::Node, attrs: I)
+    where
+        I: Iterator<Item = (&'b str, &'b str)>,
+    {
+        debug_assert!(self.nodes.get(node_id).is_some());
+        let element_attrs = match self.nodes[node_id] {
             Node::Element { ref mut attrs, .. } => attrs,
             _ => unreachable!(),
         };
-        attrs.push((name.to_string(), value.to_string()));
+        for (name, value) in attrs {
+            tracing::debug!(node_id, attr.name = name, attr.value = value);
+            element_attrs.insert(name.to_string(), value.to_string());
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn clone_node(&mut self, node: Self::Node) -> Self::Node {
-        debug_assert!(self.nodes.get(node).is_some());
-        let vnode = match self.nodes[node] {
+    fn clone_node(&mut self, node_id: Self::Node) -> Self::Node {
+        debug_assert!(self.nodes.get(node_id).is_some());
+        let id = self.nodes.len();
+        let node = match &self.nodes[node_id] {
             Node::Element {
-                ref name,
-                ref attrs,
+                name,
+                attrs,
                 namespace,
                 ..
             } => Node::Element {
+                id,
                 name: name.clone(),
                 attrs: attrs.clone(),
-                namespace,
+                namespace: namespace.clone(),
                 child_nodes: vec![],
             },
             _ => unreachable!(),
         };
-        let cloned = self.nodes.len();
-        self.nodes.push(vnode);
-        tracing::debug!(
-            node.index = node,
-            node.node = ?self.nodes[node],
-            cloned.index = cloned,
-            cloned.node = ?self.nodes[cloned],
-        );
-        cloned
+        tracing::debug!(node = ?self.nodes[node_id], clone = ?node);
+        self.nodes.push(node);
+        id
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn append_child(&mut self, parent: Self::Node, node: Self::Node) {
-        debug_assert!(self.nodes.get(parent).is_some());
-        debug_assert!(self.nodes.get(node).is_some());
-        self.child_nodes_mut(parent).push(node);
-        tracing::debug!(
-            parent.index = parent,
-            parent.node = ?self.nodes[parent],
-            node.index = node,
-            node.node = ?self.nodes[node],
-        );
+    fn append_child(&mut self, parent_id: Self::Node, node_id: Self::Node) {
+        debug_assert!(self.nodes.get(parent_id).is_some());
+        debug_assert!(self.nodes.get(node_id).is_some());
+        self.child_nodes_mut(parent_id).push(node_id);
+        tracing::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id]);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn insert_before(&mut self, parent: Self::Node, node: Self::Node, sibling: Self::Node) {
-        debug_assert!(self.nodes.get(parent).is_some());
-        debug_assert!(self.nodes.get(node).is_some());
-        debug_assert!(self.nodes.get(sibling).is_some());
-        let child_nodes = self.child_nodes_mut(parent);
-        debug_assert!(child_nodes.contains(&sibling));
+    fn insert_before(
+        &mut self,
+        parent_id: Self::Node,
+        node_id: Self::Node,
+        sibling_id: Self::Node,
+    ) {
+        debug_assert!(self.nodes.get(parent_id).is_some());
+        debug_assert!(self.nodes.get(node_id).is_some());
+        debug_assert!(self.nodes.get(sibling_id).is_some());
+        let child_nodes = self.child_nodes_mut(parent_id);
+        debug_assert!(child_nodes.contains(&sibling_id));
         let pos = child_nodes
             .iter()
-            .position(|&child| child == sibling)
+            .position(|&child_id| child_id == sibling_id)
             .unwrap();
-        child_nodes.insert(pos, node);
-        tracing::debug!(
-            parent.index = parent,
-            parent.node = ?self.nodes[parent],
-            node.index = node,
-            node.node = ?self.nodes[node],
-            sibling.index = sibling,
-            sibling.node = ?self.nodes[sibling],
-        );
+        child_nodes.insert(pos, node_id);
+        tracing::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id], sibling = ?self.nodes[sibling_id]);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn remove_child(&mut self, parent: Self::Node, node: Self::Node) {
-        debug_assert!(self.nodes.get(parent).is_some());
-        debug_assert!(self.nodes.get(node).is_some());
-        let child_nodes = self.child_nodes_mut(parent);
-        debug_assert!(child_nodes.contains(&node));
-        child_nodes.retain(|&n| n != node);
-        tracing::debug!(
-            parent.index = parent,
-            parent.node = ?self.nodes[parent],
-            node.index = node,
-            node.node = ?self.nodes[node],
-        );
+    fn remove_child(&mut self, parent_id: Self::Node, node_id: Self::Node) {
+        debug_assert!(self.nodes.get(parent_id).is_some());
+        debug_assert!(self.nodes.get(node_id).is_some());
+        let child_nodes = self.child_nodes_mut(parent_id);
+        debug_assert!(child_nodes.contains(&node_id));
+        child_nodes.retain(|&child_id| child_id != node_id);
+        tracing::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id]);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn move_child_nodes(&mut self, node: Self::Node, new_parent: Self::Node) {
-        debug_assert!(self.nodes.get(node).is_some());
-        debug_assert!(self.nodes.get(new_parent).is_some());
-        let mut child_nodes = self.take_child_nodes(node);
-        let new_child_nodes = self.child_nodes_mut(new_parent);
-        new_child_nodes.append(&mut child_nodes);
-        tracing::debug!(
-            node.index = node,
-            node.node = ?self.nodes[node],
-            new_parent.index = new_parent,
-            new_parent.node = ?self.nodes[new_parent],
-        );
+    fn move_child_nodes(&mut self, src_id: Self::Node, dst_id: Self::Node) {
+        debug_assert!(self.nodes.get(src_id).is_some());
+        debug_assert!(self.nodes.get(dst_id).is_some());
+        let mut src_child_nodes = self.take_child_nodes(src_id);
+        let dst_child_nodes = self.child_nodes_mut(dst_id);
+        dst_child_nodes.append(&mut src_child_nodes);
+        tracing::debug!(src = ?self.nodes[src_id], dst = ?self.nodes[dst_id]);
     }
 
     fn end(&mut self) {
@@ -287,14 +289,23 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
         self.flatten(0, 0, &mut v);
         tracing::debug!("{:?}", v);
     }
+
+    fn has_same_name(&mut self, node_id: Self::Node, name: &str) -> bool {
+        match self.nodes[node_id] {
+            Node::Element { name: ref v, .. } => v.eq_ignore_ascii_case(name),
+            _ => unreachable!(),
+        }
+    }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 enum Node {
     Document {
+        id: usize,
         child_nodes: Vec<usize>,
     },
     DocumentType {
+        id: usize,
         name: Option<String>,
         public_id: Option<String>,
         system_id: Option<String>,
@@ -302,13 +313,51 @@ enum Node {
         force_quirks: bool,
     },
     Element {
+        id: usize,
         name: String,
-        attrs: Vec<(String, String)>,
+        attrs: BTreeMap<String, String>,
         child_nodes: Vec<usize>,
         namespace: Namespace,
     },
-    Text(String),
-    Comment(String),
+    Text {
+        id: usize,
+        data: String,
+    },
+    Comment {
+        id: usize,
+        data: String,
+    },
+}
+
+impl Debug for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Document { id, .. } => {
+                write!(f, "{}:#document", id)
+            }
+            Self::DocumentType { id, name, .. } => {
+                write!(f, "{}:<!DOCTYPE", id)?;
+                if let Some(name) = name {
+                    write!(f, " {}", name)?;
+                }
+                write!(f, ">")
+            }
+            Self::Element {
+                id,
+                name,
+                namespace,
+                ..
+            } => {
+                write!(f, "{}:<{:?}:{}>", id, namespace, name)
+            }
+            Self::Text { id, data } => {
+                write!(f, "{}:#text:{}", id, data)
+            }
+            Self::Comment { id, data } => {
+                write!(f, "{}:#comment:{}", id, data)
+            }
+        }
+    }
 }
 
 struct LinearNode {

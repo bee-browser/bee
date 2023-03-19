@@ -28,9 +28,9 @@ where
             tracing::debug!(mode = ?self.mode, c = "NULL");
             match self.mode {
                 {{#each tokens.nul}}
-                mode!({{{ join modes ', '}}}) => {
+                mode!({{join modes ', '}}) => {
                     let ctrl = {
-                        {{{run}}}
+                        {{run}}
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -52,9 +52,9 @@ where
             tracing::debug!(mode = ?self.mode, c = "Whitespace");
             match self.mode {
                 {{#each tokens.whitespace}}
-                mode!({{{ join modes ', '}}}) => {
+                mode!({{join modes ', '}}) => {
                     let ctrl = {
-                        {{{run}}}
+                        {{run}}
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -72,9 +72,9 @@ where
             tracing::debug!(mode = ?self.mode, ?c);
             match self.mode {
                 {{#each tokens.character}}
-                mode!({{{ join modes ', '}}}) => {
+                mode!({{join modes ', '}}) => {
                     let ctrl = {
-                        {{{run}}}
+                        {{run}}
                     };
                     match ctrl {
                         Control::Reprocess => continue,

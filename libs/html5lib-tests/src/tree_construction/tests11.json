@@ -1,0 +1,1932 @@
+{
+  "name": "tests11.json",
+  "tests": [
+    {
+      "data": "<!DOCTYPE html><body><svg attributeName='' attributeType='' baseFrequency='' baseProfile='' calcMode='' clipPathUnits='' diffuseConstant='' edgeMode='' filterUnits='' glyphRef='' gradientTransform='' gradientUnits='' kernelMatrix='' kernelUnitLength='' keyPoints='' keySplines='' keyTimes='' lengthAdjust='' limitingConeAngle='' markerHeight='' markerUnits='' markerWidth='' maskContentUnits='' maskUnits='' numOctaves='' pathLength='' patternContentUnits='' patternTransform='' patternUnits='' pointsAtX='' pointsAtY='' pointsAtZ='' preserveAlpha='' preserveAspectRatio='' primitiveUnits='' refX='' refY='' repeatCount='' repeatDur='' requiredExtensions='' requiredFeatures='' specularConstant='' specularExponent='' spreadMethod='' startOffset='' stdDeviation='' stitchTiles='' surfaceScale='' systemLanguage='' tableValues='' targetX='' targetY='' textLength='' viewBox='' viewTarget='' xChannelSelector='' yChannelSelector='' zoomAndPan=''></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "attributeName=\"\""
+        ],
+        [
+          3,
+          "attributeType=\"\""
+        ],
+        [
+          3,
+          "baseFrequency=\"\""
+        ],
+        [
+          3,
+          "baseProfile=\"\""
+        ],
+        [
+          3,
+          "calcMode=\"\""
+        ],
+        [
+          3,
+          "clipPathUnits=\"\""
+        ],
+        [
+          3,
+          "diffuseConstant=\"\""
+        ],
+        [
+          3,
+          "edgeMode=\"\""
+        ],
+        [
+          3,
+          "filterUnits=\"\""
+        ],
+        [
+          3,
+          "glyphRef=\"\""
+        ],
+        [
+          3,
+          "gradientTransform=\"\""
+        ],
+        [
+          3,
+          "gradientUnits=\"\""
+        ],
+        [
+          3,
+          "kernelMatrix=\"\""
+        ],
+        [
+          3,
+          "kernelUnitLength=\"\""
+        ],
+        [
+          3,
+          "keyPoints=\"\""
+        ],
+        [
+          3,
+          "keySplines=\"\""
+        ],
+        [
+          3,
+          "keyTimes=\"\""
+        ],
+        [
+          3,
+          "lengthAdjust=\"\""
+        ],
+        [
+          3,
+          "limitingConeAngle=\"\""
+        ],
+        [
+          3,
+          "markerHeight=\"\""
+        ],
+        [
+          3,
+          "markerUnits=\"\""
+        ],
+        [
+          3,
+          "markerWidth=\"\""
+        ],
+        [
+          3,
+          "maskContentUnits=\"\""
+        ],
+        [
+          3,
+          "maskUnits=\"\""
+        ],
+        [
+          3,
+          "numOctaves=\"\""
+        ],
+        [
+          3,
+          "pathLength=\"\""
+        ],
+        [
+          3,
+          "patternContentUnits=\"\""
+        ],
+        [
+          3,
+          "patternTransform=\"\""
+        ],
+        [
+          3,
+          "patternUnits=\"\""
+        ],
+        [
+          3,
+          "pointsAtX=\"\""
+        ],
+        [
+          3,
+          "pointsAtY=\"\""
+        ],
+        [
+          3,
+          "pointsAtZ=\"\""
+        ],
+        [
+          3,
+          "preserveAlpha=\"\""
+        ],
+        [
+          3,
+          "preserveAspectRatio=\"\""
+        ],
+        [
+          3,
+          "primitiveUnits=\"\""
+        ],
+        [
+          3,
+          "refX=\"\""
+        ],
+        [
+          3,
+          "refY=\"\""
+        ],
+        [
+          3,
+          "repeatCount=\"\""
+        ],
+        [
+          3,
+          "repeatDur=\"\""
+        ],
+        [
+          3,
+          "requiredExtensions=\"\""
+        ],
+        [
+          3,
+          "requiredFeatures=\"\""
+        ],
+        [
+          3,
+          "specularConstant=\"\""
+        ],
+        [
+          3,
+          "specularExponent=\"\""
+        ],
+        [
+          3,
+          "spreadMethod=\"\""
+        ],
+        [
+          3,
+          "startOffset=\"\""
+        ],
+        [
+          3,
+          "stdDeviation=\"\""
+        ],
+        [
+          3,
+          "stitchTiles=\"\""
+        ],
+        [
+          3,
+          "surfaceScale=\"\""
+        ],
+        [
+          3,
+          "systemLanguage=\"\""
+        ],
+        [
+          3,
+          "tableValues=\"\""
+        ],
+        [
+          3,
+          "targetX=\"\""
+        ],
+        [
+          3,
+          "targetY=\"\""
+        ],
+        [
+          3,
+          "textLength=\"\""
+        ],
+        [
+          3,
+          "viewBox=\"\""
+        ],
+        [
+          3,
+          "viewTarget=\"\""
+        ],
+        [
+          3,
+          "xChannelSelector=\"\""
+        ],
+        [
+          3,
+          "yChannelSelector=\"\""
+        ],
+        [
+          3,
+          "zoomAndPan=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><BODY><SVG ATTRIBUTENAME='' ATTRIBUTETYPE='' BASEFREQUENCY='' BASEPROFILE='' CALCMODE='' CLIPPATHUNITS='' DIFFUSECONSTANT='' EDGEMODE='' FILTERUNITS='' GLYPHREF='' GRADIENTTRANSFORM='' GRADIENTUNITS='' KERNELMATRIX='' KERNELUNITLENGTH='' KEYPOINTS='' KEYSPLINES='' KEYTIMES='' LENGTHADJUST='' LIMITINGCONEANGLE='' MARKERHEIGHT='' MARKERUNITS='' MARKERWIDTH='' MASKCONTENTUNITS='' MASKUNITS='' NUMOCTAVES='' PATHLENGTH='' PATTERNCONTENTUNITS='' PATTERNTRANSFORM='' PATTERNUNITS='' POINTSATX='' POINTSATY='' POINTSATZ='' PRESERVEALPHA='' PRESERVEASPECTRATIO='' PRIMITIVEUNITS='' REFX='' REFY='' REPEATCOUNT='' REPEATDUR='' REQUIREDEXTENSIONS='' REQUIREDFEATURES='' SPECULARCONSTANT='' SPECULAREXPONENT='' SPREADMETHOD='' STARTOFFSET='' STDDEVIATION='' STITCHTILES='' SURFACESCALE='' SYSTEMLANGUAGE='' TABLEVALUES='' TARGETX='' TARGETY='' TEXTLENGTH='' VIEWBOX='' VIEWTARGET='' XCHANNELSELECTOR='' YCHANNELSELECTOR='' ZOOMANDPAN=''></SVG>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "attributeName=\"\""
+        ],
+        [
+          3,
+          "attributeType=\"\""
+        ],
+        [
+          3,
+          "baseFrequency=\"\""
+        ],
+        [
+          3,
+          "baseProfile=\"\""
+        ],
+        [
+          3,
+          "calcMode=\"\""
+        ],
+        [
+          3,
+          "clipPathUnits=\"\""
+        ],
+        [
+          3,
+          "diffuseConstant=\"\""
+        ],
+        [
+          3,
+          "edgeMode=\"\""
+        ],
+        [
+          3,
+          "filterUnits=\"\""
+        ],
+        [
+          3,
+          "glyphRef=\"\""
+        ],
+        [
+          3,
+          "gradientTransform=\"\""
+        ],
+        [
+          3,
+          "gradientUnits=\"\""
+        ],
+        [
+          3,
+          "kernelMatrix=\"\""
+        ],
+        [
+          3,
+          "kernelUnitLength=\"\""
+        ],
+        [
+          3,
+          "keyPoints=\"\""
+        ],
+        [
+          3,
+          "keySplines=\"\""
+        ],
+        [
+          3,
+          "keyTimes=\"\""
+        ],
+        [
+          3,
+          "lengthAdjust=\"\""
+        ],
+        [
+          3,
+          "limitingConeAngle=\"\""
+        ],
+        [
+          3,
+          "markerHeight=\"\""
+        ],
+        [
+          3,
+          "markerUnits=\"\""
+        ],
+        [
+          3,
+          "markerWidth=\"\""
+        ],
+        [
+          3,
+          "maskContentUnits=\"\""
+        ],
+        [
+          3,
+          "maskUnits=\"\""
+        ],
+        [
+          3,
+          "numOctaves=\"\""
+        ],
+        [
+          3,
+          "pathLength=\"\""
+        ],
+        [
+          3,
+          "patternContentUnits=\"\""
+        ],
+        [
+          3,
+          "patternTransform=\"\""
+        ],
+        [
+          3,
+          "patternUnits=\"\""
+        ],
+        [
+          3,
+          "pointsAtX=\"\""
+        ],
+        [
+          3,
+          "pointsAtY=\"\""
+        ],
+        [
+          3,
+          "pointsAtZ=\"\""
+        ],
+        [
+          3,
+          "preserveAlpha=\"\""
+        ],
+        [
+          3,
+          "preserveAspectRatio=\"\""
+        ],
+        [
+          3,
+          "primitiveUnits=\"\""
+        ],
+        [
+          3,
+          "refX=\"\""
+        ],
+        [
+          3,
+          "refY=\"\""
+        ],
+        [
+          3,
+          "repeatCount=\"\""
+        ],
+        [
+          3,
+          "repeatDur=\"\""
+        ],
+        [
+          3,
+          "requiredExtensions=\"\""
+        ],
+        [
+          3,
+          "requiredFeatures=\"\""
+        ],
+        [
+          3,
+          "specularConstant=\"\""
+        ],
+        [
+          3,
+          "specularExponent=\"\""
+        ],
+        [
+          3,
+          "spreadMethod=\"\""
+        ],
+        [
+          3,
+          "startOffset=\"\""
+        ],
+        [
+          3,
+          "stdDeviation=\"\""
+        ],
+        [
+          3,
+          "stitchTiles=\"\""
+        ],
+        [
+          3,
+          "surfaceScale=\"\""
+        ],
+        [
+          3,
+          "systemLanguage=\"\""
+        ],
+        [
+          3,
+          "tableValues=\"\""
+        ],
+        [
+          3,
+          "targetX=\"\""
+        ],
+        [
+          3,
+          "targetY=\"\""
+        ],
+        [
+          3,
+          "textLength=\"\""
+        ],
+        [
+          3,
+          "viewBox=\"\""
+        ],
+        [
+          3,
+          "viewTarget=\"\""
+        ],
+        [
+          3,
+          "xChannelSelector=\"\""
+        ],
+        [
+          3,
+          "yChannelSelector=\"\""
+        ],
+        [
+          3,
+          "zoomAndPan=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><svg attributename='' attributetype='' basefrequency='' baseprofile='' calcmode='' clippathunits='' diffuseconstant='' edgemode='' filterunits='' filterres='' glyphref='' gradienttransform='' gradientunits='' kernelmatrix='' kernelunitlength='' keypoints='' keysplines='' keytimes='' lengthadjust='' limitingconeangle='' markerheight='' markerunits='' markerwidth='' maskcontentunits='' maskunits='' numoctaves='' pathlength='' patterncontentunits='' patterntransform='' patternunits='' pointsatx='' pointsaty='' pointsatz='' preservealpha='' preserveaspectratio='' primitiveunits='' refx='' refy='' repeatcount='' repeatdur='' requiredextensions='' requiredfeatures='' specularconstant='' specularexponent='' spreadmethod='' startoffset='' stddeviation='' stitchtiles='' surfacescale='' systemlanguage='' tablevalues='' targetx='' targety='' textlength='' viewbox='' viewtarget='' xchannelselector='' ychannelselector='' zoomandpan=''></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "attributeName=\"\""
+        ],
+        [
+          3,
+          "attributeType=\"\""
+        ],
+        [
+          3,
+          "baseFrequency=\"\""
+        ],
+        [
+          3,
+          "baseProfile=\"\""
+        ],
+        [
+          3,
+          "calcMode=\"\""
+        ],
+        [
+          3,
+          "clipPathUnits=\"\""
+        ],
+        [
+          3,
+          "diffuseConstant=\"\""
+        ],
+        [
+          3,
+          "edgeMode=\"\""
+        ],
+        [
+          3,
+          "filterUnits=\"\""
+        ],
+        [
+          3,
+          "filterres=\"\""
+        ],
+        [
+          3,
+          "glyphRef=\"\""
+        ],
+        [
+          3,
+          "gradientTransform=\"\""
+        ],
+        [
+          3,
+          "gradientUnits=\"\""
+        ],
+        [
+          3,
+          "kernelMatrix=\"\""
+        ],
+        [
+          3,
+          "kernelUnitLength=\"\""
+        ],
+        [
+          3,
+          "keyPoints=\"\""
+        ],
+        [
+          3,
+          "keySplines=\"\""
+        ],
+        [
+          3,
+          "keyTimes=\"\""
+        ],
+        [
+          3,
+          "lengthAdjust=\"\""
+        ],
+        [
+          3,
+          "limitingConeAngle=\"\""
+        ],
+        [
+          3,
+          "markerHeight=\"\""
+        ],
+        [
+          3,
+          "markerUnits=\"\""
+        ],
+        [
+          3,
+          "markerWidth=\"\""
+        ],
+        [
+          3,
+          "maskContentUnits=\"\""
+        ],
+        [
+          3,
+          "maskUnits=\"\""
+        ],
+        [
+          3,
+          "numOctaves=\"\""
+        ],
+        [
+          3,
+          "pathLength=\"\""
+        ],
+        [
+          3,
+          "patternContentUnits=\"\""
+        ],
+        [
+          3,
+          "patternTransform=\"\""
+        ],
+        [
+          3,
+          "patternUnits=\"\""
+        ],
+        [
+          3,
+          "pointsAtX=\"\""
+        ],
+        [
+          3,
+          "pointsAtY=\"\""
+        ],
+        [
+          3,
+          "pointsAtZ=\"\""
+        ],
+        [
+          3,
+          "preserveAlpha=\"\""
+        ],
+        [
+          3,
+          "preserveAspectRatio=\"\""
+        ],
+        [
+          3,
+          "primitiveUnits=\"\""
+        ],
+        [
+          3,
+          "refX=\"\""
+        ],
+        [
+          3,
+          "refY=\"\""
+        ],
+        [
+          3,
+          "repeatCount=\"\""
+        ],
+        [
+          3,
+          "repeatDur=\"\""
+        ],
+        [
+          3,
+          "requiredExtensions=\"\""
+        ],
+        [
+          3,
+          "requiredFeatures=\"\""
+        ],
+        [
+          3,
+          "specularConstant=\"\""
+        ],
+        [
+          3,
+          "specularExponent=\"\""
+        ],
+        [
+          3,
+          "spreadMethod=\"\""
+        ],
+        [
+          3,
+          "startOffset=\"\""
+        ],
+        [
+          3,
+          "stdDeviation=\"\""
+        ],
+        [
+          3,
+          "stitchTiles=\"\""
+        ],
+        [
+          3,
+          "surfaceScale=\"\""
+        ],
+        [
+          3,
+          "systemLanguage=\"\""
+        ],
+        [
+          3,
+          "tableValues=\"\""
+        ],
+        [
+          3,
+          "targetX=\"\""
+        ],
+        [
+          3,
+          "targetY=\"\""
+        ],
+        [
+          3,
+          "textLength=\"\""
+        ],
+        [
+          3,
+          "viewBox=\"\""
+        ],
+        [
+          3,
+          "viewTarget=\"\""
+        ],
+        [
+          3,
+          "xChannelSelector=\"\""
+        ],
+        [
+          3,
+          "yChannelSelector=\"\""
+        ],
+        [
+          3,
+          "zoomAndPan=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><math attributeName='' attributeType='' baseFrequency='' baseProfile='' calcMode='' clipPathUnits='' diffuseConstant='' edgeMode='' filterUnits='' glyphRef='' gradientTransform='' gradientUnits='' kernelMatrix='' kernelUnitLength='' keyPoints='' keySplines='' keyTimes='' lengthAdjust='' limitingConeAngle='' markerHeight='' markerUnits='' markerWidth='' maskContentUnits='' maskUnits='' numOctaves='' pathLength='' patternContentUnits='' patternTransform='' patternUnits='' pointsAtX='' pointsAtY='' pointsAtZ='' preserveAlpha='' preserveAspectRatio='' primitiveUnits='' refX='' refY='' repeatCount='' repeatDur='' requiredExtensions='' requiredFeatures='' specularConstant='' specularExponent='' spreadMethod='' startOffset='' stdDeviation='' stitchTiles='' surfaceScale='' systemLanguage='' tableValues='' targetX='' targetY='' textLength='' viewBox='' viewTarget='' xChannelSelector='' yChannelSelector='' zoomAndPan=''></math>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "attributename=\"\""
+        ],
+        [
+          3,
+          "attributetype=\"\""
+        ],
+        [
+          3,
+          "basefrequency=\"\""
+        ],
+        [
+          3,
+          "baseprofile=\"\""
+        ],
+        [
+          3,
+          "calcmode=\"\""
+        ],
+        [
+          3,
+          "clippathunits=\"\""
+        ],
+        [
+          3,
+          "diffuseconstant=\"\""
+        ],
+        [
+          3,
+          "edgemode=\"\""
+        ],
+        [
+          3,
+          "filterunits=\"\""
+        ],
+        [
+          3,
+          "glyphref=\"\""
+        ],
+        [
+          3,
+          "gradienttransform=\"\""
+        ],
+        [
+          3,
+          "gradientunits=\"\""
+        ],
+        [
+          3,
+          "kernelmatrix=\"\""
+        ],
+        [
+          3,
+          "kernelunitlength=\"\""
+        ],
+        [
+          3,
+          "keypoints=\"\""
+        ],
+        [
+          3,
+          "keysplines=\"\""
+        ],
+        [
+          3,
+          "keytimes=\"\""
+        ],
+        [
+          3,
+          "lengthadjust=\"\""
+        ],
+        [
+          3,
+          "limitingconeangle=\"\""
+        ],
+        [
+          3,
+          "markerheight=\"\""
+        ],
+        [
+          3,
+          "markerunits=\"\""
+        ],
+        [
+          3,
+          "markerwidth=\"\""
+        ],
+        [
+          3,
+          "maskcontentunits=\"\""
+        ],
+        [
+          3,
+          "maskunits=\"\""
+        ],
+        [
+          3,
+          "numoctaves=\"\""
+        ],
+        [
+          3,
+          "pathlength=\"\""
+        ],
+        [
+          3,
+          "patterncontentunits=\"\""
+        ],
+        [
+          3,
+          "patterntransform=\"\""
+        ],
+        [
+          3,
+          "patternunits=\"\""
+        ],
+        [
+          3,
+          "pointsatx=\"\""
+        ],
+        [
+          3,
+          "pointsaty=\"\""
+        ],
+        [
+          3,
+          "pointsatz=\"\""
+        ],
+        [
+          3,
+          "preservealpha=\"\""
+        ],
+        [
+          3,
+          "preserveaspectratio=\"\""
+        ],
+        [
+          3,
+          "primitiveunits=\"\""
+        ],
+        [
+          3,
+          "refx=\"\""
+        ],
+        [
+          3,
+          "refy=\"\""
+        ],
+        [
+          3,
+          "repeatcount=\"\""
+        ],
+        [
+          3,
+          "repeatdur=\"\""
+        ],
+        [
+          3,
+          "requiredextensions=\"\""
+        ],
+        [
+          3,
+          "requiredfeatures=\"\""
+        ],
+        [
+          3,
+          "specularconstant=\"\""
+        ],
+        [
+          3,
+          "specularexponent=\"\""
+        ],
+        [
+          3,
+          "spreadmethod=\"\""
+        ],
+        [
+          3,
+          "startoffset=\"\""
+        ],
+        [
+          3,
+          "stddeviation=\"\""
+        ],
+        [
+          3,
+          "stitchtiles=\"\""
+        ],
+        [
+          3,
+          "surfacescale=\"\""
+        ],
+        [
+          3,
+          "systemlanguage=\"\""
+        ],
+        [
+          3,
+          "tablevalues=\"\""
+        ],
+        [
+          3,
+          "targetx=\"\""
+        ],
+        [
+          3,
+          "targety=\"\""
+        ],
+        [
+          3,
+          "textlength=\"\""
+        ],
+        [
+          3,
+          "viewbox=\"\""
+        ],
+        [
+          3,
+          "viewtarget=\"\""
+        ],
+        [
+          3,
+          "xchannelselector=\"\""
+        ],
+        [
+          3,
+          "ychannelselector=\"\""
+        ],
+        [
+          3,
+          "zoomandpan=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><svg contentScriptType='' contentStyleType='' externalResourcesRequired='' filterRes=''></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "contentscripttype=\"\""
+        ],
+        [
+          3,
+          "contentstyletype=\"\""
+        ],
+        [
+          3,
+          "externalresourcesrequired=\"\""
+        ],
+        [
+          3,
+          "filterres=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><svg CONTENTSCRIPTTYPE='' CONTENTSTYLETYPE='' EXTERNALRESOURCESREQUIRED='' FILTERRES=''></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "contentscripttype=\"\""
+        ],
+        [
+          3,
+          "contentstyletype=\"\""
+        ],
+        [
+          3,
+          "externalresourcesrequired=\"\""
+        ],
+        [
+          3,
+          "filterres=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><svg contentscripttype='' contentstyletype='' externalresourcesrequired='' filterres=''></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "contentscripttype=\"\""
+        ],
+        [
+          3,
+          "contentstyletype=\"\""
+        ],
+        [
+          3,
+          "externalresourcesrequired=\"\""
+        ],
+        [
+          3,
+          "filterres=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><math contentScriptType='' contentStyleType='' externalResourcesRequired='' filterRes=''></math>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "contentscripttype=\"\""
+        ],
+        [
+          3,
+          "contentstyletype=\"\""
+        ],
+        [
+          3,
+          "externalresourcesrequired=\"\""
+        ],
+        [
+          3,
+          "filterres=\"\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><svg><altGlyph /><altGlyphDef /><altGlyphItem /><animateColor /><animateMotion /><animateTransform /><clipPath /><feBlend /><feColorMatrix /><feComponentTransfer /><feComposite /><feConvolveMatrix /><feDiffuseLighting /><feDisplacementMap /><feDistantLight /><feFlood /><feFuncA /><feFuncB /><feFuncG /><feFuncR /><feGaussianBlur /><feImage /><feMerge /><feMergeNode /><feMorphology /><feOffset /><fePointLight /><feSpecularLighting /><feSpotLight /><feTile /><feTurbulence /><foreignObject /><glyphRef /><linearGradient /><radialGradient /><textPath /></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "<svg altGlyph>"
+        ],
+        [
+          3,
+          "<svg altGlyphDef>"
+        ],
+        [
+          3,
+          "<svg altGlyphItem>"
+        ],
+        [
+          3,
+          "<svg animateColor>"
+        ],
+        [
+          3,
+          "<svg animateMotion>"
+        ],
+        [
+          3,
+          "<svg animateTransform>"
+        ],
+        [
+          3,
+          "<svg clipPath>"
+        ],
+        [
+          3,
+          "<svg feBlend>"
+        ],
+        [
+          3,
+          "<svg feColorMatrix>"
+        ],
+        [
+          3,
+          "<svg feComponentTransfer>"
+        ],
+        [
+          3,
+          "<svg feComposite>"
+        ],
+        [
+          3,
+          "<svg feConvolveMatrix>"
+        ],
+        [
+          3,
+          "<svg feDiffuseLighting>"
+        ],
+        [
+          3,
+          "<svg feDisplacementMap>"
+        ],
+        [
+          3,
+          "<svg feDistantLight>"
+        ],
+        [
+          3,
+          "<svg feFlood>"
+        ],
+        [
+          3,
+          "<svg feFuncA>"
+        ],
+        [
+          3,
+          "<svg feFuncB>"
+        ],
+        [
+          3,
+          "<svg feFuncG>"
+        ],
+        [
+          3,
+          "<svg feFuncR>"
+        ],
+        [
+          3,
+          "<svg feGaussianBlur>"
+        ],
+        [
+          3,
+          "<svg feImage>"
+        ],
+        [
+          3,
+          "<svg feMerge>"
+        ],
+        [
+          3,
+          "<svg feMergeNode>"
+        ],
+        [
+          3,
+          "<svg feMorphology>"
+        ],
+        [
+          3,
+          "<svg feOffset>"
+        ],
+        [
+          3,
+          "<svg fePointLight>"
+        ],
+        [
+          3,
+          "<svg feSpecularLighting>"
+        ],
+        [
+          3,
+          "<svg feSpotLight>"
+        ],
+        [
+          3,
+          "<svg feTile>"
+        ],
+        [
+          3,
+          "<svg feTurbulence>"
+        ],
+        [
+          3,
+          "<svg foreignObject>"
+        ],
+        [
+          3,
+          "<svg glyphRef>"
+        ],
+        [
+          3,
+          "<svg linearGradient>"
+        ],
+        [
+          3,
+          "<svg radialGradient>"
+        ],
+        [
+          3,
+          "<svg textPath>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><svg><altglyph /><altglyphdef /><altglyphitem /><animatecolor /><animatemotion /><animatetransform /><clippath /><feblend /><fecolormatrix /><fecomponenttransfer /><fecomposite /><feconvolvematrix /><fediffuselighting /><fedisplacementmap /><fedistantlight /><feflood /><fefunca /><fefuncb /><fefuncg /><fefuncr /><fegaussianblur /><feimage /><femerge /><femergenode /><femorphology /><feoffset /><fepointlight /><fespecularlighting /><fespotlight /><fetile /><feturbulence /><foreignobject /><glyphref /><lineargradient /><radialgradient /><textpath /></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "<svg altGlyph>"
+        ],
+        [
+          3,
+          "<svg altGlyphDef>"
+        ],
+        [
+          3,
+          "<svg altGlyphItem>"
+        ],
+        [
+          3,
+          "<svg animateColor>"
+        ],
+        [
+          3,
+          "<svg animateMotion>"
+        ],
+        [
+          3,
+          "<svg animateTransform>"
+        ],
+        [
+          3,
+          "<svg clipPath>"
+        ],
+        [
+          3,
+          "<svg feBlend>"
+        ],
+        [
+          3,
+          "<svg feColorMatrix>"
+        ],
+        [
+          3,
+          "<svg feComponentTransfer>"
+        ],
+        [
+          3,
+          "<svg feComposite>"
+        ],
+        [
+          3,
+          "<svg feConvolveMatrix>"
+        ],
+        [
+          3,
+          "<svg feDiffuseLighting>"
+        ],
+        [
+          3,
+          "<svg feDisplacementMap>"
+        ],
+        [
+          3,
+          "<svg feDistantLight>"
+        ],
+        [
+          3,
+          "<svg feFlood>"
+        ],
+        [
+          3,
+          "<svg feFuncA>"
+        ],
+        [
+          3,
+          "<svg feFuncB>"
+        ],
+        [
+          3,
+          "<svg feFuncG>"
+        ],
+        [
+          3,
+          "<svg feFuncR>"
+        ],
+        [
+          3,
+          "<svg feGaussianBlur>"
+        ],
+        [
+          3,
+          "<svg feImage>"
+        ],
+        [
+          3,
+          "<svg feMerge>"
+        ],
+        [
+          3,
+          "<svg feMergeNode>"
+        ],
+        [
+          3,
+          "<svg feMorphology>"
+        ],
+        [
+          3,
+          "<svg feOffset>"
+        ],
+        [
+          3,
+          "<svg fePointLight>"
+        ],
+        [
+          3,
+          "<svg feSpecularLighting>"
+        ],
+        [
+          3,
+          "<svg feSpotLight>"
+        ],
+        [
+          3,
+          "<svg feTile>"
+        ],
+        [
+          3,
+          "<svg feTurbulence>"
+        ],
+        [
+          3,
+          "<svg foreignObject>"
+        ],
+        [
+          3,
+          "<svg glyphRef>"
+        ],
+        [
+          3,
+          "<svg linearGradient>"
+        ],
+        [
+          3,
+          "<svg radialGradient>"
+        ],
+        [
+          3,
+          "<svg textPath>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><BODY><SVG><ALTGLYPH /><ALTGLYPHDEF /><ALTGLYPHITEM /><ANIMATECOLOR /><ANIMATEMOTION /><ANIMATETRANSFORM /><CLIPPATH /><FEBLEND /><FECOLORMATRIX /><FECOMPONENTTRANSFER /><FECOMPOSITE /><FECONVOLVEMATRIX /><FEDIFFUSELIGHTING /><FEDISPLACEMENTMAP /><FEDISTANTLIGHT /><FEFLOOD /><FEFUNCA /><FEFUNCB /><FEFUNCG /><FEFUNCR /><FEGAUSSIANBLUR /><FEIMAGE /><FEMERGE /><FEMERGENODE /><FEMORPHOLOGY /><FEOFFSET /><FEPOINTLIGHT /><FESPECULARLIGHTING /><FESPOTLIGHT /><FETILE /><FETURBULENCE /><FOREIGNOBJECT /><GLYPHREF /><LINEARGRADIENT /><RADIALGRADIENT /><TEXTPATH /></SVG>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "<svg altGlyph>"
+        ],
+        [
+          3,
+          "<svg altGlyphDef>"
+        ],
+        [
+          3,
+          "<svg altGlyphItem>"
+        ],
+        [
+          3,
+          "<svg animateColor>"
+        ],
+        [
+          3,
+          "<svg animateMotion>"
+        ],
+        [
+          3,
+          "<svg animateTransform>"
+        ],
+        [
+          3,
+          "<svg clipPath>"
+        ],
+        [
+          3,
+          "<svg feBlend>"
+        ],
+        [
+          3,
+          "<svg feColorMatrix>"
+        ],
+        [
+          3,
+          "<svg feComponentTransfer>"
+        ],
+        [
+          3,
+          "<svg feComposite>"
+        ],
+        [
+          3,
+          "<svg feConvolveMatrix>"
+        ],
+        [
+          3,
+          "<svg feDiffuseLighting>"
+        ],
+        [
+          3,
+          "<svg feDisplacementMap>"
+        ],
+        [
+          3,
+          "<svg feDistantLight>"
+        ],
+        [
+          3,
+          "<svg feFlood>"
+        ],
+        [
+          3,
+          "<svg feFuncA>"
+        ],
+        [
+          3,
+          "<svg feFuncB>"
+        ],
+        [
+          3,
+          "<svg feFuncG>"
+        ],
+        [
+          3,
+          "<svg feFuncR>"
+        ],
+        [
+          3,
+          "<svg feGaussianBlur>"
+        ],
+        [
+          3,
+          "<svg feImage>"
+        ],
+        [
+          3,
+          "<svg feMerge>"
+        ],
+        [
+          3,
+          "<svg feMergeNode>"
+        ],
+        [
+          3,
+          "<svg feMorphology>"
+        ],
+        [
+          3,
+          "<svg feOffset>"
+        ],
+        [
+          3,
+          "<svg fePointLight>"
+        ],
+        [
+          3,
+          "<svg feSpecularLighting>"
+        ],
+        [
+          3,
+          "<svg feSpotLight>"
+        ],
+        [
+          3,
+          "<svg feTile>"
+        ],
+        [
+          3,
+          "<svg feTurbulence>"
+        ],
+        [
+          3,
+          "<svg foreignObject>"
+        ],
+        [
+          3,
+          "<svg glyphRef>"
+        ],
+        [
+          3,
+          "<svg linearGradient>"
+        ],
+        [
+          3,
+          "<svg radialGradient>"
+        ],
+        [
+          3,
+          "<svg textPath>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><math><altGlyph /><altGlyphDef /><altGlyphItem /><animateColor /><animateMotion /><animateTransform /><clipPath /><feBlend /><feColorMatrix /><feComponentTransfer /><feComposite /><feConvolveMatrix /><feDiffuseLighting /><feDisplacementMap /><feDistantLight /><feFlood /><feFuncA /><feFuncB /><feFuncG /><feFuncR /><feGaussianBlur /><feImage /><feMerge /><feMergeNode /><feMorphology /><feOffset /><fePointLight /><feSpecularLighting /><feSpotLight /><feTile /><feTurbulence /><foreignObject /><glyphRef /><linearGradient /><radialGradient /><textPath /></math>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math altglyph>"
+        ],
+        [
+          3,
+          "<math altglyphdef>"
+        ],
+        [
+          3,
+          "<math altglyphitem>"
+        ],
+        [
+          3,
+          "<math animatecolor>"
+        ],
+        [
+          3,
+          "<math animatemotion>"
+        ],
+        [
+          3,
+          "<math animatetransform>"
+        ],
+        [
+          3,
+          "<math clippath>"
+        ],
+        [
+          3,
+          "<math feblend>"
+        ],
+        [
+          3,
+          "<math fecolormatrix>"
+        ],
+        [
+          3,
+          "<math fecomponenttransfer>"
+        ],
+        [
+          3,
+          "<math fecomposite>"
+        ],
+        [
+          3,
+          "<math feconvolvematrix>"
+        ],
+        [
+          3,
+          "<math fediffuselighting>"
+        ],
+        [
+          3,
+          "<math fedisplacementmap>"
+        ],
+        [
+          3,
+          "<math fedistantlight>"
+        ],
+        [
+          3,
+          "<math feflood>"
+        ],
+        [
+          3,
+          "<math fefunca>"
+        ],
+        [
+          3,
+          "<math fefuncb>"
+        ],
+        [
+          3,
+          "<math fefuncg>"
+        ],
+        [
+          3,
+          "<math fefuncr>"
+        ],
+        [
+          3,
+          "<math fegaussianblur>"
+        ],
+        [
+          3,
+          "<math feimage>"
+        ],
+        [
+          3,
+          "<math femerge>"
+        ],
+        [
+          3,
+          "<math femergenode>"
+        ],
+        [
+          3,
+          "<math femorphology>"
+        ],
+        [
+          3,
+          "<math feoffset>"
+        ],
+        [
+          3,
+          "<math fepointlight>"
+        ],
+        [
+          3,
+          "<math fespecularlighting>"
+        ],
+        [
+          3,
+          "<math fespotlight>"
+        ],
+        [
+          3,
+          "<math fetile>"
+        ],
+        [
+          3,
+          "<math feturbulence>"
+        ],
+        [
+          3,
+          "<math foreignobject>"
+        ],
+        [
+          3,
+          "<math glyphref>"
+        ],
+        [
+          3,
+          "<math lineargradient>"
+        ],
+        [
+          3,
+          "<math radialgradient>"
+        ],
+        [
+          3,
+          "<math textpath>"
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html><body><svg><solidColor /></svg>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "<svg solidcolor>"
+        ]
+      ]
+    }
+  ]
+}

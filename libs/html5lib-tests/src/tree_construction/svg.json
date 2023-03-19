@@ -1,0 +1,212 @@
+{
+  "name": "svg.json",
+  "tests": [
+    {
+      "data": "<svg><tr><td><title><tr>",
+      "errors": [
+        "(1:21) Unexpected <tr> tag",
+        "(1:25) Unexpected EOF",
+        "#document-fragment",
+        "td"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg tr>"
+        ],
+        [
+          2,
+          "<svg td>"
+        ],
+        [
+          3,
+          "<svg title>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg><tr><td><title><tr>",
+      "errors": [
+        "(1:1) Unexpected <svg> tag",
+        "(1:21) Unexpected <tr> tag",
+        "(1:25) Unexpected EOF",
+        "#document-fragment",
+        "tr"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg tr>"
+        ],
+        [
+          2,
+          "<svg td>"
+        ],
+        [
+          3,
+          "<svg title>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg><thead><title><tbody>",
+      "errors": [
+        "(1:1) Unexpected <svg> tag",
+        "(1:20) Unexpected <tbody> tag",
+        "(1:27) Unexpected EOF",
+        "#document-fragment",
+        "thead"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg thead>"
+        ],
+        [
+          2,
+          "<svg title>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg><tfoot><title><tbody>",
+      "errors": [
+        "(1:1) Unexpected <svg> tag",
+        "(1:20) Unexpected <tbody> tag",
+        "(1:27) Unexpected EOF",
+        "#document-fragment",
+        "tfoot"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg tfoot>"
+        ],
+        [
+          2,
+          "<svg title>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg><tbody><title><tfoot>",
+      "errors": [
+        "(1:1) Unexpected <svg> tag",
+        "(1:20) Unexpected <tfoot> tag",
+        "(1:27) Unexpected EOF",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg tbody>"
+        ],
+        [
+          2,
+          "<svg title>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg><tbody><title></table>",
+      "errors": [
+        "(1:1) Unexpected <svg> tag",
+        "(1:20) Unexpected </table> tag",
+        "(1:28) Unexpected EOF",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg tbody>"
+        ],
+        [
+          2,
+          "<svg title>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg><thead><title></table>",
+      "errors": [
+        "(1:1) Unexpected <svg> tag",
+        "(1:20) Unexpected </table> tag",
+        "(1:28) Unexpected EOF",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg thead>"
+        ],
+        [
+          2,
+          "<svg title>"
+        ]
+      ]
+    },
+    {
+      "data": "<svg><tfoot><title></table>",
+      "errors": [
+        "(1:1) Unexpected <svg> tag",
+        "(1:20) Unexpected </table> tag",
+        "(1:28) Unexpected EOF",
+        "#document-fragment",
+        "tbody"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<svg svg>"
+        ],
+        [
+          1,
+          "<svg tfoot>"
+        ],
+        [
+          2,
+          "<svg title>"
+        ]
+      ]
+    }
+  ]
+}

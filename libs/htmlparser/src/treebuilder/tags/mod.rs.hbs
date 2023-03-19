@@ -5,7 +5,7 @@
 
 mod any_other;
 {{#each .}}
-mod {{{.}}};
+mod {{.}};
 {{/each}}
 
 use super::*;
@@ -19,7 +19,7 @@ where
         let local_name = LocalName::lookup(tag.name);
         match local_name {
             {{#each .}}
-            tag!({{{pascalCase .}}}) => self.handle_start_{{{.}}}(&tag),
+            tag!({{pascalCase .}}) => self.handle_start_{{.}}(&tag),
             {{/each}}
             _ => self.handle_start_any_other(&tag),
         }
@@ -30,7 +30,7 @@ where
         let local_name = LocalName::lookup(tag.name);
         match local_name {
             {{#each .}}
-            tag!({{{pascalCase .}}}) => self.handle_end_{{{.}}}(&tag),
+            tag!({{pascalCase .}}) => self.handle_end_{{.}}(&tag),
             {{/each}}
             _ => self.handle_end_any_other(&tag),
         }
@@ -96,10 +96,6 @@ where
         }
         // TODO: Clear the list of active formatting elements up to the last marker.
         self.switch_to(mode!(InRow));
-    }
-
-    fn close_p_element_in_button_scope(&mut self) {
-        // TODO
     }
 
     fn is_visible_input(tag: &Tag<'_>) -> bool {

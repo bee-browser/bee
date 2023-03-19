@@ -1,0 +1,147 @@
+{
+  "name": "main_element.json",
+  "tests": [
+    {
+      "data": "<!doctype html><p>foo<main>bar<p>baz",
+      "errors": [
+        "(1,36): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "\"foo\""
+        ],
+        [
+          2,
+          "<main>"
+        ],
+        [
+          3,
+          "\"bar\""
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "\"baz\""
+        ]
+      ]
+    },
+    {
+      "data": "<!doctype html><main><p>foo</main>bar",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<main>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "\"foo\""
+        ],
+        [
+          2,
+          "\"bar\""
+        ]
+      ]
+    },
+    {
+      "data": "<!DOCTYPE html>xxx<svg><x><g><a><main><b>",
+      "errors": [
+        " * (1,42) unexpected HTML-like start tag token in foreign content",
+        " * (1,42) unexpected end of file"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"xxx\""
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "<svg x>"
+        ],
+        [
+          4,
+          "<svg g>"
+        ],
+        [
+          5,
+          "<svg a>"
+        ],
+        [
+          6,
+          "<svg main>"
+        ],
+        [
+          2,
+          "<b>"
+        ]
+      ]
+    }
+  ]
+}
