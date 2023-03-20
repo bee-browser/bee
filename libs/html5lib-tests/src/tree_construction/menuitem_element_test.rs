@@ -12,6 +12,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "<menuitem>"),
         ],
+        context_element: None,
     });
 }
 
@@ -20,6 +21,7 @@ fn test_0001() {
     parse(Test {
         data: "</menuitem>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -35,6 +37,7 @@ fn test_0002() {
             (2, "<menuitem>"),
             (3, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -52,6 +55,7 @@ fn test_0003() {
             (3, "<menuitem>"),
             (4, "\"B\""),
         ],
+        context_element: None,
     });
 }
 
@@ -69,6 +73,7 @@ fn test_0004() {
             (3, "<menu>"),
             (4, "\"B\""),
         ],
+        context_element: None,
     });
 }
 
@@ -86,6 +91,7 @@ fn test_0005() {
             (3, "<hr>"),
             (3, "\"B\""),
         ],
+        context_element: None,
     });
 }
 
@@ -102,6 +108,7 @@ fn test_0006() {
             (3, "<menuitem>"),
             (2, "<li>"),
         ],
+        context_element: None,
     });
 }
 
@@ -118,6 +125,7 @@ fn test_0007() {
             (3, "<p>"),
             (4, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -135,6 +143,7 @@ fn test_0008() {
             (2, "<b>"),
             (3, "<menuitem>"),
         ],
+        context_element: None,
     });
 }
 
@@ -151,6 +160,7 @@ fn test_0009() {
             (3, "<asdf>"),
             (2, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -164,6 +174,7 @@ fn test_0010() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -177,6 +188,7 @@ fn test_0011() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -190,6 +202,7 @@ fn test_0012() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -204,6 +217,7 @@ fn test_0013() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -219,6 +233,7 @@ fn test_0014() {
             (2, "<option>"),
             (3, "<menuitem>"),
         ],
+        context_element: None,
     });
 }
 
@@ -234,6 +249,7 @@ fn test_0015() {
             (2, "<menuitem>"),
             (3, "<option>"),
         ],
+        context_element: None,
     });
 }
 
@@ -248,6 +264,7 @@ fn test_0016() {
             (1, "<body>"),
             (2, "<menuitem>"),
         ],
+        context_element: None,
     });
 }
 
@@ -262,6 +279,7 @@ fn test_0017() {
             (1, "<body>"),
             (2, "<menuitem>"),
         ],
+        context_element: None,
     });
 }
 
@@ -277,6 +295,7 @@ fn test_0018() {
             (2, "<menuitem>"),
             (3, "<p>"),
         ],
+        context_element: None,
     });
 }
 
@@ -292,6 +311,7 @@ fn test_0019() {
             (2, "<menuitem>"),
             (3, "<li>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

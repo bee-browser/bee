@@ -13,6 +13,7 @@ fn test_0000() {
             (2, "\"fillertext\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

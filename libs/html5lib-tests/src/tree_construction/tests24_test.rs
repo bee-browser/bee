@@ -13,6 +13,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "\"≂̸\""),
         ],
+        context_element: None,
     });
 }
 
@@ -27,6 +28,7 @@ fn test_0001() {
             (1, "<body>"),
             (2, "\"≂̸A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -41,6 +43,7 @@ fn test_0002() {
             (1, "<body>"),
             (2, "\"  \""),
         ],
+        context_element: None,
     });
 }
 
@@ -55,6 +58,7 @@ fn test_0003() {
             (1, "<body>"),
             (2, "\"  A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -69,6 +73,7 @@ fn test_0004() {
             (1, "<body>"),
             (2, "\"⊂⃒\""),
         ],
+        context_element: None,
     });
 }
 
@@ -83,6 +88,7 @@ fn test_0005() {
             (1, "<body>"),
             (2, "\"⊂⃒A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -97,6 +103,7 @@ fn test_0006() {
             (1, "<body>"),
             (2, "\"𝔾\""),
         ],
+        context_element: None,
     });
 }
 
@@ -111,6 +118,7 @@ fn test_0007() {
             (1, "<body>"),
             (2, "\"𝔾A\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

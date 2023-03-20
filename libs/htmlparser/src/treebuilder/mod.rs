@@ -125,6 +125,47 @@ where
         }
     }
 
+    pub fn set_quirks_mode(&mut self, quirks_mode: QuirksMode) {
+        self.quirks_mode = quirks_mode;
+    }
+
+    pub fn set_context_element(
+        &mut self,
+        local_name: LocalName,
+        namespace: Namespace,
+        node: T::Node,
+    ) {
+        debug_assert_eq!(self.context_stack.len(), 1);
+        self.context_stack.push(TreeBuildContext {
+            open_element: OpenElement {
+                namespace,
+                local_name,
+                node,
+            },
+            reset_mode: InsertionMode::InBody,
+            foster_parenting_insertion_point: FosterParentingInsertionPoint::LastChild(node),
+            flags: Default::default(), // TODO
+        });
+        self.switch_to(match local_name {
+            tag!(Select) => mode!(InSelect),
+            tag!(Tr) => mode!(InRow),
+            tag!(Tbody, Thead, Tfoot) => mode!(InTableBody),
+            tag!(Caption) => mode!(InCaption),
+            tag!(Colgroup) => mode!(InColumnGroup),
+            tag!(Table) => mode!(InTable),
+            tag!(Head) => mode!(InHead),
+            tag!(Body) => mode!(InBody),
+            tag!(Frameset) => mode!(InFrameset),
+            tag!(Html) => mode!(BeforeHead),
+            _ => mode!(InBody),
+        });
+        tracing::debug!(
+            context.pos = self.context_stack.len() - 1,
+            context.element = ?self.context().open_element,
+        );
+        // TODO: Set the parser's form element pointer to the nearest node to the context element that is a form element (going straight up the ancestor chain, and including the element itself, if it is a form element), if any. (If there is no such form element, the form element pointer keeps its initial value, null.)
+    }
+
     pub fn in_html_namespace(&self) -> bool {
         self.context().is_html()
     }
@@ -1692,7 +1733,7 @@ enum InsertionMode {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-enum QuirksMode {
+pub enum QuirksMode {
     NoQuirks,
     Quirks,
     LimitedQuirks,

@@ -13,6 +13,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "<svg svg>"),
         ],
+        context_element: None,
     });
 }
 
@@ -28,6 +29,7 @@ fn test_0001() {
             (2, "<svg svg>"),
             (2, "<!-- [CDATA[a]] -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -42,6 +44,7 @@ fn test_0002() {
             (1, "<body>"),
             (2, "<svg svg>"),
         ],
+        context_element: None,
     });
 }
 
@@ -56,6 +59,7 @@ fn test_0003() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -71,6 +75,7 @@ fn test_0004() {
             (2, "<select>"),
             (3, "<option>"),
         ],
+        context_element: None,
     });
 }
 
@@ -86,6 +91,7 @@ fn test_0005() {
             (2, "<svg svg>"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -103,6 +109,7 @@ fn test_0006() {
             (4, "\"foo\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -122,6 +129,7 @@ fn test_0007() {
             (4, "\"bar\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -142,6 +150,7 @@ fn test_0008() {
             (2, "<table>"),
             (3, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -163,6 +172,7 @@ fn test_0009() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -185,6 +195,7 @@ fn test_0010() {
             (7, "<svg g>"),
             (8, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -209,6 +220,7 @@ fn test_0011() {
             (6, "<p>"),
             (7, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -231,6 +243,7 @@ fn test_0012() {
             (4, "<p>"),
             (5, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -255,6 +268,7 @@ fn test_0013() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -278,6 +292,7 @@ fn test_0014() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -303,6 +318,7 @@ fn test_0015() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -324,6 +340,7 @@ fn test_0016() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -342,6 +359,7 @@ fn test_0017() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -362,6 +380,7 @@ fn test_0018() {
             (2, "<p>"),
             (3, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -382,6 +401,7 @@ fn test_0019() {
             (2, "<p>"),
             (3, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -395,6 +415,7 @@ fn test_0020() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -408,6 +429,7 @@ fn test_0021() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -424,6 +446,7 @@ fn test_0022() {
             (2, "<svg svg>"),
             (3, "xlink href=\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -443,6 +466,7 @@ fn test_0023() {
             (4, "xlink href=\"foo\""),
             (4, "xml lang=\"en\""),
         ],
+        context_element: None,
     });
 }
 
@@ -462,6 +486,7 @@ fn test_0024() {
             (4, "xlink href=\"foo\""),
             (4, "xml lang=\"en\""),
         ],
+        context_element: None,
     });
 }
 
@@ -482,6 +507,7 @@ fn test_0025() {
             (4, "xml lang=\"en\""),
             (3, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -495,6 +521,7 @@ fn test_0026() {
             (1, "<body>"),
             (2, "<svg svg>"),
         ],
+        context_element: None,
     });
 }
 
@@ -510,6 +537,7 @@ fn test_0027() {
             (3, "<svg svg>"),
             (2, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -526,6 +554,7 @@ fn test_0028() {
             (4, "<svg path>"),
             (2, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -542,6 +571,7 @@ fn test_0029() {
             (4, "<svg path>"),
             (3, "<path>"),
         ],
+        context_element: None,
     });
 }
 
@@ -560,6 +590,7 @@ fn test_0030() {
             (6, "<math math>"),
             (7, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -578,6 +609,7 @@ fn test_0031() {
             (6, "<p>"),
             (7, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -597,6 +629,7 @@ fn test_0032() {
             (5, "<ul>"),
             (6, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -615,6 +648,7 @@ fn test_0033() {
             (4, "<ul>"),
             (5, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -632,6 +666,7 @@ fn test_0034() {
             (4, "<svg desc>"),
             (5, "<p>"),
         ],
+        context_element: None,
     });
 }
 
@@ -649,6 +684,7 @@ fn test_0035() {
             (4, "<svg title>"),
             (5, "<p>"),
         ],
+        context_element: None,
     });
 }
 
@@ -667,6 +703,7 @@ fn test_0036() {
             (6, "<p>"),
             (6, "<p>"),
         ],
+        context_element: None,
     });
 }
 
@@ -686,6 +723,7 @@ fn test_0037() {
             (7, "<span>"),
             (3, "<math mi>"),
         ],
+        context_element: None,
     });
 }
 
@@ -705,6 +743,7 @@ fn test_0038() {
             (7, "<div>"),
             (3, "<math mi>"),
         ],
+        context_element: None,
     });
 }
 
@@ -720,6 +759,7 @@ fn test_0039() {
             (3, "<svg script>"),
             (3, "<svg path>"),
         ],
+        context_element: None,
     });
 }
 
@@ -736,6 +776,7 @@ fn test_0040() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -751,6 +792,7 @@ fn test_0041() {
             (3, "<math mi>"),
             (4, "<math mglyph>"),
         ],
+        context_element: None,
     });
 }
 
@@ -766,6 +808,7 @@ fn test_0042() {
             (3, "<math mi>"),
             (4, "<math malignmark>"),
         ],
+        context_element: None,
     });
 }
 
@@ -781,6 +824,7 @@ fn test_0043() {
             (3, "<math mo>"),
             (4, "<math mglyph>"),
         ],
+        context_element: None,
     });
 }
 
@@ -796,6 +840,7 @@ fn test_0044() {
             (3, "<math mo>"),
             (4, "<math malignmark>"),
         ],
+        context_element: None,
     });
 }
 
@@ -811,6 +856,7 @@ fn test_0045() {
             (3, "<math mn>"),
             (4, "<math mglyph>"),
         ],
+        context_element: None,
     });
 }
 
@@ -826,6 +872,7 @@ fn test_0046() {
             (3, "<math mn>"),
             (4, "<math malignmark>"),
         ],
+        context_element: None,
     });
 }
 
@@ -841,6 +888,7 @@ fn test_0047() {
             (3, "<math ms>"),
             (4, "<math mglyph>"),
         ],
+        context_element: None,
     });
 }
 
@@ -856,6 +904,7 @@ fn test_0048() {
             (3, "<math ms>"),
             (4, "<math malignmark>"),
         ],
+        context_element: None,
     });
 }
 
@@ -871,6 +920,7 @@ fn test_0049() {
             (3, "<math mtext>"),
             (4, "<math mglyph>"),
         ],
+        context_element: None,
     });
 }
 
@@ -886,6 +936,7 @@ fn test_0050() {
             (3, "<math mtext>"),
             (4, "<math malignmark>"),
         ],
+        context_element: None,
     });
 }
 
@@ -902,6 +953,7 @@ fn test_0051() {
             (4, "<svg svg>"),
             (3, "<math mi>"),
         ],
+        context_element: None,
     });
 }
 
@@ -924,6 +976,7 @@ fn test_0052() {
             (5, "<svg path>"),
             (3, "<math mi>"),
         ],
+        context_element: None,
     });
 }
 
@@ -947,6 +1000,7 @@ fn test_0053() {
             (5, "<svg path>"),
             (3, "<math mi>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

@@ -4,14 +4,21 @@ use super::helper::Test;
 {{#each tests}}
 
 #[test]
-fn test_{{{padStart @index 4 '0'}}}() {
+fn test_{{padStart @index 4 '0'}}() {
     parse(Test {
-        data: "{{{escapeForRust data}}}",
+        data: "{{escapeForRust data}}",
         document: vec![
             {{#each document}}
-            ({{{this.[0]}}}, "{{{escapeForRust this.[1]}}}"),
+            ({{this.[0]}}, "{{escapeForRust this.[1]}}"),
             {{/each}}
         ],
+        {{#if contextElement}}
+        {{#with contextElement}}
+        context_element: Some(("{{namespace}}", "{{localName}}")),
+        {{/with}}
+        {{else}}
+        context_element: None,
+        {{/if}}
     });
 }
 {{/each}}

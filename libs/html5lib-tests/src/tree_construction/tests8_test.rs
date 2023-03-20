@@ -15,6 +15,7 @@ fn test_0000() {
             (3, "<div>"),
             (3, "\"\nx\""),
         ],
+        context_element: None,
     });
 }
 
@@ -31,6 +32,7 @@ fn test_0001() {
             (3, "<div>"),
             (3, "\"\nx\""),
         ],
+        context_element: None,
     });
 }
 
@@ -47,6 +49,7 @@ fn test_0002() {
             (3, "<div>"),
             (3, "\"xx\""),
         ],
+        context_element: None,
     });
 }
 
@@ -63,6 +66,7 @@ fn test_0003() {
             (3, "<div>"),
             (3, "\"yz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -80,6 +84,7 @@ fn test_0004() {
             (3, "\"xx\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -95,6 +100,7 @@ fn test_0005() {
             (2, "<li>"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -109,6 +115,7 @@ fn test_0006() {
             (2, "\"xx\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -125,6 +132,7 @@ fn test_0007() {
             (2, "\"x\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -143,6 +151,7 @@ fn test_0008() {
             (3, "<b>"),
             (3, "\"y\""),
         ],
+        context_element: None,
     });
 }
 
@@ -160,6 +169,7 @@ fn test_0009() {
             (3, "<p>"),
             (4, "<a>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

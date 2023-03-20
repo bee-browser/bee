@@ -14,6 +14,7 @@ fn test_0000() {
             (2, "<!--  BAR  -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -29,6 +30,7 @@ fn test_0001() {
             (2, "<!--  BAR  -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -43,6 +45,7 @@ fn test_0002() {
             (2, "\"FOO\""),
             (2, "<!--  BAR --! >BAZ -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -57,6 +60,7 @@ fn test_0003() {
             (2, "\"FOO\""),
             (2, "<!--  BAR --!\n>BAZ -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -71,6 +75,7 @@ fn test_0004() {
             (2, "\"FOO\""),
             (2, "<!--  BAR --   >BAZ -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -86,6 +91,7 @@ fn test_0005() {
             (2, "<!--  BAR -- <QUX> -- MUX  -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -101,6 +107,7 @@ fn test_0006() {
             (2, "<!--  BAR -- <QUX> -- MUX  -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -115,6 +122,7 @@ fn test_0007() {
             (2, "\"FOO\""),
             (2, "<!--  BAR -- <QUX> -- MUX -- >BAZ -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -130,6 +138,7 @@ fn test_0008() {
             (2, "<!--  -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -145,6 +154,7 @@ fn test_0009() {
             (2, "<!--  -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -160,6 +170,7 @@ fn test_0010() {
             (2, "<!--  -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -174,6 +185,7 @@ fn test_0011() {
             (1, "<body>"),
             (2, "\"Hi\""),
         ],
+        context_element: None,
     });
 }
 
@@ -187,6 +199,7 @@ fn test_0012() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -200,6 +213,7 @@ fn test_0013() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -215,6 +229,7 @@ fn test_0014() {
             (2, "<!-- - -->"),
             (2, "\"BAZ\""),
         ],
+        context_element: None,
     });
 }
 
@@ -230,6 +245,7 @@ fn test_0015() {
             (3, "\"Comment before head\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

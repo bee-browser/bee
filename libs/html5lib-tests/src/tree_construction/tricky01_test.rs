@@ -17,6 +17,7 @@ fn test_0000() {
             (3, "\" Not bold\""),
             (2, "\"\nAlso not bold.\""),
         ],
+        context_element: None,
     });
 }
 
@@ -67,6 +68,7 @@ fn test_0001() {
             (3, "\" Only Italic \""),
             (2, "\" Plain\""),
         ],
+        context_element: None,
     });
 }
 
@@ -97,6 +99,7 @@ fn test_0002() {
             (3, "<i>"),
             (4, "\" Italic\""),
         ],
+        context_element: None,
     });
 }
 
@@ -119,6 +122,7 @@ fn test_0003() {
             (2, "<b>"),
             (3, "\"\n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -140,6 +144,7 @@ fn test_0004() {
             (6, "\"World\""),
             (4, "\"  \n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -167,6 +172,7 @@ fn test_0005() {
             (5, "\" \""),
             (4, "\" \""),
         ],
+        context_element: None,
     });
 }
 
@@ -187,6 +193,7 @@ fn test_0006() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -223,6 +230,7 @@ fn test_0007() {
             (2, "<font>"),
             (3, "\"\nThis page contains an insanely badly-nested tag sequence.\""),
         ],
+        context_element: None,
     });
 }
 
@@ -246,6 +254,7 @@ fn test_0008() {
             (4, "\"A pre tag outside everything else.\""),
             (3, "\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

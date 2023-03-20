@@ -4356,10 +4356,7 @@
     },
     {
       "data": "<template><form><input name=\"q\"></form><div>second</div></template>",
-      "errors": [
-        "#document-fragment",
-        "template"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -4390,7 +4387,11 @@
           3,
           "\"second\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "template"
+      }
     },
     {
       "data": "<!DOCTYPE HTML><template><tr><td>cell</td></tr></template>",

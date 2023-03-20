@@ -13,6 +13,7 @@ fn test_0000() {
             (2, "<script>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -28,6 +29,7 @@ fn test_0001() {
             (3, "\"a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -43,6 +45,7 @@ fn test_0002() {
             (3, "\"<\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -58,6 +61,7 @@ fn test_0003() {
             (3, "\"</\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -73,6 +77,7 @@ fn test_0004() {
             (3, "\"</S\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -88,6 +93,7 @@ fn test_0005() {
             (3, "\"</SC\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -103,6 +109,7 @@ fn test_0006() {
             (3, "\"</SCR\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -118,6 +125,7 @@ fn test_0007() {
             (3, "\"</SCRI\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -133,6 +141,7 @@ fn test_0008() {
             (3, "\"</SCRIP\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -148,6 +157,7 @@ fn test_0009() {
             (3, "\"</SCRIPT\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -162,6 +172,7 @@ fn test_0010() {
             (2, "<script>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -177,6 +188,7 @@ fn test_0011() {
             (3, "\"</s\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -192,6 +204,7 @@ fn test_0012() {
             (3, "\"</sc\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -207,6 +220,7 @@ fn test_0013() {
             (3, "\"</scr\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -222,6 +236,7 @@ fn test_0014() {
             (3, "\"</scri\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -237,6 +252,7 @@ fn test_0015() {
             (3, "\"</scrip\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -252,6 +268,7 @@ fn test_0016() {
             (3, "\"</script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -266,6 +283,7 @@ fn test_0017() {
             (2, "<script>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -281,6 +299,7 @@ fn test_0018() {
             (3, "\"<!\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -296,6 +315,7 @@ fn test_0019() {
             (3, "\"<!a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -311,6 +331,7 @@ fn test_0020() {
             (3, "\"<!-\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -326,6 +347,7 @@ fn test_0021() {
             (3, "\"<!-a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -341,6 +363,7 @@ fn test_0022() {
             (3, "\"<!--\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -356,6 +379,7 @@ fn test_0023() {
             (3, "\"<!--a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -371,6 +395,7 @@ fn test_0024() {
             (3, "\"<!--<\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -386,6 +411,7 @@ fn test_0025() {
             (3, "\"<!--<a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -401,6 +427,7 @@ fn test_0026() {
             (3, "\"<!--</\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -416,6 +443,7 @@ fn test_0027() {
             (3, "\"<!--</script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -431,6 +459,7 @@ fn test_0028() {
             (3, "\"<!--\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -446,6 +475,7 @@ fn test_0029() {
             (3, "\"<!--<s\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -461,6 +491,7 @@ fn test_0030() {
             (3, "\"<!--<script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -476,6 +507,7 @@ fn test_0031() {
             (3, "\"<!--<script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -491,6 +523,7 @@ fn test_0032() {
             (3, "\"<!--<script <\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -506,6 +539,7 @@ fn test_0033() {
             (3, "\"<!--<script <a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -521,6 +555,7 @@ fn test_0034() {
             (3, "\"<!--<script </\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -536,6 +571,7 @@ fn test_0035() {
             (3, "\"<!--<script </s\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -551,6 +587,7 @@ fn test_0036() {
             (3, "\"<!--<script </script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -566,6 +603,7 @@ fn test_0037() {
             (3, "\"<!--<script </scripta\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -581,6 +619,7 @@ fn test_0038() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -596,6 +635,7 @@ fn test_0039() {
             (3, "\"<!--<script </script>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -611,6 +651,7 @@ fn test_0040() {
             (3, "\"<!--<script </script/\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -626,6 +667,7 @@ fn test_0041() {
             (3, "\"<!--<script </script <\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -641,6 +683,7 @@ fn test_0042() {
             (3, "\"<!--<script </script <a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -656,6 +699,7 @@ fn test_0043() {
             (3, "\"<!--<script </script </\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -671,6 +715,7 @@ fn test_0044() {
             (3, "\"<!--<script </script </script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -686,6 +731,7 @@ fn test_0045() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -701,6 +747,7 @@ fn test_0046() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -716,6 +763,7 @@ fn test_0047() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -731,6 +779,7 @@ fn test_0048() {
             (3, "\"<!--<script -\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -746,6 +795,7 @@ fn test_0049() {
             (3, "\"<!--<script -a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -761,6 +811,7 @@ fn test_0050() {
             (3, "\"<!--<script -<\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -776,6 +827,7 @@ fn test_0051() {
             (3, "\"<!--<script --\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -791,6 +843,7 @@ fn test_0052() {
             (3, "\"<!--<script --a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -806,6 +859,7 @@ fn test_0053() {
             (3, "\"<!--<script --<\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -821,6 +875,7 @@ fn test_0054() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -836,6 +891,7 @@ fn test_0055() {
             (3, "\"<!--<script --><\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -851,6 +907,7 @@ fn test_0056() {
             (3, "\"<!--<script --></\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -866,6 +923,7 @@ fn test_0057() {
             (3, "\"<!--<script --></script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -881,6 +939,7 @@ fn test_0058() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -896,6 +955,7 @@ fn test_0059() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -911,6 +971,7 @@ fn test_0060() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -926,6 +987,7 @@ fn test_0061() {
             (3, "\"<!--<script><\\/script>-->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -941,6 +1003,7 @@ fn test_0062() {
             (3, "\"<!--<script></scr\'+\'ipt>-->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -956,6 +1019,7 @@ fn test_0063() {
             (3, "\"<!--<script></script><script></script>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -971,6 +1035,7 @@ fn test_0064() {
             (3, "\"<!--<script></script><script></script>--><!--\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -986,6 +1051,7 @@ fn test_0065() {
             (3, "\"<!--<script></script><script></script>-- >\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1001,6 +1067,7 @@ fn test_0066() {
             (3, "\"<!--<script></script><script></script>- ->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1016,6 +1083,7 @@ fn test_0067() {
             (3, "\"<!--<script></script><script></script>- - >\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1031,6 +1099,7 @@ fn test_0068() {
             (3, "\"<!--<script></script><script></script>->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1046,6 +1115,7 @@ fn test_0069() {
             (3, "\"<!--<script>--!></script>X\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1062,6 +1132,7 @@ fn test_0070() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1077,6 +1148,7 @@ fn test_0071() {
             (3, "\"<!--<script></scr\'+\'ipt></script>X\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1093,6 +1165,7 @@ fn test_0072() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1109,6 +1182,7 @@ fn test_0073() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1125,6 +1199,7 @@ fn test_0074() {
             (1, "<body>"),
             (2, "\"...-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1141,6 +1216,7 @@ fn test_0075() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1157,6 +1233,7 @@ fn test_0076() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1175,6 +1252,7 @@ fn test_0077() {
             (3, "\"@import ...\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1191,6 +1269,7 @@ fn test_0078() {
             (2, "<!--   -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1207,6 +1286,7 @@ fn test_0079() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1223,6 +1303,7 @@ fn test_0080() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1238,6 +1319,7 @@ fn test_0081() {
             (3, "\"</title>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1253,6 +1335,7 @@ fn test_0082() {
             (3, "\"foo/title><link></head><body>X\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1269,6 +1352,7 @@ fn test_0083() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1284,6 +1368,7 @@ fn test_0084() {
             (3, "<!-- <noscript></noscript> -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1302,6 +1387,7 @@ fn test_0085() {
             (2, "<noscript>"),
             (3, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1317,6 +1403,7 @@ fn test_0086() {
             (3, "<!-- </noscript>X<noscript> -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1333,6 +1420,7 @@ fn test_0087() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1349,6 +1437,7 @@ fn test_0088() {
             (2, "<iframe>"),
             (3, "\"</noscript>X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1365,6 +1454,7 @@ fn test_0089() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1380,6 +1470,7 @@ fn test_0090() {
             (3, "\"<body><script><!--...</script></body>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1396,6 +1487,7 @@ fn test_0091() {
             (3, "\"<!--<textarea>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1411,6 +1503,7 @@ fn test_0092() {
             (2, "<textarea>"),
             (3, "\"</textarea>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1426,6 +1519,7 @@ fn test_0093() {
             (2, "<textarea>"),
             (3, "\"<\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1441,6 +1535,7 @@ fn test_0094() {
             (2, "<textarea>"),
             (3, "\"a<b\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1457,6 +1552,7 @@ fn test_0095() {
             (3, "\"<!--<iframe>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1472,6 +1568,7 @@ fn test_0096() {
             (2, "<iframe>"),
             (3, "\"...<!--X->...<!--/X->...\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1488,6 +1585,7 @@ fn test_0097() {
             (3, "\"<!--<xmp>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1504,6 +1602,7 @@ fn test_0098() {
             (3, "\"<!--<noembed>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1512,6 +1611,7 @@ fn test_0099() {
     parse(Test {
         data: "<script>",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<script>"), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -1526,6 +1626,7 @@ fn test_0100() {
             (3, "\"a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1540,6 +1641,7 @@ fn test_0101() {
             (3, "\"<\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1554,6 +1656,7 @@ fn test_0102() {
             (3, "\"</\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1568,6 +1671,7 @@ fn test_0103() {
             (3, "\"</S\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1582,6 +1686,7 @@ fn test_0104() {
             (3, "\"</SC\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1596,6 +1701,7 @@ fn test_0105() {
             (3, "\"</SCR\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1610,6 +1716,7 @@ fn test_0106() {
             (3, "\"</SCRI\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1624,6 +1731,7 @@ fn test_0107() {
             (3, "\"</SCRIP\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1638,6 +1746,7 @@ fn test_0108() {
             (3, "\"</SCRIPT\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1646,6 +1755,7 @@ fn test_0109() {
     parse(Test {
         data: "<script></SCRIPT ",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<script>"), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -1660,6 +1770,7 @@ fn test_0110() {
             (3, "\"</s\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1674,6 +1785,7 @@ fn test_0111() {
             (3, "\"</sc\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1688,6 +1800,7 @@ fn test_0112() {
             (3, "\"</scr\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1702,6 +1815,7 @@ fn test_0113() {
             (3, "\"</scri\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1716,6 +1830,7 @@ fn test_0114() {
             (3, "\"</scrip\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1730,6 +1845,7 @@ fn test_0115() {
             (3, "\"</script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1738,6 +1854,7 @@ fn test_0116() {
     parse(Test {
         data: "<script></script ",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<script>"), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -1752,6 +1869,7 @@ fn test_0117() {
             (3, "\"<!\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1766,6 +1884,7 @@ fn test_0118() {
             (3, "\"<!a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1780,6 +1899,7 @@ fn test_0119() {
             (3, "\"<!-\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1794,6 +1914,7 @@ fn test_0120() {
             (3, "\"<!-a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1808,6 +1929,7 @@ fn test_0121() {
             (3, "\"<!--\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1822,6 +1944,7 @@ fn test_0122() {
             (3, "\"<!--a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1836,6 +1959,7 @@ fn test_0123() {
             (3, "\"<!--<\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1850,6 +1974,7 @@ fn test_0124() {
             (3, "\"<!--<a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1864,6 +1989,7 @@ fn test_0125() {
             (3, "\"<!--</\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1878,6 +2004,7 @@ fn test_0126() {
             (3, "\"<!--</script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1892,6 +2019,7 @@ fn test_0127() {
             (3, "\"<!--\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1906,6 +2034,7 @@ fn test_0128() {
             (3, "\"<!--<s\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1920,6 +2049,7 @@ fn test_0129() {
             (3, "\"<!--<script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1934,6 +2064,7 @@ fn test_0130() {
             (3, "\"<!--<script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1948,6 +2079,7 @@ fn test_0131() {
             (3, "\"<!--<script <\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1962,6 +2094,7 @@ fn test_0132() {
             (3, "\"<!--<script <a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1976,6 +2109,7 @@ fn test_0133() {
             (3, "\"<!--<script </\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1990,6 +2124,7 @@ fn test_0134() {
             (3, "\"<!--<script </s\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2004,6 +2139,7 @@ fn test_0135() {
             (3, "\"<!--<script </script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2018,6 +2154,7 @@ fn test_0136() {
             (3, "\"<!--<script </scripta\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2032,6 +2169,7 @@ fn test_0137() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2046,6 +2184,7 @@ fn test_0138() {
             (3, "\"<!--<script </script>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2060,6 +2199,7 @@ fn test_0139() {
             (3, "\"<!--<script </script/\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2074,6 +2214,7 @@ fn test_0140() {
             (3, "\"<!--<script </script <\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2088,6 +2229,7 @@ fn test_0141() {
             (3, "\"<!--<script </script <a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2102,6 +2244,7 @@ fn test_0142() {
             (3, "\"<!--<script </script </\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2116,6 +2259,7 @@ fn test_0143() {
             (3, "\"<!--<script </script </script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2130,6 +2274,7 @@ fn test_0144() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2144,6 +2289,7 @@ fn test_0145() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2158,6 +2304,7 @@ fn test_0146() {
             (3, "\"<!--<script </script \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2172,6 +2319,7 @@ fn test_0147() {
             (3, "\"<!--<script -\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2186,6 +2334,7 @@ fn test_0148() {
             (3, "\"<!--<script -a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2200,6 +2349,7 @@ fn test_0149() {
             (3, "\"<!--<script --\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2214,6 +2364,7 @@ fn test_0150() {
             (3, "\"<!--<script --a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2228,6 +2379,7 @@ fn test_0151() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2242,6 +2394,7 @@ fn test_0152() {
             (3, "\"<!--<script --><\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2256,6 +2409,7 @@ fn test_0153() {
             (3, "\"<!--<script --></\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2270,6 +2424,7 @@ fn test_0154() {
             (3, "\"<!--<script --></script\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2284,6 +2439,7 @@ fn test_0155() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2298,6 +2454,7 @@ fn test_0156() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2312,6 +2469,7 @@ fn test_0157() {
             (3, "\"<!--<script -->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2326,6 +2484,7 @@ fn test_0158() {
             (3, "\"<!--<script><\\/script>-->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2340,6 +2499,7 @@ fn test_0159() {
             (3, "\"<!--<script></scr\'+\'ipt>-->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2354,6 +2514,7 @@ fn test_0160() {
             (3, "\"<!--<script></script><script></script>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2368,6 +2529,7 @@ fn test_0161() {
             (3, "\"<!--<script></script><script></script>--><!--\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2382,6 +2544,7 @@ fn test_0162() {
             (3, "\"<!--<script></script><script></script>-- >\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2396,6 +2559,7 @@ fn test_0163() {
             (3, "\"<!--<script></script><script></script>- ->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2410,6 +2574,7 @@ fn test_0164() {
             (3, "\"<!--<script></script><script></script>- - >\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2424,6 +2589,7 @@ fn test_0165() {
             (3, "\"<!--<script></script><script></script>->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2438,6 +2604,7 @@ fn test_0166() {
             (3, "\"<!--<script>--!></script>X\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2453,6 +2620,7 @@ fn test_0167() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2467,6 +2635,7 @@ fn test_0168() {
             (3, "\"<!--<script></scr\'+\'ipt></script>X\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2482,6 +2651,7 @@ fn test_0169() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2497,6 +2667,7 @@ fn test_0170() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2512,6 +2683,7 @@ fn test_0171() {
             (1, "<body>"),
             (2, "\"...-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2527,6 +2699,7 @@ fn test_0172() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2542,6 +2715,7 @@ fn test_0173() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2559,6 +2733,7 @@ fn test_0174() {
             (3, "\"@import ...\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2574,6 +2749,7 @@ fn test_0175() {
             (2, "<!--   -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2589,6 +2765,7 @@ fn test_0176() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2604,6 +2781,7 @@ fn test_0177() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2618,6 +2796,7 @@ fn test_0178() {
             (3, "\"</title>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2632,6 +2811,7 @@ fn test_0179() {
             (3, "\"foo/title><link></head><body>X\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2647,6 +2827,7 @@ fn test_0180() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2661,6 +2842,7 @@ fn test_0181() {
             (3, "<!-- <noscript></noscript> -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2678,6 +2860,7 @@ fn test_0182() {
             (2, "<noscript>"),
             (3, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2692,6 +2875,7 @@ fn test_0183() {
             (3, "<!-- </noscript>X<noscript> -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2707,6 +2891,7 @@ fn test_0184() {
             (1, "<body>"),
             (2, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2722,6 +2907,7 @@ fn test_0185() {
             (2, "<iframe>"),
             (3, "\"</noscript>X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2737,6 +2923,7 @@ fn test_0186() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2751,6 +2938,7 @@ fn test_0187() {
             (3, "\"<body><script><!--...</script></body>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2766,6 +2954,7 @@ fn test_0188() {
             (3, "\"<!--<textarea>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2780,6 +2969,7 @@ fn test_0189() {
             (2, "<textarea>"),
             (3, "\"</textarea>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2795,6 +2985,7 @@ fn test_0190() {
             (3, "\"<!--<iframe>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2809,6 +3000,7 @@ fn test_0191() {
             (2, "<iframe>"),
             (3, "\"...<!--X->...<!--/X->...\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2824,6 +3016,7 @@ fn test_0192() {
             (3, "\"<!--<xmp>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2839,6 +3032,7 @@ fn test_0193() {
             (3, "\"<!--<noembed>\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -2847,6 +3041,7 @@ fn test_0194() {
     parse(Test {
         data: "<!doctype html><table>",
         document: vec![],
+        context_element: None,
     });
 }
 
@@ -2874,6 +3069,7 @@ fn test_0195() {
             (6, "<font>"),
             (7, "<span>"),
         ],
+        context_element: None,
     });
 }
 
@@ -2890,6 +3086,7 @@ fn test_0196() {
             (3, "<table>"),
             (4, "<form>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

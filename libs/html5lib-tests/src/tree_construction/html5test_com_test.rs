@@ -12,6 +12,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "<div<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -26,6 +27,7 @@ fn test_0001() {
             (2, "<div>"),
             (3, "foo<bar=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -40,6 +42,7 @@ fn test_0002() {
             (2, "<div>"),
             (3, "foo=\"`bar`\""),
         ],
+        context_element: None,
     });
 }
 
@@ -54,6 +57,7 @@ fn test_0003() {
             (2, "<div>"),
             (3, "\\\"foo=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -68,6 +72,7 @@ fn test_0004() {
             (2, "<a>"),
             (3, "href=\"\\nbar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -81,6 +86,7 @@ fn test_0005() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -89,6 +95,7 @@ fn test_0006() {
     parse(Test {
         data: "&lang;&rang;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"⟨⟩\"")],
+        context_element: None,
     });
 }
 
@@ -97,6 +104,7 @@ fn test_0007() {
     parse(Test {
         data: "&apos;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"\'\"")],
+        context_element: None,
     });
 }
 
@@ -105,6 +113,7 @@ fn test_0008() {
     parse(Test {
         data: "&ImaginaryI;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"ⅈ\"")],
+        context_element: None,
     });
 }
 
@@ -113,6 +122,7 @@ fn test_0009() {
     parse(Test {
         data: "&Kopf;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"𝕂\"")],
+        context_element: None,
     });
 }
 
@@ -121,6 +131,7 @@ fn test_0010() {
     parse(Test {
         data: "&notinva;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"∉\"")],
+        context_element: None,
     });
 }
 
@@ -137,6 +148,7 @@ fn test_0011() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -150,6 +162,7 @@ fn test_0012() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -163,6 +176,7 @@ fn test_0013() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -178,6 +192,7 @@ fn test_0014() {
             (3, "\"<!--\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -193,6 +208,7 @@ fn test_0015() {
             (3, "\"<!--\""),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -208,6 +224,7 @@ fn test_0016() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -223,6 +240,7 @@ fn test_0017() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -241,6 +259,7 @@ fn test_0018() {
             (3, "<li>"),
             (4, "\"B\""),
         ],
+        context_element: None,
     });
 }
 
@@ -259,6 +278,7 @@ fn test_0019() {
             (3, "<input>"),
             (4, "type=\"hidden\""),
         ],
+        context_element: None,
     });
 }
 
@@ -281,6 +301,7 @@ fn test_0020() {
             (4, "\"C\""),
             (3, "\"D\""),
         ],
+        context_element: None,
     });
 }
 
@@ -289,6 +310,7 @@ fn test_0021() {
     parse(Test {
         data: "<div></div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<div>")],
+        context_element: None,
     });
 }
 
@@ -302,6 +324,7 @@ fn test_0022() {
             (1, "<body>"),
             (2, "<svg svg>"),
         ],
+        context_element: None,
     });
 }
 
@@ -315,6 +338,7 @@ fn test_0023() {
             (1, "<body>"),
             (2, "<math math>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

@@ -14,6 +14,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -30,6 +31,7 @@ fn test_0001() {
             (1, "<body>"),
             (2, "\"--> x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -45,6 +47,7 @@ fn test_0002() {
             (1, "<body>"),
             (2, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -60,6 +63,7 @@ fn test_0003() {
             (1, "<body>"),
             (2, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -75,6 +79,7 @@ fn test_0004() {
             (3, "\" <!---> \""),
             (2, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -90,6 +95,7 @@ fn test_0005() {
             (3, "\" <!--- \""),
             (2, "\"->x --> x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -106,6 +112,7 @@ fn test_0006() {
             (1, "<body>"),
             (2, "\"--> x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -122,6 +129,7 @@ fn test_0007() {
             (1, "<body>"),
             (2, "\"--> x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -137,6 +145,7 @@ fn test_0008() {
             (3, "\" <!--- \""),
             (2, "\"->x --> x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -152,6 +161,7 @@ fn test_0009() {
             (1, "<body>"),
             (2, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -166,6 +176,7 @@ fn test_0010() {
             (2, "<p>"),
             (2, "<xmp>"),
         ],
+        context_element: None,
     });
 }
 
@@ -180,6 +191,7 @@ fn test_0011() {
             (2, "<xmp>"),
             (3, "\" <!-- > --> \""),
         ],
+        context_element: None,
     });
 }
 
@@ -194,6 +206,7 @@ fn test_0012() {
             (3, "\"&\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -208,6 +221,7 @@ fn test_0013() {
             (3, "\"<!--&-->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -222,6 +236,7 @@ fn test_0014() {
             (3, "\"<!--\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -237,6 +252,7 @@ fn test_0015() {
             (1, "<body>"),
             (2, "\"-->\""),
         ],
+        context_element: None,
     });
 }
 
@@ -251,6 +267,7 @@ fn test_0016() {
             (3, "<!-- </noscript> -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

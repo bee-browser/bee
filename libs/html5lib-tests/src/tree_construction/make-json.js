@@ -9,6 +9,7 @@ const State = {
   ERRORS: 3,
   NEW_ERRORS: 4,
   DOCUMENT: 5,
+  DOCUMENT_FRAGMENT: 6,
 };
 
 class Test {
@@ -50,6 +51,9 @@ for (const line of dat.split('\n')) {
   case '#document':
     state = State.DOCUMENT;
     continue;
+  case '#document-fragment':
+    state = State.DOCUMENT_FRAGMENT;
+    continue;
   default:
     break;
   }
@@ -79,6 +83,22 @@ for (const line of dat.split('\n')) {
       test.document.push(last);
     }
     break;
+  case State.DOCUMENT_FRAGMENT:
+    const qname = trimed.split(' ');
+    if (qname.length === 1) {
+      test.contextElement = {
+        namespace: 'html',
+        localName: qname[0],
+      };
+    } else if (qname.length === 2) {
+      test.contextElement = {
+        namespace: qname[0],
+        localName: qname[1],
+      };
+    } else {
+      console.error(`Invalid format in DOCUMENT_FRAGMENT: ${trimed}`);
+      Deno.exit(1);
+    }
   }
 }
 

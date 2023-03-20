@@ -7,6 +7,7 @@ fn test_0000() {
     parse(Test {
         data: "Test",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"Test\"")],
+        context_element: None,
     });
 }
 
@@ -15,6 +16,7 @@ fn test_0001() {
     parse(Test {
         data: "<div></div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<div>")],
+        context_element: None,
     });
 }
 
@@ -29,6 +31,7 @@ fn test_0002() {
             (2, "<div>"),
             (3, "\"Test\""),
         ],
+        context_element: None,
     });
 }
 
@@ -37,6 +40,7 @@ fn test_0003() {
     parse(Test {
         data: "<di",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -57,6 +61,7 @@ fn test_0004() {
             (2, "<div>"),
             (3, "\"Bye\""),
         ],
+        context_element: None,
     });
 }
 
@@ -72,6 +77,7 @@ fn test_0005() {
             (3, "foo=\"bar\""),
             (3, "\"Hello\""),
         ],
+        context_element: None,
     });
 }
 
@@ -92,6 +98,7 @@ fn test_0006() {
             (2, "<div>"),
             (3, "\"Bye\""),
         ],
+        context_element: None,
     });
 }
 
@@ -108,6 +115,7 @@ fn test_0007() {
             (2, "<potato>"),
             (3, "quack=\"duck\""),
         ],
+        context_element: None,
     });
 }
 
@@ -124,6 +132,7 @@ fn test_0008() {
             (3, "<potato>"),
             (4, "quack=\"duck\""),
         ],
+        context_element: None,
     });
 }
 
@@ -138,6 +147,7 @@ fn test_0009() {
             (2, "<foo>"),
             (2, "<potato>"),
         ],
+        context_element: None,
     });
 }
 
@@ -151,6 +161,7 @@ fn test_0010() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -167,6 +178,7 @@ fn test_0011() {
             (3, "<img>"),
             (3, "<img>"),
         ],
+        context_element: None,
     });
 }
 
@@ -181,6 +193,7 @@ fn test_0012() {
             (2, "<p>"),
             (3, "\"TestTest2\""),
         ],
+        context_element: None,
     });
 }
 
@@ -196,6 +209,7 @@ fn test_0013() {
             (3, "6869687=\"\""),
             (3, "problem=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -210,6 +224,7 @@ fn test_0014() {
             (2, "<a>"),
             (3, "\"test< /A>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -218,6 +233,7 @@ fn test_0015() {
     parse(Test {
         data: "&lt;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"<\"")],
+        context_element: None,
     });
 }
 
@@ -232,6 +248,7 @@ fn test_0016() {
             (2, "foo=\"bar\""),
             (2, "yo=\"mama\""),
         ],
+        context_element: None,
     });
 }
 
@@ -240,6 +257,7 @@ fn test_0017() {
     parse(Test {
         data: "<body></br foo=\"bar\"></body>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<br>")],
+        context_element: None,
     });
 }
 
@@ -255,6 +273,7 @@ fn test_0018() {
             (3, "<br>"),
             (4, "foo=\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -263,6 +282,7 @@ fn test_0019() {
     parse(Test {
         data: "<body></body></br foo=\"bar\">",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<br>")],
+        context_element: None,
     });
 }
 
@@ -278,6 +298,7 @@ fn test_0020() {
             (3, "<br>"),
             (4, "foo=\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -291,6 +312,7 @@ fn test_0021() {
             (1, "<body>"),
             (0, "<!--  Hi there  -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -308,6 +330,7 @@ fn test_0022() {
             (0, "<!--  Comment D  -->"),
             (0, "<!--  Comment E  -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -322,6 +345,7 @@ fn test_0023() {
             (2, "\"x\""),
             (2, "<!--  Hi there  -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -337,6 +361,7 @@ fn test_0024() {
             (2, "<!--  Hi there  -->"),
             (0, "<!--  Again  -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -352,6 +377,7 @@ fn test_0025() {
             (2, "<!--  Hi there  -->"),
             (0, "<!--  Again  -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -368,6 +394,7 @@ fn test_0026() {
             (4, "<rp>"),
             (5, "\"xx\""),
         ],
+        context_element: None,
     });
 }
 
@@ -384,6 +411,7 @@ fn test_0027() {
             (4, "<rt>"),
             (5, "\"xx\""),
         ],
+        context_element: None,
     });
 }
 
@@ -408,6 +436,7 @@ fn test_0028() {
             (0, "<!-- 5 -->"),
             (0, "<!-- 6 -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -438,6 +467,7 @@ fn test_0029() {
             (4, "<option>"),
             (5, "\"G\""),
         ],
+        context_element: None,
     });
 }
 
@@ -457,6 +487,7 @@ fn test_0030() {
             (3, "<li>"),
             (3, "<li>"),
         ],
+        context_element: None,
     });
 }
 
@@ -476,6 +507,7 @@ fn test_0031() {
             (5, "\"a\""),
             (4, "<nobr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -484,6 +516,7 @@ fn test_0032() {
     parse(Test {
         data: "<head></head>\n<body></body>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "\"\n\""), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -499,6 +532,7 @@ fn test_0033() {
             (1, "<body>"),
             (2, "\"ddd\""),
         ],
+        context_element: None,
     });
 }
 
@@ -518,6 +552,7 @@ fn test_0034() {
             (4, "<tbody>"),
             (5, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -538,6 +573,7 @@ fn test_0035() {
             (5, "<tr>"),
             (3, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -555,6 +591,7 @@ fn test_0036() {
             (4, "<style>"),
             (4, "<title>"),
         ],
+        context_element: None,
     });
 }
 
@@ -573,6 +610,7 @@ fn test_0037() {
             (4, "<meta>"),
             (4, "<title>"),
         ],
+        context_element: None,
     });
 }
 
@@ -590,6 +628,7 @@ fn test_0038() {
             (4, "<title>"),
             (3, "<a>"),
         ],
+        context_element: None,
     });
 }
 
@@ -605,6 +644,7 @@ fn test_0039() {
             (3, "<svg title>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -621,6 +661,7 @@ fn test_0040() {
             (4, "<rect>"),
             (5, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -637,6 +678,7 @@ fn test_0041() {
             (4, "<svg svg>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -652,6 +694,7 @@ fn test_0042() {
             (3, "<=\"\""),
             (3, "fail=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -673,6 +716,7 @@ fn test_0043() {
             (4, "<div>"),
             (5, "\"C\""),
         ],
+        context_element: None,
     });
 }
 
@@ -688,6 +732,7 @@ fn test_0044() {
             (2, "<em>"),
             (3, "<desc>"),
         ],
+        context_element: None,
     });
 }
 
@@ -708,6 +753,7 @@ fn test_0045() {
             (5, "<td>"),
             (6, "<circle>"),
         ],
+        context_element: None,
     });
 }
 
@@ -723,6 +769,7 @@ fn test_0046() {
             (3, "<svg tfoot>"),
             (4, "<svg td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -742,6 +789,7 @@ fn test_0047() {
             (4, "<math mi>"),
             (5, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -755,6 +803,7 @@ fn test_0048() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -770,6 +819,7 @@ fn test_0049() {
             (2, "<input>"),
             (3, "type=\"button\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

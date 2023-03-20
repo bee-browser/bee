@@ -7,6 +7,7 @@ fn test_0000() {
     parse(Test {
         data: "<head></head><style></style>",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<style>"), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -15,6 +16,7 @@ fn test_0001() {
     parse(Test {
         data: "<head></head><script></script>",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<script>"), (1, "<body>")],
+        context_element: None,
     });
 }
 
@@ -31,6 +33,7 @@ fn test_0002() {
             (1, "<!--   -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -48,6 +51,7 @@ fn test_0003() {
             (2, "<!--   -->"),
             (2, "<script>"),
         ],
+        context_element: None,
     });
 }
 
@@ -62,6 +66,7 @@ fn test_0004() {
             (1, "<body>"),
             (2, "<pre>"),
         ],
+        context_element: None,
     });
 }
 
@@ -77,6 +82,7 @@ fn test_0005() {
             (2, "<pre>"),
             (3, "\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -85,6 +91,7 @@ fn test_0006() {
     parse(Test {
         data: "<!DOCTYPE html><html><head></head><body><pre>",
         document: vec![],
+        context_element: None,
     });
 }
 
@@ -106,6 +113,7 @@ fn test_0007() {
             (2, "<pre>"),
             (3, "\"foo\n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -123,6 +131,7 @@ fn test_0008() {
             (2, "<span>"),
             (3, "\"\n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -138,6 +147,7 @@ fn test_0009() {
             (2, "<pre>"),
             (3, "\"x\ny\""),
         ],
+        context_element: None,
     });
 }
 
@@ -155,6 +165,7 @@ fn test_0010() {
             (3, "<div>"),
             (4, "\"\ny\""),
         ],
+        context_element: None,
     });
 }
 
@@ -170,6 +181,7 @@ fn test_0011() {
             (2, "<pre>"),
             (3, "\"\nA\""),
         ],
+        context_element: None,
     });
 }
 
@@ -184,6 +196,7 @@ fn test_0012() {
             (2, "<meta>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -197,6 +210,7 @@ fn test_0013() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -211,6 +225,7 @@ fn test_0014() {
             (2, "<textarea>"),
             (3, "\"foo<span>bar</span><i>baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -225,6 +240,7 @@ fn test_0015() {
             (3, "\"foo<span>bar</em><i>baz\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -239,6 +255,7 @@ fn test_0016() {
             (1, "<body>"),
             (2, "<textarea>"),
         ],
+        context_element: None,
     });
 }
 
@@ -254,6 +271,7 @@ fn test_0017() {
             (2, "<textarea>"),
             (3, "\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -262,6 +280,7 @@ fn test_0018() {
     parse(Test {
         data: "<!DOCTYPE html><textarea>",
         document: vec![],
+        context_element: None,
     });
 }
 
@@ -286,6 +305,7 @@ fn test_0019() {
             (5, "<p>"),
             (3, "<li>"),
         ],
+        context_element: None,
     });
 }
 
@@ -302,6 +322,7 @@ fn test_0020() {
             (2, "<nobr>"),
             (2, "<nobr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -318,6 +339,7 @@ fn test_0021() {
             (2, "<nobr>"),
             (2, "<nobr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -333,6 +355,7 @@ fn test_0022() {
             (2, "<p>"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -347,6 +370,7 @@ fn test_0023() {
             (2, "<p>"),
             (3, "<table>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

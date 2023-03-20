@@ -1,8 +1,12 @@
+use bee_htmltokenizer::InitialState;
 use bee_htmltokenizer::Tokenizer;
 
+use crate::localnames::LocalName;
 use crate::treebuilder::Control;
 use crate::treebuilder::DomTreeBuilder;
 use crate::treebuilder::TreeBuilder;
+use crate::Namespace;
+use crate::QuirksMode;
 
 pub struct Parser<T>
 where
@@ -30,6 +34,24 @@ where
 
     pub fn feed_end(&mut self) {
         self.tokenizer.feed_end();
+    }
+
+    pub fn set_quirks_mode(&mut self, quirks_mode: QuirksMode) {
+        self.tree_builder.set_quirks_mode(quirks_mode);
+    }
+
+    pub fn set_context_element(&mut self, tag_name: &str, namespace: Namespace, node: T::Node) {
+        let local_name = LocalName::lookup(tag_name);
+        self.tokenizer.set_initial_state(match local_name {
+            tag!(Title, Textarea) => InitialState::Rcdata,
+            tag!(Style, Xmp, Iframe, Noembed, Noframes) => InitialState::Rawtext,
+            tag!(Script) => InitialState::ScriptData,
+            tag!(Noscript) => InitialState::Rawtext, // TODO: Check the scripting flag
+            tag!(Plaintext) => InitialState::Plaintext,
+            _ => InitialState::Data,
+        });
+        self.tree_builder
+            .set_context_element(local_name, namespace, node);
     }
 
     pub fn parse(&mut self) {

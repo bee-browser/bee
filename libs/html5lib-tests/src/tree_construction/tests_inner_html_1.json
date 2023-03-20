@@ -5,9 +5,7 @@
       "data": "<body><span>",
       "errors": [
         "(1,6): unexpected-start-tag",
-        "(1,12): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "body"
+        "(1,12): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -15,15 +13,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "body"
+      }
     },
     {
       "data": "<span><body>",
       "errors": [
         "(1,12): unexpected-start-tag",
-        "(1,12): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "body"
+        "(1,12): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -31,15 +31,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "body"
+      }
     },
     {
       "data": "<span><body>",
       "errors": [
         "(1,12): unexpected-start-tag",
-        "(1,12): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "div"
+        "(1,12): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -47,14 +49,16 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "div"
+      }
     },
     {
       "data": "<body><span>",
       "errors": [
-        "(1,12): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "html"
+        "(1,12): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -70,15 +74,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "html"
+      }
     },
     {
       "data": "<frameset><span>",
       "errors": [
         "(1,10): unexpected-start-tag",
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "body"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -86,15 +92,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "body"
+      }
     },
     {
       "data": "<span><frameset>",
       "errors": [
         "(1,16): unexpected-start-tag",
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "body"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -102,15 +110,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "body"
+      }
     },
     {
       "data": "<span><frameset>",
       "errors": [
         "(1,16): unexpected-start-tag",
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "div"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -118,15 +128,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "div"
+      }
     },
     {
       "data": "<frameset><span>",
       "errors": [
         "(1,16): unexpected-start-tag-in-frameset",
-        "(1,16): eof-in-frameset",
-        "#document-fragment",
-        "html"
+        "(1,16): eof-in-frameset"
       ],
       "newErrors": [],
       "document": [
@@ -138,14 +150,16 @@
           0,
           "<frameset>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "html"
+      }
     },
     {
       "data": "<table><tr>",
       "errors": [
-        "(1,7): unexpected-start-tag",
-        "#document-fragment",
-        "table"
+        "(1,7): unexpected-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -157,14 +171,16 @@
           1,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "</table><tr>",
       "errors": [
-        "(1,8): unexpected-end-tag",
-        "#document-fragment",
-        "table"
+        "(1,8): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -176,15 +192,17 @@
           1,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a>",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,3): eof-in-table",
-        "#document-fragment",
-        "table"
+        "(1,3): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -192,15 +210,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a>",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,3): eof-in-table",
-        "#document-fragment",
-        "table"
+        "(1,3): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -208,15 +228,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><caption>a",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,13): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "table"
+        "(1,13): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -232,15 +254,17 @@
           1,
           "\"a\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><colgroup><col>",
       "errors": [
         "(1,3): foster-parenting-start-token",
-        "(1,18): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "table"
+        "(1,18): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -256,14 +280,16 @@
           1,
           "<col>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><tbody><tr>",
       "errors": [
-        "(1,3): foster-parenting-start-tag",
-        "#document-fragment",
-        "table"
+        "(1,3): foster-parenting-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -279,14 +305,16 @@
           1,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><tfoot><tr>",
       "errors": [
-        "(1,3): foster-parenting-start-tag",
-        "#document-fragment",
-        "table"
+        "(1,3): foster-parenting-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -302,14 +330,16 @@
           1,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><thead><tr>",
       "errors": [
-        "(1,3): foster-parenting-start-tag",
-        "#document-fragment",
-        "table"
+        "(1,3): foster-parenting-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -325,14 +355,16 @@
           1,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><tr>",
       "errors": [
-        "(1,3): foster-parenting-start-tag",
-        "#document-fragment",
-        "table"
+        "(1,3): foster-parenting-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -348,15 +380,17 @@
           1,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><th>",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,7): unexpected-cell-in-table-body",
-        "#document-fragment",
-        "table"
+        "(1,7): unexpected-cell-in-table-body"
       ],
       "newErrors": [],
       "document": [
@@ -376,15 +410,17 @@
           2,
           "<th>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<a><td>",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,7): unexpected-cell-in-table-body",
-        "#document-fragment",
-        "table"
+        "(1,7): unexpected-cell-in-table-body"
       ],
       "newErrors": [],
       "document": [
@@ -404,14 +440,16 @@
           2,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<table></table><tbody>",
       "errors": [
-        "(1,22): unexpected-start-tag",
-        "#document-fragment",
-        "caption"
+        "(1,22): unexpected-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -419,15 +457,17 @@
           0,
           "<table>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "</table><span>",
       "errors": [
         "(1,8): unexpected-end-tag",
-        "(1,14): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,14): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -435,15 +475,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span></table>",
       "errors": [
         "(1,14): unexpected-end-tag",
-        "(1,14): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,14): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -451,15 +493,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "</caption><span>",
       "errors": [
         "(1,10): XXX-undefined-error",
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -467,15 +511,17 @@
           0,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span></caption><span>",
       "errors": [
         "(1,16): XXX-undefined-error",
-        "(1,22): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,22): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -487,15 +533,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><caption><span>",
       "errors": [
         "(1,15): unexpected-start-tag",
-        "(1,21): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,21): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -507,15 +555,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><col><span>",
       "errors": [
         "(1,11): unexpected-start-tag",
-        "(1,17): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,17): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -527,15 +577,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><colgroup><span>",
       "errors": [
         "(1,16): unexpected-start-tag",
-        "(1,22): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,22): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -547,15 +599,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><html><span>",
       "errors": [
         "(1,12): non-html-root",
-        "(1,18): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,18): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -567,15 +621,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><tbody><span>",
       "errors": [
         "(1,13): unexpected-start-tag",
-        "(1,19): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,19): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -587,15 +643,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><td><span>",
       "errors": [
         "(1,10): unexpected-start-tag",
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -607,15 +665,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><tfoot><span>",
       "errors": [
         "(1,13): unexpected-start-tag",
-        "(1,19): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,19): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -627,15 +687,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><thead><span>",
       "errors": [
         "(1,13): unexpected-start-tag",
-        "(1,19): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,19): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -647,15 +709,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><th><span>",
       "errors": [
         "(1,10): unexpected-start-tag",
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -667,15 +731,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span><tr><span>",
       "errors": [
         "(1,10): unexpected-start-tag",
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -687,15 +753,17 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<span></table><span>",
       "errors": [
         "(1,14): unexpected-end-tag",
-        "(1,20): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,20): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -707,14 +775,16 @@
           1,
           "<span>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "</colgroup><col>",
       "errors": [
-        "(1,11): XXX-undefined-error",
-        "#document-fragment",
-        "colgroup"
+        "(1,11): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -722,14 +792,16 @@
           0,
           "<col>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "colgroup"
+      }
     },
     {
       "data": "<a><col>",
       "errors": [
-        "(1,3): XXX-undefined-error",
-        "#document-fragment",
-        "colgroup"
+        "(1,3): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -737,16 +809,18 @@
           0,
           "<col>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "colgroup"
+      }
     },
     {
       "data": "<caption><a>",
       "errors": [
         "(1,9): XXX-undefined-error",
         "(1,12): unexpected-start-tag-implies-table-voodoo",
-        "(1,12): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,12): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -754,16 +828,18 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<col><a>",
       "errors": [
         "(1,5): XXX-undefined-error",
         "(1,8): unexpected-start-tag-implies-table-voodoo",
-        "(1,8): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,8): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -771,16 +847,18 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<colgroup><a>",
       "errors": [
         "(1,10): XXX-undefined-error",
         "(1,13): unexpected-start-tag-implies-table-voodoo",
-        "(1,13): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,13): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -788,16 +866,18 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<tbody><a>",
       "errors": [
         "(1,7): XXX-undefined-error",
         "(1,10): unexpected-start-tag-implies-table-voodoo",
-        "(1,10): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,10): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -805,16 +885,18 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<tfoot><a>",
       "errors": [
         "(1,7): XXX-undefined-error",
         "(1,10): unexpected-start-tag-implies-table-voodoo",
-        "(1,10): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,10): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -822,16 +904,18 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<thead><a>",
       "errors": [
         "(1,7): XXX-undefined-error",
         "(1,10): unexpected-start-tag-implies-table-voodoo",
-        "(1,10): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,10): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -839,16 +923,18 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "</table><a>",
       "errors": [
         "(1,8): XXX-undefined-error",
         "(1,11): unexpected-start-tag-implies-table-voodoo",
-        "(1,11): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,11): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -856,14 +942,16 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<a><tr>",
       "errors": [
-        "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "#document-fragment",
-        "tbody"
+        "(1,3): unexpected-start-tag-implies-table-voodoo"
       ],
       "newErrors": [],
       "document": [
@@ -875,15 +963,17 @@
           0,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<a><td>",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,7): unexpected-cell-in-table-body",
-        "#document-fragment",
-        "tbody"
+        "(1,7): unexpected-cell-in-table-body"
       ],
       "newErrors": [],
       "document": [
@@ -899,15 +989,17 @@
           1,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<a><td>",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,7): unexpected-cell-in-table-body",
-        "#document-fragment",
-        "tbody"
+        "(1,7): unexpected-cell-in-table-body"
       ],
       "newErrors": [],
       "document": [
@@ -923,15 +1015,17 @@
           1,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<a><td>",
       "errors": [
         "(1,3): unexpected-start-tag-implies-table-voodoo",
-        "(1,7): unexpected-cell-in-table-body",
-        "#document-fragment",
-        "tbody"
+        "(1,7): unexpected-cell-in-table-body"
       ],
       "newErrors": [],
       "document": [
@@ -947,16 +1041,18 @@
           1,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<td><table><tbody><a><tr>",
       "errors": [
         "(1,4): unexpected-cell-in-table-body",
         "(1,21): unexpected-start-tag-implies-table-voodoo",
-        "(1,25): eof-in-table",
-        "#document-fragment",
-        "tbody"
+        "(1,25): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -984,14 +1080,16 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "</tr><td>",
       "errors": [
-        "(1,5): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,5): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -999,15 +1097,17 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<td><table><a><tr></tr><tr>",
       "errors": [
         "(1,14): unexpected-start-tag-implies-table-voodoo",
-        "(1,27): eof-in-table",
-        "#document-fragment",
-        "tr"
+        "(1,27): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -1035,14 +1135,16 @@
           3,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<caption><td>",
       "errors": [
-        "(1,9): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,9): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1050,14 +1152,16 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<col><td>",
       "errors": [
-        "(1,5): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,5): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1065,14 +1169,16 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<colgroup><td>",
       "errors": [
-        "(1,10): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,10): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1080,14 +1186,16 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<tbody><td>",
       "errors": [
-        "(1,7): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,7): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1095,14 +1203,16 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<tfoot><td>",
       "errors": [
-        "(1,7): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,7): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1110,14 +1220,16 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<thead><td>",
       "errors": [
-        "(1,7): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,7): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1125,14 +1237,16 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<tr><td>",
       "errors": [
-        "(1,4): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,4): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1140,14 +1254,16 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "</table><td>",
       "errors": [
-        "(1,8): XXX-undefined-error",
-        "#document-fragment",
-        "tr"
+        "(1,8): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1155,14 +1271,15 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<td><table></table><td>",
-      "errors": [
-        "#document-fragment",
-        "tr"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -1177,14 +1294,15 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<td><table></table><td>",
-      "errors": [
-        "#document-fragment",
-        "tr"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -1199,15 +1317,17 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<caption><a>",
       "errors": [
         "(1,9): XXX-undefined-error",
-        "(1,12): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,12): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1215,15 +1335,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<col><a>",
       "errors": [
         "(1,5): XXX-undefined-error",
-        "(1,8): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,8): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1231,15 +1353,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<colgroup><a>",
       "errors": [
         "(1,10): XXX-undefined-error",
-        "(1,13): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,13): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1247,15 +1371,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<tbody><a>",
       "errors": [
         "(1,7): XXX-undefined-error",
-        "(1,10): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,10): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1263,15 +1389,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<tfoot><a>",
       "errors": [
         "(1,7): XXX-undefined-error",
-        "(1,10): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,10): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1279,15 +1407,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<th><a>",
       "errors": [
         "(1,4): XXX-undefined-error",
-        "(1,7): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,7): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1295,15 +1425,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<thead><a>",
       "errors": [
         "(1,7): XXX-undefined-error",
-        "(1,10): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,10): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1311,15 +1443,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<tr><a>",
       "errors": [
         "(1,4): XXX-undefined-error",
-        "(1,7): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,7): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1327,15 +1461,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</table><a>",
       "errors": [
         "(1,8): XXX-undefined-error",
-        "(1,11): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,11): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1343,15 +1479,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</tbody><a>",
       "errors": [
         "(1,8): XXX-undefined-error",
-        "(1,11): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,11): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1359,15 +1497,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</td><a>",
       "errors": [
         "(1,5): unexpected-end-tag",
-        "(1,8): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,8): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1375,15 +1515,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</tfoot><a>",
       "errors": [
         "(1,8): XXX-undefined-error",
-        "(1,11): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,11): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1391,15 +1533,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</thead><a>",
       "errors": [
         "(1,8): XXX-undefined-error",
-        "(1,11): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,11): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1407,15 +1551,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</th><a>",
       "errors": [
         "(1,5): unexpected-end-tag",
-        "(1,8): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,8): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1423,15 +1569,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</tr><a>",
       "errors": [
         "(1,5): XXX-undefined-error",
-        "(1,8): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,8): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1439,15 +1587,17 @@
           0,
           "<a>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<table><td><td>",
       "errors": [
         "(1,11): unexpected-cell-in-table-body",
-        "(1,15): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,15): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -1471,14 +1621,16 @@
           3,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "</select><option>",
       "errors": [
-        "(1,9): XXX-undefined-error",
-        "#document-fragment",
-        "select"
+        "(1,9): XXX-undefined-error"
       ],
       "newErrors": [],
       "document": [
@@ -1486,14 +1638,16 @@
           0,
           "<option>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "select"
+      }
     },
     {
       "data": "<input><option>",
       "errors": [
-        "(1,7): unexpected-input-in-select",
-        "#document-fragment",
-        "select"
+        "(1,7): unexpected-input-in-select"
       ],
       "newErrors": [],
       "document": [
@@ -1501,14 +1655,16 @@
           0,
           "<option>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "select"
+      }
     },
     {
       "data": "<keygen><option>",
       "errors": [
-        "(1,8): unexpected-input-in-select",
-        "#document-fragment",
-        "select"
+        "(1,8): unexpected-input-in-select"
       ],
       "newErrors": [],
       "document": [
@@ -1516,14 +1672,16 @@
           0,
           "<option>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "select"
+      }
     },
     {
       "data": "<textarea><option>",
       "errors": [
-        "(1,10): unexpected-input-in-select",
-        "#document-fragment",
-        "select"
+        "(1,10): unexpected-input-in-select"
       ],
       "newErrors": [],
       "document": [
@@ -1531,14 +1689,16 @@
           0,
           "<option>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "select"
+      }
     },
     {
       "data": "</html><!--abc-->",
       "errors": [
-        "(1,7): unexpected-end-tag-after-body-innerhtml",
-        "#document-fragment",
-        "html"
+        "(1,7): unexpected-end-tag-after-body-innerhtml"
       ],
       "newErrors": [],
       "document": [
@@ -1554,14 +1714,16 @@
           0,
           "<!-- abc -->"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "html"
+      }
     },
     {
       "data": "</frameset><frame>",
       "errors": [
-        "(1,11): unexpected-frameset-in-frameset-innerhtml",
-        "#document-fragment",
-        "frameset"
+        "(1,11): unexpected-frameset-in-frameset-innerhtml"
       ],
       "newErrors": [],
       "document": [
@@ -1569,7 +1731,11 @@
           0,
           "<frame>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "frameset"
+      }
     }
   ]
 }

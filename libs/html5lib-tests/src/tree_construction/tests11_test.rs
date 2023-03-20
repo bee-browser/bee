@@ -71,6 +71,7 @@ fn test_0000() {
             (3, "yChannelSelector=\"\""),
             (3, "zoomAndPan=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -143,6 +144,7 @@ fn test_0001() {
             (3, "yChannelSelector=\"\""),
             (3, "zoomAndPan=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -216,6 +218,7 @@ fn test_0002() {
             (3, "yChannelSelector=\"\""),
             (3, "zoomAndPan=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -288,6 +291,7 @@ fn test_0003() {
             (3, "ychannelselector=\"\""),
             (3, "zoomandpan=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -306,6 +310,7 @@ fn test_0004() {
             (3, "externalresourcesrequired=\"\""),
             (3, "filterres=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -324,6 +329,7 @@ fn test_0005() {
             (3, "externalresourcesrequired=\"\""),
             (3, "filterres=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -342,6 +348,7 @@ fn test_0006() {
             (3, "externalresourcesrequired=\"\""),
             (3, "filterres=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -360,6 +367,7 @@ fn test_0007() {
             (3, "externalresourcesrequired=\"\""),
             (3, "filterres=\"\""),
         ],
+        context_element: None,
     });
 }
 
@@ -410,6 +418,7 @@ fn test_0008() {
             (3, "<svg radialGradient>"),
             (3, "<svg textPath>"),
         ],
+        context_element: None,
     });
 }
 
@@ -460,6 +469,7 @@ fn test_0009() {
             (3, "<svg radialGradient>"),
             (3, "<svg textPath>"),
         ],
+        context_element: None,
     });
 }
 
@@ -510,6 +520,7 @@ fn test_0010() {
             (3, "<svg radialGradient>"),
             (3, "<svg textPath>"),
         ],
+        context_element: None,
     });
 }
 
@@ -560,6 +571,7 @@ fn test_0011() {
             (3, "<math radialgradient>"),
             (3, "<math textpath>"),
         ],
+        context_element: None,
     });
 }
 
@@ -575,6 +587,7 @@ fn test_0012() {
             (2, "<svg svg>"),
             (3, "<svg solidcolor>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

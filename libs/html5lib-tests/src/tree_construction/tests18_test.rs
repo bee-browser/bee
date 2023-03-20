@@ -13,6 +13,7 @@ fn test_0000() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -28,6 +29,7 @@ fn test_0001() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -43,6 +45,7 @@ fn test_0002() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -58,6 +61,7 @@ fn test_0003() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -74,6 +78,7 @@ fn test_0004() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -89,6 +94,7 @@ fn test_0005() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -104,6 +110,7 @@ fn test_0006() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -120,6 +127,7 @@ fn test_0007() {
             (3, "\"</plaintext>\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -137,6 +145,7 @@ fn test_0008() {
             (2, "<table>"),
             (3, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -155,6 +164,7 @@ fn test_0009() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -174,6 +184,7 @@ fn test_0010() {
             (6, "<plaintext>"),
             (7, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -191,6 +202,7 @@ fn test_0011() {
             (4, "<plaintext>"),
             (5, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -208,6 +220,7 @@ fn test_0012() {
             (2, "<table>"),
             (3, "<colgroup>"),
         ],
+        context_element: None,
     });
 }
 
@@ -223,6 +236,7 @@ fn test_0013() {
             (2, "<select>"),
             (3, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -241,6 +255,7 @@ fn test_0014() {
             (3, "<caption>"),
             (4, "\"b\""),
         ],
+        context_element: None,
     });
 }
 
@@ -258,6 +273,7 @@ fn test_0015() {
             (5, "\"a</template>b\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -273,6 +289,7 @@ fn test_0016() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -286,6 +303,7 @@ fn test_0017() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -299,6 +317,7 @@ fn test_0018() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -314,6 +333,7 @@ fn test_0019() {
             (2, "<plaintext>"),
             (3, "\"</plaintext>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -327,6 +347,7 @@ fn test_0020() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -344,6 +365,7 @@ fn test_0021() {
             (4, "\"a\""),
             (3, "\"b\""),
         ],
+        context_element: None,
     });
 }
 
@@ -361,6 +383,7 @@ fn test_0022() {
             (4, "<plaintext>"),
             (5, "\"a</plaintext>b\""),
         ],
+        context_element: None,
     });
 }
 
@@ -380,6 +403,7 @@ fn test_0023() {
             (5, "<style>"),
             (6, "\"</script>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -399,6 +423,7 @@ fn test_0024() {
             (5, "<script>"),
             (6, "\"</style>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -417,6 +442,7 @@ fn test_0025() {
             (5, "\"</script>\""),
             (4, "\"abc\""),
         ],
+        context_element: None,
     });
 }
 
@@ -437,6 +463,7 @@ fn test_0026() {
             (7, "\"</script>\""),
             (6, "\"abc\""),
         ],
+        context_element: None,
     });
 }
 
@@ -454,6 +481,7 @@ fn test_0027() {
             (4, "\"</style>\""),
             (3, "\"abc\""),
         ],
+        context_element: None,
     });
 }
 
@@ -472,6 +500,7 @@ fn test_0028() {
             (3, "\"abc\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -492,6 +521,7 @@ fn test_0029() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -507,6 +537,7 @@ fn test_0030() {
             (1, "<noframes>"),
             (2, "\"abc\""),
         ],
+        context_element: None,
     });
 }
 
@@ -523,6 +554,7 @@ fn test_0031() {
             (2, "\"abc\""),
             (1, "<!-- abc -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -538,6 +570,7 @@ fn test_0032() {
             (1, "<noframes>"),
             (2, "\"abc\""),
         ],
+        context_element: None,
     });
 }
 
@@ -554,6 +587,7 @@ fn test_0033() {
             (2, "\"abc\""),
             (0, "<!-- abc -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -571,6 +605,7 @@ fn test_0034() {
             (4, "<tr>"),
             (3, "<tfoot>"),
         ],
+        context_element: None,
     });
 }
 
@@ -591,6 +626,7 @@ fn test_0035() {
             (6, "\"abc\""),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

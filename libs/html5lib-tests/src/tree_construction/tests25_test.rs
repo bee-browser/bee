@@ -14,6 +14,7 @@ fn test_0000() {
             (2, "<foo>"),
             (3, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -29,6 +30,7 @@ fn test_0001() {
             (2, "<area>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -44,6 +46,7 @@ fn test_0002() {
             (2, "<base>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -59,6 +62,7 @@ fn test_0003() {
             (2, "<basefont>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -74,6 +78,7 @@ fn test_0004() {
             (2, "<bgsound>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -89,6 +94,7 @@ fn test_0005() {
             (2, "<br>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -103,6 +109,7 @@ fn test_0006() {
             (1, "<body>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -118,6 +125,7 @@ fn test_0007() {
             (2, "<command>"),
             (3, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -133,6 +141,7 @@ fn test_0008() {
             (2, "<embed>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -147,6 +156,7 @@ fn test_0009() {
             (1, "<body>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -162,6 +172,7 @@ fn test_0010() {
             (2, "<hr>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -177,6 +188,7 @@ fn test_0011() {
             (2, "<img>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -192,6 +204,7 @@ fn test_0012() {
             (2, "<input>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -207,6 +220,7 @@ fn test_0013() {
             (2, "<keygen>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -222,6 +236,7 @@ fn test_0014() {
             (2, "<keygen>"),
             (2, "\"AB\""),
         ],
+        context_element: None,
     });
 }
 
@@ -230,6 +245,7 @@ fn test_0015() {
     parse(Test {
         data: "</keygen>A",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"A\"")],
+        context_element: None,
     });
 }
 
@@ -244,6 +260,7 @@ fn test_0016() {
             (1, "<body>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -258,6 +275,7 @@ fn test_0017() {
             (1, "<body>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -272,6 +290,7 @@ fn test_0018() {
             (1, "<body>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -286,6 +305,7 @@ fn test_0019() {
             (1, "<body>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -301,6 +321,7 @@ fn test_0020() {
             (2, "<link>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -316,6 +337,7 @@ fn test_0021() {
             (2, "<meta>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -331,6 +353,7 @@ fn test_0022() {
             (2, "<param>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -346,6 +369,7 @@ fn test_0023() {
             (2, "<source>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -361,6 +385,7 @@ fn test_0024() {
             (2, "<track>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -376,6 +401,7 @@ fn test_0025() {
             (2, "<wbr>"),
             (2, "\"A\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

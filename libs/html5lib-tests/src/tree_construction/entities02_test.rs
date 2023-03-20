@@ -13,6 +13,7 @@ fn test_0000() {
             (2, "<div>"),
             (3, "bar=\"ZZ>YY\""),
         ],
+        context_element: None,
     });
 }
 
@@ -27,6 +28,7 @@ fn test_0001() {
             (2, "<div>"),
             (3, "bar=\"ZZ&\""),
         ],
+        context_element: None,
     });
 }
 
@@ -41,6 +43,7 @@ fn test_0002() {
             (2, "<div>"),
             (3, "bar=\"ZZ&\""),
         ],
+        context_element: None,
     });
 }
 
@@ -55,6 +58,7 @@ fn test_0003() {
             (2, "<div>"),
             (3, "bar=\"ZZ&\""),
         ],
+        context_element: None,
     });
 }
 
@@ -69,6 +73,7 @@ fn test_0004() {
             (2, "<div>"),
             (3, "bar=\"ZZ&gt=YY\""),
         ],
+        context_element: None,
     });
 }
 
@@ -83,6 +88,7 @@ fn test_0005() {
             (2, "<div>"),
             (3, "bar=\"ZZ&gt0YY\""),
         ],
+        context_element: None,
     });
 }
 
@@ -97,6 +103,7 @@ fn test_0006() {
             (2, "<div>"),
             (3, "bar=\"ZZ&gt9YY\""),
         ],
+        context_element: None,
     });
 }
 
@@ -111,6 +118,7 @@ fn test_0007() {
             (2, "<div>"),
             (3, "bar=\"ZZ&gtaYY\""),
         ],
+        context_element: None,
     });
 }
 
@@ -125,6 +133,7 @@ fn test_0008() {
             (2, "<div>"),
             (3, "bar=\"ZZ&gtZYY\""),
         ],
+        context_element: None,
     });
 }
 
@@ -139,6 +148,7 @@ fn test_0009() {
             (2, "<div>"),
             (3, "bar=\"ZZ> YY\""),
         ],
+        context_element: None,
     });
 }
 
@@ -153,6 +163,7 @@ fn test_0010() {
             (2, "<div>"),
             (3, "bar=\"ZZ>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -167,6 +178,7 @@ fn test_0011() {
             (2, "<div>"),
             (3, "bar=\"ZZ>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -181,6 +193,7 @@ fn test_0012() {
             (2, "<div>"),
             (3, "bar=\"ZZ>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -195,6 +208,7 @@ fn test_0013() {
             (2, "<div>"),
             (3, "bar=\"ZZ£_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -209,6 +223,7 @@ fn test_0014() {
             (2, "<div>"),
             (3, "bar=\"ZZ&prod_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -223,6 +238,7 @@ fn test_0015() {
             (2, "<div>"),
             (3, "bar=\"ZZ£_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -237,6 +253,7 @@ fn test_0016() {
             (2, "<div>"),
             (3, "bar=\"ZZ∏_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -251,6 +268,7 @@ fn test_0017() {
             (2, "<div>"),
             (3, "bar=\"ZZ&pound=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -265,6 +283,7 @@ fn test_0018() {
             (2, "<div>"),
             (3, "bar=\"ZZ&prod=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -279,6 +298,7 @@ fn test_0019() {
             (2, "<div>"),
             (3, "\"ZZ£_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -293,6 +313,7 @@ fn test_0020() {
             (2, "<div>"),
             (3, "\"ZZ&prod_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -307,6 +328,7 @@ fn test_0021() {
             (2, "<div>"),
             (3, "\"ZZ£_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -321,6 +343,7 @@ fn test_0022() {
             (2, "<div>"),
             (3, "\"ZZ∏_id=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -335,6 +358,7 @@ fn test_0023() {
             (2, "<div>"),
             (3, "\"ZZ£=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -349,6 +373,7 @@ fn test_0024() {
             (2, "<div>"),
             (3, "\"ZZ&prod=23\""),
         ],
+        context_element: None,
     });
 }
 
@@ -363,6 +388,7 @@ fn test_0025() {
             (2, "<div>"),
             (3, "\"ZZÆ=\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

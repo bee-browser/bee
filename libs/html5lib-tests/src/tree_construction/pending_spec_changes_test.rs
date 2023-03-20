@@ -7,6 +7,7 @@ fn test_0000() {
     parse(Test {
         data: "<input type=\"hidden\"><frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 
@@ -25,6 +26,7 @@ fn test_0001() {
             (5, "\"foo\""),
             (2, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -45,6 +47,7 @@ fn test_0002() {
             (5, "<td>"),
             (6, "<circle>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

@@ -16,6 +16,7 @@ fn test_0000() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -34,6 +35,7 @@ fn test_0001() {
             (4, "<tr>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -53,6 +55,7 @@ fn test_0002() {
             (6, "<select>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -72,6 +75,7 @@ fn test_0003() {
             (6, "<select>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -90,6 +94,7 @@ fn test_0004() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -104,6 +109,7 @@ fn test_0005() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -118,6 +124,7 @@ fn test_0006() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -132,6 +139,7 @@ fn test_0007() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -146,6 +154,7 @@ fn test_0008() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -160,6 +169,7 @@ fn test_0009() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -174,6 +184,7 @@ fn test_0010() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -188,6 +199,7 @@ fn test_0011() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -205,6 +217,7 @@ fn test_0012() {
             (4, "<tr>"),
             (2, "\"a\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

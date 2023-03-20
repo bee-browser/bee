@@ -20,6 +20,7 @@ fn test_0000() {
             (5, "\"3\""),
             (4, "\"4\""),
         ],
+        context_element: None,
     });
 }
 
@@ -39,6 +40,7 @@ fn test_0001() {
             (4, "<a>"),
             (4, "<a>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

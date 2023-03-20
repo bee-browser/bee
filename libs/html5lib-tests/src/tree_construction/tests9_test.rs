@@ -13,6 +13,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "<math math>"),
         ],
+        context_element: None,
     });
 }
 
@@ -27,6 +28,7 @@ fn test_0001() {
             (1, "<body>"),
             (2, "<math math>"),
         ],
+        context_element: None,
     });
 }
 
@@ -42,6 +44,7 @@ fn test_0002() {
             (2, "<math math>"),
             (3, "<math mi>"),
         ],
+        context_element: None,
     });
 }
 
@@ -59,6 +62,7 @@ fn test_0003() {
             (4, "<svg svg>"),
             (2, "<u>"),
         ],
+        context_element: None,
     });
 }
 
@@ -73,6 +77,7 @@ fn test_0004() {
             (1, "<body>"),
             (2, "<select>"),
         ],
+        context_element: None,
     });
 }
 
@@ -88,6 +93,7 @@ fn test_0005() {
             (2, "<select>"),
             (3, "<option>"),
         ],
+        context_element: None,
     });
 }
 
@@ -103,6 +109,7 @@ fn test_0006() {
             (2, "<math math>"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -120,6 +127,7 @@ fn test_0007() {
             (4, "\"foo\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -139,6 +147,7 @@ fn test_0008() {
             (4, "\"bar\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -159,6 +168,7 @@ fn test_0009() {
             (2, "<table>"),
             (3, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -180,6 +190,7 @@ fn test_0010() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -202,6 +213,7 @@ fn test_0011() {
             (7, "<math mi>"),
             (8, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -226,6 +238,7 @@ fn test_0012() {
             (6, "<p>"),
             (7, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -248,6 +261,7 @@ fn test_0013() {
             (4, "<p>"),
             (5, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -272,6 +286,7 @@ fn test_0014() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -296,6 +311,7 @@ fn test_0015() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -320,6 +336,7 @@ fn test_0016() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -341,6 +358,7 @@ fn test_0017() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -359,6 +377,7 @@ fn test_0018() {
             (2, "<p>"),
             (3, "\"quux\""),
         ],
+        context_element: None,
     });
 }
 
@@ -379,6 +398,7 @@ fn test_0019() {
             (2, "<p>"),
             (3, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -399,6 +419,7 @@ fn test_0020() {
             (2, "<p>"),
             (3, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -412,6 +433,7 @@ fn test_0021() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -425,6 +447,7 @@ fn test_0022() {
             (1, "<head>"),
             (1, "<frameset>"),
         ],
+        context_element: None,
     });
 }
 
@@ -441,6 +464,7 @@ fn test_0023() {
             (2, "<math math>"),
             (3, "xlink href=\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -460,6 +484,7 @@ fn test_0024() {
             (4, "xlink href=\"foo\""),
             (4, "xml lang=\"en\""),
         ],
+        context_element: None,
     });
 }
 
@@ -479,6 +504,7 @@ fn test_0025() {
             (4, "xlink href=\"foo\""),
             (4, "xml lang=\"en\""),
         ],
+        context_element: None,
     });
 }
 
@@ -499,6 +525,7 @@ fn test_0026() {
             (4, "xml lang=\"en\""),
             (3, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>
