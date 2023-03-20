@@ -4,12 +4,14 @@
 // bee-tools-codegen.js --no-escape --input-stdin mod.rs.hbs
 
 mod any_other;
+mod aside;
 mod b;
 mod body;
 mod caption;
 mod col;
 mod colgroup;
 mod div;
+mod em;
 mod form;
 mod frameset;
 mod head;
@@ -50,12 +52,14 @@ where
         self.ignore_lf = false;
         let local_name = LocalName::lookup(tag.name);
         match local_name {
+            tag!(Aside) => self.handle_start_aside(&tag),
             tag!(B) => self.handle_start_b(&tag),
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Caption) => self.handle_start_caption(&tag),
             tag!(Col) => self.handle_start_col(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
             tag!(Div) => self.handle_start_div(&tag),
+            tag!(Em) => self.handle_start_em(&tag),
             tag!(Form) => self.handle_start_form(&tag),
             tag!(Frameset) => self.handle_start_frameset(&tag),
             tag!(Head) => self.handle_start_head(&tag),
@@ -93,12 +97,14 @@ where
         self.ignore_lf = false;
         let local_name = LocalName::lookup(tag.name);
         match local_name {
+            tag!(Aside) => self.handle_end_aside(&tag),
             tag!(B) => self.handle_end_b(&tag),
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Caption) => self.handle_end_caption(&tag),
             tag!(Col) => self.handle_end_col(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
             tag!(Div) => self.handle_end_div(&tag),
+            tag!(Em) => self.handle_end_em(&tag),
             tag!(Form) => self.handle_end_form(&tag),
             tag!(Frameset) => self.handle_end_frameset(&tag),
             tag!(Head) => self.handle_end_head(&tag),

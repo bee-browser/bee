@@ -144,7 +144,13 @@ where
             },
             reset_mode: InsertionMode::InBody,
             foster_parenting_insertion_point: FosterParentingInsertionPoint::LastChild(node),
-            flags: Default::default(), // TODO
+            // TODO
+            element_in_scope: Default::default(),
+            element_in_list_item_scope: Default::default(),
+            element_in_button_scope: Default::default(),
+            element_in_table_scope: Default::default(),
+            element_in_select_scope: Default::default(),
+            flags: Default::default(),
         });
         self.switch_to(match local_name {
             tag!(Select) => mode!(InSelect),
@@ -644,7 +650,16 @@ where
     #[inline(always)]
     fn push_html_applet_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Applet);
-        self.context_mut().flags -= flags!(HasPElementInButtonScope);
+        let context = self.context_mut();
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_aside_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Aside);
+        self.context_mut().element_in_scope |= ElementInScope::Aside;
     }
 
     #[inline(always)]
@@ -663,17 +678,10 @@ where
         self.push_html_element(tag, LocalName::Caption);
         let context = self.context_mut();
         context.reset_mode = mode!(InCaption);
-        context.flags -= flags!(
-            HasDivElementInScope,
-            HasFormElementInScope,
-            HasMainElementInScope,
-            HasOlElementInScope,
-            HasPreElementInScope,
-            HasUlElementInScope,
-            HasLiElementInListItemScope,
-            HasPElementInButtonScope
-        );
-        context.flags |= flags!(HasCaptionElementInTableScope);
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+        context.element_in_table_scope |= ElementInTableScope::Caption;
     }
 
     #[inline(always)]
@@ -690,7 +698,12 @@ where
     #[inline(always)]
     fn push_html_div_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Div);
-        self.context_mut().flags |= flags!(HasDivElementInScope);
+        self.context_mut().element_in_scope |= ElementInScope::Div;
+    }
+
+    #[inline(always)]
+    fn push_html_em_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Em);
     }
 
     #[inline(always)]
@@ -724,24 +737,10 @@ where
         context.reset_mode = mode!(AfterHead);
         context.foster_parenting_insertion_point =
             FosterParentingInsertionPoint::LastChild(context.open_element.node);
-        context.flags -= flags!(
-            HasDivElementInScope,
-            HasFormElementInScope,
-            HasMainElementInScope,
-            HasOlElementInScope,
-            HasPreElementInScope,
-            HasUlElementInScope,
-            HasLiElementInListItemScope,
-            HasPElementInButtonScope,
-            HasTableElementInTableScope,
-            HasCaptionElementInTableScope,
-            HasTbodyElementInTableScope,
-            HasTfootElementInTableScope,
-            HasTheadElementInTableScope,
-            HasTrElementInTableScope,
-            HasTdElementInTableScope,
-            HasThElementInTableScope,
-        );
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+        context.element_in_table_scope.clear();
     }
 
     #[inline(always)]
@@ -757,52 +756,46 @@ where
     #[inline(always)]
     fn push_html_li_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Li);
-        self.context_mut().flags |= flags!(HasLiElementInListItemScope);
+        self.context_mut().element_in_list_item_scope |= ElementInListItemScope::Li;
     }
 
     #[inline(always)]
     fn push_html_main_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Main);
-        self.context_mut().flags |= flags!(HasMainElementInScope);
+        self.context_mut().element_in_scope |= ElementInScope::Main;
     }
 
     #[inline(always)]
     fn push_html_marquee_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Marquee);
-        self.context_mut().flags -= flags!(
-            HasDivElementInScope,
-            HasFormElementInScope,
-            HasMainElementInScope,
-            HasOlElementInScope,
-            HasPreElementInScope,
-            HasUlElementInScope,
-            HasLiElementInListItemScope,
-            HasPElementInButtonScope,
-        );
+        let context = self.context_mut();
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_ol_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ol);
-        self.context_mut().flags -= flags!(HasLiElementInListItemScope);
+        self.context_mut().element_in_list_item_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_optgroup_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Optgroup);
-        self.context_mut().flags -= flags!(HasSelectElementInSelectScope);
+        self.context_mut().element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_option_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Option);
-        self.context_mut().flags -= flags!(HasSelectElementInSelectScope);
+        self.context_mut().element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_p_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::P);
-        self.context_mut().flags |= flags!(HasPElementInButtonScope);
+        self.context_mut().element_in_button_scope |= ElementInButtonScope::P;
     }
 
     #[inline(always)]
@@ -813,7 +806,7 @@ where
     #[inline(always)]
     fn push_html_pre_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Pre);
-        self.context_mut().flags |= flags!(HasPreElementInScope);
+        self.context_mut().element_in_scope |= ElementInScope::Pre;
     }
 
     #[inline(always)]
@@ -827,7 +820,7 @@ where
         // TODO
         let context = self.context_mut();
         context.reset_mode = mode!(InSelect);
-        context.flags |= flags!(HasSelectElementInSelectScope);
+        context.element_in_select_scope |= ElementInSelectScope::Select;
     }
 
     #[inline(always)]
@@ -843,25 +836,11 @@ where
         context.reset_mode = mode!(InTable);
         context.foster_parenting_insertion_point =
             FosterParentingInsertionPoint::Before(parent, context.open_element.node);
-        context.flags -= flags!(
-            HasDivElementInScope,
-            HasFormElementInScope,
-            HasDivElementInScope,
-            HasMainElementInScope,
-            HasOlElementInScope,
-            HasPreElementInScope,
-            HasUlElementInScope,
-            HasLiElementInListItemScope,
-            HasPElementInButtonScope,
-            HasCaptionElementInTableScope,
-            HasTbodyElementInTableScope,
-            HasTfootElementInTableScope,
-            HasTheadElementInTableScope,
-            HasTrElementInTableScope,
-            HasTdElementInTableScope,
-            HasThElementInTableScope,
-        );
-        context.flags |= flags!(HasTableElementInTableScope);
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+        context.element_in_table_scope.clear();
+        context.element_in_table_scope |= ElementInTableScope::Table;
     }
 
     #[inline(always)]
@@ -869,7 +848,7 @@ where
         self.push_html_element(tag, LocalName::Tbody);
         let context = self.context_mut();
         context.reset_mode = mode!(InTableBody);
-        context.flags |= flags!(HasTbodyElementInTableScope);
+        context.element_in_table_scope |= ElementInTableScope::Tbody;
     }
 
     #[inline(always)]
@@ -877,18 +856,10 @@ where
         self.push_html_element(tag, LocalName::Td);
         let context = self.context_mut();
         context.reset_mode = mode!(InCell);
-        context.flags -= flags!(
-            HasDivElementInScope,
-            HasFormElementInScope,
-            HasDivElementInScope,
-            HasMainElementInScope,
-            HasOlElementInScope,
-            HasPreElementInScope,
-            HasUlElementInScope,
-            HasLiElementInListItemScope,
-            HasPElementInButtonScope,
-        );
-        context.flags |= flags!(HasTdElementInTableScope);
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+        context.element_in_table_scope |= ElementInTableScope::Td;
     }
 
     #[inline(always)]
@@ -898,25 +869,10 @@ where
         let context = self.context_mut();
         context.foster_parenting_insertion_point =
             FosterParentingInsertionPoint::LastChild(context.open_element.node);
-        context.flags -= flags!(
-            HasDivElementInScope,
-            HasFormElementInScope,
-            HasDivElementInScope,
-            HasMainElementInScope,
-            HasOlElementInScope,
-            HasPreElementInScope,
-            HasUlElementInScope,
-            HasLiElementInListItemScope,
-            HasPElementInButtonScope,
-            HasTableElementInTableScope,
-            HasCaptionElementInTableScope,
-            HasTbodyElementInTableScope,
-            HasTfootElementInTableScope,
-            HasTheadElementInTableScope,
-            HasTrElementInTableScope,
-            HasTdElementInTableScope,
-            HasThElementInTableScope,
-        );
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+        context.element_in_table_scope.clear();
         context.flags |= flags!(HasTemplateElement);
     }
 
@@ -930,7 +886,7 @@ where
         self.push_html_element(tag, LocalName::Tfoot);
         let context = self.context_mut();
         context.reset_mode = mode!(InTableBody);
-        context.flags |= flags!(HasTfootElementInTableScope);
+        context.element_in_table_scope |= ElementInTableScope::Tfoot;
     }
 
     #[inline(always)]
@@ -938,18 +894,10 @@ where
         self.push_html_element(tag, LocalName::Th);
         let context = self.context_mut();
         context.reset_mode = mode!(InCell);
-        context.flags -= flags!(
-            HasDivElementInScope,
-            HasFormElementInScope,
-            HasDivElementInScope,
-            HasMainElementInScope,
-            HasOlElementInScope,
-            HasPreElementInScope,
-            HasUlElementInScope,
-            HasLiElementInListItemScope,
-            HasPElementInButtonScope,
-        );
-        context.flags |= flags!(HasThElementInTableScope);
+        context.element_in_scope.clear();
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+        context.element_in_table_scope |= ElementInTableScope::Th;
     }
 
     #[inline(always)]
@@ -957,7 +905,7 @@ where
         self.push_html_element(tag, LocalName::Thead);
         let context = self.context_mut();
         context.reset_mode = mode!(InTableBody);
-        context.flags |= flags!(HasTheadElementInTableScope);
+        context.element_in_table_scope |= ElementInTableScope::Thead;
     }
 
     #[inline(always)]
@@ -970,13 +918,13 @@ where
         self.push_html_element(tag, LocalName::Tr);
         let context = self.context_mut();
         context.reset_mode = mode!(InRow);
-        context.flags |= flags!(HasTrElementInTableScope);
+        context.element_in_table_scope |= ElementInTableScope::Tr;
     }
 
     #[inline(always)]
     fn push_html_ul_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ul);
-        self.context_mut().flags -= flags!(HasLiElementInListItemScope);
+        self.context_mut().element_in_list_item_scope.clear();
     }
 
     #[inline(always)]
@@ -1028,13 +976,9 @@ where
 
     fn insert_element(&mut self, open_element: OpenElement<T::Node>) {
         self.insert_node(open_element.node);
-        let context = self.context();
-        self.context_stack.push(TreeBuildContext {
-            open_element,
-            reset_mode: context.reset_mode,
-            foster_parenting_insertion_point: context.foster_parenting_insertion_point,
-            flags: context.flags,
-        });
+        let mut context = self.context().clone();
+        context.open_element = open_element;
+        self.context_stack.push(context);
         tracing::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
@@ -1078,18 +1022,23 @@ where
         let context = self.context_mut();
         match local_name {
             tag!(mathml: Mi, Mo, Mn, Ms, Mtext) => {
-                context.flags |= flags!(MathmlTextIntegrationPoint);
+                context.element_in_scope.clear();
+                context.element_in_list_item_scope.clear();
+                context.element_in_button_scope.clear();
                 context.flags -= flags!(
                     SvgIntegrationPoint,
                     SvgScript,
                     HtmlIntegrationPoint,
-                    HasPElementInButtonScope
                 );
+                context.flags |= flags!(MathmlTextIntegrationPoint);
             }
             tag!(mathml: AnnotationXml) => {
-                context.flags |= flags!(SvgIntegrationPoint);
+                context.element_in_scope.clear();
+                context.element_in_list_item_scope.clear();
+                context.element_in_button_scope.clear();
                 context.flags -=
                     flags!(MathmlTextIntegrationPoint, SvgScript, HtmlIntegrationPoint);
+                context.flags |= flags!(SvgIntegrationPoint);
             }
             _ => {
                 context.flags -= flags!(
@@ -1122,22 +1071,15 @@ where
         context.flags -= flags!(MathmlTextIntegrationPoint, SvgIntegrationPoint);
         match local_name {
             tag!(svg: Script) => {
-                context.flags |= flags!(SvgScript);
                 context.flags -= flags!(HtmlIntegrationPoint);
+                context.flags |= flags!(SvgScript);
             }
             tag!(svg: ForeignObject, Desc, Title) => {
+                context.element_in_scope.clear();
+                context.element_in_list_item_scope.clear();
+                context.element_in_button_scope.clear();
+                context.flags -= flags!(SvgScript);
                 context.flags |= flags!(HtmlIntegrationPoint);
-                context.flags -= flags!(
-                    SvgScript,
-                    HasDivElementInScope,
-                    HasFormElementInScope,
-                    HasMainElementInScope,
-                    HasOlElementInScope,
-                    HasPreElementInScope,
-                    HasUlElementInScope,
-                    HasLiElementInListItemScope,
-                    HasPElementInButtonScope,
-                );
             }
             _ => {
                 context.flags -= flags!(SvgScript, HtmlIntegrationPoint);
@@ -1291,6 +1233,11 @@ struct TreeBuildContext<T> {
     open_element: OpenElement<T>,
     reset_mode: InsertionMode,
     foster_parenting_insertion_point: FosterParentingInsertionPoint<T>,
+    element_in_scope: flagset::FlagSet<ElementInScope>,
+    element_in_list_item_scope: flagset::FlagSet<ElementInListItemScope>,
+    element_in_button_scope: flagset::FlagSet<ElementInButtonScope>,
+    element_in_table_scope: flagset::FlagSet<ElementInTableScope>,
+    element_in_select_scope: flagset::FlagSet<ElementInSelectScope>,
     flags: flagset::FlagSet<TreeBuildFlags>,
 }
 
@@ -1302,8 +1249,13 @@ where
         TreeBuildContext {
             open_element,
             reset_mode: mode!(InBody),
-            flags: Default::default(),
             foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
+            element_in_scope: Default::default(),
+            element_in_list_item_scope: Default::default(),
+            element_in_button_scope: Default::default(),
+            element_in_table_scope: Default::default(),
+            element_in_select_scope: Default::default(),
+            flags: Default::default(),
         }
     }
 
@@ -1373,123 +1325,123 @@ where
     }
 
     #[inline(always)]
+    fn has_aside_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Aside)
+    }
+
+    #[inline(always)]
     fn has_div_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasDivElementInScope))
+        self.element_in_scope.contains(ElementInScope::Div)
     }
 
     #[inline(always)]
     fn has_form_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasFormElementInScope))
+        self.element_in_scope.contains(ElementInScope::Form)
     }
 
     #[inline(always)]
     fn has_main_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasMainElementInScope))
+        self.element_in_scope.contains(ElementInScope::Main)
     }
 
     #[inline(always)]
     fn has_ol_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasOlElementInScope))
+        self.element_in_scope.contains(ElementInScope::Ol)
     }
 
     #[inline(always)]
     fn has_pre_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasPreElementInScope))
+        self.element_in_scope.contains(ElementInScope::Pre)
     }
 
     #[inline(always)]
     fn has_ul_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasUlElementInScope))
+        self.element_in_scope.contains(ElementInScope::Ul)
     }
 
     #[inline(always)]
     fn has_li_element_in_list_item_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasLiElementInListItemScope))
+        self.element_in_list_item_scope.contains(ElementInListItemScope::Li)
     }
 
     #[inline(always)]
     fn has_p_element_in_button_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasPElementInButtonScope))
-    }
-
-    #[inline(always)]
-    fn has_select_element_in_select_scope(&self) -> bool {
-        debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasSelectElementInSelectScope))
+        self.element_in_button_scope.contains(ElementInButtonScope::P)
     }
 
     #[inline(always)]
     fn has_table_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasTableElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Table)
     }
 
     #[inline(always)]
     fn has_caption_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasCaptionElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Caption)
     }
 
     #[inline(always)]
     fn has_rowgroup_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        !self.flags.is_disjoint(flags!(
-            HasTbodyElementInTableScope,
-            HasTfootElementInTableScope,
-            HasTheadElementInTableScope
-        ))
+        !self.element_in_table_scope.is_disjoint(ElementInTableScope::Tbody | ElementInTableScope::Tfoot | ElementInTableScope::Thead)
     }
 
     #[inline(always)]
     fn has_tbody_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasTbodyElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Tbody)
     }
 
     #[inline(always)]
     fn has_tfoot_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasTfootElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Tfoot)
     }
 
     #[inline(always)]
     fn has_thead_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasTheadElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Thead)
     }
 
     #[inline(always)]
     fn has_tr_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasTrElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Tr)
     }
 
     #[inline(always)]
     fn has_cell_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        !self
-            .flags
-            .is_disjoint(flags!(HasTdElementInTableScope, HasThElementInTableScope))
+        !self.element_in_table_scope.is_disjoint(ElementInTableScope::Td | ElementInTableScope::Th)
     }
 
     #[inline(always)]
     fn has_td_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasTdElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Td)
     }
 
     #[inline(always)]
     fn has_th_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.flags.contains(flags!(HasThElementInTableScope))
+        self.element_in_table_scope.contains(ElementInTableScope::Th)
+    }
+
+    #[inline(always)]
+    fn has_select_element_in_select_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_select_scope.contains(ElementInSelectScope::Select)
     }
 }
 
@@ -1557,30 +1509,46 @@ enum FosterParentingInsertionPoint<T> {
 }
 
 flagset::flags! {
-    enum TreeBuildFlags: u64 {
+    enum ElementInScope: u16 {
+        Aside,
+        Div,
+        Form,
+        Main,
+        Ol,
+        Pre,
+        Ul,
+    }
+
+    enum ElementInListItemScope: u8 {
+        Li,
+    }
+
+    enum ElementInButtonScope: u8 {
+        P,
+    }
+
+    enum ElementInTableScope: u8 {
+        Table,
+        Caption,
+        Tbody,
+        Tfoot,
+        Thead,
+        Tr,
+        Td,
+        Th,
+    }
+
+    enum ElementInSelectScope: u8 {
+        Select,
+    }
+
+    enum TreeBuildFlags: u8 {
         Removed,
         MathmlTextIntegrationPoint,
         SvgIntegrationPoint,
         SvgScript,
         HtmlIntegrationPoint,
         HasTemplateElement,
-        HasDivElementInScope,
-        HasFormElementInScope,
-        HasMainElementInScope,
-        HasOlElementInScope,
-        HasPreElementInScope,
-        HasUlElementInScope,
-        HasLiElementInListItemScope,
-        HasPElementInButtonScope,
-        HasSelectElementInSelectScope,
-        HasTableElementInTableScope,
-        HasCaptionElementInTableScope,
-        HasTbodyElementInTableScope,
-        HasTfootElementInTableScope,
-        HasTheadElementInTableScope,
-        HasTrElementInTableScope,
-        HasTdElementInTableScope,
-        HasThElementInTableScope,
     }
 }
 
