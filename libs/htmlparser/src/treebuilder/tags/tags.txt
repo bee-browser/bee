@@ -1,9 +1,11 @@
+aside
 b
 body
 caption
 col
 colgroup
 div
+em
 form
 frameset
 head
