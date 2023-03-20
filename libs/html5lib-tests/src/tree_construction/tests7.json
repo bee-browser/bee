@@ -871,9 +871,7 @@
     {
       "data": "<body>X</body></body>",
       "errors": [
-        "(1,21): unexpected-end-tag-after-body",
-        "#document-fragment",
-        "html"
+        "(1,21): unexpected-end-tag-after-body"
       ],
       "newErrors": [],
       "document": [
@@ -889,7 +887,11 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "html"
+      }
     },
     {
       "data": "<div><p>a</x> b",

@@ -12,6 +12,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "\"FOO>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -25,6 +26,7 @@ fn test_0001() {
             (1, "<body>"),
             (2, "\"FOO>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -38,6 +40,7 @@ fn test_0002() {
             (1, "<body>"),
             (2, "\"FOO> BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -51,6 +54,7 @@ fn test_0003() {
             (1, "<body>"),
             (2, "\"FOO>;;BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -64,6 +68,7 @@ fn test_0004() {
             (1, "<body>"),
             (2, "\"I\'m ¬it; I tell you\""),
         ],
+        context_element: None,
     });
 }
 
@@ -77,6 +82,7 @@ fn test_0005() {
             (1, "<body>"),
             (2, "\"I\'m ∉ I tell you\""),
         ],
+        context_element: None,
     });
 }
 
@@ -90,6 +96,7 @@ fn test_0006() {
             (1, "<body>"),
             (2, "\"&ammmp;\""),
         ],
+        context_element: None,
     });
 }
 
@@ -103,6 +110,7 @@ fn test_0007() {
             (1, "<body>"),
             (2, "\"&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;\""),
         ],
+        context_element: None,
     });
 }
 
@@ -116,6 +124,7 @@ fn test_0008() {
             (1, "<body>"),
             (2, "\"FOO& BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -130,6 +139,7 @@ fn test_0009() {
             (2, "\"FOO&\""),
             (2, "<bar>"),
         ],
+        context_element: None,
     });
 }
 
@@ -143,6 +153,7 @@ fn test_0010() {
             (1, "<body>"),
             (2, "\"FOO&&&>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -156,6 +167,7 @@ fn test_0011() {
             (1, "<body>"),
             (2, "\"FOO)BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -169,6 +181,7 @@ fn test_0012() {
             (1, "<body>"),
             (2, "\"FOOABAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -182,6 +195,7 @@ fn test_0013() {
             (1, "<body>"),
             (2, "\"FOOABAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -195,6 +209,7 @@ fn test_0014() {
             (1, "<body>"),
             (2, "\"FOO&#BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -208,6 +223,7 @@ fn test_0015() {
             (1, "<body>"),
             (2, "\"FOO&#ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -221,6 +237,7 @@ fn test_0016() {
             (1, "<body>"),
             (2, "\"FOOºR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -234,6 +251,7 @@ fn test_0017() {
             (1, "<body>"),
             (2, "\"FOO&#xZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -247,6 +265,7 @@ fn test_0018() {
             (1, "<body>"),
             (2, "\"FOO&#XZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -260,6 +279,7 @@ fn test_0019() {
             (1, "<body>"),
             (2, "\"FOO)BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -273,6 +293,7 @@ fn test_0020() {
             (1, "<body>"),
             (2, "\"FOO䆺R\""),
         ],
+        context_element: None,
     });
 }
 
@@ -286,6 +307,7 @@ fn test_0021() {
             (1, "<body>"),
             (2, "\"FOOAZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -299,6 +321,7 @@ fn test_0022() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -312,6 +335,7 @@ fn test_0023() {
             (1, "<body>"),
             (2, "\"FOOxZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -325,6 +349,7 @@ fn test_0024() {
             (1, "<body>"),
             (2, "\"FOOyZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -338,6 +363,7 @@ fn test_0025() {
             (1, "<body>"),
             (2, "\"FOO€ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -351,6 +377,7 @@ fn test_0026() {
             (1, "<body>"),
             (2, "\"FOOZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -364,6 +391,7 @@ fn test_0027() {
             (1, "<body>"),
             (2, "\"FOO‚ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -377,6 +405,7 @@ fn test_0028() {
             (1, "<body>"),
             (2, "\"FOOƒZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -390,6 +419,7 @@ fn test_0029() {
             (1, "<body>"),
             (2, "\"FOO„ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -403,6 +433,7 @@ fn test_0030() {
             (1, "<body>"),
             (2, "\"FOO…ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -416,6 +447,7 @@ fn test_0031() {
             (1, "<body>"),
             (2, "\"FOO†ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -429,6 +461,7 @@ fn test_0032() {
             (1, "<body>"),
             (2, "\"FOO‡ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -442,6 +475,7 @@ fn test_0033() {
             (1, "<body>"),
             (2, "\"FOOˆZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -455,6 +489,7 @@ fn test_0034() {
             (1, "<body>"),
             (2, "\"FOO‰ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -468,6 +503,7 @@ fn test_0035() {
             (1, "<body>"),
             (2, "\"FOOŠZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -481,6 +517,7 @@ fn test_0036() {
             (1, "<body>"),
             (2, "\"FOO‹ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -494,6 +531,7 @@ fn test_0037() {
             (1, "<body>"),
             (2, "\"FOOŒZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -507,6 +545,7 @@ fn test_0038() {
             (1, "<body>"),
             (2, "\"FOOZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -520,6 +559,7 @@ fn test_0039() {
             (1, "<body>"),
             (2, "\"FOOŽZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -533,6 +573,7 @@ fn test_0040() {
             (1, "<body>"),
             (2, "\"FOOZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -546,6 +587,7 @@ fn test_0041() {
             (1, "<body>"),
             (2, "\"FOOZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -559,6 +601,7 @@ fn test_0042() {
             (1, "<body>"),
             (2, "\"FOO‘ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -572,6 +615,7 @@ fn test_0043() {
             (1, "<body>"),
             (2, "\"FOO’ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -585,6 +629,7 @@ fn test_0044() {
             (1, "<body>"),
             (2, "\"FOO“ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -598,6 +643,7 @@ fn test_0045() {
             (1, "<body>"),
             (2, "\"FOO”ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -611,6 +657,7 @@ fn test_0046() {
             (1, "<body>"),
             (2, "\"FOO•ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -624,6 +671,7 @@ fn test_0047() {
             (1, "<body>"),
             (2, "\"FOO–ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -637,6 +685,7 @@ fn test_0048() {
             (1, "<body>"),
             (2, "\"FOO—ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -650,6 +699,7 @@ fn test_0049() {
             (1, "<body>"),
             (2, "\"FOO˜ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -663,6 +713,7 @@ fn test_0050() {
             (1, "<body>"),
             (2, "\"FOO™ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -676,6 +727,7 @@ fn test_0051() {
             (1, "<body>"),
             (2, "\"FOOšZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -689,6 +741,7 @@ fn test_0052() {
             (1, "<body>"),
             (2, "\"FOO›ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -702,6 +755,7 @@ fn test_0053() {
             (1, "<body>"),
             (2, "\"FOOœZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -715,6 +769,7 @@ fn test_0054() {
             (1, "<body>"),
             (2, "\"FOOZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -728,6 +783,7 @@ fn test_0055() {
             (1, "<body>"),
             (2, "\"FOOžZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -741,6 +797,7 @@ fn test_0056() {
             (1, "<body>"),
             (2, "\"FOOŸZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -754,6 +811,7 @@ fn test_0057() {
             (1, "<body>"),
             (2, "\"FOO ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -767,6 +825,7 @@ fn test_0058() {
             (1, "<body>"),
             (2, "\"FOO퟿ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -780,6 +839,7 @@ fn test_0059() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -793,6 +853,7 @@ fn test_0060() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -806,6 +867,7 @@ fn test_0061() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -819,6 +881,7 @@ fn test_0062() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -832,6 +895,7 @@ fn test_0063() {
             (1, "<body>"),
             (2, "\"FOOZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -845,6 +909,7 @@ fn test_0064() {
             (1, "<body>"),
             (2, "\"FOO􏿾ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -858,6 +923,7 @@ fn test_0065() {
             (1, "<body>"),
             (2, "\"FOO􈟔ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -871,6 +937,7 @@ fn test_0066() {
             (1, "<body>"),
             (2, "\"FOO􏿿ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -884,6 +951,7 @@ fn test_0067() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -897,6 +965,7 @@ fn test_0068() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -905,6 +974,7 @@ fn test_0069() {
     parse(Test {
         data: "FOO&#11111111111",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
+        context_element: None,
     });
 }
 
@@ -913,6 +983,7 @@ fn test_0070() {
     parse(Test {
         data: "FOO&#1111111111",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
+        context_element: None,
     });
 }
 
@@ -921,6 +992,7 @@ fn test_0071() {
     parse(Test {
         data: "FOO&#111111111111",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
+        context_element: None,
     });
 }
 
@@ -934,6 +1006,7 @@ fn test_0072() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -947,6 +1020,7 @@ fn test_0073() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 
@@ -960,6 +1034,7 @@ fn test_0074() {
             (1, "<body>"),
             (2, "\"FOO�ZOO\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

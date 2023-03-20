@@ -35,6 +35,7 @@ fn test_0000() {
             (4, "\"3\""),
             (3, "<nobr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -60,6 +61,7 @@ fn test_0001() {
             (2, "<nobr>"),
             (3, "\"3\""),
         ],
+        context_element: None,
     });
 }
 
@@ -85,6 +87,7 @@ fn test_0002() {
             (5, "\"3\""),
             (4, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -113,6 +116,7 @@ fn test_0003() {
             (8, "<nobr>"),
             (9, "\"3\""),
         ],
+        context_element: None,
     });
 }
 
@@ -141,6 +145,7 @@ fn test_0004() {
             (3, "<nobr>"),
             (4, "\"3\""),
         ],
+        context_element: None,
     });
 }
 
@@ -167,6 +172,7 @@ fn test_0005() {
             (3, "<nobr>"),
             (4, "\"3\""),
         ],
+        context_element: None,
     });
 }
 
@@ -189,6 +195,7 @@ fn test_0006() {
             (2, "<i>"),
             (3, "<nobr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -210,6 +217,7 @@ fn test_0007() {
             (3, "<i>"),
             (4, "\"2\""),
         ],
+        context_element: None,
     });
 }
 
@@ -231,6 +239,7 @@ fn test_0008() {
             (3, "<nobr>"),
             (4, "\"2\""),
         ],
+        context_element: None,
     });
 }
 
@@ -239,6 +248,7 @@ fn test_0009() {
     parse(Test {
         data: "<p><code x</code></p>",
         document: vec![],
+        context_element: None,
     });
 }
 
@@ -269,6 +279,7 @@ fn test_0010() {
             (4, "<i>"),
             (5, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -292,6 +303,7 @@ fn test_0011() {
             (8, "<i>"),
             (9, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -311,6 +323,7 @@ fn test_0012() {
             (4, "<i>"),
             (5, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -334,6 +347,7 @@ fn test_0013() {
             (8, "<i>"),
             (9, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -350,6 +364,7 @@ fn test_0014() {
             (3, "<!-- /div -->"),
             (3, "\"a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -365,6 +380,7 @@ fn test_0015() {
             (3, "<p>"),
             (2, "<button>"),
         ],
+        context_element: None,
     });
 }
 
@@ -380,6 +396,7 @@ fn test_0016() {
             (2, "<p>"),
             (2, "<foo>"),
         ],
+        context_element: None,
     });
 }
 
@@ -395,6 +412,7 @@ fn test_0017() {
             (2, "<br>"),
             (2, "<foo>"),
         ],
+        context_element: None,
     });
 }
 
@@ -410,6 +428,7 @@ fn test_0018() {
             (2, "<p>"),
             (2, "<foo>"),
         ],
+        context_element: None,
     });
 }
 
@@ -425,6 +444,7 @@ fn test_0019() {
             (2, "<br>"),
             (2, "<foo>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

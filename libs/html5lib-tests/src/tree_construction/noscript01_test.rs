@@ -13,6 +13,7 @@ fn test_0000() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -28,6 +29,7 @@ fn test_0001() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -41,6 +43,7 @@ fn test_0002() {
             (2, "<noscript>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -55,6 +58,7 @@ fn test_0003() {
             (3, "\"   \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -69,6 +73,7 @@ fn test_0004() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -84,6 +89,7 @@ fn test_0005() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -99,6 +105,7 @@ fn test_0006() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -114,6 +121,7 @@ fn test_0007() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -129,6 +137,7 @@ fn test_0008() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -144,6 +153,7 @@ fn test_0009() {
             (4, "\"XXX</noscript>\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -159,6 +169,7 @@ fn test_0010() {
             (4, "\"XXX\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -174,6 +185,7 @@ fn test_0011() {
             (2, "<br>"),
             (2, "<!-- foo -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -188,6 +200,7 @@ fn test_0012() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -202,6 +215,7 @@ fn test_0013() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -216,6 +230,7 @@ fn test_0014() {
             (3, "<!-- foo -->"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -231,6 +246,7 @@ fn test_0015() {
             (2, "<p>"),
             (3, "<!-- foo -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -246,6 +262,7 @@ fn test_0016() {
             (2, "\"XXX\""),
             (2, "<!-- foo -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -259,6 +276,7 @@ fn test_0017() {
             (2, "<noscript>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

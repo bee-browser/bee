@@ -10,6 +10,15 @@ fn init() {
 
 pub fn parse(test: Test) {
     let mut parser = Parser::new(TreeValidator::new(&test));
+    if let Some((namespace, local_name)) = test.context_element {
+        let namespace = match namespace {
+            "html" => Namespace::Html,
+            "mathml" => Namespace::MathMl,
+            "svg" => Namespace::Svg,
+            _ => panic!(),
+        };
+        parser.set_context_element(local_name, namespace, 0)
+    }
     parser.feed_data(test.data.encode_utf16().collect());
     parser.feed_end();
     parser.parse();
@@ -380,5 +389,6 @@ impl std::fmt::Debug for LinearNode {
 pub struct Test {
     pub data: &'static str,
     pub document: Vec<(usize, &'static str)>,
+    pub context_element: Option<(&'static str, &'static str)>, // (ns, name)
 }
 //</coverage:exclude>

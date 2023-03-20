@@ -12,6 +12,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "<isindex>"),
         ],
+        context_element: None,
     });
 }
 
@@ -29,6 +30,7 @@ fn test_0001() {
             (3, "name=\"A\""),
             (3, "prompt=\"C\""),
         ],
+        context_element: None,
     });
 }
 
@@ -43,6 +45,7 @@ fn test_0002() {
             (2, "<form>"),
             (3, "<isindex>"),
         ],
+        context_element: None,
     });
 }
 
@@ -59,6 +62,7 @@ fn test_0003() {
             (3, "\"x\""),
             (2, "\"x\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

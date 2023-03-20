@@ -15,6 +15,7 @@ fn test_0000() {
             (3, "\"\'Hello\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -30,6 +31,7 @@ fn test_0001() {
             (2, "<script>"),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -45,6 +47,7 @@ fn test_0002() {
             (2, "<script>"),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -60,6 +63,7 @@ fn test_0003() {
             (2, "<script>"),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -75,6 +79,7 @@ fn test_0004() {
             (2, "<script>"),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -91,6 +96,7 @@ fn test_0005() {
             (3, "type=\"text/plain\""),
             (3, "\"</scriptx>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -106,6 +112,7 @@ fn test_0006() {
             (2, "<script>"),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -122,6 +129,7 @@ fn test_0007() {
             (3, "\"\'<\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -138,6 +146,7 @@ fn test_0008() {
             (3, "\"\'<!\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -154,6 +163,7 @@ fn test_0009() {
             (3, "\"\'<!-\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -170,6 +180,7 @@ fn test_0010() {
             (3, "\"\'<!--\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -186,6 +197,7 @@ fn test_0011() {
             (3, "\"\'<!---\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -202,6 +214,7 @@ fn test_0012() {
             (3, "\"\'<!-->\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -218,6 +231,7 @@ fn test_0013() {
             (3, "\"\'<!-->\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -234,6 +248,7 @@ fn test_0014() {
             (3, "\"\'<!-- potato\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -250,6 +265,7 @@ fn test_0015() {
             (3, "\"\'<!-- <sCrIpt\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -266,6 +282,7 @@ fn test_0016() {
             (3, "type=\"text/plain\""),
             (3, "\"\'<!-- <sCrIpt>\'</script>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -282,6 +299,7 @@ fn test_0017() {
             (3, "type=\"text/plain\""),
             (3, "\"\'<!-- <sCrIpt> -\'</script>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -298,6 +316,7 @@ fn test_0018() {
             (3, "type=\"text/plain\""),
             (3, "\"\'<!-- <sCrIpt> --\'</script>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -314,6 +333,7 @@ fn test_0019() {
             (3, "\"\'<!-- <sCrIpt> -->\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -330,6 +350,7 @@ fn test_0020() {
             (3, "type=\"text/plain\""),
             (3, "\"\'<!-- <sCrIpt> --!>\'</script>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -346,6 +367,7 @@ fn test_0021() {
             (3, "type=\"text/plain\""),
             (3, "\"\'<!-- <sCrIpt> -- >\'</script>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -362,6 +384,7 @@ fn test_0022() {
             (3, "type=\"text/plain\""),
             (3, "\"\'<!-- <sCrIpt \'</script>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -378,6 +401,7 @@ fn test_0023() {
             (3, "type=\"text/plain\""),
             (3, "\"\'<!-- <sCrIpt/\'</script>BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -395,6 +419,7 @@ fn test_0024() {
             (3, "\"\'<!-- <sCrIpt\\\'\""),
             (2, "\"BAR\""),
         ],
+        context_element: None,
     });
 }
 
@@ -412,6 +437,7 @@ fn test_0025() {
             (3, "\"\'<!-- <sCrIpt/\'</script>BAR\""),
             (2, "\"QUX\""),
         ],
+        context_element: None,
     });
 }
 
@@ -428,6 +454,7 @@ fn test_0026() {
             (3, "\"<!--<script>-></script>-->\""),
             (2, "\"QUX\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

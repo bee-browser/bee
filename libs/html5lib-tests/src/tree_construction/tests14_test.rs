@@ -13,6 +13,7 @@ fn test_0000() {
             (1, "<body>"),
             (2, "<xyz:abc>"),
         ],
+        context_element: None,
     });
 }
 
@@ -28,6 +29,7 @@ fn test_0001() {
             (2, "<xyz:abc>"),
             (2, "<span>"),
         ],
+        context_element: None,
     });
 }
 
@@ -43,6 +45,7 @@ fn test_0002() {
             (1, "<body>"),
             (2, "<xyz:abc>"),
         ],
+        context_element: None,
     });
 }
 
@@ -57,6 +60,7 @@ fn test_0003() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -71,6 +75,7 @@ fn test_0004() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -86,6 +91,7 @@ fn test_0005() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -100,6 +106,7 @@ fn test_0006() {
             (1, "<body>"),
             (2, "789=\"012\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

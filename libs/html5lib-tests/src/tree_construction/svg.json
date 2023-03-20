@@ -5,9 +5,7 @@
       "data": "<svg><tr><td><title><tr>",
       "errors": [
         "(1:21) Unexpected <tr> tag",
-        "(1:25) Unexpected EOF",
-        "#document-fragment",
-        "td"
+        "(1:25) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -27,16 +25,18 @@
           3,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<svg><tr><td><title><tr>",
       "errors": [
         "(1:1) Unexpected <svg> tag",
         "(1:21) Unexpected <tr> tag",
-        "(1:25) Unexpected EOF",
-        "#document-fragment",
-        "tr"
+        "(1:25) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -56,16 +56,18 @@
           3,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<svg><thead><title><tbody>",
       "errors": [
         "(1:1) Unexpected <svg> tag",
         "(1:20) Unexpected <tbody> tag",
-        "(1:27) Unexpected EOF",
-        "#document-fragment",
-        "thead"
+        "(1:27) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -81,16 +83,18 @@
           2,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "thead"
+      }
     },
     {
       "data": "<svg><tfoot><title><tbody>",
       "errors": [
         "(1:1) Unexpected <svg> tag",
         "(1:20) Unexpected <tbody> tag",
-        "(1:27) Unexpected EOF",
-        "#document-fragment",
-        "tfoot"
+        "(1:27) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -106,16 +110,18 @@
           2,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tfoot"
+      }
     },
     {
       "data": "<svg><tbody><title><tfoot>",
       "errors": [
         "(1:1) Unexpected <svg> tag",
         "(1:20) Unexpected <tfoot> tag",
-        "(1:27) Unexpected EOF",
-        "#document-fragment",
-        "tbody"
+        "(1:27) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -131,16 +137,18 @@
           2,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<svg><tbody><title></table>",
       "errors": [
         "(1:1) Unexpected <svg> tag",
         "(1:20) Unexpected </table> tag",
-        "(1:28) Unexpected EOF",
-        "#document-fragment",
-        "tbody"
+        "(1:28) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -156,16 +164,18 @@
           2,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<svg><thead><title></table>",
       "errors": [
         "(1:1) Unexpected <svg> tag",
         "(1:20) Unexpected </table> tag",
-        "(1:28) Unexpected EOF",
-        "#document-fragment",
-        "tbody"
+        "(1:28) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -181,16 +191,18 @@
           2,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<svg><tfoot><title></table>",
       "errors": [
         "(1:1) Unexpected <svg> tag",
         "(1:20) Unexpected </table> tag",
-        "(1:28) Unexpected EOF",
-        "#document-fragment",
-        "tbody"
+        "(1:28) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -206,7 +218,11 @@
           2,
           "<svg title>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     }
   ]
 }

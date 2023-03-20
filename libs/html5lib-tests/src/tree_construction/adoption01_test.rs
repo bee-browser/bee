@@ -14,6 +14,7 @@ fn test_0000() {
             (2, "<p>"),
             (3, "<a>"),
         ],
+        context_element: None,
     });
 }
 
@@ -32,6 +33,7 @@ fn test_0001() {
             (4, "\"2\""),
             (3, "\"3\""),
         ],
+        context_element: None,
     });
 }
 
@@ -50,6 +52,7 @@ fn test_0002() {
             (4, "\"2\""),
             (3, "\"3\""),
         ],
+        context_element: None,
     });
 }
 
@@ -68,6 +71,7 @@ fn test_0003() {
             (2, "<b>"),
             (3, "\"3\""),
         ],
+        context_element: None,
     });
 }
 
@@ -90,6 +94,7 @@ fn test_0004() {
             (4, "\"4\""),
             (3, "\"5\""),
         ],
+        context_element: None,
     });
 }
 
@@ -109,6 +114,7 @@ fn test_0005() {
             (3, "\"3\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -126,6 +132,7 @@ fn test_0006() {
             (4, "<p>"),
             (5, "<a>"),
         ],
+        context_element: None,
     });
 }
 
@@ -144,6 +151,7 @@ fn test_0007() {
             (4, "<p>"),
             (5, "<a>"),
         ],
+        context_element: None,
     });
 }
 
@@ -163,6 +171,7 @@ fn test_0008() {
             (4, "<p>"),
             (5, "<a>"),
         ],
+        context_element: None,
     });
 }
 
@@ -191,6 +200,7 @@ fn test_0009() {
             (3, "id=\"B\""),
             (3, "\"5\""),
         ],
+        context_element: None,
     });
 }
 
@@ -212,6 +222,7 @@ fn test_0010() {
             (5, "<td>"),
             (6, "\"2\""),
         ],
+        context_element: None,
     });
 }
 
@@ -230,6 +241,7 @@ fn test_0011() {
             (5, "<td>"),
             (6, "\"B\""),
         ],
+        context_element: None,
     });
 }
 
@@ -246,6 +258,7 @@ fn test_0012() {
             (4, "<svg tr>"),
             (5, "<svg input>"),
         ],
+        context_element: None,
     });
 }
 
@@ -280,6 +293,7 @@ fn test_0013() {
             (13, "<div>"),
             (14, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -303,6 +317,7 @@ fn test_0014() {
             (6, "<div>"),
             (7, "<a>"),
         ],
+        context_element: None,
     });
 }
 
@@ -321,6 +336,7 @@ fn test_0015() {
             (6, "\"x\""),
             (2, "\"y\""),
         ],
+        context_element: None,
     });
 }
 
@@ -343,6 +359,7 @@ fn test_0016() {
             (5, "<b>"),
             (6, "\"x\""),
         ],
+        context_element: None,
     });
 }
 
@@ -359,6 +376,7 @@ fn test_0017() {
             (0, "<aside>"),
             (1, "<b>"),
         ],
+        context_element: Some(("html", "div")),
     });
 }
 //</coverage:exclude>

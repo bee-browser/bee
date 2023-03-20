@@ -12,12 +12,12 @@ mod.rs: mod.rs.hbs $(DATA_FILES)
 	@echo 'Generating $(abspath $@)...'
 	@echo -n $(TEST_NAMES) | \
 	  jq -Rsc 'split(" ")' | \
-	  $(BEE_TOOLS) codegen --input-stdin $< | \
+	  $(BEE_TOOLS) codegen --no-escape --input-stdin $< | \
 	  rustfmt --emit=stdout >$@
 
 %_test.rs: %.json test.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen test.rs.hbs $< | rustfmt --emit=stdout >$@
+	@$(BEE_TOOLS) codegen --no-escape test.rs.hbs $< | rustfmt --emit=stdout >$@
 
 .PRECIOUS: %.json
 %.json: $(DATA_DIR)/%.dat make-json.js

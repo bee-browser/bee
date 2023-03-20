@@ -190,9 +190,7 @@
       "data": "<body>\n<div>",
       "errors": [
         "(1,6): unexpected-start-tag",
-        "(2,5): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "div"
+        "(2,5): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -204,7 +202,11 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "div"
+      }
     },
     {
       "data": "<frameset></frameset>\nfoo",
@@ -519,9 +521,7 @@
       "data": "</caption><div>",
       "errors": [
         "(1,10): XXX-undefined-error",
-        "(1,15): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,15): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -529,7 +529,11 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<table><caption><div></caption>",
@@ -599,9 +603,7 @@
       "data": "</table><div>",
       "errors": [
         "(1,8): unexpected-end-tag",
-        "(1,13): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "caption"
+        "(1,13): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -609,7 +611,11 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "caption"
+      }
     },
     {
       "data": "<table><caption></body></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
@@ -736,9 +742,7 @@
         "(1,24): unexpected-end-tag",
         "(1,32): unexpected-end-tag",
         "(1,37): unexpected-end-tag",
-        "(1,42): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "td"
+        "(1,42): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -746,7 +750,11 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "td"
+      }
     },
     {
       "data": "<table><colgroup>foo",
@@ -790,9 +798,7 @@
       "errors": [
         "(1,1): unexpected-character-in-colgroup",
         "(1,2): unexpected-character-in-colgroup",
-        "(1,3): unexpected-character-in-colgroup",
-        "#document-fragment",
-        "colgroup"
+        "(1,3): unexpected-character-in-colgroup"
       ],
       "newErrors": [],
       "document": [
@@ -800,7 +806,11 @@
           0,
           "<col>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "colgroup"
+      }
     },
     {
       "data": "<table><colgroup></col>",
@@ -859,9 +869,7 @@
     {
       "data": "</frameset><frame>",
       "errors": [
-        "(1,11): unexpected-frameset-in-frameset-innerhtml",
-        "#document-fragment",
-        "frameset"
+        "(1,11): unexpected-frameset-in-frameset-innerhtml"
       ],
       "newErrors": [],
       "document": [
@@ -869,7 +877,11 @@
           0,
           "<frame>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "frameset"
+      }
     },
     {
       "data": "<frameset></div>",
@@ -898,9 +910,7 @@
       "data": "</body><div>",
       "errors": [
         "(1,7): unexpected-close-tag",
-        "(1,12): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "body"
+        "(1,12): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -908,7 +918,11 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "body"
+      }
     },
     {
       "data": "<table><tr><div>",
@@ -952,9 +966,7 @@
     {
       "data": "</tr><td>",
       "errors": [
-        "(1,5): unexpected-end-tag",
-        "#document-fragment",
-        "tr"
+        "(1,5): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -962,16 +974,18 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "</tbody></tfoot></thead><td>",
       "errors": [
         "(1,8): unexpected-end-tag",
         "(1,16): unexpected-end-tag",
-        "(1,24): unexpected-end-tag",
-        "#document-fragment",
-        "tr"
+        "(1,24): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -979,7 +993,11 @@
           0,
           "<td>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tr"
+      }
     },
     {
       "data": "<table><tr><div><td>",
@@ -1032,9 +1050,7 @@
         "(1,24): unexpected-start-tag",
         "(1,31): unexpected-start-tag",
         "(1,38): unexpected-start-tag",
-        "(1,45): unexpected-start-tag",
-        "#document-fragment",
-        "tbody"
+        "(1,45): unexpected-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -1042,7 +1058,11 @@
           0,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<table><tbody></thead>",
@@ -1078,9 +1098,7 @@
     {
       "data": "</table><tr>",
       "errors": [
-        "(1,8): unexpected-end-tag",
-        "#document-fragment",
-        "tbody"
+        "(1,8): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -1088,7 +1106,11 @@
           0,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "tbody"
+      }
     },
     {
       "data": "<table><tbody></body></caption></col></colgroup></html></td></th></tr>",
@@ -1231,9 +1253,7 @@
     {
       "data": "</table><tr>",
       "errors": [
-        "(1,8): unexpected-end-tag",
-        "#document-fragment",
-        "table"
+        "(1,8): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -1245,14 +1265,16 @@
           1,
           "<tr>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "table"
+      }
     },
     {
       "data": "<body></body></html>",
       "errors": [
-        "(1,20): unexpected-end-tag-after-body-innerhtml",
-        "#document-fragment",
-        "html"
+        "(1,20): unexpected-end-tag-after-body-innerhtml"
       ],
       "newErrors": [],
       "document": [
@@ -1264,7 +1286,11 @@
           0,
           "<body>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "html"
+      }
     },
     {
       "data": "<html><frameset></frameset></html> ",

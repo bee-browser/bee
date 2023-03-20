@@ -13,6 +13,7 @@ fn test_0000() {
             (2, "<button>"),
             (3, "\"1\""),
         ],
+        context_element: None,
     });
 }
 
@@ -29,6 +30,7 @@ fn test_0001() {
             (3, "<p>"),
             (4, "\"2\""),
         ],
+        context_element: None,
     });
 }
 
@@ -43,6 +45,7 @@ fn test_0002() {
             (2, "<dd>"),
             (3, "\"1\""),
         ],
+        context_element: None,
     });
 }
 
@@ -59,6 +62,7 @@ fn test_0003() {
             (3, "<dd>"),
             (4, "\"2\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

@@ -13,6 +13,7 @@ fn test_0000() {
             (2, "<svg svg>"),
             (3, "\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -27,6 +28,7 @@ fn test_0001() {
             (2, "<math math>"),
             (3, "\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -41,6 +43,7 @@ fn test_0002() {
             (2, "<div>"),
             (3, "<!-- [CDATA[foo]] -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -55,6 +58,7 @@ fn test_0003() {
             (2, "<svg svg>"),
             (3, "\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -69,6 +73,7 @@ fn test_0004() {
             (2, "<svg svg>"),
             (3, "\"foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -82,6 +87,7 @@ fn test_0005() {
             (1, "<body>"),
             (2, "<svg svg>"),
         ],
+        context_element: None,
     });
 }
 
@@ -95,6 +101,7 @@ fn test_0006() {
             (1, "<body>"),
             (2, "<svg svg>"),
         ],
+        context_element: None,
     });
 }
 
@@ -109,6 +116,7 @@ fn test_0007() {
             (2, "<svg svg>"),
             (3, "\"]] >\""),
         ],
+        context_element: None,
     });
 }
 
@@ -123,6 +131,7 @@ fn test_0008() {
             (2, "<svg svg>"),
             (3, "\"]] >\""),
         ],
+        context_element: None,
     });
 }
 
@@ -137,6 +146,7 @@ fn test_0009() {
             (2, "<svg svg>"),
             (3, "\"]]\""),
         ],
+        context_element: None,
     });
 }
 
@@ -151,6 +161,7 @@ fn test_0010() {
             (2, "<svg svg>"),
             (3, "\"]\""),
         ],
+        context_element: None,
     });
 }
 
@@ -165,6 +176,7 @@ fn test_0011() {
             (2, "<svg svg>"),
             (3, "\"]>a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -180,6 +192,7 @@ fn test_0012() {
             (2, "<svg svg>"),
             (3, "\"foo]\""),
         ],
+        context_element: None,
     });
 }
 
@@ -195,6 +208,7 @@ fn test_0013() {
             (2, "<svg svg>"),
             (3, "\"foo]]\""),
         ],
+        context_element: None,
     });
 }
 
@@ -210,6 +224,7 @@ fn test_0014() {
             (2, "<svg svg>"),
             (3, "\"foo]]]\""),
         ],
+        context_element: None,
     });
 }
 
@@ -226,6 +241,7 @@ fn test_0015() {
             (4, "<div>"),
             (5, "<!-- [CDATA[foo]] -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -240,6 +256,7 @@ fn test_0016() {
             (2, "<svg svg>"),
             (3, "\"<svg>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -254,6 +271,7 @@ fn test_0017() {
             (2, "<svg svg>"),
             (3, "\"</svg>a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -268,6 +286,7 @@ fn test_0018() {
             (2, "<svg svg>"),
             (3, "\"<svg>a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -282,6 +301,7 @@ fn test_0019() {
             (2, "<svg svg>"),
             (3, "\"</svg>a\""),
         ],
+        context_element: None,
     });
 }
 
@@ -297,6 +317,7 @@ fn test_0020() {
             (3, "\"<svg>\""),
             (3, "<svg path>"),
         ],
+        context_element: None,
     });
 }
 
@@ -311,6 +332,7 @@ fn test_0021() {
             (2, "<svg svg>"),
             (3, "\"<svg>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -326,6 +348,7 @@ fn test_0022() {
             (3, "\"<svg>\""),
             (3, "<!-- path -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -340,6 +363,7 @@ fn test_0023() {
             (2, "<svg svg>"),
             (3, "\"<svg>path\""),
         ],
+        context_element: None,
     });
 }
 
@@ -354,6 +378,7 @@ fn test_0024() {
             (2, "<svg svg>"),
             (3, "\"<!--svg-->\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

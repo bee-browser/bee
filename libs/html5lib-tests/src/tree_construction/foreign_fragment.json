@@ -5,9 +5,7 @@
       "data": "<nobr>X",
       "errors": [
         "6: HTML start tag “nobr” in a foreign namespace context.",
-        "7: End of file seen and there were open elements.",
-        "#document-fragment",
-        "svg path"
+        "7: End of file seen and there were open elements."
       ],
       "newErrors": [],
       "document": [
@@ -19,14 +17,16 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "path"
+      }
     },
     {
       "data": "<font color></font>X",
       "errors": [
-        "12: HTML start tag “font” in a foreign namespace context.",
-        "#document-fragment",
-        "svg path"
+        "12: HTML start tag “font” in a foreign namespace context."
       ],
       "newErrors": [],
       "document": [
@@ -42,14 +42,15 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "path"
+      }
     },
     {
       "data": "<font></font>X",
-      "errors": [
-        "#document-fragment",
-        "svg path"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -60,15 +61,17 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "path"
+      }
     },
     {
       "data": "<g></path>X",
       "errors": [
         "10: End tag “path” did not match the name of the current open element (“g”).",
-        "11: End of file seen and there were open elements.",
-        "#document-fragment",
-        "svg path"
+        "11: End of file seen and there were open elements."
       ],
       "newErrors": [],
       "document": [
@@ -80,14 +83,16 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "path"
+      }
     },
     {
       "data": "</path>X",
       "errors": [
-        "5: Stray end tag “path”.",
-        "#document-fragment",
-        "svg path"
+        "5: Stray end tag “path”."
       ],
       "newErrors": [],
       "document": [
@@ -95,14 +100,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "path"
+      }
     },
     {
       "data": "</foreignObject>X",
       "errors": [
-        "5: Stray end tag “foreignobject”.",
-        "#document-fragment",
-        "svg foreignObject"
+        "5: Stray end tag “foreignobject”."
       ],
       "newErrors": [],
       "document": [
@@ -110,14 +117,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "foreignObject"
+      }
     },
     {
       "data": "</desc>X",
       "errors": [
-        "5: Stray end tag “desc”.",
-        "#document-fragment",
-        "svg desc"
+        "5: Stray end tag “desc”."
       ],
       "newErrors": [],
       "document": [
@@ -125,14 +134,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "</title>X",
       "errors": [
-        "5: Stray end tag “title”.",
-        "#document-fragment",
-        "svg title"
+        "5: Stray end tag “title”."
       ],
       "newErrors": [],
       "document": [
@@ -140,14 +151,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "title"
+      }
     },
     {
       "data": "</svg>X",
       "errors": [
-        "5: Stray end tag “svg”.",
-        "#document-fragment",
-        "svg svg"
+        "5: Stray end tag “svg”."
       ],
       "newErrors": [],
       "document": [
@@ -155,14 +168,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "</mfenced>X",
       "errors": [
-        "5: Stray end tag “mfenced”.",
-        "#document-fragment",
-        "math mfenced"
+        "5: Stray end tag “mfenced”."
       ],
       "newErrors": [],
       "document": [
@@ -170,14 +185,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mfenced"
+      }
     },
     {
       "data": "</malignmark>X",
       "errors": [
-        "5: Stray end tag “malignmark”.",
-        "#document-fragment",
-        "math malignmark"
+        "5: Stray end tag “malignmark”."
       ],
       "newErrors": [],
       "document": [
@@ -185,14 +202,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "malignmark"
+      }
     },
     {
       "data": "</math>X",
       "errors": [
-        "5: Stray end tag “math”.",
-        "#document-fragment",
-        "math math"
+        "5: Stray end tag “math”."
       ],
       "newErrors": [],
       "document": [
@@ -200,14 +219,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "math"
+      }
     },
     {
       "data": "</annotation-xml>X",
       "errors": [
-        "5: Stray end tag “annotation-xml”.",
-        "#document-fragment",
-        "math annotation-xml"
+        "5: Stray end tag “annotation-xml”."
       ],
       "newErrors": [],
       "document": [
@@ -215,14 +236,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "annotation-xml"
+      }
     },
     {
       "data": "</mtext>X",
       "errors": [
-        "5: Stray end tag “mtext”.",
-        "#document-fragment",
-        "math mtext"
+        "5: Stray end tag “mtext”."
       ],
       "newErrors": [],
       "document": [
@@ -230,14 +253,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mtext"
+      }
     },
     {
       "data": "</mi>X",
       "errors": [
-        "5: Stray end tag “mi”.",
-        "#document-fragment",
-        "math mi"
+        "5: Stray end tag “mi”."
       ],
       "newErrors": [],
       "document": [
@@ -245,14 +270,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mi"
+      }
     },
     {
       "data": "</mo>X",
       "errors": [
-        "5: Stray end tag “mo”.",
-        "#document-fragment",
-        "math mo"
+        "5: Stray end tag “mo”."
       ],
       "newErrors": [],
       "document": [
@@ -260,14 +287,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mo"
+      }
     },
     {
       "data": "</mn>X",
       "errors": [
-        "5: Stray end tag “mn”.",
-        "#document-fragment",
-        "math mn"
+        "5: Stray end tag “mn”."
       ],
       "newErrors": [],
       "document": [
@@ -275,14 +304,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mn"
+      }
     },
     {
       "data": "</ms>X",
       "errors": [
-        "5: Stray end tag “ms”.",
-        "#document-fragment",
-        "math ms"
+        "5: Stray end tag “ms”."
       ],
       "newErrors": [],
       "document": [
@@ -290,7 +321,11 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "ms"
+      }
     },
     {
       "data": "<b></b><mglyph/><i></i><malignmark/><u></u><ms/>X",
@@ -299,9 +334,7 @@
         "52: End of file seen and there were open elements."
       ],
       "newErrors": [
-        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
-        "#document-fragment",
-        "math ms"
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus"
       ],
       "document": [
         [
@@ -332,49 +365,56 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "ms"
+      }
     },
     {
       "data": "<malignmark></malignmark>",
-      "errors": [
-        "#document-fragment",
-        "math ms"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<math malignmark>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "ms"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "math ms"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "ms"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "math ms"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "ms"
+      }
     },
     {
       "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mn/>X",
@@ -383,9 +423,7 @@
         "52: End of file seen and there were open elements."
       ],
       "newErrors": [
-        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
-        "#document-fragment",
-        "math mn"
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus"
       ],
       "document": [
         [
@@ -416,49 +454,56 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mn"
+      }
     },
     {
       "data": "<malignmark></malignmark>",
-      "errors": [
-        "#document-fragment",
-        "math mn"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<math malignmark>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mn"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "math mn"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mn"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "math mn"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mn"
+      }
     },
     {
       "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mo/>X",
@@ -467,9 +512,7 @@
         "52: End of file seen and there were open elements."
       ],
       "newErrors": [
-        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
-        "#document-fragment",
-        "math mo"
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus"
       ],
       "document": [
         [
@@ -500,49 +543,56 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mo"
+      }
     },
     {
       "data": "<malignmark></malignmark>",
-      "errors": [
-        "#document-fragment",
-        "math mo"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<math malignmark>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mo"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "math mo"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mo"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "math mo"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mo"
+      }
     },
     {
       "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mi/>X",
@@ -551,9 +601,7 @@
         "52: End of file seen and there were open elements."
       ],
       "newErrors": [
-        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus",
-        "#document-fragment",
-        "math mi"
+        "(1:44-1:49) non-void-html-element-start-tag-with-trailing-solidus"
       ],
       "document": [
         [
@@ -584,49 +632,56 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mi"
+      }
     },
     {
       "data": "<malignmark></malignmark>",
-      "errors": [
-        "#document-fragment",
-        "math mi"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<math malignmark>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mi"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "math mi"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mi"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "math mi"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mi"
+      }
     },
     {
       "data": "<b></b><mglyph/><i></i><malignmark/><u></u><mtext/>X",
@@ -635,9 +690,7 @@
         "52: End of file seen and there were open elements."
       ],
       "newErrors": [
-        "(1:44-1:52) non-void-html-element-start-tag-with-trailing-solidus",
-        "#document-fragment",
-        "math mtext"
+        "(1:44-1:52) non-void-html-element-start-tag-with-trailing-solidus"
       ],
       "document": [
         [
@@ -668,56 +721,61 @@
           1,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mtext"
+      }
     },
     {
       "data": "<malignmark></malignmark>",
-      "errors": [
-        "#document-fragment",
-        "math mtext"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<math malignmark>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mtext"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "math mtext"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mtext"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "math mtext"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "mtext"
+      }
     },
     {
       "data": "<div></div>",
       "errors": [
-        "5: HTML start tag “div” in a foreign namespace context.",
-        "#document-fragment",
-        "math annotation-xml"
+        "5: HTML start tag “div” in a foreign namespace context."
       ],
       "newErrors": [],
       "document": [
@@ -725,28 +783,31 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "annotation-xml"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "math annotation-xml"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<math figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "annotation-xml"
+      }
     },
     {
       "data": "<div></div>",
       "errors": [
-        "5: HTML start tag “div” in a foreign namespace context.",
-        "#document-fragment",
-        "math math"
+        "5: HTML start tag “div” in a foreign namespace context."
       ],
       "newErrors": [],
       "document": [
@@ -754,98 +815,106 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "math"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "math math"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<math figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "math",
+        "localName": "math"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "svg foreignObject"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "foreignObject"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "svg foreignObject"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "foreignObject"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "svg title"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "title"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "svg title"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "title"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "svg desc"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<div><h1>X</h1></div>",
       "errors": [
-        "5: HTML start tag “div” in a foreign namespace context.",
-        "#document-fragment",
-        "svg svg"
+        "5: HTML start tag “div” in a foreign namespace context."
       ],
       "newErrors": [],
       "document": [
@@ -861,14 +930,16 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "<div></div>",
       "errors": [
-        "5: HTML start tag “div” in a foreign namespace context.",
-        "#document-fragment",
-        "svg svg"
+        "5: HTML start tag “div” in a foreign namespace context."
       ],
       "newErrors": [],
       "document": [
@@ -876,42 +947,46 @@
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "<div></div>",
-      "errors": [
-        "#document-fragment",
-        "svg desc"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<div>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<figure></figure>",
-      "errors": [
-        "#document-fragment",
-        "svg desc"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "<figure>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<plaintext><foo>",
       "errors": [
-        "(1,16): expected-closing-tag-but-got-eof",
-        "#document-fragment",
-        "svg desc"
+        "(1,16): expected-closing-tag-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -923,14 +998,16 @@
           1,
           "\"<foo>\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<frameset>X",
       "errors": [
-        "6: Stray start tag “frameset”.",
-        "#document-fragment",
-        "svg desc"
+        "6: Stray start tag “frameset”."
       ],
       "newErrors": [],
       "document": [
@@ -938,14 +1015,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<head>X",
       "errors": [
-        "6: Stray start tag “head”.",
-        "#document-fragment",
-        "svg desc"
+        "6: Stray start tag “head”."
       ],
       "newErrors": [],
       "document": [
@@ -953,14 +1032,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<body>X",
       "errors": [
-        "6: Stray start tag “body”.",
-        "#document-fragment",
-        "svg desc"
+        "6: Stray start tag “body”."
       ],
       "newErrors": [],
       "document": [
@@ -968,14 +1049,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<html>X",
       "errors": [
-        "6: Stray start tag “html”.",
-        "#document-fragment",
-        "svg desc"
+        "6: Stray start tag “html”."
       ],
       "newErrors": [],
       "document": [
@@ -983,14 +1066,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<html class=\"foo\">X",
       "errors": [
-        "6: Stray start tag “html”.",
-        "#document-fragment",
-        "svg desc"
+        "6: Stray start tag “html”."
       ],
       "newErrors": [],
       "document": [
@@ -998,14 +1083,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<body class=\"foo\">X",
       "errors": [
-        "6: Stray start tag “body”.",
-        "#document-fragment",
-        "svg desc"
+        "6: Stray start tag “body”."
       ],
       "newErrors": [],
       "document": [
@@ -1013,14 +1100,16 @@
           0,
           "\"X\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "desc"
+      }
     },
     {
       "data": "<svg><p>",
       "errors": [
-        "8: HTML start tag “p” in a foreign namespace context.",
-        "#document-fragment",
-        "div"
+        "8: HTML start tag “p” in a foreign namespace context."
       ],
       "newErrors": [],
       "document": [
@@ -1032,14 +1121,16 @@
           0,
           "<p>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "div"
+      }
     },
     {
       "data": "<p>",
       "errors": [
-        "3: HTML start tag “p” in a foreign namespace context.",
-        "#document-fragment",
-        "svg svg"
+        "3: HTML start tag “p” in a foreign namespace context."
       ],
       "newErrors": [],
       "document": [
@@ -1047,16 +1138,18 @@
           0,
           "<p>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "<svg></p><foo>",
       "errors": [
         "9: HTML end tag “p” in a foreign namespace context.",
         "(1:6) Unexpected </p> from in body insertion mode",
-        "(1:15) Unexpected EOF",
-        "#document-fragment",
-        "div"
+        "(1:15) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -1072,16 +1165,18 @@
           0,
           "<foo>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "div"
+      }
     },
     {
       "data": "<svg></br><foo>",
       "errors": [
         "10: HTML end tag “br” in a foreign namespace context.",
         "(1:6) Unexpected </br> from in body insertion mode",
-        "(1:16) Unexpected EOF",
-        "#document-fragment",
-        "div"
+        "(1:16) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -1097,16 +1192,18 @@
           0,
           "<foo>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "div"
+      }
     },
     {
       "data": "</p><foo>",
       "errors": [
         "4: HTML end tag “p” in a foreign namespace context.",
         "(1:1) Unexpected </p> from in body insertion mode",
-        "(1:10) Unexpected EOF",
-        "#document-fragment",
-        "svg svg"
+        "(1:10) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -1118,16 +1215,18 @@
           0,
           "<svg foo>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "</br><foo>",
       "errors": [
         "5: HTML end tag “br” in a foreign namespace context.",
         "(1:1) Unexpected </br> from in body insertion mode",
-        "(1:11) Unexpected EOF",
-        "#document-fragment",
-        "svg svg"
+        "(1:11) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -1139,16 +1238,18 @@
           0,
           "<svg foo>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "<body><foo>",
       "errors": [
         "6: HTML start tag “body” in a foreign namespace context.",
         "(1:1) Unexpected <body> from in body insertion mode",
-        "(1:12) Unexpected EOF",
-        "#document-fragment",
-        "svg svg"
+        "(1:12) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -1156,15 +1257,17 @@
           0,
           "<svg foo>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "<p><foo>",
       "errors": [
         "3: HTML start tag “p” in a foreign namespace context.",
-        "(1:9) Unexpected EOF",
-        "#document-fragment",
-        "svg svg"
+        "(1:9) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -1176,15 +1279,17 @@
           1,
           "<foo>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     },
     {
       "data": "<p></p><foo>",
       "errors": [
         "3: HTML start tag “p” in a foreign namespace context.",
-        "(1:13) Unexpected EOF",
-        "#document-fragment",
-        "svg svg"
+        "(1:13) Unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -1196,7 +1301,11 @@
           0,
           "<svg foo>"
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "svg",
+        "localName": "svg"
+      }
     }
   ]
 }

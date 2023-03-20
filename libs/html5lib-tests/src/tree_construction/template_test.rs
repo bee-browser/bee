@@ -14,6 +14,7 @@ fn test_0000() {
             (3, "content"),
             (4, "\"Hello\""),
         ],
+        context_element: None,
     });
 }
 
@@ -29,6 +30,7 @@ fn test_0001() {
             (4, "\"Hello\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -44,6 +46,7 @@ fn test_0002() {
             (1, "<body>"),
             (2, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -59,6 +62,7 @@ fn test_0003() {
             (4, "\"Hello\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -74,6 +78,7 @@ fn test_0004() {
             (4, "<div>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -92,6 +97,7 @@ fn test_0005() {
             (6, "<span>"),
             (3, "<b>"),
         ],
+        context_element: None,
     });
 }
 
@@ -108,6 +114,7 @@ fn test_0006() {
             (4, "content"),
             (5, "\"Hello\""),
         ],
+        context_element: None,
     });
 }
 
@@ -116,6 +123,7 @@ fn test_0007() {
     parse(Test {
         data: "<div></template></div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<div>")],
+        context_element: None,
     });
 }
 
@@ -131,6 +139,7 @@ fn test_0008() {
             (3, "<template>"),
             (4, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -146,6 +155,7 @@ fn test_0009() {
             (3, "<template>"),
             (4, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -162,6 +172,7 @@ fn test_0010() {
             (4, "content"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -178,6 +189,7 @@ fn test_0011() {
             (3, "<template>"),
             (4, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -194,6 +206,7 @@ fn test_0012() {
             (3, "<template>"),
             (4, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -210,6 +223,7 @@ fn test_0013() {
             (4, "<template>"),
             (5, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -226,6 +240,7 @@ fn test_0014() {
             (4, "<template>"),
             (5, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -242,6 +257,7 @@ fn test_0015() {
             (4, "<template>"),
             (5, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -258,6 +274,7 @@ fn test_0016() {
             (4, "<template>"),
             (5, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -274,6 +291,7 @@ fn test_0017() {
             (4, "<template>"),
             (5, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -289,6 +307,7 @@ fn test_0018() {
             (3, "<template>"),
             (4, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -305,6 +324,7 @@ fn test_0019() {
             (4, "content"),
             (5, "<option>"),
         ],
+        context_element: None,
     });
 }
 
@@ -321,6 +341,7 @@ fn test_0020() {
             (4, "<option>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -337,6 +358,7 @@ fn test_0021() {
             (4, "content"),
             (3, "<option>"),
         ],
+        context_element: None,
     });
 }
 
@@ -353,6 +375,7 @@ fn test_0022() {
             (4, "<template>"),
             (5, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -368,6 +391,7 @@ fn test_0023() {
             (3, "<template>"),
             (4, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -384,6 +408,7 @@ fn test_0024() {
             (3, "<template>"),
             (4, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -401,6 +426,7 @@ fn test_0025() {
             (4, "content"),
             (5, "<option>"),
         ],
+        context_element: None,
     });
 }
 
@@ -418,6 +444,7 @@ fn test_0026() {
             (5, "content"),
             (6, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -434,6 +461,7 @@ fn test_0027() {
             (4, "content"),
             (5, "<thead>"),
         ],
+        context_element: None,
     });
 }
 
@@ -451,6 +479,7 @@ fn test_0028() {
             (5, "<td>"),
             (6, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -467,6 +496,7 @@ fn test_0029() {
             (4, "content"),
             (5, "<thead>"),
         ],
+        context_element: None,
     });
 }
 
@@ -484,6 +514,7 @@ fn test_0030() {
             (5, "content"),
             (6, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -500,6 +531,7 @@ fn test_0031() {
             (4, "content"),
             (5, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -518,6 +550,7 @@ fn test_0032() {
             (6, "content"),
             (7, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -537,6 +570,7 @@ fn test_0033() {
             (7, "content"),
             (8, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -556,6 +590,7 @@ fn test_0034() {
             (7, "content"),
             (8, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -572,6 +607,7 @@ fn test_0035() {
             (4, "content"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -587,6 +623,7 @@ fn test_0036() {
             (3, "content"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -605,6 +642,7 @@ fn test_0037() {
             (6, "<tr>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -622,6 +660,7 @@ fn test_0038() {
             (5, "content"),
             (6, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -635,6 +674,7 @@ fn test_0039() {
             (1, "<frameset>"),
             (2, "<frame>"),
         ],
+        context_element: None,
     });
 }
 
@@ -649,6 +689,7 @@ fn test_0040() {
             (3, "content"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -666,6 +707,7 @@ fn test_0041() {
             (4, "<span>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -683,6 +725,7 @@ fn test_0042() {
             (5, "<span>"),
             (4, "<span>"),
         ],
+        context_element: None,
     });
 }
 
@@ -700,6 +743,7 @@ fn test_0043() {
             (5, "\"var i = 1;\""),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -716,6 +760,7 @@ fn test_0044() {
             (4, "<tr>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -733,6 +778,7 @@ fn test_0045() {
             (4, "<tr>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -749,6 +795,7 @@ fn test_0046() {
             (4, "<td>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -765,6 +812,7 @@ fn test_0047() {
             (4, "<td>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -781,6 +829,7 @@ fn test_0048() {
             (4, "<td>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -797,6 +846,7 @@ fn test_0049() {
             (4, "<td>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -813,6 +863,7 @@ fn test_0050() {
             (4, "<td>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -829,6 +880,7 @@ fn test_0051() {
             (4, "<tr>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -845,6 +897,7 @@ fn test_0052() {
             (4, "<tr>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -861,6 +914,7 @@ fn test_0053() {
             (4, "<tr>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -878,6 +932,7 @@ fn test_0054() {
             (4, "<caption>"),
             (4, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -894,6 +949,7 @@ fn test_0055() {
             (4, "<thead>"),
             (4, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -909,6 +965,7 @@ fn test_0056() {
             (3, "content"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -925,6 +982,7 @@ fn test_0057() {
             (4, "<em>"),
             (5, "\"Hello\""),
         ],
+        context_element: None,
     });
 }
 
@@ -940,6 +998,7 @@ fn test_0058() {
             (3, "content"),
             (4, "<!-- comment -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -956,6 +1015,7 @@ fn test_0059() {
             (4, "<style>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -972,6 +1032,7 @@ fn test_0060() {
             (4, "<meta>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -988,6 +1049,7 @@ fn test_0061() {
             (4, "<link>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1006,6 +1068,7 @@ fn test_0062() {
             (6, "<tr>"),
             (4, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1023,6 +1086,7 @@ fn test_0063() {
             (5, "content"),
             (6, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1040,6 +1104,7 @@ fn test_0064() {
             (4, "<div>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1057,6 +1122,7 @@ fn test_0065() {
             (5, "<span>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1074,6 +1140,7 @@ fn test_0066() {
             (4, "<col>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1089,6 +1156,7 @@ fn test_0067() {
             (3, "content"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1108,6 +1176,7 @@ fn test_0068() {
             (4, "<tr>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1129,6 +1198,7 @@ fn test_0069() {
             (5, "<tr>"),
             (4, "<tfoot>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1149,6 +1219,7 @@ fn test_0070() {
             (8, "content"),
             (4, "\"text\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1164,6 +1235,7 @@ fn test_0071() {
             (3, "content"),
             (4, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1179,6 +1251,7 @@ fn test_0072() {
             (3, "content"),
             (4, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1194,6 +1267,7 @@ fn test_0073() {
             (3, "content"),
             (4, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1209,6 +1283,7 @@ fn test_0074() {
             (3, "content"),
             (4, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1224,6 +1299,7 @@ fn test_0075() {
             (3, "content"),
             (4, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1239,6 +1315,7 @@ fn test_0076() {
             (3, "content"),
             (4, "<col>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1257,6 +1334,7 @@ fn test_0077() {
             (5, "<i>"),
             (6, "\"Foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1275,6 +1353,7 @@ fn test_0078() {
             (4, "<template>"),
             (5, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -1293,6 +1372,7 @@ fn test_0079() {
             (6, "<td>"),
             (7, "\"Foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1309,6 +1389,7 @@ fn test_0080() {
             (5, "<table>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1325,6 +1406,7 @@ fn test_0081() {
             (5, "content"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1340,6 +1422,7 @@ fn test_0082() {
             (4, "<div>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1357,6 +1440,7 @@ fn test_0083() {
             (6, "<div>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1374,6 +1458,7 @@ fn test_0084() {
             (6, "<table>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1391,6 +1476,7 @@ fn test_0085() {
             (6, "<tbody>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1408,6 +1494,7 @@ fn test_0086() {
             (6, "<tr>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1425,6 +1512,7 @@ fn test_0087() {
             (6, "<td>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1442,6 +1530,7 @@ fn test_0088() {
             (6, "<caption>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1459,6 +1548,7 @@ fn test_0089() {
             (6, "<colgroup>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1476,6 +1566,7 @@ fn test_0090() {
             (6, "<col>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1494,6 +1585,7 @@ fn test_0091() {
             (6, "<select>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1512,6 +1604,7 @@ fn test_0092() {
             (6, "<table>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1528,6 +1621,7 @@ fn test_0093() {
             (5, "content"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1546,6 +1640,7 @@ fn test_0094() {
             (7, "\"var i\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1564,6 +1659,7 @@ fn test_0095() {
             (7, "\"var i\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1581,6 +1677,7 @@ fn test_0096() {
             (2, "<span>"),
             (3, "\"Foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1598,6 +1695,7 @@ fn test_0097() {
             (2, "<span>"),
             (3, "\"Foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1615,6 +1713,7 @@ fn test_0098() {
             (2, "<span>"),
             (3, "\"Foo\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1631,6 +1730,7 @@ fn test_0099() {
             (5, "<svg template>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1651,6 +1751,7 @@ fn test_0100() {
             (1, "<body>"),
             (2, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1667,6 +1768,7 @@ fn test_0101() {
             (4, "content"),
             (5, "<span>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1689,6 +1791,7 @@ fn test_0102() {
             (3, "<caption>"),
             (4, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -1703,6 +1806,7 @@ fn test_0103() {
             (2, "<template>"),
             (3, "content"),
         ],
+        context_element: None,
     });
 }
 
@@ -1717,6 +1821,7 @@ fn test_0104() {
             (3, "content"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1732,6 +1837,7 @@ fn test_0105() {
             (4, "\"Foo\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1754,6 +1860,7 @@ fn test_0106() {
             (9, "<table>"),
             (10, "<script>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1771,6 +1878,7 @@ fn test_0107() {
             (5, "<table>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1787,6 +1895,7 @@ fn test_0108() {
             (2, "<div>"),
             (3, "\"second\""),
         ],
+        context_element: Some(("html", "template")),
     });
 }
 
@@ -1805,6 +1914,7 @@ fn test_0109() {
             (6, "\"cell\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1827,6 +1937,7 @@ fn test_0110() {
             (4, "\" \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -1846,6 +1957,7 @@ fn test_0111() {
             (4, "\"a\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

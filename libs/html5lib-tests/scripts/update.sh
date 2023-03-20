@@ -29,7 +29,7 @@ echo $COMMIT_HASH >$DATA_DIR/commit_hash
 # Excluded test files
 rm -f $TEMP_DIR/tokenizer/xmlViolation.test
 rm -f $TEMP_DIR/tree-construction/search-element.dat
-rm -f $TEMP_DIR/tree-construction/webkit02.dat
+#rm -f $TEMP_DIR/tree-construction/webkit02.dat
 
 mv $TEMP_DIR/tokenizer $DATA_DIR/
 mv $TEMP_DIR/tree-construction $DATA_DIR/tree_construction

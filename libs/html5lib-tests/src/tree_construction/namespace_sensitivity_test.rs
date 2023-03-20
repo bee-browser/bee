@@ -20,6 +20,7 @@ fn test_0000() {
             (8, "<svg foreignObject>"),
             (9, "<span>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

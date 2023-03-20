@@ -22,6 +22,7 @@ fn test_0000() {
             (5, "<p>"),
             (6, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -44,6 +45,7 @@ fn test_0001() {
             (5, "<p>"),
             (6, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -58,6 +60,7 @@ fn test_0002() {
             (1, "<body>"),
             (2, "\" \""),
         ],
+        context_element: None,
     });
 }
 
@@ -72,6 +75,7 @@ fn test_0003() {
             (1, "<body>"),
             (2, "<meta>"),
         ],
+        context_element: None,
     });
 }
 
@@ -85,6 +89,7 @@ fn test_0004() {
             (1, "<body>"),
             (0, "<!--  foo  -->"),
         ],
+        context_element: None,
     });
 }
 
@@ -100,6 +105,7 @@ fn test_0005() {
             (2, "<title>"),
             (3, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -116,6 +122,7 @@ fn test_0006() {
             (2, "<meta>"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -131,6 +138,7 @@ fn test_0007() {
             (2, "\" x\""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -146,6 +154,7 @@ fn test_0008() {
             (2, "\" x \""),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -163,6 +172,7 @@ fn test_0009() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -181,6 +191,7 @@ fn test_0010() {
             (4, "\" <tr>x \""),
             (3, "\" \""),
         ],
+        context_element: None,
     });
 }
 
@@ -204,6 +215,7 @@ fn test_0011() {
             (7, "\"bar\""),
             (6, "\" \""),
         ],
+        context_element: None,
     });
 }
 
@@ -221,6 +233,7 @@ fn test_0012() {
             (2, "<noframes>"),
             (3, "\"</frameset><noframes>\""),
         ],
+        context_element: None,
     });
 }
 
@@ -235,6 +248,7 @@ fn test_0013() {
             (1, "<body>"),
             (2, "<object>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

@@ -40,6 +40,7 @@ fn test_0000() {
             (8, "color=\"red\""),
             (8, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -69,6 +70,7 @@ fn test_0001() {
             (6, "size=\"4\""),
             (6, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -102,6 +104,7 @@ fn test_0002() {
             (7, "size=\"4\""),
             (7, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -137,6 +140,7 @@ fn test_0003() {
             (7, "size=\"4\""),
             (7, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -172,6 +176,7 @@ fn test_0004() {
             (6, "<b>"),
             (7, "\"Y\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

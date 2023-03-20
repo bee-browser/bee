@@ -22,6 +22,7 @@ fn test_0000() {
             (6, "<a>"),
             (7, "\"X\""),
         ],
+        context_element: None,
     });
 }
 
@@ -62,6 +63,7 @@ fn test_0001() {
             (11, "<a>"),
             (12, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -104,6 +106,7 @@ fn test_0002() {
             (13, "id=\"9\""),
             (13, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -148,6 +151,7 @@ fn test_0003() {
             (14, "id=\"10\""),
             (14, "\"A\""),
         ],
+        context_element: None,
     });
 }
 
@@ -174,6 +178,7 @@ fn test_0004() {
             (7, "\"X\""),
             (6, "\"TEST\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

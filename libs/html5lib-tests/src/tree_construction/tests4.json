@@ -3,80 +3,82 @@
   "tests": [
     {
       "data": "direct div content",
-      "errors": [
-        "#document-fragment",
-        "div"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "\"direct div content\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "div"
+      }
     },
     {
       "data": "direct textarea content",
-      "errors": [
-        "#document-fragment",
-        "textarea"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "\"direct textarea content\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "textarea"
+      }
     },
     {
       "data": "textarea content with <em>pseudo</em> <foo>markup",
-      "errors": [
-        "#document-fragment",
-        "textarea"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "\"textarea content with <em>pseudo</em> <foo>markup\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "textarea"
+      }
     },
     {
       "data": "this is &#x0043;DATA inside a <style> element",
-      "errors": [
-        "#document-fragment",
-        "style"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "\"this is &#x0043;DATA inside a <style> element\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "style"
+      }
     },
     {
       "data": "</plaintext>",
-      "errors": [
-        "#document-fragment",
-        "plaintext"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
           0,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "plaintext"
+      }
     },
     {
       "data": "setting html's innerHTML",
-      "errors": [
-        "#document-fragment",
-        "html"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -91,14 +93,15 @@
           1,
           "\"setting html's innerHTML\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "html"
+      }
     },
     {
       "data": "<title>setting head's innerHTML</title>",
-      "errors": [
-        "#document-fragment",
-        "head"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -109,7 +112,11 @@
           1,
           "\"setting head's innerHTML\""
         ]
-      ]
+      ],
+      "contextElement": {
+        "namespace": "html",
+        "localName": "head"
+      }
     }
   ]
 }

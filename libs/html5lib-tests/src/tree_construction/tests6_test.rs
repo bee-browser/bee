@@ -13,6 +13,7 @@ fn test_0000() {
             (1, "\" \""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -29,6 +30,7 @@ fn test_0001() {
             (3, "<div>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -44,6 +46,7 @@ fn test_0002() {
             (3, "\"&\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -59,6 +62,7 @@ fn test_0003() {
             (3, "\"<!--&-->\""),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -72,6 +76,7 @@ fn test_0004() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -85,6 +90,7 @@ fn test_0005() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -93,6 +99,7 @@ fn test_0006() {
     parse(Test {
         data: "<body>\n<div>",
         document: vec![(0, "\"\n\""), (0, "<div>")],
+        context_element: Some(("html", "div")),
     });
 }
 
@@ -106,6 +113,7 @@ fn test_0007() {
             (1, "<frameset>"),
             (1, "\"\n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -120,6 +128,7 @@ fn test_0008() {
             (1, "\"\n\""),
             (1, "<noframes>"),
         ],
+        context_element: None,
     });
 }
 
@@ -133,6 +142,7 @@ fn test_0009() {
             (1, "<frameset>"),
             (1, "\"\n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -146,6 +156,7 @@ fn test_0010() {
             (1, "<frameset>"),
             (1, "\"\n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -159,6 +170,7 @@ fn test_0011() {
             (1, "<frameset>"),
             (1, "\"\n\""),
         ],
+        context_element: None,
     });
 }
 
@@ -167,6 +179,7 @@ fn test_0012() {
     parse(Test {
         data: "<form><form>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<form>")],
+        context_element: None,
     });
 }
 
@@ -181,6 +194,7 @@ fn test_0013() {
             (2, "<button>"),
             (2, "<button>"),
         ],
+        context_element: None,
     });
 }
 
@@ -197,6 +211,7 @@ fn test_0014() {
             (4, "<tr>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -214,6 +229,7 @@ fn test_0015() {
             (4, "<tr>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -229,6 +245,7 @@ fn test_0016() {
             (3, "<caption>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -237,6 +254,7 @@ fn test_0017() {
     parse(Test {
         data: "</caption><div>",
         document: vec![(0, "<div>")],
+        context_element: Some(("html", "caption")),
     });
 }
 
@@ -252,6 +270,7 @@ fn test_0018() {
             (3, "<caption>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -266,6 +285,7 @@ fn test_0019() {
             (2, "<table>"),
             (3, "<caption>"),
         ],
+        context_element: None,
     });
 }
 
@@ -274,6 +294,7 @@ fn test_0020() {
     parse(Test {
         data: "</table><div>",
         document: vec![(0, "<div>")],
+        context_element: Some(("html", "caption")),
     });
 }
 
@@ -289,6 +310,7 @@ fn test_0021() {
             (2, "<table>"),
             (3, "<caption>"),
         ],
+        context_element: None,
     });
 }
 
@@ -304,6 +326,7 @@ fn test_0022() {
             (3, "<caption>"),
             (4, "<div>"),
         ],
+        context_element: None,
     });
 }
 
@@ -320,6 +343,7 @@ fn test_0023() {
             (4, "<tr>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -328,6 +352,7 @@ fn test_0024() {
     parse(Test {
         data: "</table></tbody></tfoot></thead></tr><div>",
         document: vec![(0, "<div>")],
+        context_element: Some(("html", "td")),
     });
 }
 
@@ -343,6 +368,7 @@ fn test_0025() {
             (2, "<table>"),
             (3, "<colgroup>"),
         ],
+        context_element: None,
     });
 }
 
@@ -351,6 +377,7 @@ fn test_0026() {
     parse(Test {
         data: "foo<col>",
         document: vec![(0, "<col>")],
+        context_element: Some(("html", "colgroup")),
     });
 }
 
@@ -365,6 +392,7 @@ fn test_0027() {
             (2, "<table>"),
             (3, "<colgroup>"),
         ],
+        context_element: None,
     });
 }
 
@@ -373,6 +401,7 @@ fn test_0028() {
     parse(Test {
         data: "<frameset><div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 
@@ -381,6 +410,7 @@ fn test_0029() {
     parse(Test {
         data: "</frameset><frame>",
         document: vec![(0, "<frame>")],
+        context_element: Some(("html", "frameset")),
     });
 }
 
@@ -389,6 +419,7 @@ fn test_0030() {
     parse(Test {
         data: "<frameset></div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 
@@ -397,6 +428,7 @@ fn test_0031() {
     parse(Test {
         data: "</body><div>",
         document: vec![(0, "<div>")],
+        context_element: Some(("html", "body")),
     });
 }
 
@@ -413,6 +445,7 @@ fn test_0032() {
             (3, "<tbody>"),
             (4, "<tr>"),
         ],
+        context_element: None,
     });
 }
 
@@ -421,6 +454,7 @@ fn test_0033() {
     parse(Test {
         data: "</tr><td>",
         document: vec![(0, "<td>")],
+        context_element: Some(("html", "tr")),
     });
 }
 
@@ -429,6 +463,7 @@ fn test_0034() {
     parse(Test {
         data: "</tbody></tfoot></thead><td>",
         document: vec![(0, "<td>")],
+        context_element: Some(("html", "tr")),
     });
 }
 
@@ -446,6 +481,7 @@ fn test_0035() {
             (4, "<tr>"),
             (5, "<td>"),
         ],
+        context_element: None,
     });
 }
 
@@ -454,6 +490,7 @@ fn test_0036() {
     parse(Test {
         data: "<caption><col><colgroup><tbody><tfoot><thead><tr>",
         document: vec![(0, "<tr>")],
+        context_element: Some(("html", "tbody")),
     });
 }
 
@@ -468,6 +505,7 @@ fn test_0037() {
             (2, "<table>"),
             (3, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -476,6 +514,7 @@ fn test_0038() {
     parse(Test {
         data: "</table><tr>",
         document: vec![(0, "<tr>")],
+        context_element: Some(("html", "tbody")),
     });
 }
 
@@ -490,6 +529,7 @@ fn test_0039() {
             (2, "<table>"),
             (3, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -504,6 +544,7 @@ fn test_0040() {
             (2, "<table>"),
             (3, "<tbody>"),
         ],
+        context_element: None,
     });
 }
 
@@ -518,6 +559,7 @@ fn test_0041() {
             (2, "<table>"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -531,6 +573,7 @@ fn test_0042() {
             (1, "<body>"),
             (2, "<table>"),
         ],
+        context_element: None,
     });
 }
 
@@ -539,6 +582,7 @@ fn test_0043() {
     parse(Test {
         data: "</table><tr>",
         document: vec![(0, "<tbody>"), (1, "<tr>")],
+        context_element: Some(("html", "table")),
     });
 }
 
@@ -547,6 +591,7 @@ fn test_0044() {
     parse(Test {
         data: "<body></body></html>",
         document: vec![(0, "<head>"), (0, "<body>")],
+        context_element: Some(("html", "html")),
     });
 }
 
@@ -560,6 +605,7 @@ fn test_0045() {
             (1, "<frameset>"),
             (1, "\" \""),
         ],
+        context_element: None,
     });
 }
 
@@ -573,6 +619,7 @@ fn test_0046() {
             (1, "<head>"),
             (1, "<body>"),
         ],
+        context_element: None,
     });
 }
 
@@ -581,6 +628,7 @@ fn test_0047() {
     parse(Test {
         data: "<param><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 
@@ -589,6 +637,7 @@ fn test_0048() {
     parse(Test {
         data: "<source><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 
@@ -597,6 +646,7 @@ fn test_0049() {
     parse(Test {
         data: "<track><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 
@@ -605,6 +655,7 @@ fn test_0050() {
     parse(Test {
         data: "</html><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 
@@ -613,6 +664,7 @@ fn test_0051() {
     parse(Test {
         data: "</body><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
+        context_element: None,
     });
 }
 //</coverage:exclude>

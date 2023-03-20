@@ -18,6 +18,7 @@ fn test_0000() {
             (3, "<p>"),
             (4, "\"baz\""),
         ],
+        context_element: None,
     });
 }
 
@@ -35,6 +36,7 @@ fn test_0001() {
             (4, "\"foo\""),
             (2, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -55,6 +57,7 @@ fn test_0002() {
             (6, "<svg main>"),
             (2, "<b>"),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>

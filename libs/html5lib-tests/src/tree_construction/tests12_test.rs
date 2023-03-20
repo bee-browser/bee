@@ -35,6 +35,7 @@ fn test_0000() {
             (7, "\"quux\""),
             (3, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 
@@ -70,6 +71,7 @@ fn test_0001() {
             (6, "\"quux\""),
             (2, "\"bar\""),
         ],
+        context_element: None,
     });
 }
 //</coverage:exclude>
