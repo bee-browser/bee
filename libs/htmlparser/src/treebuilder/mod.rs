@@ -241,11 +241,13 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn enable_foster_parenting(&mut self) {
         self.foster_parenting = true;
+        tracing::debug!(foster_parenting = true);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn disable_foster_parenting(&mut self) {
         self.foster_parenting = false;
+        tracing::debug!(foster_parenting = false);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -648,7 +650,16 @@ where
             .iter()
             .enumerate()
             .skip(pos + 1)
-            .find(|(_, context)| !context.is_removed() && context.local_name().is_special())
+            .find(|(_, context)| {
+                if context.is_removed() {
+                    return false;
+                }
+                match context.local_name() {
+                    tag!(Mi, Mo, Mn, Ms, Mtext, AnnotationXml) => context.is_mathml(),
+                    tag!(ForeignObject, Desc, Title) => context.is_svg(),
+                    local_name => local_name.is_special(),
+                }
+            })
             .map(|(i, _)| i)
     }
 
@@ -669,6 +680,11 @@ where
         let node = self.inner.create_doctype(doctype);
         self.inner
             .append_child(self.context().open_element.node, node);
+    }
+
+    #[inline(always)]
+    fn push_html_a_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::A);
     }
 
     #[inline(always)]
@@ -728,6 +744,11 @@ where
     #[inline(always)]
     fn push_html_em_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Em);
+    }
+
+    #[inline(always)]
+    fn push_html_font_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Font);
     }
 
     #[inline(always)]
@@ -796,6 +817,11 @@ where
         context.element_in_scope.clear();
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_meta_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Meta);
     }
 
     #[inline(always)]
@@ -963,6 +989,10 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn push_html_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
+        tracing::debug!(
+            context.pos = self.context_stack.len() - 1,
+            context.element = ?self.context().open_element,
+        );
         self.append_text_if_exists();
         let node = self.inner.create_element(tag.name, Namespace::Html);
         self.inner.set_attribute(node, tag.attrs());
@@ -1296,6 +1326,18 @@ where
     }
 
     #[inline(always)]
+    fn is_mathml(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.open_element.is_mathml()
+    }
+
+    #[inline(always)]
+    fn is_svg(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.open_element.is_svg()
+    }
+
+    #[inline(always)]
     fn is_html_element(&self, local_name: LocalName) -> bool {
         debug_assert!(!self.is_removed());
         self.open_element.is_html_element(local_name)
@@ -1520,6 +1562,16 @@ impl<T> OpenElement<T> {
     #[inline(always)]
     fn is_html(&self) -> bool {
         self.namespace == Namespace::Html
+    }
+
+    #[inline(always)]
+    fn is_mathml(&self) -> bool {
+        self.namespace == Namespace::MathMl
+    }
+
+    #[inline(always)]
+    fn is_svg(&self) -> bool {
+        self.namespace == Namespace::Svg
     }
 
     #[inline(always)]
