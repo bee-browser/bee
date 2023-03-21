@@ -261,7 +261,7 @@ fn test_0008() {
             (4, "\"More text that should not be in the nobr, i.e., the\nnobr should have closed the div inside it implicitly. \""),
             (3, "<pre>"),
             (4, "\"A pre tag outside everything else.\""),
-            (3, "\""),
+            (3, "\"\n\n\""),
         ],
         context_element: None,
         scripting: Scripting::Both,
