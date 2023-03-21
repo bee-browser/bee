@@ -212,7 +212,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn set_attribute<'b, I>(&mut self, node_id: Self::Node, attrs: I)
+    fn set_attribute<'b, I>(&mut self, node_id: Self::Node, attrs: I, overwrite: bool)
     where
         I: Iterator<Item = (&'b str, &'b str)>,
     {
@@ -221,9 +221,19 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
             Node::Element { ref mut attrs, .. } => attrs,
             _ => unreachable!(),
         };
-        for (name, value) in attrs {
-            tracing::debug!(node_id, attr.name = name, attr.value = value);
-            element_attrs.insert(name.to_string(), value.to_string());
+        if overwrite {
+            for (name, value) in attrs {
+                tracing::debug!(node_id, attr.name = name, attr.value = value);
+                element_attrs.insert(name.to_string(), value.to_string());
+            }
+        } else {
+            for (name, value) in attrs {
+                if element_attrs.contains_key(name) {
+                    continue;
+                }
+                tracing::debug!(node_id, attr.name = name, attr.value = value);
+                element_attrs.insert(name.to_string(), value.to_string());
+            }
         }
     }
 
@@ -255,7 +265,8 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     fn append_child(&mut self, parent_id: Self::Node, node_id: Self::Node) {
         debug_assert!(self.nodes.get(parent_id).is_some());
         debug_assert!(self.nodes.get(node_id).is_some());
-        self.child_nodes_mut(parent_id).push(node_id);
+        let child_nodes = self.child_nodes_mut(parent_id);
+        child_nodes.push(node_id);
         tracing::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id]);
     }
 
