@@ -78,6 +78,7 @@ where
     quirks_mode: QuirksMode,
 
     text: String,
+    html_element: Option<T::Node>,
     head_element: Option<T::Node>,
     body_element: Option<T::Node>,
 
@@ -116,6 +117,7 @@ where
             original_mode: None,
             quirks_mode: QuirksMode::NoQuirks,
             text: String::with_capacity(INITIAL_TEXT_CAPACITY),
+            html_element: None,
             head_element: None,
             body_element: None,
             context_stack: vec![context],
@@ -787,6 +789,7 @@ where
 
     #[inline(always)]
     fn push_html_head_element(&mut self, tag: &Tag<'_>) {
+        debug_assert!(self.head_element.is_none());
         self.push_html_element(tag, LocalName::Head);
         let context = self.context_mut();
         context.reset_mode = mode!(InHead);
@@ -800,6 +803,7 @@ where
 
     #[inline(always)]
     fn push_html_html_element(&mut self, tag: &Tag<'_>) {
+        debug_assert!(self.html_element.is_none());
         self.push_html_element(tag, LocalName::Html);
         let context = self.context_mut();
         context.reset_mode = mode!(AfterHead);
@@ -809,6 +813,7 @@ where
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
         context.element_in_table_scope.clear();
+        self.html_element = Some(context.open_element.node);
     }
 
     #[inline(always)]
