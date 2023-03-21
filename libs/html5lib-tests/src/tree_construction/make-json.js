@@ -27,6 +27,7 @@ class Test {
 }
 
 let state = State.NONE;
+let inText = false;
 let test = new Test();
 let tests = [];
 
@@ -34,12 +35,15 @@ for (const line of dat.split('\n')) {
   const trimed = line.replace('\n', '');
   switch (trimed) {
   case '':
-    if (test.hasData()) {
-      tests.push(test);
-      test = new Test();
+    if (!inText) {
+      if (test.hasData()) {
+        tests.push(test);
+        test = new Test();
+      }
+      state = State.NONE;
+      continue;
     }
-    state = State.NONE;
-    continue;
+    break;
   case '#data':
     state = State.DATA;
     continue;
@@ -83,11 +87,21 @@ for (const line of dat.split('\n')) {
     break;
   case State.DOCUMENT:
     if (trimed.startsWith('| ')) {
-      test.document.push(parseDocumentLine(trimed));
+      const parsed = parseDocumentLine(trimed);
+      test.document.push(parsed);
+      if (parsed[1].startsWith('"')) {
+        inText = true;
+      }
+      if (parsed[1].length > 1 && parsed[1].endsWith('"')) {
+        inText = false;
+      }
     } else {
       const last = test.document.pop();
       last[1] += '\n' + trimed;
       test.document.push(last);
+      if (last[1].endsWith('"')) {
+        inText = false;
+      }
     }
     break;
   case State.DOCUMENT_FRAGMENT:
