@@ -9,9 +9,9 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_table(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_meta(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_table", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_start_meta", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -52,26 +52,22 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InHead) => {
+                mode!(
+                    InHead,
+                    InHeadNoscript,
+                    InBody,
+                    InCaption,
+                    InCell,
+                    InTemplate
+                ) => {
                     let ctrl = {
-                        debug_assert!(self.context().is_html_element(tag!(Head)));
+                        self.push_html_meta_element(tag);
                         self.pop_element();
-                        self.switch_to(mode!(AfterHead));
-                        Control::Reprocess
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InHeadNoscript) => {
-                    let ctrl = {
-                        // TODO: Parse error.
-                        debug_assert!(self.context().is_html_element(tag!(Noscript)));
-                        self.pop_element();
-                        debug_assert!(self.context().is_html_element(tag!(Head)));
-                        self.switch_to(mode!(InHead));
-                        Control::Reprocess
+                        if tag.self_closing {
+                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
+                        }
+                        // TODO: If the active speculative HTML parser is null
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -80,25 +76,14 @@ where
                 }
                 mode!(AfterHead) => {
                     let ctrl = {
-                        self.push_html_body_element(&Tag::with_no_attrs("body"));
-                        self.switch_to(mode!(InBody));
-                        Control::Reprocess
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InBody, InCaption, InCell) => {
-                    let ctrl = {
-                        if self.quirks_mode != QuirksMode::Quirks {
-                            if self.context().has_p_element_in_button_scope() {
-                                self.close_p_element();
-                            }
+                        // TODO: Parse error.
+                        self.reopen_head_element();
+                        self.push_html_meta_element(tag);
+                        self.pop_element();
+                        if tag.self_closing {
+                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
                         }
-                        self.push_html_table_element(tag);
-                        self.frameset_ok = false;
-                        self.switch_to(mode!(InTable));
+                        // TODO: If the active speculative HTML parser is null
                         Control::Continue
                     };
                     match ctrl {
@@ -109,12 +94,18 @@ where
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
                         // TODO: Parse error.
-                        // TODO: If the stack of open elements does not have a table element in table scope, ignore the token.
-                        // TODO: Otherwise
-                        // TODO: Pop elements from this stack until a table element has been popped from the stack.
-                        // TODO: Reset the insertion mode appropriately.
-                        // TODO: Reprocess the token.
-                        Control::Continue
+                        self.enable_foster_parenting();
+                        let ctrl = {
+                            self.push_html_meta_element(tag);
+                            self.pop_element();
+                            if tag.self_closing {
+                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
+                            }
+                            // TODO: If the active speculative HTML parser is null
+                            Control::Continue
+                        };
+                        self.disable_foster_parenting();
+                        ctrl
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -152,38 +143,17 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InSelect, InFrameset, AfterFrameset, AfterAfterFrameset) => {
+                mode!(
+                    InSelect,
+                    InSelectInTable,
+                    InFrameset,
+                    AfterFrameset,
+                    AfterAfterFrameset
+                ) => {
                     let ctrl = {
                         // TODO: Parse error.
                         // Ignore the token.
                         Control::Continue
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InSelectInTable) => {
-                    let ctrl = {
-                        // TODO: Parse error.
-                        while !self.context().is_html_element(tag!(Select)) {
-                            self.pop_element();
-                        }
-                        self.pop_element(); // pop an html select element
-                        self.reset_insertion_mode_appropriately();
-                        Control::Reprocess
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InTemplate) => {
-                    let ctrl = {
-                        // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-                        // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
-                        self.switch_to(mode!(InBody));
-                        Control::Reprocess
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -209,9 +179,9 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_table(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_meta(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_end_table", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_meta", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -235,6 +205,7 @@ where
                     InHeadNoscript,
                     AfterHead,
                     InSelect,
+                    InSelectInTable,
                     InTemplate,
                     InFrameset,
                     AfterFrameset,
@@ -250,7 +221,7 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InBody) => {
+                mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
                         self.append_text_if_exists();
                         let mut context_pos = self.context_stack.len() - 1;
@@ -258,7 +229,7 @@ where
                             let context = &self.context_stack[context_pos];
                             let element = context.open_element.node;
                             if context.is_html() && self.inner.has_same_name(element, tag.name) {
-                                self.close_implied_tags_except_for(tag!(Table)); // TODO
+                                self.close_implied_tags_except_for(tag!(Meta)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
                                 }
@@ -293,20 +264,39 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InTable) => {
+                mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
-                        if !self.context().has_table_element_in_table_scope() {
-                            // TODO: Parse error.
-                            // Ignore the token.
-                            Control::Continue
-                        } else {
-                            while !self.context().is_html_element(tag!(Table)) {
-                                self.pop_element();
+                        // TODO: Parse error.
+                        self.enable_foster_parenting();
+                        let ctrl = {
+                            self.append_text_if_exists();
+                            let mut context_pos = self.context_stack.len() - 1;
+                            loop {
+                                let context = &self.context_stack[context_pos];
+                                let element = context.open_element.node;
+                                if context.is_html() && self.inner.has_same_name(element, tag.name)
+                                {
+                                    self.close_implied_tags_except_for(tag!(Meta)); // TODO
+                                    if element != self.context().open_element.node {
+                                        // TODO: Parse error.
+                                    }
+                                    while self.context_stack.len() > context_pos {
+                                        self.pop_element();
+                                    }
+                                    break;
+                                } else {
+                                    if context.open_element.local_name.is_special() {
+                                        // TODO: Parse error.
+                                        // Ignore the token.
+                                        break;
+                                    }
+                                }
+                                context_pos -= 1;
                             }
-                            self.pop_element(); // pop an html table element
-                            self.reset_insertion_mode_appropriately();
                             Control::Continue
-                        }
+                        };
+                        self.disable_foster_parenting();
+                        ctrl
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -327,31 +317,6 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InCaption) => {
-                    let ctrl = {
-                        if !self.context().has_caption_element_in_table_scope() {
-                            // TODO: Parse error.
-                            // Ignore the token.
-                            Control::Continue
-                        } else {
-                            self.close_implied_tags();
-                            if !self.context().is_html_element(tag!(Caption)) {
-                                // TODO: Parse error.
-                            }
-                            while !self.context().is_html_element(tag!(Caption)) {
-                                self.pop_element();
-                            }
-                            self.pop_element(); // pop an html caption element
-                            self.pop_active_formatting_elements_up_to_marker();
-                            self.switch_to(mode!(InTable));
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
                 mode!(InColumnGroup) => {
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
@@ -363,75 +328,6 @@ where
                             self.switch_to(mode!(InTable));
                             Control::Reprocess
                         }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InTableBody) => {
-                    let ctrl = {
-                        if !self.context().has_rowgroup_element_in_table_scope() {
-                            // TODO: Parse error.
-                            // Ignore the token.
-                            Control::Continue
-                        } else {
-                            self.clear_stack_back_to_table_body_context();
-                            self.pop_element();
-                            self.switch_to(mode!(InTable));
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InRow) => {
-                    let ctrl = {
-                        if !self.context().has_tr_element_in_table_scope() {
-                            // TODO: Parse error.
-                            // Ignore the token.
-                            Control::Continue
-                        } else {
-                            self.clear_stack_back_to_table_row_context();
-                            debug_assert!(self.context().is_html_element(tag!(Tr)));
-                            self.pop_element();
-                            self.switch_to(mode!(InTableBody));
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InCell) => {
-                    let ctrl = {
-                        if !self.context().has_table_element_in_table_scope() {
-                            // TODO: Parse error.
-                            // Ignore the token.
-                            Control::Continue
-                        } else {
-                            self.close_cell();
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InSelectInTable) => {
-                    let ctrl = {
-                        // TODO: Parse error.
-                        // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as that of the token, then ignore the token.
-                        while !self.context().is_html_element(tag!(Select)) {
-                            self.pop_element();
-                        }
-                        self.pop_element(); // pop an html select element
-                        self.reset_insertion_mode_appropriately();
-                        Control::Reprocess
                     };
                     match ctrl {
                         Control::Reprocess => continue,

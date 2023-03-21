@@ -96,9 +96,9 @@ where
                         // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
                         // TODO: Insert a foreign element for the token, in the SVG namespace.
                         self.push_svg_element(tag, tag!(Svg));
-                        // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
                         if tag.self_closing {
                             self.pop_element();
+                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
                         }
                         Control::Continue
                     };
@@ -117,9 +117,9 @@ where
                             // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
                             // TODO: Insert a foreign element for the token, in the SVG namespace.
                             self.push_svg_element(tag, tag!(Svg));
-                            // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
                             if tag.self_closing {
                                 self.pop_element();
+                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
                             }
                             Control::Continue
                         };

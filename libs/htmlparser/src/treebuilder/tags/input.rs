@@ -125,7 +125,7 @@ where
                             self.push_html_input_element(tag);
                             self.pop_element();
                             if tag.self_closing {
-                                // TODO: Acknowledge the token's self-closing flag
+                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
                             }
                             Control::Continue
                         }

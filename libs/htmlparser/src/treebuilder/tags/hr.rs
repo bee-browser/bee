@@ -97,7 +97,7 @@ where
                         self.push_html_hr_element(tag);
                         self.pop_element();
                         if tag.self_closing {
-                            // TODO: Acknowledge the token's self-closing flag
+                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
                         }
                         self.frameset_ok = false;
                         Control::Continue
@@ -118,7 +118,7 @@ where
                             self.push_html_hr_element(tag);
                             self.pop_element();
                             if tag.self_closing {
-                                // TODO: Acknowledge the token's self-closing flag
+                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
                             }
                             self.frameset_ok = false;
                             Control::Continue

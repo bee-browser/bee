@@ -144,13 +144,17 @@ modes:
         run: |
           self.push_html_{{tag_name}}_element(tag);
           self.pop_element();
-          self.acknowledge_self_closing(tag);
+          if tag.self_closing {
+              {{use '$acknowledge-self-closing' }}
+          }
           Control::Continue
       - match: <meta>
         run: |
           self.push_html_meta_element(tag);
           self.pop_element();
-          self.acknowledge_self_closing(tag);
+          if tag.self_closing {
+              {{use '$acknowledge-self-closing' }}
+          }
           // TODO: If the active speculative HTML parser is null
           Control::Continue
       - match: <title>
@@ -586,13 +590,18 @@ modes:
           {{use 'any-other-end-tag'}}
       - match: <a>
         run: |
-          if !self.context().has_a_element_in_active_formatting_elements() {
+          if let Some(i) = self.active_formatting_element_list.find_last_element(tag!(A)) {
               {{use '$parse-error'}}
+              let node = self.active_formatting_element_list.get_element(i);
               self.perform_adoption_agency_algorithm(tag);
+              if let Some(i) = self.active_formatting_element_list.find_element(node) {
+                  self.active_formatting_element_list.0.remove(i);
+                  self.context_stack.retain(|context| context.open_element.node != node);
+              }
           }
           self.reconstruct_active_formatting_elements();
           self.push_html_a_element(tag);
-          self.push_element_to_active_formatting_context();
+          self.push_element_to_active_formatting_contexts();
           Control::Continue
       - match: >-
           <b> <big> <code> <em> <font> <i> <s> <small> <strike> <strong> <tt>
@@ -666,7 +675,7 @@ modes:
           self.push_html_{{tag_name}}_element(tag);
           self.pop_element();
           if tag.self_closing {
-              // TODO: Acknowledge the token's self-closing flag
+              {{use '$acknowledge-self-closing' }}
           }
           self.frameset_ok = false;
           Control::Continue
@@ -684,7 +693,7 @@ modes:
           self.push_html_{{tag_name}}_element(tag);
           self.pop_element();
           if tag.self_closing {
-              // TODO: Acknowledge the token's self-closing flag
+              {{use '$acknowledge-self-closing' }}
           }
           Control::Continue
       - match: <hr>
@@ -695,7 +704,7 @@ modes:
           self.push_html_hr_element(tag);
           self.pop_element();
           if tag.self_closing {
-              // TODO: Acknowledge the token's self-closing flag
+              {{use '$acknowledge-self-closing' }}
           }
           self.frameset_ok = false;
           Control::Continue
@@ -781,9 +790,9 @@ modes:
           // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink.)
           // TODO: Insert a foreign element for the token, in the MathML namespace.
           self.push_mathml_element(tag, tag!(Math));
-          // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
           if tag.self_closing {
               self.pop_element();
+              {{use '$acknowledge-self-closing' }}
           }
           Control::Continue
       - match: <svg>
@@ -793,9 +802,9 @@ modes:
           // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
           // TODO: Insert a foreign element for the token, in the SVG namespace.
           self.push_svg_element(tag, tag!(Svg));
-          // TODO: If the token has its self-closing flag set, pop_element the current node off the stack of open elements and acknowledge the token's self-closing flag.
           if tag.self_closing {
               self.pop_element();
+              {{use '$acknowledge-self-closing' }}
           }
           Control::Continue
       - match: >-
@@ -936,6 +945,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html table element
+              self.reset_insertion_mode_appropriately();
               Control::Continue
           }
       - match: >-
@@ -956,7 +966,7 @@ modes:
               self.push_html_input_element(tag);
               self.pop_element();
               if tag.self_closing {
-                  // TODO: Acknowledge the token's self-closing flag
+                  {{use '$acknowledge-self-closing' }}
               }
               Control::Continue
           }
@@ -1076,7 +1086,7 @@ modes:
           self.push_html_col_element(tag);
           self.pop_element();
           if tag.self_closing {
-              // TODO: Acknowledge the token's self-closing flag
+              {{use '$acknowledge-self-closing' }}
           }
           Control::Continue
       - match: </colgroup>
@@ -1503,7 +1513,7 @@ modes:
           self.push_html_frame_element(tag);
           self.pop_element();
           if tag.self_closing {
-              // TODO: Acknowledge the token's self-closing flag
+              {{use '$acknowledge-self-closing' }}
           }
           Control::Continue
       - match: <noframes>
@@ -1603,6 +1613,10 @@ snippets:
     if: enable-parse-error
     code: |
       // TODO: Parse error.
+  acknowledge-self-closing:
+    if: enable-parse-error
+    code: |
+      // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
   generic-rcdata-element-parsing-algorithm:
     code: |
       self.push_html_{{tag_name}}_element(tag);
