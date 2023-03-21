@@ -169,8 +169,8 @@ where
     }
 
     fn set_attributes_to_html_element(&mut self, tag: &Tag<'_>) {
-        // TODO
-        todo!();
+        let node = self.html_element.expect("<html> must exist");
+        self.inner.set_attribute(node, tag.attrs(), false);
     }
 
     fn set_attributes_to_body_element(&mut self, tag: &Tag<'_>) {
