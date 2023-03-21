@@ -18,6 +18,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -67,6 +68,7 @@ where
                 mode!(InHeadNoscript) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         debug_assert!(self.context().is_html_element(tag!(Noscript)));
                         self.pop_element();
                         debug_assert!(self.context().is_html_element(tag!(Head)));
@@ -113,6 +115,7 @@ where
                 mode!(Text) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         if self.context().is_html_element(tag!(Script)) {
                             // TODO: set its already started to true.
                         }
@@ -150,6 +153,7 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Html)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         Control::Done
                     };

@@ -36,17 +36,14 @@ where
         }
     }
 
-    fn has_template_element(&mut self) -> bool {
-        // TODO
-        false
-    }
-
     fn set_attributes_to_html_element(&mut self, tag: &Tag<'_>) {
         // TODO
+        todo!();
     }
 
     fn set_attributes_to_body_element(&mut self, tag: &Tag<'_>) {
-        // TODO
+        let node = self.body_element.expect("<body> must exist");
+        self.inner.set_attribute(node, tag.attrs(), false);
     }
 
     fn reset_insertion_mode_appropriately(&mut self) {

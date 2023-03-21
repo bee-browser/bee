@@ -18,6 +18,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -67,6 +68,7 @@ where
                 mode!(InHeadNoscript) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         debug_assert!(self.context().is_html_element(tag!(Noscript)));
                         self.pop_element();
                         debug_assert!(self.context().is_html_element(tag!(Head)));
@@ -98,7 +100,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -137,12 +141,15 @@ where
                     let ctrl = {
                         if !self.context().has_caption_element_in_table_scope() {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.close_implied_tags();
                             if !self.context().is_html_element(tag!(Caption)) {
                                 // TODO: Parse error.
+                                tracing::debug!("Parse error");
                             }
                             while !self.context().is_html_element(tag!(Caption)) {
                                 self.pop_element();
@@ -162,7 +169,9 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.pop_element();
@@ -179,7 +188,9 @@ where
                     let ctrl = {
                         if !self.context().has_rowgroup_element_in_table_scope() {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.clear_stack_back_to_table_body_context();
@@ -197,7 +208,9 @@ where
                     let ctrl = {
                         if !self.context().has_tr_element_in_table_scope() {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.clear_stack_back_to_table_row_context();
@@ -216,7 +229,9 @@ where
                     let ctrl = {
                         if !self.context().has_cell_element_in_table_scope() {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.close_cell();
@@ -231,6 +246,7 @@ where
                 mode!(InSelectInTable) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         while !self.context().is_html_element(tag!(Select)) {
                             self.pop_element();
                         }
@@ -258,6 +274,7 @@ where
                 mode!(AfterBody, AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -283,6 +300,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -311,7 +329,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -321,7 +341,6 @@ where
                 }
                 mode!(InBody) => {
                     let ctrl = {
-                        self.append_text_if_exists();
                         let mut context_pos = self.context_stack.len() - 1;
                         loop {
                             let context = &self.context_stack[context_pos];
@@ -380,11 +399,13 @@ where
                     let ctrl = {
                         if !self.context().has_caption_element_in_table_scope() {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
                         } else {
                             self.close_implied_tags();
                             if !self.context().is_html_element(tag!(Caption)) {
                                 // TODO: Parse error.
+                                tracing::debug!("Parse error");
                             }
                             while !self.context().is_html_element(tag!(Caption)) {
                                 self.pop_element();
@@ -404,7 +425,9 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.pop_element();
@@ -420,6 +443,7 @@ where
                 mode!(InSelectInTable) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as that of the token, then ignore the token.
                         while !self.context().is_html_element(tag!(Select)) {
                             self.pop_element();
@@ -436,6 +460,7 @@ where
                 mode!(AfterBody, AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };

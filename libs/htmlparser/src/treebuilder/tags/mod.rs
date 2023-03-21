@@ -8,10 +8,13 @@ mod any_other;
 mod aside;
 mod b;
 mod body;
+mod br;
 mod caption;
 mod col;
 mod colgroup;
+mod dd;
 mod div;
+mod dt;
 mod em;
 mod font;
 mod form;
@@ -20,11 +23,14 @@ mod head;
 mod hr;
 mod html;
 mod i;
+mod img;
 mod input;
 mod li;
 mod main;
 mod math;
 mod meta;
+mod nobr;
+mod noframes;
 mod noscript;
 mod ol;
 mod option;
@@ -60,10 +66,13 @@ where
             tag!(Aside) => self.handle_start_aside(&tag),
             tag!(B) => self.handle_start_b(&tag),
             tag!(Body) => self.handle_start_body(&tag),
+            tag!(Br) => self.handle_start_br(&tag),
             tag!(Caption) => self.handle_start_caption(&tag),
             tag!(Col) => self.handle_start_col(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
+            tag!(Dd) => self.handle_start_dd(&tag),
             tag!(Div) => self.handle_start_div(&tag),
+            tag!(Dt) => self.handle_start_dt(&tag),
             tag!(Em) => self.handle_start_em(&tag),
             tag!(Font) => self.handle_start_font(&tag),
             tag!(Form) => self.handle_start_form(&tag),
@@ -72,11 +81,14 @@ where
             tag!(Hr) => self.handle_start_hr(&tag),
             tag!(Html) => self.handle_start_html(&tag),
             tag!(I) => self.handle_start_i(&tag),
+            tag!(Img) => self.handle_start_img(&tag),
             tag!(Input) => self.handle_start_input(&tag),
             tag!(Li) => self.handle_start_li(&tag),
             tag!(Main) => self.handle_start_main(&tag),
             tag!(Math) => self.handle_start_math(&tag),
             tag!(Meta) => self.handle_start_meta(&tag),
+            tag!(Nobr) => self.handle_start_nobr(&tag),
+            tag!(Noframes) => self.handle_start_noframes(&tag),
             tag!(Noscript) => self.handle_start_noscript(&tag),
             tag!(Ol) => self.handle_start_ol(&tag),
             tag!(Option) => self.handle_start_option(&tag),
@@ -109,10 +121,13 @@ where
             tag!(Aside) => self.handle_end_aside(&tag),
             tag!(B) => self.handle_end_b(&tag),
             tag!(Body) => self.handle_end_body(&tag),
+            tag!(Br) => self.handle_end_br(&tag),
             tag!(Caption) => self.handle_end_caption(&tag),
             tag!(Col) => self.handle_end_col(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
+            tag!(Dd) => self.handle_end_dd(&tag),
             tag!(Div) => self.handle_end_div(&tag),
+            tag!(Dt) => self.handle_end_dt(&tag),
             tag!(Em) => self.handle_end_em(&tag),
             tag!(Font) => self.handle_end_font(&tag),
             tag!(Form) => self.handle_end_form(&tag),
@@ -121,11 +136,14 @@ where
             tag!(Hr) => self.handle_end_hr(&tag),
             tag!(Html) => self.handle_end_html(&tag),
             tag!(I) => self.handle_end_i(&tag),
+            tag!(Img) => self.handle_end_img(&tag),
             tag!(Input) => self.handle_end_input(&tag),
             tag!(Li) => self.handle_end_li(&tag),
             tag!(Main) => self.handle_end_main(&tag),
             tag!(Math) => self.handle_end_math(&tag),
             tag!(Meta) => self.handle_end_meta(&tag),
+            tag!(Nobr) => self.handle_end_nobr(&tag),
+            tag!(Noframes) => self.handle_end_noframes(&tag),
             tag!(Noscript) => self.handle_end_noscript(&tag),
             tag!(Ol) => self.handle_end_ol(&tag),
             tag!(Option) => self.handle_end_option(&tag),
@@ -150,17 +168,14 @@ where
         }
     }
 
-    fn has_template_element(&mut self) -> bool {
-        // TODO
-        false
-    }
-
     fn set_attributes_to_html_element(&mut self, tag: &Tag<'_>) {
         // TODO
+        todo!();
     }
 
     fn set_attributes_to_body_element(&mut self, tag: &Tag<'_>) {
-        // TODO
+        let node = self.body_element.expect("<body> must exist");
+        self.inner.set_attribute(node, tag.attrs(), false);
     }
 
     fn reset_insertion_mode_appropriately(&mut self) {

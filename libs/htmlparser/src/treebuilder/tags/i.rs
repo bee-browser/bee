@@ -18,6 +18,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -67,6 +68,7 @@ where
                 mode!(InHeadNoscript) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         debug_assert!(self.context().is_html_element(tag!(Noscript)));
                         self.pop_element();
                         debug_assert!(self.context().is_html_element(tag!(Head)));
@@ -104,6 +106,7 @@ where
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
                             self.reconstruct_active_formatting_elements();
@@ -137,7 +140,9 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.pop_element();
@@ -159,7 +164,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -182,6 +189,7 @@ where
                 mode!(AfterBody, AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -207,6 +215,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -232,7 +241,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -264,6 +275,7 @@ where
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
                             self.perform_adoption_agency_algorithm(tag);
@@ -295,7 +307,9 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.pop_element();
@@ -311,6 +325,7 @@ where
                 mode!(AfterBody, AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };

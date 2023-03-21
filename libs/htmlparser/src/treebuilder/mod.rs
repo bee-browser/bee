@@ -39,7 +39,7 @@ pub trait DomTreeBuilder {
     fn create_comment(&mut self, data: &str) -> Self::Node;
 
     /// Sets an attribute to a node.
-    fn set_attribute<'a, I>(&mut self, node: Self::Node, attrs: I)
+    fn set_attribute<'a, I>(&mut self, node: Self::Node, attrs: I, overwrite: bool)
     where
         I: Iterator<Item = (&'a str, &'a str)>;
 
@@ -79,6 +79,7 @@ where
 
     text: String,
     head_element: Option<T::Node>,
+    body_element: Option<T::Node>,
 
     context_stack: Vec<TreeBuildContext<T::Node>>,
     active_formatting_element_list: ActiveFormattingElementList<T::Node>,
@@ -116,6 +117,7 @@ where
             quirks_mode: QuirksMode::NoQuirks,
             text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             head_element: None,
+            body_element: None,
             context_stack: vec![context],
             active_formatting_element_list: Default::default(),
             iframe_srcdoc: false,
@@ -709,8 +711,17 @@ where
 
     #[inline(always)]
     fn push_html_body_element(&mut self, tag: &Tag<'_>) {
+        debug_assert!(self.body_element.is_none());
         self.push_html_element(tag, LocalName::Body);
-        self.context_mut().reset_mode = mode!(InBody);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InBody);
+        context.element_in_scope |= ElementInScope::Body;
+        self.body_element = Some(context.open_element.node);
+    }
+
+    #[inline(always)]
+    fn push_html_br_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Br);
     }
 
     #[inline(always)]
@@ -736,9 +747,21 @@ where
     }
 
     #[inline(always)]
+    fn push_html_dd_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Dd);
+        self.context_mut().element_in_scope |= ElementInScope::Dd;
+    }
+
+    #[inline(always)]
     fn push_html_div_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Div);
         self.context_mut().element_in_scope |= ElementInScope::Div;
+    }
+
+    #[inline(always)]
+    fn push_html_dt_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Dt);
+        self.context_mut().element_in_scope |= ElementInScope::Dt;
     }
 
     #[inline(always)]
@@ -794,6 +817,11 @@ where
     }
 
     #[inline(always)]
+    fn push_html_img_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Img);
+    }
+
+    #[inline(always)]
     fn push_html_input_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Input);
     }
@@ -822,6 +850,17 @@ where
     #[inline(always)]
     fn push_html_meta_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Meta);
+    }
+
+    #[inline(always)]
+    fn push_html_nobr_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Nobr);
+        self.context_mut().element_in_scope |= ElementInScope::Nobr;
+    }
+
+    #[inline(always)]
+    fn push_html_noframes_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Nobr);
     }
 
     #[inline(always)]
@@ -995,7 +1034,7 @@ where
         );
         self.append_text_if_exists();
         let node = self.inner.create_element(tag.name, Namespace::Html);
-        self.inner.set_attribute(node, tag.attrs());
+        self.inner.set_attribute(node, tag.attrs(), true);
         self.insert_html_element(OpenElement::with_html(local_name, node))
     }
 
@@ -1050,6 +1089,10 @@ where
 
     fn insert_node_with_context(&mut self, node: T::Node, stack_pos: usize) {
         let context = &self.context_stack[stack_pos];
+        tracing::debug!(
+            context.pos = stack_pos,
+            context.element = ?context.open_element,
+        );
         if self.foster_parenting {
             match context.foster_parenting_insertion_point {
                 FosterParentingInsertionPoint::None => unreachable!(),
@@ -1076,6 +1119,7 @@ where
                 // TODO: adjust foreign attributes
                 (name, value)
             }),
+            true,
         );
         self.insert_element(OpenElement::with_mathml(local_name, node));
         let context = self.context_mut();
@@ -1120,6 +1164,7 @@ where
                 // TODO: adjust foreign attributes
                 (name, value)
             }),
+            true,
         );
         self.insert_element(OpenElement::with_svg(local_name, node));
         let context = self.context_mut();
@@ -1146,8 +1191,30 @@ where
     fn reopen_head_element(&mut self) {
         self.append_text_if_exists();
         debug_assert!(self.head_element.is_some());
-        // TODO
-        todo!();
+        let node = self.head_element.expect("<head> must exists");
+        self.context_stack.push(TreeBuildContext {
+            open_element: OpenElement::with_html(tag!(Head), node),
+            reset_mode: InsertionMode::InHead,
+            foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
+            element_in_scope: Default::default(),
+            element_in_list_item_scope: Default::default(),
+            element_in_button_scope: Default::default(),
+            element_in_table_scope: Default::default(),
+            element_in_select_scope: Default::default(),
+            flags: Default::default(),
+        });
+        tracing::debug!(
+            context.pos = self.context_stack.len() - 1,
+            context.element = ?self.context().open_element,
+        );
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn close_head_element(&mut self) {
+        debug_assert!(self.head_element.is_some());
+        let node = self.head_element.expect("<head> must exists");
+        self.context_stack
+            .retain(|context| context.open_element.node != node);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -1237,7 +1304,7 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn append_comment(&mut self, comment: &Comment<'_>) {
+    fn insert_comment(&mut self, comment: &Comment<'_>) {
         self.append_text_if_exists();
         let node = self.inner.create_comment(comment.data);
         self.insert_node(node);
@@ -1398,9 +1465,27 @@ where
     }
 
     #[inline(always)]
+    fn has_body_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Body)
+    }
+
+    #[inline(always)]
+    fn has_dd_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Dd)
+    }
+
+    #[inline(always)]
     fn has_div_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Div)
+    }
+
+    #[inline(always)]
+    fn has_dt_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Dt)
     }
 
     #[inline(always)]
@@ -1413,6 +1498,12 @@ where
     fn has_main_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Main)
+    }
+
+    #[inline(always)]
+    fn has_nobr_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Nobr)
     }
 
     #[inline(always)]
@@ -1603,9 +1694,13 @@ enum FosterParentingInsertionPoint<T> {
 flagset::flags! {
     enum ElementInScope: u16 {
         Aside,
+        Body,
+        Dd,
         Div,
+        Dt,
         Form,
         Main,
+        Nobr,
         Ol,
         Pre,
         Ul,

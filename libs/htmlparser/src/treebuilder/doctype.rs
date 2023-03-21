@@ -19,11 +19,14 @@ where
                     let ctrl = {
                         if let Some("html") = doctype.name {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         } else if let Some(_) = doctype.public_id {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         } else if let Some(system_id) = doctype.system_id {
                             if system_id != "about:legacy-compat" {
                                 // TODO: Parse error.
+                                tracing::debug!("Parse error");
                             }
                         }
                         self.append_doctype(&doctype);
@@ -60,7 +63,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {

@@ -301,7 +301,11 @@ modes:
         run: |
           {{use '$parse-error'}}
           self.reopen_head_element();
-          {{use '@in-head'}}
+          let ctrl = {
+              {{use '@in-head'}}
+          };
+          self.close_head_element();
+          ctrl
         pre_conditions:
           has_head_element_pointer: true
         post_conditions:
@@ -398,9 +402,14 @@ modes:
           Control::Continue
       - match: </html>
         run: |
-          // TODO
-          self.switch_to(mode!(AfterBody));
-          Control::Reprocess
+          if !self.context().has_body_element_in_scope() {
+              {{use '$parse-error'}}
+              {{use '$ignore-token'}}
+          } else {
+              // TODO: if there is a node in the stack of open elements that is not either a dd element, a dt element, an li element, an optgroup element, an option element, a p element, an rb element, an rp element, an rt element, an rtc element, a tbody element, a td element, a tfoot element, a th element, a thead element, a tr element, the body element, or the html element, then this is a parse error.
+              self.switch_to(mode!(AfterBody));
+              Control::Reprocess
+          }
       - match: >-
           <address> <article> <aside> <blockquote> <center> <details> <dialog>
           <dir> <div> <dl> <fieldset> <figcaption> <figure> <footer> <header>
@@ -468,8 +477,45 @@ modes:
           Control::Continue
       - match: <dd> <dt>
         run: |
-          // TODO
-          {{use 'any-other-start-tag'}}
+          self.frameset_ok = false;
+          let mut context_pos = self.context_stack.len() - 1;
+          loop {
+              let context = &self.context_stack[context_pos];
+              if context.is_html_element(tag!(Dd)) {
+                  self.close_implied_tags_except_for(tag!(Dd));
+                  if !self.context().is_html_element(tag!(Dd)) {
+                      {{use '$parse-error'}}
+                  }
+                  while !self.context().is_html_element(tag!(Dd)) {
+                      self.pop_element();
+                  }
+                  self.pop_element(); // pop an html dd element
+                  break;
+              }
+              if context.is_html_element(tag!(Dt)) {
+                  self.close_implied_tags_except_for(tag!(Dt));
+                  if !self.context().is_html_element(tag!(Dt)) {
+                      {{use '$parse-error'}}
+                  }
+                  while !self.context().is_html_element(tag!(Dt)) {
+                      self.pop_element();
+                  }
+                  self.pop_element(); // pop an html dt element
+                  break;
+              }
+              let local_name = context.local_name();
+              if local_name.is_special() {
+                  if context.is_html() && !tags![Address, Div, P].contains(&local_name) {
+                      break;
+                  }
+              }
+              context_pos -= 1;
+          }
+          if self.context().has_p_element_in_button_scope() {
+              self.close_p_element();
+          }
+          self.push_html_{{tag_name}}_element(tag);
+          Control::Continue
       - match: <plaintext>
         run: |
           if self.context().has_p_element_in_button_scope() {
@@ -666,7 +712,7 @@ modes:
       - match: </br>
         run: |
           {{use '$parse-error'}}
-          // TODO: Drop the attributes from the token.
+          let tag = &Tag::with_no_attrs("br"); // Drop the attributes
           {{use 'start-br'}}
       - match: <area> <br> <embed> <img> <keygen> <wbr>
         id: start-br
@@ -822,7 +868,6 @@ modes:
       - match: </_>
         id: any-other-end-tag
         run: |
-          self.append_text_if_exists();
           let mut context_pos = self.context_stack.len() - 1;
           loop {
               let context = &self.context_stack[context_pos];
@@ -1503,7 +1548,7 @@ modes:
           } else {
               self.pop_element();
               // TODO: If the parser was not created as part of the HTML fragment parsing algorithm (fragment case)
-              if self.context().is_html_element(tag!(Frameset)) {
+              if !self.context().is_html_element(tag!(Frameset)) {
                   self.switch_to(mode!(AfterFrameset));
               }
               Control::Continue
@@ -1568,7 +1613,7 @@ modes:
     rules:
       - match: comment
         run: |
-          self.insert_comment(&comment);
+          self.append_comment_to_document(&comment);
           Control::Continue
       - match: doctype whitespace <html>
         run: |
@@ -1587,7 +1632,7 @@ modes:
     rules:
       - match: comment
         run: |
-          self.insert_comment(&comment);
+          self.append_comment_to_document(&comment);
           Control::Continue
       - match: doctype whitespace <html>
         run: |
@@ -1608,11 +1653,13 @@ snippets:
   ignore-token:
     code: |
       // Ignore the token.
+      tracing::debug!("Ignore the token");
       Control::Continue
   parse-error:
     if: enable-parse-error
     code: |
       // TODO: Parse error.
+      tracing::debug!("Parse error");
   acknowledge-self-closing:
     if: enable-parse-error
     code: |

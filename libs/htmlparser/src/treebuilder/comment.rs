@@ -33,9 +33,7 @@ where
                     InTemplate,
                     AfterBody,
                     InFrameset,
-                    AfterFrameset,
-                    AfterAfterBody,
-                    AfterAfterFrameset
+                    AfterFrameset
                 ) => {
                     let ctrl = {
                         self.insert_comment(&comment);
@@ -71,6 +69,16 @@ where
                         _ => return ctrl,
                     }
                 }
+                mode!(AfterAfterBody, AfterAfterFrameset) => {
+                    let ctrl = {
+                        self.append_comment_to_document(&comment);
+                        Control::Continue
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return ctrl,
+                    }
+                }
                 mode!(Text) => {
                     unreachable!();
                 }
@@ -78,9 +86,10 @@ where
         }
     }
 
-    // Implement the "Insert a comment" algorithm.
-    fn insert_comment(&mut self, comment: &Comment<'_>) {
-        // TODO
-        self.append_comment(comment);
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn append_comment_to_document(&mut self, comment: &Comment<'_>) {
+        self.append_text_if_exists();
+        let node = self.inner.create_comment(comment.data);
+        self.insert_node_with_context(node, 0);
     }
 }

@@ -9,9 +9,9 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_head(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_noframes(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_head", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_start_noframes", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -43,10 +43,10 @@ where
                 }
                 mode!(BeforeHead) => {
                     let ctrl = {
-                        self.push_html_head_element(tag);
+                        self.push_html_head_element(&Tag::with_no_attrs("head"));
                         // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
-                        Control::Continue
+                        Control::Reprocess
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -56,22 +56,36 @@ where
                 mode!(
                     InHead,
                     InHeadNoscript,
-                    AfterHead,
                     InBody,
                     InCaption,
                     InCell,
-                    InSelect,
-                    InSelectInTable,
+                    InTemplate,
                     InFrameset,
                     AfterFrameset,
                     AfterAfterFrameset
                 ) => {
                     let ctrl = {
+                        self.push_html_noframes_element(tag);
+                        self.save_and_switch_to(mode!(Text));
+                        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noframes")
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return ctrl,
+                    }
+                }
+                mode!(AfterHead) => {
+                    let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        // Ignore the token.
-                        tracing::debug!("Ignore the token");
-                        Control::Continue
+                        self.reopen_head_element();
+                        let ctrl = {
+                            self.push_html_noframes_element(tag);
+                            self.save_and_switch_to(mode!(Text));
+                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noframes")
+                        };
+                        self.close_head_element();
+                        ctrl
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -84,11 +98,9 @@ where
                         tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
-                            // TODO: Parse error.
-                            tracing::debug!("Parse error");
-                            // Ignore the token.
-                            tracing::debug!("Ignore the token");
-                            Control::Continue
+                            self.push_html_noframes_element(tag);
+                            self.save_and_switch_to(mode!(Text));
+                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noframes")
                         };
                         self.disable_foster_parenting();
                         ctrl
@@ -131,12 +143,13 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InTemplate) => {
+                mode!(InSelect, InSelectInTable) => {
                     let ctrl = {
-                        // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-                        // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
-                        self.switch_to(mode!(InBody));
-                        Control::Reprocess
+                        // TODO: Parse error.
+                        tracing::debug!("Parse error");
+                        // Ignore the token.
+                        tracing::debug!("Ignore the token");
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -163,9 +176,9 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_head(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_noframes(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_end_head", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_noframes", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -183,43 +196,10 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(BeforeHtml) => {
-                    let ctrl = {
-                        //debug_assert!(self.writer.is_empty());
-                        self.push_html_html_element(&Tag::with_no_attrs("html"));
-                        self.switch_to(mode!(BeforeHead));
-                        Control::Reprocess
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(BeforeHead) => {
-                    let ctrl = {
-                        self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
-                        self.switch_to(mode!(InHead));
-                        Control::Reprocess
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InHead) => {
-                    let ctrl = {
-                        debug_assert!(self.context().is_html_element(tag!(Head)));
-                        self.pop_element();
-                        self.switch_to(mode!(AfterHead));
-                        Control::Continue
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
                 mode!(
+                    BeforeHtml,
+                    BeforeHead,
+                    InHead,
                     InHeadNoscript,
                     AfterHead,
                     InSelect,
@@ -248,7 +228,7 @@ where
                             let context = &self.context_stack[context_pos];
                             let element = context.open_element.node;
                             if context.is_html() && self.inner.has_same_name(element, tag.name) {
-                                self.close_implied_tags_except_for(tag!(Head)); // TODO
+                                self.close_implied_tags_except_for(tag!(Noframes)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
                                 }
@@ -295,7 +275,7 @@ where
                                 let element = context.open_element.node;
                                 if context.is_html() && self.inner.has_same_name(element, tag.name)
                                 {
-                                    self.close_implied_tags_except_for(tag!(Head)); // TODO
+                                    self.close_implied_tags_except_for(tag!(Noframes)); // TODO
                                     if element != self.context().open_element.node {
                                         // TODO: Parse error.
                                     }

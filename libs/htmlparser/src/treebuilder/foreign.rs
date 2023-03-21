@@ -164,7 +164,7 @@ where
                 Control::Continue
             }
             Token::Comment(comment) => {
-                self.append_comment(&comment);
+                self.insert_comment(&comment);
                 Control::Continue
             }
             Token::Error(error) => self.handle_error(error),

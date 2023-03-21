@@ -18,6 +18,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -59,6 +60,7 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         if self.context().has_template_element() {
                             // Ignore the token.
                         } else {
@@ -74,9 +76,11 @@ where
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             if self.context().has_template_element() {
                                 // Ignore the token.
                             } else {
@@ -135,6 +139,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -196,7 +201,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -217,9 +224,17 @@ where
                 }
                 mode!(InBody) => {
                     let ctrl = {
-                        // TODO
-                        self.switch_to(mode!(AfterBody));
-                        Control::Reprocess
+                        if !self.context().has_body_element_in_scope() {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            // TODO: if there is a node in the stack of open elements that is not either a dd element, a dt element, an li element, an optgroup element, an option element, a p element, an rb element, an rp element, an rt element, an rtc element, a tbody element, a td element, a tfoot element, a th element, a thead element, a tr element, the body element, or the html element, then this is a parse error.
+                            self.switch_to(mode!(AfterBody));
+                            Control::Reprocess
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -255,7 +270,9 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.pop_element();
@@ -292,6 +309,7 @@ where
                 mode!(AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
