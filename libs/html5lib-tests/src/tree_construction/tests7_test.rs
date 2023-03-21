@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -15,6 +16,7 @@ fn test_0000() {
             (3, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -32,6 +34,7 @@ fn test_0001() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -48,6 +51,7 @@ fn test_0002() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -64,6 +68,7 @@ fn test_0003() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -80,6 +85,7 @@ fn test_0004() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -102,6 +108,7 @@ fn test_0005() {
             (7, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -116,6 +123,7 @@ fn test_0006() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -130,6 +138,7 @@ fn test_0007() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -148,6 +157,7 @@ fn test_0008() {
             (3, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -167,6 +177,7 @@ fn test_0009() {
             (4, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -185,6 +196,7 @@ fn test_0010() {
             (5, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -205,6 +217,7 @@ fn test_0011() {
             (5, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -221,6 +234,7 @@ fn test_0012() {
             (3, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -238,6 +252,7 @@ fn test_0013() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -254,6 +269,7 @@ fn test_0014() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -271,6 +287,7 @@ fn test_0015() {
             (4, "type=\"hidDEN\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -289,6 +306,7 @@ fn test_0016() {
             (4, "type=\"hidDEN\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -307,6 +325,7 @@ fn test_0017() {
             (4, "type=\"hidDEN\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -325,6 +344,7 @@ fn test_0018() {
             (4, "type=\"hidDEN\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -344,6 +364,7 @@ fn test_0019() {
             (4, "type=\"hidDEN\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -363,6 +384,7 @@ fn test_0020() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -379,6 +401,7 @@ fn test_0021() {
             (3, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -393,6 +416,7 @@ fn test_0022() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -407,6 +431,7 @@ fn test_0023() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -416,6 +441,7 @@ fn test_0024() {
         data: "<body>X</body></body>",
         document: vec![(0, "<head>"), (0, "<body>"), (1, "\"X\"")],
         context_element: Some(("html", "html")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -432,6 +458,7 @@ fn test_0025() {
             (4, "\"a b\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -451,6 +478,7 @@ fn test_0026() {
             (6, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -474,6 +502,7 @@ fn test_0027() {
             (3, "\"ccc\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -491,6 +520,7 @@ fn test_0028() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -509,6 +539,7 @@ fn test_0029() {
             (4, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -524,6 +555,7 @@ fn test_0030() {
             (2, "<keygen>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

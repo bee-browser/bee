@@ -36,7 +36,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script></script>BAR",
@@ -69,7 +70,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script></script >BAR",
@@ -102,7 +104,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script></script/>BAR",
@@ -138,7 +141,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script></script/ >BAR",
@@ -174,7 +178,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\"></scriptx>BAR",
@@ -212,7 +217,8 @@
           3,
           "\"</scriptx>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script></script foo=\">\" dd>BAR",
@@ -248,7 +254,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<'</script>BAR",
@@ -285,7 +292,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!'</script>BAR",
@@ -322,7 +330,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!-'</script>BAR",
@@ -359,7 +368,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!--'</script>BAR",
@@ -396,7 +406,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!---'</script>BAR",
@@ -433,7 +444,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!-->'</script>BAR",
@@ -470,7 +482,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!-->'</script>BAR",
@@ -507,7 +520,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!-- potato'</script>BAR",
@@ -544,7 +558,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!-- <sCrIpt'</script>BAR",
@@ -581,7 +596,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt>'</script>BAR",
@@ -622,7 +638,8 @@
           3,
           "\"'<!-- <sCrIpt>'</script>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt> -'</script>BAR",
@@ -663,7 +680,8 @@
           3,
           "\"'<!-- <sCrIpt> -'</script>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt> --'</script>BAR",
@@ -704,7 +722,8 @@
           3,
           "\"'<!-- <sCrIpt> --'</script>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script>'<!-- <sCrIpt> -->'</script>BAR",
@@ -741,7 +760,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt> --!>'</script>BAR",
@@ -782,7 +802,8 @@
           3,
           "\"'<!-- <sCrIpt> --!>'</script>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt> -- >'</script>BAR",
@@ -823,7 +844,8 @@
           3,
           "\"'<!-- <sCrIpt> -- >'</script>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt '</script>BAR",
@@ -864,7 +886,8 @@
           3,
           "\"'<!-- <sCrIpt '</script>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt/'</script>BAR",
@@ -905,7 +928,8 @@
           3,
           "\"'<!-- <sCrIpt/'</script>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt\\'</script>BAR",
@@ -946,7 +970,8 @@
           2,
           "\"BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script type=\"text/plain\">'<!-- <sCrIpt/'</script>BAR</script>QUX",
@@ -987,7 +1012,8 @@
           2,
           "\"QUX\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<script><!--<script>-></script>--></script>QUX",
@@ -1024,7 +1050,8 @@
           2,
           "\"QUX\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

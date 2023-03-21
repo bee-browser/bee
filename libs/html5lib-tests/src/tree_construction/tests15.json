@@ -65,7 +65,8 @@
           6,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<p><b><i><u></p>\n<p>X",
@@ -128,7 +129,8 @@
           6,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html></html> <head>",
@@ -158,7 +160,8 @@
           2,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html></body><meta>",
@@ -187,7 +190,8 @@
           2,
           "<meta>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html></html><!-- foo -->",
@@ -212,7 +216,8 @@
           0,
           "<!--  foo  -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html></body><title>X</title>",
@@ -245,7 +250,8 @@
           3,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table> X<meta></table>",
@@ -284,7 +290,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table> x</table>",
@@ -318,7 +325,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table> x </table>",
@@ -353,7 +361,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr> x</table>",
@@ -395,7 +404,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table>X<style> <tr>x </style> </table>",
@@ -440,7 +450,8 @@
           3,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><div><table><a>foo</a> <tr><td>bar</td> </tr></table></div>",
@@ -509,7 +520,8 @@
           6,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frame></frame></frame><frameset><frame><frameset><frame></frameset><noframes></frameset><noframes>",
@@ -556,7 +568,8 @@
           3,
           "\"</frameset><noframes>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><object></html>",
@@ -586,7 +599,8 @@
           2,
           "<object>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

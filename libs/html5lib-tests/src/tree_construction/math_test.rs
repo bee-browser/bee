@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -13,6 +14,7 @@ fn test_0000() {
             (3, "<math mo>"),
         ],
         context_element: Some(("html", "td")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -27,6 +29,7 @@ fn test_0001() {
             (3, "<math mo>"),
         ],
         context_element: Some(("html", "tr")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -36,6 +39,7 @@ fn test_0002() {
         data: "<math><thead><mo><tbody>",
         document: vec![(0, "<math math>"), (1, "<math thead>"), (2, "<math mo>")],
         context_element: Some(("html", "thead")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -45,6 +49,7 @@ fn test_0003() {
         data: "<math><tfoot><mo><tbody>",
         document: vec![(0, "<math math>"), (1, "<math tfoot>"), (2, "<math mo>")],
         context_element: Some(("html", "tfoot")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -54,6 +59,7 @@ fn test_0004() {
         data: "<math><tbody><mo><tfoot>",
         document: vec![(0, "<math math>"), (1, "<math tbody>"), (2, "<math mo>")],
         context_element: Some(("html", "tbody")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -63,6 +69,7 @@ fn test_0005() {
         data: "<math><tbody><mo></table>",
         document: vec![(0, "<math math>"), (1, "<math tbody>"), (2, "<math mo>")],
         context_element: Some(("html", "tbody")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -72,6 +79,7 @@ fn test_0006() {
         data: "<math><thead><mo></table>",
         document: vec![(0, "<math math>"), (1, "<math thead>"), (2, "<math mo>")],
         context_element: Some(("html", "tbody")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -81,6 +89,7 @@ fn test_0007() {
         data: "<math><tfoot><mo></table>",
         document: vec![(0, "<math math>"), (1, "<math tfoot>"), (2, "<math mo>")],
         context_element: Some(("html", "tbody")),
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

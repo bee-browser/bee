@@ -30,7 +30,8 @@
           3,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><title>X</title></table>",
@@ -67,7 +68,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><head></head><title>X</title>",
@@ -100,7 +102,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html></head><title>X</title>",
@@ -133,7 +136,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><meta></table>",
@@ -166,7 +170,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table>X<tr><td><table> <meta></table></table>",
@@ -224,7 +229,8 @@
           7,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><html> <head>",
@@ -247,7 +253,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html> <head>",
@@ -270,7 +277,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><style> <tr>x </style> </table>",
@@ -309,7 +317,8 @@
           3,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><TBODY><script> <tr>x </script> </table>",
@@ -352,7 +361,8 @@
           4,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p><applet><p>X</p></applet>",
@@ -391,7 +401,8 @@
           5,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p><object type=\"application/x-non-existant-plugin\"><p>X</p></object>",
@@ -434,7 +445,8 @@
           5,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><listing>\nX</listing>",
@@ -465,7 +477,8 @@
           3,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><input>X",
@@ -502,7 +515,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><select>X",
@@ -535,7 +549,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><input type=hidDEN></table>",
@@ -572,7 +587,8 @@
           4,
           "type=\"hidDEN\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table>X<input type=hidDEN></table>",
@@ -614,7 +630,8 @@
           4,
           "type=\"hidDEN\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table>  <input type=hidDEN></table>",
@@ -655,7 +672,8 @@
           4,
           "type=\"hidDEN\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table>  <input type='hidDEN'></table>",
@@ -696,7 +714,8 @@
           4,
           "type=\"hidDEN\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><input type=\" hidden\"><input type=hidDEN></table>",
@@ -742,7 +761,8 @@
           4,
           "type=\"hidDEN\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><select>X<tr>",
@@ -789,7 +809,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select>X</select>",
@@ -820,7 +841,8 @@
           3,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE hTmL><html></html>",
@@ -843,7 +865,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML><html></html>",
@@ -866,7 +889,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body>X</body></body>",
@@ -888,6 +912,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "html"
@@ -926,7 +951,8 @@
           4,
           "\"a b\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tr><td><code></code> </table>",
@@ -971,7 +997,8 @@
           6,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><b><tr><td>aaa</td></tr>bbb</table>ccc",
@@ -1037,7 +1064,8 @@
           3,
           "\"ccc\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "A<table><tr> B</tr> B</table>",
@@ -1078,7 +1106,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "A<table><tr> B</tr> </em>C</table>",
@@ -1124,7 +1153,8 @@
           4,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><keygen>",
@@ -1154,7 +1184,8 @@
           2,
           "<keygen>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

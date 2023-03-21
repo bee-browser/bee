@@ -29,7 +29,8 @@
           3,
           "\"foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<math><![CDATA[foo]]>",
@@ -59,7 +60,8 @@
           3,
           "\"foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div><![CDATA[foo]]>",
@@ -92,7 +94,8 @@
           3,
           "<!-- [CDATA[foo]] -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[foo",
@@ -125,7 +128,8 @@
           3,
           "\"foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[foo",
@@ -158,7 +162,8 @@
           3,
           "\"foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[",
@@ -187,7 +192,8 @@
           2,
           "<svg svg>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[]]>",
@@ -213,7 +219,8 @@
           2,
           "<svg svg>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[]] >]]>",
@@ -243,7 +250,8 @@
           3,
           "\"]] >\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[]] >]]>",
@@ -273,7 +281,8 @@
           3,
           "\"]] >\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[]]",
@@ -306,7 +315,8 @@
           3,
           "\"]]\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[]",
@@ -339,7 +349,8 @@
           3,
           "\"]\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[]>a",
@@ -372,7 +383,8 @@
           3,
           "\"]>a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><svg><![CDATA[foo]]]>",
@@ -405,7 +417,8 @@
           3,
           "\"foo]\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><svg><![CDATA[foo]]]]>",
@@ -438,7 +451,8 @@
           3,
           "\"foo]]\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><svg><![CDATA[foo]]]]]>",
@@ -471,7 +485,8 @@
           3,
           "\"foo]]]\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><foreignObject><div><![CDATA[foo]]>",
@@ -512,7 +527,8 @@
           5,
           "<!-- [CDATA[foo]] -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[<svg>]]>",
@@ -542,7 +558,8 @@
           3,
           "\"<svg>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[</svg>a]]>",
@@ -572,7 +589,8 @@
           3,
           "\"</svg>a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[<svg>a",
@@ -605,7 +623,8 @@
           3,
           "\"<svg>a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[</svg>a",
@@ -638,7 +657,8 @@
           3,
           "\"</svg>a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[<svg>]]><path>",
@@ -672,7 +692,8 @@
           3,
           "<svg path>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[<svg>]]></path>",
@@ -704,7 +725,8 @@
           3,
           "\"<svg>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[<svg>]]><!--path-->",
@@ -738,7 +760,8 @@
           3,
           "<!-- path -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[<svg>]]>path",
@@ -768,7 +791,8 @@
           3,
           "\"<svg>path\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[<!--svg-->]]>",
@@ -798,7 +822,8 @@
           3,
           "\"<!--svg-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

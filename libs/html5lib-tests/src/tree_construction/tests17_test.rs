@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -17,6 +18,7 @@ fn test_0000() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -36,6 +38,7 @@ fn test_0001() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -56,6 +59,7 @@ fn test_0002() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -76,6 +80,7 @@ fn test_0003() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -95,6 +100,7 @@ fn test_0004() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -110,6 +116,7 @@ fn test_0005() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -125,6 +132,7 @@ fn test_0006() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -140,6 +148,7 @@ fn test_0007() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -155,6 +164,7 @@ fn test_0008() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -170,6 +180,7 @@ fn test_0009() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -185,6 +196,7 @@ fn test_0010() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -200,6 +212,7 @@ fn test_0011() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -218,6 +231,7 @@ fn test_0012() {
             (2, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

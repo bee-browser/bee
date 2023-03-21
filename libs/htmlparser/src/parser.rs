@@ -40,6 +40,10 @@ where
         self.tree_builder.set_quirks_mode(quirks_mode);
     }
 
+    pub fn set_scripting(&mut self, scripting: bool) {
+        self.tree_builder.set_scripting(scripting);
+    }
+
     pub fn set_context_element(&mut self, tag_name: &str, namespace: Namespace, node: T::Node) {
         let local_name = LocalName::lookup(tag_name);
         self.tokenizer.set_initial_state(match local_name {

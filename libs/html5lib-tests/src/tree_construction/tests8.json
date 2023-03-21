@@ -38,7 +38,8 @@
           3,
           "\"\nx\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>x<div></div>\n</span>x",
@@ -77,7 +78,8 @@
           3,
           "\"\nx\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>x<div></div>x</span>x",
@@ -116,7 +118,8 @@
           3,
           "\"xx\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>x<div></div>y</span>z",
@@ -155,7 +158,8 @@
           3,
           "\"yz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><div>x<div></div>x</span>x",
@@ -205,7 +209,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><li><li></table>",
@@ -240,7 +245,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "x<table>x",
@@ -271,7 +277,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "x<table><table>x",
@@ -311,7 +318,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b>a<div></div><div></b>y",
@@ -358,7 +366,8 @@
           3,
           "\"y\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><div><p></a>",
@@ -402,7 +411,8 @@
           4,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

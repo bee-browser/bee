@@ -27,7 +27,8 @@
           2,
           "\"FOO\rZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html>\u0000<frameset></frameset>",
@@ -53,7 +54,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html> \u0000 <frameset></frameset>",
@@ -79,7 +81,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html>a\u0000a<frameset></frameset>",
@@ -110,7 +113,8 @@
           2,
           "\"aa\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html>\u0000\u0000<frameset></frameset>",
@@ -139,7 +143,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html>\u0000\n<frameset></frameset>",
@@ -165,7 +170,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><select>\u0000",
@@ -195,7 +201,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "\u0000",
@@ -220,7 +227,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body>\u0000",
@@ -245,7 +253,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<plaintext>\u0000filler\u0000text\u0000",
@@ -282,7 +291,8 @@
           3,
           "\"�filler�text�\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[\u0000filler\u0000text\u0000]]>",
@@ -315,7 +325,8 @@
           3,
           "\"�filler�text�\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><!\u0000>",
@@ -345,7 +356,8 @@
           2,
           "<!-- � -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><!\u0000filler\u0000text>",
@@ -377,7 +389,8 @@
           2,
           "<!-- �filler�text -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><svg><foreignObject>\u0000filler\u0000text",
@@ -418,7 +431,8 @@
           4,
           "\"fillertext\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg>\u0000filler\u0000text",
@@ -455,7 +469,8 @@
           3,
           "\"�filler�text\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg>\u0000<frameset>",
@@ -493,7 +508,8 @@
           3,
           "<svg frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg>\u0000 <frameset>",
@@ -531,7 +547,8 @@
           3,
           "<svg frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg>\u0000a<frameset>",
@@ -569,7 +586,8 @@
           3,
           "<svg frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg>\u0000</svg><frameset>",
@@ -596,7 +614,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg>\u0000 </svg><frameset>",
@@ -623,7 +642,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg>\u0000a</svg><frameset>",
@@ -657,7 +677,8 @@
           3,
           "\"�a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><path></path></svg><frameset>",
@@ -680,7 +701,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><p><frameset>",
@@ -704,7 +726,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><pre>\r\n\r\nA</pre>",
@@ -735,7 +758,8 @@
           3,
           "\"\nA\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><pre>\r\rA</pre>",
@@ -766,7 +790,8 @@
           3,
           "\"\nA\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><pre>\rA</pre>",
@@ -797,7 +822,8 @@
           3,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><table><tr><td><math><mtext>\u0000a",
@@ -854,7 +880,8 @@
           8,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><table><tr><td><svg><foreignObject>\u0000a",
@@ -911,7 +938,8 @@
           8,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><mi>a\u0000b",
@@ -952,7 +980,8 @@
           4,
           "\"ab\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><mo>a\u0000b",
@@ -993,7 +1022,8 @@
           4,
           "\"ab\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><mn>a\u0000b",
@@ -1034,7 +1064,8 @@
           4,
           "\"ab\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><ms>a\u0000b",
@@ -1075,7 +1106,8 @@
           4,
           "\"ab\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><mtext>a\u0000b",
@@ -1116,7 +1148,8 @@
           4,
           "\"ab\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

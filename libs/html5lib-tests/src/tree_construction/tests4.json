@@ -11,6 +11,7 @@
           "\"direct div content\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -26,6 +27,7 @@
           "\"direct textarea content\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "textarea"
@@ -41,6 +43,7 @@
           "\"textarea content with <em>pseudo</em> <foo>markup\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "textarea"
@@ -56,6 +59,7 @@
           "\"this is &#x0043;DATA inside a <style> element\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "style"
@@ -71,6 +75,7 @@
           "\"</plaintext>\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "plaintext"
@@ -94,6 +99,7 @@
           "\"setting html's innerHTML\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "html"
@@ -113,6 +119,7 @@
           "\"setting head's innerHTML\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "head"

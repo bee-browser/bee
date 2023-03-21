@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -15,6 +16,7 @@ fn test_0000() {
             (2, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -32,6 +34,7 @@ fn test_0001() {
             (2, "\"--> x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -48,6 +51,7 @@ fn test_0002() {
             (2, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -64,6 +68,7 @@ fn test_0003() {
             (2, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -80,6 +85,7 @@ fn test_0004() {
             (2, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -96,6 +102,7 @@ fn test_0005() {
             (2, "\"->x --> x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -113,6 +120,7 @@ fn test_0006() {
             (2, "\"--> x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -130,6 +138,7 @@ fn test_0007() {
             (2, "\"--> x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -146,6 +155,7 @@ fn test_0008() {
             (2, "\"->x --> x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -162,6 +172,7 @@ fn test_0009() {
             (2, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -177,6 +188,7 @@ fn test_0010() {
             (2, "<xmp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -192,6 +204,7 @@ fn test_0011() {
             (3, "\" <!-- > --> \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -207,6 +220,7 @@ fn test_0012() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -222,6 +236,7 @@ fn test_0013() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -237,6 +252,7 @@ fn test_0014() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -253,6 +269,7 @@ fn test_0015() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::On,
     });
 }
 
@@ -268,6 +285,7 @@ fn test_0016() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 //</coverage:exclude>

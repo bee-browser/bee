@@ -58,7 +58,8 @@
           4,
           "\"4\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><div><style></style><address><a>",
@@ -111,7 +112,8 @@
           4,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

@@ -26,7 +26,8 @@
           2,
           "<xyz:abc>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><html><body><xyz:abc></xyz:abc><span></span>",
@@ -57,7 +58,8 @@
           2,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><html><html abc:def=gh><xyz:abc></xyz:abc>",
@@ -90,7 +92,8 @@
           2,
           "<xyz:abc>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><html xml:lang=bar><html xml:lang=foo>",
@@ -119,7 +122,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><html 123=456>",
@@ -146,7 +150,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><html 123=456><html 789=012>",
@@ -179,7 +184,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><html><body 789=012>",
@@ -206,7 +212,8 @@
           2,
           "789=\"012\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

@@ -66,7 +66,8 @@
           7,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8>A</a>",
@@ -208,7 +209,8 @@
           12,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8><div id=9>A</a>",
@@ -358,7 +360,8 @@
           13,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><b><div id=1><div id=2><div id=3><div id=4><div id=5><div id=6><div id=7><div id=8><div id=9><div id=10>A</a>",
@@ -516,7 +519,8 @@
           14,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<cite><b><cite><i><cite><i><cite><i><div>X</b>TEST",
@@ -595,7 +599,8 @@
           6,
           "\"TEST\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

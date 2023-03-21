@@ -28,7 +28,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><form><div></form><div>",
@@ -66,7 +67,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><title>&amp;</title>",
@@ -97,7 +99,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><title><!--&amp;--></title>",
@@ -128,7 +131,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype>",
@@ -156,7 +160,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!---x",
@@ -184,7 +189,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body>\n<div>",
@@ -203,6 +209,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -234,7 +241,8 @@
           1,
           "\"\n\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset></frameset>\n<noframes>",
@@ -264,7 +272,8 @@
           1,
           "<noframes>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset></frameset>\n<div>",
@@ -290,7 +299,8 @@
           1,
           "\"\n\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset></frameset>\n</html>",
@@ -315,7 +325,8 @@
           1,
           "\"\n\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset></frameset>\n</div>",
@@ -341,7 +352,8 @@
           1,
           "\"\n\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<form><form>",
@@ -368,7 +380,8 @@
           2,
           "<form>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<button><button>",
@@ -399,7 +412,8 @@
           2,
           "<button>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tr><td></th>",
@@ -438,7 +452,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><caption><td>",
@@ -481,7 +496,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><caption><div>",
@@ -515,7 +531,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</caption><div>",
@@ -530,6 +547,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -568,7 +586,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><caption></table>",
@@ -597,7 +616,8 @@
           3,
           "<caption>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</table><div>",
@@ -612,6 +632,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -655,7 +676,8 @@
           3,
           "<caption>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><caption><div></div>",
@@ -689,7 +711,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tr><td></body></caption></col></colgroup></html>",
@@ -732,7 +755,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</table></tbody></tfoot></thead></tr><div>",
@@ -751,6 +775,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -791,7 +816,8 @@
           3,
           "<colgroup>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "foo<col>",
@@ -807,6 +833,7 @@
           "<col>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "colgroup"
@@ -841,7 +868,8 @@
           3,
           "<colgroup>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset><div>",
@@ -864,7 +892,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</frameset><frame>",
@@ -878,6 +907,7 @@
           "<frame>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "frameset"
@@ -904,7 +934,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</body><div>",
@@ -919,6 +950,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "body"
@@ -961,7 +993,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</tr><td>",
@@ -975,6 +1008,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -994,6 +1028,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1040,7 +1075,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<caption><col><colgroup><tbody><tfoot><thead><tr>",
@@ -1059,6 +1095,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -1093,7 +1130,8 @@
           3,
           "<tbody>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</table><tr>",
@@ -1107,6 +1145,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -1148,7 +1187,8 @@
           3,
           "<tbody>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tbody></div>",
@@ -1180,7 +1220,8 @@
           3,
           "<tbody>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><table>",
@@ -1211,7 +1252,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table></body></caption></col></colgroup></html></tbody></td></tfoot></th></thead></tr>",
@@ -1248,7 +1290,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</table><tr>",
@@ -1266,6 +1309,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -1287,6 +1331,7 @@
           "<body>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "html"
@@ -1315,7 +1360,8 @@
           1,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\"><html></html>",
@@ -1340,7 +1386,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<param><frameset></frameset>",
@@ -1362,7 +1409,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<source><frameset></frameset>",
@@ -1384,7 +1432,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<track><frameset></frameset>",
@@ -1406,7 +1455,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</html><frameset></frameset>",
@@ -1429,7 +1479,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</body><frameset></frameset>",
@@ -1452,7 +1503,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

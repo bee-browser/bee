@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

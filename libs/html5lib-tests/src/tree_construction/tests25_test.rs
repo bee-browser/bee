@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -15,6 +16,7 @@ fn test_0000() {
             (3, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -31,6 +33,7 @@ fn test_0001() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -47,6 +50,7 @@ fn test_0002() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -63,6 +67,7 @@ fn test_0003() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -79,6 +84,7 @@ fn test_0004() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -95,6 +101,7 @@ fn test_0005() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -110,6 +117,7 @@ fn test_0006() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -126,6 +134,7 @@ fn test_0007() {
             (3, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -142,6 +151,7 @@ fn test_0008() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -157,6 +167,7 @@ fn test_0009() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -173,6 +184,7 @@ fn test_0010() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -189,6 +201,7 @@ fn test_0011() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -205,6 +218,7 @@ fn test_0012() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -221,6 +235,7 @@ fn test_0013() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -237,6 +252,7 @@ fn test_0014() {
             (2, "\"AB\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -246,6 +262,7 @@ fn test_0015() {
         data: "</keygen>A",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"A\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -261,6 +278,7 @@ fn test_0016() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -276,6 +294,7 @@ fn test_0017() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -291,6 +310,7 @@ fn test_0018() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -306,6 +326,7 @@ fn test_0019() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -322,6 +343,7 @@ fn test_0020() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -338,6 +360,7 @@ fn test_0021() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -354,6 +377,7 @@ fn test_0022() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -370,6 +394,7 @@ fn test_0023() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -386,6 +411,7 @@ fn test_0024() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -402,6 +428,7 @@ fn test_0025() {
             (2, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

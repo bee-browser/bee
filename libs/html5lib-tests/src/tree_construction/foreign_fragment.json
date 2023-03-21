@@ -18,6 +18,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "path"
@@ -43,6 +44,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "path"
@@ -62,6 +64,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "path"
@@ -84,6 +87,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "path"
@@ -101,6 +105,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "path"
@@ -118,6 +123,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "foreignObject"
@@ -135,6 +141,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -152,6 +159,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "title"
@@ -169,6 +177,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -186,6 +195,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mfenced"
@@ -203,6 +213,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "malignmark"
@@ -220,6 +231,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "math"
@@ -237,6 +249,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "annotation-xml"
@@ -254,6 +267,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mtext"
@@ -271,6 +285,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mi"
@@ -288,6 +303,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mo"
@@ -305,6 +321,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mn"
@@ -322,6 +339,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "ms"
@@ -366,6 +384,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "ms"
@@ -381,6 +400,7 @@
           "<math malignmark>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "ms"
@@ -396,6 +416,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "ms"
@@ -411,6 +432,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "ms"
@@ -455,6 +477,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mn"
@@ -470,6 +493,7 @@
           "<math malignmark>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mn"
@@ -485,6 +509,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mn"
@@ -500,6 +525,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mn"
@@ -544,6 +570,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mo"
@@ -559,6 +586,7 @@
           "<math malignmark>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mo"
@@ -574,6 +602,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mo"
@@ -589,6 +618,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mo"
@@ -633,6 +663,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mi"
@@ -648,6 +679,7 @@
           "<math malignmark>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mi"
@@ -663,6 +695,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mi"
@@ -678,6 +711,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mi"
@@ -722,6 +756,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mtext"
@@ -737,6 +772,7 @@
           "<math malignmark>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mtext"
@@ -752,6 +788,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mtext"
@@ -767,6 +804,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "mtext"
@@ -784,6 +822,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "annotation-xml"
@@ -799,6 +838,7 @@
           "<math figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "annotation-xml"
@@ -816,6 +856,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "math"
@@ -831,6 +872,7 @@
           "<math figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "math",
         "localName": "math"
@@ -846,6 +888,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "foreignObject"
@@ -861,6 +904,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "foreignObject"
@@ -876,6 +920,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "title"
@@ -891,6 +936,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "title"
@@ -906,6 +952,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -931,6 +978,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -948,6 +996,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -963,6 +1012,7 @@
           "<div>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -978,6 +1028,7 @@
           "<figure>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -999,6 +1050,7 @@
           "\"<foo>\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -1016,6 +1068,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -1033,6 +1086,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -1050,6 +1104,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -1067,6 +1122,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -1084,6 +1140,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -1101,6 +1158,7 @@
           "\"X\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "desc"
@@ -1122,6 +1180,7 @@
           "<p>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -1139,6 +1198,7 @@
           "<p>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -1166,6 +1226,7 @@
           "<foo>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -1193,6 +1254,7 @@
           "<foo>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -1216,6 +1278,7 @@
           "<svg foo>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -1239,6 +1302,7 @@
           "<svg foo>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -1258,6 +1322,7 @@
           "<svg foo>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -1280,6 +1345,7 @@
           "<foo>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"
@@ -1302,6 +1368,7 @@
           "<svg foo>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "svg",
         "localName": "svg"

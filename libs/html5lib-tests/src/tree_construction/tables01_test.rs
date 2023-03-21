@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -16,6 +17,7 @@ fn test_0000() {
             (5, "<th>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -33,6 +35,7 @@ fn test_0001() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -50,6 +53,7 @@ fn test_0002() {
             (5, "foo=\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -66,6 +70,7 @@ fn test_0003() {
             (3, "<colgroup>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -82,6 +87,7 @@ fn test_0004() {
             (3, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -99,6 +105,7 @@ fn test_0005() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -116,6 +123,7 @@ fn test_0006() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -132,6 +140,7 @@ fn test_0007() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -147,6 +156,7 @@ fn test_0008() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -168,6 +178,7 @@ fn test_0009() {
             (6, "\"B\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -186,6 +197,7 @@ fn test_0010() {
             (6, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -205,6 +217,7 @@ fn test_0011() {
             (2, "\"B\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -222,6 +235,7 @@ fn test_0012() {
             (3, "<caption>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -240,6 +254,7 @@ fn test_0013() {
             (6, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -258,6 +273,7 @@ fn test_0014() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -277,6 +293,7 @@ fn test_0015() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -297,6 +314,7 @@ fn test_0016() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

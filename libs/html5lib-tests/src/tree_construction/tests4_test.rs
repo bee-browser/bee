@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -8,6 +9,7 @@ fn test_0000() {
         data: "direct div content",
         document: vec![(0, "\"direct div content\"")],
         context_element: Some(("html", "div")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -17,6 +19,7 @@ fn test_0001() {
         data: "direct textarea content",
         document: vec![(0, "\"direct textarea content\"")],
         context_element: Some(("html", "textarea")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -26,6 +29,7 @@ fn test_0002() {
         data: "textarea content with <em>pseudo</em> <foo>markup",
         document: vec![(0, "\"textarea content with <em>pseudo</em> <foo>markup\"")],
         context_element: Some(("html", "textarea")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -35,6 +39,7 @@ fn test_0003() {
         data: "this is &#x0043;DATA inside a <style> element",
         document: vec![(0, "\"this is &#x0043;DATA inside a <style> element\"")],
         context_element: Some(("html", "style")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -44,6 +49,7 @@ fn test_0004() {
         data: "</plaintext>",
         document: vec![(0, "\"</plaintext>\"")],
         context_element: Some(("html", "plaintext")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -57,6 +63,7 @@ fn test_0005() {
             (1, "\"setting html\'s innerHTML\""),
         ],
         context_element: Some(("html", "html")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -66,6 +73,7 @@ fn test_0006() {
         data: "<title>setting head\'s innerHTML</title>",
         document: vec![(0, "<title>"), (1, "\"setting head\'s innerHTML\"")],
         context_element: Some(("html", "head")),
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

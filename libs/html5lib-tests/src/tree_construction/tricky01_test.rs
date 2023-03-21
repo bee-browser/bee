@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -18,6 +19,7 @@ fn test_0000() {
             (2, "\"\nAlso not bold.\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -69,6 +71,7 @@ fn test_0001() {
             (2, "\" Plain\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -100,6 +103,7 @@ fn test_0002() {
             (4, "\" Italic\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -123,6 +127,7 @@ fn test_0003() {
             (3, "\"\n\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -145,6 +150,7 @@ fn test_0004() {
             (4, "\"  \n\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -173,6 +179,7 @@ fn test_0005() {
             (4, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -194,6 +201,7 @@ fn test_0006() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -231,6 +239,7 @@ fn test_0007() {
             (3, "\"\nThis page contains an insanely badly-nested tag sequence.\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -255,6 +264,7 @@ fn test_0008() {
             (3, "\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -13,6 +14,7 @@ fn test_0000() {
             (2, "<div<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -28,6 +30,7 @@ fn test_0001() {
             (3, "foo<bar=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -43,6 +46,7 @@ fn test_0002() {
             (3, "foo=\"`bar`\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -58,6 +62,7 @@ fn test_0003() {
             (3, "\\\"foo=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -73,6 +78,7 @@ fn test_0004() {
             (3, "href=\"\\nbar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -87,6 +93,7 @@ fn test_0005() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -96,6 +103,7 @@ fn test_0006() {
         data: "&lang;&rang;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"⟨⟩\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -105,6 +113,7 @@ fn test_0007() {
         data: "&apos;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"\'\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -114,6 +123,7 @@ fn test_0008() {
         data: "&ImaginaryI;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"ⅈ\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -123,6 +133,7 @@ fn test_0009() {
         data: "&Kopf;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"𝕂\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -132,6 +143,7 @@ fn test_0010() {
         data: "&notinva;",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"∉\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -149,6 +161,7 @@ fn test_0011() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -163,6 +176,7 @@ fn test_0012() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -177,6 +191,7 @@ fn test_0013() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -193,6 +208,7 @@ fn test_0014() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -209,6 +225,7 @@ fn test_0015() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -225,6 +242,7 @@ fn test_0016() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -241,6 +259,7 @@ fn test_0017() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -260,6 +279,7 @@ fn test_0018() {
             (4, "\"B\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -279,6 +299,7 @@ fn test_0019() {
             (4, "type=\"hidden\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -302,6 +323,7 @@ fn test_0020() {
             (3, "\"D\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -311,6 +333,7 @@ fn test_0021() {
         data: "<div></div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<div>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -325,6 +348,7 @@ fn test_0022() {
             (2, "<svg svg>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -339,6 +363,7 @@ fn test_0023() {
             (2, "<math math>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

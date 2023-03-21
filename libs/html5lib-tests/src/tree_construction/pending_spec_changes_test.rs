@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -8,6 +9,7 @@ fn test_0000() {
         data: "<input type=\"hidden\"><frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -27,6 +29,7 @@ fn test_0001() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -48,6 +51,7 @@ fn test_0002() {
             (6, "<circle>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

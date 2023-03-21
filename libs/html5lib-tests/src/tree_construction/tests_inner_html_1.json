@@ -14,6 +14,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "body"
@@ -32,6 +33,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "body"
@@ -50,6 +52,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -75,6 +78,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "html"
@@ -93,6 +97,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "body"
@@ -111,6 +116,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "body"
@@ -129,6 +135,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -151,6 +158,7 @@
           "<frameset>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "html"
@@ -172,6 +180,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -193,6 +202,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -211,6 +221,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -229,6 +240,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -255,6 +267,7 @@
           "\"a\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -281,6 +294,7 @@
           "<col>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -306,6 +320,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -331,6 +346,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -356,6 +372,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -381,6 +398,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -411,6 +429,7 @@
           "<th>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -441,6 +460,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "table"
@@ -458,6 +478,7 @@
           "<table>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -476,6 +497,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -494,6 +516,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -512,6 +535,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -534,6 +558,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -556,6 +581,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -578,6 +604,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -600,6 +627,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -622,6 +650,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -644,6 +673,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -666,6 +696,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -688,6 +719,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -710,6 +742,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -732,6 +765,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -754,6 +788,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -776,6 +811,7 @@
           "<span>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "caption"
@@ -793,6 +829,7 @@
           "<col>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "colgroup"
@@ -810,6 +847,7 @@
           "<col>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "colgroup"
@@ -829,6 +867,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -848,6 +887,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -867,6 +907,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -886,6 +927,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -905,6 +947,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -924,6 +967,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -943,6 +987,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -964,6 +1009,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -990,6 +1036,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -1016,6 +1063,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -1042,6 +1090,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -1081,6 +1130,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -1098,6 +1148,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1136,6 +1187,7 @@
           "<tr>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1153,6 +1205,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1170,6 +1223,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1187,6 +1241,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1204,6 +1259,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1221,6 +1277,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1238,6 +1295,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1255,6 +1313,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1272,6 +1331,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1295,6 +1355,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1318,6 +1379,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -1336,6 +1398,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1354,6 +1417,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1372,6 +1436,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1390,6 +1455,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1408,6 +1474,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1426,6 +1493,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1444,6 +1512,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1462,6 +1531,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1480,6 +1550,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1498,6 +1569,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1516,6 +1588,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1534,6 +1607,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1552,6 +1626,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1570,6 +1645,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1588,6 +1664,7 @@
           "<a>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1622,6 +1699,7 @@
           "<td>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -1639,6 +1717,7 @@
           "<option>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "select"
@@ -1656,6 +1735,7 @@
           "<option>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "select"
@@ -1673,6 +1753,7 @@
           "<option>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "select"
@@ -1690,6 +1771,7 @@
           "<option>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "select"
@@ -1715,6 +1797,7 @@
           "<!-- abc -->"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "html"
@@ -1732,6 +1815,7 @@
           "<frame>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "frameset"

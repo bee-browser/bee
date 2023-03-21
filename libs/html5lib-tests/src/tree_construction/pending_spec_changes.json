@@ -22,7 +22,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><table><caption><svg>foo</table>bar",
@@ -68,7 +69,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tr><td><svg><desc><td></desc><circle>",
@@ -124,7 +126,8 @@
           6,
           "<circle>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

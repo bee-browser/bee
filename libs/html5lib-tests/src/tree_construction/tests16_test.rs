@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -30,6 +32,7 @@ fn test_0001() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -46,6 +49,7 @@ fn test_0002() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -62,6 +66,7 @@ fn test_0003() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -78,6 +83,7 @@ fn test_0004() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -94,6 +100,7 @@ fn test_0005() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -110,6 +117,7 @@ fn test_0006() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -126,6 +134,7 @@ fn test_0007() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -142,6 +151,7 @@ fn test_0008() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -158,6 +168,7 @@ fn test_0009() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -173,6 +184,7 @@ fn test_0010() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -189,6 +201,7 @@ fn test_0011() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -205,6 +218,7 @@ fn test_0012() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -221,6 +235,7 @@ fn test_0013() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -237,6 +252,7 @@ fn test_0014() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -253,6 +269,7 @@ fn test_0015() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -269,6 +286,7 @@ fn test_0016() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -284,6 +302,7 @@ fn test_0017() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -300,6 +319,7 @@ fn test_0018() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -316,6 +336,7 @@ fn test_0019() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -332,6 +353,7 @@ fn test_0020() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -348,6 +370,7 @@ fn test_0021() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -364,6 +387,7 @@ fn test_0022() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -380,6 +404,7 @@ fn test_0023() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -396,6 +421,7 @@ fn test_0024() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -412,6 +438,7 @@ fn test_0025() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -428,6 +455,7 @@ fn test_0026() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -444,6 +472,7 @@ fn test_0027() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -460,6 +489,7 @@ fn test_0028() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -476,6 +506,7 @@ fn test_0029() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -492,6 +523,7 @@ fn test_0030() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -508,6 +540,7 @@ fn test_0031() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -524,6 +557,7 @@ fn test_0032() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -540,6 +574,7 @@ fn test_0033() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -556,6 +591,7 @@ fn test_0034() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -572,6 +608,7 @@ fn test_0035() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -588,6 +625,7 @@ fn test_0036() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -604,6 +642,7 @@ fn test_0037() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -620,6 +659,7 @@ fn test_0038() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -636,6 +676,7 @@ fn test_0039() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -652,6 +693,7 @@ fn test_0040() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -668,6 +710,7 @@ fn test_0041() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -684,6 +727,7 @@ fn test_0042() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -700,6 +744,7 @@ fn test_0043() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -716,6 +761,7 @@ fn test_0044() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -732,6 +778,7 @@ fn test_0045() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -748,6 +795,7 @@ fn test_0046() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -764,6 +812,7 @@ fn test_0047() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -780,6 +829,7 @@ fn test_0048() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -796,6 +846,7 @@ fn test_0049() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -812,6 +863,7 @@ fn test_0050() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -828,6 +880,7 @@ fn test_0051() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -844,6 +897,7 @@ fn test_0052() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -860,6 +914,7 @@ fn test_0053() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -876,6 +931,7 @@ fn test_0054() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -892,6 +948,7 @@ fn test_0055() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -908,6 +965,7 @@ fn test_0056() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -924,6 +982,7 @@ fn test_0057() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -940,6 +999,7 @@ fn test_0058() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -956,6 +1016,7 @@ fn test_0059() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -972,6 +1033,7 @@ fn test_0060() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -988,6 +1050,7 @@ fn test_0061() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1004,6 +1067,7 @@ fn test_0062() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1020,6 +1084,7 @@ fn test_0063() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1036,6 +1101,7 @@ fn test_0064() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1052,6 +1118,7 @@ fn test_0065() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1068,6 +1135,7 @@ fn test_0066() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1084,6 +1152,7 @@ fn test_0067() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1100,6 +1169,7 @@ fn test_0068() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1116,6 +1186,7 @@ fn test_0069() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1133,6 +1204,7 @@ fn test_0070() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1149,6 +1221,7 @@ fn test_0071() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1166,6 +1239,7 @@ fn test_0072() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1183,6 +1257,7 @@ fn test_0073() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1200,6 +1275,7 @@ fn test_0074() {
             (2, "\"...-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1217,6 +1293,7 @@ fn test_0075() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1234,6 +1311,7 @@ fn test_0076() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1253,6 +1331,7 @@ fn test_0077() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1270,6 +1349,7 @@ fn test_0078() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1287,6 +1367,7 @@ fn test_0079() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1304,6 +1385,7 @@ fn test_0080() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1320,6 +1402,7 @@ fn test_0081() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1336,6 +1419,7 @@ fn test_0082() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1353,6 +1437,7 @@ fn test_0083() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::On,
     });
 }
 
@@ -1369,6 +1454,7 @@ fn test_0084() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -1388,6 +1474,7 @@ fn test_0085() {
             (3, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::On,
     });
 }
 
@@ -1404,6 +1491,7 @@ fn test_0086() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -1421,6 +1509,7 @@ fn test_0087() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::On,
     });
 }
 
@@ -1438,6 +1527,7 @@ fn test_0088() {
             (3, "\"</noscript>X\""),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -1455,6 +1545,7 @@ fn test_0089() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1471,6 +1562,7 @@ fn test_0090() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1488,6 +1580,7 @@ fn test_0091() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1504,6 +1597,7 @@ fn test_0092() {
             (3, "\"</textarea>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1520,6 +1614,7 @@ fn test_0093() {
             (3, "\"<\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1536,6 +1631,7 @@ fn test_0094() {
             (3, "\"a<b\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1553,6 +1649,7 @@ fn test_0095() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1569,6 +1666,7 @@ fn test_0096() {
             (3, "\"...<!--X->...<!--/X->...\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1586,6 +1684,7 @@ fn test_0097() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1603,6 +1702,7 @@ fn test_0098() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1612,6 +1712,7 @@ fn test_0099() {
         data: "<script>",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<script>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1627,6 +1728,7 @@ fn test_0100() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1642,6 +1744,7 @@ fn test_0101() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1657,6 +1760,7 @@ fn test_0102() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1672,6 +1776,7 @@ fn test_0103() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1687,6 +1792,7 @@ fn test_0104() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1702,6 +1808,7 @@ fn test_0105() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1717,6 +1824,7 @@ fn test_0106() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1732,6 +1840,7 @@ fn test_0107() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1747,6 +1856,7 @@ fn test_0108() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1756,6 +1866,7 @@ fn test_0109() {
         data: "<script></SCRIPT ",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<script>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1771,6 +1882,7 @@ fn test_0110() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1786,6 +1898,7 @@ fn test_0111() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1801,6 +1914,7 @@ fn test_0112() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1816,6 +1930,7 @@ fn test_0113() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1831,6 +1946,7 @@ fn test_0114() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1846,6 +1962,7 @@ fn test_0115() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1855,6 +1972,7 @@ fn test_0116() {
         data: "<script></script ",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<script>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1870,6 +1988,7 @@ fn test_0117() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1885,6 +2004,7 @@ fn test_0118() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1900,6 +2020,7 @@ fn test_0119() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1915,6 +2036,7 @@ fn test_0120() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1930,6 +2052,7 @@ fn test_0121() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1945,6 +2068,7 @@ fn test_0122() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1960,6 +2084,7 @@ fn test_0123() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1975,6 +2100,7 @@ fn test_0124() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1990,6 +2116,7 @@ fn test_0125() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2005,6 +2132,7 @@ fn test_0126() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2020,6 +2148,7 @@ fn test_0127() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2035,6 +2164,7 @@ fn test_0128() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2050,6 +2180,7 @@ fn test_0129() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2065,6 +2196,7 @@ fn test_0130() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2080,6 +2212,7 @@ fn test_0131() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2095,6 +2228,7 @@ fn test_0132() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2110,6 +2244,7 @@ fn test_0133() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2125,6 +2260,7 @@ fn test_0134() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2140,6 +2276,7 @@ fn test_0135() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2155,6 +2292,7 @@ fn test_0136() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2170,6 +2308,7 @@ fn test_0137() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2185,6 +2324,7 @@ fn test_0138() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2200,6 +2340,7 @@ fn test_0139() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2215,6 +2356,7 @@ fn test_0140() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2230,6 +2372,7 @@ fn test_0141() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2245,6 +2388,7 @@ fn test_0142() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2260,6 +2404,7 @@ fn test_0143() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2275,6 +2420,7 @@ fn test_0144() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2290,6 +2436,7 @@ fn test_0145() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2305,6 +2452,7 @@ fn test_0146() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2320,6 +2468,7 @@ fn test_0147() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2335,6 +2484,7 @@ fn test_0148() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2350,6 +2500,7 @@ fn test_0149() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2365,6 +2516,7 @@ fn test_0150() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2380,6 +2532,7 @@ fn test_0151() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2395,6 +2548,7 @@ fn test_0152() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2410,6 +2564,7 @@ fn test_0153() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2425,6 +2580,7 @@ fn test_0154() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2440,6 +2596,7 @@ fn test_0155() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2455,6 +2612,7 @@ fn test_0156() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2470,6 +2628,7 @@ fn test_0157() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2485,6 +2644,7 @@ fn test_0158() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2500,6 +2660,7 @@ fn test_0159() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2515,6 +2676,7 @@ fn test_0160() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2530,6 +2692,7 @@ fn test_0161() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2545,6 +2708,7 @@ fn test_0162() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2560,6 +2724,7 @@ fn test_0163() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2575,6 +2740,7 @@ fn test_0164() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2590,6 +2756,7 @@ fn test_0165() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2605,6 +2772,7 @@ fn test_0166() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2621,6 +2789,7 @@ fn test_0167() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2636,6 +2805,7 @@ fn test_0168() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2652,6 +2822,7 @@ fn test_0169() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2668,6 +2839,7 @@ fn test_0170() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2684,6 +2856,7 @@ fn test_0171() {
             (2, "\"...-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2700,6 +2873,7 @@ fn test_0172() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2716,6 +2890,7 @@ fn test_0173() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2734,6 +2909,7 @@ fn test_0174() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2750,6 +2926,7 @@ fn test_0175() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2766,6 +2943,7 @@ fn test_0176() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2782,6 +2960,7 @@ fn test_0177() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2797,6 +2976,7 @@ fn test_0178() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2812,6 +2992,7 @@ fn test_0179() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2828,6 +3009,7 @@ fn test_0180() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::On,
     });
 }
 
@@ -2843,6 +3025,7 @@ fn test_0181() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -2861,6 +3044,7 @@ fn test_0182() {
             (3, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::On,
     });
 }
 
@@ -2876,6 +3060,7 @@ fn test_0183() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -2892,6 +3077,7 @@ fn test_0184() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::On,
     });
 }
 
@@ -2908,6 +3094,7 @@ fn test_0185() {
             (3, "\"</noscript>X\""),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -2924,6 +3111,7 @@ fn test_0186() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2939,6 +3127,7 @@ fn test_0187() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2955,6 +3144,7 @@ fn test_0188() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2970,6 +3160,7 @@ fn test_0189() {
             (3, "\"</textarea>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -2986,6 +3177,7 @@ fn test_0190() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -3001,6 +3193,7 @@ fn test_0191() {
             (3, "\"...<!--X->...<!--/X->...\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -3017,6 +3210,7 @@ fn test_0192() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -3033,6 +3227,7 @@ fn test_0193() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -3042,6 +3237,7 @@ fn test_0194() {
         data: "<!doctype html><table>",
         document: vec![],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -3070,6 +3266,7 @@ fn test_0195() {
             (7, "<span>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -3087,6 +3284,7 @@ fn test_0196() {
             (4, "<form>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

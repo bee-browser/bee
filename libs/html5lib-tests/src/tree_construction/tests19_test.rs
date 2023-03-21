@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -16,6 +17,7 @@ fn test_0000() {
             (4, "definitionURL=\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -31,6 +33,7 @@ fn test_0001() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -46,6 +49,7 @@ fn test_0002() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -62,6 +66,7 @@ fn test_0003() {
             (2, "<pre>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -78,6 +83,7 @@ fn test_0004() {
             (2, "<listing>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -94,6 +100,7 @@ fn test_0005() {
             (2, "<plaintext>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -110,6 +117,7 @@ fn test_0006() {
             (2, "<h1>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -126,6 +134,7 @@ fn test_0007() {
             (3, "type=\"hidden\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -143,6 +152,7 @@ fn test_0008() {
             (3, "<rp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -161,6 +171,7 @@ fn test_0009() {
             (5, "<rp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -179,6 +190,7 @@ fn test_0010() {
             (4, "<rp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -196,6 +208,7 @@ fn test_0011() {
             (3, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -214,6 +227,7 @@ fn test_0012() {
             (5, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -232,6 +246,7 @@ fn test_0013() {
             (4, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -250,6 +265,7 @@ fn test_0014() {
             (3, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -268,6 +284,7 @@ fn test_0015() {
             (3, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -286,6 +303,7 @@ fn test_0016() {
             (3, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -307,6 +325,7 @@ fn test_0017() {
             (4, "\"d\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -323,6 +342,7 @@ fn test_0018() {
             (2, "<foo>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -339,6 +359,7 @@ fn test_0019() {
             (2, "<foo>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -355,6 +376,7 @@ fn test_0020() {
             (1, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -374,6 +396,7 @@ fn test_0021() {
             (4, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -390,6 +413,7 @@ fn test_0022() {
             (3, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -408,6 +432,7 @@ fn test_0023() {
             (2, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -425,6 +450,7 @@ fn test_0024() {
             (3, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -442,6 +468,7 @@ fn test_0025() {
             (3, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -459,6 +486,7 @@ fn test_0026() {
             (3, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -476,6 +504,7 @@ fn test_0027() {
             (3, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -492,6 +521,7 @@ fn test_0028() {
             (3, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -508,6 +538,7 @@ fn test_0029() {
             (3, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -525,6 +556,7 @@ fn test_0030() {
             (2, "<dd>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -544,6 +576,7 @@ fn test_0031() {
             (5, "<h1>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -563,6 +596,7 @@ fn test_0032() {
             (5, "<h1>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -582,6 +616,7 @@ fn test_0033() {
             (5, "<h1>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -601,6 +636,7 @@ fn test_0034() {
             (5, "<h1>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -620,6 +656,7 @@ fn test_0035() {
             (5, "<h1>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -634,6 +671,7 @@ fn test_0036() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -650,6 +688,7 @@ fn test_0037() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -666,6 +705,7 @@ fn test_0038() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -681,6 +721,7 @@ fn test_0039() {
             (0, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -696,6 +737,7 @@ fn test_0040() {
             (1, "\"  \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -710,6 +752,7 @@ fn test_0041() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -724,6 +767,7 @@ fn test_0042() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -738,6 +782,7 @@ fn test_0043() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -747,6 +792,7 @@ fn test_0044() {
         data: "<html><frameset></frameset></html><!doctype html>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -761,6 +807,7 @@ fn test_0045() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -776,6 +823,7 @@ fn test_0046() {
             (2, "<frame>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -792,6 +840,7 @@ fn test_0047() {
             (3, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -807,6 +856,7 @@ fn test_0048() {
             (2, "<frame>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -822,6 +872,7 @@ fn test_0049() {
             (2, "<pre>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -837,6 +888,7 @@ fn test_0050() {
             (2, "<listing>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -852,6 +904,7 @@ fn test_0051() {
             (2, "<li>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -867,6 +920,7 @@ fn test_0052() {
             (2, "<dd>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -882,6 +936,7 @@ fn test_0053() {
             (2, "<dt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -897,6 +952,7 @@ fn test_0054() {
             (2, "<button>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -912,6 +968,7 @@ fn test_0055() {
             (2, "<applet>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -927,6 +984,7 @@ fn test_0056() {
             (2, "<marquee>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -942,6 +1000,7 @@ fn test_0057() {
             (2, "<object>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -957,6 +1016,7 @@ fn test_0058() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -972,6 +1032,7 @@ fn test_0059() {
             (2, "<area>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -987,6 +1048,7 @@ fn test_0060() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1002,6 +1064,7 @@ fn test_0061() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1017,6 +1080,7 @@ fn test_0062() {
             (2, "<br>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1032,6 +1096,7 @@ fn test_0063() {
             (2, "<embed>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1047,6 +1112,7 @@ fn test_0064() {
             (2, "<img>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1062,6 +1128,7 @@ fn test_0065() {
             (2, "<input>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1077,6 +1144,7 @@ fn test_0066() {
             (2, "<keygen>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1092,6 +1160,7 @@ fn test_0067() {
             (2, "<wbr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1107,6 +1176,7 @@ fn test_0068() {
             (2, "<hr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1122,6 +1192,7 @@ fn test_0069() {
             (2, "<textarea>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1137,6 +1208,7 @@ fn test_0070() {
             (2, "<xmp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1152,6 +1224,7 @@ fn test_0071() {
             (2, "<iframe>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1167,6 +1240,7 @@ fn test_0072() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1182,6 +1256,7 @@ fn test_0073() {
             (2, "<frame>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1197,6 +1272,7 @@ fn test_0074() {
             (2, "<frame>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1212,6 +1288,7 @@ fn test_0075() {
             (2, "<frame>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1228,6 +1305,7 @@ fn test_0076() {
             (3, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1243,6 +1321,7 @@ fn test_0077() {
             (2, "<frame>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1252,6 +1331,7 @@ fn test_0078() {
         data: "<html>aaa<frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"aaa\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1261,6 +1341,7 @@ fn test_0079() {
         data: "<html> a <frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"a \"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1275,6 +1356,7 @@ fn test_0080() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1290,6 +1372,7 @@ fn test_0081() {
             (2, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1307,6 +1390,7 @@ fn test_0082() {
             (2, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1327,6 +1411,7 @@ fn test_0083() {
             (6, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1342,6 +1427,7 @@ fn test_0084() {
             (2, "<math math>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1358,6 +1444,7 @@ fn test_0085() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1376,6 +1463,7 @@ fn test_0086() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1393,6 +1481,7 @@ fn test_0087() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1409,6 +1498,7 @@ fn test_0088() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1424,6 +1514,7 @@ fn test_0089() {
             (2, "<img>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1445,6 +1536,7 @@ fn test_0090() {
             (3, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1475,6 +1567,7 @@ fn test_0091() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1504,6 +1597,7 @@ fn test_0092() {
             (4, "\"f\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1527,6 +1621,7 @@ fn test_0093() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1557,6 +1652,7 @@ fn test_0094() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1584,6 +1680,7 @@ fn test_0095() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1612,6 +1709,7 @@ fn test_0096() {
             (6, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1627,6 +1725,7 @@ fn test_0097() {
             (2, "<bgsound>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1642,6 +1741,7 @@ fn test_0098() {
             (2, "<basefont>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1659,6 +1759,7 @@ fn test_0099() {
             (2, "<basefont>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1676,6 +1777,7 @@ fn test_0100() {
             (2, "<bgsound>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1693,6 +1795,7 @@ fn test_0101() {
             (2, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1710,6 +1813,7 @@ fn test_0102() {
             (2, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1729,6 +1833,7 @@ fn test_0103() {
             (4, "\"b\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1751,6 +1856,7 @@ fn test_0104() {
             (3, "\"d\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

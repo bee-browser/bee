@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -30,6 +32,7 @@ fn test_0001() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -44,6 +47,7 @@ fn test_0002() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -59,6 +63,7 @@ fn test_0003() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -74,6 +79,7 @@ fn test_0004() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -90,6 +96,7 @@ fn test_0005() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -106,6 +113,7 @@ fn test_0006() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -122,6 +130,7 @@ fn test_0007() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -138,6 +147,7 @@ fn test_0008() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -154,6 +164,7 @@ fn test_0009() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -170,6 +181,7 @@ fn test_0010() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -186,6 +198,7 @@ fn test_0011() {
             (2, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -201,6 +214,7 @@ fn test_0012() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -216,6 +230,7 @@ fn test_0013() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -231,6 +246,7 @@ fn test_0014() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -247,6 +263,7 @@ fn test_0015() {
             (3, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -263,6 +280,7 @@ fn test_0016() {
             (2, "<!-- foo -->"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -277,6 +295,7 @@ fn test_0017() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 //</coverage:exclude>

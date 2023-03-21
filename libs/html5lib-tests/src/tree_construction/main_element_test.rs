@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -19,6 +20,7 @@ fn test_0000() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -37,6 +39,7 @@ fn test_0001() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -58,6 +61,7 @@ fn test_0002() {
             (2, "<b>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

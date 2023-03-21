@@ -16,6 +16,7 @@ input
 li
 main
 math
+noscript
 ol
 option
 p

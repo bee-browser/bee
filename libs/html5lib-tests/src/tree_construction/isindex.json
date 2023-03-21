@@ -25,7 +25,8 @@
           2,
           "<isindex>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<isindex name=\"A\" action=\"B\" prompt=\"C\" foo=\"D\">",
@@ -67,7 +68,8 @@
           3,
           "prompt=\"C\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<form><isindex>",
@@ -97,7 +99,8 @@
           3,
           "<isindex>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><isindex>x</isindex>x",
@@ -132,7 +135,8 @@
           2,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

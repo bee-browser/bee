@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -13,6 +14,7 @@ fn test_0000() {
             (2, "<menuitem>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -22,6 +24,7 @@ fn test_0001() {
         data: "</menuitem>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -38,6 +41,7 @@ fn test_0002() {
             (3, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -56,6 +60,7 @@ fn test_0003() {
             (4, "\"B\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -74,6 +79,7 @@ fn test_0004() {
             (4, "\"B\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -92,6 +98,7 @@ fn test_0005() {
             (3, "\"B\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -109,6 +116,7 @@ fn test_0006() {
             (2, "<li>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -126,6 +134,7 @@ fn test_0007() {
             (4, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -144,6 +153,7 @@ fn test_0008() {
             (3, "<menuitem>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -161,6 +171,7 @@ fn test_0009() {
             (2, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -175,6 +186,7 @@ fn test_0010() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -189,6 +201,7 @@ fn test_0011() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -203,6 +216,7 @@ fn test_0012() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -218,6 +232,7 @@ fn test_0013() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -234,6 +249,7 @@ fn test_0014() {
             (3, "<menuitem>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -250,6 +266,7 @@ fn test_0015() {
             (3, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -265,6 +282,7 @@ fn test_0016() {
             (2, "<menuitem>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -280,6 +298,7 @@ fn test_0017() {
             (2, "<menuitem>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -296,6 +315,7 @@ fn test_0018() {
             (3, "<p>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -312,6 +332,7 @@ fn test_0019() {
             (3, "<li>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

@@ -29,7 +29,8 @@
           3,
           "\"foo\nbar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[foo\rbar]]>",
@@ -59,7 +60,8 @@
           3,
           "\"foo\nbar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><![CDATA[foo\r\nbar]]>",
@@ -89,7 +91,8 @@
           3,
           "\"foo\nbar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script>a='\u0000'</script>",
@@ -121,7 +124,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--\u0000</script>",
@@ -157,7 +161,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--foo\u0000</script>",
@@ -193,7 +198,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!-- foo-\u0000</script>",
@@ -229,7 +235,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!-- foo--\u0000</script>",
@@ -265,7 +272,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!-- foo-",
@@ -302,7 +310,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!-- foo-<</script>",
@@ -335,7 +344,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!-- foo-<S",
@@ -372,7 +382,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!-- foo-</SCRIPT>",
@@ -405,7 +416,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<p></script>",
@@ -438,7 +450,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script></script></script>",
@@ -471,7 +484,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script>\u0000</script></script>",
@@ -507,7 +521,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script>-\u0000</script></script>",
@@ -543,7 +558,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script>--\u0000</script></script>",
@@ -579,7 +595,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script>---</script></script>",
@@ -612,7 +629,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script></scrip></SCRIPT></script>",
@@ -645,7 +663,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script></scrip </SCRIPT></script>",
@@ -678,7 +697,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--<script></scrip/</SCRIPT></script>",
@@ -711,7 +731,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"></scrip/></script>",
@@ -744,7 +765,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"></scrip ></script>",
@@ -777,7 +799,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--</scrip></script>",
@@ -810,7 +833,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--</scrip </script>",
@@ -843,7 +867,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script type=\"data\"><!--</scrip/</script>",
@@ -876,7 +901,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><!DOCTYPE html>",
@@ -901,7 +927,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><!DOCTYPE html>",
@@ -923,7 +950,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><head><!DOCTYPE html></head>",
@@ -945,7 +973,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><head></head><!DOCTYPE html>",
@@ -967,7 +996,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body></body><!DOCTYPE html>",
@@ -989,7 +1019,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><!DOCTYPE html></table>",
@@ -1015,7 +1046,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><!DOCTYPE html></select>",
@@ -1041,7 +1073,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><colgroup><!DOCTYPE html></colgroup></table>",
@@ -1071,7 +1104,8 @@
           3,
           "<colgroup>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><colgroup><!--test--></colgroup></table>",
@@ -1104,7 +1138,8 @@
           4,
           "<!-- test -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><colgroup><html></colgroup></table>",
@@ -1134,7 +1169,8 @@
           3,
           "<colgroup>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><colgroup> foo</colgroup></table>",
@@ -1175,7 +1211,8 @@
           4,
           "\" \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><!--test--></select>",
@@ -1204,7 +1241,8 @@
           3,
           "<!-- test -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><html></select>",
@@ -1230,7 +1268,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset><html></frameset>",
@@ -1252,7 +1291,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset></frameset><html>",
@@ -1274,7 +1314,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset></frameset><!DOCTYPE html>",
@@ -1296,7 +1337,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body></body></html><!DOCTYPE html>",
@@ -1318,7 +1360,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><!DOCTYPE html></svg>",
@@ -1344,7 +1387,8 @@
           2,
           "<svg svg>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><font></font></svg>",
@@ -1373,7 +1417,8 @@
           3,
           "<svg font>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><font id=foo></font></svg>",
@@ -1406,7 +1451,8 @@
           4,
           "id=\"foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><font size=4></font></svg>",
@@ -1441,7 +1487,8 @@
           3,
           "size=\"4\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><font color=red></font></svg>",
@@ -1476,7 +1523,8 @@
           3,
           "color=\"red\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><font font=sans></font></svg>",
@@ -1509,7 +1557,8 @@
           4,
           "font=\"sans\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

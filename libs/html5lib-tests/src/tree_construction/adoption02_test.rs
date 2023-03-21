@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -21,6 +22,7 @@ fn test_0000() {
             (4, "\"4\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -41,6 +43,7 @@ fn test_0001() {
             (4, "<a>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

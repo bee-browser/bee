@@ -24,7 +24,8 @@
           2,
           "\"Test\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div></div>",
@@ -49,7 +50,8 @@
           2,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>Test</div>",
@@ -78,7 +80,8 @@
           3,
           "\"Test\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<di",
@@ -102,7 +105,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>Hello</div>\n<script>\nconsole.log(\"PASS\");\n</script>\n<div>Bye</div>",
@@ -155,7 +159,8 @@
           3,
           "\"Bye\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div foo=\"bar\">Hello</div>",
@@ -188,7 +193,8 @@
           3,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>Hello</div>\n<script>\nconsole.log(\"FOO<span>BAR</span>BAZ\");\n</script>\n<div>Bye</div>",
@@ -241,7 +247,8 @@
           3,
           "\"Bye\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<foo bar=\"baz\"></foo><potato quack=\"duck\"></potato>",
@@ -278,7 +285,8 @@
           3,
           "quack=\"duck\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<foo bar=\"baz\"><potato quack=\"duck\"></potato></foo>",
@@ -315,7 +323,8 @@
           4,
           "quack=\"duck\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<foo></foo bar=\"baz\"><potato></potato quack=\"duck\">",
@@ -349,7 +358,8 @@
           2,
           "<potato>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</ tttt>",
@@ -377,7 +387,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div FOO ><img><img></div>",
@@ -414,7 +425,8 @@
           3,
           "<img>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<p>Test</p<p>Test2</p>",
@@ -444,7 +456,8 @@
           3,
           "\"TestTest2\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<rdar://problem/6869687>",
@@ -485,7 +498,8 @@
           3,
           "problem=\"\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<A>test< /A>",
@@ -518,7 +532,8 @@
           3,
           "\"test< /A>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "&lt;",
@@ -543,7 +558,8 @@
           2,
           "\"<\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body foo='bar'><body foo='baz' yo='mama'>",
@@ -573,7 +589,8 @@
           2,
           "yo=\"mama\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body></br foo=\"bar\"></body>",
@@ -602,7 +619,8 @@
           2,
           "<br>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<bdy><br foo=\"bar\"></body>",
@@ -636,7 +654,8 @@
           4,
           "foo=\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body></body></br foo=\"bar\">",
@@ -666,7 +685,8 @@
           2,
           "<br>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<bdy></body><br foo=\"bar\">",
@@ -702,7 +722,8 @@
           4,
           "foo=\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body></body></html><!-- Hi there -->",
@@ -727,7 +748,8 @@
           0,
           "<!--  Hi there  -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body></body></html><!-- Comment A --><!-- Comment B --><!-- Comment C --><!-- Comment D --><!-- Comment E -->",
@@ -768,7 +790,8 @@
           0,
           "<!--  Comment E  -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body></body></html>x<!-- Hi there -->",
@@ -798,7 +821,8 @@
           2,
           "<!--  Hi there  -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body></body></html>x<!-- Hi there --></html><!-- Again -->",
@@ -832,7 +856,8 @@
           0,
           "<!--  Again  -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body></body></html>x<!-- Hi there --></body></html><!-- Again -->",
@@ -866,7 +891,8 @@
           0,
           "<!--  Again  -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body><ruby><div><rp>xx</rp></div></ruby></body></html>",
@@ -904,7 +930,8 @@
           5,
           "\"xx\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body><ruby><div><rt>xx</rt></div></ruby></body></html>",
@@ -942,7 +969,8 @@
           5,
           "\"xx\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><frameset><!--1--><noframes>A</noframes><!--2--></frameset><!--3--><noframes>B</noframes><!--4--></html><!--5--><noframes>C</noframes><!--6-->",
@@ -1011,7 +1039,8 @@
           0,
           "<!-- 6 -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><option>A<select><option>B<select><option>C<select><option>D<select><option>E<select><option>F<select><option>G<select>",
@@ -1108,7 +1137,8 @@
           5,
           "\"G\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<dd><dd><dt><dt><dd><li><li>",
@@ -1157,7 +1187,8 @@
           3,
           "<li>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div><b></div><div><nobr>a<nobr>",
@@ -1209,7 +1240,8 @@
           4,
           "<nobr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<head></head>\n<body></body>",
@@ -1234,7 +1266,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<head></head> <style></style>ddd",
@@ -1268,7 +1301,8 @@
           2,
           "\"ddd\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<kbd><table></kbd><col><select><tr>",
@@ -1322,7 +1356,8 @@
           5,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<kbd><table></kbd><col><select><tr></table><div>",
@@ -1380,7 +1415,8 @@
           3,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><li><style></style><title></title></a>",
@@ -1422,7 +1458,8 @@
           4,
           "<title>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<font></p><p><meta><title></title></font>",
@@ -1469,7 +1506,8 @@
           4,
           "<title>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><center><title></title><a>",
@@ -1513,7 +1551,8 @@
           3,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><title><div>",
@@ -1547,7 +1586,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><title><rect><div>",
@@ -1585,7 +1625,8 @@
           5,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><title><svg><div>",
@@ -1624,7 +1665,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<img <=\"\" FAIL>",
@@ -1660,7 +1702,8 @@
           3,
           "fail=\"\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<ul><li><div id='foo'/>A</li><li>B<div>C</div></li></ul>",
@@ -1721,7 +1764,8 @@
           5,
           "\"C\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><em><desc></em>",
@@ -1756,7 +1800,8 @@
           3,
           "<desc>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tr><td><svg><desc><td></desc><circle>",
@@ -1812,7 +1857,8 @@
           6,
           "<circle>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><tfoot></mi><td>",
@@ -1848,7 +1894,8 @@
           4,
           "<svg td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<math><mrow><mrow><mn>1</mn></mrow><mi>a</mi></mrow></math>",
@@ -1897,7 +1944,8 @@
           5,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><input type=\"hidden\"><frameset>",
@@ -1923,7 +1971,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><input type=\"button\"><frameset>",
@@ -1956,7 +2005,8 @@
           3,
           "type=\"button\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

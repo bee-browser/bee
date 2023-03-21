@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (2, "<math math>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -29,6 +31,7 @@ fn test_0001() {
             (2, "<math math>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -45,6 +48,7 @@ fn test_0002() {
             (3, "<math mi>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -63,6 +67,7 @@ fn test_0003() {
             (2, "<u>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -78,6 +83,7 @@ fn test_0004() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -94,6 +100,7 @@ fn test_0005() {
             (3, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -110,6 +117,7 @@ fn test_0006() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -128,6 +136,7 @@ fn test_0007() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -148,6 +157,7 @@ fn test_0008() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -169,6 +179,7 @@ fn test_0009() {
             (3, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -191,6 +202,7 @@ fn test_0010() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -214,6 +226,7 @@ fn test_0011() {
             (8, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -239,6 +252,7 @@ fn test_0012() {
             (7, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -262,6 +276,7 @@ fn test_0013() {
             (5, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -287,6 +302,7 @@ fn test_0014() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -312,6 +328,7 @@ fn test_0015() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -337,6 +354,7 @@ fn test_0016() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -359,6 +377,7 @@ fn test_0017() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -378,6 +397,7 @@ fn test_0018() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -399,6 +419,7 @@ fn test_0019() {
             (3, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -420,6 +441,7 @@ fn test_0020() {
             (3, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -434,6 +456,7 @@ fn test_0021() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -448,6 +471,7 @@ fn test_0022() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -465,6 +489,7 @@ fn test_0023() {
             (3, "xlink href=\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -485,6 +510,7 @@ fn test_0024() {
             (4, "xml lang=\"en\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -505,6 +531,7 @@ fn test_0025() {
             (4, "xml lang=\"en\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -526,6 +553,7 @@ fn test_0026() {
             (3, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

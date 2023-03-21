@@ -42,7 +42,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr><select><td>",
@@ -89,7 +90,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr><td><select><td>",
@@ -139,7 +141,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr><th><select><td>",
@@ -189,7 +192,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><caption><select><tr>",
@@ -235,7 +239,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><tr>",
@@ -265,7 +270,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><td>",
@@ -295,7 +301,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><th>",
@@ -325,7 +332,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><tbody>",
@@ -355,7 +363,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><thead>",
@@ -385,7 +394,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><tfoot>",
@@ -415,7 +425,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><caption>",
@@ -445,7 +456,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr></table>a",
@@ -484,7 +496,8 @@
           2,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

@@ -33,7 +33,8 @@
           3,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a>1<p>2</a>3</p>",
@@ -79,7 +80,8 @@
           3,
           "\"3\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a>1<button>2</a>3</button>",
@@ -125,7 +127,8 @@
           3,
           "\"3\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a>1<b>2</a>3</b>",
@@ -171,7 +174,8 @@
           3,
           "\"3\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a>1<div>2<div>3</a>4</div>5</div>",
@@ -234,7 +238,8 @@
           3,
           "\"5\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><a>1<p>2</a>3</p>",
@@ -292,7 +297,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><b><a><p></a>",
@@ -335,7 +341,8 @@
           5,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><a><b><p></a>",
@@ -382,7 +389,8 @@
           5,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><b><b><p></a>",
@@ -433,7 +441,8 @@
           5,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<p>1<s id=\"A\">2<b id=\"B\">3</p>4</s>5</b>",
@@ -520,7 +529,8 @@
           3,
           "\"5\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><a>1<td>2</td>3</table>",
@@ -581,7 +591,8 @@
           6,
           "\"2\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table>A<td>B</td>C</table>",
@@ -629,7 +640,8 @@
           6,
           "\"B\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<a><svg><tr><input></a>",
@@ -668,7 +680,8 @@
           5,
           "<svg input>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div><a><b><div><div><div><div><div><div><div><div><div><div></a>",
@@ -786,7 +799,8 @@
           14,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div><a><b><u><i><code><div></a>",
@@ -853,7 +867,8 @@
           7,
           "<a>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><b><b><b>x</b></b></b></b>y",
@@ -898,7 +913,8 @@
           2,
           "\"y\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<p><b><b><b><b><p>x",
@@ -961,7 +977,8 @@
           6,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><em><foo><foob><fooc><aside></b></em>",
@@ -1001,6 +1018,7 @@
           "<b>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"

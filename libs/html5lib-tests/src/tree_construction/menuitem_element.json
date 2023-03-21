@@ -25,7 +25,8 @@
           2,
           "<menuitem>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</menuitem>",
@@ -47,7 +48,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><menuitem>A",
@@ -80,7 +82,8 @@
           3,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><menuitem>A<menuitem>B",
@@ -121,7 +124,8 @@
           4,
           "\"B\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><menuitem>A<menu>B</menu>",
@@ -162,7 +166,8 @@
           4,
           "\"B\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><menuitem>A<hr>B",
@@ -203,7 +208,8 @@
           3,
           "\"B\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><li><menuitem><li>",
@@ -240,7 +246,8 @@
           2,
           "<li>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><menuitem><p></menuitem>x",
@@ -278,7 +285,8 @@
           4,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><p><b></p><menuitem>",
@@ -320,7 +328,8 @@
           3,
           "<menuitem>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><menuitem><asdf></menuitem>x",
@@ -357,7 +366,8 @@
           2,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html></menuitem>",
@@ -382,7 +392,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><html></menuitem>",
@@ -407,7 +418,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><head></menuitem>",
@@ -432,7 +444,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><select><menuitem></select>",
@@ -461,7 +474,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><option><menuitem>",
@@ -494,7 +508,8 @@
           3,
           "<menuitem>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><menuitem><option>",
@@ -527,7 +542,8 @@
           3,
           "<option>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><menuitem></body>",
@@ -556,7 +572,8 @@
           2,
           "<menuitem>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><menuitem></html>",
@@ -585,7 +602,8 @@
           2,
           "<menuitem>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><menuitem><p>",
@@ -618,7 +636,8 @@
           3,
           "<p>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><menuitem><li>",
@@ -651,7 +670,8 @@
           3,
           "<li>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

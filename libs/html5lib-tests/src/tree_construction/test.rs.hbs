@@ -1,6 +1,7 @@
 //<coverage:exclude>
 use super::helper::parse;
 use super::helper::Test;
+use super::helper::Scripting;
 {{#each tests}}
 
 #[test]
@@ -19,6 +20,7 @@ fn test_{{padStart @index 4 '0'}}() {
         {{else}}
         context_element: None,
         {{/if}}
+        scripting: Scripting::{{scripting}},
     });
 }
 {{/each}}

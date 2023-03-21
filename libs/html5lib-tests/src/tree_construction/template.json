@@ -32,7 +32,8 @@
           4,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template>Hello</template>",
@@ -65,7 +66,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template></template><div></div>",
@@ -98,7 +100,8 @@
           2,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><template>Hello</template>",
@@ -131,7 +134,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<head><template><div></div></template></head>",
@@ -164,7 +168,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div><template><div><span></template><b>",
@@ -211,7 +216,8 @@
           3,
           "<b>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div><template></div>Hello",
@@ -251,7 +257,8 @@
           5,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div></template></div>",
@@ -277,7 +284,8 @@
           2,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template></template></table>",
@@ -310,7 +318,8 @@
           4,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template></template></div>",
@@ -346,7 +355,8 @@
           4,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><div><template></template></div>",
@@ -386,7 +396,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template></template><div></div>",
@@ -426,7 +437,8 @@
           4,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table>   <template></template></table>",
@@ -463,7 +475,8 @@
           4,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tbody><template></template></tbody>",
@@ -501,7 +514,8 @@
           5,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tbody><template></tbody></template>",
@@ -540,7 +554,8 @@
           5,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tbody><template></template></tbody></table>",
@@ -577,7 +592,8 @@
           5,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><thead><template></template></thead>",
@@ -615,7 +631,8 @@
           5,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tfoot><template></template></tfoot>",
@@ -653,7 +670,8 @@
           5,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><template></template></select>",
@@ -686,7 +704,8 @@
           4,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><template><option></option></template></select>",
@@ -723,7 +742,8 @@
           5,
           "<option>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><option></option></select><option></option></template>",
@@ -761,7 +781,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><template></template><option></select>",
@@ -798,7 +819,8 @@
           3,
           "<option>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><option><template></template></select>",
@@ -835,7 +857,8 @@
           5,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><template>",
@@ -870,7 +893,8 @@
           4,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><option></option><template>",
@@ -909,7 +933,8 @@
           4,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<select><option></option><template><option>",
@@ -952,7 +977,8 @@
           5,
           "<option>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><thead><template><td></template></table>",
@@ -993,7 +1019,8 @@
           6,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template><thead></template></table>",
@@ -1030,7 +1057,8 @@
           5,
           "<thead>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><table><template><td></tr><div></template></table>",
@@ -1073,7 +1101,8 @@
           6,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template><thead></template></thead></table>",
@@ -1111,7 +1140,8 @@
           5,
           "<thead>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><thead><template><tr></template></table>",
@@ -1152,7 +1182,8 @@
           6,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template><tr></template></table>",
@@ -1189,7 +1220,8 @@
           5,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><tr><template><td>",
@@ -1236,7 +1268,8 @@
           7,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template><tr><template><td></template></tr></template></table>",
@@ -1285,7 +1318,8 @@
           8,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template><tr><template><td></td></template></tr></template></table>",
@@ -1334,7 +1368,8 @@
           8,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><template><td></template>",
@@ -1372,7 +1407,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><td></td></template>",
@@ -1405,7 +1441,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><template><tr></tr></template><td></td></template>",
@@ -1450,7 +1487,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><colgroup><template><col>",
@@ -1493,7 +1531,8 @@
           6,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<frameset><template><frame></frame></template></frameset>",
@@ -1521,7 +1560,8 @@
           2,
           "<frame>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><frame></frame></frameset><frame></frame></template>",
@@ -1555,7 +1595,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><div><frameset><span></span></div><span></span></template>",
@@ -1597,7 +1638,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><div><frameset><span></span></div><span></span></template></body>",
@@ -1639,7 +1681,8 @@
           4,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><script>var i = 1;</script><td></td></template>",
@@ -1680,7 +1723,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><tr><div></div></tr></template>",
@@ -1719,7 +1763,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><tr></tr><td></td></template>",
@@ -1761,7 +1806,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><td></td></tr><td></td></template>",
@@ -1799,7 +1845,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><td></td><tbody><td></td></template>",
@@ -1837,7 +1884,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><td></td><caption></caption><td></td></template>",
@@ -1876,7 +1924,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><td></td><colgroup></caption><td></td></template>",
@@ -1915,7 +1964,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><td></td></table><td></td></template>",
@@ -1953,7 +2003,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><tr></tr><tbody><tr></tr></template>",
@@ -1991,7 +2042,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><tr></tr><caption><tr></tr></template>",
@@ -2029,7 +2081,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><tr></tr></table><tr></tr></template>",
@@ -2067,7 +2120,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><thead></thead><caption></caption><tbody></tbody></template>",
@@ -2108,7 +2162,8 @@
           4,
           "<tbody>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><thead></thead></table><tbody></tbody></template></body>",
@@ -2146,7 +2201,8 @@
           4,
           "<tbody>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><div><tr></tr></div></template>",
@@ -2181,7 +2237,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><em>Hello</em></template>",
@@ -2218,7 +2275,8 @@
           5,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><!--comment--></template>",
@@ -2251,7 +2309,8 @@
           4,
           "<!-- comment -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><style></style><td></td></template>",
@@ -2288,7 +2347,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><meta><td></td></template>",
@@ -2325,7 +2385,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><link><td></td></template>",
@@ -2362,7 +2423,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><template><tr></tr></template><td></td></template>",
@@ -2407,7 +2469,8 @@
           4,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><table><colgroup><template><col></col></template></colgroup></table></body>",
@@ -2449,7 +2512,8 @@
           6,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body a=b><template><div></div><body c=d><div></div></body></template></body>",
@@ -2492,7 +2556,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html a=b><template><div><html b=c><span></template>",
@@ -2535,7 +2600,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html a=b><template><col></col><html b=c><col></col></template>",
@@ -2579,7 +2645,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html a=b><template><frame></frame><html b=c><frame></frame></template>",
@@ -2617,7 +2684,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><tr></tr><template></template><td></td></template>",
@@ -2667,7 +2735,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><thead></thead><template><tr></tr></template><tr></tr><tfoot></tfoot></template>",
@@ -2724,7 +2793,8 @@
           4,
           "<tfoot>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><template><b><template></template></template>text</template>",
@@ -2778,7 +2848,8 @@
           4,
           "\"text\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><col><colgroup>",
@@ -2813,7 +2884,8 @@
           4,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><col></colgroup>",
@@ -2848,7 +2920,8 @@
           4,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><col><colgroup></template></body>",
@@ -2882,7 +2955,8 @@
           4,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><col><div>",
@@ -2917,7 +2991,8 @@
           4,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><col></div>",
@@ -2952,7 +3027,8 @@
           4,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><col>Hello",
@@ -2991,7 +3067,8 @@
           4,
           "<col>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template><i><menu>Foo</i>",
@@ -3038,7 +3115,8 @@
           6,
           "\"Foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><template></div><div>Foo</div><template></template><tr></tr>",
@@ -3087,7 +3165,8 @@
           5,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><div><template></div><tr><td>Foo</td></tr></template>",
@@ -3134,7 +3213,8 @@
           7,
           "\"Foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template></figcaption><sub><table></table>",
@@ -3173,7 +3253,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template>",
@@ -3212,7 +3293,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><div>",
@@ -3246,7 +3328,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><div>",
@@ -3289,7 +3372,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><table>",
@@ -3332,7 +3416,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><tbody>",
@@ -3375,7 +3460,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><tr>",
@@ -3418,7 +3504,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><td>",
@@ -3461,7 +3548,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><caption>",
@@ -3504,7 +3592,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><colgroup>",
@@ -3547,7 +3636,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><col>",
@@ -3590,7 +3680,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><tbody><select>",
@@ -3638,7 +3729,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><table>Foo",
@@ -3688,7 +3780,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><frame>",
@@ -3728,7 +3821,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><script>var i",
@@ -3776,7 +3870,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><template><style>var i",
@@ -3824,7 +3919,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><table></template><body><span>Foo",
@@ -3867,7 +3963,8 @@
           3,
           "\"Foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><td></template><body><span>Foo",
@@ -3909,7 +4006,8 @@
           3,
           "\"Foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><object></template><body><span>Foo",
@@ -3952,7 +4050,8 @@
           3,
           "\"Foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><svg><template>",
@@ -3990,7 +4089,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><svg><foo><template><foreignObject><div></template><div>",
@@ -4045,7 +4145,8 @@
           2,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<dummy><template><span></dummy>",
@@ -4085,7 +4186,8 @@
           5,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body><table><tr><td><select><template>Foo</template><caption>A</table>",
@@ -4147,7 +4249,8 @@
           4,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<body></body><template>",
@@ -4178,7 +4281,8 @@
           3,
           "content"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<head></head><template>",
@@ -4209,7 +4313,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<head></head><template>Foo</template>",
@@ -4243,7 +4348,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML><dummy><table><template><table><template><table><script>",
@@ -4307,7 +4413,8 @@
           10,
           "<script>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><a><table><a>",
@@ -4352,7 +4459,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<template><form><input name=\"q\"></form><div>second</div></template>",
@@ -4388,6 +4496,7 @@
           "\"second\""
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "template"
@@ -4434,7 +4543,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML><template> <tr> <td>cell</td> </tr> </template>",
@@ -4493,7 +4603,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML><template><tr><td>cell</td></tr>a</template>",
@@ -4542,7 +4653,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

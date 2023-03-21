@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -72,6 +73,7 @@ fn test_0000() {
             (3, "zoomAndPan=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -145,6 +147,7 @@ fn test_0001() {
             (3, "zoomAndPan=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -219,6 +222,7 @@ fn test_0002() {
             (3, "zoomAndPan=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -292,6 +296,7 @@ fn test_0003() {
             (3, "zoomandpan=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -311,6 +316,7 @@ fn test_0004() {
             (3, "filterres=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -330,6 +336,7 @@ fn test_0005() {
             (3, "filterres=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -349,6 +356,7 @@ fn test_0006() {
             (3, "filterres=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -368,6 +376,7 @@ fn test_0007() {
             (3, "filterres=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -419,6 +428,7 @@ fn test_0008() {
             (3, "<svg textPath>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -470,6 +480,7 @@ fn test_0009() {
             (3, "<svg textPath>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -521,6 +532,7 @@ fn test_0010() {
             (3, "<svg textPath>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -572,6 +584,7 @@ fn test_0011() {
             (3, "<math textpath>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -588,6 +601,7 @@ fn test_0012() {
             (3, "<svg solidcolor>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

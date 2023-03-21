@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (2, "\"≂̸\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -29,6 +31,7 @@ fn test_0001() {
             (2, "\"≂̸A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -44,6 +47,7 @@ fn test_0002() {
             (2, "\"  \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -59,6 +63,7 @@ fn test_0003() {
             (2, "\"  A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -74,6 +79,7 @@ fn test_0004() {
             (2, "\"⊂⃒\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -89,6 +95,7 @@ fn test_0005() {
             (2, "\"⊂⃒A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -104,6 +111,7 @@ fn test_0006() {
             (2, "\"𝔾\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -119,6 +127,7 @@ fn test_0007() {
             (2, "\"𝔾A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>
