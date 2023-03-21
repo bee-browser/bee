@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (2, "<svg svg>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -30,6 +32,7 @@ fn test_0001() {
             (2, "<!-- [CDATA[a]] -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -45,6 +48,7 @@ fn test_0002() {
             (2, "<svg svg>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -60,6 +64,7 @@ fn test_0003() {
             (2, "<select>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -76,6 +81,7 @@ fn test_0004() {
             (3, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -92,6 +98,7 @@ fn test_0005() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -110,6 +117,7 @@ fn test_0006() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -130,6 +138,7 @@ fn test_0007() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -151,6 +160,7 @@ fn test_0008() {
             (3, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -173,6 +183,7 @@ fn test_0009() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -196,6 +207,7 @@ fn test_0010() {
             (8, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -221,6 +233,7 @@ fn test_0011() {
             (7, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -244,6 +257,7 @@ fn test_0012() {
             (5, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -269,6 +283,7 @@ fn test_0013() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -293,6 +308,7 @@ fn test_0014() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -319,6 +335,7 @@ fn test_0015() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -341,6 +358,7 @@ fn test_0016() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -360,6 +378,7 @@ fn test_0017() {
             (3, "\"quux\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -381,6 +400,7 @@ fn test_0018() {
             (3, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -402,6 +422,7 @@ fn test_0019() {
             (3, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -416,6 +437,7 @@ fn test_0020() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -430,6 +452,7 @@ fn test_0021() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -447,6 +470,7 @@ fn test_0022() {
             (3, "xlink href=\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -467,6 +491,7 @@ fn test_0023() {
             (4, "xml lang=\"en\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -487,6 +512,7 @@ fn test_0024() {
             (4, "xml lang=\"en\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -508,6 +534,7 @@ fn test_0025() {
             (3, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -522,6 +549,7 @@ fn test_0026() {
             (2, "<svg svg>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -538,6 +566,7 @@ fn test_0027() {
             (2, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -555,6 +584,7 @@ fn test_0028() {
             (2, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -572,6 +602,7 @@ fn test_0029() {
             (3, "<path>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -591,6 +622,7 @@ fn test_0030() {
             (7, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -610,6 +642,7 @@ fn test_0031() {
             (7, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -630,6 +663,7 @@ fn test_0032() {
             (6, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -649,6 +683,7 @@ fn test_0033() {
             (5, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -667,6 +702,7 @@ fn test_0034() {
             (5, "<p>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -685,6 +721,7 @@ fn test_0035() {
             (5, "<p>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -704,6 +741,7 @@ fn test_0036() {
             (6, "<p>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -724,6 +762,7 @@ fn test_0037() {
             (3, "<math mi>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -744,6 +783,7 @@ fn test_0038() {
             (3, "<math mi>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -760,6 +800,7 @@ fn test_0039() {
             (3, "<svg path>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -777,6 +818,7 @@ fn test_0040() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -793,6 +835,7 @@ fn test_0041() {
             (4, "<math mglyph>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -809,6 +852,7 @@ fn test_0042() {
             (4, "<math malignmark>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -825,6 +869,7 @@ fn test_0043() {
             (4, "<math mglyph>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -841,6 +886,7 @@ fn test_0044() {
             (4, "<math malignmark>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -857,6 +903,7 @@ fn test_0045() {
             (4, "<math mglyph>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -873,6 +920,7 @@ fn test_0046() {
             (4, "<math malignmark>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -889,6 +937,7 @@ fn test_0047() {
             (4, "<math mglyph>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -905,6 +954,7 @@ fn test_0048() {
             (4, "<math malignmark>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -921,6 +971,7 @@ fn test_0049() {
             (4, "<math mglyph>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -937,6 +988,7 @@ fn test_0050() {
             (4, "<math malignmark>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -954,6 +1006,7 @@ fn test_0051() {
             (3, "<math mi>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -977,6 +1030,7 @@ fn test_0052() {
             (3, "<math mi>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1001,6 +1055,7 @@ fn test_0053() {
             (3, "<math mi>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -23,6 +24,7 @@ fn test_0000() {
             (6, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -46,6 +48,7 @@ fn test_0001() {
             (6, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -61,6 +64,7 @@ fn test_0002() {
             (2, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -76,6 +80,7 @@ fn test_0003() {
             (2, "<meta>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -90,6 +95,7 @@ fn test_0004() {
             (0, "<!--  foo  -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -106,6 +112,7 @@ fn test_0005() {
             (3, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -123,6 +130,7 @@ fn test_0006() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -139,6 +147,7 @@ fn test_0007() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -155,6 +164,7 @@ fn test_0008() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -173,6 +183,7 @@ fn test_0009() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -192,6 +203,7 @@ fn test_0010() {
             (3, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -216,6 +228,7 @@ fn test_0011() {
             (6, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -234,6 +247,7 @@ fn test_0012() {
             (3, "\"</frameset><noframes>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -249,6 +263,7 @@ fn test_0013() {
             (2, "<object>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

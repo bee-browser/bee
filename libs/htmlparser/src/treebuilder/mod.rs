@@ -88,6 +88,7 @@ where
     frameset_ok: bool,
     ignore_lf: bool,
     foster_parenting: bool,
+    scripting: bool,
 }
 
 #[derive(Debug)]
@@ -122,11 +123,16 @@ where
             frameset_ok: true,
             ignore_lf: false,
             foster_parenting: false,
+            scripting: false,
         }
     }
 
     pub fn set_quirks_mode(&mut self, quirks_mode: QuirksMode) {
         self.quirks_mode = quirks_mode;
+    }
+
+    pub fn set_scripting(&mut self, scripting: bool) {
+        self.scripting = scripting;
     }
 
     pub fn set_context_element(
@@ -790,6 +796,11 @@ where
         context.element_in_scope.clear();
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_noscript_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Noscript);
     }
 
     #[inline(always)]

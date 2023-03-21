@@ -40,7 +40,8 @@
           3,
           "<rb>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rb>b<rt></ruby></html>",
@@ -81,7 +82,8 @@
           3,
           "<rt>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rb>b<rtc></ruby></html>",
@@ -122,7 +124,8 @@
           3,
           "<rtc>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rb>b<rp></ruby></html>",
@@ -163,7 +166,8 @@
           3,
           "<rp>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rb>b<span></ruby></html>",
@@ -205,7 +209,8 @@
           4,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rt>b<rb></ruby></html>",
@@ -246,7 +251,8 @@
           3,
           "<rb>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rt>b<rt></ruby></html>",
@@ -287,7 +293,8 @@
           3,
           "<rt>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rt>b<rtc></ruby></html>",
@@ -328,7 +335,8 @@
           3,
           "<rtc>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rt>b<rp></ruby></html>",
@@ -369,7 +377,8 @@
           3,
           "<rp>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rt>b<span></ruby></html>",
@@ -411,7 +420,8 @@
           4,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rtc>b<rb></ruby></html>",
@@ -452,7 +462,8 @@
           3,
           "<rb>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rtc>b<rt>c<rt>d</ruby></html>",
@@ -505,7 +516,8 @@
           5,
           "\"d\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rtc>b<rtc></ruby></html>",
@@ -546,7 +558,8 @@
           3,
           "<rtc>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rtc>b<rp></ruby></html>",
@@ -587,7 +600,8 @@
           4,
           "<rp>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rtc>b<span></ruby></html>",
@@ -629,7 +643,8 @@
           4,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rp>b<rb></ruby></html>",
@@ -670,7 +685,8 @@
           3,
           "<rb>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rp>b<rt></ruby></html>",
@@ -711,7 +727,8 @@
           3,
           "<rt>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rp>b<rtc></ruby></html>",
@@ -752,7 +769,8 @@
           3,
           "<rtc>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rp>b<rp></ruby></html>",
@@ -793,7 +811,8 @@
           3,
           "<rp>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby>a<rp>b<span></ruby></html>",
@@ -835,7 +854,8 @@
           4,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><ruby><rtc><ruby>a<rb>b<rt></ruby></ruby></html>",
@@ -884,7 +904,8 @@
           5,
           "<rt>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

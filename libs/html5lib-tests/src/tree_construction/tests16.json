@@ -28,7 +28,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script>a",
@@ -61,7 +62,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><",
@@ -94,7 +96,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></",
@@ -127,7 +130,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></S",
@@ -160,7 +164,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></SC",
@@ -193,7 +198,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></SCR",
@@ -226,7 +232,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></SCRI",
@@ -259,7 +266,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></SCRIP",
@@ -292,7 +300,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></SCRIPT",
@@ -325,7 +334,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></SCRIPT ",
@@ -357,7 +367,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></s",
@@ -390,7 +401,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></sc",
@@ -423,7 +435,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></scr",
@@ -456,7 +469,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></scri",
@@ -489,7 +503,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></scrip",
@@ -522,7 +537,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></script",
@@ -555,7 +571,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script></script ",
@@ -587,7 +604,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!",
@@ -620,7 +638,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!a",
@@ -653,7 +672,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!-",
@@ -686,7 +706,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!-a",
@@ -719,7 +740,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--",
@@ -755,7 +777,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--a",
@@ -791,7 +814,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<",
@@ -827,7 +851,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<a",
@@ -863,7 +888,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--</",
@@ -899,7 +925,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--</script",
@@ -935,7 +962,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--</script ",
@@ -971,7 +999,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<s",
@@ -1007,7 +1036,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script",
@@ -1043,7 +1073,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script ",
@@ -1079,7 +1110,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script <",
@@ -1115,7 +1147,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script <a",
@@ -1151,7 +1184,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </",
@@ -1187,7 +1221,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </s",
@@ -1223,7 +1258,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script",
@@ -1259,7 +1295,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </scripta",
@@ -1295,7 +1332,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script ",
@@ -1331,7 +1369,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script>",
@@ -1367,7 +1406,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script/",
@@ -1403,7 +1443,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script <",
@@ -1439,7 +1480,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script <a",
@@ -1475,7 +1517,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script </",
@@ -1511,7 +1554,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script </script",
@@ -1547,7 +1591,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script </script ",
@@ -1583,7 +1628,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script </script/",
@@ -1619,7 +1665,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script </script </script>",
@@ -1650,7 +1697,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script -",
@@ -1686,7 +1734,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script -a",
@@ -1722,7 +1771,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script -<",
@@ -1758,7 +1808,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --",
@@ -1794,7 +1845,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --a",
@@ -1830,7 +1882,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --<",
@@ -1866,7 +1919,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script -->",
@@ -1899,7 +1953,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --><",
@@ -1932,7 +1987,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --></",
@@ -1965,7 +2021,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --></script",
@@ -1998,7 +2055,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --></script ",
@@ -2034,7 +2092,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --></script/",
@@ -2070,7 +2129,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script --></script>",
@@ -2101,7 +2161,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script><\\/script>--></script>",
@@ -2132,7 +2193,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></scr'+'ipt>--></script>",
@@ -2163,7 +2225,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></script><script></script></script>",
@@ -2194,7 +2257,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></script><script></script>--><!--</script>",
@@ -2225,7 +2289,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></script><script></script>-- ></script>",
@@ -2256,7 +2321,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></script><script></script>- -></script>",
@@ -2287,7 +2353,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></script><script></script>- - ></script>",
@@ -2318,7 +2385,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></script><script></script>-></script>",
@@ -2349,7 +2417,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script>--!></script>X",
@@ -2385,7 +2454,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<scr'+'ipt></script>--></script>",
@@ -2422,7 +2492,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><script><!--<script></scr'+'ipt></script>X",
@@ -2458,7 +2529,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style><!--<style></style>--></style>",
@@ -2495,7 +2567,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style><!--</style>X",
@@ -2530,7 +2603,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style><!--...</style>...--></style>",
@@ -2567,7 +2641,8 @@
           2,
           "\"...-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style><!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style></style>X",
@@ -2602,7 +2677,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style><!--...<style><!--...--!></style>--></style>",
@@ -2639,7 +2715,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style><!--...</style><!-- --><style>@import ...</style>",
@@ -2682,7 +2759,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style>...<style><!--...</style><!-- --></style>",
@@ -2719,7 +2797,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><style>...<!--[if IE]><style>...</style>X",
@@ -2754,7 +2833,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><title><!--<title></title>--></title>",
@@ -2791,7 +2871,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><title>&lt;/title></title>",
@@ -2822,7 +2903,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><title>foo/title><link></head><body>X",
@@ -2855,13 +2937,13 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><noscript><!--<noscript></noscript>--></noscript>",
       "errors": [
-        "(1,64): unexpected-end-tag",
-        "#script-on"
+        "(1,64): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -2893,13 +2975,12 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<!doctype html><noscript><!--<noscript></noscript>--></noscript>",
-      "errors": [
-        "#script-off"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -2926,13 +3007,12 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<!doctype html><noscript><!--</noscript>X<noscript>--></noscript>",
-      "errors": [
-        "#script-on"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -2971,13 +3051,12 @@
           3,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<!doctype html><noscript><!--</noscript>X<noscript>--></noscript>",
-      "errors": [
-        "#script-off"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -3004,13 +3083,12 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<!doctype html><noscript><iframe></noscript>X",
-      "errors": [
-        "#script-on"
-      ],
+      "errors": [],
       "newErrors": [],
       "document": [
         [
@@ -3041,14 +3119,14 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<!doctype html><noscript><iframe></noscript>X",
       "errors": [
         " * (1,34) unexpected token in head noscript",
-        " * (1,46) unexpected EOF",
-        "#script-off"
+        " * (1,46) unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -3080,7 +3158,8 @@
           3,
           "\"</noscript>X\""
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<!doctype html><noframes><!--<noframes></noframes>--></noframes>",
@@ -3117,7 +3196,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><noframes><body><script><!--...</script></body></noframes></html>",
@@ -3148,7 +3228,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><textarea><!--<textarea></textarea>--></textarea>",
@@ -3185,7 +3266,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><textarea>&lt;/textarea></textarea>",
@@ -3216,7 +3298,8 @@
           3,
           "\"</textarea>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><textarea>&lt;</textarea>",
@@ -3247,7 +3330,8 @@
           3,
           "\"<\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><textarea>a&lt;b</textarea>",
@@ -3278,7 +3362,8 @@
           3,
           "\"a<b\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><iframe><!--<iframe></iframe>--></iframe>",
@@ -3315,7 +3400,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><iframe>...<!--X->...<!--/X->...</iframe>",
@@ -3346,7 +3432,8 @@
           3,
           "\"...<!--X->...<!--/X->...\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><xmp><!--<xmp></xmp>--></xmp>",
@@ -3383,7 +3470,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><noembed><!--<noembed></noembed>--></noembed>",
@@ -3420,7 +3508,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script>",
@@ -3446,7 +3535,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script>a",
@@ -3476,7 +3566,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><",
@@ -3506,7 +3597,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></",
@@ -3536,7 +3628,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></S",
@@ -3566,7 +3659,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></SC",
@@ -3596,7 +3690,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></SCR",
@@ -3626,7 +3721,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></SCRI",
@@ -3656,7 +3752,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></SCRIP",
@@ -3686,7 +3783,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></SCRIPT",
@@ -3716,7 +3814,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></SCRIPT ",
@@ -3745,7 +3844,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></s",
@@ -3775,7 +3875,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></sc",
@@ -3805,7 +3906,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></scr",
@@ -3835,7 +3937,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></scri",
@@ -3865,7 +3968,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></scrip",
@@ -3895,7 +3999,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></script",
@@ -3925,7 +4030,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script></script ",
@@ -3954,7 +4060,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!",
@@ -3984,7 +4091,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!a",
@@ -4014,7 +4122,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!-",
@@ -4044,7 +4153,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!-a",
@@ -4074,7 +4184,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--",
@@ -4107,7 +4218,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--a",
@@ -4140,7 +4252,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<",
@@ -4173,7 +4286,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<a",
@@ -4206,7 +4320,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--</",
@@ -4239,7 +4354,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--</script",
@@ -4272,7 +4388,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--</script ",
@@ -4305,7 +4422,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<s",
@@ -4338,7 +4456,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script",
@@ -4371,7 +4490,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script ",
@@ -4404,7 +4524,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script <",
@@ -4437,7 +4558,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script <a",
@@ -4470,7 +4592,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </",
@@ -4503,7 +4626,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </s",
@@ -4536,7 +4660,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script",
@@ -4569,7 +4694,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </scripta",
@@ -4602,7 +4728,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script ",
@@ -4635,7 +4762,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script>",
@@ -4668,7 +4796,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script/",
@@ -4701,7 +4830,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script <",
@@ -4734,7 +4864,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script <a",
@@ -4767,7 +4898,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script </",
@@ -4800,7 +4932,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script </script",
@@ -4833,7 +4966,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script </script ",
@@ -4866,7 +5000,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script </script/",
@@ -4899,7 +5034,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script </script </script>",
@@ -4928,7 +5064,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script -",
@@ -4961,7 +5098,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script -a",
@@ -4994,7 +5132,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --",
@@ -5027,7 +5166,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --a",
@@ -5060,7 +5200,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script -->",
@@ -5090,7 +5231,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --><",
@@ -5120,7 +5262,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --></",
@@ -5150,7 +5293,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --></script",
@@ -5180,7 +5324,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --></script ",
@@ -5213,7 +5358,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --></script/",
@@ -5246,7 +5392,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script --></script>",
@@ -5275,7 +5422,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script><\\/script>--></script>",
@@ -5304,7 +5452,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></scr'+'ipt>--></script>",
@@ -5333,7 +5482,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></script><script></script></script>",
@@ -5362,7 +5512,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></script><script></script>--><!--</script>",
@@ -5391,7 +5542,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></script><script></script>-- ></script>",
@@ -5420,7 +5572,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></script><script></script>- -></script>",
@@ -5449,7 +5602,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></script><script></script>- - ></script>",
@@ -5478,7 +5632,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></script><script></script>-></script>",
@@ -5507,7 +5662,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script>--!></script>X",
@@ -5540,7 +5696,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<scr'+'ipt></script>--></script>",
@@ -5574,7 +5731,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script><!--<script></scr'+'ipt></script>X",
@@ -5607,7 +5765,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style><!--<style></style>--></style>",
@@ -5641,7 +5800,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style><!--</style>X",
@@ -5674,7 +5834,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style><!--...</style>...--></style>",
@@ -5708,7 +5869,8 @@
           2,
           "\"...-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style><!--<br><html xmlns:v=\"urn:schemas-microsoft-com:vml\"><!--[if !mso]><style></style>X",
@@ -5741,7 +5903,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style><!--...<style><!--...--!></style>--></style>",
@@ -5775,7 +5938,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style><!--...</style><!-- --><style>@import ...</style>",
@@ -5816,7 +5980,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style>...<style><!--...</style><!-- --></style>",
@@ -5850,7 +6015,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style>...<!--[if IE]><style>...</style>X",
@@ -5883,7 +6049,8 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<title><!--<title></title>--></title>",
@@ -5917,7 +6084,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<title>&lt;/title></title>",
@@ -5946,7 +6114,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<title>foo/title><link></head><body>X",
@@ -5976,14 +6145,14 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<noscript><!--<noscript></noscript>--></noscript>",
       "errors": [
         "(1,10): expected-doctype-but-got-start-tag",
-        "(1,49): unexpected-end-tag",
-        "#script-on"
+        "(1,49): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -6011,13 +6180,13 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<noscript><!--<noscript></noscript>--></noscript>",
       "errors": [
-        " * (1,11) missing DOCTYPE",
-        "#script-off"
+        " * (1,11) missing DOCTYPE"
       ],
       "newErrors": [],
       "document": [
@@ -6041,13 +6210,13 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<noscript><!--</noscript>X<noscript>--></noscript>",
       "errors": [
-        "(1,10): expected-doctype-but-got-start-tag",
-        "#script-on"
+        "(1,10): expected-doctype-but-got-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -6083,13 +6252,13 @@
           3,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<noscript><!--</noscript>X<noscript>--></noscript>",
       "errors": [
-        "(1,10): expected-doctype-but-got-start-tag",
-        "#script-off"
+        "(1,10): expected-doctype-but-got-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -6113,13 +6282,13 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<noscript><iframe></noscript>X",
       "errors": [
-        "(1,10): expected-doctype-but-got-start-tag",
-        "#script-on"
+        "(1,10): expected-doctype-but-got-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -6147,15 +6316,15 @@
           2,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<noscript><iframe></noscript>X",
       "errors": [
         " * (1,11) missing DOCTYPE",
         " * (1,19) unexpected token in head noscript",
-        " * (1,31) unexpected EOF",
-        "#script-off"
+        " * (1,31) unexpected EOF"
       ],
       "newErrors": [],
       "document": [
@@ -6183,7 +6352,8 @@
           3,
           "\"</noscript>X\""
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<noframes><!--<noframes></noframes>--></noframes>",
@@ -6217,7 +6387,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<noframes><body><script><!--...</script></body></noframes></html>",
@@ -6246,7 +6417,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<textarea><!--<textarea></textarea>--></textarea>",
@@ -6280,7 +6452,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<textarea>&lt;/textarea></textarea>",
@@ -6309,7 +6482,8 @@
           3,
           "\"</textarea>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<iframe><!--<iframe></iframe>--></iframe>",
@@ -6343,7 +6517,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<iframe>...<!--X->...<!--/X->...</iframe>",
@@ -6372,7 +6547,8 @@
           3,
           "\"...<!--X->...<!--/X->...\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<xmp><!--<xmp></xmp>--></xmp>",
@@ -6406,7 +6582,8 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<noembed><!--<noembed></noembed>--></noembed>",
@@ -6440,13 +6617,15 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table>",
       "errors": [],
       "newErrors": [],
-      "document": []
+      "document": [],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><td><span><font></span><span>",
@@ -6530,7 +6709,8 @@
           7,
           "<span>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><form><table></form><form></table></form>",
@@ -6571,7 +6751,8 @@
           4,
           "<form>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (3, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -29,6 +31,7 @@ fn test_0001() {
             (3, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -44,6 +47,7 @@ fn test_0002() {
             (3, "<!-- [CDATA[foo]] -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -59,6 +63,7 @@ fn test_0003() {
             (3, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -74,6 +79,7 @@ fn test_0004() {
             (3, "\"foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -88,6 +94,7 @@ fn test_0005() {
             (2, "<svg svg>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -102,6 +109,7 @@ fn test_0006() {
             (2, "<svg svg>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -117,6 +125,7 @@ fn test_0007() {
             (3, "\"]] >\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -132,6 +141,7 @@ fn test_0008() {
             (3, "\"]] >\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -147,6 +157,7 @@ fn test_0009() {
             (3, "\"]]\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -162,6 +173,7 @@ fn test_0010() {
             (3, "\"]\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -177,6 +189,7 @@ fn test_0011() {
             (3, "\"]>a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -193,6 +206,7 @@ fn test_0012() {
             (3, "\"foo]\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -209,6 +223,7 @@ fn test_0013() {
             (3, "\"foo]]\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -225,6 +240,7 @@ fn test_0014() {
             (3, "\"foo]]]\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -242,6 +258,7 @@ fn test_0015() {
             (5, "<!-- [CDATA[foo]] -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -257,6 +274,7 @@ fn test_0016() {
             (3, "\"<svg>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -272,6 +290,7 @@ fn test_0017() {
             (3, "\"</svg>a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -287,6 +306,7 @@ fn test_0018() {
             (3, "\"<svg>a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -302,6 +322,7 @@ fn test_0019() {
             (3, "\"</svg>a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -318,6 +339,7 @@ fn test_0020() {
             (3, "<svg path>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -333,6 +355,7 @@ fn test_0021() {
             (3, "\"<svg>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -349,6 +372,7 @@ fn test_0022() {
             (3, "<!-- path -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -364,6 +388,7 @@ fn test_0023() {
             (3, "\"<svg>path\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -379,6 +404,7 @@ fn test_0024() {
             (3, "\"<!--svg-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

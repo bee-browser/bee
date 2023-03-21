@@ -22,6 +22,7 @@ mod input;
 mod li;
 mod main;
 mod math;
+mod noscript;
 mod ol;
 mod option;
 mod p;
@@ -70,6 +71,7 @@ where
             tag!(Li) => self.handle_start_li(&tag),
             tag!(Main) => self.handle_start_main(&tag),
             tag!(Math) => self.handle_start_math(&tag),
+            tag!(Noscript) => self.handle_start_noscript(&tag),
             tag!(Ol) => self.handle_start_ol(&tag),
             tag!(Option) => self.handle_start_option(&tag),
             tag!(P) => self.handle_start_p(&tag),
@@ -115,6 +117,7 @@ where
             tag!(Li) => self.handle_end_li(&tag),
             tag!(Main) => self.handle_end_main(&tag),
             tag!(Math) => self.handle_end_math(&tag),
+            tag!(Noscript) => self.handle_end_noscript(&tag),
             tag!(Ol) => self.handle_end_ol(&tag),
             tag!(Option) => self.handle_end_option(&tag),
             tag!(P) => self.handle_end_p(&tag),

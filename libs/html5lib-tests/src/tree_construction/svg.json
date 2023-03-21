@@ -26,6 +26,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "td"
@@ -57,6 +58,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tr"
@@ -84,6 +86,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "thead"
@@ -111,6 +114,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tfoot"
@@ -138,6 +142,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -165,6 +170,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -192,6 +198,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"
@@ -219,6 +226,7 @@
           "<svg title>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "tbody"

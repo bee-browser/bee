@@ -18,6 +18,7 @@ class Test {
     this.errors = [];
     this.newErrors = []
     this.document = [];
+    this.scripting = 'Both';
   }
 
   hasData() {
@@ -53,6 +54,12 @@ for (const line of dat.split('\n')) {
     continue;
   case '#document-fragment':
     state = State.DOCUMENT_FRAGMENT;
+    continue;
+  case '#script-on':
+    test.scripting = 'On';
+    continue;
+  case '#script-off':
+    test.scripting = 'Off';
     continue;
   default:
     break;

@@ -29,13 +29,13 @@
           3,
           "bar=\"qux/\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<p id=\"status\"><noscript><strong>A</strong></noscript><span>B</span></p>",
       "errors": [
-        "(1,15): expected-doctype-but-got-start-tag",
-        "#script-on"
+        "(1,15): expected-doctype-but-got-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -75,13 +75,13 @@
           4,
           "\"B\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<p id=\"status\"><noscript><strong>A</strong></noscript><span>B</span></p>",
       "errors": [
-        "(1,15): expected-doctype-but-got-start-tag",
-        "#script-off"
+        "(1,15): expected-doctype-but-got-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -125,7 +125,8 @@
           4,
           "\"B\""
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<div><sarcasm><div></div></sarcasm></div>",
@@ -158,7 +159,8 @@
           4,
           "<div>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><body><img src=\"\" border=\"0\" alt=\"><div>A</div></body></html>",
@@ -182,7 +184,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><td></tbody>A",
@@ -226,7 +229,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><td></thead>A",
@@ -270,7 +274,8 @@
           6,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><td></tfoot>A",
@@ -314,7 +319,8 @@
           6,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><thead><td></tbody>A",
@@ -358,7 +364,8 @@
           6,
           "\"A\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<legend>test</legend>",
@@ -387,7 +394,8 @@
           3,
           "\"test\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<table><input>",
@@ -418,7 +426,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><em><foo><foo><aside></b>",
@@ -469,7 +478,8 @@
           4,
           "<b>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><em><foo><foo><aside></b></em>",
@@ -525,7 +535,8 @@
           4,
           "<b>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><em><foo><foo><foo><aside></b>",
@@ -576,7 +587,8 @@
           3,
           "<b>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><em><foo><foo><foo><aside></b></em>",
@@ -628,7 +640,8 @@
           3,
           "<b>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<b><em><foo><foo><foo><foo><foo><foo><foo><foo><foo><foo><aside></b></em>",
@@ -696,6 +709,7 @@
           "<b>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -767,6 +781,7 @@
           "<b>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "div"
@@ -785,6 +800,7 @@
           "<option>"
         ]
       ],
+      "scripting": "Both",
       "contextElement": {
         "namespace": "html",
         "localName": "select"
@@ -834,7 +850,8 @@
           5,
           "\"</foreignObject></svg><div>bar</div>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg><foreignObject></foreignObject><title></svg>foo",
@@ -872,7 +889,8 @@
           2,
           "\"foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "</foreignObject><plaintext><div>foo</div>",
@@ -903,7 +921,8 @@
           3,
           "\"<div>foo</div>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

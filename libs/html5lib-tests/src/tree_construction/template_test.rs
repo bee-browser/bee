@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -15,6 +16,7 @@ fn test_0000() {
             (4, "\"Hello\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -31,6 +33,7 @@ fn test_0001() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -47,6 +50,7 @@ fn test_0002() {
             (2, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -63,6 +67,7 @@ fn test_0003() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -79,6 +84,7 @@ fn test_0004() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -98,6 +104,7 @@ fn test_0005() {
             (3, "<b>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -115,6 +122,7 @@ fn test_0006() {
             (5, "\"Hello\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -124,6 +132,7 @@ fn test_0007() {
         data: "<div></template></div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<div>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -140,6 +149,7 @@ fn test_0008() {
             (4, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -156,6 +166,7 @@ fn test_0009() {
             (4, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -173,6 +184,7 @@ fn test_0010() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -190,6 +202,7 @@ fn test_0011() {
             (4, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -207,6 +220,7 @@ fn test_0012() {
             (4, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -224,6 +238,7 @@ fn test_0013() {
             (5, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -241,6 +256,7 @@ fn test_0014() {
             (5, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -258,6 +274,7 @@ fn test_0015() {
             (5, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -275,6 +292,7 @@ fn test_0016() {
             (5, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -292,6 +310,7 @@ fn test_0017() {
             (5, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -308,6 +327,7 @@ fn test_0018() {
             (4, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -325,6 +345,7 @@ fn test_0019() {
             (5, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -342,6 +363,7 @@ fn test_0020() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -359,6 +381,7 @@ fn test_0021() {
             (3, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -376,6 +399,7 @@ fn test_0022() {
             (5, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -392,6 +416,7 @@ fn test_0023() {
             (4, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -409,6 +434,7 @@ fn test_0024() {
             (4, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -427,6 +453,7 @@ fn test_0025() {
             (5, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -445,6 +472,7 @@ fn test_0026() {
             (6, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -462,6 +490,7 @@ fn test_0027() {
             (5, "<thead>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -480,6 +509,7 @@ fn test_0028() {
             (6, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -497,6 +527,7 @@ fn test_0029() {
             (5, "<thead>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -515,6 +546,7 @@ fn test_0030() {
             (6, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -532,6 +564,7 @@ fn test_0031() {
             (5, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -551,6 +584,7 @@ fn test_0032() {
             (7, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -571,6 +605,7 @@ fn test_0033() {
             (8, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -591,6 +626,7 @@ fn test_0034() {
             (8, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -608,6 +644,7 @@ fn test_0035() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -624,6 +661,7 @@ fn test_0036() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -643,6 +681,7 @@ fn test_0037() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -661,6 +700,7 @@ fn test_0038() {
             (6, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -675,6 +715,7 @@ fn test_0039() {
             (2, "<frame>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -690,6 +731,7 @@ fn test_0040() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -708,6 +750,7 @@ fn test_0041() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -726,6 +769,7 @@ fn test_0042() {
             (4, "<span>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -744,6 +788,7 @@ fn test_0043() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -761,6 +806,7 @@ fn test_0044() {
             (4, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -779,6 +825,7 @@ fn test_0045() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -796,6 +843,7 @@ fn test_0046() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -813,6 +861,7 @@ fn test_0047() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -830,6 +879,7 @@ fn test_0048() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -847,6 +897,7 @@ fn test_0049() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -864,6 +915,7 @@ fn test_0050() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -881,6 +933,7 @@ fn test_0051() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -898,6 +951,7 @@ fn test_0052() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -915,6 +969,7 @@ fn test_0053() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -933,6 +988,7 @@ fn test_0054() {
             (4, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -950,6 +1006,7 @@ fn test_0055() {
             (4, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -966,6 +1023,7 @@ fn test_0056() {
             (4, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -983,6 +1041,7 @@ fn test_0057() {
             (5, "\"Hello\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -999,6 +1058,7 @@ fn test_0058() {
             (4, "<!-- comment -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1016,6 +1076,7 @@ fn test_0059() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1033,6 +1094,7 @@ fn test_0060() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1050,6 +1112,7 @@ fn test_0061() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1069,6 +1132,7 @@ fn test_0062() {
             (4, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1087,6 +1151,7 @@ fn test_0063() {
             (6, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1105,6 +1170,7 @@ fn test_0064() {
             (4, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1123,6 +1189,7 @@ fn test_0065() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1141,6 +1208,7 @@ fn test_0066() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1157,6 +1225,7 @@ fn test_0067() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1177,6 +1246,7 @@ fn test_0068() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1199,6 +1269,7 @@ fn test_0069() {
             (4, "<tfoot>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1220,6 +1291,7 @@ fn test_0070() {
             (4, "\"text\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1236,6 +1308,7 @@ fn test_0071() {
             (4, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1252,6 +1325,7 @@ fn test_0072() {
             (4, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1268,6 +1342,7 @@ fn test_0073() {
             (4, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1284,6 +1359,7 @@ fn test_0074() {
             (4, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1300,6 +1376,7 @@ fn test_0075() {
             (4, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1316,6 +1393,7 @@ fn test_0076() {
             (4, "<col>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1335,6 +1413,7 @@ fn test_0077() {
             (6, "\"Foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1354,6 +1433,7 @@ fn test_0078() {
             (5, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1373,6 +1453,7 @@ fn test_0079() {
             (7, "\"Foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1390,6 +1471,7 @@ fn test_0080() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1407,6 +1489,7 @@ fn test_0081() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1423,6 +1506,7 @@ fn test_0082() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1441,6 +1525,7 @@ fn test_0083() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1459,6 +1544,7 @@ fn test_0084() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1477,6 +1563,7 @@ fn test_0085() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1495,6 +1582,7 @@ fn test_0086() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1513,6 +1601,7 @@ fn test_0087() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1531,6 +1620,7 @@ fn test_0088() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1549,6 +1639,7 @@ fn test_0089() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1567,6 +1658,7 @@ fn test_0090() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1586,6 +1678,7 @@ fn test_0091() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1605,6 +1698,7 @@ fn test_0092() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1622,6 +1716,7 @@ fn test_0093() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1641,6 +1736,7 @@ fn test_0094() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1660,6 +1756,7 @@ fn test_0095() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1678,6 +1775,7 @@ fn test_0096() {
             (3, "\"Foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1696,6 +1794,7 @@ fn test_0097() {
             (3, "\"Foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1714,6 +1813,7 @@ fn test_0098() {
             (3, "\"Foo\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1731,6 +1831,7 @@ fn test_0099() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1752,6 +1853,7 @@ fn test_0100() {
             (2, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1769,6 +1871,7 @@ fn test_0101() {
             (5, "<span>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1792,6 +1895,7 @@ fn test_0102() {
             (4, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1807,6 +1911,7 @@ fn test_0103() {
             (3, "content"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1822,6 +1927,7 @@ fn test_0104() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1838,6 +1944,7 @@ fn test_0105() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1861,6 +1968,7 @@ fn test_0106() {
             (10, "<script>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1879,6 +1987,7 @@ fn test_0107() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1896,6 +2005,7 @@ fn test_0108() {
             (3, "\"second\""),
         ],
         context_element: Some(("html", "template")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -1915,6 +2025,7 @@ fn test_0109() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1938,6 +2049,7 @@ fn test_0110() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1958,6 +2070,7 @@ fn test_0111() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

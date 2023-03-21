@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -15,6 +16,7 @@ fn test_0000() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -31,6 +33,7 @@ fn test_0001() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -46,6 +49,7 @@ fn test_0002() {
             (2, "<!--  BAR --! >BAZ -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -61,6 +65,7 @@ fn test_0003() {
             (2, "<!--  BAR --!\n>BAZ -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -76,6 +81,7 @@ fn test_0004() {
             (2, "<!--  BAR --   >BAZ -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -92,6 +98,7 @@ fn test_0005() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -108,6 +115,7 @@ fn test_0006() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -123,6 +131,7 @@ fn test_0007() {
             (2, "<!--  BAR -- <QUX> -- MUX -- >BAZ -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -139,6 +148,7 @@ fn test_0008() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -155,6 +165,7 @@ fn test_0009() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -171,6 +182,7 @@ fn test_0010() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -186,6 +198,7 @@ fn test_0011() {
             (2, "\"Hi\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -200,6 +213,7 @@ fn test_0012() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -214,6 +228,7 @@ fn test_0013() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -230,6 +245,7 @@ fn test_0014() {
             (2, "\"BAZ\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -246,6 +262,7 @@ fn test_0015() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

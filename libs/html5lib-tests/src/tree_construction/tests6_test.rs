@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -31,6 +33,7 @@ fn test_0001() {
             (4, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -47,6 +50,7 @@ fn test_0002() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -63,6 +67,7 @@ fn test_0003() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -77,6 +82,7 @@ fn test_0004() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -91,6 +97,7 @@ fn test_0005() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -100,6 +107,7 @@ fn test_0006() {
         data: "<body>\n<div>",
         document: vec![(0, "\"\n\""), (0, "<div>")],
         context_element: Some(("html", "div")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -114,6 +122,7 @@ fn test_0007() {
             (1, "\"\n\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -129,6 +138,7 @@ fn test_0008() {
             (1, "<noframes>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -143,6 +153,7 @@ fn test_0009() {
             (1, "\"\n\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -157,6 +168,7 @@ fn test_0010() {
             (1, "\"\n\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -171,6 +183,7 @@ fn test_0011() {
             (1, "\"\n\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -180,6 +193,7 @@ fn test_0012() {
         data: "<form><form>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<form>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -195,6 +209,7 @@ fn test_0013() {
             (2, "<button>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -212,6 +227,7 @@ fn test_0014() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -230,6 +246,7 @@ fn test_0015() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -246,6 +263,7 @@ fn test_0016() {
             (4, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -255,6 +273,7 @@ fn test_0017() {
         data: "</caption><div>",
         document: vec![(0, "<div>")],
         context_element: Some(("html", "caption")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -271,6 +290,7 @@ fn test_0018() {
             (4, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -286,6 +306,7 @@ fn test_0019() {
             (3, "<caption>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -295,6 +316,7 @@ fn test_0020() {
         data: "</table><div>",
         document: vec![(0, "<div>")],
         context_element: Some(("html", "caption")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -311,6 +333,7 @@ fn test_0021() {
             (3, "<caption>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -327,6 +350,7 @@ fn test_0022() {
             (4, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -344,6 +368,7 @@ fn test_0023() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -353,6 +378,7 @@ fn test_0024() {
         data: "</table></tbody></tfoot></thead></tr><div>",
         document: vec![(0, "<div>")],
         context_element: Some(("html", "td")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -369,6 +395,7 @@ fn test_0025() {
             (3, "<colgroup>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -378,6 +405,7 @@ fn test_0026() {
         data: "foo<col>",
         document: vec![(0, "<col>")],
         context_element: Some(("html", "colgroup")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -393,6 +421,7 @@ fn test_0027() {
             (3, "<colgroup>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -402,6 +431,7 @@ fn test_0028() {
         data: "<frameset><div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -411,6 +441,7 @@ fn test_0029() {
         data: "</frameset><frame>",
         document: vec![(0, "<frame>")],
         context_element: Some(("html", "frameset")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -420,6 +451,7 @@ fn test_0030() {
         data: "<frameset></div>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -429,6 +461,7 @@ fn test_0031() {
         data: "</body><div>",
         document: vec![(0, "<div>")],
         context_element: Some(("html", "body")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -446,6 +479,7 @@ fn test_0032() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -455,6 +489,7 @@ fn test_0033() {
         data: "</tr><td>",
         document: vec![(0, "<td>")],
         context_element: Some(("html", "tr")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -464,6 +499,7 @@ fn test_0034() {
         data: "</tbody></tfoot></thead><td>",
         document: vec![(0, "<td>")],
         context_element: Some(("html", "tr")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -482,6 +518,7 @@ fn test_0035() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -491,6 +528,7 @@ fn test_0036() {
         data: "<caption><col><colgroup><tbody><tfoot><thead><tr>",
         document: vec![(0, "<tr>")],
         context_element: Some(("html", "tbody")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -506,6 +544,7 @@ fn test_0037() {
             (3, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -515,6 +554,7 @@ fn test_0038() {
         data: "</table><tr>",
         document: vec![(0, "<tr>")],
         context_element: Some(("html", "tbody")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -530,6 +570,7 @@ fn test_0039() {
             (3, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -545,6 +586,7 @@ fn test_0040() {
             (3, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -560,6 +602,7 @@ fn test_0041() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -574,6 +617,7 @@ fn test_0042() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -583,6 +627,7 @@ fn test_0043() {
         data: "</table><tr>",
         document: vec![(0, "<tbody>"), (1, "<tr>")],
         context_element: Some(("html", "table")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -592,6 +637,7 @@ fn test_0044() {
         data: "<body></body></html>",
         document: vec![(0, "<head>"), (0, "<body>")],
         context_element: Some(("html", "html")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -606,6 +652,7 @@ fn test_0045() {
             (1, "\" \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -620,6 +667,7 @@ fn test_0046() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -629,6 +677,7 @@ fn test_0047() {
         data: "<param><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -638,6 +687,7 @@ fn test_0048() {
         data: "<source><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -647,6 +697,7 @@ fn test_0049() {
         data: "<track><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -656,6 +707,7 @@ fn test_0050() {
         data: "</html><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -665,6 +717,7 @@ fn test_0051() {
         data: "</body><frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

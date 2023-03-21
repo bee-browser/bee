@@ -32,7 +32,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-- BAR --!>BAZ",
@@ -68,7 +69,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-- BAR --! >BAZ",
@@ -100,7 +102,8 @@
           2,
           "<!--  BAR --! >BAZ -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-- BAR --!\n>BAZ",
@@ -132,7 +135,8 @@
           2,
           "<!--  BAR --!\n>BAZ -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-- BAR --   >BAZ",
@@ -164,7 +168,8 @@
           2,
           "<!--  BAR --   >BAZ -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-- BAR -- <QUX> -- MUX -->BAZ",
@@ -197,7 +202,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-- BAR -- <QUX> -- MUX --!>BAZ",
@@ -233,7 +239,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-- BAR -- <QUX> -- MUX -- >BAZ",
@@ -265,7 +272,8 @@
           2,
           "<!--  BAR -- <QUX> -- MUX -- >BAZ -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!---->BAZ",
@@ -298,7 +306,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!--->BAZ",
@@ -334,7 +343,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!-->BAZ",
@@ -370,7 +380,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<?xml version=\"1.0\">Hi",
@@ -402,7 +413,8 @@
           2,
           "\"Hi\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<?xml version=\"1.0\">",
@@ -430,7 +442,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<?xml version",
@@ -458,7 +471,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO<!----->BAZ",
@@ -491,7 +505,8 @@
           2,
           "\"BAZ\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<html><!-- comment --><title>Comment before head</title>",
@@ -524,7 +539,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

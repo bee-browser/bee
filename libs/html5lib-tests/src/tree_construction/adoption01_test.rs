@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -15,6 +16,7 @@ fn test_0000() {
             (3, "<a>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -34,6 +36,7 @@ fn test_0001() {
             (3, "\"3\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -53,6 +56,7 @@ fn test_0002() {
             (3, "\"3\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -72,6 +76,7 @@ fn test_0003() {
             (3, "\"3\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -95,6 +100,7 @@ fn test_0004() {
             (3, "\"5\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -115,6 +121,7 @@ fn test_0005() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -133,6 +140,7 @@ fn test_0006() {
             (5, "<a>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -152,6 +160,7 @@ fn test_0007() {
             (5, "<a>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -172,6 +181,7 @@ fn test_0008() {
             (5, "<a>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -201,6 +211,7 @@ fn test_0009() {
             (3, "\"5\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -223,6 +234,7 @@ fn test_0010() {
             (6, "\"2\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -242,6 +254,7 @@ fn test_0011() {
             (6, "\"B\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -259,6 +272,7 @@ fn test_0012() {
             (5, "<svg input>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -294,6 +308,7 @@ fn test_0013() {
             (14, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -318,6 +333,7 @@ fn test_0014() {
             (7, "<a>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -337,6 +353,7 @@ fn test_0015() {
             (2, "\"y\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -360,6 +377,7 @@ fn test_0016() {
             (6, "\"x\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -377,6 +395,7 @@ fn test_0017() {
             (1, "<b>"),
         ],
         context_element: Some(("html", "div")),
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

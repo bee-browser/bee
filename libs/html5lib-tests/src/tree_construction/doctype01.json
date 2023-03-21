@@ -26,7 +26,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!dOctYpE HtMl>Hello",
@@ -53,7 +54,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPEhtml>Hello",
@@ -84,7 +86,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE>Hello",
@@ -116,7 +119,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE >Hello",
@@ -148,7 +152,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato>Hello",
@@ -177,7 +182,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato >Hello",
@@ -206,7 +212,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato taco>Hello",
@@ -238,7 +245,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato taco \"ddd>Hello",
@@ -270,7 +278,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato sYstEM>Hello",
@@ -302,7 +311,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato sYstEM    >Hello",
@@ -334,7 +344,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE   potato       sYstEM  ggg>Hello",
@@ -366,7 +377,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato SYSTEM taco  >Hello",
@@ -398,7 +410,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato SYSTEM 'taco\"'>Hello",
@@ -427,7 +440,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato SYSTEM \"taco\">Hello",
@@ -456,7 +470,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato SYSTEM \"tai'co\">Hello",
@@ -485,7 +500,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato SYSTEMtaco \"ddd\">Hello",
@@ -517,7 +533,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato grass SYSTEM taco>Hello",
@@ -549,7 +566,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato pUbLIc>Hello",
@@ -581,7 +599,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato pUbLIc >Hello",
@@ -613,7 +632,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato pUbLIcgoof>Hello",
@@ -645,7 +665,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato PUBLIC goof>Hello",
@@ -677,7 +698,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato PUBLIC \"go'of\">Hello",
@@ -706,7 +728,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato PUBLIC 'go'of'>Hello",
@@ -738,7 +761,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato PUBLIC 'go:hh   of' >Hello",
@@ -767,7 +791,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE potato PUBLIC \"W3C-//dfdf\" SYSTEM ggg>Hello",
@@ -799,7 +824,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n   \"http://www.w3.org/TR/html4/strict.dtd\">Hello",
@@ -828,7 +854,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE ...>Hello",
@@ -857,7 +884,8 @@
           2,
           "\"Hello\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
@@ -882,7 +910,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">",
@@ -907,7 +936,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE root-element [SYSTEM OR PUBLIC FPI] \"uri\" [ \n<!-- internal declarations -->\n]>",
@@ -939,7 +969,8 @@
           2,
           "\"]>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html PUBLIC\n  \"-//WAPFORUM//DTD XHTML Mobile 1.0//EN\"\n    \"http://www.wapforum.org/DTD/xhtml-mobile10.dtd\">",
@@ -964,7 +995,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML SYSTEM \"http://www.w3.org/DTD/HTML4-strict.dtd\"><body><b>Mine!</b></body>",
@@ -997,7 +1029,8 @@
           3,
           "\"Mine!\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\"http://www.w3.org/TR/html4/strict.dtd\">",
@@ -1025,7 +1058,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"'http://www.w3.org/TR/html4/strict.dtd'>",
@@ -1053,7 +1087,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML PUBLIC\"-//W3C//DTD HTML 4.01//EN\"'http://www.w3.org/TR/html4/strict.dtd'>",
@@ -1083,7 +1118,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE HTML PUBLIC'-//W3C//DTD HTML 4.01//EN''http://www.w3.org/TR/html4/strict.dtd'>",
@@ -1113,7 +1149,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

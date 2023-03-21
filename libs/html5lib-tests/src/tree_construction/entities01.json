@@ -24,7 +24,8 @@
           2,
           "\"FOO>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&gtBAR",
@@ -52,7 +53,8 @@
           2,
           "\"FOO>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&gt BAR",
@@ -80,7 +82,8 @@
           2,
           "\"FOO> BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&gt;;;BAR",
@@ -105,7 +108,8 @@
           2,
           "\"FOO>;;BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "I'm &notit; I tell you",
@@ -133,7 +137,8 @@
           2,
           "\"I'm ¬it; I tell you\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "I'm &notin; I tell you",
@@ -158,7 +163,8 @@
           2,
           "\"I'm ∉ I tell you\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "&ammmp;",
@@ -186,7 +192,8 @@
           2,
           "\"&ammmp;\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;",
@@ -214,7 +221,8 @@
           2,
           "\"&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO& BAR",
@@ -239,7 +247,8 @@
           2,
           "\"FOO& BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&<BAR>",
@@ -269,7 +278,8 @@
           2,
           "<bar>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&&&&gt;BAR",
@@ -294,7 +304,8 @@
           2,
           "\"FOO&&&>BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#41;BAR",
@@ -319,7 +330,8 @@
           2,
           "\"FOO)BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x41;BAR",
@@ -344,7 +356,8 @@
           2,
           "\"FOOABAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#X41;BAR",
@@ -369,7 +382,8 @@
           2,
           "\"FOOABAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#BAR",
@@ -397,7 +411,8 @@
           2,
           "\"FOO&#BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#ZOO",
@@ -425,7 +440,8 @@
           2,
           "\"FOO&#ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xBAR",
@@ -453,7 +469,8 @@
           2,
           "\"FOOºR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xZOO",
@@ -481,7 +498,8 @@
           2,
           "\"FOO&#xZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#XZOO",
@@ -509,7 +527,8 @@
           2,
           "\"FOO&#XZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#41BAR",
@@ -537,7 +556,8 @@
           2,
           "\"FOO)BAR\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x41BAR",
@@ -565,7 +585,8 @@
           2,
           "\"FOO䆺R\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x41ZOO",
@@ -593,7 +614,8 @@
           2,
           "\"FOOAZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0000;ZOO",
@@ -621,7 +643,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0078;ZOO",
@@ -646,7 +669,8 @@
           2,
           "\"FOOxZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0079;ZOO",
@@ -671,7 +695,8 @@
           2,
           "\"FOOyZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0080;ZOO",
@@ -699,7 +724,8 @@
           2,
           "\"FOO€ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0081;ZOO",
@@ -727,7 +753,8 @@
           2,
           "\"FOOZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0082;ZOO",
@@ -755,7 +782,8 @@
           2,
           "\"FOO‚ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0083;ZOO",
@@ -783,7 +811,8 @@
           2,
           "\"FOOƒZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0084;ZOO",
@@ -811,7 +840,8 @@
           2,
           "\"FOO„ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0085;ZOO",
@@ -839,7 +869,8 @@
           2,
           "\"FOO…ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0086;ZOO",
@@ -867,7 +898,8 @@
           2,
           "\"FOO†ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0087;ZOO",
@@ -895,7 +927,8 @@
           2,
           "\"FOO‡ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0088;ZOO",
@@ -923,7 +956,8 @@
           2,
           "\"FOOˆZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0089;ZOO",
@@ -951,7 +985,8 @@
           2,
           "\"FOO‰ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x008A;ZOO",
@@ -979,7 +1014,8 @@
           2,
           "\"FOOŠZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x008B;ZOO",
@@ -1007,7 +1043,8 @@
           2,
           "\"FOO‹ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x008C;ZOO",
@@ -1035,7 +1072,8 @@
           2,
           "\"FOOŒZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x008D;ZOO",
@@ -1063,7 +1101,8 @@
           2,
           "\"FOOZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x008E;ZOO",
@@ -1091,7 +1130,8 @@
           2,
           "\"FOOŽZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x008F;ZOO",
@@ -1119,7 +1159,8 @@
           2,
           "\"FOOZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0090;ZOO",
@@ -1147,7 +1188,8 @@
           2,
           "\"FOOZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0091;ZOO",
@@ -1175,7 +1217,8 @@
           2,
           "\"FOO‘ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0092;ZOO",
@@ -1203,7 +1246,8 @@
           2,
           "\"FOO’ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0093;ZOO",
@@ -1231,7 +1275,8 @@
           2,
           "\"FOO“ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0094;ZOO",
@@ -1259,7 +1304,8 @@
           2,
           "\"FOO”ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0095;ZOO",
@@ -1287,7 +1333,8 @@
           2,
           "\"FOO•ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0096;ZOO",
@@ -1315,7 +1362,8 @@
           2,
           "\"FOO–ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0097;ZOO",
@@ -1343,7 +1391,8 @@
           2,
           "\"FOO—ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0098;ZOO",
@@ -1371,7 +1420,8 @@
           2,
           "\"FOO˜ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x0099;ZOO",
@@ -1399,7 +1449,8 @@
           2,
           "\"FOO™ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x009A;ZOO",
@@ -1427,7 +1478,8 @@
           2,
           "\"FOOšZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x009B;ZOO",
@@ -1455,7 +1507,8 @@
           2,
           "\"FOO›ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x009C;ZOO",
@@ -1483,7 +1536,8 @@
           2,
           "\"FOOœZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x009D;ZOO",
@@ -1511,7 +1565,8 @@
           2,
           "\"FOOZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x009E;ZOO",
@@ -1539,7 +1594,8 @@
           2,
           "\"FOOžZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x009F;ZOO",
@@ -1567,7 +1623,8 @@
           2,
           "\"FOOŸZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x00A0;ZOO",
@@ -1592,7 +1649,8 @@
           2,
           "\"FOO ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xD7FF;ZOO",
@@ -1617,7 +1675,8 @@
           2,
           "\"FOO퟿ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xD800;ZOO",
@@ -1645,7 +1704,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xD801;ZOO",
@@ -1673,7 +1733,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xDFFE;ZOO",
@@ -1701,7 +1762,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xDFFF;ZOO",
@@ -1729,7 +1791,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xE000;ZOO",
@@ -1754,7 +1817,8 @@
           2,
           "\"FOOZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x10FFFE;ZOO",
@@ -1782,7 +1846,8 @@
           2,
           "\"FOO􏿾ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x1087D4;ZOO",
@@ -1807,7 +1872,8 @@
           2,
           "\"FOO􈟔ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x10FFFF;ZOO",
@@ -1835,7 +1901,8 @@
           2,
           "\"FOO􏿿ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#x110000;ZOO",
@@ -1863,7 +1930,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#xFFFFFF;ZOO",
@@ -1891,7 +1959,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#11111111111",
@@ -1921,7 +1990,8 @@
           2,
           "\"FOO�\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#1111111111",
@@ -1951,7 +2021,8 @@
           2,
           "\"FOO�\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#111111111111",
@@ -1981,7 +2052,8 @@
           2,
           "\"FOO�\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#11111111111ZOO",
@@ -2011,7 +2083,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#1111111111ZOO",
@@ -2041,7 +2114,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "FOO&#111111111111ZOO",
@@ -2071,7 +2145,8 @@
           2,
           "\"FOO�ZOO\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

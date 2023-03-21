@@ -48,7 +48,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><address><p>foo</address>bar",
@@ -87,7 +88,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<article>bar<p>baz",
@@ -136,7 +138,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><article><p>foo</article>bar",
@@ -175,7 +178,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<aside>bar<p>baz",
@@ -224,7 +228,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><aside><p>foo</aside>bar",
@@ -263,7 +268,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<blockquote>bar<p>baz",
@@ -312,7 +318,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><blockquote><p>foo</blockquote>bar",
@@ -351,7 +358,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<center>bar<p>baz",
@@ -400,7 +408,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><center><p>foo</center>bar",
@@ -439,7 +448,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<details>bar<p>baz",
@@ -488,7 +498,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><details><p>foo</details>bar",
@@ -527,7 +538,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<dialog>bar<p>baz",
@@ -576,7 +588,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><dialog><p>foo</dialog>bar",
@@ -615,7 +628,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<dir>bar<p>baz",
@@ -664,7 +678,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><dir><p>foo</dir>bar",
@@ -703,7 +718,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<div>bar<p>baz",
@@ -752,7 +768,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><div><p>foo</div>bar",
@@ -791,7 +808,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<dl>bar<p>baz",
@@ -840,7 +858,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><dl><p>foo</dl>bar",
@@ -879,7 +898,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<fieldset>bar<p>baz",
@@ -928,7 +948,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><fieldset><p>foo</fieldset>bar",
@@ -967,7 +988,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<figcaption>bar<p>baz",
@@ -1016,7 +1038,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><figcaption><p>foo</figcaption>bar",
@@ -1055,7 +1078,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<figure>bar<p>baz",
@@ -1104,7 +1128,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><figure><p>foo</figure>bar",
@@ -1143,7 +1168,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<footer>bar<p>baz",
@@ -1192,7 +1218,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><footer><p>foo</footer>bar",
@@ -1231,7 +1258,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<header>bar<p>baz",
@@ -1280,7 +1308,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><header><p>foo</header>bar",
@@ -1319,7 +1348,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<hgroup>bar<p>baz",
@@ -1368,7 +1398,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><hgroup><p>foo</hgroup>bar",
@@ -1407,7 +1438,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<listing>bar<p>baz",
@@ -1456,7 +1488,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><listing><p>foo</listing>bar",
@@ -1495,7 +1528,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<menu>bar<p>baz",
@@ -1544,7 +1578,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><menu><p>foo</menu>bar",
@@ -1583,7 +1618,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<nav>bar<p>baz",
@@ -1632,7 +1668,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><nav><p>foo</nav>bar",
@@ -1671,7 +1708,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<ol>bar<p>baz",
@@ -1720,7 +1758,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><ol><p>foo</ol>bar",
@@ -1759,7 +1798,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<pre>bar<p>baz",
@@ -1808,7 +1848,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><pre><p>foo</pre>bar",
@@ -1847,7 +1888,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<section>bar<p>baz",
@@ -1896,7 +1938,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><section><p>foo</section>bar",
@@ -1935,7 +1978,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<summary>bar<p>baz",
@@ -1984,7 +2028,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><summary><p>foo</summary>bar",
@@ -2023,7 +2068,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><p>foo<ul>bar<p>baz",
@@ -2072,7 +2118,8 @@
           4,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><ul><p>foo</ul>bar",
@@ -2111,7 +2158,8 @@
           2,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

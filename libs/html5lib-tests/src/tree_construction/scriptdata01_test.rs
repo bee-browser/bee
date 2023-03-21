@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -16,6 +17,7 @@ fn test_0000() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -32,6 +34,7 @@ fn test_0001() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -48,6 +51,7 @@ fn test_0002() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -64,6 +68,7 @@ fn test_0003() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -80,6 +85,7 @@ fn test_0004() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -97,6 +103,7 @@ fn test_0005() {
             (3, "\"</scriptx>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -113,6 +120,7 @@ fn test_0006() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -130,6 +138,7 @@ fn test_0007() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -147,6 +156,7 @@ fn test_0008() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -164,6 +174,7 @@ fn test_0009() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -181,6 +192,7 @@ fn test_0010() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -198,6 +210,7 @@ fn test_0011() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -215,6 +228,7 @@ fn test_0012() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -232,6 +246,7 @@ fn test_0013() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -249,6 +264,7 @@ fn test_0014() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -266,6 +282,7 @@ fn test_0015() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -283,6 +300,7 @@ fn test_0016() {
             (3, "\"\'<!-- <sCrIpt>\'</script>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -300,6 +318,7 @@ fn test_0017() {
             (3, "\"\'<!-- <sCrIpt> -\'</script>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -317,6 +336,7 @@ fn test_0018() {
             (3, "\"\'<!-- <sCrIpt> --\'</script>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -334,6 +354,7 @@ fn test_0019() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -351,6 +372,7 @@ fn test_0020() {
             (3, "\"\'<!-- <sCrIpt> --!>\'</script>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -368,6 +390,7 @@ fn test_0021() {
             (3, "\"\'<!-- <sCrIpt> -- >\'</script>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -385,6 +408,7 @@ fn test_0022() {
             (3, "\"\'<!-- <sCrIpt \'</script>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -402,6 +426,7 @@ fn test_0023() {
             (3, "\"\'<!-- <sCrIpt/\'</script>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -420,6 +445,7 @@ fn test_0024() {
             (2, "\"BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -438,6 +464,7 @@ fn test_0025() {
             (2, "\"QUX\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -455,6 +482,7 @@ fn test_0026() {
             (2, "\"QUX\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

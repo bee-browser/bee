@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -16,6 +17,7 @@ fn test_0000() {
             (3, "\"\nx\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -33,6 +35,7 @@ fn test_0001() {
             (3, "\"\nx\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -50,6 +53,7 @@ fn test_0002() {
             (3, "\"xx\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -67,6 +71,7 @@ fn test_0003() {
             (3, "\"yz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -85,6 +90,7 @@ fn test_0004() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -101,6 +107,7 @@ fn test_0005() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -116,6 +123,7 @@ fn test_0006() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -133,6 +141,7 @@ fn test_0007() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -152,6 +161,7 @@ fn test_0008() {
             (3, "\"y\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -170,6 +180,7 @@ fn test_0009() {
             (4, "<a>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

@@ -125,7 +125,8 @@
           3,
           "<nobr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b><nobr>1<nobr></b><i><nobr>2<nobr></i>3",
@@ -204,7 +205,8 @@
           3,
           "\"3\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b><nobr>1<table><nobr></b><i><nobr>2<nobr></i>3",
@@ -290,7 +292,8 @@
           4,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b><nobr>1<table><tr><td><nobr></b><i><nobr>2<nobr></i>3",
@@ -380,7 +383,8 @@
           9,
           "\"3\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b><nobr>1<div><nobr></b><i><nobr>2<nobr></i>3",
@@ -473,7 +477,8 @@
           4,
           "\"3\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b><nobr>1<nobr></b><div><i><nobr>2<nobr></i>3",
@@ -556,7 +561,8 @@
           4,
           "\"3\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b><nobr>1<nobr><ins></b><i><nobr>",
@@ -621,7 +627,8 @@
           3,
           "<nobr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b><nobr>1<ins><nobr></b><i>2",
@@ -681,7 +688,8 @@
           4,
           "\"2\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><b>1<nobr></b><i><nobr>2</i>",
@@ -741,13 +749,15 @@
           4,
           "\"2\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<p><code x</code></p>",
       "errors": [],
       "newErrors": [],
-      "document": []
+      "document": [],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><svg><foreignObject><p><i></p>a",
@@ -849,7 +859,8 @@
           5,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><table><tr><td><svg><foreignObject><p><i></p>a",
@@ -915,7 +926,8 @@
           9,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><mtext><p><i></p>a",
@@ -965,7 +977,8 @@
           5,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><table><tr><td><math><mtext><p><i></p>a",
@@ -1031,7 +1044,8 @@
           9,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><div><!/div>a",
@@ -1071,7 +1085,8 @@
           3,
           "\"a\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<button><p><button>",
@@ -1106,7 +1121,8 @@
           2,
           "<button>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg></p><foo>",
@@ -1142,7 +1158,8 @@
           2,
           "<foo>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<svg></br><foo>",
@@ -1178,7 +1195,8 @@
           2,
           "<foo>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<math></p><foo>",
@@ -1214,7 +1232,8 @@
           2,
           "<foo>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<math></br><foo>",
@@ -1250,7 +1269,8 @@
           2,
           "<foo>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

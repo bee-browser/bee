@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (3, "\"1\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -31,6 +33,7 @@ fn test_0001() {
             (4, "\"2\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -46,6 +49,7 @@ fn test_0002() {
             (3, "\"1\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -63,6 +67,7 @@ fn test_0003() {
             (4, "\"2\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

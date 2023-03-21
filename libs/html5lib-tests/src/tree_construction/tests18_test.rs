@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -30,6 +32,7 @@ fn test_0001() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -46,6 +49,7 @@ fn test_0002() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -62,6 +66,7 @@ fn test_0003() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -79,6 +84,7 @@ fn test_0004() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Off,
     });
 }
 
@@ -95,6 +101,7 @@ fn test_0005() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -111,6 +118,7 @@ fn test_0006() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -128,6 +136,7 @@ fn test_0007() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -146,6 +155,7 @@ fn test_0008() {
             (3, "<tbody>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -165,6 +175,7 @@ fn test_0009() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -185,6 +196,7 @@ fn test_0010() {
             (7, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -203,6 +215,7 @@ fn test_0011() {
             (5, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -221,6 +234,7 @@ fn test_0012() {
             (3, "<colgroup>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -237,6 +251,7 @@ fn test_0013() {
             (3, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -256,6 +271,7 @@ fn test_0014() {
             (4, "\"b\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -274,6 +290,7 @@ fn test_0015() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -290,6 +307,7 @@ fn test_0016() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -304,6 +322,7 @@ fn test_0017() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -318,6 +337,7 @@ fn test_0018() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -334,6 +354,7 @@ fn test_0019() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -348,6 +369,7 @@ fn test_0020() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -366,6 +388,7 @@ fn test_0021() {
             (3, "\"b\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -384,6 +407,7 @@ fn test_0022() {
             (5, "\"a</plaintext>b\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -404,6 +428,7 @@ fn test_0023() {
             (6, "\"</script>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -424,6 +449,7 @@ fn test_0024() {
             (6, "\"</style>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -443,6 +469,7 @@ fn test_0025() {
             (4, "\"abc\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -464,6 +491,7 @@ fn test_0026() {
             (6, "\"abc\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -482,6 +510,7 @@ fn test_0027() {
             (3, "\"abc\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -501,6 +530,7 @@ fn test_0028() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -522,6 +552,7 @@ fn test_0029() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -538,6 +569,7 @@ fn test_0030() {
             (2, "\"abc\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -555,6 +587,7 @@ fn test_0031() {
             (1, "<!-- abc -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -571,6 +604,7 @@ fn test_0032() {
             (2, "\"abc\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -588,6 +622,7 @@ fn test_0033() {
             (0, "<!-- abc -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -606,6 +641,7 @@ fn test_0034() {
             (3, "<tfoot>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -627,6 +663,7 @@ fn test_0035() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

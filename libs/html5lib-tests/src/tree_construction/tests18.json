@@ -29,7 +29,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><plaintext></plaintext>",
@@ -62,7 +63,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><html><plaintext></plaintext>",
@@ -95,7 +97,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><head><plaintext></plaintext>",
@@ -128,14 +131,14 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><html><noscript><plaintext></plaintext>",
       "errors": [
         "42: Bad start tag in “plaintext” in “head”.",
-        "54: End of file seen and there were open elements.",
-        "#script-off"
+        "54: End of file seen and there were open elements."
       ],
       "newErrors": [],
       "document": [
@@ -167,7 +170,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Off"
     },
     {
       "data": "<!doctype html></head><plaintext></plaintext>",
@@ -200,7 +204,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><body><plaintext></plaintext>",
@@ -233,7 +238,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><plaintext></plaintext>",
@@ -283,7 +289,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tbody><plaintext></plaintext>",
@@ -337,7 +344,8 @@
           3,
           "<tbody>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tbody><tr><plaintext></plaintext>",
@@ -395,7 +403,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><td><plaintext></plaintext>",
@@ -445,7 +454,8 @@
           7,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><caption><plaintext></plaintext>",
@@ -486,7 +496,8 @@
           5,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><colgroup><plaintext></plaintext>",
@@ -540,7 +551,8 @@
           3,
           "<colgroup>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><plaintext></plaintext>X",
@@ -575,7 +587,8 @@
           3,
           "\"X\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><select><plaintext>a<caption>b",
@@ -623,7 +636,8 @@
           4,
           "\"b\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><template><plaintext>a</template>b",
@@ -664,7 +678,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><body></body><plaintext></plaintext>",
@@ -698,7 +713,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><frameset><plaintext></plaintext>",
@@ -725,7 +741,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><frameset></frameset><plaintext></plaintext>",
@@ -751,7 +768,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><body></body></html><plaintext></plaintext>",
@@ -785,7 +803,8 @@
           3,
           "\"</plaintext>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><frameset></frameset></html><plaintext></plaintext>",
@@ -811,7 +830,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><svg><plaintext>a</plaintext>b",
@@ -852,7 +872,8 @@
           3,
           "\"b\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><svg><title><plaintext>a</plaintext>b",
@@ -893,7 +914,8 @@
           5,
           "\"a</plaintext>b\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr><style></script></style>abc",
@@ -945,7 +967,8 @@
           6,
           "\"</script>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr><script></style></script>abc",
@@ -997,7 +1020,8 @@
           6,
           "\"</style>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><caption><style></script></style>abc",
@@ -1042,7 +1066,8 @@
           4,
           "\"abc\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><td><style></script></style>abc",
@@ -1096,7 +1121,8 @@
           6,
           "\"abc\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><select><script></style></script>abc",
@@ -1137,7 +1163,8 @@
           3,
           "\"abc\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><select><script></style></script>abc",
@@ -1183,7 +1210,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr><select><script></style></script>abc",
@@ -1237,7 +1265,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><frameset></frameset><noframes>abc",
@@ -1270,7 +1299,8 @@
           2,
           "\"abc\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><frameset></frameset><noframes>abc</noframes><!--abc-->",
@@ -1305,7 +1335,8 @@
           1,
           "<!-- abc -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><frameset></frameset></html><noframes>abc",
@@ -1338,7 +1369,8 @@
           2,
           "\"abc\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><frameset></frameset></html><noframes>abc</noframes><!--abc-->",
@@ -1373,7 +1405,8 @@
           0,
           "<!-- abc -->"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><tr></tbody><tfoot>",
@@ -1414,7 +1447,8 @@
           3,
           "<tfoot>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!doctype html><table><td><svg></svg>abc<td>",
@@ -1468,7 +1502,8 @@
           5,
           "<td>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

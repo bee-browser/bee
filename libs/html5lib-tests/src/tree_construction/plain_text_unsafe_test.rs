@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -13,6 +14,7 @@ fn test_0000() {
             (2, "\"FOO\rZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -22,6 +24,7 @@ fn test_0001() {
         data: "<html>\0<frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -31,6 +34,7 @@ fn test_0002() {
         data: "<html> \0 <frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -40,6 +44,7 @@ fn test_0003() {
         data: "<html>a\0a<frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"aa\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -49,6 +54,7 @@ fn test_0004() {
         data: "<html>\0\0<frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -58,6 +64,7 @@ fn test_0005() {
         data: "<html>\0\n<frameset></frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -67,6 +74,7 @@ fn test_0006() {
         data: "<html><select>\0",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<select>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -76,6 +84,7 @@ fn test_0007() {
         data: "\0",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -85,6 +94,7 @@ fn test_0008() {
         data: "<body>\0",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -100,6 +110,7 @@ fn test_0009() {
             (3, "\"�filler�text�\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -115,6 +126,7 @@ fn test_0010() {
             (3, "\"�filler�text�\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -129,6 +141,7 @@ fn test_0011() {
             (2, "<!-- � -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -143,6 +156,7 @@ fn test_0012() {
             (2, "<!-- �filler�text -->"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -159,6 +173,7 @@ fn test_0013() {
             (4, "\"fillertext\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -174,6 +189,7 @@ fn test_0014() {
             (3, "\"�filler�text\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -190,6 +206,7 @@ fn test_0015() {
             (3, "<svg frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -206,6 +223,7 @@ fn test_0016() {
             (3, "<svg frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -222,6 +240,7 @@ fn test_0017() {
             (3, "<svg frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -231,6 +250,7 @@ fn test_0018() {
         data: "<svg>\0</svg><frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -240,6 +260,7 @@ fn test_0019() {
         data: "<svg>\0 </svg><frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -255,6 +276,7 @@ fn test_0020() {
             (3, "\"�a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -264,6 +286,7 @@ fn test_0021() {
         data: "<svg><path></path></svg><frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -273,6 +296,7 @@ fn test_0022() {
         data: "<svg><p><frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -289,6 +313,7 @@ fn test_0023() {
             (3, "\"\nA\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -305,6 +330,7 @@ fn test_0024() {
             (3, "\"\nA\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -321,6 +347,7 @@ fn test_0025() {
             (3, "\"A\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -342,6 +369,7 @@ fn test_0026() {
             (8, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -363,6 +391,7 @@ fn test_0027() {
             (8, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -380,6 +409,7 @@ fn test_0028() {
             (4, "\"ab\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -397,6 +427,7 @@ fn test_0029() {
             (4, "\"ab\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -414,6 +445,7 @@ fn test_0030() {
             (4, "\"ab\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -431,6 +463,7 @@ fn test_0031() {
             (4, "\"ab\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -448,6 +481,7 @@ fn test_0032() {
             (4, "\"ab\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

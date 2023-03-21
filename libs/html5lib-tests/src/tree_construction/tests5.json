@@ -32,7 +32,8 @@
           2,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style> <!-- </style> --> </style>x",
@@ -70,7 +71,8 @@
           2,
           "\"--> x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style> <!--> </style>x",
@@ -103,7 +105,8 @@
           2,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style> <!---> </style>x",
@@ -136,7 +139,8 @@
           2,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<iframe> <!---> </iframe>x",
@@ -169,7 +173,8 @@
           2,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<iframe> <!--- </iframe>->x</iframe> --> </iframe>x",
@@ -204,7 +209,8 @@
           2,
           "\"->x --> x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<script> <!-- </script> --> </script>x",
@@ -242,7 +248,8 @@
           2,
           "\"--> x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<title> <!-- </title> --> </title>x",
@@ -280,7 +287,8 @@
           2,
           "\"--> x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<textarea> <!--- </textarea>->x</textarea> --> </textarea>x",
@@ -315,7 +323,8 @@
           2,
           "\"->x --> x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<style> <!</-- </style>x",
@@ -348,7 +357,8 @@
           2,
           "\"x\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<p><xmp></xmp>",
@@ -377,7 +387,8 @@
           2,
           "<xmp>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<xmp> <!-- > --> </xmp>",
@@ -406,7 +417,8 @@
           3,
           "\" <!-- > --> \""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<title>&amp;</title>",
@@ -435,7 +447,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<title><!--&amp;--></title>",
@@ -464,7 +477,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<title><!--</title>",
@@ -493,14 +507,14 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<noscript><!--</noscript>--></noscript>",
       "errors": [
         "(1,10): expected-doctype-but-got-start-tag",
-        "(1,39): unexpected-end-tag",
-        "#script-on"
+        "(1,39): unexpected-end-tag"
       ],
       "newErrors": [],
       "document": [
@@ -528,13 +542,13 @@
           2,
           "\"-->\""
         ]
-      ]
+      ],
+      "scripting": "On"
     },
     {
       "data": "<noscript><!--</noscript>--></noscript>",
       "errors": [
-        "(1,10): expected-doctype-but-got-start-tag",
-        "#script-off"
+        "(1,10): expected-doctype-but-got-start-tag"
       ],
       "newErrors": [],
       "document": [
@@ -558,7 +572,8 @@
           1,
           "<body>"
         ]
-      ]
+      ],
+      "scripting": "Off"
     }
   ]
 }

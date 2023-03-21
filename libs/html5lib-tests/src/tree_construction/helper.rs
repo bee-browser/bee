@@ -9,7 +9,19 @@ fn init() {
 }
 
 pub fn parse(test: Test) {
-    let mut parser = Parser::new(TreeValidator::new(&test));
+    match test.scripting {
+        Scripting::Off => do_parse(&test, false),
+        Scripting::On => do_parse(&test, true),
+        Scripting::Both => {
+            do_parse(&test, false);
+            do_parse(&test, true);
+        }
+    }
+}
+
+fn do_parse(test: &Test, scripting: bool) {
+    let mut parser = Parser::new(TreeValidator::new(test));
+    parser.set_scripting(scripting);
     if let Some((namespace, local_name)) = test.context_element {
         let namespace = match namespace {
             "html" => Namespace::Html,
@@ -390,5 +402,12 @@ pub struct Test {
     pub data: &'static str,
     pub document: Vec<(usize, &'static str)>,
     pub context_element: Option<(&'static str, &'static str)>, // (ns, name)
+    pub scripting: Scripting,
+}
+
+pub enum Scripting {
+    Off,
+    On,
+    Both,
 }
 //</coverage:exclude>

@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (3, "bar=\"ZZ>YY\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -29,6 +31,7 @@ fn test_0001() {
             (3, "bar=\"ZZ&\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -44,6 +47,7 @@ fn test_0002() {
             (3, "bar=\"ZZ&\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -59,6 +63,7 @@ fn test_0003() {
             (3, "bar=\"ZZ&\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -74,6 +79,7 @@ fn test_0004() {
             (3, "bar=\"ZZ&gt=YY\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -89,6 +95,7 @@ fn test_0005() {
             (3, "bar=\"ZZ&gt0YY\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -104,6 +111,7 @@ fn test_0006() {
             (3, "bar=\"ZZ&gt9YY\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -119,6 +127,7 @@ fn test_0007() {
             (3, "bar=\"ZZ&gtaYY\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -134,6 +143,7 @@ fn test_0008() {
             (3, "bar=\"ZZ&gtZYY\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -149,6 +159,7 @@ fn test_0009() {
             (3, "bar=\"ZZ> YY\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -164,6 +175,7 @@ fn test_0010() {
             (3, "bar=\"ZZ>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -179,6 +191,7 @@ fn test_0011() {
             (3, "bar=\"ZZ>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -194,6 +207,7 @@ fn test_0012() {
             (3, "bar=\"ZZ>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -209,6 +223,7 @@ fn test_0013() {
             (3, "bar=\"ZZ£_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -224,6 +239,7 @@ fn test_0014() {
             (3, "bar=\"ZZ&prod_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -239,6 +255,7 @@ fn test_0015() {
             (3, "bar=\"ZZ£_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -254,6 +271,7 @@ fn test_0016() {
             (3, "bar=\"ZZ∏_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -269,6 +287,7 @@ fn test_0017() {
             (3, "bar=\"ZZ&pound=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -284,6 +303,7 @@ fn test_0018() {
             (3, "bar=\"ZZ&prod=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -299,6 +319,7 @@ fn test_0019() {
             (3, "\"ZZ£_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -314,6 +335,7 @@ fn test_0020() {
             (3, "\"ZZ&prod_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -329,6 +351,7 @@ fn test_0021() {
             (3, "\"ZZ£_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -344,6 +367,7 @@ fn test_0022() {
             (3, "\"ZZ∏_id=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -359,6 +383,7 @@ fn test_0023() {
             (3, "\"ZZ£=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -374,6 +399,7 @@ fn test_0024() {
             (3, "\"ZZ&prod=23\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -389,6 +415,7 @@ fn test_0025() {
             (3, "\"ZZÆ=\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

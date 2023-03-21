@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -36,6 +37,7 @@ fn test_0000() {
             (3, "<nobr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -62,6 +64,7 @@ fn test_0001() {
             (3, "\"3\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -88,6 +91,7 @@ fn test_0002() {
             (4, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -117,6 +121,7 @@ fn test_0003() {
             (9, "\"3\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -146,6 +151,7 @@ fn test_0004() {
             (4, "\"3\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -173,6 +179,7 @@ fn test_0005() {
             (4, "\"3\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -196,6 +203,7 @@ fn test_0006() {
             (3, "<nobr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -218,6 +226,7 @@ fn test_0007() {
             (4, "\"2\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -240,6 +249,7 @@ fn test_0008() {
             (4, "\"2\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -249,6 +259,7 @@ fn test_0009() {
         data: "<p><code x</code></p>",
         document: vec![],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -280,6 +291,7 @@ fn test_0010() {
             (5, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -304,6 +316,7 @@ fn test_0011() {
             (9, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -324,6 +337,7 @@ fn test_0012() {
             (5, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -348,6 +362,7 @@ fn test_0013() {
             (9, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -365,6 +380,7 @@ fn test_0014() {
             (3, "\"a\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -381,6 +397,7 @@ fn test_0015() {
             (2, "<button>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -397,6 +414,7 @@ fn test_0016() {
             (2, "<foo>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -413,6 +431,7 @@ fn test_0017() {
             (2, "<foo>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -429,6 +448,7 @@ fn test_0018() {
             (2, "<foo>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -445,6 +465,7 @@ fn test_0019() {
             (2, "<foo>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

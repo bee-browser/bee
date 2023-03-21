@@ -28,7 +28,8 @@
           3,
           "bar=\"ZZ>YY\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&\"></div>",
@@ -57,7 +58,8 @@
           3,
           "bar=\"ZZ&\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar='ZZ&'></div>",
@@ -86,7 +88,8 @@
           3,
           "bar=\"ZZ&\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=ZZ&></div>",
@@ -115,7 +118,8 @@
           3,
           "bar=\"ZZ&\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&gt=YY\"></div>",
@@ -144,7 +148,8 @@
           3,
           "bar=\"ZZ&gt=YY\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&gt0YY\"></div>",
@@ -173,7 +178,8 @@
           3,
           "bar=\"ZZ&gt0YY\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&gt9YY\"></div>",
@@ -202,7 +208,8 @@
           3,
           "bar=\"ZZ&gt9YY\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&gtaYY\"></div>",
@@ -231,7 +238,8 @@
           3,
           "bar=\"ZZ&gtaYY\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&gtZYY\"></div>",
@@ -260,7 +268,8 @@
           3,
           "bar=\"ZZ&gtZYY\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&gt YY\"></div>",
@@ -292,7 +301,8 @@
           3,
           "bar=\"ZZ> YY\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&gt\"></div>",
@@ -324,7 +334,8 @@
           3,
           "bar=\"ZZ>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar='ZZ&gt'></div>",
@@ -356,7 +367,8 @@
           3,
           "bar=\"ZZ>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=ZZ&gt></div>",
@@ -388,7 +400,8 @@
           3,
           "bar=\"ZZ>\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&pound_id=23\"></div>",
@@ -420,7 +433,8 @@
           3,
           "bar=\"ZZ£_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&prod_id=23\"></div>",
@@ -449,7 +463,8 @@
           3,
           "bar=\"ZZ&prod_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&pound;_id=23\"></div>",
@@ -478,7 +493,8 @@
           3,
           "bar=\"ZZ£_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&prod;_id=23\"></div>",
@@ -507,7 +523,8 @@
           3,
           "bar=\"ZZ∏_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&pound=23\"></div>",
@@ -536,7 +553,8 @@
           3,
           "bar=\"ZZ&pound=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div bar=\"ZZ&prod=23\"></div>",
@@ -565,7 +583,8 @@
           3,
           "bar=\"ZZ&prod=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>ZZ&pound_id=23</div>",
@@ -597,7 +616,8 @@
           3,
           "\"ZZ£_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>ZZ&prod_id=23</div>",
@@ -626,7 +646,8 @@
           3,
           "\"ZZ&prod_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>ZZ&pound;_id=23</div>",
@@ -655,7 +676,8 @@
           3,
           "\"ZZ£_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>ZZ&prod;_id=23</div>",
@@ -684,7 +706,8 @@
           3,
           "\"ZZ∏_id=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>ZZ&pound=23</div>",
@@ -716,7 +739,8 @@
           3,
           "\"ZZ£=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>ZZ&prod=23</div>",
@@ -745,7 +769,8 @@
           3,
           "\"ZZ&prod=23\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<div>ZZ&AElig=</div>",
@@ -777,7 +802,8 @@
           3,
           "\"ZZÆ=\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

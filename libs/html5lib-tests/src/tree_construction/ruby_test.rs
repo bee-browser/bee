@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -17,6 +18,7 @@ fn test_0000() {
             (3, "<rb>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -35,6 +37,7 @@ fn test_0001() {
             (3, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -53,6 +56,7 @@ fn test_0002() {
             (3, "<rtc>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -71,6 +75,7 @@ fn test_0003() {
             (3, "<rp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -89,6 +94,7 @@ fn test_0004() {
             (4, "<span>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -107,6 +113,7 @@ fn test_0005() {
             (3, "<rb>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -125,6 +132,7 @@ fn test_0006() {
             (3, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -143,6 +151,7 @@ fn test_0007() {
             (3, "<rtc>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -161,6 +170,7 @@ fn test_0008() {
             (3, "<rp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -179,6 +189,7 @@ fn test_0009() {
             (4, "<span>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -197,6 +208,7 @@ fn test_0010() {
             (3, "<rb>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -218,6 +230,7 @@ fn test_0011() {
             (5, "\"d\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -236,6 +249,7 @@ fn test_0012() {
             (3, "<rtc>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -254,6 +268,7 @@ fn test_0013() {
             (4, "<rp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -272,6 +287,7 @@ fn test_0014() {
             (4, "<span>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -290,6 +306,7 @@ fn test_0015() {
             (3, "<rb>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -308,6 +325,7 @@ fn test_0016() {
             (3, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -326,6 +344,7 @@ fn test_0017() {
             (3, "<rtc>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -344,6 +363,7 @@ fn test_0018() {
             (3, "<rp>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -362,6 +382,7 @@ fn test_0019() {
             (4, "<span>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -382,6 +403,7 @@ fn test_0020() {
             (5, "<rt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

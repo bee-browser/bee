@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -13,6 +14,7 @@ fn test_0000() {
             (2, "\"FOO>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -27,6 +29,7 @@ fn test_0001() {
             (2, "\"FOO>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -41,6 +44,7 @@ fn test_0002() {
             (2, "\"FOO> BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -55,6 +59,7 @@ fn test_0003() {
             (2, "\"FOO>;;BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -69,6 +74,7 @@ fn test_0004() {
             (2, "\"I\'m ¬it; I tell you\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -83,6 +89,7 @@ fn test_0005() {
             (2, "\"I\'m ∉ I tell you\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -97,6 +104,7 @@ fn test_0006() {
             (2, "\"&ammmp;\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -111,6 +119,7 @@ fn test_0007() {
             (2, "\"&ammmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmp;\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -125,6 +134,7 @@ fn test_0008() {
             (2, "\"FOO& BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -140,6 +150,7 @@ fn test_0009() {
             (2, "<bar>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -154,6 +165,7 @@ fn test_0010() {
             (2, "\"FOO&&&>BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -168,6 +180,7 @@ fn test_0011() {
             (2, "\"FOO)BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -182,6 +195,7 @@ fn test_0012() {
             (2, "\"FOOABAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -196,6 +210,7 @@ fn test_0013() {
             (2, "\"FOOABAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -210,6 +225,7 @@ fn test_0014() {
             (2, "\"FOO&#BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -224,6 +240,7 @@ fn test_0015() {
             (2, "\"FOO&#ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -238,6 +255,7 @@ fn test_0016() {
             (2, "\"FOOºR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -252,6 +270,7 @@ fn test_0017() {
             (2, "\"FOO&#xZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -266,6 +285,7 @@ fn test_0018() {
             (2, "\"FOO&#XZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -280,6 +300,7 @@ fn test_0019() {
             (2, "\"FOO)BAR\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -294,6 +315,7 @@ fn test_0020() {
             (2, "\"FOO䆺R\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -308,6 +330,7 @@ fn test_0021() {
             (2, "\"FOOAZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -322,6 +345,7 @@ fn test_0022() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -336,6 +360,7 @@ fn test_0023() {
             (2, "\"FOOxZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -350,6 +375,7 @@ fn test_0024() {
             (2, "\"FOOyZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -364,6 +390,7 @@ fn test_0025() {
             (2, "\"FOO€ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -378,6 +405,7 @@ fn test_0026() {
             (2, "\"FOOZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -392,6 +420,7 @@ fn test_0027() {
             (2, "\"FOO‚ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -406,6 +435,7 @@ fn test_0028() {
             (2, "\"FOOƒZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -420,6 +450,7 @@ fn test_0029() {
             (2, "\"FOO„ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -434,6 +465,7 @@ fn test_0030() {
             (2, "\"FOO…ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -448,6 +480,7 @@ fn test_0031() {
             (2, "\"FOO†ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -462,6 +495,7 @@ fn test_0032() {
             (2, "\"FOO‡ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -476,6 +510,7 @@ fn test_0033() {
             (2, "\"FOOˆZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -490,6 +525,7 @@ fn test_0034() {
             (2, "\"FOO‰ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -504,6 +540,7 @@ fn test_0035() {
             (2, "\"FOOŠZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -518,6 +555,7 @@ fn test_0036() {
             (2, "\"FOO‹ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -532,6 +570,7 @@ fn test_0037() {
             (2, "\"FOOŒZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -546,6 +585,7 @@ fn test_0038() {
             (2, "\"FOOZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -560,6 +600,7 @@ fn test_0039() {
             (2, "\"FOOŽZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -574,6 +615,7 @@ fn test_0040() {
             (2, "\"FOOZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -588,6 +630,7 @@ fn test_0041() {
             (2, "\"FOOZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -602,6 +645,7 @@ fn test_0042() {
             (2, "\"FOO‘ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -616,6 +660,7 @@ fn test_0043() {
             (2, "\"FOO’ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -630,6 +675,7 @@ fn test_0044() {
             (2, "\"FOO“ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -644,6 +690,7 @@ fn test_0045() {
             (2, "\"FOO”ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -658,6 +705,7 @@ fn test_0046() {
             (2, "\"FOO•ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -672,6 +720,7 @@ fn test_0047() {
             (2, "\"FOO–ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -686,6 +735,7 @@ fn test_0048() {
             (2, "\"FOO—ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -700,6 +750,7 @@ fn test_0049() {
             (2, "\"FOO˜ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -714,6 +765,7 @@ fn test_0050() {
             (2, "\"FOO™ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -728,6 +780,7 @@ fn test_0051() {
             (2, "\"FOOšZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -742,6 +795,7 @@ fn test_0052() {
             (2, "\"FOO›ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -756,6 +810,7 @@ fn test_0053() {
             (2, "\"FOOœZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -770,6 +825,7 @@ fn test_0054() {
             (2, "\"FOOZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -784,6 +840,7 @@ fn test_0055() {
             (2, "\"FOOžZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -798,6 +855,7 @@ fn test_0056() {
             (2, "\"FOOŸZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -812,6 +870,7 @@ fn test_0057() {
             (2, "\"FOO ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -826,6 +885,7 @@ fn test_0058() {
             (2, "\"FOO퟿ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -840,6 +900,7 @@ fn test_0059() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -854,6 +915,7 @@ fn test_0060() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -868,6 +930,7 @@ fn test_0061() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -882,6 +945,7 @@ fn test_0062() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -896,6 +960,7 @@ fn test_0063() {
             (2, "\"FOOZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -910,6 +975,7 @@ fn test_0064() {
             (2, "\"FOO􏿾ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -924,6 +990,7 @@ fn test_0065() {
             (2, "\"FOO􈟔ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -938,6 +1005,7 @@ fn test_0066() {
             (2, "\"FOO􏿿ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -952,6 +1020,7 @@ fn test_0067() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -966,6 +1035,7 @@ fn test_0068() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -975,6 +1045,7 @@ fn test_0069() {
         data: "FOO&#11111111111",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -984,6 +1055,7 @@ fn test_0070() {
         data: "FOO&#1111111111",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -993,6 +1065,7 @@ fn test_0071() {
         data: "FOO&#111111111111",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"FOO�\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1007,6 +1080,7 @@ fn test_0072() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1021,6 +1095,7 @@ fn test_0073() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -1035,6 +1110,7 @@ fn test_0074() {
             (2, "\"FOO�ZOO\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -8,6 +9,7 @@ fn test_0000() {
         data: "<nobr>X",
         document: vec![(0, "<nobr>"), (1, "\"X\"")],
         context_element: Some(("svg", "path")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -17,6 +19,7 @@ fn test_0001() {
         data: "<font color></font>X",
         document: vec![(0, "<font>"), (1, "color=\"\""), (0, "\"X\"")],
         context_element: Some(("svg", "path")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -26,6 +29,7 @@ fn test_0002() {
         data: "<font></font>X",
         document: vec![(0, "<svg font>"), (0, "\"X\"")],
         context_element: Some(("svg", "path")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -35,6 +39,7 @@ fn test_0003() {
         data: "<g></path>X",
         document: vec![(0, "<svg g>"), (1, "\"X\"")],
         context_element: Some(("svg", "path")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -44,6 +49,7 @@ fn test_0004() {
         data: "</path>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "path")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -53,6 +59,7 @@ fn test_0005() {
         data: "</foreignObject>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "foreignObject")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -62,6 +69,7 @@ fn test_0006() {
         data: "</desc>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -71,6 +79,7 @@ fn test_0007() {
         data: "</title>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "title")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -80,6 +89,7 @@ fn test_0008() {
         data: "</svg>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -89,6 +99,7 @@ fn test_0009() {
         data: "</mfenced>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "mfenced")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -98,6 +109,7 @@ fn test_0010() {
         data: "</malignmark>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "malignmark")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -107,6 +119,7 @@ fn test_0011() {
         data: "</math>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "math")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -116,6 +129,7 @@ fn test_0012() {
         data: "</annotation-xml>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "annotation-xml")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -125,6 +139,7 @@ fn test_0013() {
         data: "</mtext>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "mtext")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -134,6 +149,7 @@ fn test_0014() {
         data: "</mi>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "mi")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -143,6 +159,7 @@ fn test_0015() {
         data: "</mo>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "mo")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -152,6 +169,7 @@ fn test_0016() {
         data: "</mn>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "mn")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -161,6 +179,7 @@ fn test_0017() {
         data: "</ms>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("math", "ms")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -178,6 +197,7 @@ fn test_0018() {
             (1, "\"X\""),
         ],
         context_element: Some(("math", "ms")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -187,6 +207,7 @@ fn test_0019() {
         data: "<malignmark></malignmark>",
         document: vec![(0, "<math malignmark>")],
         context_element: Some(("math", "ms")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -196,6 +217,7 @@ fn test_0020() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("math", "ms")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -205,6 +227,7 @@ fn test_0021() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("math", "ms")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -222,6 +245,7 @@ fn test_0022() {
             (1, "\"X\""),
         ],
         context_element: Some(("math", "mn")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -231,6 +255,7 @@ fn test_0023() {
         data: "<malignmark></malignmark>",
         document: vec![(0, "<math malignmark>")],
         context_element: Some(("math", "mn")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -240,6 +265,7 @@ fn test_0024() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("math", "mn")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -249,6 +275,7 @@ fn test_0025() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("math", "mn")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -266,6 +293,7 @@ fn test_0026() {
             (1, "\"X\""),
         ],
         context_element: Some(("math", "mo")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -275,6 +303,7 @@ fn test_0027() {
         data: "<malignmark></malignmark>",
         document: vec![(0, "<math malignmark>")],
         context_element: Some(("math", "mo")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -284,6 +313,7 @@ fn test_0028() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("math", "mo")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -293,6 +323,7 @@ fn test_0029() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("math", "mo")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -310,6 +341,7 @@ fn test_0030() {
             (1, "\"X\""),
         ],
         context_element: Some(("math", "mi")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -319,6 +351,7 @@ fn test_0031() {
         data: "<malignmark></malignmark>",
         document: vec![(0, "<math malignmark>")],
         context_element: Some(("math", "mi")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -328,6 +361,7 @@ fn test_0032() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("math", "mi")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -337,6 +371,7 @@ fn test_0033() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("math", "mi")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -354,6 +389,7 @@ fn test_0034() {
             (1, "\"X\""),
         ],
         context_element: Some(("math", "mtext")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -363,6 +399,7 @@ fn test_0035() {
         data: "<malignmark></malignmark>",
         document: vec![(0, "<math malignmark>")],
         context_element: Some(("math", "mtext")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -372,6 +409,7 @@ fn test_0036() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("math", "mtext")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -381,6 +419,7 @@ fn test_0037() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("math", "mtext")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -390,6 +429,7 @@ fn test_0038() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("math", "annotation-xml")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -399,6 +439,7 @@ fn test_0039() {
         data: "<figure></figure>",
         document: vec![(0, "<math figure>")],
         context_element: Some(("math", "annotation-xml")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -408,6 +449,7 @@ fn test_0040() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("math", "math")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -417,6 +459,7 @@ fn test_0041() {
         data: "<figure></figure>",
         document: vec![(0, "<math figure>")],
         context_element: Some(("math", "math")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -426,6 +469,7 @@ fn test_0042() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("svg", "foreignObject")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -435,6 +479,7 @@ fn test_0043() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("svg", "foreignObject")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -444,6 +489,7 @@ fn test_0044() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("svg", "title")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -453,6 +499,7 @@ fn test_0045() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("svg", "title")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -462,6 +509,7 @@ fn test_0046() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -471,6 +519,7 @@ fn test_0047() {
         data: "<div><h1>X</h1></div>",
         document: vec![(0, "<div>"), (1, "<h1>"), (2, "\"X\"")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -480,6 +529,7 @@ fn test_0048() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -489,6 +539,7 @@ fn test_0049() {
         data: "<div></div>",
         document: vec![(0, "<div>")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -498,6 +549,7 @@ fn test_0050() {
         data: "<figure></figure>",
         document: vec![(0, "<figure>")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -507,6 +559,7 @@ fn test_0051() {
         data: "<plaintext><foo>",
         document: vec![(0, "<plaintext>"), (1, "\"<foo>\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -516,6 +569,7 @@ fn test_0052() {
         data: "<frameset>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -525,6 +579,7 @@ fn test_0053() {
         data: "<head>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -534,6 +589,7 @@ fn test_0054() {
         data: "<body>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -543,6 +599,7 @@ fn test_0055() {
         data: "<html>X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -552,6 +609,7 @@ fn test_0056() {
         data: "<html class=\"foo\">X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -561,6 +619,7 @@ fn test_0057() {
         data: "<body class=\"foo\">X",
         document: vec![(0, "\"X\"")],
         context_element: Some(("svg", "desc")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -570,6 +629,7 @@ fn test_0058() {
         data: "<svg><p>",
         document: vec![(0, "<svg svg>"), (0, "<p>")],
         context_element: Some(("html", "div")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -579,6 +639,7 @@ fn test_0059() {
         data: "<p>",
         document: vec![(0, "<p>")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -588,6 +649,7 @@ fn test_0060() {
         data: "<svg></p><foo>",
         document: vec![(0, "<svg svg>"), (0, "<p>"), (0, "<foo>")],
         context_element: Some(("html", "div")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -597,6 +659,7 @@ fn test_0061() {
         data: "<svg></br><foo>",
         document: vec![(0, "<svg svg>"), (0, "<br>"), (0, "<foo>")],
         context_element: Some(("html", "div")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -606,6 +669,7 @@ fn test_0062() {
         data: "</p><foo>",
         document: vec![(0, "<p>"), (0, "<svg foo>")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -615,6 +679,7 @@ fn test_0063() {
         data: "</br><foo>",
         document: vec![(0, "<br>"), (0, "<svg foo>")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -624,6 +689,7 @@ fn test_0064() {
         data: "<body><foo>",
         document: vec![(0, "<svg foo>")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -633,6 +699,7 @@ fn test_0065() {
         data: "<p><foo>",
         document: vec![(0, "<p>"), (1, "<foo>")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 
@@ -642,6 +709,7 @@ fn test_0066() {
         data: "<p></p><foo>",
         document: vec![(0, "<p>"), (0, "<svg foo>")],
         context_element: Some(("svg", "svg")),
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

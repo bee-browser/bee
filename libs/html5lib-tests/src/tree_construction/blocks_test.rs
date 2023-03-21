@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -19,6 +20,7 @@ fn test_0000() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -37,6 +39,7 @@ fn test_0001() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -57,6 +60,7 @@ fn test_0002() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -75,6 +79,7 @@ fn test_0003() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -95,6 +100,7 @@ fn test_0004() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -113,6 +119,7 @@ fn test_0005() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -133,6 +140,7 @@ fn test_0006() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -151,6 +159,7 @@ fn test_0007() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -171,6 +180,7 @@ fn test_0008() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -189,6 +199,7 @@ fn test_0009() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -209,6 +220,7 @@ fn test_0010() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -227,6 +239,7 @@ fn test_0011() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -247,6 +260,7 @@ fn test_0012() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -265,6 +279,7 @@ fn test_0013() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -285,6 +300,7 @@ fn test_0014() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -303,6 +319,7 @@ fn test_0015() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -323,6 +340,7 @@ fn test_0016() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -341,6 +359,7 @@ fn test_0017() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -361,6 +380,7 @@ fn test_0018() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -379,6 +399,7 @@ fn test_0019() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -399,6 +420,7 @@ fn test_0020() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -417,6 +439,7 @@ fn test_0021() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -437,6 +460,7 @@ fn test_0022() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -455,6 +479,7 @@ fn test_0023() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -475,6 +500,7 @@ fn test_0024() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -493,6 +519,7 @@ fn test_0025() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -513,6 +540,7 @@ fn test_0026() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -531,6 +559,7 @@ fn test_0027() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -551,6 +580,7 @@ fn test_0028() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -569,6 +599,7 @@ fn test_0029() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -589,6 +620,7 @@ fn test_0030() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -607,6 +639,7 @@ fn test_0031() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -627,6 +660,7 @@ fn test_0032() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -645,6 +679,7 @@ fn test_0033() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -665,6 +700,7 @@ fn test_0034() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -683,6 +719,7 @@ fn test_0035() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -703,6 +740,7 @@ fn test_0036() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -721,6 +759,7 @@ fn test_0037() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -741,6 +780,7 @@ fn test_0038() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -759,6 +799,7 @@ fn test_0039() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -779,6 +820,7 @@ fn test_0040() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -797,6 +839,7 @@ fn test_0041() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -817,6 +860,7 @@ fn test_0042() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -835,6 +879,7 @@ fn test_0043() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -855,6 +900,7 @@ fn test_0044() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -873,6 +919,7 @@ fn test_0045() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -893,6 +940,7 @@ fn test_0046() {
             (4, "\"baz\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -911,6 +959,7 @@ fn test_0047() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>

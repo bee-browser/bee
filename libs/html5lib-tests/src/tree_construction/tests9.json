@@ -26,7 +26,8 @@
           2,
           "<math math>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><math></math>",
@@ -53,7 +54,8 @@
           2,
           "<math math>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><mi>",
@@ -86,7 +88,8 @@
           3,
           "<math mi>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><math><annotation-xml><svg><u>",
@@ -128,7 +131,8 @@
           2,
           "<u>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><select><math></math></select>",
@@ -158,7 +162,8 @@
           2,
           "<select>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><select><option><math></math></option></select>",
@@ -192,7 +197,8 @@
           3,
           "<option>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><math></math></table>",
@@ -225,7 +231,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><math><mi>foo</mi></math></table>",
@@ -269,7 +276,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><math><mi>foo</mi><mi>bar</mi></math></table>",
@@ -324,7 +332,8 @@
           2,
           "<table>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><tbody><math><mi>foo</mi><mi>bar</mi></math></tbody></table>",
@@ -383,7 +392,8 @@
           3,
           "<tbody>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><tbody><tr><math><mi>foo</mi><mi>bar</mi></math></tr></tbody></table>",
@@ -446,7 +456,8 @@
           4,
           "<tr>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><tbody><tr><td><math><mi>foo</mi><mi>bar</mi></math></td></tr></tbody></table>",
@@ -505,7 +516,8 @@
           8,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><tbody><tr><td><math><mi>foo</mi><mi>bar</mi></math><p>baz</td></tr></tbody></table>",
@@ -572,7 +584,8 @@
           7,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><caption><math><mi>foo</mi><mi>bar</mi></math><p>baz</caption></table>",
@@ -631,7 +644,8 @@
           5,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><caption><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
@@ -700,7 +714,8 @@
           3,
           "\"quux\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><caption><math><mi>foo</mi><mi>bar</mi>baz</table><p>quux",
@@ -766,7 +781,8 @@
           3,
           "\"quux\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><colgroup><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
@@ -846,7 +862,8 @@
           3,
           "\"quux\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><tr><td><select><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
@@ -909,7 +926,8 @@
           3,
           "\"quux\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body><table><select><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux",
@@ -961,7 +979,8 @@
           3,
           "\"quux\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body></body></html><math><mi>foo</mi><mi>bar</mi><p>baz",
@@ -1015,7 +1034,8 @@
           3,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body></body><math><mi>foo</mi><mi>bar</mi><p>baz",
@@ -1069,7 +1089,8 @@
           3,
           "\"baz\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><frameset><math><mi></mi><mi></mi><p><span>",
@@ -1101,7 +1122,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><frameset></frameset><math><mi></mi><mi></mi><p><span>",
@@ -1132,7 +1154,8 @@
           1,
           "<frameset>"
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body xlink:href=foo><math xlink:href=foo></math>",
@@ -1167,7 +1190,8 @@
           3,
           "xlink href=\"foo\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body xlink:href=foo xml:lang=en><math><mi xml:lang=en xlink:href=foo></mi></math>",
@@ -1214,7 +1238,8 @@
           4,
           "xml lang=\"en\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body xlink:href=foo xml:lang=en><math><mi xml:lang=en xlink:href=foo /></math>",
@@ -1261,7 +1286,8 @@
           4,
           "xml lang=\"en\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     },
     {
       "data": "<!DOCTYPE html><body xlink:href=foo xml:lang=en><math><mi xml:lang=en xlink:href=foo />bar</math>",
@@ -1312,7 +1338,8 @@
           3,
           "\"bar\""
         ]
-      ]
+      ],
+      "scripting": "Both"
     }
   ]
 }

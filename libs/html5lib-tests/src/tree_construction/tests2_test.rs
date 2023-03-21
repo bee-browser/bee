@@ -1,5 +1,6 @@
 //<coverage:exclude>
 use super::helper::parse;
+use super::helper::Scripting;
 use super::helper::Test;
 
 #[test]
@@ -14,6 +15,7 @@ fn test_0000() {
             (2, "\"Test\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -29,6 +31,7 @@ fn test_0001() {
             (3, "\"test</div>test\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -46,6 +49,7 @@ fn test_0002() {
             (5, "<td>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -64,6 +68,7 @@ fn test_0003() {
             (6, "\"test\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -73,6 +78,7 @@ fn test_0004() {
         data: "<frame>test",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"test\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -87,6 +93,7 @@ fn test_0005() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -102,6 +109,7 @@ fn test_0006() {
             (2, "\"  \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -117,6 +125,7 @@ fn test_0007() {
             (1, "\"  \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -131,6 +140,7 @@ fn test_0008() {
             (1, "<frameset>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -150,6 +160,7 @@ fn test_0009() {
             (5, "\"test\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -167,6 +178,7 @@ fn test_0010() {
             (2, "<dd>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -182,6 +194,7 @@ fn test_0011() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -198,6 +211,7 @@ fn test_0012() {
             (2, "<table>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -213,6 +227,7 @@ fn test_0013() {
             (3, "\"</plaintext>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -231,6 +246,7 @@ fn test_0014() {
             (4, "<tr>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -249,6 +265,7 @@ fn test_0015() {
             (2, "t4=\"4\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -258,6 +275,7 @@ fn test_0016() {
         data: "</b test",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -273,6 +291,7 @@ fn test_0017() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -290,6 +309,7 @@ fn test_0018() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -299,6 +319,7 @@ fn test_0019() {
         data: "&",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"&\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -308,6 +329,7 @@ fn test_0020() {
         data: "&#",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"&#\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -317,6 +339,7 @@ fn test_0021() {
         data: "&#X",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"&#X\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -326,6 +349,7 @@ fn test_0022() {
         data: "&#x",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"&#x\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -335,6 +359,7 @@ fn test_0023() {
         data: "&#45",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"-\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -349,6 +374,7 @@ fn test_0024() {
             (2, "\"&x-test\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -365,6 +391,7 @@ fn test_0025() {
             (2, "<li>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -381,6 +408,7 @@ fn test_0026() {
             (2, "<dt>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -397,6 +425,7 @@ fn test_0027() {
             (2, "<dd>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -413,6 +442,7 @@ fn test_0028() {
             (2, "<form>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -429,6 +459,7 @@ fn test_0029() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -438,6 +469,7 @@ fn test_0030() {
         data: "&AMP",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "\"&\"")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -452,6 +484,7 @@ fn test_0031() {
             (2, "\"&AMp;\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -467,6 +500,7 @@ fn test_0032() {
             (2, "<thisisasillytestelementnametomakesurecrazytagnamesareparsedcorrectly>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -482,6 +516,7 @@ fn test_0033() {
             (2, "\"XX\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -497,6 +532,7 @@ fn test_0034() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -518,6 +554,7 @@ fn test_0035() {
             (6, "\"test\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -535,6 +572,7 @@ fn test_0036() {
             (3, "<optgroup>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -554,6 +592,7 @@ fn test_0037() {
             (2, "<option>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -572,6 +611,7 @@ fn test_0038() {
             (3, "<optgroup>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -590,6 +630,7 @@ fn test_0039() {
             (2, "\"bar\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -607,6 +648,7 @@ fn test_0040() {
             (3, "<input>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -622,6 +664,7 @@ fn test_0041() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -637,6 +680,7 @@ fn test_0042() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -652,6 +696,7 @@ fn test_0043() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -666,6 +711,7 @@ fn test_0044() {
             (2, "\"test\ntest\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -682,6 +728,7 @@ fn test_0045() {
             (3, "\"test</body>\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -704,6 +751,7 @@ fn test_0046() {
             (3, "\"\nx { content:\"</style\" } \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -720,6 +768,7 @@ fn test_0047() {
             (3, "<optgroup>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -729,6 +778,7 @@ fn test_0048() {
         data: " \n ",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -743,6 +793,7 @@ fn test_0049() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -763,6 +814,7 @@ fn test_0050() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -778,6 +830,7 @@ fn test_0051() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -794,6 +847,7 @@ fn test_0052() {
             (2, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -809,6 +863,7 @@ fn test_0053() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -824,6 +879,7 @@ fn test_0054() {
             (2, "\"XX\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -839,6 +895,7 @@ fn test_0055() {
             (2, "\"X \""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -856,6 +913,7 @@ fn test_0056() {
             (3, "\"X\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -875,6 +933,7 @@ fn test_0057() {
             (3, "z=\"\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -890,6 +949,7 @@ fn test_0058() {
             (1, "<body>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -909,6 +969,7 @@ fn test_0059() {
             (6, "<p>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -926,6 +987,7 @@ fn test_0060() {
             (2, "\"-->\""),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 
@@ -943,6 +1005,7 @@ fn test_0061() {
             (3, "<div>"),
         ],
         context_element: None,
+        scripting: Scripting::Both,
     });
 }
 //</coverage:exclude>
