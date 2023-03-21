@@ -309,6 +309,7 @@ where
         self.append_text_if_exists();
 
         self.inner.print_tree();
+        tracing::debug!(?self.active_formatting_element_list);
 
         const MAX_OUTER_ITERATIONS: usize = 8;
         const MAX_INNER_ITERATIONS: usize = 3;
@@ -326,9 +327,8 @@ where
                 .is_none();
         tracing::debug!(
             step2_cond,
-            ?context.open_element.namespace,
-            ?context.open_element.local_name,
-            ?context.open_element.node,
+            context.pos = self.context_stack.len() - 1,
+            context.element = ?context.open_element,
             "step#2"
         );
         if step2_cond {
@@ -349,7 +349,12 @@ where
                 }
             };
             let element = self.active_formatting_element_list.get_element(list_pos);
-            tracing::debug!(outer_loop_counter, list_pos, ?element, "step#4.3");
+            tracing::debug!(
+                outer_loop_counter,
+                element.list.pos = list_pos,
+                element.list.node = ?element,
+                "step#4.3"
+            );
 
             let stack_pos = match self.find_element_in_scope(element) {
                 Err(false) => {
@@ -369,9 +374,8 @@ where
                     // step#4.6
                     tracing::debug!(
                         outer_loop_counter,
-                        context.open_element.node = ?self.context().open_element.node,
-                        ?element,
-                        stack_pos = pos,
+                        element.context.pos = pos,
+                        element.context.element = ?self.context_stack[pos].open_element,
                         "step#4.6"
                     );
                     if self.context().open_element.node != element {
@@ -397,8 +401,8 @@ where
             let furthest_block = self.context_stack[furthest_block_pos].open_element.node;
             tracing::debug!(
                 outer_loop_counter,
-                furthest_block_pos,
-                ?furthest_block,
+                furthest_block.context.pos = furthest_block_pos,
+                furthest_block.context.element = ?self.context_stack[furthest_block_pos].open_element,
                 "step#4.7"
             );
 
@@ -410,7 +414,12 @@ where
 
             // step#4.9
             let common_ancestor_stack_pos = stack_pos - 1;
-            tracing::debug!(outer_loop_counter, common_ancestor_stack_pos, "step#4.9");
+            tracing::debug!(
+                outer_loop_counter,
+                common_ancestor.context.pos = common_ancestor_stack_pos,
+                common_ancestor.context.element = ?self.context_stack[common_ancestor_stack_pos].open_element,
+                "step#4.9"
+            );
 
             // step#4.10
             let mut bookmark = list_pos;
@@ -419,7 +428,13 @@ where
             // step#4.11
             let mut node_stack_pos = furthest_block_pos;
             let mut last_node = furthest_block;
-            tracing::debug!(outer_loop_counter, node_stack_pos, ?last_node, "step#4.11");
+            tracing::debug!(
+                outer_loop_counter,
+                node.context.pos = node_stack_pos,
+                node.context.element = ?self.context_stack[node_stack_pos].open_element,
+                ?last_node,
+                "step#4.11"
+            );
 
             // step#4.12
             let mut inner_loop_counter = 0;
@@ -435,45 +450,39 @@ where
                 tracing::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
-                    node_stack_pos,
-                    ?node,
+                    node.context.pos = node_stack_pos,
+                    node.context.element = ?self.context_stack[node_stack_pos].open_element,
                     "step#4.13.2"
                 );
 
                 // step#4.13.3
                 if node_stack_pos == stack_pos {
-                    tracing::debug!(
-                        outer_loop_counter,
-                        inner_loop_counter,
-                        node_stack_pos,
-                        stack_pos,
-                        "step#4.13.3"
-                    );
+                    tracing::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.3");
                     break;
                 }
 
-                let node_list_pos = match self.active_formatting_element_list.find_element(node) {
-                    Some(pos) => {
-                        // step#4.13.4
-                        tracing::debug!(
-                            outer_loop_counter,
-                            inner_loop_counter,
-                            node_list_pos = pos,
-                            "step#4.13.4"
-                        );
-                        if inner_loop_counter > MAX_INNER_ITERATIONS {
-                            self.active_formatting_element_list.remove(pos);
-                        }
-                        pos
+                // step#4.13.4
+                let mut node_list_pos = self.active_formatting_element_list.find_element(node);
+                tracing::debug!(
+                    outer_loop_counter,
+                    inner_loop_counter,
+                    node.context.pos = node_stack_pos,
+                    node.context.element = ?self.context_stack[node_stack_pos].open_element,
+                    node.list.pos = ?node_list_pos,
+                    "step#4.13.4"
+                );
+                if let Some(pos) = node_list_pos {
+                    if inner_loop_counter > MAX_INNER_ITERATIONS {
+                        self.active_formatting_element_list.remove(pos);
+                        node_list_pos = None;
                     }
+                }
+
+                // step#4.13.5
+                let node_list_pos = match node_list_pos {
+                    Some(pos) => pos,
                     None => {
-                        // step#4.13.5
-                        tracing::debug!(
-                            outer_loop_counter,
-                            inner_loop_counter,
-                            node_stack_pos,
-                            "step#4.13.5"
-                        );
+                        tracing::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.5");
                         self.context_stack[node_stack_pos].flags |= flags!(Removed);
                         continue;
                     }
@@ -492,9 +501,9 @@ where
                 tracing::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
-                    ?node,
-                    node_stack_pos,
-                    node_list_pos,
+                    node.context.pos = node_stack_pos,
+                    node.context.element = ?self.context_stack[node_stack_pos].open_element,
+                    node.list.pos = node_list_pos,
                     "step#4.13.6"
                 );
 
@@ -513,7 +522,8 @@ where
                 tracing::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
-                    ?node,
+                    node.context.pos = node_stack_pos,
+                    node.context.element = ?self.context_stack[node_stack_pos].open_element,
                     ?last_node,
                     "step#4.13.8"
                 );
@@ -533,7 +543,8 @@ where
             tracing::debug!(
                 outer_loop_counter,
                 ?last_node,
-                common_ancestor_stack_pos,
+                common_ancestor.context.pos = common_ancestor_stack_pos,
+                common_ancestor.context.element = ?self.context_stack[common_ancestor_stack_pos].open_element,
                 "step#4.14"
             );
             self.insert_node_with_context(last_node, common_ancestor_stack_pos);
@@ -545,7 +556,8 @@ where
             // step#4.16
             tracing::debug!(
                 outer_loop_counter,
-                ?furthest_block,
+                furthest_block.context.pos = furthest_block_pos,
+                furthest_block.context.element = ?self.context_stack[furthest_block_pos].open_element,
                 ?new_element,
                 "step#4.16"
             );
@@ -554,14 +566,20 @@ where
             // step#4.17
             tracing::debug!(
                 outer_loop_counter,
+                furthest_block.context.pos = furthest_block_pos,
+                furthest_block.context.element = ?self.context_stack[furthest_block_pos].open_element,
                 ?new_element,
-                ?furthest_block_pos,
                 "step#4.17"
             );
             self.insert_node_with_context(new_element, furthest_block_pos);
 
             // step#4.18
-            tracing::debug!(outer_loop_counter, list_pos, bookmark, "step#4.18");
+            tracing::debug!(
+                outer_loop_counter,
+                element.list.pos = list_pos,
+                bookmark,
+                "step#4.18"
+            );
             self.active_formatting_element_list.remove(list_pos);
             self.active_formatting_element_list
                 .insert_element(bookmark, subject, new_element);
@@ -1025,11 +1043,7 @@ where
                 context.element_in_scope.clear();
                 context.element_in_list_item_scope.clear();
                 context.element_in_button_scope.clear();
-                context.flags -= flags!(
-                    SvgIntegrationPoint,
-                    SvgScript,
-                    HtmlIntegrationPoint,
-                );
+                context.flags -= flags!(SvgIntegrationPoint, SvgScript, HtmlIntegrationPoint,);
                 context.flags |= flags!(MathmlTextIntegrationPoint);
             }
             tag!(mathml: AnnotationXml) => {
@@ -1369,79 +1383,94 @@ where
     #[inline(always)]
     fn has_li_element_in_list_item_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_list_item_scope.contains(ElementInListItemScope::Li)
+        self.element_in_list_item_scope
+            .contains(ElementInListItemScope::Li)
     }
 
     #[inline(always)]
     fn has_p_element_in_button_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_button_scope.contains(ElementInButtonScope::P)
+        self.element_in_button_scope
+            .contains(ElementInButtonScope::P)
     }
 
     #[inline(always)]
     fn has_table_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Table)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Table)
     }
 
     #[inline(always)]
     fn has_caption_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Caption)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Caption)
     }
 
     #[inline(always)]
     fn has_rowgroup_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        !self.element_in_table_scope.is_disjoint(ElementInTableScope::Tbody | ElementInTableScope::Tfoot | ElementInTableScope::Thead)
+        !self.element_in_table_scope.is_disjoint(
+            ElementInTableScope::Tbody | ElementInTableScope::Tfoot | ElementInTableScope::Thead,
+        )
     }
 
     #[inline(always)]
     fn has_tbody_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Tbody)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Tbody)
     }
 
     #[inline(always)]
     fn has_tfoot_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Tfoot)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Tfoot)
     }
 
     #[inline(always)]
     fn has_thead_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Thead)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Thead)
     }
 
     #[inline(always)]
     fn has_tr_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Tr)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Tr)
     }
 
     #[inline(always)]
     fn has_cell_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        !self.element_in_table_scope.is_disjoint(ElementInTableScope::Td | ElementInTableScope::Th)
+        !self
+            .element_in_table_scope
+            .is_disjoint(ElementInTableScope::Td | ElementInTableScope::Th)
     }
 
     #[inline(always)]
     fn has_td_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Td)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Td)
     }
 
     #[inline(always)]
     fn has_th_element_in_table_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_table_scope.contains(ElementInTableScope::Th)
+        self.element_in_table_scope
+            .contains(ElementInTableScope::Th)
     }
 
     #[inline(always)]
     fn has_select_element_in_select_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
-        self.element_in_select_scope.contains(ElementInSelectScope::Select)
+        self.element_in_select_scope
+            .contains(ElementInSelectScope::Select)
     }
 }
 
@@ -1552,18 +1581,31 @@ flagset::flags! {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 enum ActiveFormattingContext<T> {
     Marker,
     Element { local_name: LocalName, node: T },
     Removed,
 }
 
+impl<T: Debug> Debug for ActiveFormattingContext<T>
+where
+    T: Copy + Clone + Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Marker => write!(f, "$marker"),
+            Self::Element { local_name, node } => write!(f, "{:?}:<{:?}>", node, local_name),
+            Self::Removed => write!(f, "$removed"),
+        }
+    }
+}
+
 struct ActiveFormattingElementList<T>(Vec<ActiveFormattingContext<T>>);
 
 impl<T> ActiveFormattingElementList<T>
 where
-    T: Clone + Copy + Eq + PartialEq,
+    T: Clone + Copy + Debug + Eq + PartialEq,
 {
     fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -1573,7 +1615,9 @@ where
         self.0.len()
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     fn remove(&mut self, i: usize) {
+        tracing::debug!(index = i, item = ?self.0[i]);
         self.0[i] = ActiveFormattingContext::Removed;
     }
 
@@ -1618,9 +1662,11 @@ where
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     fn insert_element(&mut self, i: usize, local_name: LocalName, node: T) {
         self.0
             .insert(i, ActiveFormattingContext::Element { local_name, node });
+        tracing::debug!(index = i, item = ?self.0[i]);
     }
 
     fn push_marker(&mut self) {
@@ -1667,9 +1713,21 @@ where
     }
 }
 
-impl<T> Default for ActiveFormattingElementList<T> {
+impl<T> Default for ActiveFormattingElementList<T>
+where
+    T: Copy + Clone + Debug,
+{
     fn default() -> Self {
         ActiveFormattingElementList(vec![])
+    }
+}
+
+impl<T> Debug for ActiveFormattingElementList<T>
+where
+    T: Copy + Clone + Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.0)
     }
 }
 
