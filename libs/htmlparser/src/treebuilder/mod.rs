@@ -77,10 +77,11 @@ where
     original_mode: Option<InsertionMode>,
     quirks_mode: QuirksMode,
 
-    text: String,
     html_element: Option<T::Node>,
     head_element: Option<T::Node>,
     body_element: Option<T::Node>,
+    text: String,
+    pending_table_text: String,
 
     context_stack: Vec<TreeBuildContext<T::Node>>,
     active_formatting_element_list: ActiveFormattingElementList<T::Node>,
@@ -91,6 +92,7 @@ where
     ignore_lf: bool,
     foster_parenting: bool,
     scripting: bool,
+    pending_table_text_contains_non_whitespace: bool,
 }
 
 #[derive(Debug)]
@@ -116,10 +118,11 @@ where
             mode: mode!(Initial),
             original_mode: None,
             quirks_mode: QuirksMode::NoQuirks,
-            text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             html_element: None,
             head_element: None,
             body_element: None,
+            text: String::with_capacity(INITIAL_TEXT_CAPACITY),
+            pending_table_text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             context_stack: vec![context],
             active_formatting_element_list: Default::default(),
             iframe_srcdoc: false,
@@ -128,6 +131,7 @@ where
             ignore_lf: false,
             foster_parenting: false,
             scripting: false,
+            pending_table_text_contains_non_whitespace: false,
         }
     }
 
@@ -738,6 +742,12 @@ where
     }
 
     #[inline(always)]
+    fn push_html_center_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Center);
+        self.context_mut().element_in_scope |= ElementInScope::Center;
+    }
+
+    #[inline(always)]
     fn push_html_col_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Col);
     }
@@ -758,6 +768,12 @@ where
     fn push_html_div_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Div);
         self.context_mut().element_in_scope |= ElementInScope::Div;
+    }
+
+    #[inline(always)]
+    fn push_html_dl_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Dl);
+        self.context_mut().element_in_scope |= ElementInScope::Dl;
     }
 
     #[inline(always)]
@@ -1098,7 +1114,9 @@ where
             context.pos = stack_pos,
             context.element = ?context.open_element,
         );
-        if self.foster_parenting {
+        if self.foster_parenting
+            && context.is_one_of_html_elements(&tags![Table, Tbody, Tfoot, Thead, Tr])
+        {
             match context.foster_parenting_insertion_point {
                 FosterParentingInsertionPoint::None => unreachable!(),
                 FosterParentingInsertionPoint::LastChild(parent) => {
@@ -1476,6 +1494,12 @@ where
     }
 
     #[inline(always)]
+    fn has_center_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Center)
+    }
+
+    #[inline(always)]
     fn has_dd_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Dd)
@@ -1485,6 +1509,12 @@ where
     fn has_div_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Div)
+    }
+
+    #[inline(always)]
+    fn has_dl_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Dl)
     }
 
     #[inline(always)]
@@ -1700,8 +1730,10 @@ flagset::flags! {
     enum ElementInScope: u16 {
         Aside,
         Body,
+        Center,
         Dd,
         Div,
+        Dl,
         Dt,
         Form,
         Main,

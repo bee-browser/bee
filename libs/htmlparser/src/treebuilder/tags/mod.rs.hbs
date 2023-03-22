@@ -54,7 +54,7 @@ where
         loop {
             match self.context().open_element.local_name {
                 tag!(Html, Table, Template) => break,
-                _ => self.remove_element(),
+                _ => self.pop_element(),
             }
         }
     }
@@ -63,7 +63,7 @@ where
         loop {
             match self.context().open_element.local_name {
                 tag!(Tbody, Tfoot, Thead) => break,
-                _ => self.remove_element(),
+                _ => self.pop_element(),
             }
         }
     }
@@ -72,7 +72,7 @@ where
         loop {
             match self.context().open_element.local_name {
                 tag!(Html, Template, Tr) => break,
-                _ => self.remove_element(),
+                _ => self.pop_element(),
             }
         }
     }
