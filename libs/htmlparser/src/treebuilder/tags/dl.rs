@@ -9,9 +9,9 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_aside(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_dl(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_aside", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_start_dl", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -96,7 +96,7 @@ where
                         if self.context().has_p_element_in_button_scope() {
                             self.close_p_element();
                         }
-                        self.push_html_aside_element(tag);
+                        self.push_html_dl_element(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -113,7 +113,7 @@ where
                             if self.context().has_p_element_in_button_scope() {
                                 self.close_p_element();
                             }
-                            self.push_html_aside_element(tag);
+                            self.push_html_dl_element(tag);
                             Control::Continue
                         };
                         self.disable_foster_parenting();
@@ -219,9 +219,9 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_aside(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_dl(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_end_aside", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_dl", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -266,20 +266,20 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        if !self.context().has_aside_element_in_scope() {
+                        if !self.context().has_dl_element_in_scope() {
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             // Ignore the token.
                         } else {
                             self.close_implied_tags();
-                            if !self.context().is_html_element(tag!(Aside)) {
+                            if !self.context().is_html_element(tag!(Dl)) {
                                 // TODO: Parse error.
                                 tracing::debug!("Parse error");
                             }
-                            while !self.context().is_html_element(tag!(Aside)) {
+                            while !self.context().is_html_element(tag!(Dl)) {
                                 self.pop_element();
                             }
-                            self.pop_element(); // pop an html aside element
+                            self.pop_element(); // pop an html dl element
                         }
                         Control::Continue
                     };
@@ -305,20 +305,20 @@ where
                         tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
-                            if !self.context().has_aside_element_in_scope() {
+                            if !self.context().has_dl_element_in_scope() {
                                 // TODO: Parse error.
                                 tracing::debug!("Parse error");
                                 // Ignore the token.
                             } else {
                                 self.close_implied_tags();
-                                if !self.context().is_html_element(tag!(Aside)) {
+                                if !self.context().is_html_element(tag!(Dl)) {
                                     // TODO: Parse error.
                                     tracing::debug!("Parse error");
                                 }
-                                while !self.context().is_html_element(tag!(Aside)) {
+                                while !self.context().is_html_element(tag!(Dl)) {
                                     self.pop_element();
                                 }
-                                self.pop_element(); // pop an html aside element
+                                self.pop_element(); // pop an html dl element
                             }
                             Control::Continue
                         };

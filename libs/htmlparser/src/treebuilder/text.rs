@@ -25,7 +25,8 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn handle_null_character(&mut self, c: char) {
         loop {
-            tracing::debug!(mode = ?self.mode, c = "NULL");
+            let span = tracing::debug_span!("handle_null_character", mode = ?self.mode);
+            let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
                     let ctrl = {
@@ -140,7 +141,9 @@ where
                         if self.context().is_one_of_html_elements(&tags![
                             Table, Tbody, Template, Tfoot, Thead, Tr
                         ]) {
-                            // TODO: Let the pending table character tokens be an empty list of tokens.
+                            self.append_text_if_exists();
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                             self.save_and_switch_to(mode!(InTableText));
                             Control::Reprocess
                         } else {
@@ -212,11 +215,13 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn handle_whitespace_character(&mut self, c: char) {
         if self.ignore_lf && c == '\n' {
+            tracing::debug!(ignore_lf = true);
             self.ignore_lf = false;
             return;
         }
         loop {
-            tracing::debug!(mode = ?self.mode, c = "Whitespace");
+            let span = tracing::debug_span!("handle_whitespace_character", mode = ?self.mode, ?c);
+            let _enter = span.enter();
             match self.mode {
                 mode!(Initial, BeforeHtml, BeforeHead) => {
                     let ctrl = {
@@ -234,7 +239,6 @@ where
                     InHeadNoscript,
                     AfterHead,
                     Text,
-                    InTableText,
                     InColumnGroup,
                     InSelect,
                     InSelectInTable,
@@ -274,7 +278,9 @@ where
                         if self.context().is_one_of_html_elements(&tags![
                             Table, Tbody, Template, Tfoot, Thead, Tr
                         ]) {
-                            // TODO: Let the pending table character tokens be an empty list of tokens.
+                            self.append_text_if_exists();
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                             self.save_and_switch_to(mode!(InTableText));
                             Control::Reprocess
                         } else {
@@ -295,6 +301,16 @@ where
                         _ => return,
                     }
                 }
+                mode!(InTableText) => {
+                    let ctrl = {
+                        self.pending_table_text.push(c);
+                        Control::Continue
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return,
+                    }
+                }
             }
         }
     }
@@ -302,7 +318,8 @@ where
     #[tracing::instrument(level = "debug", skip_all)]
     fn handle_character(&mut self, c: char) {
         loop {
-            tracing::debug!(mode = ?self.mode, ?c);
+            let span = tracing::debug_span!("handle_character", mode = ?self.mode, ?c);
+            let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
                     let ctrl = {
@@ -393,7 +410,7 @@ where
                         _ => return,
                     }
                 }
-                mode!(Text, InTableText, InSelect, InSelectInTable) => {
+                mode!(Text, InSelect, InSelectInTable) => {
                     let ctrl = {
                         self.append_char(c);
                         Control::Continue
@@ -408,7 +425,9 @@ where
                         if self.context().is_one_of_html_elements(&tags![
                             Table, Tbody, Template, Tfoot, Thead, Tr
                         ]) {
-                            // TODO: Let the pending table character tokens be an empty list of tokens.
+                            self.append_text_if_exists();
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                             self.save_and_switch_to(mode!(InTableText));
                             Control::Reprocess
                         } else {
@@ -424,6 +443,17 @@ where
                             self.disable_foster_parenting();
                             ctrl
                         }
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return,
+                    }
+                }
+                mode!(InTableText) => {
+                    let ctrl = {
+                        self.pending_table_text.push(c);
+                        self.pending_table_text_contains_non_whitespace = true;
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,

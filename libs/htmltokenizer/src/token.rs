@@ -52,10 +52,10 @@ impl<'a> std::fmt::Debug for Token<'a> {
                 write!(f, "</{}>", tag.name)
             }
             Token::Text(ref text) => {
-                write!(f, "#text:{}", text.data)
+                write!(f, "#text:{}", text.data.escape_debug())
             }
             Token::Comment(ref comment) => {
-                write!(f, "#comment:{}", comment.data)
+                write!(f, "#comment:{}", comment.data.escape_debug())
             }
             Token::Error(ref err) => {
                 write!(f, "{:?}", err)

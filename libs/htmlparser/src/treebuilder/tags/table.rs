@@ -112,12 +112,18 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        // TODO: If the stack of open elements does not have a table element in table scope, ignore the token.
-                        // TODO: Otherwise
-                        // TODO: Pop elements from this stack until a table element has been popped from the stack.
-                        // TODO: Reset the insertion mode appropriately.
-                        // TODO: Reprocess the token.
-                        Control::Continue
+                        if !self.context().has_table_element_in_table_scope() {
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            while !self.context().is_html_element(tag!(Table)) {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop an html table element
+                            self.reset_insertion_mode_appropriately();
+                            Control::Reprocess
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -126,9 +132,20 @@ where
                 }
                 mode!(InTableText) => {
                     let ctrl = {
-                        // TODO
-                        if !self.text.is_empty() {
-                            self.insert_text_to_foster_parent();
+                        if self.pending_table_text_contains_non_whitespace {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            self.enable_foster_parenting();
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
+                            self.disable_foster_parenting();
+                        } else {
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                         }
                         self.switch_to_original_mode();
                         Control::Reprocess
@@ -328,9 +345,20 @@ where
                 }
                 mode!(InTableText) => {
                     let ctrl = {
-                        // TODO
-                        if !self.text.is_empty() {
-                            self.insert_text_to_foster_parent();
+                        if self.pending_table_text_contains_non_whitespace {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            self.enable_foster_parenting();
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
+                            self.disable_foster_parenting();
+                        } else {
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                         }
                         self.switch_to_original_mode();
                         Control::Reprocess

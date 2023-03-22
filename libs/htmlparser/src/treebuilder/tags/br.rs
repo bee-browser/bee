@@ -132,9 +132,20 @@ where
                 }
                 mode!(InTableText) => {
                     let ctrl = {
-                        // TODO
-                        if !self.text.is_empty() {
-                            self.insert_text_to_foster_parent();
+                        if self.pending_table_text_contains_non_whitespace {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            self.enable_foster_parenting();
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
+                            self.disable_foster_parenting();
+                        } else {
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                         }
                         self.switch_to_original_mode();
                         Control::Reprocess
@@ -354,9 +365,20 @@ where
                 }
                 mode!(InTableText) => {
                     let ctrl = {
-                        // TODO
-                        if !self.text.is_empty() {
-                            self.insert_text_to_foster_parent();
+                        if self.pending_table_text_contains_non_whitespace {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            self.enable_foster_parenting();
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
+                            self.disable_foster_parenting();
+                        } else {
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                         }
                         self.switch_to_original_mode();
                         Control::Reprocess

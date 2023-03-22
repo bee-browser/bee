@@ -10,10 +10,12 @@ mod b;
 mod body;
 mod br;
 mod caption;
+mod center;
 mod col;
 mod colgroup;
 mod dd;
 mod div;
+mod dl;
 mod dt;
 mod em;
 mod font;
@@ -68,10 +70,12 @@ where
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Br) => self.handle_start_br(&tag),
             tag!(Caption) => self.handle_start_caption(&tag),
+            tag!(Center) => self.handle_start_center(&tag),
             tag!(Col) => self.handle_start_col(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
             tag!(Dd) => self.handle_start_dd(&tag),
             tag!(Div) => self.handle_start_div(&tag),
+            tag!(Dl) => self.handle_start_dl(&tag),
             tag!(Dt) => self.handle_start_dt(&tag),
             tag!(Em) => self.handle_start_em(&tag),
             tag!(Font) => self.handle_start_font(&tag),
@@ -123,10 +127,12 @@ where
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Br) => self.handle_end_br(&tag),
             tag!(Caption) => self.handle_end_caption(&tag),
+            tag!(Center) => self.handle_end_center(&tag),
             tag!(Col) => self.handle_end_col(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
             tag!(Dd) => self.handle_end_dd(&tag),
             tag!(Div) => self.handle_end_div(&tag),
+            tag!(Dl) => self.handle_end_dl(&tag),
             tag!(Dt) => self.handle_end_dt(&tag),
             tag!(Em) => self.handle_end_em(&tag),
             tag!(Font) => self.handle_end_font(&tag),
@@ -186,7 +192,7 @@ where
         loop {
             match self.context().open_element.local_name {
                 tag!(Html, Table, Template) => break,
-                _ => self.remove_element(),
+                _ => self.pop_element(),
             }
         }
     }
@@ -195,7 +201,7 @@ where
         loop {
             match self.context().open_element.local_name {
                 tag!(Tbody, Tfoot, Thead) => break,
-                _ => self.remove_element(),
+                _ => self.pop_element(),
             }
         }
     }
@@ -204,7 +210,7 @@ where
         loop {
             match self.context().open_element.local_name {
                 tag!(Html, Template, Tr) => break,
-                _ => self.remove_element(),
+                _ => self.pop_element(),
             }
         }
     }

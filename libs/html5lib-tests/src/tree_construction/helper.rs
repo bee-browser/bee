@@ -383,10 +383,10 @@ impl Debug for Node {
                 write!(f, "{}:<{:?}:{}>", id, namespace, name)
             }
             Self::Text { id, data } => {
-                write!(f, "{}:#text:{}", id, data)
+                write!(f, "{}:#text:{}", id, data.escape_debug())
             }
             Self::Comment { id, data } => {
-                write!(f, "{}:#comment:{}", id, data)
+                write!(f, "{}:#comment:{}", id, data.escape_debug())
             }
         }
     }

@@ -4,10 +4,12 @@ b
 body
 br
 caption
+center
 col
 colgroup
 dd
 div
+dl
 dt
 em
 font
