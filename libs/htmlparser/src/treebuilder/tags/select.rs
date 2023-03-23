@@ -182,13 +182,18 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
-                        while !self.context().is_html_element(tag!(Select)) {
-                            self.pop_element();
+                        if !self.context().has_select_element_in_select_scope() {
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            while !self.context().is_html_element(tag!(Select)) {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop an html select element
+                            self.reset_insertion_mode_appropriately();
+                            Control::Continue
                         }
-                        self.pop_element(); // pop an html select element
-                        self.reset_insertion_mode_appropriately();
-                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -410,13 +415,20 @@ where
                 }
                 mode!(InSelect, InSelectInTable) => {
                     let ctrl = {
-                        // TODO: If the stack of open elements does not have a select element in select scope, this is a parse error; ignore the token. (fragment case)
-                        while !self.context().is_html_element(tag!(Select)) {
-                            self.pop_element();
+                        if !self.context().has_select_element_in_select_scope() {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            while !self.context().is_html_element(tag!(Select)) {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop an html select element
+                            self.reset_insertion_mode_appropriately();
+                            Control::Continue
                         }
-                        self.pop_element(); // pop an html select element
-                        self.reset_insertion_mode_appropriately();
-                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,

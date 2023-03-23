@@ -23,7 +23,13 @@ use crate::localnames::LocalName;
 pub trait DomTreeBuilder {
     type Node: Clone + Copy + Debug + Eq + PartialEq;
 
-    /// Gets the root node.
+    /// Gets the document node.
+    fn get_document(&mut self) -> Self::Node;
+
+    /// Gets the root node to which created nodes will be added.
+    ///
+    /// It's a document node when parsing an HTML document.  When parsing an
+    /// HTML fragment, it's a root node (normally, an 'html' element node).
     fn get_root(&mut self) -> Self::Node;
 
     /// Creates a DocumentType node.
@@ -152,7 +158,7 @@ where
         node: T::Node,
     ) {
         debug_assert_eq!(self.context_stack.len(), 1);
-        self.context_stack.push(TreeBuildContext {
+        self.context_stack[0] = TreeBuildContext {
             open_element: OpenElement {
                 namespace,
                 local_name,
@@ -160,16 +166,17 @@ where
             },
             reset_mode: InsertionMode::InBody,
             foster_parenting_insertion_point: FosterParentingInsertionPoint::LastChild(node),
-            // TODO
             element_in_scope: Default::default(),
             element_in_list_item_scope: Default::default(),
             element_in_button_scope: Default::default(),
             element_in_table_scope: Default::default(),
             element_in_select_scope: Default::default(),
+            // TODO
             flags: Default::default(),
-        });
+        };
         self.switch_to(match local_name {
             tag!(Select) => mode!(InSelect),
+            tag!(Td, Th) => mode!(InCell),
             tag!(Tr) => mode!(InRow),
             tag!(Tbody, Thead, Tfoot) => mode!(InTableBody),
             tag!(Caption) => mode!(InCaption),
@@ -695,6 +702,8 @@ where
     #[inline(always)]
     fn push_html_a_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::A);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -704,27 +713,36 @@ where
         context.element_in_scope.clear();
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_aside_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Aside);
-        self.context_mut().element_in_scope |= ElementInScope::Aside;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Aside;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_b_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::B);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_basefont_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Basefont);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_bgsound_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Bgsound);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -734,12 +752,15 @@ where
         let context = self.context_mut();
         context.reset_mode = mode!(InBody);
         context.element_in_scope |= ElementInScope::Body;
+        context.element_in_select_scope.clear();
         self.body_element = Some(context.open_element.node);
     }
 
     #[inline(always)]
     fn push_html_br_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Br);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -750,69 +771,99 @@ where
         context.element_in_scope.clear();
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
+        context.element_in_select_scope.clear();
         context.element_in_table_scope |= ElementInTableScope::Caption;
     }
 
     #[inline(always)]
     fn push_html_center_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Center);
-        self.context_mut().element_in_scope |= ElementInScope::Center;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Center;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_col_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Col);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_colgroup_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Colgroup);
-        self.context_mut().reset_mode = mode!(InColumnGroup);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InColumnGroup);
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_dd_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Dd);
-        self.context_mut().element_in_scope |= ElementInScope::Dd;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Dd;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_div_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Div);
-        self.context_mut().element_in_scope |= ElementInScope::Div;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Div;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_dl_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Dl);
-        self.context_mut().element_in_scope |= ElementInScope::Dl;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Dl;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_dt_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Dt);
-        self.context_mut().element_in_scope |= ElementInScope::Dt;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Dt;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_em_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Em);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_font_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Font);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_form_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Form);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_frame_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Frame);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_frameset_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Frameset);
-        self.context_mut().reset_mode = mode!(InFrameset);
+        let context = self.context_mut();
+        context.reset_mode = mode!(InFrameset);
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -821,12 +872,15 @@ where
         self.push_html_element(tag, LocalName::Head);
         let context = self.context_mut();
         context.reset_mode = mode!(InHead);
+        context.element_in_select_scope.clear();
         self.head_element = Some(context.open_element.node);
     }
 
     #[inline(always)]
     fn push_html_hr_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Hr);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -841,39 +895,52 @@ where
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
         context.element_in_table_scope.clear();
+        context.element_in_select_scope.clear();
         self.html_element = Some(context.open_element.node);
     }
 
     #[inline(always)]
     fn push_html_i_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::I);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_img_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Img);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_input_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Input);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_li_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Li);
-        self.context_mut().element_in_list_item_scope |= ElementInListItemScope::Li;
+        let context = self.context_mut();
+        context.element_in_list_item_scope |= ElementInListItemScope::Li;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_link_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Link);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_main_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Main);
-        self.context_mut().element_in_scope |= ElementInScope::Main;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Main;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -883,67 +950,84 @@ where
         context.element_in_scope.clear();
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_meta_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Meta);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_nobr_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Nobr);
-        self.context_mut().element_in_scope |= ElementInScope::Nobr;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Nobr;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_noframes_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Nobr);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_noscript_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Noscript);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_ol_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ol);
-        self.context_mut().element_in_list_item_scope.clear();
+        let context = self.context_mut();
+        context.element_in_list_item_scope.clear();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_optgroup_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Optgroup);
-        self.context_mut().element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_option_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Option);
-        self.context_mut().element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_p_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::P);
-        self.context_mut().element_in_button_scope |= ElementInButtonScope::P;
+        let context = self.context_mut();
+        context.element_in_button_scope |= ElementInButtonScope::P;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_plaintext_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Plaintext);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_pre_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Pre);
-        self.context_mut().element_in_scope |= ElementInScope::Pre;
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Pre;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_script_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Script);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -952,12 +1036,15 @@ where
         // TODO
         let context = self.context_mut();
         context.reset_mode = mode!(InSelect);
+        context.element_in_select_scope.clear();
         context.element_in_select_scope |= ElementInSelectScope::Select;
     }
 
     #[inline(always)]
     fn push_html_style_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Style);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -973,6 +1060,7 @@ where
         context.element_in_button_scope.clear();
         context.element_in_table_scope.clear();
         context.element_in_table_scope |= ElementInTableScope::Table;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -981,6 +1069,7 @@ where
         let context = self.context_mut();
         context.reset_mode = mode!(InTableBody);
         context.element_in_table_scope |= ElementInTableScope::Tbody;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -992,6 +1081,7 @@ where
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
         context.element_in_table_scope |= ElementInTableScope::Td;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -1005,6 +1095,7 @@ where
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
         context.element_in_table_scope.clear();
+        context.element_in_select_scope.clear();
         context.flags |= flags!(HasTemplateElement);
     }
 
@@ -1019,6 +1110,7 @@ where
         let context = self.context_mut();
         context.reset_mode = mode!(InTableBody);
         context.element_in_table_scope |= ElementInTableScope::Tfoot;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -1030,6 +1122,7 @@ where
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
         context.element_in_table_scope |= ElementInTableScope::Th;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -1038,11 +1131,14 @@ where
         let context = self.context_mut();
         context.reset_mode = mode!(InTableBody);
         context.element_in_table_scope |= ElementInTableScope::Thead;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_title_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Title);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -1051,17 +1147,22 @@ where
         let context = self.context_mut();
         context.reset_mode = mode!(InRow);
         context.element_in_table_scope |= ElementInTableScope::Tr;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_ul_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ul);
-        self.context_mut().element_in_list_item_scope.clear();
+        let context = self.context_mut();
+        context.element_in_list_item_scope.clear();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
     fn push_html_unknown_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::lookup(tag.name));
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[tracing::instrument(level = "debug", skip_all)]

@@ -22,6 +22,7 @@ mod dt;
 mod em;
 mod font;
 mod form;
+mod frame;
 mod frameset;
 mod head;
 mod hr;
@@ -85,6 +86,7 @@ where
             tag!(Em) => self.handle_start_em(&tag),
             tag!(Font) => self.handle_start_font(&tag),
             tag!(Form) => self.handle_start_form(&tag),
+            tag!(Frame) => self.handle_start_frame(&tag),
             tag!(Frameset) => self.handle_start_frameset(&tag),
             tag!(Head) => self.handle_start_head(&tag),
             tag!(Hr) => self.handle_start_hr(&tag),
@@ -145,6 +147,7 @@ where
             tag!(Em) => self.handle_end_em(&tag),
             tag!(Font) => self.handle_end_font(&tag),
             tag!(Form) => self.handle_end_form(&tag),
+            tag!(Frame) => self.handle_end_frame(&tag),
             tag!(Frameset) => self.handle_end_frameset(&tag),
             tag!(Head) => self.handle_end_head(&tag),
             tag!(Hr) => self.handle_end_hr(&tag),

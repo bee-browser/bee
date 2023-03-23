@@ -33,6 +33,7 @@ where
         self.tokenizer.feed_data(data);
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn feed_end(&mut self) {
         self.tokenizer.feed_end();
     }
@@ -47,6 +48,7 @@ where
         self.tree_builder.set_scripting(scripting);
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_context_element(&mut self, tag_name: &str, namespace: Namespace, node: T::Node) {
         let local_name = LocalName::lookup(tag_name);
         self.tokenizer.set_initial_state(match local_name {
@@ -61,6 +63,7 @@ where
             .set_context_element(local_name, namespace, node);
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn parse(&mut self) {
         loop {
             self.tokenizer

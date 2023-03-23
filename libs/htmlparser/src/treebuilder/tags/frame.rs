@@ -9,9 +9,9 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_input(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_frame(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_input", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_start_frame", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -91,14 +91,20 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InBody, InCaption, InCell) => {
+                mode!(
+                    InBody,
+                    InCaption,
+                    InCell,
+                    InSelect,
+                    InSelectInTable,
+                    AfterFrameset,
+                    AfterAfterFrameset
+                ) => {
                     let ctrl = {
-                        self.reconstruct_active_formatting_elements();
-                        self.push_html_input_element(tag);
-                        self.pop_element();
-                        if Self::is_visible_input(tag) {
-                            self.frameset_ok = false;
-                        }
+                        // TODO: Parse error.
+                        tracing::debug!("Parse error");
+                        // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -108,31 +114,18 @@ where
                 }
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
-                        if Self::is_visible_input(tag) {
+                        // TODO: Parse error.
+                        tracing::debug!("Parse error");
+                        self.enable_foster_parenting();
+                        let ctrl = {
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
-                            self.enable_foster_parenting();
-                            let ctrl = {
-                                self.reconstruct_active_formatting_elements();
-                                self.push_html_input_element(tag);
-                                self.pop_element();
-                                if Self::is_visible_input(tag) {
-                                    self.frameset_ok = false;
-                                }
-                                Control::Continue
-                            };
-                            self.disable_foster_parenting();
-                            ctrl
-                        } else {
-                            // TODO: Parse error.
-                            tracing::debug!("Parse error");
-                            self.push_html_input_element(tag);
-                            self.pop_element();
-                            if tag.self_closing {
-                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
-                            }
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
-                        }
+                        };
+                        self.disable_foster_parenting();
+                        ctrl
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -183,28 +176,6 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InSelect, InSelectInTable) => {
-                    let ctrl = {
-                        // TODO: Parse error.
-                        tracing::debug!("Parse error");
-                        if !self.context().has_select_element_in_select_scope() {
-                            // Ignore the token.
-                            tracing::debug!("Ignore the token");
-                            Control::Continue
-                        } else {
-                            while !self.context().is_html_element(tag!(Select)) {
-                                self.pop_element();
-                            }
-                            self.pop_element(); // pop an html select element
-                            self.reset_insertion_mode_appropriately();
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
                 mode!(InTemplate) => {
                     let ctrl = {
                         // TODO: Pop the current template insertion mode off the stack of template insertion modes.
@@ -229,12 +200,13 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InFrameset, AfterFrameset, AfterAfterFrameset) => {
+                mode!(InFrameset) => {
                     let ctrl = {
-                        // TODO: Parse error.
-                        tracing::debug!("Parse error");
-                        // Ignore the token.
-                        tracing::debug!("Ignore the token");
+                        self.push_html_frame_element(tag);
+                        self.pop_element();
+                        if tag.self_closing {
+                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
+                        }
                         Control::Continue
                     };
                     match ctrl {
@@ -250,9 +222,9 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_input(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_frame(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_end_input", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_frame", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -302,7 +274,7 @@ where
                             let context = &self.context_stack[context_pos];
                             let element = context.open_element.node;
                             if context.is_html() && self.inner.has_same_name(element, tag.name) {
-                                self.close_implied_tags_except_for(tag!(Input)); // TODO
+                                self.close_implied_tags_except_for(tag!(Frame)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
                                 }
@@ -349,7 +321,7 @@ where
                                 let element = context.open_element.node;
                                 if context.is_html() && self.inner.has_same_name(element, tag.name)
                                 {
-                                    self.close_implied_tags_except_for(tag!(Input)); // TODO
+                                    self.close_implied_tags_except_for(tag!(Frame)); // TODO
                                     if element != self.context().open_element.node {
                                         // TODO: Parse error.
                                     }
