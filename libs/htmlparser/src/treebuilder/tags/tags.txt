@@ -1,6 +1,8 @@
 a
 aside
 b
+basefont
+bgsound
 body
 br
 caption
@@ -22,6 +24,7 @@ i
 img
 input
 li
+link
 main
 math
 meta

@@ -27,8 +27,9 @@ where
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn feed_data(&mut self, data: Vec<u16>) {
-        tracing::debug!(data = String::from_utf16_lossy(&data));
+        tracing::debug!(data = String::from_utf16_lossy(&data).escape_debug().to_string());
         self.tokenizer.feed_data(data);
     }
 
@@ -36,10 +37,12 @@ where
         self.tokenizer.feed_end();
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_quirks_mode(&mut self, quirks_mode: QuirksMode) {
         self.tree_builder.set_quirks_mode(quirks_mode);
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_scripting(&mut self, scripting: bool) {
         self.tree_builder.set_scripting(scripting);
     }

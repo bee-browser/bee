@@ -139,8 +139,10 @@ where
         self.quirks_mode = quirks_mode;
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_scripting(&mut self, scripting: bool) {
         self.scripting = scripting;
+        tracing::debug!(scripting);
     }
 
     pub fn set_context_element(
@@ -716,6 +718,16 @@ where
     }
 
     #[inline(always)]
+    fn push_html_basefont_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Basefont);
+    }
+
+    #[inline(always)]
+    fn push_html_bgsound_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Bgsound);
+    }
+
+    #[inline(always)]
     fn push_html_body_element(&mut self, tag: &Tag<'_>) {
         debug_assert!(self.body_element.is_none());
         self.push_html_element(tag, LocalName::Body);
@@ -851,6 +863,11 @@ where
     fn push_html_li_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Li);
         self.context_mut().element_in_list_item_scope |= ElementInListItemScope::Li;
+    }
+
+    #[inline(always)]
+    fn push_html_link_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Link);
     }
 
     #[inline(always)]
