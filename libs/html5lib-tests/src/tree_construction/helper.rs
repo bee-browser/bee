@@ -153,7 +153,16 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     type Node = usize;
 
     #[tracing::instrument(level = "debug", skip_all)]
+    fn get_document(&mut self) -> Self::Node {
+        0
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
     fn get_root(&mut self) -> Self::Node {
+        // In the HTML5 specification, an 'html' element is created and appended
+        // to the document, but the expected document tree of each test cases in
+        // html5lib-tests for the HTML fragment parsing algorithm has no root
+        // 'html' element.
         0
     }
 

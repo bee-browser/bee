@@ -1376,7 +1376,14 @@ modes:
           Control::Continue
       - match: </optgroup>
         run: |
-          // TODO: First, if the current node is an option element, and the node immediately before it in the stack of open elements is an optgroup element, then pop the current node from the stack of open elements.
+          if self.context().is_html_element(tag!(Option)) {
+              if self.context_stack.len() > 1 {
+                  let prev_context_pos = self.context_stack.len() - 2;
+                  if self.context_stack[prev_context_pos].is_html_element(tag!(Optgroup)) {
+                      self.pop_element();
+                  }
+              }
+          }
           if self.context().is_html_element(tag!(Optgroup)) {
               self.pop_element();
               Control::Continue
@@ -1395,33 +1402,43 @@ modes:
           }
       - match: </select>
         run: |
-          // TODO: If the stack of open elements does not have a select element in select scope, this is a parse error; ignore the token. (fragment case)
-          while !self.context().is_html_element(tag!(Select)) {
-              self.pop_element();
+          if !self.context().has_select_element_in_select_scope() {
+              {{use '$parse-error'}}
+              {{use '$ignore-token'}}
+          } else {
+              while !self.context().is_html_element(tag!(Select)) {
+                  self.pop_element();
+              }
+              self.pop_element(); // pop an html select element
+              self.reset_insertion_mode_appropriately();
+              Control::Continue
           }
-          self.pop_element(); // pop an html select element
-          self.reset_insertion_mode_appropriately();
-          Control::Continue
       - match: <select>
         run: |
           {{use '$parse-error'}}
-          // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
-          while !self.context().is_html_element(tag!(Select)) {
-              self.pop_element();
+          if !self.context().has_select_element_in_select_scope() {
+              {{use '$ignore-token'}}
+          } else {
+              while !self.context().is_html_element(tag!(Select)) {
+                  self.pop_element();
+              }
+              self.pop_element(); // pop an html select element
+              self.reset_insertion_mode_appropriately();
+              Control::Continue
           }
-          self.pop_element(); // pop an html select element
-          self.reset_insertion_mode_appropriately();
-          Control::Continue
       - match: <input> <keygen> <textarea>
         run: |
           {{use '$parse-error'}}
-          // TODO: If the stack of open elements does not have a select element in select scope, ignore the token. (fragment case)
-          while !self.context().is_html_element(tag!(Select)) {
-              self.pop_element();
+          if !self.context().has_select_element_in_select_scope() {
+              {{use '$ignore-token'}}
+          } else {
+              while !self.context().is_html_element(tag!(Select)) {
+                  self.pop_element();
+              }
+              self.pop_element(); // pop an html select element
+              self.reset_insertion_mode_appropriately();
+              Control::Reprocess
           }
-          self.pop_element(); // pop an html select element
-          self.reset_insertion_mode_appropriately();
-          Control::Reprocess
       - match: <script> <template> </template>
         run: |
           {{use '@in-head'}}
@@ -1564,7 +1581,7 @@ modes:
           Control::Continue
       - match: </frameset>
         run: |
-          if self.context().is_html_element(tag!(Html)) {
+          if self.context_stack.len() == 1 {
               {{use '$parse-error'}}
               {{use '$ignore-token'}}
           } else {

@@ -38,6 +38,7 @@ where
     fn append_comment_to_document(&mut self, comment: &Comment<'_>) {
         self.append_text_if_exists();
         let node = self.inner.create_comment(comment.data);
-        self.insert_node_with_context(node, 0);
+        let document = self.inner.get_document();
+        self.inner.append_child(document, node);
     }
 }

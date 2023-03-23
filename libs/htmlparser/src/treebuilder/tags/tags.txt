@@ -16,6 +16,7 @@ dt
 em
 font
 form
+frame
 frameset
 head
 hr
