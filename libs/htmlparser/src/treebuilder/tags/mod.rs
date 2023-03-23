@@ -7,6 +7,8 @@ mod a;
 mod any_other;
 mod aside;
 mod b;
+mod basefont;
+mod bgsound;
 mod body;
 mod br;
 mod caption;
@@ -28,6 +30,7 @@ mod i;
 mod img;
 mod input;
 mod li;
+mod link;
 mod main;
 mod math;
 mod meta;
@@ -67,6 +70,8 @@ where
             tag!(A) => self.handle_start_a(&tag),
             tag!(Aside) => self.handle_start_aside(&tag),
             tag!(B) => self.handle_start_b(&tag),
+            tag!(Basefont) => self.handle_start_basefont(&tag),
+            tag!(Bgsound) => self.handle_start_bgsound(&tag),
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Br) => self.handle_start_br(&tag),
             tag!(Caption) => self.handle_start_caption(&tag),
@@ -88,6 +93,7 @@ where
             tag!(Img) => self.handle_start_img(&tag),
             tag!(Input) => self.handle_start_input(&tag),
             tag!(Li) => self.handle_start_li(&tag),
+            tag!(Link) => self.handle_start_link(&tag),
             tag!(Main) => self.handle_start_main(&tag),
             tag!(Math) => self.handle_start_math(&tag),
             tag!(Meta) => self.handle_start_meta(&tag),
@@ -124,6 +130,8 @@ where
             tag!(A) => self.handle_end_a(&tag),
             tag!(Aside) => self.handle_end_aside(&tag),
             tag!(B) => self.handle_end_b(&tag),
+            tag!(Basefont) => self.handle_end_basefont(&tag),
+            tag!(Bgsound) => self.handle_end_bgsound(&tag),
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Br) => self.handle_end_br(&tag),
             tag!(Caption) => self.handle_end_caption(&tag),
@@ -145,6 +153,7 @@ where
             tag!(Img) => self.handle_end_img(&tag),
             tag!(Input) => self.handle_end_input(&tag),
             tag!(Li) => self.handle_end_li(&tag),
+            tag!(Link) => self.handle_end_link(&tag),
             tag!(Main) => self.handle_end_main(&tag),
             tag!(Math) => self.handle_end_math(&tag),
             tag!(Meta) => self.handle_end_meta(&tag),
