@@ -150,15 +150,15 @@ impl<'a> TreeValidator<'a> {
 }
 
 impl<'a> DomTreeBuilder for TreeValidator<'a> {
-    type Node = usize;
+    type NodeId = usize;
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn get_document(&mut self) -> Self::Node {
+    fn get_document(&mut self) -> Self::NodeId {
         0
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn get_root(&mut self) -> Self::Node {
+    fn get_root(&mut self) -> Self::NodeId {
         // In the HTML5 specification, an 'html' element is created and appended
         // to the document, but the expected document tree of each test cases in
         // html5lib-tests for the HTML fragment parsing algorithm has no root
@@ -167,7 +167,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::Node {
+    fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::DocumentType {
             id,
@@ -182,7 +182,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn create_element(&mut self, name: &str, ns: Namespace) -> Self::Node {
+    fn create_element(&mut self, name: &str, ns: Namespace) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::Element {
             id,
@@ -197,7 +197,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn create_text(&mut self, data: &str) -> Self::Node {
+    fn create_text(&mut self, data: &str) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::Text {
             id,
@@ -209,7 +209,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn create_comment(&mut self, data: &str) -> Self::Node {
+    fn create_comment(&mut self, data: &str) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::Comment {
             id,
@@ -221,7 +221,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn set_attribute<'b, I>(&mut self, node_id: Self::Node, attrs: I, overwrite: bool)
+    fn set_attribute<'b, I>(&mut self, node_id: Self::NodeId, attrs: I, overwrite: bool)
     where
         I: Iterator<Item = (&'b str, &'b str)>,
     {
@@ -247,7 +247,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn clone_node(&mut self, node_id: Self::Node) -> Self::Node {
+    fn clone_node(&mut self, node_id: Self::NodeId) -> Self::NodeId {
         debug_assert!(self.nodes.get(node_id).is_some());
         let id = self.nodes.len();
         let node = match &self.nodes[node_id] {
@@ -271,7 +271,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn append_child(&mut self, parent_id: Self::Node, node_id: Self::Node) {
+    fn append_child(&mut self, parent_id: Self::NodeId, node_id: Self::NodeId) {
         debug_assert!(self.nodes.get(parent_id).is_some());
         debug_assert!(self.nodes.get(node_id).is_some());
         let child_nodes = self.child_nodes_mut(parent_id);
@@ -282,9 +282,9 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     #[tracing::instrument(level = "debug", skip_all)]
     fn insert_before(
         &mut self,
-        parent_id: Self::Node,
-        node_id: Self::Node,
-        sibling_id: Self::Node,
+        parent_id: Self::NodeId,
+        node_id: Self::NodeId,
+        sibling_id: Self::NodeId,
     ) {
         debug_assert!(self.nodes.get(parent_id).is_some());
         debug_assert!(self.nodes.get(node_id).is_some());
@@ -300,7 +300,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn remove_child(&mut self, parent_id: Self::Node, node_id: Self::Node) {
+    fn remove_child(&mut self, parent_id: Self::NodeId, node_id: Self::NodeId) {
         debug_assert!(self.nodes.get(parent_id).is_some());
         debug_assert!(self.nodes.get(node_id).is_some());
         let child_nodes = self.child_nodes_mut(parent_id);
@@ -310,7 +310,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn move_child_nodes(&mut self, src_id: Self::Node, dst_id: Self::Node) {
+    fn move_child_nodes(&mut self, src_id: Self::NodeId, dst_id: Self::NodeId) {
         debug_assert!(self.nodes.get(src_id).is_some());
         debug_assert!(self.nodes.get(dst_id).is_some());
         let mut src_child_nodes = self.take_child_nodes(src_id);
@@ -331,7 +331,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
         tracing::debug!("{:?}", v);
     }
 
-    fn has_same_name(&mut self, node_id: Self::Node, name: &str) -> bool {
+    fn has_same_name(&mut self, node_id: Self::NodeId, name: &str) -> bool {
         match self.nodes[node_id] {
             Node::Element { name: ref v, .. } => v.eq_ignore_ascii_case(name),
             _ => unreachable!(),

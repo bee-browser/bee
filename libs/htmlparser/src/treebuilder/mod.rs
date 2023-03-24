@@ -21,48 +21,48 @@ use crate::localnames::LocalName;
 /// The instance implementing this trait needs to implement some kind of stack
 /// machine that supports the following operations
 pub trait DomTreeBuilder {
-    type Node: Clone + Copy + Debug + Eq + PartialEq;
+    type NodeId: Clone + Copy + Debug + Eq + PartialEq;
 
     /// Gets the document node.
-    fn get_document(&mut self) -> Self::Node;
+    fn get_document(&mut self) -> Self::NodeId;
 
     /// Gets the root node to which created nodes will be added.
     ///
     /// It's a document node when parsing an HTML document.  When parsing an
     /// HTML fragment, it's a root node (normally, an 'html' element node).
-    fn get_root(&mut self) -> Self::Node;
+    fn get_root(&mut self) -> Self::NodeId;
 
     /// Creates a DocumentType node.
-    fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::Node;
+    fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::NodeId;
 
     /// Creates an Element node.
-    fn create_element(&mut self, name: &str, ns: Namespace) -> Self::Node;
+    fn create_element(&mut self, name: &str, ns: Namespace) -> Self::NodeId;
 
     /// Create a Text node.
-    fn create_text(&mut self, data: &str) -> Self::Node;
+    fn create_text(&mut self, data: &str) -> Self::NodeId;
 
     /// Create a Comment node.
-    fn create_comment(&mut self, data: &str) -> Self::Node;
+    fn create_comment(&mut self, data: &str) -> Self::NodeId;
 
     /// Sets an attribute to a node.
-    fn set_attribute<'a, I>(&mut self, node: Self::Node, attrs: I, overwrite: bool)
+    fn set_attribute<'a, I>(&mut self, node: Self::NodeId, attrs: I, overwrite: bool)
     where
         I: Iterator<Item = (&'a str, &'a str)>;
 
     /// Clones a node.
-    fn clone_node(&mut self, node: Self::Node) -> Self::Node;
+    fn clone_node(&mut self, node: Self::NodeId) -> Self::NodeId;
 
     /// Appends a node as a last child node of a parent node.
-    fn append_child(&mut self, parent: Self::Node, node: Self::Node);
+    fn append_child(&mut self, parent: Self::NodeId, node: Self::NodeId);
 
     /// Inserts a node before a sibling node into the child node list of a parent node.
-    fn insert_before(&mut self, parent: Self::Node, node: Self::Node, sibling: Self::Node);
+    fn insert_before(&mut self, parent: Self::NodeId, node: Self::NodeId, sibling: Self::NodeId);
 
     /// Removes a node from the child node list of a parent node.
-    fn remove_child(&mut self, parent: Self::Node, node: Self::Node);
+    fn remove_child(&mut self, parent: Self::NodeId, node: Self::NodeId);
 
     /// Moves all child nodes of a node to a new parent node.
-    fn move_child_nodes(&mut self, node: Self::Node, new_parent: Self::Node);
+    fn move_child_nodes(&mut self, node: Self::NodeId, new_parent: Self::NodeId);
 
     ///
     fn end(&mut self);
@@ -71,7 +71,7 @@ pub trait DomTreeBuilder {
     fn print_tree(&self);
 
     ///
-    fn has_same_name(&mut self, node: Self::Node, name: &str) -> bool;
+    fn has_same_name(&mut self, node: Self::NodeId, name: &str) -> bool;
 }
 
 pub struct TreeBuilder<T>
@@ -83,14 +83,14 @@ where
     original_mode: Option<InsertionMode>,
     quirks_mode: QuirksMode,
 
-    html_element: Option<T::Node>,
-    head_element: Option<T::Node>,
-    body_element: Option<T::Node>,
+    html_element: Option<T::NodeId>,
+    head_element: Option<T::NodeId>,
+    body_element: Option<T::NodeId>,
     text: String,
     pending_table_text: String,
 
-    context_stack: Vec<TreeBuildContext<T::Node>>,
-    active_formatting_element_list: ActiveFormattingElementList<T::Node>,
+    context_stack: Vec<TreeBuildContext<T::NodeId>>,
+    active_formatting_element_list: ActiveFormattingElementList<T::NodeId>,
 
     iframe_srcdoc: bool,
     quirks_mode_changeable: bool,
@@ -155,7 +155,7 @@ where
         &mut self,
         local_name: LocalName,
         namespace: Namespace,
-        node: T::Node,
+        node: T::NodeId,
     ) {
         debug_assert_eq!(self.context_stack.len(), 1);
         self.context_stack[0] = TreeBuildContext {
@@ -628,13 +628,13 @@ where
         self.active_formatting_element_list.clean();
     }
 
-    fn find_element_in_stack(&self, element: T::Node) -> Option<usize> {
+    fn find_element_in_stack(&self, element: T::NodeId) -> Option<usize> {
         self.context_stack
             .iter()
             .rposition(|context| !context.is_removed() && context.open_element.node == element)
     }
 
-    fn find_element_in_scope(&self, element: T::Node) -> Result<usize, bool> {
+    fn find_element_in_scope(&self, element: T::NodeId) -> Result<usize, bool> {
         for (i, context) in self.context_stack.iter().enumerate().rev() {
             if context.is_removed() {
                 continue;
@@ -1178,30 +1178,30 @@ where
     }
 
     #[inline(always)]
-    fn context(&self) -> &TreeBuildContext<T::Node> {
+    fn context(&self) -> &TreeBuildContext<T::NodeId> {
         self.nth_context(0)
     }
 
     #[inline(always)]
-    fn nth_context(&self, n: usize) -> &TreeBuildContext<T::Node> {
+    fn nth_context(&self, n: usize) -> &TreeBuildContext<T::NodeId> {
         debug_assert!(n < self.context_stack.len());
         let pos = self.context_stack.len() - 1 - n;
         &self.context_stack[pos]
     }
 
     #[inline(always)]
-    fn context_mut(&mut self) -> &mut TreeBuildContext<T::Node> {
+    fn context_mut(&mut self) -> &mut TreeBuildContext<T::NodeId> {
         self.nth_context_mut(0)
     }
 
     #[inline(always)]
-    fn nth_context_mut(&mut self, n: usize) -> &mut TreeBuildContext<T::Node> {
+    fn nth_context_mut(&mut self, n: usize) -> &mut TreeBuildContext<T::NodeId> {
         debug_assert!(n < self.context_stack.len());
         let pos = self.context_stack.len() - 1 - n;
         &mut self.context_stack[pos]
     }
 
-    fn insert_html_element(&mut self, open_element: OpenElement<T::Node>) {
+    fn insert_html_element(&mut self, open_element: OpenElement<T::NodeId>) {
         self.insert_element(open_element);
         self.context_mut().flags -= flags!(
             MathmlTextIntegrationPoint,
@@ -1211,7 +1211,7 @@ where
         );
     }
 
-    fn insert_element(&mut self, open_element: OpenElement<T::Node>) {
+    fn insert_element(&mut self, open_element: OpenElement<T::NodeId>) {
         self.insert_node(open_element.node);
         let mut context = self.context().clone();
         context.open_element = open_element;
@@ -1222,11 +1222,11 @@ where
         );
     }
 
-    fn insert_node(&mut self, node: T::Node) {
+    fn insert_node(&mut self, node: T::NodeId) {
         self.insert_node_with_context(node, self.context_stack.len() - 1);
     }
 
-    fn insert_node_with_context(&mut self, node: T::Node, stack_pos: usize) {
+    fn insert_node_with_context(&mut self, node: T::NodeId, stack_pos: usize) {
         let context = &self.context_stack[stack_pos];
         tracing::debug!(
             context.pos = stack_pos,
