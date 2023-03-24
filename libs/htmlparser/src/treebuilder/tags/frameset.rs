@@ -95,17 +95,24 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        // TODO: Ignore the token (fragment case).
-                        if !self.frameset_ok {
+                        if self.context_stack.len() < 3
+                            || !self.context_stack[2].is_html_element(tag!(Body))
+                        {
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else if !self.frameset_ok {
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
                         } else {
                             while !self.context().is_html_element(tag!(Html)) {
                                 self.remove_element();
                             }
                             self.push_html_frameset_element(tag);
                             self.switch_to(mode!(InFrameset));
+                            Control::Continue
                         }
-                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -120,17 +127,24 @@ where
                         let ctrl = {
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
-                            // TODO: Ignore the token (fragment case).
-                            if !self.frameset_ok {
+                            if self.context_stack.len() < 3
+                                || !self.context_stack[2].is_html_element(tag!(Body))
+                            {
                                 // Ignore the token.
+                                tracing::debug!("Ignore the token");
+                                Control::Continue
+                            } else if !self.frameset_ok {
+                                // Ignore the token.
+                                tracing::debug!("Ignore the token");
+                                Control::Continue
                             } else {
                                 while !self.context().is_html_element(tag!(Html)) {
                                     self.remove_element();
                                 }
                                 self.push_html_frameset_element(tag);
                                 self.switch_to(mode!(InFrameset));
+                                Control::Continue
                             }
-                            Control::Continue
                         };
                         self.disable_foster_parenting();
                         ctrl
@@ -422,7 +436,7 @@ where
                 }
                 mode!(InFrameset) => {
                     let ctrl = {
-                        if self.context_stack.len() == 1 {
+                        if self.context().is_html_element(tag!(Html)) {
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             // Ignore the token.
@@ -430,8 +444,9 @@ where
                             Control::Continue
                         } else {
                             self.pop_element();
-                            // TODO: If the parser was not created as part of the HTML fragment parsing algorithm (fragment case)
-                            if !self.context().is_html_element(tag!(Frameset)) {
+                            if self.fragment_parsing_context.is_none()
+                                && !self.context().is_html_element(tag!(Frameset))
+                            {
                                 self.switch_to(mode!(AfterFrameset));
                             }
                             Control::Continue

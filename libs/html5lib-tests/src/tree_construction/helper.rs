@@ -55,6 +55,11 @@ impl<'a> TreeValidator<'a> {
     fn flatten(&self, depth: usize, index: usize, v: &mut Vec<LinearNode>) {
         match &self.nodes[index] {
             Node::Document { child_nodes, .. } => {
+                let child_nodes = if self.test.for_html_fragment_parsing() {
+                    self.child_nodes(1)
+                } else {
+                    child_nodes
+                };
                 for &child_index in child_nodes.iter() {
                     self.flatten(depth, child_index, v);
                 }
@@ -131,6 +136,19 @@ impl<'a> TreeValidator<'a> {
             _ => unreachable!(),
         };
         std::mem::replace(child_nodes, vec![])
+    }
+
+    fn child_nodes(&self, node_id: usize) -> &Vec<usize> {
+        debug_assert!(self.nodes.get(node_id).is_some());
+        match self.nodes.get(node_id) {
+            Some(Node::Document {
+                ref child_nodes, ..
+            }) => child_nodes,
+            Some(Node::Element {
+                ref child_nodes, ..
+            }) => child_nodes,
+            _ => unreachable!(),
+        }
     }
 
     fn child_nodes_mut(&mut self, node: usize) -> &mut Vec<usize> {
@@ -423,6 +441,12 @@ pub struct Test {
     pub document: Vec<(usize, &'static str)>,
     pub context_element: Option<(&'static str, &'static str)>, // (ns, name)
     pub scripting: Scripting,
+}
+
+impl Test {
+    fn for_html_fragment_parsing(&self) -> bool {
+        self.context_element.is_some()
+    }
 }
 
 pub enum Scripting {

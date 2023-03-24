@@ -405,7 +405,7 @@ where
                 }
                 mode!(InColumnGroup) => {
                     let ctrl = {
-                        if self.context().is_html_element(tag!(Colgroup)) {
+                        if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             // Ignore the token.

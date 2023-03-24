@@ -8,21 +8,22 @@ where
         if let Token::End = token {
             return false;
         }
-        if self.context().is_html() {
+        let context = self.adjusted_context();
+        if context.is_html() {
             return false;
         }
         match token {
             Token::StartTag(ref tag) => {
-                if self.context().is_html_integration_point() {
+                if context.is_html_integration_point() {
                     return false;
                 }
                 let local_name = LocalName::lookup(tag.name);
-                if self.context().is_svg_integration_point() {
+                if context.is_svg_integration_point() {
                     if let tag!(svg: Svg) = local_name {
                         return false;
                     }
                 }
-                if self.context().is_mathml_text_integration_point() {
+                if context.is_mathml_text_integration_point() {
                     match local_name {
                         tag!(mathml: Mglyph, Malignmark) => (),
                         _ => return false,
@@ -30,10 +31,10 @@ where
                 }
             }
             Token::Text(_) => {
-                if self.context().is_html_integration_point() {
+                if context.is_html_integration_point() {
                     return false;
                 }
-                if self.context().is_mathml_text_integration_point() {
+                if context.is_mathml_text_integration_point() {
                     return false;
                 }
             }

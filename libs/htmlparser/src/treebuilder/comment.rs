@@ -31,7 +31,6 @@ where
                     InSelect,
                     InSelectInTable,
                     InTemplate,
-                    AfterBody,
                     InFrameset,
                     AfterFrameset
                 ) => {
@@ -80,6 +79,16 @@ where
                         _ => return ctrl,
                     }
                 }
+                mode!(AfterBody) => {
+                    let ctrl = {
+                        self.append_comment_to_document_element(&comment);
+                        Control::Continue
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return ctrl,
+                    }
+                }
                 mode!(AfterAfterBody, AfterAfterFrameset) => {
                     let ctrl = {
                         self.append_comment_to_document(&comment);
@@ -95,6 +104,14 @@ where
                 }
             }
         }
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn append_comment_to_document_element(&mut self, comment: &Comment<'_>) {
+        self.append_text_if_exists();
+        let node = self.inner.create_comment(comment.data);
+        let parent = self.context_stack[1].open_element.node;
+        self.inner.append_child(parent, node);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]

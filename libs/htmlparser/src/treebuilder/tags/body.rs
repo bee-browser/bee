@@ -96,10 +96,18 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        // TODO: Ignore the token (fragment case).
-                        self.frameset_ok = false;
-                        self.set_attributes_to_body_element(tag);
-                        Control::Continue
+                        if self.context_stack.len() < 3
+                            || !self.context_stack[2].is_html_element(tag!(Body))
+                            || self.context().has_template_element()
+                        {
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            self.frameset_ok = false;
+                            self.set_attributes_to_body_element(tag);
+                            Control::Continue
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -114,10 +122,18 @@ where
                         let ctrl = {
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
-                            // TODO: Ignore the token (fragment case).
-                            self.frameset_ok = false;
-                            self.set_attributes_to_body_element(tag);
-                            Control::Continue
+                            if self.context_stack.len() < 3
+                                || !self.context_stack[2].is_html_element(tag!(Body))
+                                || self.context().has_template_element()
+                            {
+                                // Ignore the token.
+                                tracing::debug!("Ignore the token");
+                                Control::Continue
+                            } else {
+                                self.frameset_ok = false;
+                                self.set_attributes_to_body_element(tag);
+                                Control::Continue
+                            }
                         };
                         self.disable_foster_parenting();
                         ctrl

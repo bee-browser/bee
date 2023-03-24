@@ -203,7 +203,7 @@ where
     fn clear_stack_back_to_table_context(&mut self) {
         loop {
             match self.context().open_element.local_name {
-                tag!(Html, Table, Template) => break,
+                tag!(Table, Template, Html) => break,
                 _ => self.pop_element(),
             }
         }
@@ -212,7 +212,7 @@ where
     fn clear_stack_back_to_table_body_context(&mut self) {
         loop {
             match self.context().open_element.local_name {
-                tag!(Tbody, Tfoot, Thead) => break,
+                tag!(Tbody, Tfoot, Thead, Template, Html) => break,
                 _ => self.pop_element(),
             }
         }
@@ -221,7 +221,7 @@ where
     fn clear_stack_back_to_table_row_context(&mut self) {
         loop {
             match self.context().open_element.local_name {
-                tag!(Html, Template, Tr) => break,
+                tag!(Template, Tr, Html) => break,
                 _ => self.pop_element(),
             }
         }

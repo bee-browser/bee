@@ -309,9 +309,16 @@ where
                 }
                 mode!(AfterBody) => {
                     let ctrl = {
-                        // TODO: If the parser was created as part of the HTML fragment parsing algorithm, this is a parse error; ignore the token. (fragment case)
-                        self.switch_to(mode!(AfterAfterBody));
-                        Control::Continue
+                        if self.fragment_parsing_context.is_some() {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            self.switch_to(mode!(AfterAfterBody));
+                            Control::Continue
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
