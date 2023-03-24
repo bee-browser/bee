@@ -374,24 +374,28 @@ modes:
       - match: <body>
         run: |
           {{use '$parse-error'}}
-          // TODO: Ignore the token (fragment case).
-          self.frameset_ok = false;
-          self.set_attributes_to_body_element(tag);
-          Control::Continue
+          if self.context_stack.len() < 3 || !self.context_stack[2].is_html_element(tag!(Body)) || self.context().has_template_element() {
+              {{use '$ignore-token'}}
+          } else {
+              self.frameset_ok = false;
+              self.set_attributes_to_body_element(tag);
+              Control::Continue
+          }
       - match: <frameset>
         run: |
           {{use '$parse-error'}}
-          // TODO: Ignore the token (fragment case).
-          if !self.frameset_ok {
-              // Ignore the token.
+          if self.context_stack.len() < 3 || !self.context_stack[2].is_html_element(tag!(Body)) {
+              {{use '$ignore-token'}}
+          } else if !self.frameset_ok {
+              {{use '$ignore-token'}}
           } else {
               while !self.context().is_html_element(tag!(Html)) {
                   self.remove_element();
               }
               self.push_html_frameset_element(tag);
               self.switch_to(mode!(InFrameset));
+              Control::Continue
           }
-          Control::Continue
       - match: eof
         run: |
           // TODO
@@ -1158,7 +1162,7 @@ modes:
           Control::Continue
       - match: </colgroup>
         run: |
-          if self.context().is_html_element(tag!(Colgroup)) {
+          if !self.context().is_html_element(tag!(Colgroup)) {
               {{use '$parse-error'}}
               {{use '$ignore-token'}}
           } else {
@@ -1534,7 +1538,7 @@ modes:
           {{use '@in-body'}}
       - match: comment
         run: |
-          self.insert_comment(&comment);
+          self.append_comment_to_document_element(&comment);
           Control::Continue
       - match: doctype
         run: |
@@ -1545,9 +1549,13 @@ modes:
           {{use '@in-body'}}
       - match: </html>
         run: |
-          // TODO: If the parser was created as part of the HTML fragment parsing algorithm, this is a parse error; ignore the token. (fragment case)
-          self.switch_to(mode!(AfterAfterBody));
-          Control::Continue
+          if self.fragment_parsing_context.is_some() {
+              {{use '$parse-error'}}
+              {{use '$ignore-token'}}
+          } else {
+              self.switch_to(mode!(AfterAfterBody));
+              Control::Continue
+          }
       - match: eof
         run: |
           Control::Done
@@ -1581,13 +1589,12 @@ modes:
           Control::Continue
       - match: </frameset>
         run: |
-          if self.context_stack.len() == 1 {
+          if self.context().is_html_element(tag!(Html)) {
               {{use '$parse-error'}}
               {{use '$ignore-token'}}
           } else {
               self.pop_element();
-              // TODO: If the parser was not created as part of the HTML fragment parsing algorithm (fragment case)
-              if !self.context().is_html_element(tag!(Frameset)) {
+              if self.fragment_parsing_context.is_none() && !self.context().is_html_element(tag!(Frameset)) {
                   self.switch_to(mode!(AfterFrameset));
               }
               Control::Continue

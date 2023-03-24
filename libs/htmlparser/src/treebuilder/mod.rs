@@ -89,6 +89,7 @@ where
     text: String,
     pending_table_text: String,
 
+    fragment_parsing_context: Option<TreeBuildContext<T::NodeId>>,
     context_stack: Vec<TreeBuildContext<T::NodeId>>,
     active_formatting_element_list: ActiveFormattingElementList<T::NodeId>,
 
@@ -129,6 +130,7 @@ where
             body_element: None,
             text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             pending_table_text: String::with_capacity(INITIAL_TEXT_CAPACITY),
+            fragment_parsing_context: None,
             context_stack: vec![context],
             active_formatting_element_list: Default::default(),
             iframe_srcdoc: false,
@@ -151,6 +153,7 @@ where
         tracing::debug!(scripting);
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_context_element(
         &mut self,
         local_name: LocalName,
@@ -158,23 +161,12 @@ where
         node: T::NodeId,
     ) {
         debug_assert_eq!(self.context_stack.len(), 1);
-        self.context_stack[0] = TreeBuildContext {
-            open_element: OpenElement {
-                namespace,
-                local_name,
-                node,
-            },
-            reset_mode: InsertionMode::InBody,
-            foster_parenting_insertion_point: FosterParentingInsertionPoint::LastChild(node),
-            element_in_scope: Default::default(),
-            element_in_list_item_scope: Default::default(),
-            element_in_button_scope: Default::default(),
-            element_in_table_scope: Default::default(),
-            element_in_select_scope: Default::default(),
-            // TODO
-            flags: Default::default(),
+        let context_element = OpenElement {
+            local_name,
+            namespace,
+            node,
         };
-        self.switch_to(match local_name {
+        let mode = match local_name {
             tag!(Select) => mode!(InSelect),
             tag!(Td, Th) => mode!(InCell),
             tag!(Tr) => mode!(InRow),
@@ -187,12 +179,49 @@ where
             tag!(Frameset) => mode!(InFrameset),
             tag!(Html) => mode!(BeforeHead),
             _ => mode!(InBody),
-        });
+        };
+        tracing::debug!(?context_element);
+        self.push_html_html_element(&Tag::with_no_attrs("html"));
+        self.context_mut().reset_mode = mode;
+        self.switch_to(mode);
         tracing::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
         );
         // TODO: Set the parser's form element pointer to the nearest node to the context element that is a form element (going straight up the ancestor chain, and including the element itself, if it is a form element), if any. (If there is no such form element, the form element pointer keeps its initial value, null.)
+        let mut flags = Default::default();
+        match namespace {
+            Namespace::Html => {}
+            Namespace::MathMl => match local_name {
+                tag!(mathml: Mi, Mo, Mn, Ms, Mtext) => {
+                    flags |= flags!(MathmlTextIntegrationPoint);
+                }
+                tag!(mathml: AnnotationXml) => {
+                    flags |= flags!(SvgIntegrationPoint);
+                }
+                _ => {}
+            },
+            Namespace::Svg => match local_name {
+                tag!(svg: Script) => {
+                    flags |= flags!(SvgScript);
+                }
+                tag!(svg: ForeignObject, Desc, Title) => {
+                    flags |= flags!(HtmlIntegrationPoint);
+                }
+                _ => {}
+            },
+        }
+        self.fragment_parsing_context = Some(TreeBuildContext {
+            open_element: context_element,
+            reset_mode: mode!(InBody),
+            foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
+            element_in_scope: Default::default(),
+            element_in_list_item_scope: Default::default(),
+            element_in_button_scope: Default::default(),
+            element_in_table_scope: Default::default(),
+            element_in_select_scope: Default::default(),
+            flags,
+        });
     }
 
     pub fn in_html_namespace(&self) -> bool {
@@ -1178,6 +1207,14 @@ where
     }
 
     #[inline(always)]
+    fn adjusted_context(&self) -> &TreeBuildContext<T::NodeId> {
+        match self.fragment_parsing_context {
+            Some(ref context) => context,
+            None => self.context(),
+        }
+    }
+
+    #[inline(always)]
     fn context(&self) -> &TreeBuildContext<T::NodeId> {
         self.nth_context(0)
     }
@@ -1570,6 +1607,11 @@ where
     }
 
     #[inline(always)]
+    fn is_in_foreign_content(&self) -> bool {
+        self.flags.contains(flags!(InForeignContent))
+    }
+
+    #[inline(always)]
     fn is_mathml_text_integration_point(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.flags.contains(flags!(MathmlTextIntegrationPoint))
@@ -1886,6 +1928,7 @@ flagset::flags! {
 
     enum TreeBuildFlags: u8 {
         Removed,
+        InForeignContent,
         MathmlTextIntegrationPoint,
         SvgIntegrationPoint,
         SvgScript,

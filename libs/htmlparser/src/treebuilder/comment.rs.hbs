@@ -35,6 +35,14 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
+    fn append_comment_to_document_element(&mut self, comment: &Comment<'_>) {
+        self.append_text_if_exists();
+        let node = self.inner.create_comment(comment.data);
+        let parent = self.context_stack[1].open_element.node;
+        self.inner.append_child(parent, node);
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
     fn append_comment_to_document(&mut self, comment: &Comment<'_>) {
         self.append_text_if_exists();
         let node = self.inner.create_comment(comment.data);
