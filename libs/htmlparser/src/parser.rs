@@ -49,7 +49,7 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn set_context_element(&mut self, tag_name: &str, namespace: Namespace, node: T::Node) {
+    pub fn set_context_element(&mut self, tag_name: &str, namespace: Namespace, node: T::NodeId) {
         let local_name = LocalName::lookup(tag_name);
         self.tokenizer.set_initial_state(match local_name {
             tag!(Title, Textarea) => InitialState::Rcdata,
