@@ -93,10 +93,22 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        // TODO
-                        self.reconstruct_active_formatting_elements();
-                        self.push_html_form_element(tag);
-                        Control::Continue
+                        if self.form_element.is_some() && !self.context().has_template_element() {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            if self.context().has_p_element_in_button_scope() {
+                                self.close_p_element();
+                            }
+                            self.push_html_form_element(tag);
+                            if !self.context().has_template_element() {
+                                self.form_element = Some(self.context().open_element.node);
+                            }
+                            Control::Continue
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -107,12 +119,16 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        // TODO: If there is a template element on the stack of open elements, or if the form element pointer is not null, ignore the token.
-                        // TODO: Otherwise
-                        self.push_html_form_element(tag);
-                        // TODO: set the form element pointer to point to the element created.
-                        self.pop_element();
-                        Control::Continue
+                        if self.context().has_template_element() || self.form_element.is_some() {
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            self.push_html_form_element(tag);
+                            self.form_element = Some(self.context().open_element.node);
+                            self.pop_element();
+                            Control::Continue
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -125,6 +141,7 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
                             let node = self.inner.create_text(self.pending_table_text.as_str());
                             self.insert_node(node);
                             self.pending_table_text.clear();
@@ -261,23 +278,57 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        // TODO
-                        if !self.context().has_form_element_in_scope() {
-                            // TODO: Parse error.
-                            tracing::debug!("Parse error");
-                            // Ignore the token.
+                        if !self.context().has_template_element() {
+                            let node = self.form_element.take();
+                            match node {
+                                Some(node) => {
+                                    match self.find_element_in_scope(node) {
+                                        Ok(pos) => {
+                                            self.close_implied_tags();
+                                            if self.context().open_element.node != node {
+                                                // TODO: Parse error.
+                                                tracing::debug!("Parse error");
+                                            }
+                                            self.context_stack.remove(pos);
+                                            Control::Continue
+                                        }
+                                        _ => {
+                                            // TODO: Parse error.
+                                            tracing::debug!("Parse error");
+                                            // Ignore the token.
+                                            tracing::debug!("Ignore the token");
+                                            Control::Continue
+                                        }
+                                    }
+                                }
+                                _ => {
+                                    // TODO: Parse error.
+                                    tracing::debug!("Parse error");
+                                    // Ignore the token.
+                                    tracing::debug!("Ignore the token");
+                                    Control::Continue
+                                }
+                            }
                         } else {
-                            self.close_implied_tags();
-                            if !self.context().is_html_element(tag!(Form)) {
+                            if !self.context().has_form_element_in_scope() {
                                 // TODO: Parse error.
                                 tracing::debug!("Parse error");
+                                // Ignore the token.
+                                tracing::debug!("Ignore the token");
+                                Control::Continue
+                            } else {
+                                self.close_implied_tags();
+                                if !self.context().is_html_element(tag!(Form)) {
+                                    // TODO: Parse error.
+                                    tracing::debug!("Parse error");
+                                }
+                                while !self.context().is_html_element(tag!(Form)) {
+                                    self.pop_element();
+                                }
+                                self.pop_element(); // pop an html form element
+                                Control::Continue
                             }
-                            while !self.context().is_html_element(tag!(Form)) {
-                                self.pop_element();
-                            }
-                            self.pop_element(); // pop an html form element
                         }
-                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -301,23 +352,57 @@ where
                         tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
-                            // TODO
-                            if !self.context().has_form_element_in_scope() {
-                                // TODO: Parse error.
-                                tracing::debug!("Parse error");
-                                // Ignore the token.
+                            if !self.context().has_template_element() {
+                                let node = self.form_element.take();
+                                match node {
+                                    Some(node) => {
+                                        match self.find_element_in_scope(node) {
+                                            Ok(pos) => {
+                                                self.close_implied_tags();
+                                                if self.context().open_element.node != node {
+                                                    // TODO: Parse error.
+                                                    tracing::debug!("Parse error");
+                                                }
+                                                self.context_stack.remove(pos);
+                                                Control::Continue
+                                            }
+                                            _ => {
+                                                // TODO: Parse error.
+                                                tracing::debug!("Parse error");
+                                                // Ignore the token.
+                                                tracing::debug!("Ignore the token");
+                                                Control::Continue
+                                            }
+                                        }
+                                    }
+                                    _ => {
+                                        // TODO: Parse error.
+                                        tracing::debug!("Parse error");
+                                        // Ignore the token.
+                                        tracing::debug!("Ignore the token");
+                                        Control::Continue
+                                    }
+                                }
                             } else {
-                                self.close_implied_tags();
-                                if !self.context().is_html_element(tag!(Form)) {
+                                if !self.context().has_form_element_in_scope() {
                                     // TODO: Parse error.
                                     tracing::debug!("Parse error");
+                                    // Ignore the token.
+                                    tracing::debug!("Ignore the token");
+                                    Control::Continue
+                                } else {
+                                    self.close_implied_tags();
+                                    if !self.context().is_html_element(tag!(Form)) {
+                                        // TODO: Parse error.
+                                        tracing::debug!("Parse error");
+                                    }
+                                    while !self.context().is_html_element(tag!(Form)) {
+                                        self.pop_element();
+                                    }
+                                    self.pop_element(); // pop an html form element
+                                    Control::Continue
                                 }
-                                while !self.context().is_html_element(tag!(Form)) {
-                                    self.pop_element();
-                                }
-                                self.pop_element(); // pop an html form element
                             }
-                            Control::Continue
                         };
                         self.disable_foster_parenting();
                         ctrl
@@ -333,6 +418,7 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
                             let node = self.inner.create_text(self.pending_table_text.as_str());
                             self.insert_node(node);
                             self.pending_table_text.clear();

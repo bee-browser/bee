@@ -5,14 +5,17 @@
 
 mod a;
 mod any_other;
+mod applet;
 mod aside;
 mod b;
 mod basefont;
 mod bgsound;
 mod body;
 mod br;
+mod button;
 mod caption;
 mod center;
+mod code;
 mod col;
 mod colgroup;
 mod dd;
@@ -28,19 +31,25 @@ mod head;
 mod hr;
 mod html;
 mod i;
+mod iframe;
 mod img;
 mod input;
+mod keygen;
 mod li;
 mod link;
+mod listing;
 mod main;
 mod math;
 mod meta;
 mod nobr;
 mod noframes;
 mod noscript;
+mod object;
 mod ol;
+mod optgroup;
 mod option;
 mod p;
+mod param;
 mod plaintext;
 mod pre;
 mod script;
@@ -57,6 +66,7 @@ mod thead;
 mod title;
 mod tr;
 mod ul;
+mod xmp;
 
 use super::*;
 
@@ -69,14 +79,17 @@ where
         let local_name = LocalName::lookup(tag.name);
         match local_name {
             tag!(A) => self.handle_start_a(&tag),
+            tag!(Applet) => self.handle_start_applet(&tag),
             tag!(Aside) => self.handle_start_aside(&tag),
             tag!(B) => self.handle_start_b(&tag),
             tag!(Basefont) => self.handle_start_basefont(&tag),
             tag!(Bgsound) => self.handle_start_bgsound(&tag),
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Br) => self.handle_start_br(&tag),
+            tag!(Button) => self.handle_start_button(&tag),
             tag!(Caption) => self.handle_start_caption(&tag),
             tag!(Center) => self.handle_start_center(&tag),
+            tag!(Code) => self.handle_start_code(&tag),
             tag!(Col) => self.handle_start_col(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
             tag!(Dd) => self.handle_start_dd(&tag),
@@ -92,9 +105,12 @@ where
             tag!(Hr) => self.handle_start_hr(&tag),
             tag!(Html) => self.handle_start_html(&tag),
             tag!(I) => self.handle_start_i(&tag),
+            tag!(Iframe) => self.handle_start_iframe(&tag),
             tag!(Img) => self.handle_start_img(&tag),
             tag!(Input) => self.handle_start_input(&tag),
+            tag!(Keygen) => self.handle_start_keygen(&tag),
             tag!(Li) => self.handle_start_li(&tag),
+            tag!(Listing) => self.handle_start_listing(&tag),
             tag!(Link) => self.handle_start_link(&tag),
             tag!(Main) => self.handle_start_main(&tag),
             tag!(Math) => self.handle_start_math(&tag),
@@ -102,9 +118,12 @@ where
             tag!(Nobr) => self.handle_start_nobr(&tag),
             tag!(Noframes) => self.handle_start_noframes(&tag),
             tag!(Noscript) => self.handle_start_noscript(&tag),
+            tag!(Object) => self.handle_start_object(&tag),
             tag!(Ol) => self.handle_start_ol(&tag),
+            tag!(Optgroup) => self.handle_start_optgroup(&tag),
             tag!(Option) => self.handle_start_option(&tag),
             tag!(P) => self.handle_start_p(&tag),
+            tag!(Param) => self.handle_start_param(&tag),
             tag!(Plaintext) => self.handle_start_plaintext(&tag),
             tag!(Pre) => self.handle_start_pre(&tag),
             tag!(Script) => self.handle_start_script(&tag),
@@ -121,6 +140,7 @@ where
             tag!(Tr) => self.handle_start_tr(&tag),
             tag!(Title) => self.handle_start_title(&tag),
             tag!(Ul) => self.handle_start_ul(&tag),
+            tag!(Xmp) => self.handle_start_xmp(&tag),
             _ => self.handle_start_any_other(&tag),
         }
     }
@@ -130,14 +150,17 @@ where
         let local_name = LocalName::lookup(tag.name);
         match local_name {
             tag!(A) => self.handle_end_a(&tag),
+            tag!(Applet) => self.handle_end_applet(&tag),
             tag!(Aside) => self.handle_end_aside(&tag),
             tag!(B) => self.handle_end_b(&tag),
             tag!(Basefont) => self.handle_end_basefont(&tag),
             tag!(Bgsound) => self.handle_end_bgsound(&tag),
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Br) => self.handle_end_br(&tag),
+            tag!(Button) => self.handle_end_button(&tag),
             tag!(Caption) => self.handle_end_caption(&tag),
             tag!(Center) => self.handle_end_center(&tag),
+            tag!(Code) => self.handle_end_code(&tag),
             tag!(Col) => self.handle_end_col(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
             tag!(Dd) => self.handle_end_dd(&tag),
@@ -153,9 +176,12 @@ where
             tag!(Hr) => self.handle_end_hr(&tag),
             tag!(Html) => self.handle_end_html(&tag),
             tag!(I) => self.handle_end_i(&tag),
+            tag!(Iframe) => self.handle_end_iframe(&tag),
             tag!(Img) => self.handle_end_img(&tag),
             tag!(Input) => self.handle_end_input(&tag),
+            tag!(Keygen) => self.handle_end_keygen(&tag),
             tag!(Li) => self.handle_end_li(&tag),
+            tag!(Listing) => self.handle_end_listing(&tag),
             tag!(Link) => self.handle_end_link(&tag),
             tag!(Main) => self.handle_end_main(&tag),
             tag!(Math) => self.handle_end_math(&tag),
@@ -163,9 +189,12 @@ where
             tag!(Nobr) => self.handle_end_nobr(&tag),
             tag!(Noframes) => self.handle_end_noframes(&tag),
             tag!(Noscript) => self.handle_end_noscript(&tag),
+            tag!(Object) => self.handle_end_object(&tag),
             tag!(Ol) => self.handle_end_ol(&tag),
+            tag!(Optgroup) => self.handle_end_optgroup(&tag),
             tag!(Option) => self.handle_end_option(&tag),
             tag!(P) => self.handle_end_p(&tag),
+            tag!(Param) => self.handle_end_param(&tag),
             tag!(Plaintext) => self.handle_end_plaintext(&tag),
             tag!(Pre) => self.handle_end_pre(&tag),
             tag!(Script) => self.handle_end_script(&tag),
@@ -182,18 +211,19 @@ where
             tag!(Tr) => self.handle_end_tr(&tag),
             tag!(Title) => self.handle_end_title(&tag),
             tag!(Ul) => self.handle_end_ul(&tag),
+            tag!(Xmp) => self.handle_end_xmp(&tag),
             _ => self.handle_end_any_other(&tag),
         }
     }
 
     fn set_attributes_to_html_element(&mut self, tag: &Tag<'_>) {
         let node = self.html_element.expect("<html> must exist");
-        self.inner.set_attribute(node, tag.attrs(), false);
+        self.inner.set_attributes(node, tag.attrs(), false);
     }
 
     fn set_attributes_to_body_element(&mut self, tag: &Tag<'_>) {
         let node = self.body_element.expect("<body> must exist");
-        self.inner.set_attribute(node, tag.attrs(), false);
+        self.inner.set_attributes(node, tag.attrs(), false);
     }
 
     fn reset_insertion_mode_appropriately(&mut self) {
@@ -228,20 +258,16 @@ where
     }
 
     fn close_cell(&mut self) {
-        // TODO: Generate implied end tags.
-        loop {
-            match self.context().open_element.local_name {
-                tag!(Td, Th) => {
-                    self.pop_element();
-                    break;
-                }
-                _ => {
-                    // TODO: Parse error.
-                    self.pop_element();
-                }
-            }
+        self.close_implied_tags();
+        if !self.context().is_one_of_html_elements(&tags![Td, Th]) {
+            // TODO: Parse error.
         }
-        // TODO: Clear the list of active formatting elements up to the last marker.
+        while !self.context().is_one_of_html_elements(&tags![Td, Th]) {
+            self.pop_element();
+        }
+        self.pop_element(); // pop an html td or th element
+        self.active_formatting_element_list
+            .clear_up_to_last_marker();
         self.switch_to(mode!(InRow));
     }
 

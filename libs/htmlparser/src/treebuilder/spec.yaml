@@ -211,7 +211,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html template element
-              self.pop_active_formatting_elements_up_to_marker();
+              self.active_formatting_element_list.clear_up_to_last_marker();
               // TODO: Pop the current template insertion mode off the stack of template insertion modes.
               self.reset_insertion_mode_appropriately();
           }
@@ -447,8 +447,19 @@ modes:
           Control::Continue
       - match: <form>
         run: |
-          // TODO
-          {{use 'any-other-start-tag'}}
+          if self.form_element.is_some() && !self.context().has_template_element() {
+              {{use '$parse-error'}}
+              {{use '$ignore-token'}}
+          } else {
+              if self.context().has_p_element_in_button_scope() {
+                  self.close_p_element();
+              }
+              self.push_html_form_element(tag);
+              if !self.context().has_template_element() {
+                  self.form_element = Some(self.context().open_element.node);
+              }
+              Control::Continue
+          }
       - match: <li>
         run: |
           self.frameset_ok = false;
@@ -564,21 +575,46 @@ modes:
           Control::Continue
       - match: </form>
         run: |
-          // TODO
-          if !self.context().has_form_element_in_scope() {
-              {{use '$parse-error'}}
-              // Ignore the token.
+          if !self.context().has_template_element() {
+              let node = self.form_element.take();
+              match node {
+                  Some(node) => {
+                      match self.find_element_in_scope(node) {
+                          Ok(pos) => {
+                              self.close_implied_tags();
+                              if self.context().open_element.node != node {
+                                  {{use '$parse-error'}}
+                              }
+                              self.context_stack.remove(pos);
+                              Control::Continue
+                          }
+                          _ => {
+                              {{use '$parse-error'}}
+                              {{use '$ignore-token'}}
+                          }
+                      }
+                  }
+                  _ => {
+                      {{use '$parse-error'}}
+                      {{use '$ignore-token'}}
+                  }
+              }
           } else {
-              self.close_implied_tags();
-              if !self.context().is_html_element(tag!(Form)) {
+              if !self.context().has_form_element_in_scope() {
                   {{use '$parse-error'}}
+                  {{use '$ignore-token'}}
+              } else {
+                  self.close_implied_tags();
+                  if !self.context().is_html_element(tag!(Form)) {
+                      {{use '$parse-error'}}
+                  }
+                  while !self.context().is_html_element(tag!(Form)) {
+                      self.pop_element();
+                  }
+                  self.pop_element(); // pop an html form element
+                  Control::Continue
               }
-              while !self.context().is_html_element(tag!(Form)) {
-                  self.pop_element();
-              }
-              self.pop_element(); // pop an html form element
           }
-          Control::Continue
       - match: </p>
         run: |
           if !self.context().has_p_element_in_button_scope() {
@@ -700,7 +736,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html {{tag_name}} element
-              self.pop_active_formatting_element_up_to_marker();
+              self.active_formatting_element_list.clear_up_to_last_marker();
           }
           Control::Continue
       - match: <table>
@@ -1029,12 +1065,14 @@ modes:
       - match: <form>
         run: |
           {{use '$parse-error'}}
-          // TODO: If there is a template element on the stack of open elements, or if the form element pointer is not null, ignore the token.
-          // TODO: Otherwise
-          self.push_html_form_element(tag);
-          // TODO: set the form element pointer to point to the element created.
-          self.pop_element();
-          Control::Continue
+          if self.context().has_template_element() || self.form_element.is_some() {
+              {{use '$ignore-token'}}
+          } else {
+              self.push_html_form_element(tag);
+              self.form_element = Some(self.context().open_element.node);
+              self.pop_element();
+              Control::Continue
+          }
       - match: eof
         run: |
           {{use '@in-body'}}
@@ -1069,6 +1107,7 @@ modes:
           if self.pending_table_text_contains_non_whitespace {
               {{use '$parse-error'}}
               self.enable_foster_parenting();
+              self.reconstruct_active_formatting_elements();
               let node = self.inner.create_text(self.pending_table_text.as_str());
               self.insert_node(node);
               self.pending_table_text.clear();
@@ -1100,7 +1139,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html caption element
-              self.pop_active_formatting_elements_up_to_marker();
+              self.active_formatting_element_list.clear_up_to_last_marker();
               self.switch_to(mode!(InTable));
           }
           Control::Continue
@@ -1120,7 +1159,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html caption element
-              self.pop_active_formatting_elements_up_to_marker();
+              self.active_formatting_element_list.clear_up_to_last_marker();
               self.switch_to(mode!(InTable));
               Control::Reprocess
           }
@@ -1310,7 +1349,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html {{tag_name}} element
-              self.pop_active_formatting_elements_up_to_marker();
+              self.active_formatting_element_list.clear_up_to_last_marker();
               self.switch_to(mode!(InRow));
               Control::Continue
           }

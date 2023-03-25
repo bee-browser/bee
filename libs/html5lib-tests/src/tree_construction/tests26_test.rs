@@ -256,17 +256,7 @@ fn test_0008() {
 #[test]
 fn test_0009() {
     parse(Test {
-        data: "<p><code x</code></p>",
-        document: vec![],
-        context_element: None,
-        scripting: Scripting::Both,
-    });
-}
-
-#[test]
-fn test_0010() {
-    parse(Test {
-        data: "<!DOCTYPE html><svg><foreignObject><p><i></p>a",
+        data: "<p><code x</code></p>\n",
         document: vec![
             (0, "<html>"),
             (1, "<head>"),
@@ -279,6 +269,17 @@ fn test_0010() {
             (3, "code=\"\""),
             (3, "x<=\"\""),
             (3, "\"\n\""),
+        ],
+        context_element: None,
+        scripting: Scripting::Both,
+    });
+}
+
+#[test]
+fn test_0010() {
+    parse(Test {
+        data: "<!DOCTYPE html><svg><foreignObject><p><i></p>a",
+        document: vec![
             (0, "<!DOCTYPE html>"),
             (0, "<html>"),
             (1, "<head>"),

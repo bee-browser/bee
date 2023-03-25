@@ -145,6 +145,7 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
                             let node = self.inner.create_text(self.pending_table_text.as_str());
                             self.insert_node(node);
                             self.pending_table_text.clear();
@@ -382,6 +383,7 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
                             let node = self.inner.create_text(self.pending_table_text.as_str());
                             self.insert_node(node);
                             self.pending_table_text.clear();

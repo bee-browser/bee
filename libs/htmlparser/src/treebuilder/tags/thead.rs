@@ -128,6 +128,7 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
                             let node = self.inner.create_text(self.pending_table_text.as_str());
                             self.insert_node(node);
                             self.pending_table_text.clear();
@@ -165,7 +166,8 @@ where
                                 self.pop_element();
                             }
                             self.pop_element(); // pop an html caption element
-                            self.pop_active_formatting_elements_up_to_marker();
+                            self.active_formatting_element_list
+                                .clear_up_to_last_marker();
                             self.switch_to(mode!(InTable));
                             Control::Reprocess
                         }
@@ -395,6 +397,7 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
                             let node = self.inner.create_text(self.pending_table_text.as_str());
                             self.insert_node(node);
                             self.pending_table_text.clear();

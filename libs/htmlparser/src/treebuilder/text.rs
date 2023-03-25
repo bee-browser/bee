@@ -24,6 +24,9 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn handle_null_character(&mut self, c: char) {
+        if self.ignore_lf {
+            self.ignore_lf = false;
+        }
         loop {
             let span = tracing::debug_span!("handle_null_character", mode = ?self.mode);
             let _enter = span.enter();
@@ -317,6 +320,9 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     fn handle_character(&mut self, c: char) {
+        if self.ignore_lf {
+            self.ignore_lf = false;
+        }
         loop {
             let span = tracing::debug_span!("handle_character", mode = ?self.mode, ?c);
             let _enter = span.enter();

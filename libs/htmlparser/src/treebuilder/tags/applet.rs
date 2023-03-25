@@ -18,6 +18,7 @@ where
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -67,6 +68,7 @@ where
                 mode!(InHeadNoscript) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         debug_assert!(self.context().is_html_element(tag!(Noscript)));
                         self.pop_element();
                         debug_assert!(self.context().is_html_element(tag!(Head)));
@@ -105,6 +107,7 @@ where
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
                             self.reconstruct_active_formatting_elements();
@@ -123,9 +126,21 @@ where
                 }
                 mode!(InTableText) => {
                     let ctrl = {
-                        // TODO
-                        if !self.text.is_empty() {
-                            self.insert_text_to_foster_parent();
+                        if self.pending_table_text_contains_non_whitespace {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
+                            self.disable_foster_parenting();
+                        } else {
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                         }
                         self.switch_to_original_mode();
                         Control::Reprocess
@@ -139,7 +154,9 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.pop_element();
@@ -161,7 +178,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -184,6 +203,7 @@ where
                 mode!(AfterBody, AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -202,13 +222,14 @@ where
     #[allow(unused_variables)]
     pub fn handle_end_applet(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_applet", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_applet", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
                     let ctrl = {
                         if !self.iframe_srcdoc {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                         }
                         self.change_quirks_mode_if_changeable(QuirksMode::Quirks);
                         self.switch_to(mode!(BeforeHtml));
@@ -234,7 +255,9 @@ where
                 ) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         // Ignore the token.
+                        tracing::debug!("Ignore the token");
                         Control::Continue
                     };
                     match ctrl {
@@ -246,17 +269,20 @@ where
                     let ctrl = {
                         if !self.context().has_applet_element_in_scope() {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
                         } else {
                             self.close_implied_tags();
                             if !self.context().is_html_element(tag!(Applet)) {
                                 // TODO: Parse error.
+                                tracing::debug!("Parse error");
                             }
                             while !self.context().is_html_element(tag!(Applet)) {
                                 self.pop_element();
                             }
                             self.pop_element(); // pop an html applet element
-                            self.pop_active_formatting_element_up_to_marker();
+                            self.active_formatting_element_list
+                                .clear_up_to_last_marker();
                         }
                         Control::Continue
                     };
@@ -279,21 +305,25 @@ where
                 mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
                             if !self.context().has_applet_element_in_scope() {
                                 // TODO: Parse error.
+                                tracing::debug!("Parse error");
                                 // Ignore the token.
                             } else {
                                 self.close_implied_tags();
                                 if !self.context().is_html_element(tag!(Applet)) {
                                     // TODO: Parse error.
+                                    tracing::debug!("Parse error");
                                 }
                                 while !self.context().is_html_element(tag!(Applet)) {
                                     self.pop_element();
                                 }
                                 self.pop_element(); // pop an html applet element
-                                self.pop_active_formatting_element_up_to_marker();
+                                self.active_formatting_element_list
+                                    .clear_up_to_last_marker();
                             }
                             Control::Continue
                         };
@@ -307,9 +337,21 @@ where
                 }
                 mode!(InTableText) => {
                     let ctrl = {
-                        // TODO
-                        if !self.text.is_empty() {
-                            self.insert_text_to_foster_parent();
+                        if self.pending_table_text_contains_non_whitespace {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            self.enable_foster_parenting();
+                            self.reconstruct_active_formatting_elements();
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
+                            self.disable_foster_parenting();
+                        } else {
+                            let node = self.inner.create_text(self.pending_table_text.as_str());
+                            self.insert_node(node);
+                            self.pending_table_text.clear();
+                            self.pending_table_text_contains_non_whitespace = false;
                         }
                         self.switch_to_original_mode();
                         Control::Reprocess
@@ -323,7 +365,9 @@ where
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
                             // TODO: Parse error.
+                            tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
                             Control::Continue
                         } else {
                             self.pop_element();
@@ -339,6 +383,7 @@ where
                 mode!(AfterBody, AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
+                        tracing::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
