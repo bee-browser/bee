@@ -14,6 +14,7 @@ use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
 use bee_htmltokenizer::InitialState;
 
+use crate::localnames;
 use crate::localnames::LocalName;
 
 /// A trait used for building a DOM tree.
@@ -38,8 +39,8 @@ pub trait DomTreeBuilder {
     /// Create a Comment node.
     fn create_comment(&mut self, data: &str) -> Self::NodeId;
 
-    /// Sets an attribute to a node.
-    fn set_attribute<'a, I>(&mut self, node: Self::NodeId, attrs: I, overwrite: bool)
+    /// Sets attributes to a node.
+    fn set_attributes<'a, I>(&mut self, node: Self::NodeId, attrs: I, overwrite: bool)
     where
         I: Iterator<Item = (&'a str, &'a str)>;
 
@@ -80,6 +81,7 @@ where
     html_element: Option<T::NodeId>,
     head_element: Option<T::NodeId>,
     body_element: Option<T::NodeId>,
+    form_element: Option<T::NodeId>,
     text: String,
     pending_table_text: String,
 
@@ -122,6 +124,7 @@ where
             html_element: None,
             head_element: None,
             body_element: None,
+            form_element: None,
             text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             pending_table_text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             fragment_parsing_context: None,
@@ -168,7 +171,6 @@ where
             tag!(Caption) => mode!(InCaption),
             tag!(Colgroup) => mode!(InColumnGroup),
             tag!(Table) => mode!(InTable),
-            tag!(Head) => mode!(InHead),
             tag!(Body) => mode!(InBody),
             tag!(Frameset) => mode!(InFrameset),
             tag!(Html) => mode!(BeforeHead),
@@ -734,6 +736,7 @@ where
         self.push_html_element(tag, LocalName::Applet);
         let context = self.context_mut();
         context.element_in_scope.clear();
+        context.element_in_scope |= ElementInScope::Applet;
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
         context.element_in_select_scope.clear();
@@ -787,6 +790,14 @@ where
     }
 
     #[inline(always)]
+    fn push_html_button_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Button);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Button;
+        context.element_in_button_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_caption_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Caption);
         let context = self.context_mut();
@@ -803,6 +814,13 @@ where
         self.push_html_element(tag, LocalName::Center);
         let context = self.context_mut();
         context.element_in_scope |= ElementInScope::Center;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_code_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Code);
+        let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
 
@@ -930,6 +948,13 @@ where
     }
 
     #[inline(always)]
+    fn push_html_iframe_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Iframe);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_img_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Img);
         let context = self.context_mut();
@@ -939,6 +964,13 @@ where
     #[inline(always)]
     fn push_html_input_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Input);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_keygen_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Keygen);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -955,6 +987,14 @@ where
     fn push_html_link_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Link);
         let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_listing_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Listing);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Listing;
         context.element_in_select_scope.clear();
     }
 
@@ -1006,6 +1046,17 @@ where
     }
 
     #[inline(always)]
+    fn push_html_object_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Object);
+        let context = self.context_mut();
+        context.element_in_scope.clear();
+        context.element_in_scope |= ElementInScope::Object;
+        context.element_in_list_item_scope.clear();
+        context.element_in_button_scope.clear();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_ol_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ol);
         let context = self.context_mut();
@@ -1028,6 +1079,13 @@ where
         self.push_html_element(tag, LocalName::P);
         let context = self.context_mut();
         context.element_in_button_scope |= ElementInButtonScope::P;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_param_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Param);
+        let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
 
@@ -1182,6 +1240,13 @@ where
     }
 
     #[inline(always)]
+    fn push_html_xmp_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Xmp);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_unknown_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::lookup(tag.name));
         let context = self.context_mut();
@@ -1196,7 +1261,7 @@ where
         );
         self.append_text_if_exists();
         let node = self.inner.create_element(tag.name, Namespace::Html);
-        self.inner.set_attribute(node, tag.attrs(), true);
+        self.inner.set_attributes(node, tag.attrs(), true);
         self.insert_html_element(OpenElement::with_html(local_name, node))
     }
 
@@ -1280,17 +1345,30 @@ where
         }
     }
 
+    #[inline(always)]
+    fn adjust_mathml_attribute(name: &str) -> &str {
+        if name == "definitionurl" {
+            "definitionURL"
+        } else {
+            // We don't adjust foreign attributes.
+            name
+        }
+    }
+
+    #[inline(always)]
+    fn adjust_svg_attribute(name: &str) -> &str {
+        // We don't adjust foreign attributes.
+        localnames::svgattrs::adjust(name)
+    }
+
     #[tracing::instrument(level = "debug", skip_all)]
     fn push_mathml_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
         self.append_text_if_exists();
         let node = self.inner.create_element(tag.name, Namespace::MathMl);
-        self.inner.set_attribute(
+        self.inner.set_attributes(
             node,
-            tag.attrs().map(|(name, value)| {
-                // TODO: adjust MathML attributes
-                // TODO: adjust foreign attributes
-                (name, value)
-            }),
+            tag.attrs()
+                .map(|(name, value)| (Self::adjust_mathml_attribute(name), value)),
             true,
         );
         self.insert_element(OpenElement::with_mathml(local_name, node));
@@ -1330,12 +1408,10 @@ where
             _ => local_name.name(),
         };
         let node = self.inner.create_element(tag_name, Namespace::Svg);
-        self.inner.set_attribute(
+        self.inner.set_attributes(
             node,
-            tag.attrs().map(|(name, value)| {
-                // TODO: adjust foreign attributes
-                (name, value)
-            }),
+            tag.attrs()
+                .map(|(name, value)| (Self::adjust_svg_attribute(name), value)),
             true,
         );
         self.insert_element(OpenElement::with_svg(local_name, node));
@@ -1636,6 +1712,12 @@ where
     }
 
     #[inline(always)]
+    fn has_applet_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Applet)
+    }
+
+    #[inline(always)]
     fn has_aside_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Aside)
@@ -1645,6 +1727,12 @@ where
     fn has_body_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Body)
+    }
+
+    #[inline(always)]
+    fn has_button_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Button)
     }
 
     #[inline(always)]
@@ -1684,6 +1772,12 @@ where
     }
 
     #[inline(always)]
+    fn has_listing_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Listing)
+    }
+
+    #[inline(always)]
     fn has_main_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Main)
@@ -1693,6 +1787,12 @@ where
     fn has_nobr_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Nobr)
+    }
+
+    #[inline(always)]
+    fn has_object_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Object)
     }
 
     #[inline(always)]
@@ -1881,17 +1981,21 @@ enum FosterParentingInsertionPoint<T> {
 }
 
 flagset::flags! {
-    enum ElementInScope: u16 {
+    enum ElementInScope: u32 {
+        Applet,
         Aside,
         Body,
+        Button,
         Center,
         Dd,
         Div,
         Dl,
         Dt,
         Form,
+        Listing,
         Main,
         Nobr,
+        Object,
         Ol,
         Pre,
         Ul,

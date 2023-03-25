@@ -35,6 +35,9 @@ for (const line of dat.split('\n')) {
   const trimed = line.replace('\n', '');
   switch (trimed) {
   case '':
+    if (state === State.DATA) {
+      break;
+    }
     if (!inText) {
       if (test.hasData()) {
         tests.push(test);

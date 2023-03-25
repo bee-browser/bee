@@ -6621,19 +6621,9 @@
       "scripting": "Both"
     },
     {
-      "data": "<!doctype html><table>",
-      "errors": [],
-      "newErrors": [],
-      "document": [],
-      "scripting": "Both"
-    },
-    {
-      "data": "<!doctype html><table><td><span><font></span><span>",
+      "data": "<!doctype html><table>\n",
       "errors": [
-        "(2,0): eof-in-table",
-        "(1,26): unexpected-cell-in-table-body",
-        "(1,45): unexpected-end-tag",
-        "(1,51): expected-closing-tag-but-got-eof"
+        "(2,0): eof-in-table"
       ],
       "newErrors": [],
       "document": [
@@ -6660,7 +6650,19 @@
         [
           3,
           "\"\n\""
-        ],
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><table><td><span><font></span><span>",
+      "errors": [
+        "(1,26): unexpected-cell-in-table-body",
+        "(1,45): unexpected-end-tag",
+        "(1,51): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
         [
           0,
           "<!DOCTYPE html>"

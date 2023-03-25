@@ -96,8 +96,15 @@ fn test_0005() {
 #[test]
 fn test_0006() {
     parse(Test {
-        data: "<!DOCTYPE html><html><head></head><body><pre>",
-        document: vec![],
+        data: "<!DOCTYPE html><html><head></head><body><pre>\n\nfoo</pre></body></html>",
+        document: vec![
+            (0, "<!DOCTYPE html>"),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "<pre>"),
+            (3, "\"\nfoo\""),
+        ],
         context_element: None,
         scripting: Scripting::Both,
     });
@@ -108,12 +115,6 @@ fn test_0007() {
     parse(Test {
         data: "<!DOCTYPE html><html><head></head><body><pre>\nfoo\n</pre></body></html>",
         document: vec![
-            (0, "<!DOCTYPE html>"),
-            (0, "<html>"),
-            (1, "<head>"),
-            (1, "<body>"),
-            (2, "<pre>"),
-            (3, "\"\nfoo\""),
             (0, "<!DOCTYPE html>"),
             (0, "<html>"),
             (1, "<head>"),
@@ -297,8 +298,15 @@ fn test_0017() {
 #[test]
 fn test_0018() {
     parse(Test {
-        data: "<!DOCTYPE html><textarea>",
-        document: vec![],
+        data: "<!DOCTYPE html><textarea>\n\nfoo</textarea>",
+        document: vec![
+            (0, "<!DOCTYPE html>"),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "<textarea>"),
+            (3, "\"\nfoo\""),
+        ],
         context_element: None,
         scripting: Scripting::Both,
     });
@@ -309,12 +317,6 @@ fn test_0019() {
     parse(Test {
         data: "<!DOCTYPE html><html><head></head><body><ul><li><div><p><li></ul></body></html>",
         document: vec![
-            (0, "<!DOCTYPE html>"),
-            (0, "<html>"),
-            (1, "<head>"),
-            (1, "<body>"),
-            (2, "<textarea>"),
-            (3, "\"\nfoo\""),
             (0, "<!DOCTYPE html>"),
             (0, "<html>"),
             (1, "<head>"),

@@ -1,11 +1,12 @@
 BEE_TOOLS := ../../../../tools/bin/bee-tools
-SRCS := mod.rs
+SRCS := tags.rs svgattrs.rs
 
 .PHONY: codegen
 codegen: $(SRCS)
 
-mod.rs: local_names.yaml mod.rs.hbs
+%.rs: %.yaml %.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) deepmerge -i yaml -o json $< | \
-	  $(BEE_TOOLS) codegen --no-escape --input-stdin mod.rs.hbs | \
+	@cat $< | \
+	  $(BEE_TOOLS) y2j | \
+	  $(BEE_TOOLS) codegen --no-escape --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@

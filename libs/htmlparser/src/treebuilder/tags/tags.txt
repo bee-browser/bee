@@ -1,12 +1,15 @@
 a
+applet
 aside
 b
 basefont
 bgsound
 body
 br
+button
 caption
 center
+code
 col
 colgroup
 dd
@@ -22,9 +25,12 @@ head
 hr
 html
 i
+iframe
 img
 input
+keygen
 li
+listing
 link
 main
 math
@@ -32,9 +38,12 @@ meta
 nobr
 noframes
 noscript
+object
 ol
+optgroup
 option
 p
+param
 plaintext
 pre
 script
@@ -51,3 +60,4 @@ thead
 tr
 title
 ul
+xmp

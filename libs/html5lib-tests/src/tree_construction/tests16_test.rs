@@ -3234,8 +3234,15 @@ fn test_0193() {
 #[test]
 fn test_0194() {
     parse(Test {
-        data: "<!doctype html><table>",
-        document: vec![],
+        data: "<!doctype html><table>\n",
+        document: vec![
+            (0, "<!DOCTYPE html>"),
+            (0, "<html>"),
+            (1, "<head>"),
+            (1, "<body>"),
+            (2, "<table>"),
+            (3, "\"\n\""),
+        ],
         context_element: None,
         scripting: Scripting::Both,
     });
@@ -3246,12 +3253,6 @@ fn test_0195() {
     parse(Test {
         data: "<!doctype html><table><td><span><font></span><span>",
         document: vec![
-            (0, "<!DOCTYPE html>"),
-            (0, "<html>"),
-            (1, "<head>"),
-            (1, "<body>"),
-            (2, "<table>"),
-            (3, "\"\n\""),
             (0, "<!DOCTYPE html>"),
             (0, "<html>"),
             (1, "<head>"),

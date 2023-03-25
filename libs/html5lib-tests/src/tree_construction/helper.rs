@@ -96,9 +96,24 @@ impl<'a> TreeValidator<'a> {
                     },
                 });
                 for (name, value) in attrs.iter() {
+                    let (prefix, name) = match namespace {
+                        Namespace::Html => (None, name.as_str()),
+                        _ => {
+                            let parts: Vec<_> = name.splitn(2, ':').collect();
+                            if parts.len() == 1 {
+                                (None, name.as_str())
+                            } else {
+                                (Some(parts[0]), parts[1])
+                            }
+                        }
+                    };
                     v.push(LinearNode {
                         depth: depth + 1,
-                        repr: format!(r#"{}="{}""#, name, value),
+                        repr: if let Some(prefix) = prefix {
+                            format!(r#"{} {}="{}""#, prefix, name, value)
+                        } else {
+                            format!(r#"{}="{}""#, name, value)
+                        },
                     });
                 }
                 for &child_index in child_nodes.iter() {
@@ -106,6 +121,15 @@ impl<'a> TreeValidator<'a> {
                 }
             }
             Node::Text { data, .. } => {
+                if let Some(node) = v.last_mut() {
+                    if node.depth == depth && node.repr.starts_with('"') {
+                        // Concatenate characters.
+                        node.repr.pop();
+                        node.repr += data;
+                        node.repr += "\"";
+                        return;
+                    }
+                }
                 v.push(LinearNode {
                     depth,
                     repr: format!(r#""{}""#, data),
@@ -230,7 +254,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn set_attribute<'b, I>(&mut self, node_id: Self::NodeId, attrs: I, overwrite: bool)
+    fn set_attributes<'b, I>(&mut self, node_id: Self::NodeId, attrs: I, overwrite: bool)
     where
         I: Iterator<Item = (&'b str, &'b str)>,
     {

@@ -979,7 +979,7 @@ fn test_0060() {
 #[test]
 fn test_0061() {
     parse(Test {
-        data: "<DIV>",
+        data: "\n<DIV>",
         document: vec![
             (0, "<html>"),
             (1, "<head>"),

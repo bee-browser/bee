@@ -2271,7 +2271,7 @@
       "scripting": "Both"
     },
     {
-      "data": "<DIV>",
+      "data": "\n<DIV>",
       "errors": [
         "(1,0): expected-doctype-but-got-eof",
         "(1,5): expected-doctype-but-got-start-tag",

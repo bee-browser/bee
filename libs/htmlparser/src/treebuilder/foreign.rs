@@ -93,11 +93,22 @@ where
                     self.handle_start_tag(tag)
                 }
                 local_name => {
-                    // TODO
                     match self.context().open_element.namespace {
                         Namespace::MathMl => self.push_mathml_element(&tag, local_name),
                         Namespace::Svg => self.push_svg_element(&tag, local_name),
                         _ => unreachable!(),
+                    }
+                    if tag.self_closing {
+                        match local_name {
+                            tag!(Script) => {
+                                self.pop_element();
+                                // TODO
+                            }
+                            _ => {
+                                self.pop_element();
+                                // TODO: acknowledge the token's self-closing flag
+                            }
+                        }
                     }
                     Control::Continue
                 }

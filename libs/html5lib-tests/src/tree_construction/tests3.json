@@ -198,14 +198,7 @@
       "scripting": "Both"
     },
     {
-      "data": "<!DOCTYPE html><html><head></head><body><pre>",
-      "errors": [],
-      "newErrors": [],
-      "document": [],
-      "scripting": "Both"
-    },
-    {
-      "data": "<!DOCTYPE html><html><head></head><body><pre>\nfoo\n</pre></body></html>",
+      "data": "<!DOCTYPE html><html><head></head><body><pre>\n\nfoo</pre></body></html>",
       "errors": [],
       "newErrors": [],
       "document": [
@@ -232,7 +225,15 @@
         [
           3,
           "\"\nfoo\""
-        ],
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html><head></head><body><pre>\nfoo\n</pre></body></html>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
         [
           0,
           "<!DOCTYPE html>"
@@ -585,17 +586,8 @@
       "scripting": "Both"
     },
     {
-      "data": "<!DOCTYPE html><textarea>",
+      "data": "<!DOCTYPE html><textarea>\n\nfoo</textarea>",
       "errors": [],
-      "newErrors": [],
-      "document": [],
-      "scripting": "Both"
-    },
-    {
-      "data": "<!DOCTYPE html><html><head></head><body><ul><li><div><p><li></ul></body></html>",
-      "errors": [
-        "(1,60): end-tag-too-early"
-      ],
       "newErrors": [],
       "document": [
         [
@@ -621,7 +613,17 @@
         [
           3,
           "\"\nfoo\""
-        ],
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html><head></head><body><ul><li><div><p><li></ul></body></html>",
+      "errors": [
+        "(1,60): end-tag-too-early"
+      ],
+      "newErrors": [],
+      "document": [
         [
           0,
           "<!DOCTYPE html>"
