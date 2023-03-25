@@ -26,12 +26,6 @@ pub trait DomTreeBuilder {
     /// Gets the document node.
     fn get_document(&mut self) -> Self::NodeId;
 
-    /// Gets the root node to which created nodes will be added.
-    ///
-    /// It's a document node when parsing an HTML document.  When parsing an
-    /// HTML fragment, it's a root node (normally, an 'html' element node).
-    fn get_root(&mut self) -> Self::NodeId;
-
     /// Creates a DocumentType node.
     fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::NodeId;
 
@@ -118,7 +112,7 @@ where
     T: DomTreeBuilder,
 {
     pub fn new(mut inner: T) -> Self {
-        let open_element = OpenElement::with_html(LocalName::Unknown, inner.get_root());
+        let open_element = OpenElement::with_html(LocalName::Unknown, inner.get_document());
         let context = TreeBuildContext::new(open_element);
         TreeBuilder {
             inner,
