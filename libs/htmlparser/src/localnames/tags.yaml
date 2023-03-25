@@ -398,6 +398,10 @@ isindex:
   category: ordinary
   obsolete: true
 
+image:
+  category: ordinary
+  obsolete: true
+
 keygen:
   category: special
   obsolete: true

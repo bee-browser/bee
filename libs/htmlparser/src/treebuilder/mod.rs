@@ -767,6 +767,14 @@ where
     }
 
     #[inline(always)]
+    fn push_html_address_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Address);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Address;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_applet_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Applet);
         let context = self.context_mut();
@@ -781,6 +789,14 @@ where
     fn push_html_area_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Area);
         let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_article_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Article);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Article;
         context.element_in_select_scope.clear();
     }
 
@@ -824,6 +840,14 @@ where
     fn push_html_big_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Big);
         let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_blockquote_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Blockquote);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Blockquote;
         context.element_in_select_scope.clear();
     }
 
@@ -904,6 +928,30 @@ where
     }
 
     #[inline(always)]
+    fn push_html_details_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Details);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Details;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_dialog_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Dialog);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Dialog;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_dir_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Dir);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Dir;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_div_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Div);
         let context = self.context_mut();
@@ -942,9 +990,41 @@ where
     }
 
     #[inline(always)]
+    fn push_html_fieldset_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Fieldset);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Fieldset;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_figcaption_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Figcaption);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Figcaption;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_figure_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Figure);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Figure;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_font_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Font);
         let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_footer_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Footer);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Footer;
         context.element_in_select_scope.clear();
     }
 
@@ -971,6 +1051,14 @@ where
     }
 
     #[inline(always)]
+    fn push_html_heading_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::lookup(tag.name));
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Heading;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_head_element(&mut self, tag: &Tag<'_>) {
         debug_assert!(self.head_element.is_none());
         self.push_html_element(tag, LocalName::Head);
@@ -978,6 +1066,22 @@ where
         context.reset_mode = mode!(InHead);
         context.element_in_select_scope.clear();
         self.head_element = Some(context.open_element.node);
+    }
+
+    #[inline(always)]
+    fn push_html_header_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Header);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Header;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_hgroup_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Hgroup);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Hgroup;
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -1013,6 +1117,13 @@ where
     #[inline(always)]
     fn push_html_iframe_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Iframe);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_image_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Img);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -1074,6 +1185,7 @@ where
         self.push_html_element(tag, LocalName::Marquee);
         let context = self.context_mut();
         context.element_in_scope.clear();
+        context.element_in_scope |= ElementInScope::Marquee;
         context.element_in_list_item_scope.clear();
         context.element_in_button_scope.clear();
         context.element_in_select_scope.clear();
@@ -1087,10 +1199,33 @@ where
     }
 
     #[inline(always)]
+    fn push_html_menu_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Menu);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Menu;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_nav_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Nav);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Nav;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_nobr_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Nobr);
         let context = self.context_mut();
         context.element_in_scope |= ElementInScope::Nobr;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_noembed_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Noembed);
+        let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
 
@@ -1168,9 +1303,67 @@ where
     }
 
     #[inline(always)]
+    fn push_html_rb_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Rb);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_rp_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Rp);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_rt_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Rt);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_rtc_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Rtc);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_ruby_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Ruby);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Ruby;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_s_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::S);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_sarcasm_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Sarcasm);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_script_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Script);
         let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_section_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Section);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Section;
         context.element_in_select_scope.clear();
     }
 
@@ -1185,8 +1378,22 @@ where
     }
 
     #[inline(always)]
+    fn push_html_small_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Small);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_source_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Source);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_strike_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Strike);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -1202,6 +1409,14 @@ where
     fn push_html_style_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Style);
         let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_summary_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Summary);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Summary;
         context.element_in_select_scope.clear();
     }
 
@@ -1311,6 +1526,20 @@ where
     #[inline(always)]
     fn push_html_track_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Track);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_tt_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Tt);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_u_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::U);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -1469,7 +1698,7 @@ where
                 context.element_in_scope.clear();
                 context.element_in_list_item_scope.clear();
                 context.element_in_button_scope.clear();
-                context.flags -= flags!(SvgIntegrationPoint, SvgScript, HtmlIntegrationPoint,);
+                context.flags -= flags!(SvgIntegrationPoint, SvgScript, HtmlIntegrationPoint);
                 context.flags |= flags!(MathmlTextIntegrationPoint);
             }
             tag!(mathml: AnnotationXml) => {
@@ -1479,6 +1708,13 @@ where
                 context.flags -=
                     flags!(MathmlTextIntegrationPoint, SvgScript, HtmlIntegrationPoint);
                 context.flags |= flags!(SvgIntegrationPoint);
+                if tag.attrs().any(|(name, value)| {
+                    name == "encoding"
+                        && (unicase::eq_ascii(value, "text/html")
+                            || unicase::eq_ascii(value, "application/xhtml+xml"))
+                }) {
+                    context.flags |= flags!(HtmlIntegrationPoint);
+                }
             }
             _ => {
                 context.flags -= flags!(
@@ -1803,15 +2039,33 @@ where
     }
 
     #[inline(always)]
+    fn has_address_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Address)
+    }
+
+    #[inline(always)]
     fn has_applet_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Applet)
     }
 
     #[inline(always)]
+    fn has_article_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Article)
+    }
+
+    #[inline(always)]
     fn has_aside_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Aside)
+    }
+
+    #[inline(always)]
+    fn has_blockquote_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Blockquote)
     }
 
     #[inline(always)]
@@ -1839,6 +2093,24 @@ where
     }
 
     #[inline(always)]
+    fn has_details_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Details)
+    }
+
+    #[inline(always)]
+    fn has_dialog_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Dialog)
+    }
+
+    #[inline(always)]
+    fn has_dir_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Dir)
+    }
+
+    #[inline(always)]
     fn has_div_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Div)
@@ -1857,9 +2129,51 @@ where
     }
 
     #[inline(always)]
+    fn has_fieldset_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Fieldset)
+    }
+
+    #[inline(always)]
+    fn has_figcaption_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Figcaption)
+    }
+
+    #[inline(always)]
+    fn has_figure_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Figure)
+    }
+
+    #[inline(always)]
+    fn has_footer_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Footer)
+    }
+
+    #[inline(always)]
     fn has_form_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Form)
+    }
+
+    #[inline(always)]
+    fn has_header_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Header)
+    }
+
+    #[inline(always)]
+    fn has_heading_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Heading)
+    }
+
+    #[inline(always)]
+    fn has_hgroup_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Hgroup)
     }
 
     #[inline(always)]
@@ -1872,6 +2186,24 @@ where
     fn has_main_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Main)
+    }
+
+    #[inline(always)]
+    fn has_marquee_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Marquee)
+    }
+
+    #[inline(always)]
+    fn has_menu_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Menu)
+    }
+
+    #[inline(always)]
+    fn has_nav_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Nav)
     }
 
     #[inline(always)]
@@ -1896,6 +2228,24 @@ where
     fn has_pre_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Pre)
+    }
+
+    #[inline(always)]
+    fn has_ruby_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Ruby)
+    }
+
+    #[inline(always)]
+    fn has_section_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Section)
+    }
+
+    #[inline(always)]
+    fn has_summary_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Summary)
     }
 
     #[inline(always)]
@@ -2072,23 +2422,42 @@ enum FosterParentingInsertionPoint<T> {
 }
 
 flagset::flags! {
-    enum ElementInScope: u32 {
+    enum ElementInScope: u64 {
+        Address,
         Applet,
+        Article,
         Aside,
+        Blockquote,
         Body,
         Button,
         Center,
         Dd,
+        Details,
+        Dialog,
+        Dir,
         Div,
         Dl,
         Dt,
+        Fieldset,
+        Figcaption,
+        Figure,
+        Footer,
         Form,
+        Header,
+        Heading,
+        Hgroup,
         Listing,
         Main,
+        Marquee,
+        Menu,
+        Nav,
         Nobr,
         Object,
         Ol,
         Pre,
+        Ruby,
+        Section,
+        Summary,
         Ul,
     }
 

@@ -15,6 +15,10 @@ mod.rs: mod.rs.hbs tags.txt
 	  $(BEE_TOOLS) codegen --no-escape --input-stdin mod.rs.hbs | \
 	  rustfmt --emit=stdout >$@
 
+tags.txt: $(SPEC_YAML)
+	@echo 'Generating $(abspath $@)...'
+	@deno run --allow-read $(COLLECT_JS) tags -s $(SPEC_YAML) | jq -r '.[]' >$@
+
 any_other.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read $(COLLECT_JS) rules -s $(SPEC_YAML) any_other '<_>' '</_>' | \
