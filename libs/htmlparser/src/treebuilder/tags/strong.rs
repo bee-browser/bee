@@ -9,9 +9,9 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_em(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_strong(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_em", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_start_strong", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -94,7 +94,7 @@ where
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
                         self.reconstruct_active_formatting_elements();
-                        self.push_html_em_element(tag);
+                        self.push_html_strong_element(tag);
                         self.push_element_to_active_formatting_contexts(tag);
                         Control::Continue
                     };
@@ -110,7 +110,7 @@ where
                         self.enable_foster_parenting();
                         let ctrl = {
                             self.reconstruct_active_formatting_elements();
-                            self.push_html_em_element(tag);
+                            self.push_html_strong_element(tag);
                             self.push_element_to_active_formatting_contexts(tag);
                             Control::Continue
                         };
@@ -218,9 +218,9 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_em(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_strong(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_end_em", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_strong", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {

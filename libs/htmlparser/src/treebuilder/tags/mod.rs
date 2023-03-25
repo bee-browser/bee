@@ -6,10 +6,13 @@
 mod a;
 mod any_other;
 mod applet;
+mod area;
 mod aside;
 mod b;
+mod base;
 mod basefont;
 mod bgsound;
+mod big;
 mod body;
 mod br;
 mod button;
@@ -23,6 +26,7 @@ mod div;
 mod dl;
 mod dt;
 mod em;
+mod embed;
 mod font;
 mod form;
 mod frame;
@@ -54,6 +58,8 @@ mod plaintext;
 mod pre;
 mod script;
 mod select;
+mod source;
+mod strong;
 mod style;
 mod svg;
 mod table;
@@ -65,7 +71,9 @@ mod th;
 mod thead;
 mod title;
 mod tr;
+mod track;
 mod ul;
+mod wbr;
 mod xmp;
 
 use super::*;
@@ -80,10 +88,13 @@ where
         match local_name {
             tag!(A) => self.handle_start_a(&tag),
             tag!(Applet) => self.handle_start_applet(&tag),
+            tag!(Area) => self.handle_start_area(&tag),
             tag!(Aside) => self.handle_start_aside(&tag),
             tag!(B) => self.handle_start_b(&tag),
+            tag!(Base) => self.handle_start_base(&tag),
             tag!(Basefont) => self.handle_start_basefont(&tag),
             tag!(Bgsound) => self.handle_start_bgsound(&tag),
+            tag!(Big) => self.handle_start_big(&tag),
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Br) => self.handle_start_br(&tag),
             tag!(Button) => self.handle_start_button(&tag),
@@ -97,6 +108,7 @@ where
             tag!(Dl) => self.handle_start_dl(&tag),
             tag!(Dt) => self.handle_start_dt(&tag),
             tag!(Em) => self.handle_start_em(&tag),
+            tag!(Embed) => self.handle_start_embed(&tag),
             tag!(Font) => self.handle_start_font(&tag),
             tag!(Form) => self.handle_start_form(&tag),
             tag!(Frame) => self.handle_start_frame(&tag),
@@ -128,6 +140,8 @@ where
             tag!(Pre) => self.handle_start_pre(&tag),
             tag!(Script) => self.handle_start_script(&tag),
             tag!(Select) => self.handle_start_select(&tag),
+            tag!(Source) => self.handle_start_source(&tag),
+            tag!(Strong) => self.handle_start_strong(&tag),
             tag!(Style) => self.handle_start_style(&tag),
             tag!(Svg) => self.handle_start_svg(&tag),
             tag!(Table) => self.handle_start_table(&tag),
@@ -138,8 +152,10 @@ where
             tag!(Th) => self.handle_start_th(&tag),
             tag!(Thead) => self.handle_start_thead(&tag),
             tag!(Tr) => self.handle_start_tr(&tag),
+            tag!(Track) => self.handle_start_track(&tag),
             tag!(Title) => self.handle_start_title(&tag),
             tag!(Ul) => self.handle_start_ul(&tag),
+            tag!(Wbr) => self.handle_start_wbr(&tag),
             tag!(Xmp) => self.handle_start_xmp(&tag),
             _ => self.handle_start_any_other(&tag),
         }
@@ -151,10 +167,13 @@ where
         match local_name {
             tag!(A) => self.handle_end_a(&tag),
             tag!(Applet) => self.handle_end_applet(&tag),
+            tag!(Area) => self.handle_end_area(&tag),
             tag!(Aside) => self.handle_end_aside(&tag),
             tag!(B) => self.handle_end_b(&tag),
+            tag!(Base) => self.handle_end_base(&tag),
             tag!(Basefont) => self.handle_end_basefont(&tag),
             tag!(Bgsound) => self.handle_end_bgsound(&tag),
+            tag!(Big) => self.handle_end_big(&tag),
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Br) => self.handle_end_br(&tag),
             tag!(Button) => self.handle_end_button(&tag),
@@ -168,6 +187,7 @@ where
             tag!(Dl) => self.handle_end_dl(&tag),
             tag!(Dt) => self.handle_end_dt(&tag),
             tag!(Em) => self.handle_end_em(&tag),
+            tag!(Embed) => self.handle_end_embed(&tag),
             tag!(Font) => self.handle_end_font(&tag),
             tag!(Form) => self.handle_end_form(&tag),
             tag!(Frame) => self.handle_end_frame(&tag),
@@ -199,6 +219,8 @@ where
             tag!(Pre) => self.handle_end_pre(&tag),
             tag!(Script) => self.handle_end_script(&tag),
             tag!(Select) => self.handle_end_select(&tag),
+            tag!(Source) => self.handle_end_source(&tag),
+            tag!(Strong) => self.handle_end_strong(&tag),
             tag!(Style) => self.handle_end_style(&tag),
             tag!(Svg) => self.handle_end_svg(&tag),
             tag!(Table) => self.handle_end_table(&tag),
@@ -209,8 +231,10 @@ where
             tag!(Th) => self.handle_end_th(&tag),
             tag!(Thead) => self.handle_end_thead(&tag),
             tag!(Tr) => self.handle_end_tr(&tag),
+            tag!(Track) => self.handle_end_track(&tag),
             tag!(Title) => self.handle_end_title(&tag),
             tag!(Ul) => self.handle_end_ul(&tag),
+            tag!(Wbr) => self.handle_end_wbr(&tag),
             tag!(Xmp) => self.handle_end_xmp(&tag),
             _ => self.handle_end_any_other(&tag),
         }

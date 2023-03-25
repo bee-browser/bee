@@ -101,7 +101,7 @@ where
                             self.reconstruct_active_formatting_elements();
                         }
                         self.push_html_nobr_element(tag);
-                        self.push_element_to_active_formatting_contexts();
+                        self.push_element_to_active_formatting_contexts(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -123,7 +123,7 @@ where
                                 self.reconstruct_active_formatting_elements();
                             }
                             self.push_html_nobr_element(tag);
-                            self.push_element_to_active_formatting_contexts();
+                            self.push_element_to_active_formatting_contexts(tag);
                             Control::Continue
                         };
                         self.disable_foster_parenting();

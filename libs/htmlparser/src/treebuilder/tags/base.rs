@@ -9,9 +9,9 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_em(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_base(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_em", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_start_base", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -53,12 +53,14 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InHead) => {
+                mode!(InHead, InBody, InCaption, InCell, InTemplate) => {
                     let ctrl = {
-                        debug_assert!(self.context().is_html_element(tag!(Head)));
+                        self.push_html_base_element(tag);
                         self.pop_element();
-                        self.switch_to(mode!(AfterHead));
-                        Control::Reprocess
+                        if tag.self_closing {
+                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
+                        }
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -82,21 +84,19 @@ where
                 }
                 mode!(AfterHead) => {
                     let ctrl = {
-                        self.push_html_body_element(&Tag::with_no_attrs("body"));
-                        self.switch_to(mode!(InBody));
-                        Control::Reprocess
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InBody, InCaption, InCell) => {
-                    let ctrl = {
-                        self.reconstruct_active_formatting_elements();
-                        self.push_html_em_element(tag);
-                        self.push_element_to_active_formatting_contexts(tag);
-                        Control::Continue
+                        // TODO: Parse error.
+                        tracing::debug!("Parse error");
+                        self.reopen_head_element();
+                        let ctrl = {
+                            self.push_html_base_element(tag);
+                            self.pop_element();
+                            if tag.self_closing {
+                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
+                            }
+                            Control::Continue
+                        };
+                        self.close_head_element();
+                        ctrl
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -109,9 +109,11 @@ where
                         tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
-                            self.reconstruct_active_formatting_elements();
-                            self.push_html_em_element(tag);
-                            self.push_element_to_active_formatting_contexts(tag);
+                            self.push_html_base_element(tag);
+                            self.pop_element();
+                            if tag.self_closing {
+                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
+                            }
                             Control::Continue
                         };
                         self.disable_foster_parenting();
@@ -186,18 +188,6 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InTemplate) => {
-                    let ctrl = {
-                        // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-                        // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
-                        self.switch_to(mode!(InBody));
-                        Control::Reprocess
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
                 mode!(AfterBody, AfterAfterBody) => {
                     let ctrl = {
                         // TODO: Parse error.
@@ -218,9 +208,9 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_em(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_base(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_end_em", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_base", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -265,7 +255,28 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        self.perform_adoption_agency_algorithm(tag);
+                        let mut context_pos = self.context_stack.len() - 1;
+                        loop {
+                            let context = &self.context_stack[context_pos];
+                            let element = context.open_element.node;
+                            if context.is_html() && self.inner.has_same_name(element, tag.name) {
+                                self.close_implied_tags_except_for(tag!(Base)); // TODO
+                                if element != self.context().open_element.node {
+                                    // TODO: Parse error.
+                                }
+                                while self.context_stack.len() > context_pos {
+                                    self.pop_element();
+                                }
+                                break;
+                            } else {
+                                if context.open_element.local_name.is_special() {
+                                    // TODO: Parse error.
+                                    // Ignore the token.
+                                    break;
+                                }
+                            }
+                            context_pos -= 1;
+                        }
                         Control::Continue
                     };
                     match ctrl {
@@ -290,7 +301,29 @@ where
                         tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
-                            self.perform_adoption_agency_algorithm(tag);
+                            let mut context_pos = self.context_stack.len() - 1;
+                            loop {
+                                let context = &self.context_stack[context_pos];
+                                let element = context.open_element.node;
+                                if context.is_html() && self.inner.has_same_name(element, tag.name)
+                                {
+                                    self.close_implied_tags_except_for(tag!(Base)); // TODO
+                                    if element != self.context().open_element.node {
+                                        // TODO: Parse error.
+                                    }
+                                    while self.context_stack.len() > context_pos {
+                                        self.pop_element();
+                                    }
+                                    break;
+                                } else {
+                                    if context.open_element.local_name.is_special() {
+                                        // TODO: Parse error.
+                                        // Ignore the token.
+                                        break;
+                                    }
+                                }
+                                context_pos -= 1;
+                            }
                             Control::Continue
                         };
                         self.disable_foster_parenting();

@@ -9,6 +9,8 @@ mod tags;
 mod text;
 
 use std::fmt::Debug;
+use std::hash::Hash;
+use std::hash::Hasher;
 
 use bee_htmltokenizer::token::*;
 use bee_htmltokenizer::Error;
@@ -299,11 +301,23 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn push_element_to_active_formatting_contexts(&mut self) {
+    fn push_element_to_active_formatting_contexts(&mut self, tag: &Tag<'_>) {
+        // The HTML5 specification requires comparing attributes, but we compare
+        // hash values instead.  It works fine in the most cases.
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        for (name, value) in tag.attrs() {
+            name.hash(&mut hasher);
+            value.hash(&mut hasher);
+        }
+        let attrs_hash = hasher.finish();
+
         let open_element = &self.context().open_element;
         tracing::debug!(element = ?open_element);
-        self.active_formatting_element_list
-            .push_element(open_element.local_name, open_element.node);
+        self.active_formatting_element_list.push_element(
+            open_element.local_name,
+            open_element.node,
+            attrs_hash,
+        );
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -342,9 +356,19 @@ where
             let local_name = self.active_formatting_element_list.get_local_name(i);
             let new_node = self.inner.clone_node(node);
             self.insert_html_element(OpenElement::with_html(local_name, new_node));
+            // TODO
+            match local_name {
+                tag!(Nobr) => {
+                    self.context_mut().element_in_scope |= ElementInScope::Nobr;
+                }
+                _ => {}
+            }
             self.active_formatting_element_list.set_element(i, new_node);
             i += 1;
         }
+
+        self.inner.print_tree();
+        tracing::debug!(?self.active_formatting_element_list);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
@@ -399,6 +423,9 @@ where
                 }
             };
             let element = self.active_formatting_element_list.get_element(list_pos);
+            let element_hash = self
+                .active_formatting_element_list
+                .get_element_hash(list_pos);
             tracing::debug!(
                 outer_loop_counter,
                 element.list.pos = list_pos,
@@ -440,7 +467,7 @@ where
                 Some(pos) => pos,
                 None => {
                     //  step#4.8
-                    tracing::debug!(outer_loop_counter, "step#4.8");
+                    tracing::debug!(outer_loop_counter, stack_pos, "step#4.8");
                     while self.context_stack.len() > stack_pos {
                         self.pop_element();
                     }
@@ -631,8 +658,12 @@ where
                 "step#4.18"
             );
             self.active_formatting_element_list.remove(list_pos);
-            self.active_formatting_element_list
-                .insert_element(bookmark, subject, new_element);
+            self.active_formatting_element_list.insert_element(
+                bookmark,
+                subject,
+                new_element,
+                element_hash,
+            );
 
             // step#4.19
             tracing::debug!(outer_loop_counter, stack_pos, "step#4.19");
@@ -646,11 +677,15 @@ where
             self.context_stack.insert(furthest_block_pos + 1, context);
 
             self.inner.print_tree();
+            tracing::debug!(?self.active_formatting_element_list);
         }
 
         self.context_stack
             .retain(|context| !context.flags.contains(flags!(Removed)));
         self.active_formatting_element_list.clean();
+
+        self.inner.print_tree();
+        tracing::debug!(?self.active_formatting_element_list);
     }
 
     fn find_element_in_stack(&self, element: T::NodeId) -> Option<usize> {
@@ -743,6 +778,13 @@ where
     }
 
     #[inline(always)]
+    fn push_html_area_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Area);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_aside_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Aside);
         let context = self.context_mut();
@@ -758,6 +800,13 @@ where
     }
 
     #[inline(always)]
+    fn push_html_base_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Base);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_basefont_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Basefont);
         let context = self.context_mut();
@@ -767,6 +816,13 @@ where
     #[inline(always)]
     fn push_html_bgsound_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Bgsound);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_big_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Big);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -874,6 +930,13 @@ where
     #[inline(always)]
     fn push_html_em_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Em);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_embed_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Embed);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -1033,7 +1096,7 @@ where
 
     #[inline(always)]
     fn push_html_noframes_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag, LocalName::Nobr);
+        self.push_html_element(tag, LocalName::Noframes);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -1119,6 +1182,20 @@ where
         context.reset_mode = mode!(InSelect);
         context.element_in_select_scope.clear();
         context.element_in_select_scope |= ElementInSelectScope::Select;
+    }
+
+    #[inline(always)]
+    fn push_html_source_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Source);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_strong_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Strong);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
     }
 
     #[inline(always)]
@@ -1232,10 +1309,24 @@ where
     }
 
     #[inline(always)]
+    fn push_html_track_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Track);
+        let context = self.context_mut();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_ul_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ul);
         let context = self.context_mut();
         context.element_in_list_item_scope.clear();
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
+    fn push_html_wbr_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Wbr);
+        let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
 
@@ -2038,7 +2129,11 @@ flagset::flags! {
 #[derive(PartialEq)]
 enum ActiveFormattingContext<T> {
     Marker,
-    Element { local_name: LocalName, node: T },
+    Element {
+        local_name: LocalName,
+        attrs_hash: u64,
+        node: T,
+    },
     Removed,
 }
 
@@ -2049,7 +2144,11 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Marker => write!(f, "$marker"),
-            Self::Element { local_name, node } => write!(f, "{:?}:<{:?}>", node, local_name),
+            Self::Element {
+                local_name,
+                attrs_hash,
+                node,
+            } => write!(f, "{:?}:<{:?} {}>", node, local_name, attrs_hash),
             Self::Removed => write!(f, "$removed"),
         }
     }
@@ -2109,6 +2208,13 @@ where
         }
     }
 
+    fn get_element_hash(&self, i: usize) -> u64 {
+        match self.0.get(i).unwrap() {
+            ActiveFormattingContext::Element { attrs_hash, .. } => *attrs_hash,
+            _ => unreachable!(),
+        }
+    }
+
     fn get_local_name(&self, i: usize) -> LocalName {
         match self.0.get(i).unwrap() {
             ActiveFormattingContext::Element { local_name, .. } => *local_name,
@@ -2117,9 +2223,15 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn insert_element(&mut self, i: usize, local_name: LocalName, node: T) {
-        self.0
-            .insert(i, ActiveFormattingContext::Element { local_name, node });
+    fn insert_element(&mut self, i: usize, local_name: LocalName, node: T, attrs_hash: u64) {
+        self.0.insert(
+            i,
+            ActiveFormattingContext::Element {
+                local_name,
+                attrs_hash,
+                node,
+            },
+        );
         tracing::debug!(index = i, item = ?self.0[i]);
     }
 
@@ -2127,9 +2239,38 @@ where
         self.0.push(ActiveFormattingContext::Marker);
     }
 
-    fn push_element(&mut self, local_name: LocalName, node: T) {
-        self.0
-            .push(ActiveFormattingContext::Element { local_name, node });
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn push_element(&mut self, local_name: LocalName, node: T, attrs_hash: u64) {
+        let mut count = 0;
+        let mut first_pos = None;
+        for (i, item) in self.0.iter().enumerate().rev() {
+            match item {
+                ActiveFormattingContext::Marker => break,
+                ActiveFormattingContext::Element {
+                    local_name: element_name,
+                    attrs_hash: element_hash,
+                    ..
+                } => {
+                    if *element_name == local_name && *element_hash == attrs_hash {
+                        count += 1;
+                        if count == 3 {
+                            first_pos = Some(i);
+                            break;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        if let Some(pos) = first_pos {
+            tracing::debug!(removed = ?self.0[pos]);
+            self.0.remove(pos);
+        }
+        self.0.push(ActiveFormattingContext::Element {
+            local_name,
+            attrs_hash,
+            node,
+        });
     }
 
     fn find_element(&self, element: T) -> Option<usize> {
