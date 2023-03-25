@@ -1,9 +1,12 @@
 a
 applet
+area
 aside
 b
+base
 basefont
 bgsound
+big
 body
 br
 button
@@ -17,6 +20,7 @@ div
 dl
 dt
 em
+embed
 font
 form
 frame
@@ -48,6 +52,8 @@ plaintext
 pre
 script
 select
+source
+strong
 style
 svg
 table
@@ -58,6 +64,8 @@ tfoot
 th
 thead
 tr
+track
 title
 ul
+wbr
 xmp

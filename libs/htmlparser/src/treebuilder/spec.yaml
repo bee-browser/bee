@@ -688,7 +688,7 @@ modes:
           }
           self.reconstruct_active_formatting_elements();
           self.push_html_a_element(tag);
-          self.push_element_to_active_formatting_contexts();
+          self.push_element_to_active_formatting_contexts(tag);
           Control::Continue
       - match: >-
           <b> <big> <code> <em> <font> <i> <s> <small> <strike> <strong> <tt>
@@ -696,7 +696,7 @@ modes:
         run: |
           self.reconstruct_active_formatting_elements();
           self.push_html_{{tag_name}}_element(tag);
-          self.push_element_to_active_formatting_contexts();
+          self.push_element_to_active_formatting_contexts(tag);
           Control::Continue
       - match: <nobr>
         run: |
@@ -707,7 +707,7 @@ modes:
               self.reconstruct_active_formatting_elements();
           }
           self.push_html_nobr_element(tag);
-          self.push_element_to_active_formatting_contexts();
+          self.push_element_to_active_formatting_contexts(tag);
           Control::Continue
       - match: >-
           </a> </b> </big> </code> </em> </font> </i> </nobr> </s> </small>
