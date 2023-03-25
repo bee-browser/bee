@@ -137,6 +137,7 @@ pub enum LocalName {
     Frameset,
     Hgroup,
     Isindex,
+    Image,
     Keygen,
     Listing,
     Marquee,
@@ -395,6 +396,7 @@ static LOCAL_NAMES: Map<&'static str, LocalName> = phf_map! {
     "frameset" => LocalName::Frameset,
     "hgroup" => LocalName::Hgroup,
     "isindex" => LocalName::Isindex,
+    "image" => LocalName::Image,
     "keygen" => LocalName::Keygen,
     "listing" => LocalName::Listing,
     "marquee" => LocalName::Marquee,
@@ -480,7 +482,7 @@ macro_rules! data {
     };
 }
 
-const DATA: [LocalNameData; 191] = [
+const DATA: [LocalNameData; 192] = [
     data!["a", Formatting],
     data!["abbr", Ordinary],
     data!["address", Special],
@@ -606,6 +608,7 @@ const DATA: [LocalNameData; 191] = [
     data![obsolete: "frameset", Special],
     data![obsolete: "hgroup", Special],
     data![obsolete: "isindex", Ordinary],
+    data![obsolete: "image", Ordinary],
     data![obsolete: "keygen", Special],
     data![obsolete: "listing", Special],
     data![obsolete: "marquee", Special],

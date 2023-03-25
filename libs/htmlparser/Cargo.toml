@@ -12,3 +12,4 @@ flagset = "0.4.3"
 phf = { version = "0.11.1", features = ["macros"] }
 thiserror = "1.0.38"
 tracing = "0.1.37"
+unicase = "2.6.0"

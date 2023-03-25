@@ -4,15 +4,18 @@
 // bee-tools-codegen.js --no-escape --input-stdin mod.rs.hbs
 
 mod a;
+mod address;
 mod any_other;
 mod applet;
 mod area;
+mod article;
 mod aside;
 mod b;
 mod base;
 mod basefont;
 mod bgsound;
 mod big;
+mod blockquote;
 mod body;
 mod br;
 mod button;
@@ -22,20 +25,36 @@ mod code;
 mod col;
 mod colgroup;
 mod dd;
+mod details;
+mod dialog;
+mod dir;
 mod div;
 mod dl;
 mod dt;
 mod em;
 mod embed;
+mod fieldset;
+mod figcaption;
+mod figure;
 mod font;
+mod footer;
 mod form;
 mod frame;
 mod frameset;
+mod h1;
+mod h2;
+mod h3;
+mod h4;
+mod h5;
+mod h6;
 mod head;
+mod header;
+mod hgroup;
 mod hr;
 mod html;
 mod i;
 mod iframe;
+mod image;
 mod img;
 mod input;
 mod keygen;
@@ -43,9 +62,13 @@ mod li;
 mod link;
 mod listing;
 mod main;
+mod marquee;
 mod math;
+mod menu;
 mod meta;
+mod nav;
 mod nobr;
+mod noembed;
 mod noframes;
 mod noscript;
 mod object;
@@ -56,15 +79,26 @@ mod p;
 mod param;
 mod plaintext;
 mod pre;
+mod rb;
+mod rp;
+mod rt;
+mod rtc;
+mod s;
+mod sarcasm;
 mod script;
+mod section;
 mod select;
+mod small;
 mod source;
+mod strike;
 mod strong;
 mod style;
+mod summary;
 mod svg;
 mod table;
 mod tbody;
 mod td;
+mod template;
 mod textarea;
 mod tfoot;
 mod th;
@@ -72,6 +106,8 @@ mod thead;
 mod title;
 mod tr;
 mod track;
+mod tt;
+mod u;
 mod ul;
 mod wbr;
 mod xmp;
@@ -87,14 +123,17 @@ where
         let local_name = LocalName::lookup(tag.name);
         match local_name {
             tag!(A) => self.handle_start_a(&tag),
+            tag!(Address) => self.handle_start_address(&tag),
             tag!(Applet) => self.handle_start_applet(&tag),
             tag!(Area) => self.handle_start_area(&tag),
+            tag!(Article) => self.handle_start_article(&tag),
             tag!(Aside) => self.handle_start_aside(&tag),
             tag!(B) => self.handle_start_b(&tag),
             tag!(Base) => self.handle_start_base(&tag),
             tag!(Basefont) => self.handle_start_basefont(&tag),
             tag!(Bgsound) => self.handle_start_bgsound(&tag),
             tag!(Big) => self.handle_start_big(&tag),
+            tag!(Blockquote) => self.handle_start_blockquote(&tag),
             tag!(Body) => self.handle_start_body(&tag),
             tag!(Br) => self.handle_start_br(&tag),
             tag!(Button) => self.handle_start_button(&tag),
@@ -104,30 +143,50 @@ where
             tag!(Col) => self.handle_start_col(&tag),
             tag!(Colgroup) => self.handle_start_colgroup(&tag),
             tag!(Dd) => self.handle_start_dd(&tag),
+            tag!(Details) => self.handle_start_details(&tag),
+            tag!(Dialog) => self.handle_start_dialog(&tag),
+            tag!(Dir) => self.handle_start_dir(&tag),
             tag!(Div) => self.handle_start_div(&tag),
             tag!(Dl) => self.handle_start_dl(&tag),
             tag!(Dt) => self.handle_start_dt(&tag),
             tag!(Em) => self.handle_start_em(&tag),
             tag!(Embed) => self.handle_start_embed(&tag),
+            tag!(Fieldset) => self.handle_start_fieldset(&tag),
+            tag!(Figcaption) => self.handle_start_figcaption(&tag),
+            tag!(Figure) => self.handle_start_figure(&tag),
             tag!(Font) => self.handle_start_font(&tag),
+            tag!(Footer) => self.handle_start_footer(&tag),
             tag!(Form) => self.handle_start_form(&tag),
             tag!(Frame) => self.handle_start_frame(&tag),
             tag!(Frameset) => self.handle_start_frameset(&tag),
+            tag!(H1) => self.handle_start_h1(&tag),
+            tag!(H2) => self.handle_start_h2(&tag),
+            tag!(H3) => self.handle_start_h3(&tag),
+            tag!(H4) => self.handle_start_h4(&tag),
+            tag!(H5) => self.handle_start_h5(&tag),
+            tag!(H6) => self.handle_start_h6(&tag),
             tag!(Head) => self.handle_start_head(&tag),
+            tag!(Header) => self.handle_start_header(&tag),
+            tag!(Hgroup) => self.handle_start_hgroup(&tag),
             tag!(Hr) => self.handle_start_hr(&tag),
             tag!(Html) => self.handle_start_html(&tag),
             tag!(I) => self.handle_start_i(&tag),
             tag!(Iframe) => self.handle_start_iframe(&tag),
+            tag!(Image) => self.handle_start_image(&tag),
             tag!(Img) => self.handle_start_img(&tag),
             tag!(Input) => self.handle_start_input(&tag),
             tag!(Keygen) => self.handle_start_keygen(&tag),
             tag!(Li) => self.handle_start_li(&tag),
-            tag!(Listing) => self.handle_start_listing(&tag),
             tag!(Link) => self.handle_start_link(&tag),
+            tag!(Listing) => self.handle_start_listing(&tag),
             tag!(Main) => self.handle_start_main(&tag),
+            tag!(Marquee) => self.handle_start_marquee(&tag),
             tag!(Math) => self.handle_start_math(&tag),
+            tag!(Menu) => self.handle_start_menu(&tag),
             tag!(Meta) => self.handle_start_meta(&tag),
+            tag!(Nav) => self.handle_start_nav(&tag),
             tag!(Nobr) => self.handle_start_nobr(&tag),
+            tag!(Noembed) => self.handle_start_noembed(&tag),
             tag!(Noframes) => self.handle_start_noframes(&tag),
             tag!(Noscript) => self.handle_start_noscript(&tag),
             tag!(Object) => self.handle_start_object(&tag),
@@ -138,22 +197,35 @@ where
             tag!(Param) => self.handle_start_param(&tag),
             tag!(Plaintext) => self.handle_start_plaintext(&tag),
             tag!(Pre) => self.handle_start_pre(&tag),
+            tag!(Rb) => self.handle_start_rb(&tag),
+            tag!(Rp) => self.handle_start_rp(&tag),
+            tag!(Rt) => self.handle_start_rt(&tag),
+            tag!(Rtc) => self.handle_start_rtc(&tag),
+            tag!(S) => self.handle_start_s(&tag),
+            tag!(Sarcasm) => self.handle_start_sarcasm(&tag),
             tag!(Script) => self.handle_start_script(&tag),
+            tag!(Section) => self.handle_start_section(&tag),
             tag!(Select) => self.handle_start_select(&tag),
+            tag!(Small) => self.handle_start_small(&tag),
             tag!(Source) => self.handle_start_source(&tag),
+            tag!(Strike) => self.handle_start_strike(&tag),
             tag!(Strong) => self.handle_start_strong(&tag),
             tag!(Style) => self.handle_start_style(&tag),
+            tag!(Summary) => self.handle_start_summary(&tag),
             tag!(Svg) => self.handle_start_svg(&tag),
             tag!(Table) => self.handle_start_table(&tag),
             tag!(Tbody) => self.handle_start_tbody(&tag),
             tag!(Td) => self.handle_start_td(&tag),
+            tag!(Template) => self.handle_start_template(&tag),
             tag!(Textarea) => self.handle_start_textarea(&tag),
             tag!(Tfoot) => self.handle_start_tfoot(&tag),
             tag!(Th) => self.handle_start_th(&tag),
             tag!(Thead) => self.handle_start_thead(&tag),
+            tag!(Title) => self.handle_start_title(&tag),
             tag!(Tr) => self.handle_start_tr(&tag),
             tag!(Track) => self.handle_start_track(&tag),
-            tag!(Title) => self.handle_start_title(&tag),
+            tag!(Tt) => self.handle_start_tt(&tag),
+            tag!(U) => self.handle_start_u(&tag),
             tag!(Ul) => self.handle_start_ul(&tag),
             tag!(Wbr) => self.handle_start_wbr(&tag),
             tag!(Xmp) => self.handle_start_xmp(&tag),
@@ -166,14 +238,17 @@ where
         let local_name = LocalName::lookup(tag.name);
         match local_name {
             tag!(A) => self.handle_end_a(&tag),
+            tag!(Address) => self.handle_end_address(&tag),
             tag!(Applet) => self.handle_end_applet(&tag),
             tag!(Area) => self.handle_end_area(&tag),
+            tag!(Article) => self.handle_end_article(&tag),
             tag!(Aside) => self.handle_end_aside(&tag),
             tag!(B) => self.handle_end_b(&tag),
             tag!(Base) => self.handle_end_base(&tag),
             tag!(Basefont) => self.handle_end_basefont(&tag),
             tag!(Bgsound) => self.handle_end_bgsound(&tag),
             tag!(Big) => self.handle_end_big(&tag),
+            tag!(Blockquote) => self.handle_end_blockquote(&tag),
             tag!(Body) => self.handle_end_body(&tag),
             tag!(Br) => self.handle_end_br(&tag),
             tag!(Button) => self.handle_end_button(&tag),
@@ -183,30 +258,50 @@ where
             tag!(Col) => self.handle_end_col(&tag),
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
             tag!(Dd) => self.handle_end_dd(&tag),
+            tag!(Details) => self.handle_end_details(&tag),
+            tag!(Dialog) => self.handle_end_dialog(&tag),
+            tag!(Dir) => self.handle_end_dir(&tag),
             tag!(Div) => self.handle_end_div(&tag),
             tag!(Dl) => self.handle_end_dl(&tag),
             tag!(Dt) => self.handle_end_dt(&tag),
             tag!(Em) => self.handle_end_em(&tag),
             tag!(Embed) => self.handle_end_embed(&tag),
+            tag!(Fieldset) => self.handle_end_fieldset(&tag),
+            tag!(Figcaption) => self.handle_end_figcaption(&tag),
+            tag!(Figure) => self.handle_end_figure(&tag),
             tag!(Font) => self.handle_end_font(&tag),
+            tag!(Footer) => self.handle_end_footer(&tag),
             tag!(Form) => self.handle_end_form(&tag),
             tag!(Frame) => self.handle_end_frame(&tag),
             tag!(Frameset) => self.handle_end_frameset(&tag),
+            tag!(H1) => self.handle_end_h1(&tag),
+            tag!(H2) => self.handle_end_h2(&tag),
+            tag!(H3) => self.handle_end_h3(&tag),
+            tag!(H4) => self.handle_end_h4(&tag),
+            tag!(H5) => self.handle_end_h5(&tag),
+            tag!(H6) => self.handle_end_h6(&tag),
             tag!(Head) => self.handle_end_head(&tag),
+            tag!(Header) => self.handle_end_header(&tag),
+            tag!(Hgroup) => self.handle_end_hgroup(&tag),
             tag!(Hr) => self.handle_end_hr(&tag),
             tag!(Html) => self.handle_end_html(&tag),
             tag!(I) => self.handle_end_i(&tag),
             tag!(Iframe) => self.handle_end_iframe(&tag),
+            tag!(Image) => self.handle_end_image(&tag),
             tag!(Img) => self.handle_end_img(&tag),
             tag!(Input) => self.handle_end_input(&tag),
             tag!(Keygen) => self.handle_end_keygen(&tag),
             tag!(Li) => self.handle_end_li(&tag),
-            tag!(Listing) => self.handle_end_listing(&tag),
             tag!(Link) => self.handle_end_link(&tag),
+            tag!(Listing) => self.handle_end_listing(&tag),
             tag!(Main) => self.handle_end_main(&tag),
+            tag!(Marquee) => self.handle_end_marquee(&tag),
             tag!(Math) => self.handle_end_math(&tag),
+            tag!(Menu) => self.handle_end_menu(&tag),
             tag!(Meta) => self.handle_end_meta(&tag),
+            tag!(Nav) => self.handle_end_nav(&tag),
             tag!(Nobr) => self.handle_end_nobr(&tag),
+            tag!(Noembed) => self.handle_end_noembed(&tag),
             tag!(Noframes) => self.handle_end_noframes(&tag),
             tag!(Noscript) => self.handle_end_noscript(&tag),
             tag!(Object) => self.handle_end_object(&tag),
@@ -217,22 +312,35 @@ where
             tag!(Param) => self.handle_end_param(&tag),
             tag!(Plaintext) => self.handle_end_plaintext(&tag),
             tag!(Pre) => self.handle_end_pre(&tag),
+            tag!(Rb) => self.handle_end_rb(&tag),
+            tag!(Rp) => self.handle_end_rp(&tag),
+            tag!(Rt) => self.handle_end_rt(&tag),
+            tag!(Rtc) => self.handle_end_rtc(&tag),
+            tag!(S) => self.handle_end_s(&tag),
+            tag!(Sarcasm) => self.handle_end_sarcasm(&tag),
             tag!(Script) => self.handle_end_script(&tag),
+            tag!(Section) => self.handle_end_section(&tag),
             tag!(Select) => self.handle_end_select(&tag),
+            tag!(Small) => self.handle_end_small(&tag),
             tag!(Source) => self.handle_end_source(&tag),
+            tag!(Strike) => self.handle_end_strike(&tag),
             tag!(Strong) => self.handle_end_strong(&tag),
             tag!(Style) => self.handle_end_style(&tag),
+            tag!(Summary) => self.handle_end_summary(&tag),
             tag!(Svg) => self.handle_end_svg(&tag),
             tag!(Table) => self.handle_end_table(&tag),
             tag!(Tbody) => self.handle_end_tbody(&tag),
             tag!(Td) => self.handle_end_td(&tag),
+            tag!(Template) => self.handle_end_template(&tag),
             tag!(Textarea) => self.handle_end_textarea(&tag),
             tag!(Tfoot) => self.handle_end_tfoot(&tag),
             tag!(Th) => self.handle_end_th(&tag),
             tag!(Thead) => self.handle_end_thead(&tag),
+            tag!(Title) => self.handle_end_title(&tag),
             tag!(Tr) => self.handle_end_tr(&tag),
             tag!(Track) => self.handle_end_track(&tag),
-            tag!(Title) => self.handle_end_title(&tag),
+            tag!(Tt) => self.handle_end_tt(&tag),
+            tag!(U) => self.handle_end_u(&tag),
             tag!(Ul) => self.handle_end_ul(&tag),
             tag!(Wbr) => self.handle_end_wbr(&tag),
             tag!(Xmp) => self.handle_end_xmp(&tag),
