@@ -106,7 +106,7 @@ where
         }
     }
 
-    fn determine_quirks_mode(&mut self, doctype: &Doctype<'_>) {
+    fn determine_quirks_mode(&mut self, _doctype: &Doctype<'_>) {
         // TODO
     }
 }
