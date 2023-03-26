@@ -14,8 +14,6 @@ html5-spec:
 # * The guard condition in the rule for `<noscript>` in the `in-head` insertion
 #   mode is expanded inside the Rust code in the `run` property.
 # * Steps of `Anything else` in the `in-table-text` are manually expanded.
-# * Steps of `<img>` in the `in-body` are directly expanded in `<image>` in the
-#   `in-body` instead of reprocessing the token renamed to "img".
 modes:
   - name: initial
     ref: the-initial-insertion-mode
@@ -563,7 +561,7 @@ modes:
         run: |
           if !self.context().has_{{tag_name}}_element_in_scope() {
               {{use '$parse-error'}}
-              // Ignore the token.
+              {{use '$ignore-token'}}
           } else {
               self.close_implied_tags();
               if !self.context().is_html_element(tag!({{TagName}})) {
@@ -573,8 +571,8 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html {{tag_name}} element
+              Control::Continue
           }
-          Control::Continue
       - match: </form>
         run: |
           if !self.context().has_template_element() {
@@ -800,7 +798,7 @@ modes:
       - match: <image>
         run: |
           {{use '$parse-error'}}
-          {{use 'start-br'}}
+          self.handle_start_tag(tag.rename("img"))
       - match: <textarea>
         run: |
           self.push_html_textarea_element(tag);

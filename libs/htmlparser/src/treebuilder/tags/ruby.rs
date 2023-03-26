@@ -9,9 +9,9 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_center(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_ruby(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_start_center", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_start_ruby", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -93,10 +93,8 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        if self.context().has_p_element_in_button_scope() {
-                            self.close_p_element();
-                        }
-                        self.push_html_center_element(tag);
+                        self.reconstruct_active_formatting_elements();
+                        self.push_html_ruby_element(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -110,10 +108,8 @@ where
                         tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
-                            if self.context().has_p_element_in_button_scope() {
-                                self.close_p_element();
-                            }
-                            self.push_html_center_element(tag);
+                            self.reconstruct_active_formatting_elements();
+                            self.push_html_ruby_element(tag);
                             Control::Continue
                         };
                         self.disable_foster_parenting();
@@ -220,9 +216,9 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_center(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_ruby(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            let span = tracing::debug_span!("handle_end_center", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_end_ruby", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
                 mode!(Initial) => {
@@ -267,24 +263,29 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        if !self.context().has_center_element_in_scope() {
-                            // TODO: Parse error.
-                            tracing::debug!("Parse error");
-                            // Ignore the token.
-                            tracing::debug!("Ignore the token");
-                            Control::Continue
-                        } else {
-                            self.close_implied_tags();
-                            if !self.context().is_html_element(tag!(Center)) {
-                                // TODO: Parse error.
-                                tracing::debug!("Parse error");
+                        let mut context_pos = self.context_stack.len() - 1;
+                        loop {
+                            let context = &self.context_stack[context_pos];
+                            let element = context.open_element.node;
+                            if context.is_html() && self.inner.has_same_name(element, tag.name) {
+                                self.close_implied_tags_except_for(tag!(Ruby)); // TODO
+                                if element != self.context().open_element.node {
+                                    // TODO: Parse error.
+                                }
+                                while self.context_stack.len() > context_pos {
+                                    self.pop_element();
+                                }
+                                break;
+                            } else {
+                                if context.open_element.local_name.is_special() {
+                                    // TODO: Parse error.
+                                    // Ignore the token.
+                                    break;
+                                }
                             }
-                            while !self.context().is_html_element(tag!(Center)) {
-                                self.pop_element();
-                            }
-                            self.pop_element(); // pop an html center element
-                            Control::Continue
+                            context_pos -= 1;
                         }
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -308,24 +309,30 @@ where
                         tracing::debug!("Parse error");
                         self.enable_foster_parenting();
                         let ctrl = {
-                            if !self.context().has_center_element_in_scope() {
-                                // TODO: Parse error.
-                                tracing::debug!("Parse error");
-                                // Ignore the token.
-                                tracing::debug!("Ignore the token");
-                                Control::Continue
-                            } else {
-                                self.close_implied_tags();
-                                if !self.context().is_html_element(tag!(Center)) {
-                                    // TODO: Parse error.
-                                    tracing::debug!("Parse error");
+                            let mut context_pos = self.context_stack.len() - 1;
+                            loop {
+                                let context = &self.context_stack[context_pos];
+                                let element = context.open_element.node;
+                                if context.is_html() && self.inner.has_same_name(element, tag.name)
+                                {
+                                    self.close_implied_tags_except_for(tag!(Ruby)); // TODO
+                                    if element != self.context().open_element.node {
+                                        // TODO: Parse error.
+                                    }
+                                    while self.context_stack.len() > context_pos {
+                                        self.pop_element();
+                                    }
+                                    break;
+                                } else {
+                                    if context.open_element.local_name.is_special() {
+                                        // TODO: Parse error.
+                                        // Ignore the token.
+                                        break;
+                                    }
                                 }
-                                while !self.context().is_html_element(tag!(Center)) {
-                                    self.pop_element();
-                                }
-                                self.pop_element(); // pop an html center element
-                                Control::Continue
+                                context_pos -= 1;
                             }
+                            Control::Continue
                         };
                         self.disable_foster_parenting();
                         ctrl

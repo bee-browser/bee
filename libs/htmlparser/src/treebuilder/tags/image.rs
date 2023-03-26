@@ -95,14 +95,7 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        self.reconstruct_active_formatting_elements();
-                        self.push_html_image_element(tag);
-                        self.pop_element();
-                        if tag.self_closing {
-                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
-                        }
-                        self.frameset_ok = false;
-                        Control::Continue
+                        self.handle_start_tag(tag.rename("img"))
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -117,14 +110,7 @@ where
                         let ctrl = {
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
-                            self.reconstruct_active_formatting_elements();
-                            self.push_html_image_element(tag);
-                            self.pop_element();
-                            if tag.self_closing {
-                                // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
-                            }
-                            self.frameset_ok = false;
-                            Control::Continue
+                            self.handle_start_tag(tag.rename("img"))
                         };
                         self.disable_foster_parenting();
                         ctrl

@@ -275,6 +275,8 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
                         } else {
                             self.close_implied_tags();
                             if !self.context().is_html_element(tag!(Pre)) {
@@ -285,8 +287,8 @@ where
                                 self.pop_element();
                             }
                             self.pop_element(); // pop an html pre element
+                            Control::Continue
                         }
-                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -314,6 +316,8 @@ where
                                 // TODO: Parse error.
                                 tracing::debug!("Parse error");
                                 // Ignore the token.
+                                tracing::debug!("Ignore the token");
+                                Control::Continue
                             } else {
                                 self.close_implied_tags();
                                 if !self.context().is_html_element(tag!(Pre)) {
@@ -324,8 +328,8 @@ where
                                     self.pop_element();
                                 }
                                 self.pop_element(); // pop an html pre element
+                                Control::Continue
                             }
-                            Control::Continue
                         };
                         self.disable_foster_parenting();
                         ctrl

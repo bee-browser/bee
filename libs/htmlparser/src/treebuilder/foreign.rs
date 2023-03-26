@@ -93,7 +93,7 @@ where
                     self.handle_start_tag(tag)
                 }
                 local_name => {
-                    match self.context().open_element.namespace {
+                    match self.adjusted_context().open_element.namespace {
                         Namespace::MathMl => self.push_mathml_element(&tag, local_name),
                         Namespace::Svg => self.push_svg_element(&tag, local_name),
                         _ => unreachable!(),

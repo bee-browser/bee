@@ -979,16 +979,8 @@ fn test_0060() {
 #[test]
 fn test_0061() {
     parse(Test {
-        data: "\n<DIV>",
-        document: vec![
-            (0, "<html>"),
-            (1, "<head>"),
-            (1, "<body>"),
-            (0, "<html>"),
-            (1, "<head>"),
-            (1, "<body>"),
-            (2, "<div>"),
-        ],
+        data: "",
+        document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>")],
         context_element: None,
         scripting: Scripting::Both,
     });
@@ -996,6 +988,16 @@ fn test_0061() {
 
 #[test]
 fn test_0062() {
+    parse(Test {
+        data: "<DIV>",
+        document: vec![(0, "<html>"), (1, "<head>"), (1, "<body>"), (2, "<div>")],
+        context_element: None,
+        scripting: Scripting::Both,
+    });
+}
+
+#[test]
+fn test_0063() {
     parse(Test {
         data: "<DIV> abc",
         document: vec![
@@ -1011,7 +1013,7 @@ fn test_0062() {
 }
 
 #[test]
-fn test_0063() {
+fn test_0064() {
     parse(Test {
         data: "<DIV> abc <B>",
         document: vec![
@@ -1028,7 +1030,7 @@ fn test_0063() {
 }
 
 #[test]
-fn test_0064() {
+fn test_0065() {
     parse(Test {
         data: "<DIV> abc <B> def",
         document: vec![
@@ -1046,7 +1048,7 @@ fn test_0064() {
 }
 
 #[test]
-fn test_0065() {
+fn test_0066() {
     parse(Test {
         data: "<DIV> abc <B> def <I>",
         document: vec![
@@ -1065,7 +1067,7 @@ fn test_0065() {
 }
 
 #[test]
-fn test_0066() {
+fn test_0067() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi",
         document: vec![
@@ -1085,7 +1087,7 @@ fn test_0066() {
 }
 
 #[test]
-fn test_0067() {
+fn test_0068() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P>",
         document: vec![
@@ -1106,7 +1108,7 @@ fn test_0067() {
 }
 
 #[test]
-fn test_0068() {
+fn test_0069() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P> jkl",
         document: vec![
@@ -1128,7 +1130,7 @@ fn test_0068() {
 }
 
 #[test]
-fn test_0069() {
+fn test_0070() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P> jkl </B>",
         document: vec![
@@ -1152,7 +1154,7 @@ fn test_0069() {
 }
 
 #[test]
-fn test_0070() {
+fn test_0071() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P> jkl </B> mno",
         document: vec![
@@ -1177,7 +1179,7 @@ fn test_0070() {
 }
 
 #[test]
-fn test_0071() {
+fn test_0072() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I>",
         document: vec![
@@ -1203,7 +1205,7 @@ fn test_0071() {
 }
 
 #[test]
-fn test_0072() {
+fn test_0073() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr",
         document: vec![
@@ -1230,7 +1232,7 @@ fn test_0072() {
 }
 
 #[test]
-fn test_0073() {
+fn test_0074() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P>",
         document: vec![
@@ -1257,7 +1259,7 @@ fn test_0073() {
 }
 
 #[test]
-fn test_0074() {
+fn test_0075() {
     parse(Test {
         data: "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P> stu",
         document: vec![
@@ -1285,7 +1287,7 @@ fn test_0074() {
 }
 
 #[test]
-fn test_0075() {
+fn test_0076() {
     parse(Test {
         data: "<test attribute---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->",
         document: vec![
@@ -1301,7 +1303,7 @@ fn test_0075() {
 }
 
 #[test]
-fn test_0076() {
+fn test_0077() {
     parse(Test {
         data: "<a href=\"blah\">aba<table><a href=\"foo\">br<tr><td></td></tr>x</table>aoe",
         document: vec![
@@ -1331,7 +1333,7 @@ fn test_0076() {
 }
 
 #[test]
-fn test_0077() {
+fn test_0078() {
     parse(Test {
         data: "<a href=\"blah\">aba<table><tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
         document: vec![
@@ -1356,7 +1358,7 @@ fn test_0077() {
 }
 
 #[test]
-fn test_0078() {
+fn test_0079() {
     parse(Test {
         data: "<table><a href=\"blah\">aba<tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
         document: vec![
@@ -1386,7 +1388,7 @@ fn test_0078() {
 }
 
 #[test]
-fn test_0079() {
+fn test_0080() {
     parse(Test {
         data: "<a href=a>aa<marquee>aa<a href=b>bb</marquee>aa",
         document: vec![
@@ -1409,7 +1411,7 @@ fn test_0079() {
 }
 
 #[test]
-fn test_0080() {
+fn test_0081() {
     parse(Test {
         data: "<wbr><strike><code></strike><code><strike></code>",
         document: vec![
@@ -1429,7 +1431,7 @@ fn test_0080() {
 }
 
 #[test]
-fn test_0081() {
+fn test_0082() {
     parse(Test {
         data: "<!DOCTYPE html><spacer>foo",
         document: vec![
@@ -1446,7 +1448,7 @@ fn test_0081() {
 }
 
 #[test]
-fn test_0082() {
+fn test_0083() {
     parse(Test {
         data: "<title><meta></title><link><title><meta></title>",
         document: vec![
@@ -1465,7 +1467,7 @@ fn test_0082() {
 }
 
 #[test]
-fn test_0083() {
+fn test_0084() {
     parse(Test {
         data: "<style><!--</style><meta><script>--><link></script>",
         document: vec![
@@ -1484,7 +1486,7 @@ fn test_0083() {
 }
 
 #[test]
-fn test_0084() {
+fn test_0085() {
     parse(Test {
         data: "<head><meta></head><link>",
         document: vec![
@@ -1500,7 +1502,7 @@ fn test_0084() {
 }
 
 #[test]
-fn test_0085() {
+fn test_0086() {
     parse(Test {
         data: "<table><tr><tr><td><td><span><th><span>X</table>",
         document: vec![
@@ -1524,7 +1526,7 @@ fn test_0085() {
 }
 
 #[test]
-fn test_0086() {
+fn test_0087() {
     parse(Test {
         data: "<body><body><base><link><meta><title><p></title><body><p></body>",
         document: vec![
@@ -1544,7 +1546,7 @@ fn test_0086() {
 }
 
 #[test]
-fn test_0087() {
+fn test_0088() {
     parse(Test {
         data: "<textarea><p></textarea>",
         document: vec![
@@ -1560,7 +1562,7 @@ fn test_0087() {
 }
 
 #[test]
-fn test_0088() {
+fn test_0089() {
     parse(Test {
         data: "<p><image></p>",
         document: vec![
@@ -1576,7 +1578,7 @@ fn test_0088() {
 }
 
 #[test]
-fn test_0089() {
+fn test_0090() {
     parse(Test {
         data: "<a><table><a></table><p><a><div><a>",
         document: vec![
@@ -1597,7 +1599,7 @@ fn test_0089() {
 }
 
 #[test]
-fn test_0090() {
+fn test_0091() {
     parse(Test {
         data: "<head></p><meta><p>",
         document: vec![
@@ -1613,7 +1615,7 @@ fn test_0090() {
 }
 
 #[test]
-fn test_0091() {
+fn test_0092() {
     parse(Test {
         data: "<head></html><meta><p>",
         document: vec![
@@ -1629,7 +1631,7 @@ fn test_0091() {
 }
 
 #[test]
-fn test_0092() {
+fn test_0093() {
     parse(Test {
         data: "<b><table><td><i></table>",
         document: vec![
@@ -1649,7 +1651,7 @@ fn test_0092() {
 }
 
 #[test]
-fn test_0093() {
+fn test_0094() {
     parse(Test {
         data: "<b><table><td></b><i></table>",
         document: vec![
@@ -1669,7 +1671,7 @@ fn test_0093() {
 }
 
 #[test]
-fn test_0094() {
+fn test_0095() {
     parse(Test {
         data: "<h1><h2>",
         document: vec![
@@ -1685,7 +1687,7 @@ fn test_0094() {
 }
 
 #[test]
-fn test_0095() {
+fn test_0096() {
     parse(Test {
         data: "<a><p><a></a></p></a>",
         document: vec![
@@ -1703,7 +1705,7 @@ fn test_0095() {
 }
 
 #[test]
-fn test_0096() {
+fn test_0097() {
     parse(Test {
         data: "<b><button></b></button></b>",
         document: vec![
@@ -1720,7 +1722,7 @@ fn test_0096() {
 }
 
 #[test]
-fn test_0097() {
+fn test_0098() {
     parse(Test {
         data: "<p><b><div><marquee></p></b></div>",
         document: vec![
@@ -1740,7 +1742,7 @@ fn test_0097() {
 }
 
 #[test]
-fn test_0098() {
+fn test_0099() {
     parse(Test {
         data: "<script></script></div><title></title><p><p>",
         document: vec![
@@ -1758,7 +1760,7 @@ fn test_0098() {
 }
 
 #[test]
-fn test_0099() {
+fn test_0100() {
     parse(Test {
         data: "<p><hr></p>",
         document: vec![
@@ -1775,7 +1777,7 @@ fn test_0099() {
 }
 
 #[test]
-fn test_0100() {
+fn test_0101() {
     parse(Test {
         data: "<select><b><option><select><option></b></select>",
         document: vec![
@@ -1792,7 +1794,7 @@ fn test_0100() {
 }
 
 #[test]
-fn test_0101() {
+fn test_0102() {
     parse(Test {
         data: "<html><head><title></title><body></body></html>",
         document: vec![(0, "<html>"), (1, "<head>"), (2, "<title>"), (1, "<body>")],
@@ -1802,7 +1804,7 @@ fn test_0101() {
 }
 
 #[test]
-fn test_0102() {
+fn test_0103() {
     parse(Test {
         data: "<a><table><td><a><table></table><a></tr><a></table><a>",
         document: vec![
@@ -1826,7 +1828,7 @@ fn test_0102() {
 }
 
 #[test]
-fn test_0103() {
+fn test_0104() {
     parse(Test {
         data: "<ul><li></li><div><li></div><li><li><div><li><address><li><b><em></b><li></ul>",
         document: vec![
@@ -1853,7 +1855,7 @@ fn test_0103() {
 }
 
 #[test]
-fn test_0104() {
+fn test_0105() {
     parse(Test {
         data: "<ul><li><ul></li><li>a</li></ul></li></ul>",
         document: vec![
@@ -1872,7 +1874,7 @@ fn test_0104() {
 }
 
 #[test]
-fn test_0105() {
+fn test_0106() {
     parse(Test {
         data: "<frameset><frame><frameset><frame></frameset><noframes></noframes></frameset>",
         document: vec![
@@ -1890,7 +1892,7 @@ fn test_0105() {
 }
 
 #[test]
-fn test_0106() {
+fn test_0107() {
     parse(Test {
         data: "<h1><table><td><h3></table><h3></h1>",
         document: vec![
@@ -1911,7 +1913,7 @@ fn test_0106() {
 }
 
 #[test]
-fn test_0107() {
+fn test_0108() {
     parse(Test {
         data: "<table><colgroup><col><colgroup><col><col><col><colgroup><col><col><thead><tr><td></table>",
         document: vec![
@@ -1938,7 +1940,7 @@ fn test_0107() {
 }
 
 #[test]
-fn test_0108() {
+fn test_0109() {
     parse(Test {
         data: "<table><col><tbody><col><tr><col><td><col></table><col>",
         document: vec![
@@ -1967,7 +1969,7 @@ fn test_0108() {
 }
 
 #[test]
-fn test_0109() {
+fn test_0110() {
     parse(Test {
         data: "<table><colgroup><tbody><colgroup><tr><colgroup><td><colgroup></table><colgroup>",
         document: vec![
@@ -1992,7 +1994,7 @@ fn test_0109() {
 }
 
 #[test]
-fn test_0110() {
+fn test_0111() {
     parse(Test {
         data: "</strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
         document: vec![
@@ -2008,7 +2010,7 @@ fn test_0110() {
 }
 
 #[test]
-fn test_0111() {
+fn test_0112() {
     parse(Test {
         data: "<table><tr></strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
         document: vec![
@@ -2027,7 +2029,7 @@ fn test_0111() {
 }
 
 #[test]
-fn test_0112() {
+fn test_0113() {
     parse(Test {
         data: "<frameset>",
         document: vec![(0, "<html>"), (1, "<head>"), (1, "<frameset>")],

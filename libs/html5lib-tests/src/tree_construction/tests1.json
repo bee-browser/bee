@@ -2271,11 +2271,9 @@
       "scripting": "Both"
     },
     {
-      "data": "\n<DIV>",
+      "data": "",
       "errors": [
-        "(1,0): expected-doctype-but-got-eof",
-        "(1,5): expected-doctype-but-got-start-tag",
-        "(1,5): expected-closing-tag-but-got-eof"
+        "(1,0): expected-doctype-but-got-eof"
       ],
       "newErrors": [],
       "document": [
@@ -2290,7 +2288,18 @@
         [
           1,
           "<body>"
-        ],
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,5): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
         [
           0,
           "<html>"

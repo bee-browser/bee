@@ -83,6 +83,7 @@ mod rb;
 mod rp;
 mod rt;
 mod rtc;
+mod ruby;
 mod s;
 mod sarcasm;
 mod script;
@@ -201,6 +202,7 @@ where
             tag!(Rp) => self.handle_start_rp(&tag),
             tag!(Rt) => self.handle_start_rt(&tag),
             tag!(Rtc) => self.handle_start_rtc(&tag),
+            tag!(Ruby) => self.handle_start_ruby(&tag),
             tag!(S) => self.handle_start_s(&tag),
             tag!(Sarcasm) => self.handle_start_sarcasm(&tag),
             tag!(Script) => self.handle_start_script(&tag),
@@ -316,6 +318,7 @@ where
             tag!(Rp) => self.handle_end_rp(&tag),
             tag!(Rt) => self.handle_end_rt(&tag),
             tag!(Rtc) => self.handle_end_rtc(&tag),
+            tag!(Ruby) => self.handle_end_ruby(&tag),
             tag!(S) => self.handle_end_s(&tag),
             tag!(Sarcasm) => self.handle_end_sarcasm(&tag),
             tag!(Script) => self.handle_end_script(&tag),
