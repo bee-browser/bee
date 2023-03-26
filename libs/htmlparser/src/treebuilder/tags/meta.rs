@@ -44,7 +44,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -258,6 +257,7 @@ where
                                 self.close_implied_tags_except_for(tag!(Meta)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
+                                    tracing::debug!("Parse error");
                                 }
                                 while self.context_stack.len() > context_pos {
                                     self.pop_element();
@@ -266,6 +266,7 @@ where
                             } else {
                                 if context.open_element.local_name.is_special() {
                                     // TODO: Parse error.
+                                    tracing::debug!("Parse error");
                                     // Ignore the token.
                                     break;
                                 }
@@ -305,6 +306,7 @@ where
                                     self.close_implied_tags_except_for(tag!(Meta)); // TODO
                                     if element != self.context().open_element.node {
                                         // TODO: Parse error.
+                                        tracing::debug!("Parse error");
                                     }
                                     while self.context_stack.len() > context_pos {
                                         self.pop_element();
@@ -313,6 +315,7 @@ where
                                 } else {
                                     if context.open_element.local_name.is_special() {
                                         // TODO: Parse error.
+                                        tracing::debug!("Parse error");
                                         // Ignore the token.
                                         break;
                                     }

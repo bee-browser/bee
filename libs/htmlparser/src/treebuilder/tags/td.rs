@@ -44,7 +44,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -259,8 +258,8 @@ where
                 }
                 mode!(InTemplate) => {
                     let ctrl = {
-                        // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-                        // TODO: Push "in row" onto the stack of template insertion modes so that it is the new current template insertion mode.
+                        self.pop_template_mode();
+                        self.push_template_mode(mode!(InRow));
                         self.switch_to(mode!(InRow));
                         Control::Reprocess
                     };
@@ -347,6 +346,7 @@ where
                                 self.close_implied_tags_except_for(tag!(Td)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
+                                    tracing::debug!("Parse error");
                                 }
                                 while self.context_stack.len() > context_pos {
                                     self.pop_element();
@@ -355,6 +355,7 @@ where
                             } else {
                                 if context.open_element.local_name.is_special() {
                                     // TODO: Parse error.
+                                    tracing::debug!("Parse error");
                                     // Ignore the token.
                                     break;
                                 }
@@ -457,13 +458,18 @@ where
                     let ctrl = {
                         // TODO: Parse error.
                         tracing::debug!("Parse error");
-                        // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as that of the token, then ignore the token.
-                        while !self.context().is_html_element(tag!(Select)) {
-                            self.pop_element();
+                        if !self.context().has_table_element_in_table_scope() {
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            while !self.context().is_html_element(tag!(Select)) {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop an html select element
+                            self.reset_insertion_mode_appropriately();
+                            Control::Reprocess
                         }
-                        self.pop_element(); // pop an html select element
-                        self.reset_insertion_mode_appropriately();
-                        Control::Reprocess
                     };
                     match ctrl {
                         Control::Reprocess => continue,

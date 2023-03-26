@@ -44,7 +44,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -94,9 +93,6 @@ where
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
                         self.reconstruct_active_formatting_elements();
-                        // TODO: Adjust SVG attributes for the token. (This fixes the case of SVG attributes that are not all lowercase.)
-                        // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
-                        // TODO: Insert a foreign element for the token, in the SVG namespace.
                         self.push_svg_element(tag, tag!(Svg));
                         if tag.self_closing {
                             self.pop_element();
@@ -116,9 +112,6 @@ where
                         self.enable_foster_parenting();
                         let ctrl = {
                             self.reconstruct_active_formatting_elements();
-                            // TODO: Adjust SVG attributes for the token. (This fixes the case of SVG attributes that are not all lowercase.)
-                            // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
-                            // TODO: Insert a foreign element for the token, in the SVG namespace.
                             self.push_svg_element(tag, tag!(Svg));
                             if tag.self_closing {
                                 self.pop_element();
@@ -200,8 +193,8 @@ where
                 }
                 mode!(InTemplate) => {
                     let ctrl = {
-                        // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-                        // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
+                        self.pop_template_mode();
+                        self.push_template_mode(mode!(InBody));
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -285,6 +278,7 @@ where
                                 self.close_implied_tags_except_for(tag!(Svg)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
+                                    tracing::debug!("Parse error");
                                 }
                                 while self.context_stack.len() > context_pos {
                                     self.pop_element();
@@ -293,6 +287,7 @@ where
                             } else {
                                 if context.open_element.local_name.is_special() {
                                     // TODO: Parse error.
+                                    tracing::debug!("Parse error");
                                     // Ignore the token.
                                     break;
                                 }
@@ -332,6 +327,7 @@ where
                                     self.close_implied_tags_except_for(tag!(Svg)); // TODO
                                     if element != self.context().open_element.node {
                                         // TODO: Parse error.
+                                        tracing::debug!("Parse error");
                                     }
                                     while self.context_stack.len() > context_pos {
                                         self.pop_element();
@@ -340,6 +336,7 @@ where
                                 } else {
                                     if context.open_element.local_name.is_special() {
                                         // TODO: Parse error.
+                                        tracing::debug!("Parse error");
                                         // Ignore the token.
                                         break;
                                     }

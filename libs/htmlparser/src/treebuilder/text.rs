@@ -61,7 +61,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -357,7 +356,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };

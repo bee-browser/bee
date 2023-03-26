@@ -44,7 +44,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -100,12 +99,31 @@ where
                     InRow,
                     InCell,
                     InSelect,
-                    InSelectInTable,
-                    InTemplate
+                    InSelectInTable
                 ) => {
                     let ctrl = {
-                        // TODO
-                        Control::Done
+                        if !self.template_mode_stack.is_empty() {
+                            if !self.context().has_template_element() {
+                                // TODO: Stop parsing.
+                                Control::Done
+                            } else {
+                                // TODO: Parse error.
+                                tracing::debug!("Parse error");
+                                while !self.context().is_html_element(tag!(Template)) {
+                                    self.pop_element();
+                                }
+                                self.pop_element(); // pop an html template element
+                                self.active_formatting_element_list
+                                    .clear_up_to_last_marker();
+                                self.pop_template_mode();
+                                self.reset_insertion_mode_appropriately();
+                                Control::Reprocess
+                            }
+                        } else {
+                            // TODO: If there is a node in the stack of open elements that is not either a dd element, a dt element, an li element, an optgroup element, an option element, a p element, an rb element, an rp element, an rt element, an rtc element, a tbody element, a td element, a tfoot element, a th element, a thead element, a tr element, the body element, or the html element, then this is a parse error.
+                            // TODO: Stop parsing.
+                            Control::Done
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -148,6 +166,30 @@ where
                         }
                         self.switch_to_original_mode();
                         Control::Reprocess
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => break,
+                    }
+                }
+                mode!(InTemplate) => {
+                    let ctrl = {
+                        if !self.context().has_template_element() {
+                            // TODO: Stop parsing.
+                            Control::Done
+                        } else {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            while !self.context().is_html_element(tag!(Template)) {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop an html template element
+                            self.active_formatting_element_list
+                                .clear_up_to_last_marker();
+                            self.pop_template_mode();
+                            self.reset_insertion_mode_appropriately();
+                            Control::Reprocess
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,

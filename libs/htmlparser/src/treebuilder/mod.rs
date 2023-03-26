@@ -89,6 +89,7 @@ where
 
     fragment_parsing_context: Option<TreeBuildContext<T::NodeId>>,
     context_stack: Vec<TreeBuildContext<T::NodeId>>,
+    template_mode_stack: Vec<InsertionMode>,
     active_formatting_element_list: ActiveFormattingElementList<T::NodeId>,
 
     iframe_srcdoc: bool,
@@ -131,6 +132,7 @@ where
             pending_table_text: String::with_capacity(INITIAL_TEXT_CAPACITY),
             fragment_parsing_context: None,
             context_stack: vec![context],
+            template_mode_stack: vec![],
             active_formatting_element_list: Default::default(),
             iframe_srcdoc: false,
             quirks_mode_changeable: true,
@@ -181,6 +183,9 @@ where
         tracing::debug!(?context_element);
         self.push_html_html_element(&Tag::with_no_attrs("html"));
         self.context_mut().reset_mode = mode;
+        if context_element.is_html_element(tag!(Template)) {
+            self.push_template_mode(mode!(InTemplate));
+        }
         self.switch_to(mode);
         tracing::debug!(
             context.pos = self.context_stack.len() - 1,
@@ -1043,6 +1048,7 @@ where
     fn push_html_form_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Form);
         let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Form;
         context.element_in_select_scope.clear();
     }
 
@@ -1128,13 +1134,6 @@ where
     #[inline(always)]
     fn push_html_iframe_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Iframe);
-        let context = self.context_mut();
-        context.element_in_select_scope.clear();
-    }
-
-    #[inline(always)]
-    fn push_html_image_element(&mut self, tag: &Tag<'_>) {
-        self.push_html_element(tag, LocalName::Img);
         let context = self.context_mut();
         context.element_in_select_scope.clear();
     }
@@ -1384,7 +1383,11 @@ where
         self.push_html_element(tag, LocalName::Select);
         // TODO
         let context = self.context_mut();
-        context.reset_mode = mode!(InSelect);
+        if context.has_table_element_in_table_scope() {
+            context.reset_mode = mode!(InSelectInTable);
+        } else {
+            context.reset_mode = mode!(InSelect);
+        }
         context.element_in_select_scope.clear();
         context.element_in_select_scope |= ElementInSelectScope::Select;
     }
@@ -1474,6 +1477,7 @@ where
         self.push_html_element(tag, LocalName::Template);
         // TODO: switch the insertion mode to the current template insertion mode
         let context = self.context_mut();
+        context.reset_mode = mode!(InTemplate);
         context.foster_parenting_insertion_point =
             FosterParentingInsertionPoint::LastChild(context.open_element.node);
         context.element_in_scope.clear();
@@ -1913,11 +1917,29 @@ where
         }
     }
 
-    fn insert_text_to_foster_parent(&mut self) {
-        debug_assert!(!self.text.is_empty());
-        self.enable_foster_parenting();
-        self.append_text_if_exists();
-        self.disable_foster_parenting();
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn push_template_mode(&mut self, mode: InsertionMode) {
+        self.template_mode_stack.push(mode);
+        tracing::debug!(template_mode_stack.top = ?self.template_mode_stack.last());
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn pop_template_mode(&mut self) {
+        self.template_mode_stack.pop();
+        tracing::debug!(template_mode_stack.top = ?self.template_mode_stack.last());
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn reset_insertion_mode_appropriately(&mut self) {
+        tracing::debug!(
+            context.pos = self.context_stack.len() - 1,
+            context.element = ?self.context().open_element,
+        );
+        let mut mode = self.context().reset_mode;
+        if let mode!(InTemplate) = mode {
+            mode = *self.template_mode_stack.last().unwrap();
+        }
+        self.switch_to(mode);
     }
 }
 
@@ -2014,11 +2036,6 @@ where
     #[inline(always)]
     fn is_removed(&self) -> bool {
         self.flags.contains(flags!(Removed))
-    }
-
-    #[inline(always)]
-    fn is_in_foreign_content(&self) -> bool {
-        self.flags.contains(flags!(InForeignContent))
     }
 
     #[inline(always)]
@@ -2499,7 +2516,6 @@ flagset::flags! {
 
     enum TreeBuildFlags: u8 {
         Removed,
-        InForeignContent,
         MathmlTextIntegrationPoint,
         SvgIntegrationPoint,
         SvgScript,

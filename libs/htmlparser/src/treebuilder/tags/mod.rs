@@ -361,10 +361,6 @@ where
         self.inner.set_attributes(node, tag.attrs(), false);
     }
 
-    fn reset_insertion_mode_appropriately(&mut self) {
-        self.switch_to(self.context().reset_mode);
-    }
-
     fn clear_stack_back_to_table_context(&mut self) {
         loop {
             match self.context().open_element.local_name {

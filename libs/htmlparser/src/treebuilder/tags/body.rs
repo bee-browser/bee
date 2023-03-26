@@ -44,7 +44,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -209,8 +208,8 @@ where
                 }
                 mode!(InTemplate) => {
                     let ctrl = {
-                        // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-                        // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
+                        self.pop_template_mode();
+                        self.push_template_mode(mode!(InBody));
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
@@ -274,7 +273,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -334,9 +332,17 @@ where
                 }
                 mode!(InBody) => {
                     let ctrl = {
-                        // TODO
-                        self.switch_to(mode!(AfterBody));
-                        Control::Continue
+                        if !self.context().has_body_element_in_scope() {
+                            // TODO: Parse error.
+                            tracing::debug!("Parse error");
+                            // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            // TODO: if there is a node in the stack of open elements that is not either a dd element, a dt element, an li element, an optgroup element, an option element, a p element, an rb element, an rp element, an rt element, an rtc element, a tbody element, a td element, a tfoot element, a th element, a thead element, a tr element, the body element, or the html element, then this is a parse error.
+                            self.switch_to(mode!(AfterBody));
+                            Control::Continue
+                        }
                     };
                     match ctrl {
                         Control::Reprocess => continue,

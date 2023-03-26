@@ -44,7 +44,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -194,8 +193,8 @@ where
                 }
                 mode!(InTemplate) => {
                     let ctrl = {
-                        // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-                        // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
+                        self.pop_template_mode();
+                        self.push_template_mode(mode!(InBody));
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };

@@ -44,7 +44,6 @@ where
                 mode!(BeforeHead) => {
                     let ctrl = {
                         self.push_html_head_element(&Tag::with_no_attrs("head"));
-                        // TODO: Set the head element pointer to the newly created head element.
                         self.switch_to(mode!(InHead));
                         Control::Reprocess
                     };
@@ -72,7 +71,7 @@ where
                         self.context_mut().flags |= flags!(HasTemplateElement);
                         self.frameset_ok = false;
                         self.switch_to(mode!(InTemplate));
-                        // TODO: Push "in template" onto the stack of template insertion modes so that it is the new current template insertion mode
+                        self.push_template_mode(mode!(InTemplate));
                         Control::Continue
                     };
                     match ctrl {
@@ -106,7 +105,7 @@ where
                             self.context_mut().flags |= flags!(HasTemplateElement);
                             self.frameset_ok = false;
                             self.switch_to(mode!(InTemplate));
-                            // TODO: Push "in template" onto the stack of template insertion modes so that it is the new current template insertion mode
+                            self.push_template_mode(mode!(InTemplate));
                             Control::Continue
                         };
                         self.close_head_element();
@@ -235,22 +234,24 @@ where
                             // TODO: Parse error.
                             tracing::debug!("Parse error");
                             // Ignore the token.
+                            tracing::debug!("Ignore the token");
+                            Control::Continue
                         } else {
                             self.close_all_implied_tags();
                             if !self.context().is_html_element(tag!(Template)) {
                                 // TODO: Parse error.
                                 tracing::debug!("Parse error");
                             }
-                            while self.context().is_html_element(tag!(Template)) {
+                            while !self.context().is_html_element(tag!(Template)) {
                                 self.pop_element();
                             }
                             self.pop_element(); // pop an html template element
                             self.active_formatting_element_list
                                 .clear_up_to_last_marker();
-                            // TODO: Pop the current template insertion mode off the stack of template insertion modes.
+                            self.pop_template_mode();
                             self.reset_insertion_mode_appropriately();
+                            Control::Continue
                         }
-                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
