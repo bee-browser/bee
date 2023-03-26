@@ -105,7 +105,6 @@ modes:
       - match: <head>
         run: |
           self.push_html_head_element(tag);
-          // TODO: Set the head element pointer to the newly created head element.
           self.switch_to(mode!(InHead));
           Control::Continue
       - match: </head> </body> </html> </br>
@@ -119,7 +118,6 @@ modes:
         id: anything-else
         run: |
           self.push_html_head_element(&Tag::with_no_attrs("head"));
-          // TODO: Set the head element pointer to the newly created head element.
           self.switch_to(mode!(InHead));
           Control::Reprocess
 
@@ -195,27 +193,27 @@ modes:
           self.context_mut().flags |= flags!(HasTemplateElement);
           self.frameset_ok = false;
           self.switch_to(mode!(InTemplate));
-          // TODO: Push "in template" onto the stack of template insertion modes so that it is the new current template insertion mode
+          self.push_template_mode(mode!(InTemplate));
           Control::Continue
       - match: </template>
         run: |
           if !self.context().has_template_element() {
               {{use '$parse-error'}}
-              // Ignore the token.
+              {{use '$ignore-token'}}
           } else {
               self.close_all_implied_tags();
               if !self.context().is_html_element(tag!(Template)) {
                   {{use '$parse-error'}}
               }
-              while self.context().is_html_element(tag!(Template)) {
+              while !self.context().is_html_element(tag!(Template)) {
                   self.pop_element();
               }
               self.pop_element(); // pop an html template element
               self.active_formatting_element_list.clear_up_to_last_marker();
-              // TODO: Pop the current template insertion mode off the stack of template insertion modes.
+              self.pop_template_mode();
               self.reset_insertion_mode_appropriately();
+              Control::Continue
           }
-          Control::Continue
       - match: <head> </_>
         run: |
           {{use '$parse-error'}}
@@ -398,13 +396,23 @@ modes:
           }
       - match: eof
         run: |
-          // TODO
-          Control::Done
+          if !self.template_mode_stack.is_empty() {
+              {{use '@in-template'}}
+          } else {
+              // TODO: If there is a node in the stack of open elements that is not either a dd element, a dt element, an li element, an optgroup element, an option element, a p element, an rb element, an rp element, an rt element, an rtc element, a tbody element, a td element, a tfoot element, a th element, a thead element, a tr element, the body element, or the html element, then this is a parse error.
+              // TODO: Stop parsing.
+              Control::Done
+          }
       - match: </body>
         run: |
-          // TODO
-          self.switch_to(mode!(AfterBody));
-          Control::Continue
+          if !self.context().has_body_element_in_scope() {
+              {{use '$parse-error'}}
+              {{use '$ignore-token'}}
+          } else {
+              // TODO: if there is a node in the stack of open elements that is not either a dd element, a dt element, an li element, an optgroup element, an option element, a p element, an rb element, an rp element, an rt element, an rtc element, a tbody element, a td element, a tfoot element, a th element, a thead element, a tr element, the body element, or the html element, then this is a parse error.
+              self.switch_to(mode!(AfterBody));
+              Control::Continue
+          }
       - match: </html>
         run: |
           if !self.context().has_body_element_in_scope() {
@@ -575,6 +583,8 @@ modes:
           }
       - match: </form>
         run: |
+          // The HTML5 specification is unclear.
+          // So, we implement the same step as html5ever.
           if !self.context().has_template_element() {
               let node = self.form_element.take();
               match node {
@@ -872,9 +882,6 @@ modes:
       - match: <math>
         run: |
           self.reconstruct_active_formatting_elements();
-          // TODO: Adjust MathML attributes for the token. (This fixes the case of MathML attributes that are not all lowercase.)
-          // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink.)
-          // TODO: Insert a foreign element for the token, in the MathML namespace.
           self.push_mathml_element(tag, tag!(Math));
           if tag.self_closing {
               self.pop_element();
@@ -884,9 +891,6 @@ modes:
       - match: <svg>
         run: |
           self.reconstruct_active_formatting_elements();
-          // TODO: Adjust SVG attributes for the token. (This fixes the case of SVG attributes that are not all lowercase.)
-          // TODO: Adjust foreign attributes for the token. (This fixes the use of namespaced attributes, in particular XLink in SVG.)
-          // TODO: Insert a foreign element for the token, in the SVG namespace.
           self.push_svg_element(tag, tag!(Svg));
           if tag.self_closing {
               self.pop_element();
@@ -915,7 +919,7 @@ modes:
               if context.is_html() && self.inner.has_same_name(element, tag.name) {
                   self.close_implied_tags_except_for(tag!({{TagName}})); // TODO
                   if element != self.context().open_element.node {
-                      // TODO: Parse error.
+                      {{use '$parse-error'}}
                   }
                   while self.context_stack.len() > context_pos {
                       self.pop_element();
@@ -923,7 +927,7 @@ modes:
                   break;
               } else {
                   if context.open_element.local_name.is_special() {
-                      // TODO: Parse error.
+                      {{use '$parse-error'}}
                       // Ignore the token.
                       break;
                   }
@@ -1507,13 +1511,16 @@ modes:
       - match: </caption> </table> </tbody> </tfoot> </thead> </tr> </td> </th>
         run: |
           {{use '$parse-error'}}
-          // TODO: If the stack of open elements does not have an element in table scope that is an HTML element with the same tag name as that of the token, then ignore the token.
-          while !self.context().is_html_element(tag!(Select)) {
-              self.pop_element();
+          if !self.context().has_table_element_in_table_scope() {
+              {{use '$ignore-token'}}
+          } else {
+              while !self.context().is_html_element(tag!(Select)) {
+                  self.pop_element();
+              }
+              self.pop_element(); // pop an html select element
+              self.reset_insertion_mode_appropriately();
+              Control::Reprocess
           }
-          self.pop_element(); // pop an html select element
-          self.reset_insertion_mode_appropriately();
-          Control::Reprocess
       - match: any
         run: |
           {{use '@in-select'}}
@@ -1531,32 +1538,32 @@ modes:
           {{use '@in-head'}}
       - match: <caption> <colgroup> <tbody> <tfoot> <thead>
         run: |
-          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-          // TODO: Push "in table" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.pop_template_mode();
+          self.push_template_mode(mode!(InTable));
           self.switch_to(mode!(InTable));
           Control::Reprocess
       - match: <col>
         run: |
-          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-          // TODO: Push "in column group" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.pop_template_mode();
+          self.push_template_mode(mode!(InColumnGroup));
           self.switch_to(mode!(InColumnGroup));
           Control::Reprocess
       - match: <tr>
         run: |
-          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-          // TODO: Push "in table body" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.pop_template_mode();
+          self.push_template_mode(mode!(InTableBody));
           self.switch_to(mode!(InTableBody));
           Control::Reprocess
       - match: <td> <th>
         run: |
-          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-          // TODO: Push "in row" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.pop_template_mode();
+          self.push_template_mode(mode!(InRow));
           self.switch_to(mode!(InRow));
           Control::Reprocess
       - match: <_>
         run: |
-          // TODO: Pop the current template insertion mode off the stack of template insertion modes.
-          // TODO: Push "in body" onto the stack of template insertion modes so that it is the new current template insertion mode.
+          self.pop_template_mode();
+          self.push_template_mode(mode!(InBody));
           self.switch_to(mode!(InBody));
           Control::Reprocess
       - match: </_>
@@ -1565,8 +1572,20 @@ modes:
           {{use '$ignore-token'}}
       - match: eof
         run: |
-          // TODO
-          Control::Done
+          if !self.context().has_template_element() {
+              // TODO: Stop parsing.
+              Control::Done
+          } else {
+              {{use '$parse-error'}}
+              while !self.context().is_html_element(tag!(Template)) {
+                  self.pop_element();
+              }
+              self.pop_element(); // pop an html template element
+              self.active_formatting_element_list.clear_up_to_last_marker();
+              self.pop_template_mode();
+              self.reset_insertion_mode_appropriately();
+              Control::Reprocess
+          }
 
   - name: after-body
     ref: parsing-main-afterbody

@@ -1,5 +1,3 @@
-use std::ascii::AsciiExt;
-
 use bee_htmltokenizer::InitialState;
 use bee_htmltokenizer::Tokenizer;
 

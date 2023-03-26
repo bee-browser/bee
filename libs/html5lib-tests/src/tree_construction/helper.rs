@@ -95,6 +95,15 @@ impl<'a> TreeValidator<'a> {
                         Namespace::Svg => format!("<svg {}>", name),
                     },
                 });
+                let depth = if *namespace == Namespace::Html && name == "template" {
+                    v.push(LinearNode {
+                        depth: depth + 1,
+                        repr: "content".to_string(),
+                    });
+                    depth + 1
+                } else {
+                    depth
+                };
                 for (name, value) in attrs.iter() {
                     let (prefix, name) = match namespace {
                         Namespace::Html => (None, name.as_str()),
