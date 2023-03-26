@@ -40,16 +40,6 @@ impl LocalName {
         }
     }
 
-    pub fn is_formatting(self) -> bool {
-        if self == Self::Unknown {
-            return false;
-        }
-        match DATA[self.as_index()].category {
-            Category::Formatting => true,
-            _ => false,
-        }
-    }
-
     fn as_index(self) -> usize {
         match self {
           Self::Unknown => panic!(),
@@ -72,7 +62,6 @@ impl Debug for LocalName {
 struct LocalNameData {
     name: &'static str,
     category: Category,
-    obsolete: bool,
 }
 
 enum Category {
@@ -92,14 +81,12 @@ macro_rules! data {
         LocalNameData {
             name: $name,
             category: Category::$category,
-            obsolete: false,
         }
     };
     (obsolete: $name:literal, $category:ident) => {
         LocalNameData {
             name: $name,
             category: Category::$category,
-            obsolete: true,
         }
     };
 }
