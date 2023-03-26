@@ -180,6 +180,12 @@ function render(spec, modes, ids, token, run, arrow) {
   }
   const hbs = Handlebars.create();
   hbs.registerHelper('use', (ref) => {
+    let targetToken = token;
+    if (ref.startsWith('<')) {
+      const i = ref.indexOf('>');
+      targetToken = ref.slice(0, i + 1);
+      ref = ref.slice(i + 1);
+    }
     if (ref.startsWith('@')) {
       let modeName = ref.slice(1);
       log.debug(`${arrow} using modes.${modeName}`);
@@ -188,12 +194,12 @@ function render(spec, modes, ids, token, run, arrow) {
         log.error(`No such mode is defined in modes: ${modeName}`);
         Deno.exit(1);
       }
-      const [match, run] = lookupRun(mode, token, arrow.charAt(0) + arrow);
+      const [match, run] = lookupRun(mode, targetToken, arrow.charAt(0) + arrow);
       if (match === undefined) {
         log.error('No rule matching the token is defined');
         Deno.exit(1);
       }
-      return render(spec, modes, mode.ids, token, run, arrow.charAt(0) + arrow);
+      return render(spec, modes, mode.ids, targetToken, run, arrow.charAt(0) + arrow);
     }
     if (ref.startsWith('$')) {
       let snippetName = ref.slice(1);
@@ -203,11 +209,11 @@ function render(spec, modes, ids, token, run, arrow) {
         log.error(`No such name is defined in snippets: ${snippetName}`);
         Deno.exit(1);
       }
-      return render(spec, modes, ids, token, snippet.code, arrow.charAt(0) + arrow);
+      return render(spec, modes, ids, targetToken, snippet.code, arrow.charAt(0) + arrow);
     }
     if (ref in ids) {
       log.debug(`${arrow} using ${ref} in the mode`);
-      return render(spec, modes, ids, token, ids[ref].run, arrow);
+      return render(spec, modes, ids, targetToken, ids[ref].run, arrow);
     }
     log.error("Invalid reference: ${ref}");
     Deno.exit(1);

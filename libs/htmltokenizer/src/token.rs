@@ -110,6 +110,14 @@ impl<'a> Tag<'a> {
         }
     }
 
+    pub fn rename(&self, name: &'a str) -> Self {
+        Tag {
+            name,
+            attrs: self.attrs.clone(),
+            self_closing: self.self_closing,
+        }
+    }
+
     pub fn has_any_attributes(&self, names: &[&str]) -> bool {
         self.attrs().any(|(name, _)| names.contains(&name))
     }
@@ -119,7 +127,7 @@ impl<'a> Tag<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct AttrsHolder<'a> {
     buffer: &'a str,
     attrs: Vec<AttrRange>,
@@ -225,7 +233,7 @@ pub(crate) struct TagRange {
     pub start_tag: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct AttrRange {
     pub name: Range<usize>,
     pub value: Range<usize>,

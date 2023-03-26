@@ -22,7 +22,7 @@ class Test {
   }
 
   hasData() {
-    return this.data !== null && this.data.length > 0;
+    return this.data !== null;
   }
 }
 

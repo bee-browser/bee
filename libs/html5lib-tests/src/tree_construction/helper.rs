@@ -25,7 +25,7 @@ fn do_parse(test: &Test, scripting: bool) {
     if let Some((namespace, local_name)) = test.context_element {
         let namespace = match namespace {
             "html" => Namespace::Html,
-            "mathml" => Namespace::MathMl,
+            "math" => Namespace::MathMl,
             "svg" => Namespace::Svg,
             _ => panic!(),
         };

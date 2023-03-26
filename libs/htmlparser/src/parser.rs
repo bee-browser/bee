@@ -1,3 +1,5 @@
+use std::ascii::AsciiExt;
+
 use bee_htmltokenizer::InitialState;
 use bee_htmltokenizer::Tokenizer;
 
@@ -50,15 +52,25 @@ where
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_context_element(&mut self, tag_name: &str, namespace: Namespace, node: T::NodeId) {
-        let local_name = LocalName::lookup(tag_name);
-        self.tokenizer.set_initial_state(match local_name {
-            tag!(Title, Textarea) => InitialState::Rcdata,
-            tag!(Style, Xmp, Iframe, Noembed, Noframes) => InitialState::Rawtext,
-            tag!(Script) => InitialState::ScriptData,
-            tag!(Noscript) => InitialState::Rawtext, // TODO: Check the scripting flag
-            tag!(Plaintext) => InitialState::Plaintext,
-            _ => InitialState::Data,
-        });
+        tracing::debug!(tag_name, ?namespace, ?node);
+        // TODO: The case-sensitivity of `tag_name` depends on the `namespace`.
+        // TODO: `LocalName::lookup()` expects a lowercase tag name because the
+        // HTML tokenizer converts all tag names to lowercase in the
+        // tokenization process.
+        let mut local_name = LocalName::lookup(tag_name.to_ascii_lowercase().as_str());
+        if tag_name != local_name.name() {
+            local_name = LocalName::Unknown;
+        }
+        if namespace == Namespace::Html {
+            self.tokenizer.set_initial_state(match local_name {
+                tag!(Title, Textarea) => InitialState::Rcdata,
+                tag!(Style, Xmp, Iframe, Noembed, Noframes) => InitialState::Rawtext,
+                tag!(Script) => InitialState::ScriptData,
+                tag!(Noscript) => InitialState::Rawtext, // TODO: Check the scripting flag
+                tag!(Plaintext) => InitialState::Plaintext,
+                _ => InitialState::Data,
+            });
+        }
         self.tree_builder
             .set_context_element(local_name, namespace, node);
     }

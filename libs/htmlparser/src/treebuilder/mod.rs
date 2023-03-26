@@ -223,7 +223,7 @@ where
     }
 
     pub fn in_html_namespace(&self) -> bool {
-        self.context().is_html()
+        self.adjusted_context().is_html()
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
@@ -435,6 +435,7 @@ where
 
             let stack_pos = match self.find_element_in_scope(element) {
                 Err(false) => {
+                    // not in stack
                     // step#4.4
                     // TODO: Parse error.
                     self.active_formatting_element_list.remove(list_pos);
@@ -442,6 +443,7 @@ where
                     break;
                 }
                 Err(true) => {
+                    // not in scope
                     // step#4.5
                     // TODO: Parse error.
                     tracing::debug!(outer_loop_counter, "step#4.5");
@@ -695,31 +697,40 @@ where
     }
 
     fn find_element_in_scope(&self, element: T::NodeId) -> Result<usize, bool> {
+        let mut in_scope = true;
         for (i, context) in self.context_stack.iter().enumerate().rev() {
             if context.is_removed() {
                 continue;
             }
             if context.open_element.node == element {
-                return Ok(i);
+                if in_scope {
+                    return Ok(i);
+                } else {
+                    return Err(true);
+                }
             }
             match context.open_element.namespace {
                 Namespace::Html => match context.open_element.local_name {
                     tag!(Applet, Caption, Html, Table, Td, Th, Marquee, Object, Template) => {
-                        return Err(true)
+                        in_scope = false;
                     }
-                    _ => (),
+                    _ => {}
                 },
                 Namespace::MathMl => match context.open_element.local_name {
-                    tag!(Mi, Mo, Mn, Ms, Mtext, AnnotationXml) => return Err(true),
-                    _ => (),
+                    tag!(Mi, Mo, Mn, Ms, Mtext, AnnotationXml) => {
+                        in_scope = false;
+                    }
+                    _ => {}
                 },
                 Namespace::Svg => match context.open_element.local_name {
-                    tag!(ForeignObject, Desc, Title) => return Err(true),
-                    _ => (),
+                    tag!(ForeignObject, Desc, Title) => {
+                        in_scope = false;
+                    }
+                    _ => {}
                 },
             }
         }
-        Err(false)
+        Err(false) // not in stack
     }
 
     fn find_furthest_block(&self, pos: usize) -> Option<usize> {
@@ -734,7 +745,7 @@ where
                 match context.local_name() {
                     tag!(Mi, Mo, Mn, Ms, Mtext, AnnotationXml) => context.is_mathml(),
                     tag!(ForeignObject, Desc, Title) => context.is_svg(),
-                    local_name => local_name.is_special(),
+                    local_name => context.is_html() && local_name.is_special(),
                 }
             })
             .map(|(i, _)| i)
@@ -1258,6 +1269,7 @@ where
     fn push_html_ol_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ol);
         let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Ol;
         context.element_in_list_item_scope.clear();
         context.element_in_select_scope.clear();
     }
@@ -1548,6 +1560,7 @@ where
     fn push_html_ul_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Ul);
         let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Ul;
         context.element_in_list_item_scope.clear();
         context.element_in_select_scope.clear();
     }
@@ -1588,8 +1601,8 @@ where
     #[inline(always)]
     fn adjusted_context(&self) -> &TreeBuildContext<T::NodeId> {
         match self.fragment_parsing_context {
-            Some(ref context) => context,
-            None => self.context(),
+            Some(ref context) if self.context_stack.len() <= 2 => context,
+            _ => self.context(),
         }
     }
 
