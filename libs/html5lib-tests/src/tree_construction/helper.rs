@@ -31,7 +31,8 @@ fn do_parse(test: &Test, scripting: bool) {
         };
         parser.set_context_element(local_name, namespace, 0)
     }
-    parser.feed_data(test.data.encode_utf16().collect());
+    let data: Vec<u16> = test.data.encode_utf16().collect();
+    parser.feed_data(&data);
     parser.feed_end();
     parser.parse();
 }

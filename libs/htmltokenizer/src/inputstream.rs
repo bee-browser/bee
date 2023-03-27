@@ -53,8 +53,8 @@ impl InputStream {
         }
     }
 
-    pub(crate) fn feed_data(&mut self, mut data: Vec<u16>) {
-        self.data.append(&mut data);
+    pub(crate) fn feed_data(&mut self, data: &[u16]) {
+        self.data.extend_from_slice(data);
     }
 
     pub(crate) fn feed_end(&mut self) {
