@@ -9,15 +9,15 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_text(&mut self, text: Text<'_>) -> Control {
+    pub fn handle_null(&mut self, text: Text<'_>) -> Control {
         if self.ignore_lf {
             self.ignore_lf = false;
         }
         loop {
-            let span = tracing::debug_span!("handle_text", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_null", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
-                {{#each tokens.text}}
+                {{#each tokens.nul}}
                 mode!({{join modes ', '}}) => {
                     let ctrl = {
                         {{run}}

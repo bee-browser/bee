@@ -6,8 +6,10 @@ pub enum Token<'a> {
     Doctype(Doctype<'a>),
     StartTag(Tag<'a>),
     EndTag(Tag<'a>),
-    Text(Text<'a>),
     Comment(Comment<'a>),
+    Null(Text<'a>),
+    Whitespace(Text<'a>),
+    Text(Text<'a>),
     Error(Error),
     End,
 }
@@ -23,8 +25,10 @@ impl<'a> Token<'a> {
                     Token::EndTag(Tag::new(tag, buf))
                 }
             }
-            TokenRange::Text(data) => Token::Text(Text::new(data, buf)),
             TokenRange::Comment(data) => Token::Comment(Comment::new(data, buf)),
+            TokenRange::Null(data) => Token::Null(Text::new(data, buf)),
+            TokenRange::Whitespace(data) => Token::Whitespace(Text::new(data, buf)),
+            TokenRange::Text(data) => Token::Text(Text::new(data, buf)),
             TokenRange::Error(err) => Token::Error(err),
         }
     }
@@ -51,11 +55,11 @@ impl<'a> std::fmt::Debug for Token<'a> {
             Token::EndTag(ref tag) => {
                 write!(f, "</{}>", tag.name)
             }
-            Token::Text(ref text) => {
-                write!(f, "#text:{}", text.data.escape_debug())
-            }
             Token::Comment(ref comment) => {
                 write!(f, "#comment:{}", comment.data.escape_debug())
+            }
+            Token::Null(ref text) | Token::Whitespace(ref text) | Token::Text(ref text) => {
+                write!(f, "#text:{}", text.data.escape_debug())
             }
             Token::Error(ref err) => {
                 write!(f, "{:?}", err)
@@ -212,8 +216,10 @@ impl<'a> Comment<'a> {
 pub(crate) enum TokenRange {
     Doctype(DoctypeRange),
     Tag(TagRange),
-    Text(Range<usize>),
     Comment(Range<usize>),
+    Null(Range<usize>),
+    Whitespace(Range<usize>),
+    Text(Range<usize>),
     Error(Error),
 }
 

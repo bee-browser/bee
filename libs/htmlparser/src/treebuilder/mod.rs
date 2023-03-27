@@ -5,8 +5,10 @@ mod comment;
 mod doctype;
 mod eof;
 mod foreign;
+mod null;
 mod tags;
 mod text;
+mod whitespace;
 
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -252,8 +254,10 @@ where
                 Token::Doctype(doctype) => self.handle_doctype(doctype),
                 Token::StartTag(tag) => self.handle_start_tag(tag),
                 Token::EndTag(tag) => self.handle_end_tag(tag),
-                Token::Text(text) => self.handle_text(text),
                 Token::Comment(comment) => self.handle_comment(comment),
+                Token::Null(text) => self.handle_null(text),
+                Token::Whitespace(text) => self.handle_whitespace(text),
+                Token::Text(text) => self.handle_text(text),
                 Token::Error(error) => self.handle_error(error),
                 Token::End => self.handle_eof(),
             }
@@ -1894,8 +1898,15 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    fn append_char(&mut self, c: char) {
-        self.text.push(c);
+    fn append_text(&mut self, text: &str) {
+        self.text.push_str(text);
+    }
+
+    #[tracing::instrument(level = "debug", skip_all)]
+    fn append_replacement_characters(&mut self, n: usize) {
+        for _ in 0..n {
+            self.text.push('\u{FFFD}');
+        }
     }
 
     #[tracing::instrument(level = "debug", skip_all)]

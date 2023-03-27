@@ -126,7 +126,7 @@ modes:
     rules:
       - match: whitespace
         run: |
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
       - match: comment
         run: |
@@ -270,7 +270,7 @@ modes:
     rules:
       - match: whitespace
         run: |
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
       - match: comment
         run: |
@@ -338,13 +338,13 @@ modes:
       - match: whitespace
         run: |
           self.reconstruct_active_formatting_elements();
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
-      # character: !(null or whitespace)
-      - match: character
+      # text: !(nul or whitespace)
+      - match: text
         run: |
           self.reconstruct_active_formatting_elements();
-          self.append_char(c);
+          self.append_text(text.data);
           self.frameset_ok = false;
           Control::Continue
       - match: comment
@@ -939,9 +939,9 @@ modes:
   - name: text
     ref: parsing-main-incdata
     rules:
-      - match: nul whitespace character
+      - match: nul whitespace text
         run: |
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
       - match: eof
         run: |
@@ -967,7 +967,7 @@ modes:
   - name: in-table
     ref: parsing-main-intable
     rules:
-      - match: nul whitespace character
+      - match: nul whitespace text
         run: |
           if self.context().is_one_of_html_elements(&tags![Table, Tbody, Template, Tfoot, Thead, Tr]) {
               self.append_text_if_exists();
@@ -1098,11 +1098,11 @@ modes:
           {{use '$ignore-token'}}
       - match: whitespace
         run: |
-          self.pending_table_text.push(c);
+          self.pending_table_text.push_str(text.data);
           Control::Continue
-      - match: character
+      - match: text
         run: |
-          self.pending_table_text.push(c);
+          self.pending_table_text.push_str(text.data);
           self.pending_table_text_contains_non_whitespace = true;
           Control::Continue
       - match: any
@@ -1181,7 +1181,7 @@ modes:
     rules:
       - match: whitespace
         run: |
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
       - match: comment
         run: |
@@ -1388,9 +1388,9 @@ modes:
       - match: nul
         run: |
           {{use '$ignore-token'}}
-      - match: whitespace character
+      - match: whitespace text
         run: |
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
       - match: comment
         run: |
@@ -1528,7 +1528,7 @@ modes:
   - name: in-template
     ref: parsing-main-intemplate
     rules:
-      - match: nul whitespace character comment doctype
+      - match: nul whitespace text comment doctype
         run: |
           {{use '@in-body'}}
       - match: >-
@@ -1627,7 +1627,7 @@ modes:
     rules:
       - match: whitespace
         run: |
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
       - match: comment
         run: |
@@ -1683,7 +1683,7 @@ modes:
     rules:
       - match: whitespace
         run: |
-          self.append_char(c);
+          self.append_text(text.data);
           Control::Continue
       - match: comment
         run: |

@@ -365,7 +365,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     fn end(&mut self) {
         let mut v = vec![];
         self.flatten(0, 0, &mut v);
-        assert_eq!(v, self.test.document, "{}", self.test.data);
+        assert_eq!(v, self.test.document, "{}", self.test.data.escape_debug());
     }
 
     fn print_tree(&self) {
