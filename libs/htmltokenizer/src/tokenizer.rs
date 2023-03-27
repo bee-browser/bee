@@ -76,7 +76,7 @@ impl<'a> Tokenizer<'a> {
         self.char_buffer.clear();
     }
 
-    pub fn feed_data(&mut self, data: Vec<u16>) {
+    pub fn feed_data(&mut self, data: &[u16]) {
         self.input_stream.feed_data(data);
     }
 

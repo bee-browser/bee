@@ -28,8 +28,8 @@ where
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn feed_data(&mut self, data: Vec<u16>) {
-        tracing::debug!(data = String::from_utf16_lossy(&data).escape_debug().to_string());
+    pub fn feed_data(&mut self, data: &[u16]) {
+        tracing::debug!(data = String::from_utf16_lossy(data).escape_debug().to_string());
         self.tokenizer.feed_data(data);
     }
 

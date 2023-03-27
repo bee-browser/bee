@@ -9,7 +9,8 @@ fn main() -> Result<()> {
     let mut html = String::new();
     io::stdin().read_to_string(&mut html)?;
     let mut tokenizer = Tokenizer::new();
-    tokenizer.feed_data(html.encode_utf16().collect());
+    let data: Vec<u16> = html.encode_utf16().collect();
+    tokenizer.feed_data(&data);
     tokenizer.feed_end();
     loop {
         match tokenizer.next_token() {

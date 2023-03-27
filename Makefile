@@ -82,6 +82,10 @@ build: format codegen $(BUILD_TARGETS)
 test: format codegen install-nextest
 	cargo nextest run --all-features
 
+.PHONY: bench
+bench:
+	cargo bench
+
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
 	cargo clean
