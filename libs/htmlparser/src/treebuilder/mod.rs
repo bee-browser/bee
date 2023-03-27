@@ -66,9 +66,6 @@ pub trait DomTreeBuilder {
 
     ///
     fn print_tree(&self);
-
-    ///
-    fn has_same_name(&mut self, node: Self::NodeId, name: &str) -> bool;
 }
 
 pub struct TreeBuilder<T>
@@ -117,7 +114,7 @@ where
     T: DomTreeBuilder,
 {
     pub fn new(mut inner: T) -> Self {
-        let open_element = OpenElement::with_html(LocalName::Unknown, inner.get_document());
+        let open_element = OpenElement::with_html(LocalName::Unknown, inner.get_document(), "");
         let context = TreeBuildContext::new(open_element);
         TreeBuilder {
             inner,
@@ -160,12 +157,14 @@ where
         local_name: LocalName,
         namespace: Namespace,
         node: T::NodeId,
+        tag_name: &str,
     ) {
         debug_assert_eq!(self.context_stack.len(), 1);
         let context_element = OpenElement {
             local_name,
             namespace,
             node,
+            tag_name: tag_name.to_string(),
         };
         let mode = match local_name {
             tag!(Select) => mode!(InSelect),
@@ -360,7 +359,11 @@ where
             let node = self.active_formatting_element_list.get_element(i);
             let local_name = self.active_formatting_element_list.get_local_name(i);
             let new_node = self.inner.clone_node(node);
-            self.insert_html_element(OpenElement::with_html(local_name, new_node));
+            self.insert_html_element(OpenElement::with_html(
+                local_name,
+                new_node,
+                local_name.name(),
+            ));
             // TODO
             match local_name {
                 tag!(Nobr) => {
@@ -1599,7 +1602,7 @@ where
         self.append_text_if_exists();
         let node = self.inner.create_element(tag.name, Namespace::Html);
         self.inner.set_attributes(node, tag.attrs(), true);
-        self.insert_html_element(OpenElement::with_html(local_name, node))
+        self.insert_html_element(OpenElement::with_html(local_name, node, tag.name))
     }
 
     #[inline(always)]
@@ -1708,7 +1711,7 @@ where
                 .map(|(name, value)| (Self::adjust_mathml_attribute(name), value)),
             true,
         );
-        self.insert_element(OpenElement::with_mathml(local_name, node));
+        self.insert_element(OpenElement::with_mathml(local_name, node, tag.name));
         let context = self.context_mut();
         match local_name {
             tag!(mathml: Mi, Mo, Mn, Ms, Mtext) => {
@@ -1758,7 +1761,7 @@ where
                 .map(|(name, value)| (Self::adjust_svg_attribute(name), value)),
             true,
         );
-        self.insert_element(OpenElement::with_svg(local_name, node));
+        self.insert_element(OpenElement::with_svg(local_name, node, tag.name));
         let context = self.context_mut();
         context.flags -= flags!(MathmlTextIntegrationPoint, SvgIntegrationPoint);
         match local_name {
@@ -1785,7 +1788,7 @@ where
         debug_assert!(self.head_element.is_some());
         let node = self.head_element.expect("<head> must exists");
         self.context_stack.push(TreeBuildContext {
-            open_element: OpenElement::with_html(tag!(Head), node),
+            open_element: OpenElement::with_html(tag!(Head), node, "head"),
             reset_mode: InsertionMode::InHead,
             foster_parenting_insertion_point: FosterParentingInsertionPoint::None,
             element_in_scope: Default::default(),
@@ -2383,30 +2386,34 @@ struct OpenElement<T> {
     namespace: Namespace,
     local_name: LocalName,
     node: T,
+    tag_name: String, // TODO: remove
 }
 
 impl<T> OpenElement<T> {
-    fn with_html(local_name: LocalName, node: T) -> Self {
+    fn with_html(local_name: LocalName, node: T, tag_name: &str) -> Self {
         OpenElement {
             namespace: Namespace::Html,
             local_name,
             node,
+            tag_name: tag_name.to_string(),
         }
     }
 
-    fn with_mathml(local_name: LocalName, node: T) -> Self {
+    fn with_mathml(local_name: LocalName, node: T, tag_name: &str) -> Self {
         OpenElement {
             namespace: Namespace::MathMl,
             local_name,
             node,
+            tag_name: tag_name.to_string(),
         }
     }
 
-    fn with_svg(local_name: LocalName, node: T) -> Self {
+    fn with_svg(local_name: LocalName, node: T, tag_name: &str) -> Self {
         OpenElement {
             namespace: Namespace::Svg,
             local_name,
             node,
+            tag_name: tag_name.to_string(),
         }
     }
 
@@ -2428,6 +2435,11 @@ impl<T> OpenElement<T> {
     #[inline(always)]
     fn is_html_element(&self, local_name: LocalName) -> bool {
         self.namespace == Namespace::Html && self.local_name == local_name
+    }
+
+    #[inline(always)]
+    fn has_same_name(&self, tag_name: &str) -> bool {
+        self.tag_name.eq_ignore_ascii_case(tag_name)
     }
 }
 

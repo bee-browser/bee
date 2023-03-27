@@ -372,13 +372,6 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
         self.flatten(0, 0, &mut v);
         tracing::debug!("{:?}", v);
     }
-
-    fn has_same_name(&mut self, node_id: Self::NodeId, name: &str) -> bool {
-        match self.nodes[node_id] {
-            Node::Element { name: ref v, .. } => v.eq_ignore_ascii_case(name),
-            _ => unreachable!(),
-        }
-    }
 }
 
 #[derive(Clone)]

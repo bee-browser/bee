@@ -139,12 +139,17 @@ where
                 _ => {
                     self.append_text_if_exists();
                     let mut stack_pos = self.context_stack.len() - 1;
-                    let mut node = self.context_stack[stack_pos].open_element.node;
-                    if !self.inner.has_same_name(node, tag.name) {
+                    if !self.context_stack[stack_pos]
+                        .open_element
+                        .has_same_name(tag.name)
+                    {
                         // TODO: Parser error.
                     }
                     while stack_pos > 0 {
-                        if self.inner.has_same_name(node, tag.name) {
+                        if self.context_stack[stack_pos]
+                            .open_element
+                            .has_same_name(tag.name)
+                        {
                             self.context_stack.truncate(stack_pos);
                             break;
                         }
@@ -152,7 +157,6 @@ where
                         if self.context_stack[stack_pos].is_html() {
                             return self.handle_end_tag(tag);
                         }
-                        node = self.context_stack[stack_pos].open_element.node;
                     }
                     Control::Continue
                 }
