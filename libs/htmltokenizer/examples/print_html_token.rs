@@ -47,11 +47,11 @@ fn main() -> Result<()> {
             Token::EndTag(tag) => {
                 println!(r#"</{}>"#, tag.name.escape_debug());
             }
-            Token::Text(text) => {
-                println!(r#"#text:"{}""#, text.data.escape_debug());
-            }
             Token::Comment(comment) => {
                 println!(r#"#comment:"{}""#, comment.data.escape_debug());
+            }
+            Token::Null(text) | Token::Whitespace(text) | Token::Text(text) => {
+                println!(r#"#text:"{}""#, text.data.escape_debug());
             }
             Token::Error(err) => {
                 eprintln!("ERROR: {}", err);

@@ -9,15 +9,21 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_text(&mut self, text: Text<'_>) -> Control {
-        if self.ignore_lf {
+    pub fn handle_whitespace(&mut self, mut text: Text<'_>) -> Control {
+        debug_assert!(!text.data.is_empty());
+        if self.ignore_lf && text.data.starts_with('\n') {
+            tracing::debug!(ignore_lf = true);
+            text.data = text.data.strip_prefix('\n').unwrap();
             self.ignore_lf = false;
         }
+        if text.data.is_empty() {
+            return Control::Continue;
+        }
         loop {
-            let span = tracing::debug_span!("handle_text", mode = ?self.mode);
+            let span = tracing::debug_span!("handle_whitespace", mode = ?self.mode);
             let _enter = span.enter();
             match self.mode {
-                {{#each tokens.text}}
+                {{#each tokens.whitespace}}
                 mode!({{join modes ', '}}) => {
                     let ctrl = {
                         {{run}}

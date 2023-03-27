@@ -35,6 +35,8 @@ pub struct Tokenizer<'a> {
 impl<'a> Tokenizer<'a> {
     const INITIAL_BUFFER_SIZE: usize = 4096;
 
+    const WHITESPACES: [char; 5] = ['\x09', '\x0A', '\x0C', '\x0D', ' '];
+
     pub fn new() -> Self {
         Tokenizer {
             state: State::Data,
@@ -263,10 +265,14 @@ impl<'a> Tokenizer<'a> {
                 }
                 Char(Some('\0'), location) => {
                     self.emit_error(ErrorCode::UnexpectedNullCharacter, location);
-                    self.append_char_to_text('\0');
+                    self.append_null_to_text();
                 }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
                 Char(None, _) => {
                     self.emit_token_if_exists();
@@ -302,7 +308,11 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
             }
         }
@@ -327,7 +337,11 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
             }
         }
@@ -352,7 +366,11 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
             }
         }
@@ -372,7 +390,11 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
             }
         }
@@ -735,7 +757,11 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
             }
         }
@@ -764,7 +790,11 @@ impl<'a> Tokenizer<'a> {
             }
             Char(Some(c), _) => {
                 self.switch_to(State::ScriptDataEscaped);
-                self.append_char_to_text(c);
+                if Self::WHITESPACES.contains(&c) {
+                    self.append_whitespace_to_text(c);
+                } else {
+                    self.append_char_to_text(c);
+                }
             }
         }
     }
@@ -800,7 +830,11 @@ impl<'a> Tokenizer<'a> {
                 }
                 Char(Some(c), _) => {
                     self.switch_to(State::ScriptDataEscaped);
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                     return;
                 }
             }
@@ -897,7 +931,11 @@ impl<'a> Tokenizer<'a> {
                         self.switch_to(State::ScriptDataEscaped);
                     }
                     if let Char(Some(c), _) = ch {
-                        self.append_char_to_text(c);
+                        if Self::WHITESPACES.contains(&c) {
+                            self.append_whitespace_to_text(c);
+                        } else {
+                            self.append_char_to_text(c);
+                        }
                     }
                     return;
                 }
@@ -942,7 +980,11 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
             }
         }
@@ -971,7 +1013,11 @@ impl<'a> Tokenizer<'a> {
             }
             Char(Some(c), _) => {
                 self.switch_to(State::ScriptDataDoubleEscaped);
-                self.append_char_to_text(c);
+                if Self::WHITESPACES.contains(&c) {
+                    self.append_whitespace_to_text(c);
+                } else {
+                    self.append_char_to_text(c);
+                }
             }
         }
     }
@@ -1007,7 +1053,11 @@ impl<'a> Tokenizer<'a> {
                 }
                 Char(Some(c), _) => {
                     self.switch_to(State::ScriptDataDoubleEscaped);
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                     return;
                 }
             }
@@ -1044,7 +1094,11 @@ impl<'a> Tokenizer<'a> {
                         self.switch_to(State::ScriptDataDoubleEscaped);
                     }
                     if let Char(Some(c), _) = ch {
-                        self.append_char_to_text(c);
+                        if Self::WHITESPACES.contains(&c) {
+                            self.append_whitespace_to_text(c);
+                        } else {
+                            self.append_char_to_text(c);
+                        }
                     }
                     return;
                 }
@@ -2709,8 +2763,15 @@ impl<'a> Tokenizer<'a> {
                     self.switch_to(State::End);
                     return;
                 }
+                Char(Some('\0'), _) => {
+                    self.append_null_to_text();
+                }
                 Char(Some(c), _) => {
-                    self.append_char_to_text(c);
+                    if Self::WHITESPACES.contains(&c) {
+                        self.append_whitespace_to_text(c);
+                    } else {
+                        self.append_char_to_text(c);
+                    }
                 }
             }
         }
@@ -2805,7 +2866,13 @@ impl<'a> Tokenizer<'a> {
                 if self.does_append_to_attr_value() {
                     self.append_str_to_attr_value(chars);
                 } else {
-                    self.append_str_to_text(chars);
+                    for c in chars.chars() {
+                        if Self::WHITESPACES.contains(&c) {
+                            self.append_whitespace_to_text(c);
+                        } else {
+                            self.append_char_to_text(c);
+                        }
+                    }
                 }
                 self.switch_to(self.return_state);
                 return;
@@ -3028,6 +3095,8 @@ impl<'a> Tokenizer<'a> {
         };
         if self.does_append_to_attr_value() {
             self.append_char_to_attr_value(c);
+        } else if Self::WHITESPACES.contains(&c) {
+            self.append_whitespace_to_text(c);
         } else {
             self.append_char_to_text(c);
         }
@@ -3345,6 +3414,47 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    fn append_null_to_text(&mut self) {
+        let start_pos = self.char_buffer.len();
+        self.char_buffer.push('\0');
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Null(ref mut text)) => {
+                text.end = end_pos;
+            }
+            Some(TokenRange::Whitespace(_)) | Some(TokenRange::Text(_)) => {
+                let token = self.current_token.take().unwrap();
+                self.emit(token);
+                self.current_token = Some(TokenRange::Null(start_pos..end_pos));
+            }
+            None => {
+                self.current_token = Some(TokenRange::Null(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn append_whitespace_to_text(&mut self, c: char) {
+        debug_assert!(Self::WHITESPACES.contains(&c));
+        let start_pos = self.char_buffer.len();
+        self.char_buffer.push(c);
+        let end_pos = self.char_buffer.len();
+        match self.current_token {
+            Some(TokenRange::Whitespace(ref mut text)) => {
+                text.end = end_pos;
+            }
+            Some(TokenRange::Null(_)) | Some(TokenRange::Text(_)) => {
+                let token = self.current_token.take().unwrap();
+                self.emit(token);
+                self.current_token = Some(TokenRange::Whitespace(start_pos..end_pos));
+            }
+            None => {
+                self.current_token = Some(TokenRange::Whitespace(start_pos..end_pos));
+            }
+            _ => unreachable!(),
+        }
+    }
+
     fn append_char_to_text(&mut self, c: char) {
         let start_pos = self.char_buffer.len();
         self.char_buffer.push(c);
@@ -3352,6 +3462,11 @@ impl<'a> Tokenizer<'a> {
         match self.current_token {
             Some(TokenRange::Text(ref mut text)) => {
                 text.end = end_pos;
+            }
+            Some(TokenRange::Null(_)) | Some(TokenRange::Whitespace(_)) => {
+                let token = self.current_token.take().unwrap();
+                self.emit(token);
+                self.current_token = Some(TokenRange::Text(start_pos..end_pos));
             }
             None => {
                 self.current_token = Some(TokenRange::Text(start_pos..end_pos));
@@ -3361,12 +3476,18 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn append_str_to_text(&mut self, s: &str) {
+        debug_assert!(!s.contains('\0'));
         let start_pos = self.char_buffer.len();
         self.char_buffer.push_str(s);
         let end_pos = self.char_buffer.len();
         match self.current_token {
             Some(TokenRange::Text(ref mut text)) => {
                 text.end = end_pos;
+            }
+            Some(TokenRange::Null(_)) | Some(TokenRange::Whitespace(_)) => {
+                let token = self.current_token.take().unwrap();
+                self.emit(token);
+                self.current_token = Some(TokenRange::Text(start_pos..end_pos));
             }
             None => {
                 self.current_token = Some(TokenRange::Text(start_pos..end_pos));
@@ -3394,6 +3515,8 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn append_char_to_temp(&mut self, c: char) {
+        debug_assert!(c != '\0');
+        debug_assert!(!Self::WHITESPACES.contains(&c));
         self.temp_buffer.push(c);
     }
 
@@ -3404,6 +3527,11 @@ impl<'a> Tokenizer<'a> {
         match self.current_token {
             Some(TokenRange::Text(ref mut text)) => {
                 text.end = end_pos;
+            }
+            Some(TokenRange::Null(_)) | Some(TokenRange::Whitespace(_)) => {
+                let token = self.current_token.take().unwrap();
+                self.emit(token);
+                self.current_token = Some(TokenRange::Text(start_pos..end_pos));
             }
             None => {
                 self.current_token = Some(TokenRange::Text(start_pos..end_pos));

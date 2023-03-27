@@ -24,8 +24,10 @@ pub fn tokenize(json: &'static str) {
             Token::Doctype(doctype) => validator.handle_doctype(doctype),
             Token::StartTag(tag) => validator.handle_start_tag(tag),
             Token::EndTag(tag) => validator.handle_end_tag(tag),
-            Token::Text(text) => validator.handle_text(text),
             Token::Comment(comment) => validator.handle_comment(comment),
+            Token::Null(text) => validator.handle_text(text),
+            Token::Whitespace(text) => validator.handle_text(text),
+            Token::Text(text) => validator.handle_text(text),
             Token::End => {
                 validator.handle_end();
                 break;

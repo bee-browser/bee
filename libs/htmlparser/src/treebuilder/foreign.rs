@@ -30,7 +30,7 @@ where
                     }
                 }
             }
-            Token::Text(_) => {
+            Token::Null(_) | Token::Whitespace(_) | Token::Text(_) => {
                 if context.is_html_integration_point() {
                     return false;
                 }
@@ -161,22 +161,18 @@ where
                     Control::Continue
                 }
             },
+            Token::Null(text) => {
+                // TODO: Parse error.
+                self.append_replacement_characters(text.data.len());
+                Control::Continue
+            }
+            Token::Whitespace(text) => {
+                self.append_text(text.data);
+                Control::Continue
+            }
             Token::Text(text) => {
-                for c in text.data.chars() {
-                    match c {
-                        '\0' => {
-                            // TODO: Parse error.
-                            self.append_char('\u{FFFD}');
-                        }
-                        char_class!(whitespace) => {
-                            self.append_char(c);
-                        }
-                        _ => {
-                            self.append_char(c);
-                            self.frameset_ok = false;
-                        }
-                    }
-                }
+                self.append_text(text.data);
+                self.frameset_ok = false;
                 Control::Continue
             }
             Token::Comment(comment) => {
