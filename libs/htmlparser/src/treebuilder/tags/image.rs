@@ -266,7 +266,7 @@ where
                         loop {
                             let context = &self.context_stack[context_pos];
                             let element = context.open_element.node;
-                            if context.is_html() && self.inner.has_same_name(element, tag.name) {
+                            if context.is_html() && context.open_element.has_same_name(tag.name) {
                                 self.close_implied_tags_except_for(tag!(Image)); // TODO
                                 if element != self.context().open_element.node {
                                     // TODO: Parse error.
@@ -314,7 +314,7 @@ where
                             loop {
                                 let context = &self.context_stack[context_pos];
                                 let element = context.open_element.node;
-                                if context.is_html() && self.inner.has_same_name(element, tag.name)
+                                if context.is_html() && context.open_element.has_same_name(tag.name)
                                 {
                                     self.close_implied_tags_except_for(tag!(Image)); // TODO
                                     if element != self.context().open_element.node {

@@ -70,7 +70,7 @@ where
             });
         }
         self.tree_builder
-            .set_context_element(local_name, namespace, node);
+            .set_context_element(local_name, namespace, node, tag_name);
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
