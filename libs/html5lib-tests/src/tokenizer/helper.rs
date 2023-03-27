@@ -17,7 +17,7 @@ pub fn tokenize(json: &'static str) {
     if let Some(ref tag_name) = test.last_start_tag {
         tokenizer.set_last_start_tag(tag_name.as_str());
     }
-    tokenizer.feed_data(test.input_utf16.clone());
+    tokenizer.feed_data(&test.input_utf16);
     tokenizer.feed_end();
     loop {
         match tokenizer.next_token() {

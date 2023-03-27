@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use bee_htmlparser::*;
 use criterion::Criterion;
 
-fn html5ever_benchmark(c: &mut Criterion) {
+fn htmlparser_benchmark(c: &mut Criterion) {
     run_bench(c, "lipsum.html");
     run_bench(c, "medium-fragment.html");
     run_bench(c, "wikipedia.html");
@@ -34,9 +34,7 @@ struct DummyBuilder {
 
 impl DummyBuilder {
     fn new() -> Self {
-        DummyBuilder {
-            next_id: 1,
-        }
+        DummyBuilder { next_id: 1 }
     }
 
     fn next_id(&mut self) -> usize {
@@ -71,32 +69,33 @@ impl DomTreeBuilder for DummyBuilder {
 
     fn set_attributes<'a, I>(&mut self, _node: Self::NodeId, _attrs: I, _overwrite: bool)
     where
-        I: Iterator<Item = (&'a str, &'a str)> {
+        I: Iterator<Item = (&'a str, &'a str)>,
+    {
     }
 
     fn clone_node(&mut self, _node: Self::NodeId) -> Self::NodeId {
         self.next_id()
     }
 
-    fn append_child(&mut self, _parent: Self::NodeId, _node: Self::NodeId) {
+    fn append_child(&mut self, _parent: Self::NodeId, _node: Self::NodeId) {}
+
+    fn insert_before(
+        &mut self,
+        _parent: Self::NodeId,
+        _node: Self::NodeId,
+        _sibling: Self::NodeId,
+    ) {
     }
 
-    fn insert_before(&mut self, _parent: Self::NodeId, _node: Self::NodeId, _sibling: Self::NodeId) {
-    }
+    fn remove_child(&mut self, _parent: Self::NodeId, _node: Self::NodeId) {}
 
-    fn remove_child(&mut self, _parent: Self::NodeId, _node: Self::NodeId) {
-    }
+    fn move_child_nodes(&mut self, _node: Self::NodeId, _new_parent: Self::NodeId) {}
 
-    fn move_child_nodes(&mut self, _node: Self::NodeId, _new_parent: Self::NodeId) {
-    }
+    fn end(&mut self) {}
 
-    fn end(&mut self) {
-    }
-
-    fn print_tree(&self) {
-    }
+    fn print_tree(&self) {}
 }
 
-criterion::criterion_group!(benches, html5ever_benchmark);
+criterion::criterion_group!(benches, htmlparser_benchmark);
 criterion::criterion_main!(benches);
 //</exclude:coverage>
