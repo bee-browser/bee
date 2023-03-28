@@ -1,0 +1,10 @@
+[package]
+name = "bee-tests-toydom"
+version = "0.0.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+bee-htmlparser = { path = "../../libs/htmlparser" }
+tracing = "0.1.37"
