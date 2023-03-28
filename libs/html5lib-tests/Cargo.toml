@@ -1,6 +1,6 @@
 [package]
 name = "bee-html5lib-tests"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 authors = ["BEE project contributors"]
 publish = false
@@ -8,6 +8,7 @@ publish = false
 [dev-dependencies]
 bee-htmlparser = { path = "../htmlparser" }
 bee-htmltokenizer = { path = "../htmltokenizer", features = ["html5lib-tests"] }
+bee-tests-toydom = { path = "../../tests/toydom" }
 ctor = "0.1.26"
 serde = { version = "1.0.158", features = ["derive"] }
 serde_json = "1.0.94"

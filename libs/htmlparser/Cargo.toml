@@ -15,9 +15,16 @@ tracing = "0.1.37"
 unicase = "2.6.0"
 
 [dev-dependencies]
+anyhow = "1.0.70"
+bee-tests-toydom = { path = "../../tests/toydom" }
 criterion = "0.4.0"
+tracing-subscriber = "0.3.16"
 
 [[bench]]
 name = "bee-htmlparser-bench"
 path = "benches/htmlparser_bench.rs"
 harness = false
+
+[[example]]
+name = "bee-htmlparser-demo"
+path = "examples/demo.rs"
