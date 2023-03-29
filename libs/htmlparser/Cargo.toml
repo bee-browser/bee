@@ -6,7 +6,6 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-bee-htmltags = { path = "../htmltags" }
 bee-htmltokenizer = { path = "../htmltokenizer" }
 flagset = "0.4.3"
 phf = { version = "0.11.1", features = ["macros"] }
