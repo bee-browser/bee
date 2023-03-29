@@ -5,11 +5,12 @@ authors = ["BEE project contributors"]
 edition = "2021"
 publish = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 num-traits = "0.2.15"
 serde = { version = "1.0.158", features = ["derive"], optional = true }
 
 [dev-dependencies]
 serde_test = "1.0.158"
+
+[lib]
+bench = false

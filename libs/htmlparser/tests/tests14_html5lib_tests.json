@@ -1,0 +1,219 @@
+{
+  "name": "tests14_html5lib_tests",
+  "tests": [
+    {
+      "data": "<!DOCTYPE html><html><body><xyz:abc></xyz:abc>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<xyz:abc>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html><body><xyz:abc></xyz:abc><span></span>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<xyz:abc>"
+        ],
+        [
+          2,
+          "<span>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html><html abc:def=gh><xyz:abc></xyz:abc>",
+      "errors": [
+        "(1,38): non-html-root"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "abc:def=\"gh\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<xyz:abc>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html xml:lang=bar><html xml:lang=foo>",
+      "errors": [
+        "(1,53): non-html-root"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "xml:lang=\"bar\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html 123=456>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "123=\"456\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html 123=456><html 789=012>",
+      "errors": [
+        "(1,43): non-html-root"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "123=\"456\""
+        ],
+        [
+          1,
+          "789=\"012\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html><body 789=012>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "789=\"012\""
+        ]
+      ],
+      "scripting": "Both"
+    }
+  ]
+}

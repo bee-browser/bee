@@ -1,0 +1,56 @@
+{
+  "name": "pending_spec_changes_plain_text_unsafe_html5lib_tests",
+  "tests": [
+    {
+      "data": "<body><table>\u0000filler\u0000text\u0000",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,14): invalid-codepoint",
+        "(1,14): invalid-codepoint-in-table-text",
+        "(1,21): invalid-codepoint",
+        "(1,21): invalid-codepoint-in-table-text",
+        "(1,26): invalid-codepoint",
+        "(1,26): invalid-codepoint-in-table-text",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): foster-parenting-character-in-table",
+        "(1,26): eof-in-table"
+      ],
+      "newErrors": [
+        "(1:14) unexpected-null-character",
+        "(1:21) unexpected-null-character",
+        "(1:26) unexpected-null-character"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"fillertext\""
+        ],
+        [
+          2,
+          "<table>"
+        ]
+      ],
+      "scripting": "Both"
+    }
+  ]
+}

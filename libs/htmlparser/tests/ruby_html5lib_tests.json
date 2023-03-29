@@ -1,0 +1,911 @@
+{
+  "name": "ruby_html5lib_tests",
+  "tests": [
+    {
+      "data": "<html><ruby>a<rb>b<rb></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rb>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rb>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rb>b<rt></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rb>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rt>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rb>b<rtc></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rb>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rb>b<rp></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rb>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rp>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rb>b<span></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,31): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rb>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          4,
+          "<span>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rt>b<rb></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rt>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rb>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rt>b<rt></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rt>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rt>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rt>b<rtc></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rt>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rt>b<rp></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rt>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rp>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rt>b<span></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,31): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rt>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          4,
+          "<span>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rtc>b<rb></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rb>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rtc>b<rt>c<rt>d</ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          4,
+          "<rt>"
+        ],
+        [
+          5,
+          "\"c\""
+        ],
+        [
+          4,
+          "<rt>"
+        ],
+        [
+          5,
+          "\"d\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rtc>b<rtc></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rtc>b<rp></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          4,
+          "<rp>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rtc>b<span></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,32): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          4,
+          "<span>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rp>b<rb></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rp>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rb>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rp>b<rt></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rp>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rt>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rp>b<rtc></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rp>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rtc>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rp>b<rp></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rp>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          3,
+          "<rp>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby>a<rp>b<span></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,31): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "\"a\""
+        ],
+        [
+          3,
+          "<rp>"
+        ],
+        [
+          4,
+          "\"b\""
+        ],
+        [
+          4,
+          "<span>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><ruby><rtc><ruby>a<rb>b<rt></ruby></ruby></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ruby>"
+        ],
+        [
+          3,
+          "<rtc>"
+        ],
+        [
+          4,
+          "<ruby>"
+        ],
+        [
+          5,
+          "\"a\""
+        ],
+        [
+          5,
+          "<rb>"
+        ],
+        [
+          6,
+          "\"b\""
+        ],
+        [
+          5,
+          "<rt>"
+        ]
+      ],
+      "scripting": "Both"
+    }
+  ]
+}

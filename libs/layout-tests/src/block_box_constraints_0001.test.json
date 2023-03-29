@@ -1,1 +1,0 @@
-{"description":"The block box is horizontally centered.","css":"html, body {\n  width: 100%;\n  height: 100%;\n}\n\n.red {\n  background: red;\n}\n\n.green {\n  background: green;\n}\n\n.blue {\n  background: blue;\n}\n\n.block {\n  width: 200px;\n  height: 200px;\n  margin: 0 auto;\n}","html":"<div class=\"blue block\"></div>"}

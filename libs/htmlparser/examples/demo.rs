@@ -3,9 +3,9 @@ use std::io::Read;
 use anyhow::Result;
 
 use bee_htmlparser::*;
-use bee_tests_toydom::delegate;
-use bee_tests_toydom::ToyBuilder;
-use bee_tests_toydom::ToyNode;
+use bee_toydom::delegate;
+use bee_toydom::ToyBuilder;
+use bee_toydom::ToyNode;
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt::init();

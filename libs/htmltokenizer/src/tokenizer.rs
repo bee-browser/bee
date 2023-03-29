@@ -3622,7 +3622,6 @@ impl<'a> Tokenizer<'a> {
 struct Char(Option<char>, Location);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 pub enum InitialState {
     Data,
     Rcdata,

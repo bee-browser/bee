@@ -1,0 +1,229 @@
+{
+  "name": "tests24_html5lib_tests",
+  "tests": [
+    {
+      "data": "<!DOCTYPE html>&NotEqualTilde;",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"≂̸\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>&NotEqualTilde;A",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"≂̸A\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>&ThickSpace;",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"  \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>&ThickSpace;A",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"  A\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>&NotSubset;",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"⊂⃒\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>&NotSubset;A",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"⊂⃒A\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>&Gopf;",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"𝔾\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>&Gopf;A",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"𝔾A\""
+        ]
+      ],
+      "scripting": "Both"
+    }
+  ]
+}

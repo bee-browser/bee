@@ -1,0 +1,2156 @@
+{
+  "name": "tests2_html5lib_tests",
+  "tests": [
+    {
+      "data": "<!DOCTYPE html>Test",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"Test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<textarea>test</div>test",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(1,24): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<textarea>"
+        ],
+        [
+          3,
+          "\"test</div>test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><td>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-cell-in-table-body",
+        "(1,11): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><td>test</tbody></table>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-cell-in-table-body"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "\"test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<frame>test",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,7): unexpected-start-tag-ignored"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><frameset>test",
+      "errors": [
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): eof-in-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><frameset> te st",
+      "errors": [
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): unexpected-char-in-frameset",
+        "(1,29): eof-in-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          2,
+          "\"  \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><frameset></frameset> te st",
+      "errors": [
+        "(1,29): unexpected-char-after-frameset",
+        "(1,29): unexpected-char-after-frameset",
+        "(1,29): unexpected-char-after-frameset",
+        "(1,29): unexpected-char-after-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          1,
+          "\"  \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><frameset><!DOCTYPE html>",
+      "errors": [
+        "(1,40): unexpected-doctype",
+        "(1,40): eof-in-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><font><p><b>test</font>",
+      "errors": [
+        "(1,38): adoption-agency-1.3",
+        "(1,38): adoption-agency-1.3"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<font>"
+        ],
+        [
+          4,
+          "<b>"
+        ],
+        [
+          5,
+          "\"test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><dt><div><dd>",
+      "errors": [
+        "(1,28): end-tag-too-early"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<dt>"
+        ],
+        [
+          3,
+          "<div>"
+        ],
+        [
+          2,
+          "<dd>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<script></x",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,11): expected-named-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<script>"
+        ],
+        [
+          3,
+          "\"</x\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><plaintext><td>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,18): unexpected-start-tag-implies-table-voodoo",
+        "(1,22): foster-parenting-character-in-table",
+        "(1,22): foster-parenting-character-in-table",
+        "(1,22): foster-parenting-character-in-table",
+        "(1,22): foster-parenting-character-in-table",
+        "(1,22): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<plaintext>"
+        ],
+        [
+          3,
+          "\"<td>\""
+        ],
+        [
+          2,
+          "<table>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<plaintext></plaintext>",
+      "errors": [
+        "(1,11): expected-doctype-but-got-start-tag",
+        "(1,23): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<plaintext>"
+        ],
+        [
+          3,
+          "\"</plaintext>\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><table><tr>TEST",
+      "errors": [
+        "(1,30): foster-parenting-character-in-table",
+        "(1,30): foster-parenting-character-in-table",
+        "(1,30): foster-parenting-character-in-table",
+        "(1,30): foster-parenting-character-in-table",
+        "(1,30): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"TEST\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><body t1=1><body t2=2><body t3=3 t4=4>",
+      "errors": [
+        "(1,37): unexpected-start-tag",
+        "(1,53): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "t1=\"1\""
+        ],
+        [
+          2,
+          "t2=\"2\""
+        ],
+        [
+          2,
+          "t3=\"3\""
+        ],
+        [
+          2,
+          "t4=\"4\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</b test",
+      "errors": [
+        "(1,8): eof-in-attribute-name",
+        "(1,8): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:9) eof-in-tag"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html></b test<b &=&amp>X",
+      "errors": [
+        "(1,24): invalid-character-in-attribute-name",
+        "(1,32): named-entity-without-semicolon",
+        "(1,33): attributes-in-end-tag",
+        "(1,33): unexpected-end-tag-before-html"
+      ],
+      "newErrors": [
+        "(1:24) unexpected-character-in-attribute-name",
+        "(1:33) missing-semicolon-after-character-reference",
+        "(1:33) end-tag-with-attributes"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctypehtml><scrIPt type=text/x-foobar;baz>X</SCRipt",
+      "errors": [
+        "(1,9): need-space-after-doctype",
+        "(1,54): expected-named-closing-tag-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:10) missing-whitespace-before-doctype-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<script>"
+        ],
+        [
+          3,
+          "type=\"text/x-foobar;baz\""
+        ],
+        [
+          3,
+          "\"X</SCRipt\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&",
+      "errors": [
+        "(1,1): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"&\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&#",
+      "errors": [
+        "(1,2): expected-numeric-entity",
+        "(1,2): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:3) absence-of-digits-in-numeric-character-reference"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"&#\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&#X",
+      "errors": [
+        "(1,3): expected-numeric-entity",
+        "(1,3): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:4) absence-of-digits-in-numeric-character-reference"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"&#X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&#x",
+      "errors": [
+        "(1,3): expected-numeric-entity",
+        "(1,3): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:4) absence-of-digits-in-numeric-character-reference"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"&#x\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&#45",
+      "errors": [
+        "(1,4): numeric-entity-without-semicolon",
+        "(1,4): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:5) missing-semicolon-after-character-reference"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"-\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&x-test",
+      "errors": [
+        "(1,2): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"&x-test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctypehtml><p><li>",
+      "errors": [
+        "(1,9): need-space-after-doctype"
+      ],
+      "newErrors": [
+        "(1:10) missing-whitespace-before-doctype-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<li>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctypehtml><p><dt>",
+      "errors": [
+        "(1,9): need-space-after-doctype"
+      ],
+      "newErrors": [
+        "(1:10) missing-whitespace-before-doctype-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<dt>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctypehtml><p><dd>",
+      "errors": [
+        "(1,9): need-space-after-doctype"
+      ],
+      "newErrors": [
+        "(1:10) missing-whitespace-before-doctype-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<dd>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctypehtml><p><form>",
+      "errors": [
+        "(1,9): need-space-after-doctype",
+        "(1,23): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:10) missing-whitespace-before-doctype-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<form>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><p></P>X",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&AMP",
+      "errors": [
+        "(1,4): named-entity-without-semicolon",
+        "(1,4): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:5) missing-semicolon-after-character-reference"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"&\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "&AMp;",
+      "errors": [
+        "(1,3): expected-named-entity",
+        "(1,3): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:5) unknown-named-character-reference"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"&AMp;\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html><head></head><body><thisISasillyTESTelementNameToMakeSureCrazyTagNamesArePARSEDcorrectLY>",
+      "errors": [
+        "(1,110): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<thisisasillytestelementnametomakesurecrazytagnamesareparsedcorrectly>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>X</body>X",
+      "errors": [
+        "(1,24): unexpected-char-after-body"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"XX\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><!-- X",
+      "errors": [
+        "(1,21): eof-in-comment"
+      ],
+      "newErrors": [
+        "(1:22) eof-in-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<!--  X -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><table><caption>test TEST</caption><td>test",
+      "errors": [
+        "(1,54): unexpected-cell-in-table-body",
+        "(1,58): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<caption>"
+        ],
+        [
+          4,
+          "\"test TEST\""
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "\"test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><select><option><optgroup>",
+      "errors": [
+        "(1,41): eof-in-select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          3,
+          "<optgroup>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><select><optgroup><option></optgroup><option><select><option>",
+      "errors": [
+        "(1,68): unexpected-select-in-select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<optgroup>"
+        ],
+        [
+          4,
+          "<option>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          2,
+          "<option>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><select><optgroup><option><optgroup>",
+      "errors": [
+        "(1,51): eof-in-select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<optgroup>"
+        ],
+        [
+          4,
+          "<option>"
+        ],
+        [
+          3,
+          "<optgroup>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><datalist><option>foo</datalist>bar",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<datalist>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          4,
+          "\"foo\""
+        ],
+        [
+          2,
+          "\"bar\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><font><input><input></font>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "<input>"
+        ],
+        [
+          3,
+          "<input>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><!-- XXX - XXX -->",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<!--  XXX - XXX  -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><!-- XXX - XXX",
+      "errors": [
+        "(1,29): eof-in-comment"
+      ],
+      "newErrors": [
+        "(1:30) eof-in-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<!--  XXX - XXX -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><!-- XXX - XXX - XXX -->",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<!--  XXX - XXX - XXX  -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "test\ntest",
+      "errors": [
+        "(2,4): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"test\ntest\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><body><title>test</body></title>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"test</body>\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><body><title>X</title><meta name=z><link rel=foo><style>\nx { content:\"</style\" } </style>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"X\""
+        ],
+        [
+          2,
+          "<meta>"
+        ],
+        [
+          3,
+          "name=\"z\""
+        ],
+        [
+          2,
+          "<link>"
+        ],
+        [
+          3,
+          "rel=\"foo\""
+        ],
+        [
+          2,
+          "<style>"
+        ],
+        [
+          3,
+          "\"\nx { content:\"</style\" } \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><select><optgroup></optgroup></select>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<optgroup>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": " \n ",
+      "errors": [
+        "(2,1): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>  <html>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><script>\n</script>  <title>x</title>  </head>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<script>"
+        ],
+        [
+          3,
+          "\"\n\""
+        ],
+        [
+          2,
+          "\"  \""
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"x\""
+        ],
+        [
+          2,
+          "\"  \""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><html><body><html id=x>",
+      "errors": [
+        "(1,38): non-html-root"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "id=\"x\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>X</body><html id=\"x\">",
+      "errors": [
+        "(1,36): non-html-root"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "id=\"x\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><head><html id=x>",
+      "errors": [
+        "(1,32): non-html-root"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "id=\"x\""
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>X</html>X",
+      "errors": [
+        "(1,24): expected-eof-but-got-char"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"XX\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>X</html> ",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"X \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>X</html><p>X",
+      "errors": [
+        "(1,26): expected-eof-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"X\""
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>X<p/x/y/z>",
+      "errors": [
+        "(1,19): unexpected-character-after-solidus-in-tag",
+        "(1,21): unexpected-character-after-solidus-in-tag",
+        "(1,23): unexpected-character-after-solidus-in-tag"
+      ],
+      "newErrors": [
+        "(1:20) unexpected-solidus-in-tag",
+        "(1:22) unexpected-solidus-in-tag",
+        "(1:24) unexpected-solidus-in-tag"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"X\""
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "x=\"\""
+        ],
+        [
+          3,
+          "y=\"\""
+        ],
+        [
+          3,
+          "z=\"\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><!--x--",
+      "errors": [
+        "(1,22): eof-in-comment-double-dash"
+      ],
+      "newErrors": [
+        "(1:23) eof-in-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<!-- x -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><table><tr><td></p></table>",
+      "errors": [
+        "(1,34): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE <!DOCTYPE HTML>><!--<!--x-->-->",
+      "errors": [
+        "(1,20): expected-space-or-right-bracket-in-doctype",
+        "(1,25): unknown-doctype",
+        "(1,35): unexpected-char-in-comment"
+      ],
+      "newErrors": [
+        "(1:21) invalid-character-sequence-after-doctype-name",
+        "(1:35) nested-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE <!doctype>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\">\""
+        ],
+        [
+          2,
+          "<!-- <!--x -->"
+        ],
+        [
+          2,
+          "\"-->\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><div><form></form><div></div></div>",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<form>"
+        ],
+        [
+          3,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    }
+  ]
+}

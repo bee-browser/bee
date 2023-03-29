@@ -1,0 +1,2091 @@
+[
+  {
+    "description": "Correct Doctype lowercase",
+    "initialState": "Data",
+    "input": "<!DOCTYPE html>",
+    "inputUtf16": [
+      60,
+      33,
+      68,
+      79,
+      67,
+      84,
+      89,
+      80,
+      69,
+      32,
+      104,
+      116,
+      109,
+      108,
+      62
+    ],
+    "output": [
+      {
+        "Doctype": {
+          "name": "html",
+          "public_id": null,
+          "system_id": null,
+          "force_quirks": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Correct Doctype uppercase",
+    "initialState": "Data",
+    "input": "<!DOCTYPE HTML>",
+    "inputUtf16": [
+      60,
+      33,
+      68,
+      79,
+      67,
+      84,
+      89,
+      80,
+      69,
+      32,
+      72,
+      84,
+      77,
+      76,
+      62
+    ],
+    "output": [
+      {
+        "Doctype": {
+          "name": "html",
+          "public_id": null,
+          "system_id": null,
+          "force_quirks": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Correct Doctype mixed case",
+    "initialState": "Data",
+    "input": "<!DOCTYPE HtMl>",
+    "inputUtf16": [
+      60,
+      33,
+      68,
+      79,
+      67,
+      84,
+      89,
+      80,
+      69,
+      32,
+      72,
+      116,
+      77,
+      108,
+      62
+    ],
+    "output": [
+      {
+        "Doctype": {
+          "name": "html",
+          "public_id": null,
+          "system_id": null,
+          "force_quirks": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Correct Doctype case with EOF",
+    "initialState": "Data",
+    "input": "<!DOCTYPE HtMl",
+    "inputUtf16": [
+      60,
+      33,
+      68,
+      79,
+      67,
+      84,
+      89,
+      80,
+      69,
+      32,
+      72,
+      116,
+      77,
+      108
+    ],
+    "output": [
+      {
+        "Doctype": {
+          "name": "html",
+          "public_id": null,
+          "system_id": null,
+          "force_quirks": true
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "eof-in-doctype",
+        "location": {
+          "line": 1,
+          "column": 15
+        }
+      }
+    ]
+  },
+  {
+    "description": "Truncated doctype start",
+    "initialState": "Data",
+    "input": "<!DOC>",
+    "inputUtf16": [
+      60,
+      33,
+      68,
+      79,
+      67,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": "DOC"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "incorrectly-opened-comment",
+        "location": {
+          "line": 1,
+          "column": 3
+        }
+      }
+    ]
+  },
+  {
+    "description": "Doctype in error",
+    "initialState": "Data",
+    "input": "<!DOCTYPE foo>",
+    "inputUtf16": [
+      60,
+      33,
+      68,
+      79,
+      67,
+      84,
+      89,
+      80,
+      69,
+      32,
+      102,
+      111,
+      111,
+      62
+    ],
+    "output": [
+      {
+        "Doctype": {
+          "name": "foo",
+          "public_id": null,
+          "system_id": null,
+          "force_quirks": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Single Start Tag",
+    "initialState": "Data",
+    "input": "<h>",
+    "inputUtf16": [
+      60,
+      104,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {},
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Empty end tag",
+    "initialState": "Data",
+    "input": "</>",
+    "inputUtf16": [
+      60,
+      47,
+      62
+    ],
+    "output": [],
+    "errors": [
+      {
+        "code": "missing-end-tag-name",
+        "location": {
+          "line": 1,
+          "column": 3
+        }
+      }
+    ]
+  },
+  {
+    "description": "Empty start tag",
+    "initialState": "Data",
+    "input": "<>",
+    "inputUtf16": [
+      60,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<>"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "invalid-first-character-of-tag-name",
+        "location": {
+          "line": 1,
+          "column": 2
+        }
+      }
+    ]
+  },
+  {
+    "description": "Start Tag w/attribute",
+    "initialState": "Data",
+    "input": "<h a='b'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      98,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "b"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Start Tag w/attribute no quotes",
+    "initialState": "Data",
+    "input": "<h a=b>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      98,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "b"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Start/End Tag",
+    "initialState": "Data",
+    "input": "<h></h>",
+    "inputUtf16": [
+      60,
+      104,
+      62,
+      60,
+      47,
+      104,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {},
+          "self_closing": false
+        }
+      },
+      {
+        "EndTag": {
+          "name": "h"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Two unclosed start tags",
+    "initialState": "Data",
+    "input": "<p>One<p>Two",
+    "inputUtf16": [
+      60,
+      112,
+      62,
+      79,
+      110,
+      101,
+      60,
+      112,
+      62,
+      84,
+      119,
+      111
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "p",
+          "attrs": {},
+          "self_closing": false
+        }
+      },
+      {
+        "Character": {
+          "data": "One"
+        }
+      },
+      {
+        "StartTag": {
+          "name": "p",
+          "attrs": {},
+          "self_closing": false
+        }
+      },
+      {
+        "Character": {
+          "data": "Two"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "End Tag w/attribute",
+    "initialState": "Data",
+    "input": "<h></h a='b'>",
+    "inputUtf16": [
+      60,
+      104,
+      62,
+      60,
+      47,
+      104,
+      32,
+      97,
+      61,
+      39,
+      98,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {},
+          "self_closing": false
+        }
+      },
+      {
+        "EndTag": {
+          "name": "h"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "end-tag-with-attributes",
+        "location": {
+          "line": 1,
+          "column": 13
+        }
+      }
+    ]
+  },
+  {
+    "description": "Multiple atts",
+    "initialState": "Data",
+    "input": "<h a='b' c='d'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      98,
+      39,
+      32,
+      99,
+      61,
+      39,
+      100,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "b",
+            "c": "d"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Multiple atts no space",
+    "initialState": "Data",
+    "input": "<h a='b'c='d'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      98,
+      39,
+      99,
+      61,
+      39,
+      100,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "b",
+            "c": "d"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "missing-whitespace-between-attributes",
+        "location": {
+          "line": 1,
+          "column": 9
+        }
+      }
+    ]
+  },
+  {
+    "description": "Repeated attr",
+    "initialState": "Data",
+    "input": "<h a='b' a='d'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      98,
+      39,
+      32,
+      97,
+      61,
+      39,
+      100,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "b"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "duplicate-attribute",
+        "location": {
+          "line": 1,
+          "column": 11
+        }
+      }
+    ]
+  },
+  {
+    "description": "Simple comment",
+    "initialState": "Data",
+    "input": "<!--comment-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      99,
+      111,
+      109,
+      109,
+      101,
+      110,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": "comment"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Comment, Central dash no space",
+    "initialState": "Data",
+    "input": "<!----->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      45,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": "-"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Comment, two central dashes",
+    "initialState": "Data",
+    "input": "<!-- --comment -->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      45,
+      45,
+      99,
+      111,
+      109,
+      109,
+      101,
+      110,
+      116,
+      32,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": " --comment "
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Comment, central less-than bang",
+    "initialState": "Data",
+    "input": "<!--<!-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      60,
+      33,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": "<!"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Unfinished comment",
+    "initialState": "Data",
+    "input": "<!--comment",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      99,
+      111,
+      109,
+      109,
+      101,
+      110,
+      116
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": "comment"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "eof-in-comment",
+        "location": {
+          "line": 1,
+          "column": 12
+        }
+      }
+    ]
+  },
+  {
+    "description": "Unfinished comment after start of nested comment",
+    "initialState": "Data",
+    "input": "<!-- <!--",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      33,
+      45,
+      45
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": " <!"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "eof-in-comment",
+        "location": {
+          "line": 1,
+          "column": 10
+        }
+      }
+    ]
+  },
+  {
+    "description": "Start of a comment",
+    "initialState": "Data",
+    "input": "<!-",
+    "inputUtf16": [
+      60,
+      33,
+      45
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": "-"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "incorrectly-opened-comment",
+        "location": {
+          "line": 1,
+          "column": 3
+        }
+      }
+    ]
+  },
+  {
+    "description": "Short comment",
+    "initialState": "Data",
+    "input": "<!-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": ""
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "abrupt-closing-of-empty-comment",
+        "location": {
+          "line": 1,
+          "column": 5
+        }
+      }
+    ]
+  },
+  {
+    "description": "Short comment two",
+    "initialState": "Data",
+    "input": "<!--->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": ""
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "abrupt-closing-of-empty-comment",
+        "location": {
+          "line": 1,
+          "column": 6
+        }
+      }
+    ]
+  },
+  {
+    "description": "Short comment three",
+    "initialState": "Data",
+    "input": "<!---->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": ""
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "< in comment",
+    "initialState": "Data",
+    "input": "<!-- <test-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": " <test"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "<< in comment",
+    "initialState": "Data",
+    "input": "<!--<<-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      60,
+      60,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": "<<"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "<! in comment",
+    "initialState": "Data",
+    "input": "<!-- <!test-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      33,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": " <!test"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "<!- in comment",
+    "initialState": "Data",
+    "input": "<!-- <!-test-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      33,
+      45,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": " <!-test"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Nested comment",
+    "initialState": "Data",
+    "input": "<!-- <!--test-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      33,
+      45,
+      45,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": " <!--test"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "nested-comment",
+        "location": {
+          "line": 1,
+          "column": 10
+        }
+      }
+    ]
+  },
+  {
+    "description": "Nested comment with extra <",
+    "initialState": "Data",
+    "input": "<!-- <<!--test-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      60,
+      33,
+      45,
+      45,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Comment": {
+          "data": " <<!--test"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "nested-comment",
+        "location": {
+          "line": 1,
+          "column": 11
+        }
+      }
+    ]
+  },
+  {
+    "description": "< in script data",
+    "initialState": "ScriptData",
+    "input": "<test-->",
+    "inputUtf16": [
+      60,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<test-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "<! in script data",
+    "initialState": "ScriptData",
+    "input": "<!test-->",
+    "inputUtf16": [
+      60,
+      33,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!test-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "<!- in script data",
+    "initialState": "ScriptData",
+    "input": "<!-test-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!-test-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Escaped script data",
+    "initialState": "ScriptData",
+    "input": "<!--test-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      116,
+      101,
+      115,
+      116,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!--test-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "< in script HTML comment",
+    "initialState": "ScriptData",
+    "input": "<!-- < test -->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      32,
+      116,
+      101,
+      115,
+      116,
+      32,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!-- < test -->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "</ in script HTML comment",
+    "initialState": "ScriptData",
+    "input": "<!-- </ test -->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      47,
+      32,
+      116,
+      101,
+      115,
+      116,
+      32,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!-- </ test -->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Start tag in script HTML comment",
+    "initialState": "ScriptData",
+    "input": "<!-- <test> -->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      116,
+      101,
+      115,
+      116,
+      62,
+      32,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!-- <test> -->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "End tag in script HTML comment",
+    "initialState": "ScriptData",
+    "input": "<!-- </test> -->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      32,
+      60,
+      47,
+      116,
+      101,
+      115,
+      116,
+      62,
+      32,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!-- </test> -->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "- in script HTML comment double escaped",
+    "initialState": "ScriptData",
+    "input": "<!--<script>-</script>-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      60,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      60,
+      47,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!--<script>-</script>-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "-- in script HTML comment double escaped",
+    "initialState": "ScriptData",
+    "input": "<!--<script>--</script>-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      60,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      45,
+      60,
+      47,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!--<script>--</script>-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "--- in script HTML comment double escaped",
+    "initialState": "ScriptData",
+    "input": "<!--<script>---</script>-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      60,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      45,
+      45,
+      60,
+      47,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!--<script>---</script>-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "- spaced in script HTML comment double escaped",
+    "initialState": "ScriptData",
+    "input": "<!--<script> - </script>-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      60,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      32,
+      45,
+      32,
+      60,
+      47,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!--<script> - </script>-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "-- spaced in script HTML comment double escaped",
+    "initialState": "ScriptData",
+    "input": "<!--<script> -- </script>-->",
+    "inputUtf16": [
+      60,
+      33,
+      45,
+      45,
+      60,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      32,
+      45,
+      45,
+      32,
+      60,
+      47,
+      115,
+      99,
+      114,
+      105,
+      112,
+      116,
+      62,
+      45,
+      45,
+      62
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "<!--<script> -- </script>-->"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Ampersand EOF",
+    "initialState": "Data",
+    "input": "&",
+    "inputUtf16": [
+      38
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "&"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Ampersand ampersand EOF",
+    "initialState": "Data",
+    "input": "&&",
+    "inputUtf16": [
+      38,
+      38
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "&&"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Ampersand space EOF",
+    "initialState": "Data",
+    "input": "& ",
+    "inputUtf16": [
+      38,
+      32
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "& "
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Unfinished entity",
+    "initialState": "Data",
+    "input": "&f",
+    "inputUtf16": [
+      38,
+      102
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "&f"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Ampersand, number sign",
+    "initialState": "Data",
+    "input": "&#",
+    "inputUtf16": [
+      38,
+      35
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "&#"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "absence-of-digits-in-numeric-character-reference",
+        "location": {
+          "line": 1,
+          "column": 3
+        }
+      }
+    ]
+  },
+  {
+    "description": "Unfinished numeric entity",
+    "initialState": "Data",
+    "input": "&#x",
+    "inputUtf16": [
+      38,
+      35,
+      120
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "&#x"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "absence-of-digits-in-numeric-character-reference",
+        "location": {
+          "line": 1,
+          "column": 4
+        }
+      }
+    ]
+  },
+  {
+    "description": "Entity with trailing semicolon (1)",
+    "initialState": "Data",
+    "input": "I'm &not;it",
+    "inputUtf16": [
+      73,
+      39,
+      109,
+      32,
+      38,
+      110,
+      111,
+      116,
+      59,
+      105,
+      116
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "I'm ¬it"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Entity with trailing semicolon (2)",
+    "initialState": "Data",
+    "input": "I'm &notin;",
+    "inputUtf16": [
+      73,
+      39,
+      109,
+      32,
+      38,
+      110,
+      111,
+      116,
+      105,
+      110,
+      59
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "I'm ∉"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Entity without trailing semicolon (1)",
+    "initialState": "Data",
+    "input": "I'm &notit",
+    "inputUtf16": [
+      73,
+      39,
+      109,
+      32,
+      38,
+      110,
+      111,
+      116,
+      105,
+      116
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "I'm ¬it"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "missing-semicolon-after-character-reference",
+        "location": {
+          "line": 1,
+          "column": 9
+        }
+      }
+    ]
+  },
+  {
+    "description": "Entity without trailing semicolon (2)",
+    "initialState": "Data",
+    "input": "I'm &notin",
+    "inputUtf16": [
+      73,
+      39,
+      109,
+      32,
+      38,
+      110,
+      111,
+      116,
+      105,
+      110
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "I'm ¬in"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "missing-semicolon-after-character-reference",
+        "location": {
+          "line": 1,
+          "column": 9
+        }
+      }
+    ]
+  },
+  {
+    "description": "Partial entity match at end of file",
+    "initialState": "Data",
+    "input": "I'm &no",
+    "inputUtf16": [
+      73,
+      39,
+      109,
+      32,
+      38,
+      110,
+      111
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "I'm &no"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Non-ASCII character reference name",
+    "initialState": "Data",
+    "input": "&¬;",
+    "inputUtf16": [
+      38,
+      172,
+      59
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "&¬;"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "ASCII decimal entity",
+    "initialState": "Data",
+    "input": "&#0036;",
+    "inputUtf16": [
+      38,
+      35,
+      48,
+      48,
+      51,
+      54,
+      59
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "$"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "ASCII hexadecimal entity",
+    "initialState": "Data",
+    "input": "&#x3f;",
+    "inputUtf16": [
+      38,
+      35,
+      120,
+      51,
+      102,
+      59
+    ],
+    "output": [
+      {
+        "Character": {
+          "data": "?"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Hexadecimal entity in attribute",
+    "initialState": "Data",
+    "input": "<h a='&#x3f;'></h>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      38,
+      35,
+      120,
+      51,
+      102,
+      59,
+      39,
+      62,
+      60,
+      47,
+      104,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "?"
+          },
+          "self_closing": false
+        }
+      },
+      {
+        "EndTag": {
+          "name": "h"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Entity in attribute without semicolon ending in x",
+    "initialState": "Data",
+    "input": "<h a='&notx'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      38,
+      110,
+      111,
+      116,
+      120,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "&notx"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Entity in attribute without semicolon ending in 1",
+    "initialState": "Data",
+    "input": "<h a='&not1'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      38,
+      110,
+      111,
+      116,
+      49,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "&not1"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Entity in attribute without semicolon ending in i",
+    "initialState": "Data",
+    "input": "<h a='&noti'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      38,
+      110,
+      111,
+      116,
+      105,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "&noti"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Entity in attribute without semicolon",
+    "initialState": "Data",
+    "input": "<h a='&COPY'>",
+    "inputUtf16": [
+      60,
+      104,
+      32,
+      97,
+      61,
+      39,
+      38,
+      67,
+      79,
+      80,
+      89,
+      39,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "h",
+          "attrs": {
+            "a": "©"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "missing-semicolon-after-character-reference",
+        "location": {
+          "line": 1,
+          "column": 12
+        }
+      }
+    ]
+  },
+  {
+    "description": "Unquoted attribute ending in ampersand",
+    "initialState": "Data",
+    "input": "<s o=& t>",
+    "inputUtf16": [
+      60,
+      115,
+      32,
+      111,
+      61,
+      38,
+      32,
+      116,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "s",
+          "attrs": {
+            "o": "&",
+            "t": ""
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Unquoted attribute at end of tag with final character of &, with tag followed by characters",
+    "initialState": "Data",
+    "input": "<a a=a&>foo",
+    "inputUtf16": [
+      60,
+      97,
+      32,
+      97,
+      61,
+      97,
+      38,
+      62,
+      102,
+      111,
+      111
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "a",
+          "attrs": {
+            "a": "a&"
+          },
+          "self_closing": false
+        }
+      },
+      {
+        "Character": {
+          "data": "foo"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "plaintext element",
+    "initialState": "Data",
+    "input": "<plaintext>foobar",
+    "inputUtf16": [
+      60,
+      112,
+      108,
+      97,
+      105,
+      110,
+      116,
+      101,
+      120,
+      116,
+      62,
+      102,
+      111,
+      111,
+      98,
+      97,
+      114
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "plaintext",
+          "attrs": {},
+          "self_closing": false
+        }
+      },
+      {
+        "Character": {
+          "data": "foobar"
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "description": "Open angled bracket in unquoted attribute value state",
+    "initialState": "Data",
+    "input": "<a a=f<>",
+    "inputUtf16": [
+      60,
+      97,
+      32,
+      97,
+      61,
+      102,
+      60,
+      62
+    ],
+    "output": [
+      {
+        "StartTag": {
+          "name": "a",
+          "attrs": {
+            "a": "f<"
+          },
+          "self_closing": false
+        }
+      }
+    ],
+    "errors": [
+      {
+        "code": "unexpected-character-in-unquoted-attribute-value",
+        "location": {
+          "line": 1,
+          "column": 7
+        }
+      }
+    ]
+  }
+]
