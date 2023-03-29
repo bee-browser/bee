@@ -1,0 +1,5097 @@
+{
+  "name": "tests1_html5lib_tests",
+  "tests": [
+    {
+      "data": "Test",
+      "errors": [
+        "(1,0): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"Test\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p>One<p>Two",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "\"One\""
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "\"Two\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "Line1<br>Line2<br>Line3<br>Line4",
+      "errors": [
+        "(1,0): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"Line1\""
+        ],
+        [
+          2,
+          "<br>"
+        ],
+        [
+          2,
+          "\"Line2\""
+        ],
+        [
+          2,
+          "<br>"
+        ],
+        [
+          2,
+          "\"Line3\""
+        ],
+        [
+          2,
+          "<br>"
+        ],
+        [
+          2,
+          "\"Line4\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<head>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<body>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head></head>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head></head><body>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head></head><body></body>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head><body></body></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head></body></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head><body></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><body></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<body></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<head></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</head>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</body>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-end-tag element."
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</html>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-end-tag element."
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b><table><td><i></table>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-cell-in-table-body",
+        "(1,25): unexpected-cell-end-tag",
+        "(1,25): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<i>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b><table><td></b><i></table>X",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-cell-in-table-body",
+        "(1,18): unexpected-end-tag",
+        "(1,29): unexpected-cell-end-tag",
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<i>"
+        ],
+        [
+          3,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<h1>Hello<h2>World",
+      "errors": [
+        "(1,4): expected-doctype-but-got-start-tag",
+        "(1,13): unexpected-start-tag",
+        "(1,18): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<h1>"
+        ],
+        [
+          3,
+          "\"Hello\""
+        ],
+        [
+          2,
+          "<h2>"
+        ],
+        [
+          3,
+          "\"World\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a><p>X<a>Y</a>Z</p></a>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,10): unexpected-start-tag-implies-end-tag",
+        "(1,10): adoption-agency-1.3",
+        "(1,24): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          4,
+          "\"X\""
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          4,
+          "\"Y\""
+        ],
+        [
+          3,
+          "\"Z\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b><button>foo</b>bar",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,18): adoption-agency-1.3",
+        "(1,21): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          2,
+          "<button>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\"foo\""
+        ],
+        [
+          3,
+          "\"bar\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><span><button>foo</span>bar",
+      "errors": [
+        "(1,39): unexpected-end-tag",
+        "(1,42): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<span>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "\"foobar\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p><b><div><marquee></p></b></div>X",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-end-tag",
+        "(1,24): unexpected-end-tag",
+        "(1,28): unexpected-end-tag",
+        "(1,34): end-tag-too-early",
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "<marquee>"
+        ],
+        [
+          5,
+          "<p>"
+        ],
+        [
+          5,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<script><div></script></div><title><p></title><p><p>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,28): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<script>"
+        ],
+        [
+          3,
+          "\"<div>\""
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"<p>\""
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!--><div>--<!-->",
+      "errors": [
+        "(1,5): incorrect-comment",
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(1,17): incorrect-comment",
+        "(1,17): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:5) abrupt-closing-of-empty-comment",
+        "(1:17) abrupt-closing-of-empty-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!--  -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\"--\""
+        ],
+        [
+          3,
+          "<!--  -->"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p><hr></p>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<hr>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<select><b><option><select><option></b></select>X",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-start-tag-in-select",
+        "(1,27): unexpected-select-in-select",
+        "(1,39): unexpected-end-tag",
+        "(1,48): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          2,
+          "<option>"
+        ],
+        [
+          3,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a><table><td><a><table></table><a></tr><a></table><b>X</b>C<a>Y",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-cell-in-table-body",
+        "(1,35): unexpected-start-tag-implies-end-tag",
+        "(1,40): unexpected-cell-end-tag",
+        "(1,43): unexpected-start-tag-implies-table-voodoo",
+        "(1,43): unexpected-start-tag-implies-end-tag",
+        "(1,43): unexpected-end-tag",
+        "(1,63): unexpected-start-tag-implies-end-tag",
+        "(1,64): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<a>"
+        ],
+        [
+          8,
+          "<table>"
+        ],
+        [
+          7,
+          "<a>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\"X\""
+        ],
+        [
+          3,
+          "\"C\""
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "\"Y\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a X>0<b>1<a Y>2",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,15): unexpected-start-tag-implies-end-tag",
+        "(1,15): adoption-agency-1.3",
+        "(1,16): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "x=\"\""
+        ],
+        [
+          3,
+          "\"0\""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\"1\""
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          4,
+          "y=\"\""
+        ],
+        [
+          4,
+          "\"2\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!-----><font><div>hello<table>excite!<b>me!<th><i>please!</tr><!--X-->",
+      "errors": [
+        "(1,14): expected-doctype-but-got-start-tag",
+        "(1,41): unexpected-start-tag-implies-table-voodoo",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): foster-parenting-character-in-table",
+        "(1,48): unexpected-cell-in-table-body",
+        "(1,63): unexpected-cell-end-tag",
+        "(1,71): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!-- - -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "<div>"
+        ],
+        [
+          4,
+          "\"helloexcite!\""
+        ],
+        [
+          4,
+          "<b>"
+        ],
+        [
+          5,
+          "\"me!\""
+        ],
+        [
+          4,
+          "<table>"
+        ],
+        [
+          5,
+          "<tbody>"
+        ],
+        [
+          6,
+          "<tr>"
+        ],
+        [
+          7,
+          "<th>"
+        ],
+        [
+          8,
+          "<i>"
+        ],
+        [
+          9,
+          "\"please!\""
+        ],
+        [
+          6,
+          "<!-- X -->"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><li>hello<li>world<ul>how<li>do</ul>you</body><!--do-->",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<li>"
+        ],
+        [
+          3,
+          "\"hello\""
+        ],
+        [
+          2,
+          "<li>"
+        ],
+        [
+          3,
+          "\"world\""
+        ],
+        [
+          3,
+          "<ul>"
+        ],
+        [
+          4,
+          "\"how\""
+        ],
+        [
+          4,
+          "<li>"
+        ],
+        [
+          5,
+          "\"do\""
+        ],
+        [
+          3,
+          "\"you\""
+        ],
+        [
+          1,
+          "<!-- do -->"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html>A<option>B<optgroup>C<select>D</option>E",
+      "errors": [
+        "(1,54): unexpected-end-tag-in-select",
+        "(1,55): eof-in-select"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"A\""
+        ],
+        [
+          2,
+          "<option>"
+        ],
+        [
+          3,
+          "\"B\""
+        ],
+        [
+          2,
+          "<optgroup>"
+        ],
+        [
+          3,
+          "\"C\""
+        ],
+        [
+          3,
+          "<select>"
+        ],
+        [
+          4,
+          "\"DE\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<",
+      "errors": [
+        "(1,1): expected-tag-name",
+        "(1,1): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:2) eof-before-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"<\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<#",
+      "errors": [
+        "(1,1): expected-tag-name",
+        "(1,1): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:2) invalid-first-character-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"<#\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</",
+      "errors": [
+        "(1,2): expected-closing-tag-but-got-eof",
+        "(1,2): expected-doctype-but-got-chars"
+      ],
+      "newErrors": [
+        "(1:3) eof-before-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"</\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</#",
+      "errors": [
+        "(1,2): expected-closing-tag-but-got-char",
+        "(1,3): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:3) invalid-first-character-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- # -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<?",
+      "errors": [
+        "(1,1): expected-tag-name-but-got-question-mark",
+        "(1,2): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:2) unexpected-question-mark-instead-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- ? -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<?#",
+      "errors": [
+        "(1,1): expected-tag-name-but-got-question-mark",
+        "(1,3): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:2) unexpected-question-mark-instead-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- ?# -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!",
+      "errors": [
+        "(1,2): expected-dashes-or-doctype",
+        "(1,2): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:3) incorrectly-opened-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!--  -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!#",
+      "errors": [
+        "(1,2): expected-dashes-or-doctype",
+        "(1,3): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:3) incorrectly-opened-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- # -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<?COMMENT?>",
+      "errors": [
+        "(1,1): expected-tag-name-but-got-question-mark",
+        "(1,11): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:2) unexpected-question-mark-instead-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- ?COMMENT? -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!COMMENT>",
+      "errors": [
+        "(1,2): expected-dashes-or-doctype",
+        "(1,10): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:3) incorrectly-opened-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- COMMENT -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</ COMMENT >",
+      "errors": [
+        "(1,2): expected-closing-tag-but-got-char",
+        "(1,12): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:3) invalid-first-character-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!--  COMMENT  -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<?COM--MENT?>",
+      "errors": [
+        "(1,1): expected-tag-name-but-got-question-mark",
+        "(1,13): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:2) unexpected-question-mark-instead-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- ?COM--MENT? -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!COM--MENT>",
+      "errors": [
+        "(1,2): expected-dashes-or-doctype",
+        "(1,12): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:3) incorrectly-opened-comment"
+      ],
+      "document": [
+        [
+          0,
+          "<!-- COM--MENT -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</ COM--MENT >",
+      "errors": [
+        "(1,2): expected-closing-tag-but-got-char",
+        "(1,14): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [
+        "(1:3) invalid-first-character-of-tag-name"
+      ],
+      "document": [
+        [
+          0,
+          "<!--  COM--MENT  -->"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><style> EOF",
+      "errors": [
+        "(1,26): expected-named-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<style>"
+        ],
+        [
+          3,
+          "\" EOF\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><script> <!-- </script> --> </script> EOF",
+      "errors": [
+        "(1,52): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<script>"
+        ],
+        [
+          3,
+          "\" <!-- \""
+        ],
+        [
+          2,
+          "\" \""
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "\"-->  EOF\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b><p></b>TEST",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,10): adoption-agency-1.3"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          3,
+          "\"TEST\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p id=a><b><p id=b></b>TEST",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,19): unexpected-end-tag",
+        "(1,23): adoption-agency-1.2"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "id=\"a\""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "id=\"b\""
+        ],
+        [
+          3,
+          "\"TEST\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b id=a><p><b id=b></p></b>TEST",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,23): unexpected-end-tag",
+        "(1,27): adoption-agency-1.2",
+        "(1,31): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "id=\"a\""
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "<b>"
+        ],
+        [
+          5,
+          "id=\"b\""
+        ],
+        [
+          3,
+          "\"TEST\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><title>U-test</title><body><div><p>Test<u></p></div></body>",
+      "errors": [
+        "(1,61): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"U-test\""
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "\"Test\""
+        ],
+        [
+          4,
+          "<u>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><font><table></font></table></font>",
+      "errors": [
+        "(1,35): unexpected-end-tag-implies-table-voodoo",
+        "(1,35): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          3,
+          "<table>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<font><p>hello<b>cruel</font>world",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,29): adoption-agency-1.3",
+        "(1,29): adoption-agency-1.3",
+        "(1,34): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<font>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<font>"
+        ],
+        [
+          4,
+          "\"hello\""
+        ],
+        [
+          4,
+          "<b>"
+        ],
+        [
+          5,
+          "\"cruel\""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\"world\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b>Test</i>Test",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-end-tag",
+        "(1,15): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"TestTest\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b>A<cite>B<div>C",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,17): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"A\""
+        ],
+        [
+          3,
+          "<cite>"
+        ],
+        [
+          4,
+          "\"B\""
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          5,
+          "\"C\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b>A<cite>B<div>C</cite>D",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,24): unexpected-end-tag",
+        "(1,25): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"A\""
+        ],
+        [
+          3,
+          "<cite>"
+        ],
+        [
+          4,
+          "\"B\""
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          5,
+          "\"CD\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b>A<cite>B<div>C</b>D",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,21): adoption-agency-1.3",
+        "(1,22): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "\"A\""
+        ],
+        [
+          3,
+          "<cite>"
+        ],
+        [
+          4,
+          "\"B\""
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\"C\""
+        ],
+        [
+          3,
+          "\"D\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "",
+      "errors": [
+        "(1,0): expected-doctype-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,5): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,9): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,13): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,17): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,21): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,25): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,29): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          5,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P> jkl",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,33): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          5,
+          "<p>"
+        ],
+        [
+          6,
+          "\" jkl\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P> jkl </B>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,38): adoption-agency-1.3",
+        "(1,38): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          4,
+          "<p>"
+        ],
+        [
+          5,
+          "<b>"
+        ],
+        [
+          6,
+          "\" jkl \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P> jkl </B> mno",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,38): adoption-agency-1.3",
+        "(1,42): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          4,
+          "<p>"
+        ],
+        [
+          5,
+          "<b>"
+        ],
+        [
+          6,
+          "\" jkl \""
+        ],
+        [
+          5,
+          "\" mno\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,38): adoption-agency-1.3",
+        "(1,47): adoption-agency-1.3",
+        "(1,47): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "<b>"
+        ],
+        [
+          6,
+          "\" jkl \""
+        ],
+        [
+          5,
+          "\" mno \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,38): adoption-agency-1.3",
+        "(1,47): adoption-agency-1.3",
+        "(1,51): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "<b>"
+        ],
+        [
+          6,
+          "\" jkl \""
+        ],
+        [
+          5,
+          "\" mno \""
+        ],
+        [
+          4,
+          "\" pqr\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,38): adoption-agency-1.3",
+        "(1,47): adoption-agency-1.3",
+        "(1,56): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "<b>"
+        ],
+        [
+          6,
+          "\" jkl \""
+        ],
+        [
+          5,
+          "\" mno \""
+        ],
+        [
+          4,
+          "\" pqr \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<DIV> abc <B> def <I> ghi <P> jkl </B> mno </I> pqr </P> stu",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,38): adoption-agency-1.3",
+        "(1,47): adoption-agency-1.3",
+        "(1,60): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "\" abc \""
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "\" def \""
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "\" ghi \""
+        ],
+        [
+          3,
+          "<i>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          4,
+          "<i>"
+        ],
+        [
+          5,
+          "<b>"
+        ],
+        [
+          6,
+          "\" jkl \""
+        ],
+        [
+          5,
+          "\" mno \""
+        ],
+        [
+          4,
+          "\" pqr \""
+        ],
+        [
+          3,
+          "\" stu\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<test attribute---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->",
+      "errors": [
+        "(1,1040): expected-doctype-but-got-start-tag",
+        "(1,1040): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<test>"
+        ],
+        [
+          3,
+          "attribute----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------=\"\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a href=\"blah\">aba<table><a href=\"foo\">br<tr><td></td></tr>x</table>aoe",
+      "errors": [
+        "(1,15): expected-doctype-but-got-start-tag",
+        "(1,39): unexpected-start-tag-implies-table-voodoo",
+        "(1,39): unexpected-start-tag-implies-end-tag",
+        "(1,39): unexpected-end-tag",
+        "(1,45): foster-parenting-character-in-table",
+        "(1,45): foster-parenting-character-in-table",
+        "(1,68): foster-parenting-character-in-table",
+        "(1,71): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "href=\"blah\""
+        ],
+        [
+          3,
+          "\"aba\""
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          4,
+          "href=\"foo\""
+        ],
+        [
+          4,
+          "\"br\""
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          4,
+          "href=\"foo\""
+        ],
+        [
+          4,
+          "\"x\""
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "href=\"foo\""
+        ],
+        [
+          3,
+          "\"aoe\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a href=\"blah\">aba<table><tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
+      "errors": [
+        "(1,15): expected-doctype-but-got-start-tag",
+        "(1,54): unexpected-cell-end-tag",
+        "(1,68): unexpected text in table",
+        "(1,71): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "href=\"blah\""
+        ],
+        [
+          3,
+          "\"abax\""
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<a>"
+        ],
+        [
+          8,
+          "href=\"foo\""
+        ],
+        [
+          8,
+          "\"br\""
+        ],
+        [
+          3,
+          "\"aoe\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><a href=\"blah\">aba<tr><td><a href=\"foo\">br</td></tr>x</table>aoe",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,22): unexpected-start-tag-implies-table-voodoo",
+        "(1,29): foster-parenting-character-in-table",
+        "(1,29): foster-parenting-character-in-table",
+        "(1,29): foster-parenting-character-in-table",
+        "(1,54): unexpected-cell-end-tag",
+        "(1,68): foster-parenting-character-in-table",
+        "(1,71): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "href=\"blah\""
+        ],
+        [
+          3,
+          "\"aba\""
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "href=\"blah\""
+        ],
+        [
+          3,
+          "\"x\""
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "<a>"
+        ],
+        [
+          7,
+          "href=\"foo\""
+        ],
+        [
+          7,
+          "\"br\""
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "href=\"blah\""
+        ],
+        [
+          3,
+          "\"aoe\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a href=a>aa<marquee>aa<a href=b>bb</marquee>aa",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(1,45): end-tag-too-early",
+        "(1,47): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "href=\"a\""
+        ],
+        [
+          3,
+          "\"aa\""
+        ],
+        [
+          3,
+          "<marquee>"
+        ],
+        [
+          4,
+          "\"aa\""
+        ],
+        [
+          4,
+          "<a>"
+        ],
+        [
+          5,
+          "href=\"b\""
+        ],
+        [
+          5,
+          "\"bb\""
+        ],
+        [
+          3,
+          "\"aa\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<wbr><strike><code></strike><code><strike></code>",
+      "errors": [
+        "(1,5): expected-doctype-but-got-start-tag",
+        "(1,28): adoption-agency-1.3",
+        "(1,49): adoption-agency-1.3",
+        "(1,49): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<wbr>"
+        ],
+        [
+          2,
+          "<strike>"
+        ],
+        [
+          3,
+          "<code>"
+        ],
+        [
+          2,
+          "<code>"
+        ],
+        [
+          3,
+          "<code>"
+        ],
+        [
+          4,
+          "<strike>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!DOCTYPE html><spacer>foo",
+      "errors": [
+        "(1,26): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<spacer>"
+        ],
+        [
+          3,
+          "\"foo\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<title><meta></title><link><title><meta></title>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"<meta>\""
+        ],
+        [
+          2,
+          "<link>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"<meta>\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<style><!--</style><meta><script>--><link></script>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<style>"
+        ],
+        [
+          3,
+          "\"<!--\""
+        ],
+        [
+          2,
+          "<meta>"
+        ],
+        [
+          2,
+          "<script>"
+        ],
+        [
+          3,
+          "\"--><link>\""
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<head><meta></head><link>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,25): unexpected-start-tag-out-of-my-head"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<meta>"
+        ],
+        [
+          2,
+          "<link>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><tr><tr><td><td><span><th><span>X</table>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,33): unexpected-cell-end-tag",
+        "(1,48): unexpected-cell-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          6,
+          "<span>"
+        ],
+        [
+          5,
+          "<th>"
+        ],
+        [
+          6,
+          "<span>"
+        ],
+        [
+          7,
+          "\"X\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<body><body><base><link><meta><title><p></title><body><p></body>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,12): unexpected-start-tag",
+        "(1,54): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<base>"
+        ],
+        [
+          2,
+          "<link>"
+        ],
+        [
+          2,
+          "<meta>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          3,
+          "\"<p>\""
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<textarea><p></textarea>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<textarea>"
+        ],
+        [
+          3,
+          "\"<p>\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p><image></p>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,10): unexpected-start-tag-treated-as"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<img>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a><table><a></table><p><a><div><a>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,13): unexpected-start-tag-implies-table-voodoo",
+        "(1,13): unexpected-start-tag-implies-end-tag",
+        "(1,13): adoption-agency-1.3",
+        "(1,27): unexpected-start-tag-implies-end-tag",
+        "(1,27): adoption-agency-1.2",
+        "(1,32): unexpected-end-tag",
+        "(1,35): unexpected-start-tag-implies-end-tag",
+        "(1,35): adoption-agency-1.2",
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<a>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<head></p><meta><p>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,10): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<meta>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<head></html><meta><p>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,19): expected-eof-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<meta>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b><table><td><i></table>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-cell-in-table-body",
+        "(1,25): unexpected-cell-end-tag",
+        "(1,25): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<i>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b><table><td></b><i></table>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-cell-in-table-body",
+        "(1,18): unexpected-end-tag",
+        "(1,29): unexpected-cell-end-tag",
+        "(1,29): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<i>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<h1><h2>",
+      "errors": [
+        "(1,4): expected-doctype-but-got-start-tag",
+        "(1,8): unexpected-start-tag",
+        "(1,8): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<h1>"
+        ],
+        [
+          2,
+          "<h2>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a><p><a></a></p></a>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,9): unexpected-start-tag-implies-end-tag",
+        "(1,9): adoption-agency-1.3",
+        "(1,21): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          3,
+          "<a>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<b><button></b></button></b>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,15): adoption-agency-1.3",
+        "(1,28): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<b>"
+        ],
+        [
+          2,
+          "<button>"
+        ],
+        [
+          3,
+          "<b>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p><b><div><marquee></p></b></div>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-end-tag",
+        "(1,24): unexpected-end-tag",
+        "(1,28): unexpected-end-tag",
+        "(1,34): end-tag-too-early",
+        "(1,34): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          2,
+          "<div>"
+        ],
+        [
+          3,
+          "<b>"
+        ],
+        [
+          4,
+          "<marquee>"
+        ],
+        [
+          5,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<script></script></div><title></title><p><p>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,23): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<script>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p><hr></p>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<hr>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<select><b><option><select><option></b></select>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,11): unexpected-start-tag-in-select",
+        "(1,27): unexpected-select-in-select",
+        "(1,39): unexpected-end-tag",
+        "(1,48): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<select>"
+        ],
+        [
+          3,
+          "<option>"
+        ],
+        [
+          2,
+          "<option>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<html><head><title></title><body></body></html>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          2,
+          "<title>"
+        ],
+        [
+          1,
+          "<body>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<a><table><td><a><table></table><a></tr><a></table><a>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-cell-in-table-body",
+        "(1,35): unexpected-start-tag-implies-end-tag",
+        "(1,40): unexpected-cell-end-tag",
+        "(1,43): unexpected-start-tag-implies-table-voodoo",
+        "(1,43): unexpected-start-tag-implies-end-tag",
+        "(1,43): unexpected-end-tag",
+        "(1,54): unexpected-start-tag-implies-end-tag",
+        "(1,54): adoption-agency-1.2",
+        "(1,54): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<a>"
+        ],
+        [
+          3,
+          "<a>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<a>"
+        ],
+        [
+          8,
+          "<table>"
+        ],
+        [
+          7,
+          "<a>"
+        ],
+        [
+          2,
+          "<a>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<ul><li></li><div><li></div><li><li><div><li><address><li><b><em></b><li></ul>",
+      "errors": [
+        "(1,4): expected-doctype-but-got-start-tag",
+        "(1,45): end-tag-too-early",
+        "(1,58): end-tag-too-early",
+        "(1,69): adoption-agency-1.3"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ul>"
+        ],
+        [
+          3,
+          "<li>"
+        ],
+        [
+          3,
+          "<div>"
+        ],
+        [
+          4,
+          "<li>"
+        ],
+        [
+          3,
+          "<li>"
+        ],
+        [
+          3,
+          "<li>"
+        ],
+        [
+          4,
+          "<div>"
+        ],
+        [
+          3,
+          "<li>"
+        ],
+        [
+          4,
+          "<address>"
+        ],
+        [
+          3,
+          "<li>"
+        ],
+        [
+          4,
+          "<b>"
+        ],
+        [
+          5,
+          "<em>"
+        ],
+        [
+          3,
+          "<li>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<ul><li><ul></li><li>a</li></ul></li></ul>",
+      "errors": [
+        "(1,4): expected-doctype-but-got-start-tag",
+        "(1,17): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<ul>"
+        ],
+        [
+          3,
+          "<li>"
+        ],
+        [
+          4,
+          "<ul>"
+        ],
+        [
+          5,
+          "<li>"
+        ],
+        [
+          6,
+          "\"a\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<frameset><frame><frameset><frame></frameset><noframes></noframes></frameset>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ],
+        [
+          2,
+          "<frame>"
+        ],
+        [
+          2,
+          "<frameset>"
+        ],
+        [
+          3,
+          "<frame>"
+        ],
+        [
+          2,
+          "<noframes>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<h1><table><td><h3></table><h3></h1>",
+      "errors": [
+        "(1,4): expected-doctype-but-got-start-tag",
+        "(1,15): unexpected-cell-in-table-body",
+        "(1,27): unexpected-cell-end-tag",
+        "(1,31): unexpected-start-tag",
+        "(1,36): end-tag-too-early"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<h1>"
+        ],
+        [
+          3,
+          "<table>"
+        ],
+        [
+          4,
+          "<tbody>"
+        ],
+        [
+          5,
+          "<tr>"
+        ],
+        [
+          6,
+          "<td>"
+        ],
+        [
+          7,
+          "<h3>"
+        ],
+        [
+          2,
+          "<h3>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><colgroup><col><colgroup><col><col><col><colgroup><col><col><thead><tr><td></table>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          3,
+          "<thead>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><col><tbody><col><tr><col><td><col></table><col>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,37): unexpected-cell-in-table-body",
+        "(1,55): unexpected-start-tag-ignored"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<col>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          4,
+          "<col>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><colgroup><tbody><colgroup><tr><colgroup><td><colgroup></table><colgroup>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,52): unexpected-cell-in-table-body",
+        "(1,80): unexpected-start-tag-ignored"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          5,
+          "<td>"
+        ],
+        [
+          3,
+          "<colgroup>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "</strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
+      "errors": [
+        "(1,9): expected-doctype-but-got-end-tag",
+        "(1,9): unexpected-end-tag-before-html",
+        "(1,13): unexpected-end-tag-before-html",
+        "(1,18): unexpected-end-tag-before-html",
+        "(1,22): unexpected-end-tag-before-html",
+        "(1,26): unexpected-end-tag-before-html",
+        "(1,35): unexpected-end-tag-before-html",
+        "(1,39): unexpected-end-tag-before-html",
+        "(1,47): unexpected-end-tag-before-html",
+        "(1,52): unexpected-end-tag-before-html",
+        "(1,58): unexpected-end-tag-before-html",
+        "(1,64): unexpected-end-tag-before-html",
+        "(1,72): unexpected-end-tag-before-html",
+        "(1,79): unexpected-end-tag-before-html",
+        "(1,88): unexpected-end-tag-before-html",
+        "(1,93): unexpected-end-tag-before-html",
+        "(1,98): unexpected-end-tag-before-html",
+        "(1,103): unexpected-end-tag-before-html",
+        "(1,108): unexpected-end-tag-before-html",
+        "(1,113): unexpected-end-tag-before-html",
+        "(1,118): unexpected-end-tag-before-html",
+        "(1,130): unexpected-end-tag-after-body",
+        "(1,130): unexpected-end-tag-treated-as",
+        "(1,134): unexpected-end-tag",
+        "(1,140): unexpected-end-tag",
+        "(1,148): unexpected-end-tag",
+        "(1,155): unexpected-end-tag",
+        "(1,163): unexpected-end-tag",
+        "(1,172): unexpected-end-tag",
+        "(1,180): unexpected-end-tag",
+        "(1,185): unexpected-end-tag",
+        "(1,190): unexpected-end-tag",
+        "(1,195): unexpected-end-tag",
+        "(1,203): unexpected-end-tag",
+        "(1,210): unexpected-end-tag",
+        "(1,217): unexpected-end-tag",
+        "(1,225): unexpected-end-tag",
+        "(1,230): unexpected-end-tag",
+        "(1,238): unexpected-end-tag",
+        "(1,244): unexpected-end-tag",
+        "(1,251): unexpected-end-tag",
+        "(1,258): unexpected-end-tag",
+        "(1,269): unexpected-end-tag",
+        "(1,279): unexpected-end-tag",
+        "(1,287): unexpected-end-tag",
+        "(1,296): unexpected-end-tag",
+        "(1,300): unexpected-end-tag",
+        "(1,305): unexpected-end-tag",
+        "(1,310): unexpected-end-tag",
+        "(1,320): unexpected-end-tag",
+        "(1,331): unexpected-end-tag",
+        "(1,339): unexpected-end-tag",
+        "(1,347): unexpected-end-tag",
+        "(1,355): unexpected-end-tag",
+        "(1,365): end-tag-too-early",
+        "(1,378): end-tag-too-early",
+        "(1,387): end-tag-too-early",
+        "(1,393): end-tag-too-early",
+        "(1,399): end-tag-too-early",
+        "(1,404): end-tag-too-early",
+        "(1,415): end-tag-too-early",
+        "(1,425): end-tag-too-early",
+        "(1,432): end-tag-too-early",
+        "(1,437): end-tag-too-early",
+        "(1,442): end-tag-too-early",
+        "(1,447): unexpected-end-tag",
+        "(1,454): unexpected-end-tag",
+        "(1,460): unexpected-end-tag",
+        "(1,467): unexpected-end-tag",
+        "(1,476): end-tag-too-early",
+        "(1,486): end-tag-too-early",
+        "(1,495): end-tag-too-early",
+        "(1,513): expected-eof-but-got-end-tag",
+        "(1,513): unexpected-end-tag",
+        "(1,520): unexpected-end-tag",
+        "(1,529): unexpected-end-tag",
+        "(1,537): unexpected-end-tag",
+        "(1,547): unexpected-end-tag",
+        "(1,557): unexpected-end-tag",
+        "(1,568): unexpected-end-tag",
+        "(1,579): unexpected-end-tag",
+        "(1,590): unexpected-end-tag",
+        "(1,599): unexpected-end-tag",
+        "(1,611): unexpected-end-tag",
+        "(1,622): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<br>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<table><tr></strong></b></em></i></u></strike></s></blink></tt></pre></big></small></font></select></h1></h2></h3></h4></h5></h6></body></br></a></img></title></span></style></script></table></th></td></tr></frame></area></link></param></hr></input></col></base></meta></basefont></bgsound></embed></spacer></p></dd></dt></caption></colgroup></tbody></tfoot></thead></address></blockquote></center></dir></div></dl></fieldset></listing></menu></ol></ul></li></nobr></wbr></form></button></marquee></object></html></frameset></head></iframe></image></isindex></noembed></noframes></noscript></optgroup></option></plaintext></textarea>",
+      "errors": [
+        "(1,7): expected-doctype-but-got-start-tag",
+        "(1,20): unexpected-end-tag-implies-table-voodoo",
+        "(1,20): unexpected-end-tag",
+        "(1,24): unexpected-end-tag-implies-table-voodoo",
+        "(1,24): unexpected-end-tag",
+        "(1,29): unexpected-end-tag-implies-table-voodoo",
+        "(1,29): unexpected-end-tag",
+        "(1,33): unexpected-end-tag-implies-table-voodoo",
+        "(1,33): unexpected-end-tag",
+        "(1,37): unexpected-end-tag-implies-table-voodoo",
+        "(1,37): unexpected-end-tag",
+        "(1,46): unexpected-end-tag-implies-table-voodoo",
+        "(1,46): unexpected-end-tag",
+        "(1,50): unexpected-end-tag-implies-table-voodoo",
+        "(1,50): unexpected-end-tag",
+        "(1,58): unexpected-end-tag-implies-table-voodoo",
+        "(1,58): unexpected-end-tag",
+        "(1,63): unexpected-end-tag-implies-table-voodoo",
+        "(1,63): unexpected-end-tag",
+        "(1,69): unexpected-end-tag-implies-table-voodoo",
+        "(1,69): end-tag-too-early",
+        "(1,75): unexpected-end-tag-implies-table-voodoo",
+        "(1,75): unexpected-end-tag",
+        "(1,83): unexpected-end-tag-implies-table-voodoo",
+        "(1,83): unexpected-end-tag",
+        "(1,90): unexpected-end-tag-implies-table-voodoo",
+        "(1,90): unexpected-end-tag",
+        "(1,99): unexpected-end-tag-implies-table-voodoo",
+        "(1,99): unexpected-end-tag",
+        "(1,104): unexpected-end-tag-implies-table-voodoo",
+        "(1,104): end-tag-too-early",
+        "(1,109): unexpected-end-tag-implies-table-voodoo",
+        "(1,109): end-tag-too-early",
+        "(1,114): unexpected-end-tag-implies-table-voodoo",
+        "(1,114): end-tag-too-early",
+        "(1,119): unexpected-end-tag-implies-table-voodoo",
+        "(1,119): end-tag-too-early",
+        "(1,124): unexpected-end-tag-implies-table-voodoo",
+        "(1,124): end-tag-too-early",
+        "(1,129): unexpected-end-tag-implies-table-voodoo",
+        "(1,129): end-tag-too-early",
+        "(1,136): unexpected-end-tag-in-table-row",
+        "(1,141): unexpected-end-tag-implies-table-voodoo",
+        "(1,141): unexpected-end-tag-treated-as",
+        "(1,145): unexpected-end-tag-implies-table-voodoo",
+        "(1,145): unexpected-end-tag",
+        "(1,151): unexpected-end-tag-implies-table-voodoo",
+        "(1,151): unexpected-end-tag",
+        "(1,159): unexpected-end-tag-implies-table-voodoo",
+        "(1,159): unexpected-end-tag",
+        "(1,166): unexpected-end-tag-implies-table-voodoo",
+        "(1,166): unexpected-end-tag",
+        "(1,174): unexpected-end-tag-implies-table-voodoo",
+        "(1,174): unexpected-end-tag",
+        "(1,183): unexpected-end-tag-implies-table-voodoo",
+        "(1,183): unexpected-end-tag",
+        "(1,196): unexpected-end-tag",
+        "(1,201): unexpected-end-tag",
+        "(1,206): unexpected-end-tag",
+        "(1,214): unexpected-end-tag",
+        "(1,221): unexpected-end-tag",
+        "(1,228): unexpected-end-tag",
+        "(1,236): unexpected-end-tag",
+        "(1,241): unexpected-end-tag",
+        "(1,249): unexpected-end-tag",
+        "(1,255): unexpected-end-tag",
+        "(1,262): unexpected-end-tag",
+        "(1,269): unexpected-end-tag",
+        "(1,280): unexpected-end-tag",
+        "(1,290): unexpected-end-tag",
+        "(1,298): unexpected-end-tag",
+        "(1,307): unexpected-end-tag",
+        "(1,311): unexpected-end-tag",
+        "(1,316): unexpected-end-tag",
+        "(1,321): unexpected-end-tag",
+        "(1,331): unexpected-end-tag",
+        "(1,342): unexpected-end-tag",
+        "(1,350): unexpected-end-tag",
+        "(1,358): unexpected-end-tag",
+        "(1,366): unexpected-end-tag",
+        "(1,376): end-tag-too-early",
+        "(1,389): end-tag-too-early",
+        "(1,398): end-tag-too-early",
+        "(1,404): end-tag-too-early",
+        "(1,410): end-tag-too-early",
+        "(1,415): end-tag-too-early",
+        "(1,426): end-tag-too-early",
+        "(1,436): end-tag-too-early",
+        "(1,443): end-tag-too-early",
+        "(1,448): end-tag-too-early",
+        "(1,453): end-tag-too-early",
+        "(1,458): unexpected-end-tag",
+        "(1,465): unexpected-end-tag",
+        "(1,471): unexpected-end-tag",
+        "(1,478): unexpected-end-tag",
+        "(1,487): end-tag-too-early",
+        "(1,497): end-tag-too-early",
+        "(1,506): end-tag-too-early",
+        "(1,524): expected-eof-but-got-end-tag",
+        "(1,524): unexpected-end-tag",
+        "(1,531): unexpected-end-tag",
+        "(1,540): unexpected-end-tag",
+        "(1,548): unexpected-end-tag",
+        "(1,558): unexpected-end-tag",
+        "(1,568): unexpected-end-tag",
+        "(1,579): unexpected-end-tag",
+        "(1,590): unexpected-end-tag",
+        "(1,601): unexpected-end-tag",
+        "(1,610): unexpected-end-tag",
+        "(1,622): unexpected-end-tag",
+        "(1,633): unexpected-end-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<br>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<tbody>"
+        ],
+        [
+          4,
+          "<tr>"
+        ],
+        [
+          2,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<frameset>",
+      "errors": [
+        "(1,10): expected-doctype-but-got-start-tag",
+        "(1,10): eof-in-frameset"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<frameset>"
+        ]
+      ],
+      "scripting": "Both"
+    }
+  ]
+}

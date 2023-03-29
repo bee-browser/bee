@@ -16,6 +16,10 @@ COMMIT_HASH="$(cd $TEMP_DIR; git show --format='%H' --no-patch)"
 echo "Updating $DATA_DIR..."
 rm -rf $DATA_DIR
 mkdir -p $DATA_DIR
-echo $COMMIT_HASH >$DATA_DIR/commit_hash
-
 mv $TEMP_DIR/data/*.html $DATA_DIR/
+
+cat <<EOF >>$DATA_DIR/__data_src.yaml
+git_url: '$GIT_URL'
+commit: '$COMMIT_HASH'
+updated: '$(date -Idate)'
+EOF

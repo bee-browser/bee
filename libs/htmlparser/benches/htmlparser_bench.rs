@@ -2,7 +2,7 @@
 use std::path::PathBuf;
 
 use bee_htmlparser::*;
-use bee_tests_toydom::NullBuilder;
+use bee_toydom::NullBuilder;
 use criterion::Criterion;
 
 fn htmlparser_benchmark(c: &mut Criterion) {

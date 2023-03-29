@@ -1,0 +1,29 @@
+//<coverage:exclude>
+mod helper;
+
+use helper::parse;
+use helper::Scripting;
+use helper::Test;
+{{#each tests}}
+
+#[test]
+fn test_{{padStart @index 4 '0'}}() {
+    parse(Test {
+        data: "{{escapeForRust data}}",
+        document: vec![
+            {{#each document}}
+            ({{this.[0]}}, "{{escapeForRust this.[1]}}"),
+            {{/each}}
+        ],
+        {{#if contextElement}}
+        {{#with contextElement}}
+        context_element: Some(("{{namespace}}", "{{localName}}")),
+        {{/with}}
+        {{else}}
+        context_element: None,
+        {{/if}}
+        scripting: Scripting::{{scripting}},
+    });
+}
+{{/each}}
+//</coverage:exclude>

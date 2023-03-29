@@ -2,9 +2,8 @@ use crate::Location;
 use std::fmt;
 use thiserror;
 
-#[derive(Debug, PartialEq, thiserror::Error)]
+#[derive(Debug, thiserror::Error)]
 #[error("{location}: {code}")]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 pub struct Error {
     pub code: ErrorCode,
     pub location: Location,
@@ -24,8 +23,7 @@ impl Error {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
+#[derive(Clone, Copy, Debug)]
 pub enum ErrorCode {
     AbruptClosingOfEmptyComment,
     AbruptDoctypePublicIdentifier,

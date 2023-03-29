@@ -1,0 +1,2437 @@
+{
+  "name": "tests20_html5lib_tests",
+  "tests": [
+    {
+      "data": "<!doctype html><p><button><button>",
+      "errors": [
+        "(1,34): unexpected-start-tag-implies-end-tag",
+        "(1,34): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          3,
+          "<button>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><address>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<address>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><article>",
+      "errors": [
+        "(1,36): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<article>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><aside>",
+      "errors": [
+        "(1,34): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<aside>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><blockquote>",
+      "errors": [
+        "(1,38): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<blockquote>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><center>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<center>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><details>",
+      "errors": [
+        "(1,36): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<details>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><dialog>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<dialog>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><dir>",
+      "errors": [
+        "(1,32): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<dir>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><div>",
+      "errors": [
+        "(1,32): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><dl>",
+      "errors": [
+        "(1,31): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<dl>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><fieldset>",
+      "errors": [
+        "(1,37): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<fieldset>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><figcaption>",
+      "errors": [
+        "(1,39): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<figcaption>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><figure>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<figure>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><footer>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<footer>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><header>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<header>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><hgroup>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<hgroup>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><main>",
+      "errors": [
+        "(1,33): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<main>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><menu>",
+      "errors": [
+        "(1,32): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<menu>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><nav>",
+      "errors": [
+        "(1,32): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<nav>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><ol>",
+      "errors": [
+        "(1,31): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<ol>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><p>",
+      "errors": [
+        "(1,29): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><search>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<search>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><section>",
+      "errors": [
+        "(1,36): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<section>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><summary>",
+      "errors": [
+        "(1,36): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<summary>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><ul>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<ul>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><h1>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<h1>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><h6>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<h6>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><listing>",
+      "errors": [
+        "(1,35): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<listing>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><pre>",
+      "errors": [
+        "(1,31): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<pre>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><form>",
+      "errors": [
+        "(1,32): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<form>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><li>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<li>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><dd>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<dd>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><dt>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<dt>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><plaintext>",
+      "errors": [
+        "(1,37): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<plaintext>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><table>",
+      "errors": [
+        "(1,33): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<table>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><hr>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<hr>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button><xmp>",
+      "errors": [
+        "(1,31): expected-named-closing-tag-but-got-eof",
+        "(1,31): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<xmp>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><button></p>",
+      "errors": [
+        "(1,30): unexpected-end-tag",
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          4,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><button><p></button>x",
+      "errors": [],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<button>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          2,
+          "\"x\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><address><button></address>a",
+      "errors": [
+        "(1,42): end-tag-too-early"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<address>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          2,
+          "\"a\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><address><button></address>a",
+      "errors": [
+        "(1,42): end-tag-too-early"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<address>"
+        ],
+        [
+          3,
+          "<button>"
+        ],
+        [
+          2,
+          "\"a\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<p><table></p>",
+      "errors": [
+        "(1,3): expected-doctype-but-got-start-tag",
+        "(1,14): unexpected-end-tag-implies-table-voodoo",
+        "(1,14): unexpected-end-tag",
+        "(1,14): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          3,
+          "<p>"
+        ],
+        [
+          3,
+          "<table>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><svg>",
+      "errors": [
+        "(1,20): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><figcaption>",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<figcaption>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><p><summary>",
+      "errors": [
+        "(1,27): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<p>"
+        ],
+        [
+          2,
+          "<summary>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><form><table><form>",
+      "errors": [
+        "(1,34): unexpected-form-in-table",
+        "(1,34): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<form>"
+        ],
+        [
+          3,
+          "<table>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><table><form><form>",
+      "errors": [
+        "(1,28): unexpected-form-in-table",
+        "(1,34): unexpected-form-in-table",
+        "(1,34): eof-in-table"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<form>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><table><form></table><form>",
+      "errors": [
+        "(1,28): unexpected-form-in-table",
+        "(1,42): unexpected-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<table>"
+        ],
+        [
+          3,
+          "<form>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><svg><foreignObject><p>",
+      "errors": [
+        "(1,38): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "<svg foreignObject>"
+        ],
+        [
+          4,
+          "<p>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<!doctype html><svg><title>abc",
+      "errors": [
+        "(1,30): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<!DOCTYPE html>"
+        ],
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<svg svg>"
+        ],
+        [
+          3,
+          "<svg title>"
+        ],
+        [
+          4,
+          "\"abc\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<option><span><option>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag",
+        "(1,22): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<option>"
+        ],
+        [
+          3,
+          "<span>"
+        ],
+        [
+          4,
+          "<option>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<option><option>",
+      "errors": [
+        "(1,8): expected-doctype-but-got-start-tag"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<option>"
+        ],
+        [
+          2,
+          "<option>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml><div>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,27): unexpected-html-element-in-foreign-content",
+        "(1,27): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          2,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml encoding=\"application/svg+xml\"><div>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,58): unexpected-html-element-in-foreign-content",
+        "(1,58): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "encoding=\"application/svg+xml\""
+        ],
+        [
+          2,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml encoding=\"application/xhtml+xml\"><div>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,60): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "encoding=\"application/xhtml+xml\""
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml encoding=\"aPPlication/xhtmL+xMl\"><div>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,60): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "encoding=\"aPPlication/xhtmL+xMl\""
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml encoding=\"text/html\"><div>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,48): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "encoding=\"text/html\""
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml encoding=\"Text/htmL\"><div>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,48): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "encoding=\"Text/htmL\""
+        ],
+        [
+          4,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml encoding=\" text/html \"><div>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,50): unexpected-html-element-in-foreign-content",
+        "(1,50): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "encoding=\" text/html \""
+        ],
+        [
+          2,
+          "<div>"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml> </annotation-xml>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,40): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "\" \""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml>c</annotation-xml>",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,40): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "\"c\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml><!--foo-->",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,32): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "<!-- foo -->"
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml></svg>x",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,28): unexpected-end-tag-in-math",
+        "(1,28): unexpected-end-tag",
+        "(1,29): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "\"x\""
+        ]
+      ],
+      "scripting": "Both"
+    },
+    {
+      "data": "<math><annotation-xml><svg>x",
+      "errors": [
+        "(1,6): expected-doctype-but-got-start-tag",
+        "(1,28): expected-closing-tag-but-got-eof"
+      ],
+      "newErrors": [],
+      "document": [
+        [
+          0,
+          "<html>"
+        ],
+        [
+          1,
+          "<head>"
+        ],
+        [
+          1,
+          "<body>"
+        ],
+        [
+          2,
+          "<math math>"
+        ],
+        [
+          3,
+          "<math annotation-xml>"
+        ],
+        [
+          4,
+          "<svg svg>"
+        ],
+        [
+          5,
+          "\"x\""
+        ]
+      ],
+      "scripting": "Both"
+    }
+  ]
+}

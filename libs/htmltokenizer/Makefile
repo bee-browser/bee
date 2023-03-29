@@ -9,6 +9,14 @@ test:
 
 .PHONY: codegen
 codegen: src/charref/trie.rs
+	@$(MAKE) -s -C tests codegen
+
+.PHONY: update-data
+update-data:
+	@sh scripts/update-html5lib-tests.sh
+	@rm -f tests/*_html5lib_tests.json
+	@rm -f tests/*_html5lib_tests.rs
+	@$(MAKE) -s -C tests codegen
 
 src/charref/trie.rs: src/charref/trie.codegen.json src/charref/trie.rs.hbs
 	@echo 'Generating $@'...
