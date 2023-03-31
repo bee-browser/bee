@@ -1,7 +1,7 @@
 'use strict';
 
-import * as path from 'std/path/mod.ts';
-import * as yaml from 'std/encoding/yaml.ts';
+import * as path from 'https://deno.land/std@0.181.0/path/mod.ts';
+import * as yaml from 'https://deno.land/std@0.181.0/encoding/yaml.ts';
 import { parseCommand, readAllText } from '../lib/cli.js';
 
 const PROGNAME = path.basename(Deno.mainModule);

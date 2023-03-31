@@ -1,8 +1,8 @@
 'use strict';
 
-import * as path from 'std/path/mod.ts';
-import * as yaml from 'std/encoding/yaml.ts';
-import { deepmerge } from 'deepmerge';
+import * as path from 'https://deno.land/std@0.181.0/path/mod.ts';
+import * as yaml from 'https://deno.land/std@0.181.0/encoding/yaml.ts';
+import { deepmerge } from 'https://deno.land/x/deepmerge@1.0.3/mod.ts';
 import { parseCommand } from '../lib/cli.js';
 
 const PROGNAME = path.basename(Deno.mainModule);

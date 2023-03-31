@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'std/path/mod.ts';
+import * as path from 'https://deno.land/std@0.181.0/path/mod.ts';
 import { parseCommand, runCommand } from '../lib/cli.js';
 
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));

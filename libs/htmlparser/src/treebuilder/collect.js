@@ -1,5 +1,5 @@
-import * as path from "https://deno.land/std@0.178.0/path/mod.ts";
-import * as yaml from 'https://deno.land/std@0.178.0/encoding/yaml.ts';
+import * as path from "https://deno.land/std@0.181.0/path/mod.ts";
+import * as yaml from 'https://deno.land/std@0.181.0/encoding/yaml.ts';
 import { pascalCase } from 'https://deno.land/x/case@2.1.1/mod.ts';
 import { Command } from "https://deno.land/x/cliffy@v0.25.7/command/mod.ts";
 import Handlebars from 'npm:handlebars@4.7.7';

@@ -1,6 +1,6 @@
 'use strict';
 
-import { EventEmitter } from 'https://deno.land/std@0.85.0/node/events.ts';
+import { EventEmitter } from 'https://deno.land/std@0.181.0/node/events.ts';
 
 export default class Widget extends EventEmitter {
   constructor() {
