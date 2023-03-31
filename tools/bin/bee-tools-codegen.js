@@ -3,7 +3,7 @@
 import * as fs from 'https://deno.land/std@0.181.0/fs/mod.ts';
 import * as path from 'https://deno.land/std@0.181.0/path/mod.ts';
 import * as changeCase from 'https://deno.land/x/case@2.1.1/mod.ts';
-import { default as Handlebars } from 'https://jspm.dev/handlebars';
+import Handlebars from 'npm:handlebars@4.7.7'
 import { parseCommand, readAllText } from '../lib/cli.js';
 
 const PROGNAME = path.basename(Deno.mainModule);

@@ -1,7 +1,7 @@
 'use strict';
 
 import * as path from 'https://deno.land/std@0.181.0/path/mod.ts';
-import { default as Handlebars } from 'https://jspm.dev/handlebars';
+import Handlebars from 'npm:handlebars@4.7.7'
 import { RESOURCES_DIR } from '../lib/consts.js';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { DOT_MATRIX_FONT } from '../resources/dot_matrix/font.js';
