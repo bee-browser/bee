@@ -1,9 +1,9 @@
 'use strict';
 
-import * as fs from 'std/fs/mod.ts';
-import * as path from 'std/path/mod.ts';
-import * as changeCase from 'case';
-import { default as Handlebars } from 'handlebars';
+import * as fs from 'https://deno.land/std@0.181.0/fs/mod.ts';
+import * as path from 'https://deno.land/std@0.181.0/path/mod.ts';
+import * as changeCase from 'https://deno.land/x/case@2.1.1/mod.ts';
+import { default as Handlebars } from 'https://jspm.dev/handlebars';
 import { parseCommand, readAllText } from '../lib/cli.js';
 
 const PROGNAME = path.basename(Deno.mainModule);

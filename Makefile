@@ -39,6 +39,7 @@ CLEAN_TARGETS = $(addprefix clean-,\
 CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/htmltokenizer \
   libs/htmlparser \
+  libs/layout \
 )
 
 UPDATE_DEPS_TARGETS = $(addprefix update-deps-,\
@@ -108,7 +109,15 @@ coverage-html: coverage-test install-grcov | $(PROJDIR)/target/coverage
 codegen: $(CODEGEN_TARGETS)
 
 .PHONY: update-deps
-update-deps: $(UPDATE_DEPS_TARGETS)
+update-deps: update-deps-crates update-deps-deno
+
+.PHONY: update-deps-crates
+update-deps-crates:
+	cargo upgrade --locked
+
+.PHONY: update-deps-deno
+update-deps-deno:
+	@git ls-files '*.js' | xargs deno run --allow-net --allow-read --allow-write https://deno.land/x/udd@0.8.2/main.ts
 
 .PHONY: doc
 doc: format

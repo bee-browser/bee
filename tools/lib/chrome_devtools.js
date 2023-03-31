@@ -1,7 +1,7 @@
 'use strict';
 
-import * as path from 'std/path/mod.ts';
-import { default as puppeteer } from 'puppeteer';
+import * as path from 'https://deno.land/std@0.181.0/path/mod.ts';
+import { default as puppeteer } from 'https://deno.land/x/puppeteer@16.2.0/mod.ts';
 import { RESOURCES_DIR, } from './consts.js';
 
 const DEFAULT_LINUX_EXECUTABLE = '/opt/google/chrome/google-chrome';
