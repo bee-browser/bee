@@ -117,7 +117,7 @@ update-deps-crates:
 
 .PHONY: update-deps-deno
 update-deps-deno:
-	@git ls-files '*.js' | xargs deno run --allow-net --allow-read --allow-write https://deno.land/x/udd@0.8.2/main.ts
+	@git ls-files '*.js' | xargs deno run --allow-net --allow-read --allow-write https://raw.githubusercontent.com/masnagam/deno-udd/fix-issue-86/main.ts
 
 .PHONY: doc
 doc: format
