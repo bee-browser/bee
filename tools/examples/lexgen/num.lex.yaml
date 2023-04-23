@@ -1,0 +1,4 @@
+tokens:
+  - name: num
+    regexp: >-
+      \d+|\d*\.\d+

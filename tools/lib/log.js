@@ -1,16 +1,21 @@
-import * as log from "https://deno.land/std@0.183.0/log/mod.ts";
+import * as log from 'https://deno.land/std@0.184.0/log/mod.ts';
 
 class StderrHandler extends log.handlers.ConsoleHandler {
+  constructor(label, level) {
+    super(level);
+    this.label_ = label;
+    this.encoder_ = new TextEncoder('utf-8');
+  }
+
   log(msg) {
-    const encoder = new TextEncoder('utf-8');
-    Deno.stderr.writeSync(encoder.encode(msg + '\n'));
+    Deno.stderr.writeSync(this.encoder_.encode(`${this.label_}: ${msg}\n`));
   }
 }
 
-export async function setup(level) {
+export async function setup(label, level) {
   await log.setup({
     handlers: {
-      stderr: new StderrHandler('DEBUG'),
+      stderr: new StderrHandler(label, 'DEBUG'),
     },
     loggers: {
       default: {

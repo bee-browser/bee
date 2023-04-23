@@ -1,0 +1,268 @@
+tokens:
+  - name: white_space
+    regexp: >-
+      [{{tab}}{{vt}}{{ff}}{{zwnbsp}}{{usp}}]+
+  - name: line_terminator
+    regexp: >-
+      {{line_terminator}}
+  - name: comment
+    regexp: >-
+      ({{multi_line_comment}})|({{single_line_comment}})
+  # reserved words
+  - name: await
+  - name: break
+  - name: case
+  - name: catch
+  - name: class
+  - name: const
+  - name: continue
+  - name: debugger
+  - name: default
+  - name: delete
+  - name: do
+  - name: else
+  - name: enum
+  - name: export
+  - name: extends
+  - name: 'false'
+  - name: finally
+  - name: for
+  - name: function
+  - name: if
+  - name: import
+  - name: in
+  - name: instanceof
+  - name: new
+  - name: 'null'
+  - name: return
+  - name: super
+  - name: switch
+  - name: this
+  - name: throw
+  - name: 'true'
+  - name: try
+  - name: typeof
+  - name: var
+  - name: void
+  - name: while
+  - name: with
+  - name: yield
+  # identifier must be defined after reserved words.
+  - name: identifier
+    regexp: >-
+      ({{identifier_start_char}})({{identifier_char}}*)
+  - name: private_identifier
+    regexp: >-
+      #({{identifier_start_char}})({{identifier_char}}*)
+  # punctuators
+  # Names are took from //src/parsing/token.h in V8.
+  - name: optional_chaining
+    regexp: '\?\.'
+  - name: lbrace
+    regexp: '\{'
+  - name: lparen
+    regexp: '\('
+  - name: rparen
+    regexp: '\)'
+  - name: lbrack
+    regexp: '\['
+  - name: rbrack
+    regexp: '\]'
+  - name: period
+    regexp: '\.'
+  - name: ellipsis
+    regexp: '\.\.\.'
+  - name: semicolon
+    regexp: ';'
+  - name: comma
+    regexp: ','
+  - name: lt
+    regexp: '<'
+  - name: gt
+    regexp: '>'
+  - name: lte
+    regexp: '<='
+  - name: gte
+    regexp: '>='
+  - name: eq
+    regexp: '=='
+  - name: ne
+    regexp: '!='
+  - name: eq_strict
+    regexp: '==='
+  - name: ne_strict
+    regexp: '!=='
+  - name: add
+    regepx: '\+'
+  - name: sub
+    regexp: '-'
+  - name: mul
+    regexp: '\*'
+  - name: mod
+    regexp: '%'
+  - name: exp
+    regexp: '\*\*'
+  - name: inc
+    regexp: '\+\+'
+  - name: dec
+    regexp: '--'
+  - name: shl
+    regexp: '<<'
+  - name: sar
+    regexp: '>>'
+  - name: shr
+    regexp: '>>>'
+  - name: bit_and
+    regexp: '&'
+  - name: bit_or
+    regexp: '\|'
+  - name: bit_xor
+    regexp: '\^'
+  - name: not
+    regexp: '!'
+  - name: bit_not
+    regexp: '~'
+  - name: and
+    regexp: '&&'
+  - name: or
+    regexp: '\|\|'
+  - name: nullish
+    regexp: '\?\?'
+  - name: conditional
+    regexp: '\?'
+  - name: colon
+    regexp: ':'
+  - name: assign
+    regexp: '='
+  - name: add_assign
+    regexp: '\+='
+  - name: sub_assign
+    regexp: '-='
+  - name: mul_assign
+    regexp: '\*='
+  - name: mod_assign
+    regexp: '%='
+  - name: exp_assign
+    regexp: '\*\*='
+  - name: shl_assign
+    regexp: '<<='
+  - name: sar_assign
+    regexp: '>>='
+  - name: shr_assign
+    regexp: '>>>='
+  - name: bit_and_assign
+    regexp: '&='
+  - name: bit_or_assign
+    regexp: '\|='
+  - name: bit_xor_assign
+    regexp: '\^='
+  - name: and_assign
+    regexp: '&&='
+  - name: or_assign
+    regexp: '\|\|='
+  - name: nullish_assign
+    regexp: '\?\?='
+  - name: arrow
+    regexp: '=>'
+  - name: div
+    regexp: '\/'
+  - name: div_assign
+    regexp: '\/='
+  - name: rbrace
+    regexp: '\}'
+  - name: numeric_literal
+    # TODO
+    regexp: >-
+      \d+
+  - name: string_literal
+    regexp: >-
+      {{double_string_literal}}|{{single_string_literal}}
+  - name: template
+    # TODO
+    regexp: >-
+      `[^`]*`
+
+variables:
+  backslash: >-
+    \\
+  tab: >-
+    \u{0009}
+  vt: >-
+    \u{000B}
+  ff: >-
+    \u{000C}
+  zwnbsp: >-
+    \u{FEFF}
+  usp: >-
+    \u{0020}\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}
+  lf: >-
+    \u{000A}
+  cr: >-
+    \u{000D}
+  ls: >-
+    \u{2028}
+  ps: >-
+    \u{2029}
+  digit: >-
+    [0-9]
+  non_zero_digit: >-
+    [1-9]
+  hexdigit: >-
+    [0-9a-fA-F]
+  non_zero_hexdigit: >-
+    [1-9a-fA-F]
+  hex4digits: >-
+    {{hexdigit}}{4}
+  hex5digits: >-
+    {{hexdigit}}{5}
+  line_terminator: >-
+    [{{lf}}{{cr}}{{ls}}{{ps}}]
+  non_line_terminator: >-
+    [^{{lf}}{{cr}}{{ls}}{{ps}}]
+  line_terminator_sequence: >-
+    ([{{lf}}{{cr}}{{ls}}{{ps}}]|({{cr}}{{lf}}))
+  line_continuation: >-
+    ({{backslash}}{{line_terminator_sequence}})
+  multi_line_comment: >-
+    \/\*([^*]|\*[^/])*\*\/
+  single_line_comment: >-
+    \/\/{{non_line_terminator}}*
+  # TODO: octal_escape_sequence
+  escape_sequence: >-
+    ({{character_escape_sequence}}|{{hex_escape_sequence}}|{{unicode_escape_sequence}})
+  character_escape_sequence: >-
+    ({{backslash}}({{single_escape_character}}|{{non_single_escape_character}}))
+  single_escape_character: >-
+    ['"{{backslash}}bfnrtv]
+  non_single_escape_character: >-
+    [^'"{{backslash}}bfnrtv0-9xu{{lf}}{{cr}}{{ls}}{{ps}}]
+  hex_escape_sequence: >-
+    ({{backslash}}x{{hexdigit}}{2})
+  unicode_escape_sequence_hex4digits: >-
+    ({{backslash}}u{{hex4digits}})
+  unicode_escape_sequence_code_point: >-
+    ({{backslash}}u\{((0*10{{hex4digits}})|(0*{{hexdigit}}{1,5}))\})
+  unicode_escape_sequence: >-
+    ({{unicode_escape_sequence_hex4digits}}|{{unicode_escape_sequence_code_point}})
+  unicode_escape_digit: >-
+    ({{backslash}}u((003[0-9])|(\{0*3[0-9]\})))
+  unicode_escape_upper_alpha: >-
+    {{backslash}}((u004[1-9a-fA-F])|(u005[0-9aA])|(u\{0*4[1-9a-fA-F]\})|(u\{0*5[0-9aA]\}))
+  unicode_escape_lower_alpha: >-
+    {{backslash}}((u006[1-9a-fA-F])|(u007[0-9aA])|(u\{0*6[1-9a-fA-F]\})|(u\{0*7[0-9aA]\}))
+  unicode_escape_dollar: >-
+    {{backslash}}((u0024)|(u\{0*24\}))
+  unicode_escape_underscore: >-
+    {{backslash}}((u005[fF])|(u\{0*5[fF]\}))
+  identifier_start_char: >-
+    ([a-zA-Z$_]|{{unicode_escape_lower_alpha}}|{{unicode_escape_upper_alpha}}|{{unicode_escape_dollar}}|{{unicode_escape_underscore}})
+  identifier_char: >-
+    ([0-9a-zA-Z$_]|{{unicode_escape_digit}}|{{unicode_escape_lower_alpha}}|{{unicode_escape_upper_alpha}}|{{unicode_escape_dollar}}|{{unicode_escape_underscore}})
+  double_string_character: >-
+    ([^"{{backslash}}{{lf}}{{cr}}]|{{escape_sequence}}|{{line_continuation}})
+  single_string_character: >-
+    ([^'{{backslash}}{{lf}}{{cr}}]|{{escape_sequence}}|{{line_continuation}})
+  double_string_literal: >-
+    (["]{{double_string_character}}*["])
+  single_string_literal: >-
+    ([']{{single_string_character}}*['])
