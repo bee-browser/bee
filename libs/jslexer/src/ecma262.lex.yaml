@@ -171,9 +171,8 @@ tokens:
   - name: rbrace
     regexp: '\}'
   - name: numeric_literal
-    # TODO
     regexp: >-
-      \d+
+      {{decimal_literal}}|{{decimal_big_integer_literal}}|({{non_decimal_integer_literal}}n?)|{{legacy_octal_integer_literal}}
   - name: string_literal
     regexp: >-
       {{double_string_literal}}|{{single_string_literal}}
@@ -266,3 +265,52 @@ variables:
     (["]{{double_string_character}}*["])
   single_string_literal: >-
     ([']{{single_string_character}}*['])
+  # Numeric Literals
+  decimal_literal: >-
+    ({{decimal_literal1}}|{{decimal_literal2}}|{{decimal_literal3}})
+  decimal_literal1: >-
+    ({{decimal_integer_literal}}\.{{decimal_digits}}?{{exponent_part}}?)
+  decimal_literal2: >-
+    (\.{{decimal_digits}}{{exponent_part}}?)
+  decimal_literal3: >-
+    ({{decimal_integer_literal}}{{exponent_part}}?)
+  decimal_integer_literal: >-
+    (0|{{non_zero_digit}}_?{{decimal_digits}}|{{non_octal_decimal_integer_literal}})
+  decimal_digits: >-
+    (({{digit}}_?)*{{digit}})
+  non_octal_decimal_integer_literal: >-
+    (((0{{non_octal_digit}})|({{legacy_octal_like_decimal_integer_literal}}{{non_octal_digit}}))*{{digit}})
+  legacy_octal_like_decimal_integer_literal: >-
+    (0{{octal_digit}}+)
+  exponent_part: >-
+    ([eE]{{signed_integer}})
+  signed_integer: >-
+    ([+-]?{{decimal_digits}})
+  octal_digit: >-
+    [0-7]
+  non_octal_digit: >-
+    [89]
+  decimal_big_integer_literal: >-
+    ({{decimal_big_integer_literal1}}|{{decimal_big_integer_literal2}}|{{decimal_big_integer_literal3}})
+  decimal_big_integer_literal1: >-
+    (0n)
+  decimal_big_integer_literal2: >-
+    ({{non_zero_digit}}{{decimal_digits}}?n)
+  decimal_big_integer_literal3: >-
+    ({{non_zero_digit}}_{{decimal_digits}}n)
+  non_decimal_integer_literal: >-
+    ({{binary_integer_literal}}|{{octal_integer_literal}}|{{hex_integer_literal}})
+  binary_integer_literal: >-
+    (0[bB]{{binary_digits}})
+  binary_digits: >-
+    (([01]_?)*[01])
+  octal_integer_literal: >-
+    (0[oO]{{octal_digits}})
+  octal_digits: >-
+    (({{octal_digit}}_?)*{{octal_digit}})
+  hex_integer_literal: >-
+    (0[xX]{{hex_digits}})
+  hex_digits: >-
+    (({{hexdigit}}_?)*{{hexdigit}})
+  legacy_octal_integer_literal: >-
+    (0{{octal_digit}}+)
