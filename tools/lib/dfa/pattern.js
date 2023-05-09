@@ -19,7 +19,7 @@
 import {
   assert,
   assertExists,
-} from 'https://deno.land/std@0.184.0/testing/asserts.ts';
+} from 'https://deno.land/std@0.186.0/testing/asserts.ts';
 import { UnicodeSpan } from './unicode.js';
 import { CharClass } from './char_class.js';
 

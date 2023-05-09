@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.184.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.186.0/path/mod.ts';
 
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));
 

@@ -6,9 +6,11 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
+tracing = "0.1.37"
 
 [dev-dependencies]
 anyhow = "1.0.70"
+ctor = "0.2.0"
 tracing-subscriber = "0.3.17"
 
 [lib]

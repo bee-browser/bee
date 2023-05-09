@@ -1,4 +1,4 @@
-import * as log from 'https://deno.land/std@0.184.0/log/mod.ts';
+import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
 
 class StderrHandler extends log.handlers.ConsoleHandler {
   constructor(label, level) {

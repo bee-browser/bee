@@ -2,8 +2,8 @@
 
 // The import map is NOT applied to workers:
 // https://github.com/denoland/deno/issues/6675
-import * as io from 'https://deno.land/std@0.184.0/io/mod.ts';
-import * as path from 'https://deno.land/std@0.184.0/path/mod.ts';
+import * as io from 'https://deno.land/std@0.186.0/io/mod.ts';
+import * as path from 'https://deno.land/std@0.186.0/path/mod.ts';
 
 const TOOLS_DIR = path.resolve(path.dirname(path.fromFileUrl(import.meta.url)), '..', '..');
 const TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'bee-tools-text-to-dot-matrix');

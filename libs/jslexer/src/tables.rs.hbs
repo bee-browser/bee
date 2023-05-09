@@ -4,11 +4,26 @@
 // {{@command}}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Token {
+pub enum TokenKind {
     {{#each tokens}}
     {{pascalCase name}},
     {{/each}}
     Eof,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Token<'a> {
+    pub kind: TokenKind,
+    pub lexeme: &'a str,
+}
+
+impl<'a> Default for Token<'a> {
+    fn default() -> Self {
+        Token {
+            kind: TokenKind::Eof,
+            lexeme: "",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -44,12 +59,22 @@ pub struct State(u16);
 
 impl State {
     #[inline(always)]
-    pub fn next_state(self, cc: CharClass) -> State {
+    pub fn is_invalid(&self) -> bool {
+        self.0 == {{length states}}
+    }
+
+    #[inline(always)]
+    pub fn next_state(&self, cc: CharClass) -> State {
         State(TRANSITION_TABLE[self.0 as usize][cc.0 as usize])
     }
 
     #[inline(always)]
-    pub fn accept(self) -> Option<Token> {
+    pub fn lookahead(&self) -> bool {
+        LOOKAHEAD_TABLE[self.0 as usize]
+    }
+
+    #[inline(always)]
+    pub fn accept(&self) -> Option<TokenKind> {
         ACCEPT_TABLE[self.0 as usize]
     }
 }
@@ -60,12 +85,22 @@ const TRANSITION_TABLE: [[u16; {{length charClasses}}]; {{length states}}] = [
     {{/each}}
 ];
 
-const ACCEPT_TABLE: [Option<Token>; {{length states}}] = [
+const ACCEPT_TABLE: [Option<TokenKind>; {{length states}}] = [
     {{#each states}}
     {{#if accept}}
-    Some(Token::{{pascalCase accept.name}}),
+    Some(TokenKind::{{pascalCase accept}}),
     {{else}}
     None,
+    {{/if}}
+    {{/each}}
+];
+
+const LOOKAHEAD_TABLE: [bool; {{length states}}] = [
+    {{#each states}}
+    {{#if lookahead}}
+    true,
+    {{else}}
+    false,
     {{/if}}
     {{/each}}
 ];

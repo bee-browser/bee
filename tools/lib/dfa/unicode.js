@@ -1,7 +1,7 @@
 import {
   assert,
   unreachable,
-} from 'https://deno.land/std@0.184.0/testing/asserts.ts';
+} from 'https://deno.land/std@0.186.0/testing/asserts.ts';
 
 const CODE_POINT_MIN = 0;
 const CODE_POINT_MAX = 0x10FFFF;
@@ -247,5 +247,14 @@ export class UnicodeSpan {
       return this.firstDisplayChar;
     }
     return `${this.firstDisplayChar}..${this.lastDisplayChar}`;
+  }
+}
+
+export class UnicodePattern {
+  constructor(prop, exclude = false) {
+    this.prop = prop;
+    this.exclude = exclude
+    // immutable
+    Object.freeze(this);
   }
 }

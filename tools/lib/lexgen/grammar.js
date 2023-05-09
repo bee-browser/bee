@@ -1,6 +1,6 @@
-import * as log from 'https://deno.land/std@0.184.0/log/mod.ts';
-import * as yaml from 'https://deno.land/std@0.184.0/yaml/mod.ts';
-import { assert } from 'https://deno.land/std@0.184.0/testing/asserts.ts';
+import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
+import * as yaml from 'https://deno.land/std@0.186.0/yaml/mod.ts';
+import { assert } from 'https://deno.land/std@0.186.0/testing/asserts.ts';
 import Handlebars from 'npm:handlebars@4.7.7'
 import {
   parseRegExpLiteral,

@@ -3,12 +3,12 @@ import {
   assertEquals,
   assertExists,
   assertThrows,
-} from 'https://deno.land/std@0.184.0/testing/asserts.ts';
+} from 'https://deno.land/std@0.186.0/testing/asserts.ts';
 
 import {
   describe,
   it,
-} from 'https://deno.land/std@0.184.0/testing/bdd.ts';
+} from 'https://deno.land/std@0.186.0/testing/bdd.ts';
 
 import { CharClass, CharClassListBuilder } from './char_class.js';
 import { UnicodeSpan } from './unicode.js';
@@ -22,7 +22,6 @@ describe('CharClass', () => {
   it('has ANY', () => {
     assertExists(CharClass.ANY);
     assert(!CharClass.ANY.isEmpty);
-    assertEquals(CharClass.ANY.amount, 0x110000);
   });
 
   it('constructor', () => {
@@ -30,26 +29,19 @@ describe('CharClass', () => {
     assert(empty.isEmpty);
 
     const single = new CharClass(new UnicodeSpan('a'));
-    assertEquals(single.amount, 1);
+    assert(!single.isEmpty);
 
     const list = new CharClass([new UnicodeSpan('a'), new UnicodeSpan('b')]);
-    assertEquals(list.amount, 2);
+    assert(!list.isEmpty);
 
     assertThrows(() => new CharClass({}));
   });
 
   it('list', () => {
     const cc = new CharClass(new UnicodeSpan('a'));
-    assertExists(cc.list);
-    assertEquals(cc.list.length, 1);
-    assertThrows(() => cc.list = []);  // immutable
-  });
-
-  it('amount', () => {
-    const cc = new CharClass(new UnicodeSpan('a'));
-    assertExists(cc.amount);
-    assertEquals(cc.amount, 1);
-    assertThrows(() => cc.amount = 0);  // immutable
+    assertExists(cc.spans);
+    assertEquals(cc.spans.length, 1);
+    assertThrows(() => cc.spans = []);  // immutable
   });
 
   it('isEmpty', () => {

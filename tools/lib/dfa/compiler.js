@@ -1,7 +1,7 @@
 'use strict';
 
-import * as log from 'https://deno.land/std@0.184.0/log/mod.ts';
-import { assert, unreachable } from "https://deno.land/std@0.184.0/testing/asserts.ts";
+import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
+import { assert, unreachable } from "https://deno.land/std@0.186.0/testing/asserts.ts";
 import { Pattern, oneOf } from './pattern.js';
 import { CharClass, CharClassListBuilder } from './char_class.js';
 import { UnicodeSpan } from './unicode.js';
@@ -36,7 +36,7 @@ export function compile(tokens) {
   log.info(`#States: ${states.length}`);
 
   log.info('Minimizing states in DFA...');
-  const finalStates = minimize(states, accepts);
+  const finalStates = minimize(states, accepts.values());
   log.info(`#States: ${finalStates.length}`);
 
   return {
@@ -92,7 +92,7 @@ function buildCharClassList(unified) {
   return builder.build();
 }
 
-function buildCharClassAsciiTable(ccList) {
+export function buildCharClassAsciiTable(ccList) {
   const not_found = ccList.length;
   const table = [];
   for (let i = 0; i < 128; ++i) {
@@ -109,7 +109,7 @@ function buildCharClassAsciiTable(ccList) {
   return table;
 }
 
-function buildCharClassNonAsciiList(ccList) {
+export function buildCharClassNonAsciiList(ccList) {
   const ascii = new UnicodeSpan(0, 127);
   const list = [];
   for (let i = 0; i < ccList.length; ++i) {
@@ -328,12 +328,12 @@ function determineToken(nodes, accepts) {
   return accept;
 }
 
-function minimize(states, accepts) {
+function minimize(states, tokens) {
   // Each group contains the index of each state.
   let groups = [
     states.map((_, i) => i).filter((si) => states[si].accept === null),
   ];
-  for (const token of accepts.values()) {
+  for (const token of tokens) {
     // Collect states accepting the same token.
     groups.push(states.map((_, i) => i).filter((si) => {
       return states[si].accept === token;
