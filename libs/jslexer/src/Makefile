@@ -1,6 +1,4 @@
 BEE_TOOLS := ../../../tools/bin/bee-tools
-ES2022_LEX_YAML := ../data/es2022.lex.yaml
-LEXGEN_JS := ../scripts/lexgen.js
 
 # Specify `-d` if you want to see debug logs.
 LEXGEN_ARGS ?=
@@ -133,6 +131,20 @@ tables.rs: tables.rs.hbs lexer.dfa.json
 	@$(BEE_TOOLS) codegen tables.rs.hbs lexer.dfa.json | rustfmt --emit=stdout >$@
 
 .PRECIOUS: lexer.dfa.json
-lexer.dfa.json: $(ES2022_LEX_YAML) $(LEXGEN_JS)
+lexer.dfa.json: es2022.lex.yaml lexgen.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run $(LEXGEN_JS) $(LEXGEN_ARGS) $(TOKENS) | jq '.' >$@
+	@cat $< | deno run lexgen.js $(LEXGEN_ARGS) $(TOKENS) | jq '.' >$@
+
+.PRECIOUS: es2022.lex.yaml
+es2022.lex.yaml: es2022.lex.txt transpile.js
+	@echo 'Generating $(abspath $@)...'
+	@cat $< | deno run transpile.js >$@
+
+es2022.lex.txt: es2022.spec.html
+	@echo 'Generating $(abspath $@)...'
+	@cat $< | cargo run -q --package xtask esgrammar >$@
+
+.PRECIOUS: es2022.spec.html
+es2022.spec.html:
+	@echo 'Downloading $(abspath $@)...'
+	@curl https://raw.githubusercontent.com/tc39/ecma262/es2022/spec.html -sG >$@

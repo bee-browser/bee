@@ -6,9 +6,5 @@ test: codegen
 	cargo nextest run --all-features
 
 .PHONY: codegen
-codegen: update-data
+codegen:
 	@$(MAKE) -s -C src codegen
-
-.PHONY: update-data
-update-data:
-	@$(MAKE) -s -C data update
