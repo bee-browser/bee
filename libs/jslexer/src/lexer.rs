@@ -1,105 +1,39 @@
-use crate::tables::CharClass;
-use crate::tables::State;
-use crate::tables::Token;
-use crate::tables::TokenKind;
+use crate::cursor::SourceCursor;
+use crate::dfa::recognize;
+use crate::goals::Goal;
+use crate::tokens::Token;
+use crate::tokens::TokenKind;
 
 pub struct Lexer<'a> {
     cursor: SourceCursor<'a>,
+    goal: Goal,
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(src: &'a str) -> Lexer {
         Lexer {
             cursor: SourceCursor::new(src),
+            goal: Goal::InputElementDiv,
         }
+    }
+
+    pub fn set_goal(&mut self, goal: Goal) {
+        self.goal = goal;
     }
 
     pub fn next_token(&mut self) -> Token<'a> {
-        let mut token = Token::default();
-        let mut state = State::default();
-
-        while let Some(ch) = self.cursor.get() {
-            tracing::debug!(?state, ?ch);
-            let cc = match CharClass::try_from(ch) {
-                Ok(cc) => cc,
-                Err(_) => break,
-            };
-            state = state.next_state(cc);
-            tracing::debug!(?cc, next_state = ?state, next_state.invalid = state.is_invalid());
-            if state.is_invalid() {
-                break;
-            }
-            if state.lookahead() {
-                self.cursor.lookahead();
-            } else {
-                self.cursor.consume();
-            }
-            if let Some(kind) = state.accept() {
-                token.kind = kind;
-                token.lexeme = self.cursor.lexeme();
-                tracing::debug!(candidate = ?token);
-            }
-        }
-        self.cursor.advance();
+        let kind = recognize(self.goal, &mut self.cursor);
+        let lexeme = match kind {
+            TokenKind::Eof => "",
+            _ => self.cursor.lexeme(),
+        };
+        let token = Token { kind, lexeme };
         tracing::debug!(?token);
-        if token.kind == TokenKind::Eof && !self.cursor.eof() {
-            tracing::error!(cursor.pos = self.cursor.pos, "Invalid source");
+        self.cursor.advance();
+        if kind == TokenKind::Eof && !self.cursor.eof() {
+            tracing::error!(cursor.pos = self.cursor.pos(), "Invalid source");
         }
         token
-    }
-}
-
-struct SourceCursor<'a> {
-    src: &'a str,
-    chars: Vec<(usize, char)>,
-    pos: usize,
-    next_pos: usize,
-    token_end: usize,
-}
-
-impl<'a> SourceCursor<'a> {
-    fn new(src: &'a str) -> Self {
-        SourceCursor {
-            src,
-            chars: src.char_indices().collect(),
-            pos: 0,
-            next_pos: 0,
-            token_end: 0,
-        }
-    }
-
-    #[inline(always)]
-    fn get(&self) -> Option<char> {
-        self.chars.get(self.next_pos).map(|(_, ch)| *ch)
-    }
-
-    #[inline(always)]
-    fn lexeme(&self) -> &'a str {
-        self.src.get(self.pos..self.token_end).unwrap()
-    }
-
-    #[inline(always)]
-    fn consume(&mut self) {
-        self.next_pos += 1;
-        self.token_end = self.next_pos;
-        tracing::debug!(cursor.token_end = self.token_end);
-    }
-
-    #[inline(always)]
-    fn lookahead(&mut self) {
-        self.next_pos += 1;
-        tracing::debug!(cursor.next_pos = self.next_pos);
-    }
-
-    #[inline(always)]
-    fn advance(&mut self) {
-        self.pos = self.token_end;
-        tracing::debug!(cursor.pos = self.pos);
-    }
-
-    #[inline(always)]
-    fn eof(&self) -> bool {
-        self.pos == self.chars.len()
     }
 }
 
@@ -138,7 +72,7 @@ mod tests {
     fn test() {
         let mut lexer = Lexer::new("instanceof in");
         assert_token!(lexer, Instanceof, "instanceof");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, In, "in");
         assert_eof!(lexer);
     }
@@ -153,12 +87,10 @@ mod tests {
     #[test]
     fn test_comments() {
         let mut lexer = Lexer::new("  // a b /* a b */\n  /*  \n  * a b \n  * a b */\n");
-        assert_token!(lexer, WhiteSpace, " ");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, "  ");
         assert_token!(lexer, Comment, "// a b /* a b */");
         assert_token!(lexer, LineTerminatorSequence, "\n");
-        assert_token!(lexer, WhiteSpace, " ");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, "  ");
         assert_token!(lexer, Comment, "/*  \n  * a b \n  * a b */");
         assert_token!(lexer, LineTerminatorSequence, "\n");
         assert_eof!(lexer);
@@ -184,35 +116,35 @@ mod tests {
              \\u{05F} ",
         );
         assert_token!(lexer, IdentifierName, "_");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "$");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "a");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "a1");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "a_");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "a$");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u0024");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u{24}");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u{024}");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u005f");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u005F");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u{5f}");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u{5F}");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u{05f}");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_token!(lexer, IdentifierName, "\\u{05F}");
-        assert_token!(lexer, WhiteSpace, " ");
+        assert_token!(lexer, WhiteSpaceSequence, " ");
         assert_eof!(lexer);
     }
 

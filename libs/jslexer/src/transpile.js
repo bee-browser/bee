@@ -125,6 +125,10 @@ function readRules(esgrammar) {
     name: 'NonZeroHexDigit',
     values: ['HexDigit but not `0`'],
   });
+  rules.push({
+    name: 'WhiteSpaceSequence',
+    values: ['WhiteSpace WhiteSpaceSequence?'],
+  });
 
   return rules;
 }

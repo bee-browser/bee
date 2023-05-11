@@ -164,6 +164,8 @@ class NfaBuilder {
       return this.buildWordNfa_(item.data, context);
     case 'char-class':
       return this.buildCharClassNfa_(item.data, context);
+    case 'empty':
+      return this.buildEmptyNfa_(context);
     default:
       unimplemented(`TODO: ${item.type}`);
     }
@@ -276,6 +278,14 @@ class NfaBuilder {
     const cc = this.buildCharClass_(data);
     log.debug(`${context.indent}char-class: ${cc.toString()}`);
     this.nfa_.addTransition(start, accept, cc);
+    return [start, accept];
+  }
+
+  buildEmptyNfa_(context) {
+    const start = this.nfa_.createState(`${context.label}/empty@start`);
+    const accept = this.nfa_.createState(`${context.label}/empty@accept`);
+    log.debug(`${context.indent}empty`);
+    this.nfa_.addTransition(start, accept);
     return [start, accept];
   }
 

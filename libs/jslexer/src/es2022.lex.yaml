@@ -2119,6 +2119,17 @@ NonZeroHexDigit:
       data: HexDigit
     - type: exclude
       data: '0'
+WhiteSpaceSequence:
+  type: one-of
+  data:
+    - type: non-terminal
+      data: WhiteSpace
+    - type: sequence
+      data:
+        - type: non-terminal
+          data: WhiteSpace
+        - type: non-terminal
+          data: WhiteSpaceSequence
 AWAIT:
   type: word
   data: await

@@ -18,6 +18,9 @@ fn main() -> Result<()> {
     loop {
         let token = lexer.next_token();
         match token.kind {
+            JsTokenKind::WhiteSpaceSequence => {
+                column += token.lexeme.chars().count();
+            }
             JsTokenKind::LineTerminatorSequence => {
                 line += 1;
                 column = 1;
