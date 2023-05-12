@@ -14,14 +14,17 @@ each goal symbol in the following steps:
 1. Extract the lexical grammar from ES2022 specification
 2. Transpile the extracted lexical grammar into an equivalent but more
    computer-friendly data
-3. Building a NFA recognizing tokens contained in each goal symbol in the data
+3. Define goal symbols in [src/tokens.yaml](./src/tokens.yaml)
+4. Build a NFA recognizing tokens contained in each goal symbol in the data
    without converting production rules into a regular expression for each token
-4. Building a minimized DFA for each goal symbol from a NFA
+5. Build a minimized DFA for each goal symbol from a NFA
 
 Details of each step are described in `src/Makefile`.
 
 ## TODO
 
+* [ ] Support `ID_Start` and `ID_Continue` Unicode properties
+  * Currently, we support only ASCII character identifier names
 * [ ] Streaming
 * [ ] Text encoding
 * [ ] Source location
