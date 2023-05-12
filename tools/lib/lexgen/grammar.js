@@ -2,11 +2,7 @@ import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
 import * as yaml from 'https://deno.land/std@0.186.0/yaml/mod.ts';
 import { assert } from 'https://deno.land/std@0.186.0/testing/asserts.ts';
 import Handlebars from 'npm:handlebars@4.7.7'
-import {
-  parseRegExpLiteral,
-  validateRegExpLiteral,
-  visitRegExpAST,
-} from 'npm:regexpp@3.2.0';
+import { parseRegExpLiteral, validateRegExpLiteral, visitRegExpAST, } from 'npm:regexpp@3.2.0';
 import { readAllText } from '../cli.js';
 import { Pattern, EMPTY } from '../dfa/pattern.js';
 import { compile } from '../dfa/compiler.js';
@@ -163,7 +159,7 @@ class PatternTreeGenerator {
 
   onCharacterLeave(node) {
     //log.debug('onCharacterLeave', node);
-    this.stack_.push(Pattern.charClass([node.value]));
+    this.stack_.push(Pattern.unicodeSet([node.value]));
   }
 
   onCharacterClassLeave(node) {
@@ -189,7 +185,7 @@ class PatternTreeGenerator {
     const max = this.stack_.pop();
     const min = this.stack_.pop();
     // And then add a new Char node.
-    this.stack_.push(Pattern.charClass([[node.min.value, node.max.value]]));
+    this.stack_.push(Pattern.unicodeSet([[node.min.value, node.max.value]]));
   }
 
   onCharacterSetLeave(node) {
@@ -197,20 +193,20 @@ class PatternTreeGenerator {
     let pat;
     switch (node.kind) {
     case 'any':
-      this.stack_.push(Pattern.charClass([], true));
+      this.stack_.push(Pattern.unicodeSet([], true));
       break;
     case 'space':
-      this.stack_push(Pattern.charClass([
+      this.stack_push(Pattern.unicodeSet([
         '\f', '\n', '\r', '\t', '\v',
         '\u0020', '\u00a0', '\u1680', ['\u2000', '\u200a'],
         '\u2028', '\u2029', '\u202f', '\u205f', '\u3000', '\ufeff',
       ], node.negate));
       break;
     case 'digit':
-      this.stack_.push(Pattern.charClass([['0', '9']], node.negate));
+      this.stack_.push(Pattern.unicodeSet([['0', '9']], node.negate));
       break;
     case 'word':
-      this.stack_push(Pattern.charClass([
+      this.stack_push(Pattern.unicodeSet([
         ['A', 'Z'], ['a', 'z'], ['0', '9'], '_',
       ], node.negate));
       break;

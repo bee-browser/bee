@@ -12,12 +12,16 @@ pub fn recognize<'a>(cursor: &mut SourceCursor<'a>) -> TokenKind {
 
     while let Some(ch) = cursor.get() {
         tracing::debug!(?state, ?ch);
-        let cc = match CharClass::try_from(ch) {
-            Ok(cc) => cc,
+        let unicode_set = match UnicodeSet::try_from(ch) {
+            Ok(unicode_set) => unicode_set,
             Err(_) => break,
         };
-        state = state.next_state(cc);
-        tracing::debug!(?cc, next_state = ?state, next_state.invalid = state.is_invalid());
+        state = state.next_state(unicode_set);
+        tracing::debug!(
+            ?unicode_set,
+            next_state = ?state,
+            next_state.invalid = state.is_invalid(),
+        );
         if state.is_invalid() {
             break;
         }
@@ -35,66 +39,66 @@ pub fn recognize<'a>(cursor: &mut SourceCursor<'a>) -> TokenKind {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct CharClass(u8);
+struct UnicodeSet(u8);
 
-impl TryFrom<char> for CharClass {
+impl TryFrom<char> for UnicodeSet {
     type Error = ();
 
     fn try_from(ch: char) -> Result<Self, Self::Error> {
         let c = ch as usize;
         if c < 128 {
-            return Ok(CharClass(ASCII_TABLE[c]));
+            return Ok(UnicodeSet(ASCII_TABLE[c]));
         }
         if c == 160 {
-            return Ok(CharClass(8));
+            return Ok(UnicodeSet(8));
         }
         if c == 5760 {
-            return Ok(CharClass(8));
+            return Ok(UnicodeSet(8));
         }
         if c >= 8192 && c <= 8202 {
-            return Ok(CharClass(8));
+            return Ok(UnicodeSet(8));
         }
         if c == 8207 {
-            return Ok(CharClass(8));
+            return Ok(UnicodeSet(8));
         }
         if c == 8287 {
-            return Ok(CharClass(8));
+            return Ok(UnicodeSet(8));
         }
         if c == 65279 {
-            return Ok(CharClass(8));
+            return Ok(UnicodeSet(8));
         }
         if c >= 8232 && c <= 8233 {
-            return Ok(CharClass(10));
+            return Ok(UnicodeSet(10));
         }
         if c >= 8204 && c <= 8205 {
-            return Ok(CharClass(69));
+            return Ok(UnicodeSet(69));
         }
         if c >= 128 && c <= 159 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c >= 161 && c <= 5759 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c >= 5761 && c <= 8191 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c == 8203 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c == 8206 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c >= 8208 && c <= 8231 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c >= 8234 && c <= 8286 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c >= 8288 && c <= 65278 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         if c >= 65280 && c <= 1114111 {
-            return Ok(CharClass(70));
+            return Ok(UnicodeSet(70));
         }
         Err(())
     }
@@ -119,8 +123,8 @@ impl State {
     }
 
     #[inline(always)]
-    fn next_state(&self, cc: CharClass) -> State {
-        State(TRANSITION_TABLE[self.0 as usize][cc.0 as usize])
+    fn next_state(&self, unicode_set: UnicodeSet) -> State {
+        State(TRANSITION_TABLE[self.0 as usize][unicode_set.0 as usize])
     }
 
     #[inline(always)]

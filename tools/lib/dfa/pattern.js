@@ -20,8 +20,7 @@ import {
   assert,
   assertExists,
 } from 'https://deno.land/std@0.186.0/testing/asserts.ts';
-import { UnicodeSpan } from './unicode.js';
-import { CharClass } from './char_class.js';
+import { UnicodeSpan, UnicodeSet } from './unicode.js';
 
 class Node {
   constructor(left, right) {
@@ -62,7 +61,7 @@ export class Pattern extends Node {
   static ALTERNATION = 5;
   static REPETITION = 6;
 
-  static charClass(list, exclude = false) {
+  static unicodeSet(list, exclude = false) {
     const spans = list.map((v) => {
       if (Array.isArray(v)) {
         assert(v.length === 2);
@@ -70,14 +69,14 @@ export class Pattern extends Node {
       }
       return new UnicodeSpan(v);
     });
-    let cc = CharClass.EMPTY;
+    let unicodeSet = UnicodeSet.EMPTY;
     for (const span of spans) {
-      cc = cc.mergeUnicodeSpan(span);
+      unicodeSet = unicodeSet.mergeSpan(span);
     }
     if (exclude) {
-      cc = CharClass.ANY.exclude(cc);
+      unicodeSet = UnicodeSet.ANY.exclude(unicodeSet);
     }
-    return new Char(cc);
+    return new Char(unicodeSet);
   }
 
   constructor(type, left, right) {
@@ -177,30 +176,30 @@ class Accept extends Pattern {
 }
 
 /**
- * A leaf node representing a single character belonging to a character class.
+ * A leaf node representing a single character belonging to a unicode set.
  */
 class Char extends Pattern {
-  static ANY = new Char(CharClass.ANY);
+  static ANY = new Char(UnicodeSet.ANY);
 
   constructor(value) {
-    assert(value instanceof CharClass);
+    assert(value instanceof UnicodeSet);
     Object.freeze(value);
     super(Pattern.CHAR);
-    this.charClass = value;
+    this.unicodeSet = value;
     this.freeze();
   }
 
   invert() {
-    return new Char(CharClass.ANY.exclude(this.charClass));
+    return new Char(UnicodeSet.ANY.exclude(this.unicodeSet));
   }
 
   merge(other) {
     assert(other instanceof Char);
-    return new Char(this.charClass.merge(other.charClass));
+    return new Char(this.unicodeSet.merge(other.unicodeSet));
   }
 
   toString() {
-    return `Char(${this.charClass})`;
+    return `Char(${this.unicodeSet})`;
   }
 }
 
@@ -252,11 +251,11 @@ class Repetition extends Pattern {
 export const EMPTY = new Empty();
 
 export function cp(value) {
-  return new Char(new CharClass(new UnicodeSpan(value)));
+  return new Char(new UnicodeSet(new UnicodeSpan(value)));
 }
 
 export function between(min, max) {
-  return new Char(new CharClass(new UnicodeSpan(min, max)));
+  return new Char(new UnicodeSet(new UnicodeSpan(min, max)));
 }
 
 export function zeroOrOne(node) {

@@ -377,11 +377,11 @@ function translateProduction(production) {
   if (production === '> any Unicode code point with the Unicode property “ID_Start”') {
     // TODO:
     // return {
-    //   type: 'char-class',
-    //   data: [{ type: 'unicode-property', data: 'ID_Start' }],
+    //   type: 'unicode-set',
+    //   data: [{ type: 'property', data: 'ID_Start' }],
     // };
     return {
-      type: 'char-class',
+      type: 'unicode-set',
       data: [
         { type: 'span', data: ['a', 'z'] },
         { type: 'span', data: ['A', 'Z'] },
@@ -395,11 +395,11 @@ function translateProduction(production) {
   if (production === '> any Unicode code point with the Unicode property “ID_Continue”') {
     // TODO:
     // return {
-    //   type: 'char-class',
-    //   data: [{ type: 'unicode-property',  data: 'ID_Continue' }],
+    //   type: 'unicode-set',
+    //   data: [{ type: 'property',  data: 'ID_Continue' }],
     // };
     return {
-      type: 'char-class',
+      type: 'unicode-set',
       data: [
         { type: 'span', data: ['0', '9'] },
         { type: 'span', data: ['a', 'z'] },
@@ -416,7 +416,7 @@ function translateProduction(production) {
     production = production.replaceAll(' or', '');
     const [base, ...excludes] = production.split(/\s+/u);
     return {
-      type: 'char-class',
+      type: 'unicode-set',
       data: [
         { type: 'non-terminal', data: base },
         ...excludes.map((exclude) => {
@@ -434,7 +434,7 @@ function translateProduction(production) {
     production = production.replace('but not', '');
     const [base, ...excludes] = production.split(/\s+/u);
     return {
-      type: 'char-class',
+      type: 'unicode-set',
       data: [
         { type: 'non-terminal', data: base },
         ...excludes.map((exclude) => {
@@ -456,7 +456,7 @@ function translateProduction(production) {
       // We assume that `str` contains only ASCII characters.
       if (str.length === 1) {
         seq.push({
-          type: 'char-class',
+          type: 'unicode-set',
           data: [{ type: 'char', data: str }],
         });
       } else {
@@ -464,7 +464,7 @@ function translateProduction(production) {
       }
     } else if (item.startsWith('<')) {
       seq.push({
-        type: 'char-class',
+        type: 'unicode-set',
         data: [{ type: 'built-in', data: item.slice(1, -1) }],
       });
     } else if (item === '[lookahead') {
@@ -551,10 +551,10 @@ function translateLookaheadSet(values, negate = false) {
 function mergeCharClasses(rules) {
   for (const rule of rules) {
     if (rule.type === 'one-of' &&
-        rule.data.every((item) => item.type === 'char-class')) {
+        rule.data.every((item) => item.type === 'unicode-set')) {
       log.info(`Merging character classes in ${rule.name}...`);
       let data = rule.data.reduce((data, item) => data.concat(item.data), []);
-      rule.type = 'char-class';
+      rule.type = 'unicode-set';
       rule.data = data;
     }
   }

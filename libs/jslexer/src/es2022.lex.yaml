@@ -65,7 +65,7 @@ InputElementTemplateTail:
     - type: non-terminal
       data: TemplateSubstitutionTail
 WhiteSpace:
-  type: char-class
+  type: unicode-set
   data:
     - type: built-in
       data: TAB
@@ -78,7 +78,7 @@ WhiteSpace:
     - type: built-in
       data: USP
 LineTerminator:
-  type: char-class
+  type: unicode-set
   data:
     - type: built-in
       data: LF
@@ -91,13 +91,13 @@ LineTerminator:
 LineTerminatorSequence:
   type: one-of
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: LF
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: built-in
               data: CR
@@ -106,21 +106,21 @@ LineTerminatorSequence:
             - type: built-in
               data: LF
           negate: true
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: LS
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: PS
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: built-in
               data: CR
-        - type: char-class
+        - type: unicode-set
           data:
             - type: built-in
               data: LF
@@ -159,13 +159,13 @@ MultiLineCommentChars:
           data: MultiLineNotAsteriskChar
         - type: non-terminal
           data: MultiLineCommentChars
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: '*'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '*'
@@ -182,27 +182,27 @@ PostAsteriskCommentChars:
           data: MultiLineNotForwardSlashOrAsteriskChar
         - type: non-terminal
           data: MultiLineCommentChars
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: '*'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '*'
         - type: non-terminal
           data: PostAsteriskCommentChars
 MultiLineNotAsteriskChar:
-  type: char-class
+  type: unicode-set
   data:
     - type: non-terminal
       data: SourceCharacter
     - type: exclude
       data: '*'
 MultiLineNotForwardSlashOrAsteriskChar:
-  type: char-class
+  type: unicode-set
   data:
     - type: non-terminal
       data: SourceCharacter
@@ -233,7 +233,7 @@ SingleLineCommentChars:
         - type: non-terminal
           data: SingleLineCommentChars
 SingleLineCommentChar:
-  type: char-class
+  type: unicode-set
   data:
     - type: non-terminal
       data: SourceCharacter
@@ -257,7 +257,7 @@ CommonToken:
 PrivateIdentifier:
   type: sequence
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: '#'
@@ -281,7 +281,7 @@ IdentifierStart:
       data: IdentifierStartChar
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: \
@@ -294,7 +294,7 @@ IdentifierPart:
       data: IdentifierPartChar
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: \
@@ -305,11 +305,11 @@ IdentifierStartChar:
   data:
     - type: non-terminal
       data: UnicodeIDStart
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: $
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: _
@@ -318,20 +318,20 @@ IdentifierPartChar:
   data:
     - type: non-terminal
       data: UnicodeIDContinue
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: $
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: ZWNJ
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: ZWJ
 UnicodeIDStart:
-  type: char-class
+  type: unicode-set
   data:
     - type: span
       data:
@@ -346,7 +346,7 @@ UnicodeIDStart:
     - type: char
       data: _
 UnicodeIDContinue:
-  type: char-class
+  type: unicode-set
   data:
     - type: span
       data:
@@ -613,7 +613,7 @@ BooleanLiteral:
     - type: word
       data: 'false'
 NumericLiteralSeparator:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: _
@@ -639,7 +639,7 @@ DecimalBigIntegerLiteral:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
@@ -688,7 +688,7 @@ NonDecimalIntegerLiteral_Sep:
     - type: non-terminal
       data: HexIntegerLiteral_Sep
 BigIntLiteralSuffix:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: 'n'
@@ -699,7 +699,7 @@ DecimalLiteral:
       data:
         - type: non-terminal
           data: DecimalIntegerLiteral
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: .
@@ -707,7 +707,7 @@ DecimalLiteral:
       data:
         - type: non-terminal
           data: DecimalIntegerLiteral
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: .
@@ -717,7 +717,7 @@ DecimalLiteral:
       data:
         - type: non-terminal
           data: DecimalIntegerLiteral
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: .
@@ -727,7 +727,7 @@ DecimalLiteral:
       data:
         - type: non-terminal
           data: DecimalIntegerLiteral
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: .
@@ -737,7 +737,7 @@ DecimalLiteral:
           data: ExponentPart_Sep
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: .
@@ -745,7 +745,7 @@ DecimalLiteral:
           data: DecimalDigits_Sep
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: .
@@ -764,7 +764,7 @@ DecimalLiteral:
 DecimalIntegerLiteral:
   type: one-of
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: '0'
@@ -817,7 +817,7 @@ DecimalDigits_Sep:
         - type: non-terminal
           data: DecimalDigit
 DecimalDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '0'
@@ -840,7 +840,7 @@ DecimalDigit:
     - type: char
       data: '9'
 NonZeroDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '1'
@@ -875,7 +875,7 @@ ExponentPart_Sep:
     - type: non-terminal
       data: SignedInteger_Sep
 ExponentIndicator:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: e
@@ -888,7 +888,7 @@ SignedInteger:
       data: DecimalDigits
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: +
@@ -896,7 +896,7 @@ SignedInteger:
           data: DecimalDigits
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '-'
@@ -909,7 +909,7 @@ SignedInteger_Sep:
       data: DecimalDigits_Sep
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: +
@@ -917,7 +917,7 @@ SignedInteger_Sep:
           data: DecimalDigits_Sep
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '-'
@@ -984,7 +984,7 @@ BinaryDigits_Sep:
         - type: non-terminal
           data: BinaryDigit
 BinaryDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '0'
@@ -1055,7 +1055,7 @@ LegacyOctalIntegerLiteral:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
@@ -1072,7 +1072,7 @@ NonOctalDecimalIntegerLiteral:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
@@ -1095,7 +1095,7 @@ LegacyOctalLikeDecimalIntegerLiteral:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
@@ -1108,7 +1108,7 @@ LegacyOctalLikeDecimalIntegerLiteral:
         - type: non-terminal
           data: OctalDigit
 OctalDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '0'
@@ -1127,7 +1127,7 @@ OctalDigit:
     - type: char
       data: '7'
 NonOctalDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '8'
@@ -1194,7 +1194,7 @@ HexDigits_Sep:
         - type: non-terminal
           data: HexDigit
 HexDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '0'
@@ -1245,45 +1245,45 @@ StringLiteral:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '"'
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '"'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '"'
         - type: non-terminal
           data: DoubleStringCharacters
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '"'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: ''''
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: ''''
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: ''''
         - type: non-terminal
           data: SingleStringCharacters
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: ''''
@@ -1312,7 +1312,7 @@ SingleStringCharacters:
 DoubleStringCharacter:
   type: one-of
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: non-terminal
           data: SourceCharacter
@@ -1322,17 +1322,17 @@ DoubleStringCharacter:
           data: \
         - type: exclude
           data: LineTerminator
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: LS
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: PS
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: \
@@ -1343,7 +1343,7 @@ DoubleStringCharacter:
 SingleStringCharacter:
   type: one-of
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: non-terminal
           data: SourceCharacter
@@ -1353,17 +1353,17 @@ SingleStringCharacter:
           data: \
         - type: exclude
           data: LineTerminator
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: LS
-    - type: char-class
+    - type: unicode-set
       data:
         - type: built-in
           data: PS
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: \
@@ -1374,7 +1374,7 @@ SingleStringCharacter:
 LineContinuation:
   type: sequence
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: \
@@ -1387,7 +1387,7 @@ EscapeSequence:
       data: CharacterEscapeSequence
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
@@ -1412,7 +1412,7 @@ CharacterEscapeSequence:
     - type: non-terminal
       data: NonEscapeCharacter
 SingleEscapeCharacter:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: ''''
@@ -1433,7 +1433,7 @@ SingleEscapeCharacter:
     - type: char
       data: v
 NonEscapeCharacter:
-  type: char-class
+  type: unicode-set
   data:
     - type: non-terminal
       data: SourceCharacter
@@ -1448,11 +1448,11 @@ EscapeCharacter:
       data: SingleEscapeCharacter
     - type: non-terminal
       data: DecimalDigit
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: x
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: u
@@ -1461,7 +1461,7 @@ LegacyOctalEscapeSequence:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
@@ -1507,14 +1507,14 @@ LegacyOctalEscapeSequence:
         - type: non-terminal
           data: OctalDigit
 NonZeroOctalDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: non-terminal
       data: OctalDigit
     - type: exclude
       data: '0'
 ZeroToThree:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '0'
@@ -1525,7 +1525,7 @@ ZeroToThree:
     - type: char
       data: '3'
 FourToSeven:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '4'
@@ -1536,7 +1536,7 @@ FourToSeven:
     - type: char
       data: '7'
 NonOctalDecimalEscapeSequence:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '8'
@@ -1545,7 +1545,7 @@ NonOctalDecimalEscapeSequence:
 HexEscapeSequence:
   type: sequence
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: x
@@ -1558,7 +1558,7 @@ UnicodeEscapeSequence:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
@@ -1570,7 +1570,7 @@ UnicodeEscapeSequence:
           data: 'u{'
         - type: non-terminal
           data: CodePoint
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '}'
@@ -1588,13 +1588,13 @@ Hex4Digits:
 RegularExpressionLiteral:
   type: sequence
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: /
     - type: non-terminal
       data: RegularExpressionBody
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: /
@@ -1620,7 +1620,7 @@ RegularExpressionChars:
 RegularExpressionFirstChar:
   type: one-of
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: non-terminal
           data: RegularExpressionNonTerminator
@@ -1639,7 +1639,7 @@ RegularExpressionFirstChar:
 RegularExpressionChar:
   type: one-of
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: non-terminal
           data: RegularExpressionNonTerminator
@@ -1656,14 +1656,14 @@ RegularExpressionChar:
 RegularExpressionBackslashSequence:
   type: sequence
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: \
     - type: non-terminal
       data: RegularExpressionNonTerminator
 RegularExpressionNonTerminator:
-  type: char-class
+  type: unicode-set
   data:
     - type: non-terminal
       data: SourceCharacter
@@ -1672,13 +1672,13 @@ RegularExpressionNonTerminator:
 RegularExpressionClass:
   type: sequence
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: '['
     - type: non-terminal
       data: RegularExpressionClassChars
-    - type: char-class
+    - type: unicode-set
       data:
         - type: char
           data: ']'
@@ -1695,7 +1695,7 @@ RegularExpressionClassChars:
 RegularExpressionClassChar:
   type: one-of
   data:
-    - type: char-class
+    - type: unicode-set
       data:
         - type: non-terminal
           data: RegularExpressionNonTerminator
@@ -1727,23 +1727,23 @@ NoSubstitutionTemplate:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
         - type: non-terminal
           data: TemplateCharacters
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
@@ -1752,7 +1752,7 @@ TemplateHead:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
@@ -1760,7 +1760,7 @@ TemplateHead:
           data: '${'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
@@ -1780,7 +1780,7 @@ TemplateMiddle:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '}'
@@ -1788,7 +1788,7 @@ TemplateMiddle:
           data: '${'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '}'
@@ -1801,23 +1801,23 @@ TemplateTail:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '}'
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '}'
         - type: non-terminal
           data: TemplateCharacters
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '`'
@@ -1837,7 +1837,7 @@ TemplateCharacter:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: $
@@ -1848,7 +1848,7 @@ TemplateCharacter:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: \
@@ -1856,7 +1856,7 @@ TemplateCharacter:
           data: TemplateEscapeSequence
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: \
@@ -1866,7 +1866,7 @@ TemplateCharacter:
       data: LineContinuation
     - type: non-terminal
       data: LineTerminatorSequence
-    - type: char-class
+    - type: unicode-set
       data:
         - type: non-terminal
           data: SourceCharacter
@@ -1885,7 +1885,7 @@ TemplateEscapeSequence:
       data: CharacterEscapeSequence
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
@@ -1903,13 +1903,13 @@ NotEscapeSequence:
   data:
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
         - type: non-terminal
           data: DecimalDigit
-    - type: char-class
+    - type: unicode-set
       data:
         - type: non-terminal
           data: DecimalDigit
@@ -1917,7 +1917,7 @@ NotEscapeSequence:
           data: '0'
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: x
@@ -1928,7 +1928,7 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: x
@@ -1941,7 +1941,7 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
@@ -1957,7 +1957,7 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
@@ -1970,7 +1970,7 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
@@ -1985,7 +1985,7 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
@@ -2002,11 +2002,11 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '{'
@@ -2017,11 +2017,11 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '{'
@@ -2034,11 +2034,11 @@ NotEscapeSequence:
           negate: true
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: u
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '{'
@@ -2106,14 +2106,14 @@ CodePoint:
           data: Hex4Digits
     - type: sequence
       data:
-        - type: char-class
+        - type: unicode-set
           data:
             - type: char
               data: '0'
         - type: non-terminal
           data: CodePoint
 NonZeroHexDigit:
-  type: char-class
+  type: unicode-set
   data:
     - type: non-terminal
       data: HexDigit
@@ -2300,32 +2300,32 @@ OPTIONAL_CHAINING:
           data: DecimalDigit
       negate: true
 LBRACE:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '{'
 LPAREN:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: (
 RPAREN:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: )
 LBRACK:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '['
 RBRACK:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: ']'
 DOT:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: .
@@ -2333,22 +2333,22 @@ ELLIPSIS:
   type: word
   data: ...
 SEMI_COLON:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: ;
 COMMA:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: ','
 LT:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: <
 GT:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '>'
@@ -2371,22 +2371,22 @@ NE_STRICT:
   type: word
   data: '!=='
 ADD:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: +
 SUB:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '-'
 MUL:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '*'
 MOD:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '%'
@@ -2409,27 +2409,27 @@ SHR:
   type: word
   data: '>>>'
 BIT_AND:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '&'
 BIT_OR:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '|'
 BIT_XOR:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: ^
 NOT:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '!'
 BIT_NOT:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '~'
@@ -2443,17 +2443,17 @@ NULLISH:
   type: word
   data: '??'
 CONDITIONAL:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '?'
 COLON:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: ':'
 ASSIGN:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: =
@@ -2503,7 +2503,7 @@ ARROW:
   type: word
   data: =>
 DIV:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: /
@@ -2511,7 +2511,7 @@ DIV_ASSIGN:
   type: word
   data: /=
 RBRACE:
-  type: char-class
+  type: unicode-set
   data:
     - type: char
       data: '}'

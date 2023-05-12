@@ -355,7 +355,7 @@
       "name": "RBRACE"
     }
   ],
-  "charClasses": [
+  "unicodeSets": [
     [
       13
     ],
@@ -36304,7 +36304,7 @@
       "dead": false
     }
   ],
-  "ccAsciiTable": [
+  "asciiTable": [
     70,
     70,
     70,
@@ -36434,84 +36434,84 @@
     58,
     70
   ],
-  "ccNonAsciiList": [
+  "nonAsciiList": [
     {
       "codePoint": 160,
-      "charClass": 6
+      "unicodeSet": 6
     },
     {
       "codePoint": 5760,
-      "charClass": 6
+      "unicodeSet": 6
     },
     {
       "firstCodePoint": 8192,
       "lastCodePoint": 8202,
-      "charClass": 6
+      "unicodeSet": 6
     },
     {
       "codePoint": 8207,
-      "charClass": 6
+      "unicodeSet": 6
     },
     {
       "codePoint": 8287,
-      "charClass": 6
+      "unicodeSet": 6
     },
     {
       "codePoint": 65279,
-      "charClass": 6
+      "unicodeSet": 6
     },
     {
       "firstCodePoint": 8232,
       "lastCodePoint": 8233,
-      "charClass": 8
+      "unicodeSet": 8
     },
     {
       "firstCodePoint": 8204,
       "lastCodePoint": 8205,
-      "charClass": 69
+      "unicodeSet": 69
     },
     {
       "firstCodePoint": 128,
       "lastCodePoint": 159,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "firstCodePoint": 161,
       "lastCodePoint": 5759,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "firstCodePoint": 5761,
       "lastCodePoint": 8191,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "codePoint": 8203,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "codePoint": 8206,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "firstCodePoint": 8208,
       "lastCodePoint": 8231,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "firstCodePoint": 8234,
       "lastCodePoint": 8286,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "firstCodePoint": 8288,
       "lastCodePoint": 65278,
-      "charClass": 70
+      "unicodeSet": 70
     },
     {
       "firstCodePoint": 65280,
       "lastCodePoint": 1114111,
-      "charClass": 70
+      "unicodeSet": 70
     }
   ]
 }

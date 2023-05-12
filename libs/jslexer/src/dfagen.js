@@ -11,15 +11,8 @@ import {
 import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
 import * as yaml from 'https://deno.land/std@0.186.0/yaml/mod.ts';
 import { snakeCase } from 'https://deno.land/x/case@2.1.1/mod.ts'
-import {
-  CharClass,
-  CharClassListBuilder,
-} from '../../../tools/lib/dfa/char_class.js';
-import { UnicodeSpan } from '../../../tools/lib/dfa/unicode.js';
-import {
-  buildCharClassAsciiTable,
-  buildCharClassNonAsciiList,
-} from '../../../tools/lib/dfa/compiler.js';
+import { UnicodeSpan, UnicodeSet, UnicodeSetsBuilder } from '../../../tools/lib/dfa/unicode.js';
+import { buildAsciiTable, buildNonAsciiList } from '../../../tools/lib/dfa/compiler.js';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';
 
@@ -51,16 +44,14 @@ async function run(options, tokens) {
   }
   const grammar = yaml.parse(await readAllText(Deno.stdin));
   const dfa = compile(grammar, tokens);
-  const ccList = dfa.buildCharClassList();
-  log.info(`#Tokens: ${tokens.length}`);
-  log.info(`#CC    : ${ccList.length}`);
-  log.info(`#DFA   : ${dfa.size}`);
+  const unicodeSets = dfa.buildUnicodeSets();
+  log.info(`#Tokens=${tokens.length} #UnicodeSets=${unicodeSets.length} #DFA=${dfa.size}`);
   console.log(JSON.stringify({
     tokens: tokens.map((token) => {
       return { name: token };
     }),
-    charClasses: ccList.map((cc) => {
-      return cc.spans.map((span) => {
+    unicodeSets: unicodeSets.map((unicodeSet) => {
+      return unicodeSet.spans.map((span) => {
         if (span.length === 1) {
           return span.firstCodePoint;
         }
@@ -69,8 +60,10 @@ async function run(options, tokens) {
     }),
     states: dfa.states.map((state) => {
       const transitions = [];
-      for (const cc of ccList) {
-        const trans = state.transitions.find((trans) => trans.cc.includes(cc));
+      for (const unicodeSet of unicodeSets) {
+        const trans = state.transitions.find((trans) => {
+          return trans.unicodeSet.includes(unicodeSet);
+        });
         if (trans) {
           transitions.push(trans.next);
         } else {
@@ -84,8 +77,8 @@ async function run(options, tokens) {
         dead: transitions.every((id) => id === state.id),
       };
     }),
-    ccAsciiTable: buildCharClassAsciiTable(ccList),
-    ccNonAsciiList: buildCharClassNonAsciiList(ccList),
+    asciiTable: buildAsciiTable(unicodeSets),
+    nonAsciiList: buildNonAsciiList(unicodeSets),
   }));
 }
 
@@ -108,7 +101,7 @@ function compile(grammar, tokens) {
 function buildNfa(grammar, tokens) {
   const builder = new NfaBuilder(grammar);
   for (const token of tokens) {
-    log.info(`Compiling ${token} into NFA...`);
+    log.debug(`Compiling ${token} into NFA...`);
     builder.addToken(token);
   }
   return builder.build();
@@ -162,8 +155,8 @@ class NfaBuilder {
       return this.buildSequenceNfa_(item.data, context);
     case 'word':
       return this.buildWordNfa_(item.data, context);
-    case 'char-class':
-      return this.buildCharClassNfa_(item.data, context);
+    case 'unicode-set':
+      return this.buildUnicodeSetNfa_(item.data, context);
     case 'empty':
       return this.buildEmptyNfa_(context);
     default:
@@ -265,19 +258,19 @@ class NfaBuilder {
     let state = start;
     for (const ch of word) {
       const next = this.nfa_.createState(`${context.label}/word(${word})[${ch}]`);
-      const cc = new CharClass(new UnicodeSpan(ch));
-      this.nfa_.addTransition(state, next, cc);
+      const unicodeSet = new UnicodeSet(new UnicodeSpan(ch));
+      this.nfa_.addTransition(state, next, unicodeSet);
       state = next;
     }
     return [start, state];
   }
 
-  buildCharClassNfa_(data, context) {
+  buildUnicodeSetNfa_(data, context) {
     const start = this.nfa_.createState(`${context.label}/cc@start`);
     const accept = this.nfa_.createState(`${context.label}/cc@accept`);
-    const cc = this.buildCharClass_(data);
-    log.debug(`${context.indent}char-class: ${cc.toString()}`);
-    this.nfa_.addTransition(start, accept, cc);
+    const unicodeSet = this.buildUnicodeSet_(data);
+    log.debug(`${context.indent}unicode-set: ${unicodeSet.toString()}`);
+    this.nfa_.addTransition(start, accept, unicodeSet);
     return [start, accept];
   }
 
@@ -293,85 +286,84 @@ class NfaBuilder {
     const start = this.nfa_.createState(`${context.label}/lookahead@start`);
     const accept = this.nfa_.createState(`${context.label}/lookahead@accept`);
     this.nfa_.lookahead(accept);
-    let cc = CharClass.ANY;
+    let unicodeSet = UnicodeSet.ANY;
     for (const lookahead of lookaheads) {
-      let lookaheadCc = this.buildCharClass_(lookahead.data);
+      let other = this.buildUnicodeSet_(lookahead.data);
       if (lookahead.negate) {
-        lookaheadCc = CharClass.ANY.exclude(lookaheadCc);
+        other = UnicodeSet.ANY.exclude(other);
       }
-      cc = cc.intersect(lookaheadCc);
+      unicodeSet = unicodeSet.intersect(other);
     }
-    log.debug(`${context.indent}lookahead: ${cc.toString()}`);
-    this.nfa_.addTransition(start, accept, cc);
+    log.debug(`${context.indent}lookahead: ${unicodeSet.toString()}`);
+    this.nfa_.addTransition(start, accept, unicodeSet);
     return [start, accept];
   }
 
-  buildCharClass_(data) {
-    let cc = CharClass.EMPTY;
+  buildUnicodeSet_(data) {
+    let unicodeSet = UnicodeSet.EMPTY;
     for (const ch of data) {
       switch (ch.type) {
       case 'any':
-        cc = cc.merge(CharClass.ANY);
+        unicodeSet = unicodeSet.merge(UnicodeSet.ANY);
         break;
       case 'non-terminal':
-        cc = cc.merge(this.buildNonTerminalCharClass_(ch.data));
+        unicodeSet = unicodeSet.merge(this.buildNonTerminalUnicodeSet_(ch.data));
         break;
       case 'built-in':
-        cc = cc.merge(CharClass[ch.data]);
+        unicodeSet = unicodeSet.merge(UnicodeSet[ch.data]);
         break;
       case 'char':
-        cc = cc.mergeUnicodeSpan(new UnicodeSpan(ch.data));
+        unicodeSet = unicodeSet.mergeSpan(new UnicodeSpan(ch.data));
         break;
       case 'span':
-        cc = cc.mergeUnicodeSpan(new UnicodeSpan(ch.data[0], ch.data[1]));
+        unicodeSet = unicodeSet.mergeSpan(new UnicodeSpan(ch.data[0], ch.data[1]));
         break;
       case 'exclude':
         if (ch.data.length === 1) {
-          cc = cc.excludeUnicodeSpan(new UnicodeSpan(ch.data));
+          unicodeSet = unicodeSet.excludeSpan(new UnicodeSpan(ch.data));
         } else {
-          cc = cc.exclude(this.buildNonTerminalCharClass_(ch.data));
+          unicodeSet = unicodeSet.exclude(this.buildNonTerminalUnicodeSet_(ch.data));
         }
         break;
-      case 'unicode-property':
-        // TODO
-        break;
+      default:
+        unimplemented(`NfaBuilder.buildUnicodeSet_: ${ch.type}`);
       }
     }
-    return cc;
+    return unicodeSet;
   }
 
-  buildNonTerminalCharClass_(name) {
+  buildNonTerminalUnicodeSet_(name) {
     assertExists(this.grammar_[name]);
     const item = this.grammar_[name];
     switch (item.type) {
     case 'any':
-      return CharClass.ANY;
+      return UnicodeSet.ANY;
     case 'non-terminal':
-      return this.buildNonTerminalCharClass_(item.data);
+      return this.buildNonTerminalUnicodeSet_(item.data);
     case 'one-of':
-      return this.buildUnifiedCharClass_(item.data);
-    case 'char-class':
-      return this.buildCharClass_(item.data);
+      return this.buildUnifiedUnicodeSet_(item.data);
+    case 'unicode-set':
+      return this.buildUnicodeSet_(item.data);
     default:
-      unimplemented(`NfaBuilder.buildNonTerminalCharClass_: ${item.type}`);
+      unimplemented(`NfaBuilder.buildNonTerminalUnicodeSet_: ${item.type}`);
     }
   }
 
-  buildUnifiedCharClass_(items) {
-    let cc = CharClass.EMPTY;
+  buildUnifiedUnicodeSet_(items) {
+    let unicodeSet = UnicodeSet.EMPTY;
     for (const item of items) {
       switch (item.type) {
       case 'non-terminal':
-        cc = cc.merge(this.buildNonTerminalCharClass_(item.data));
+        unicodeSet = unicodeSet.merge(this.buildNonTerminalUnicodeSet_(item.data));
         break;
-      case 'char-class':
-        cc = cc.merge(this.buildCharClass_(item.data));
+      case 'unicode-set':
+        unicodeSet = unicodeSet.merge(this.buildUnicodeSet_(item.data));
         break;
       default:
-        unimplemented(`NfaBuilder.buildUnifiedCharClass_: ${item.type}`);
+        unimplemented(`NfaBuilder.buildUnifiedUnicodeSet_: ${item.type}`);
       }
     }
-    return cc;
+    return unicodeSet;
   }
 }
 
@@ -403,41 +395,41 @@ class Automaton {
     this.$(id).lookahead = true;
   }
 
-  addTransition(id, next, cc = CharClass.EMPTY) {
-    this.$(id).transitions.push({ cc, next });
+  addTransition(id, next, unicodeSet = UnicodeSet.EMPTY) {
+    this.$(id).transitions.push({ unicodeSet, next });
   }
 
-  buildCharClassList() {
-    const builder = new CharClassListBuilder();
+  buildUnicodeSets() {
+    const builder = new UnicodeSetsBuilder();
     for (const state of this.states) {
       for (const trans of state.transitions) {
-        builder.add(trans.cc);
+        builder.add(trans.unicodeSet);
       }
     }
     return builder.build();
   }
 
   minifyTransitionTables() {
-    // Merge character classes in the transition table of each state, which move
+    // Merge unicode sets in the transition table of each state, which move
     // to the same state.
     for (const state of this.states) {
       log.debug(`${state.toString()}`);
-      const map = new Map();  // state -> [cc]
+      const map = new Map();  // state -> [unicodeSet]
       for (const trans of state.transitions) {
         if (map.has(trans.next)) {
-          map.get(trans.next).push(trans.cc);
+          map.get(trans.next).push(trans.unicodeSet);
         } else {
-          map.set(trans.next, [trans.cc]);
+          map.set(trans.next, [trans.unicodeSet]);
         }
       }
       state.transitions = [];
       for (const next of Array.from(map.keys()).sort((a, b) => a - b)) {
-        let cc = CharClass.EMPTY;
-        for (const cc_ of map.get(next)) {
-          cc = cc.merge(cc_);
+        let unicodeSet = UnicodeSet.EMPTY;
+        for (const other of map.get(next)) {
+          unicodeSet = unicodeSet.merge(other);
         }
-        log.debug(`  ${cc.toString()} -> ${this.$(next).toString()}`);
-        state.transitions.push({ cc, next });
+        log.debug(`  ${unicodeSet.toString()} -> ${this.$(next).toString()}`);
+        state.transitions.push({ unicodeSet, next });
       }
     }
     return this;
@@ -482,9 +474,9 @@ class Nfa extends Automaton {
   }
 
   buildDfa() {
-    const ccList = this.buildCharClassList();
-    ccList.forEach((cc, i) => {
-      log.debug(`CC#${i}: ${cc.toString()}`);
+    const unicodeSets = this.buildUnicodeSets();
+    unicodeSets.forEach((unicodeSet, i) => {
+      log.debug(`UnicodeSet#${i}: ${unicodeSet.toString()}`);
     });
 
     const dfa = new Dfa();
@@ -500,10 +492,10 @@ class Nfa extends Automaton {
       const nfaStateIds = remaining.shift();
       const dfaStateId = stateMap.get(nfaStateIds.join(','));
       log.debug(`${dfa.$(dfaStateId).toString()}: NFA#[${nfaStateIds.join(',')}]`);
-      for (const cc of ccList) {
-        const nextNfaStateIds = this.closure_(this.move_(nfaStateIds, cc));
+      for (const unicodeSet of unicodeSets) {
+        const nextNfaStateIds = this.closure_(this.move_(nfaStateIds, unicodeSet));
         if (nextNfaStateIds.length === 0) {
-          log.debug(`  ${cc.toString()} -> ()`);
+          log.debug(`  ${unicodeSet.toString()} -> ()`);
           continue;
         }
         let dfaNextStateId = stateMap.get(nextNfaStateIds.join(','));
@@ -522,8 +514,8 @@ class Nfa extends Automaton {
           stateMap.set(nextNfaStateIds.join(','), dfaNextStateId);
           remaining.push(nextNfaStateIds);
         }
-        log.debug(`  ${cc.toString()} -> ${dfa.$(dfaNextStateId).toString()}`);
-        dfa.addTransition(dfaStateId, dfaNextStateId, cc);
+        log.debug(`  ${unicodeSet.toString()} -> ${dfa.$(dfaNextStateId).toString()}`);
+        dfa.addTransition(dfaStateId, dfaNextStateId, unicodeSet);
       }
     }
 
@@ -532,11 +524,11 @@ class Nfa extends Automaton {
 
   // private methods
 
-  move_(ids, cc) {
+  move_(ids, unicodeSet) {
     const result = [];
     for (const id of ids) {
       for (const trans of this.$(id).transitions) {
-        if (trans.cc.includes(cc)) {
+        if (trans.unicodeSet.includes(unicodeSet)) {
           result.push(trans.next);
         }
       }
@@ -552,7 +544,7 @@ class Nfa extends Automaton {
       const id = remaining.pop();
       const nextIds = this.states[id]
         .transitions
-        .filter((trans) => trans.cc.isEmpty)
+        .filter((trans) => trans.unicodeSet.isEmpty)
         .filter((trans) => !closure.has(trans.next))
         .map((trans) => trans.next);
       for (const nextId of nextIds) {
@@ -570,7 +562,7 @@ class Dfa extends Automaton {
   }
 
   minify(tokens) {
-    const ccList = this.buildCharClassList();
+    const unicodeSets = this.buildUnicodeSets();
 
     let groups = [];
     // Separate lookahead states from others.
@@ -591,7 +583,7 @@ class Dfa extends Automaton {
         // Collect states having the same transition table in `groups`.
         const map = new Map();
         for (const id of group) {
-          const trans = this.buildTransitionTable_(id, ccList, groups);
+          const trans = this.buildTransitionTable_(id, unicodeSets, groups);
           const key = trans.join(',');
           if (map.has(key)) {
             map.get(key).push(id);
@@ -636,8 +628,8 @@ class Dfa extends Automaton {
       // `group[0]` for rebuilding the transitions of the new state.
       for (const trans of this.$(group[0]).transitions) {
         const next = groups.findIndex((group) => group.includes(trans.next));
-        log.debug(`  ${trans.cc.toString()} -> ${dfa.$(next).toString()}`);
-        dfa.addTransition(id, next, trans.cc);
+        log.debug(`  ${trans.unicodeSet.toString()} -> ${dfa.$(next).toString()}`);
+        dfa.addTransition(id, next, trans.unicodeSet);
       }
     }
 
@@ -656,11 +648,11 @@ class Dfa extends Automaton {
     }
   }
 
-  buildTransitionTable_(id, ccList, groups) {
+  buildTransitionTable_(id, unicodeSets, groups) {
     const transTable = [];
-    for (const cc of ccList) {
+    for (const unicodeSet of unicodeSets) {
       const trans = this.$(id).transitions.find((trans) => {
-        return trans.cc.includes(cc);
+        return trans.unicodeSet.includes(unicodeSet);
       });
       if (trans) {
         const next = groups.findIndex((group) => group.includes(trans.next));

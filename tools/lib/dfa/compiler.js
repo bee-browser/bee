@@ -3,26 +3,25 @@
 import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
 import { assert, unreachable } from "https://deno.land/std@0.186.0/testing/asserts.ts";
 import { Pattern, oneOf } from './pattern.js';
-import { CharClass, CharClassListBuilder } from './char_class.js';
-import { UnicodeSpan } from './unicode.js';
+import { UnicodeSpan, UnicodeSet, UnicodeSetsBuilder } from './unicode.js';
 
 export function compile(tokens) {
   log.info('Unifying regular expressions...');
   const unified = unify(tokens);
   unified.dump(log.debug);
 
-  log.info('Building character class list...');
-  const ccList = buildCharClassList(unified);
-  log.info(`#CCs: ${ccList.length}`);
-  ccList.forEach((cc, i) => {
-    log.debug(`CC#${i}: ${cc.toString()}`);
+  log.info('Building unicode sets...');
+  const unicodeSets = buildUnicodeSets(unified);
+  log.info(`#UnicodeSets: ${unicodeSets.length}`);
+  unicodeSets.forEach((unicodeSet, i) => {
+    log.debug(`UnicodeSet#${i}: ${unicodeSet.toString()}`);
   });
 
-  log.info('Building a map from an ASCII character to its character class...');
-  const ccAsciiTable = buildCharClassAsciiTable(ccList);
+  log.info('Building ASCII table from unicode sets...');
+  const asciiTable = buildAsciiTable(unicodeSets);
 
-  log.info('Building a map from a non-ASCII character to its character class...');
-  const ccNonAsciiList = buildCharClassNonAsciiList(ccList);
+  log.info('Building non-ASCII list from unicode sets...');
+  const nonAsciiList = buildNonAsciiList(unicodeSets);
 
   log.info('Building pattern tree from unified regular expression...');
   const [nodes, root, accepts] = buildTree(unified);
@@ -32,7 +31,7 @@ export function compile(tokens) {
   //log.debug(accepts);
 
   log.info('Building DFA...');
-  const states = buildStates(ccList, nodes, root, accepts);
+  const states = buildStates(unicodeSets, nodes, root, accepts);
   log.info(`#States: ${states.length}`);
 
   log.info('Minimizing states in DFA...');
@@ -43,8 +42,8 @@ export function compile(tokens) {
     tokens: tokens.map(({ name, regexp }) => {
       return { name, regexp };
     }),
-    charClasses: ccList.map((cc) => {
-      return cc.spans.map((span) => {
+    unicodeSets: unicodeSets.map((unicodeSet) => {
+      return unicodeSet.spans.map((span) => {
         if (span.length === 1) {
           return span.firstCodePoint;
         }
@@ -58,8 +57,8 @@ export function compile(tokens) {
         dead: state.dead,
       };
     }),
-    ccAsciiTable,
-    ccNonAsciiList,
+    asciiTable,
+    nonAsciiList,
   };
 }
 
@@ -71,18 +70,18 @@ function unify(tokens) {
   }));
 }
 
-function buildCharClassList(unified) {
-  let builder = new CharClassListBuilder();
-  let cc = CharClass.EMPTY;
+function buildUnicodeSets(unified) {
+  let builder = new UnicodeSetsBuilder();
+  let unicodeSet = UnicodeSet.EMPTY;
   unified.traverseInInorder((node, depth) => {
     switch (node.type) {
     case Pattern.CHAR:
-      cc = cc.merge(node.charClass);
+      unicodeSet = unicodeSet.merge(node.unicodeSet);
       break;
     case Pattern.CONCATINATION:
     case Pattern.REPETITION:
-      builder.add(cc);
-      cc = CharClass.EMPTY;
+      builder.add(unicodeSet);
+      unicodeSet = UnicodeSet.EMPTY;
       break;
     default:
       // Nothing to do.
@@ -92,12 +91,12 @@ function buildCharClassList(unified) {
   return builder.build();
 }
 
-export function buildCharClassAsciiTable(ccList) {
-  const not_found = ccList.length;
+export function buildAsciiTable(unicodeSets) {
+  const not_found = unicodeSets.length;
   const table = [];
   for (let i = 0; i < 128; ++i) {
-    const index = ccList.findIndex((cc) => {
-      return cc.includesUnicodeSpan(new UnicodeSpan(i));
+    const index = unicodeSets.findIndex((unicodeSet) => {
+      return unicodeSet.includesSpan(new UnicodeSpan(i));
     });
     if (index === -1) {
       table[i] = not_found;
@@ -109,12 +108,12 @@ export function buildCharClassAsciiTable(ccList) {
   return table;
 }
 
-export function buildCharClassNonAsciiList(ccList) {
+export function buildNonAsciiList(unicodeSets) {
   const ascii = new UnicodeSpan(0, 127);
   const list = [];
-  for (let i = 0; i < ccList.length; ++i) {
-    const cc = ccList[i];
-    const nonAscii = cc.excludeUnicodeSpan(ascii);
+  for (let i = 0; i < unicodeSets.length; ++i) {
+    const unicodeSet = unicodeSets[i];
+    const nonAscii = unicodeSet.excludeSpan(ascii);
     if (nonAscii.isEmpty) {
       continue;
     }
@@ -122,13 +121,13 @@ export function buildCharClassNonAsciiList(ccList) {
       if (span.length === 1) {
         list.push({
           codePoint: span.firstCodePoint,
-          charClass: i,
+          unicodeSet: i,
         })
       } else {
         list.push({
           firstCodePoint: span.firstCodePoint,
           lastCodePoint: span.lastCodePoint,
-          charClass: i,
+          unicodeSet: i,
         });
       }
     }
@@ -171,7 +170,7 @@ function buildTree(unified) {
       nodes.push({
         index,
         type: Pattern.CHAR,
-        charClass: pat.charClass,
+        unicodeSet: pat.unicodeSet,
         nullable: false,
         firstNodes: [index],
         lastNodes: [index],
@@ -251,7 +250,7 @@ function buildTree(unified) {
   return [nodes, root, accepts];
 }
 
-function buildStates(ccList, nodes, root, accepts) {
+function buildStates(unicodeSets, nodes, root, accepts) {
   const states = [{
     nodes: nodes[root].firstNodes,
     transitions: [],
@@ -265,8 +264,8 @@ function buildStates(ccList, nodes, root, accepts) {
     processed.add(stateIndex);
     const state = states[stateIndex];
     state.accept = determineToken(state.nodes, accepts);
-    for (let ccIndex = 0; ccIndex < ccList.length; ++ccIndex) {
-      const cc = ccList[ccIndex];
+    for (let usIndex = 0; usIndex < unicodeSets.length; ++usIndex) {
+      const unicodeSet = unicodeSets[usIndex];
       const nextState = {
         nodes: new Set(),
         transitions: [],
@@ -277,15 +276,15 @@ function buildStates(ccList, nodes, root, accepts) {
           continue;
         }
         assert(node.type === Pattern.CHAR);
-        if (node.charClass.includes(cc)) {
+        if (node.unicodeSet.includes(unicodeSet)) {
           for (const followIndex of node.followNodes) {
             nextState.nodes.add(followIndex);
           }
         }
       }
       if (nextState.nodes.length === 0) {
-        log.debug(`  CC#{ccIndex} -> No State`);
-        state.transitions[ccIndex] = null;
+        log.debug(`  UnicodeSet#{usIndex} -> No State`);
+        state.transitions[usIndex] = null;
         continue;
       }
       nextState.nodes = Array.from(nextState.nodes).sort((a, b) => a - b);
@@ -299,8 +298,8 @@ function buildStates(ccList, nodes, root, accepts) {
         nextStateIndex = states.length;
         states.push(nextState);
       }
-      log.debug(`  CC#${ccIndex} -> State#${nextStateIndex}`);
-      state.transitions[ccIndex] = nextStateIndex;
+      log.debug(`  UnicodeSet#${usIndex} -> State#${nextStateIndex}`);
+      state.transitions[usIndex] = nextStateIndex;
       if (processed.has(nextStateIndex)) {
         continue;
       }
