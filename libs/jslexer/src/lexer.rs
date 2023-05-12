@@ -10,6 +10,11 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
+    /// Creates a JavaScript lexer.
+    ///
+    /// `src` must contain a complete source text.
+    ///
+    /// The initial goal symbol of the created JavaScript lexer is [`Goal::InputElementDiv`].
     pub fn new(src: &'a str) -> Lexer {
         Lexer {
             cursor: SourceCursor::new(src),
@@ -17,10 +22,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Sets a goal symbol that the JavaScript lexer will recognize.
     pub fn set_goal(&mut self, goal: Goal) {
         self.goal = goal;
     }
 
+    /// Gets a next token in the source text.
     pub fn next_token(&mut self) -> Token<'a> {
         let kind = recognize(self.goal, &mut self.cursor);
         let lexeme = match kind {
