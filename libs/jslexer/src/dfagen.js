@@ -23,7 +23,7 @@ import {
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';
 
-const PROGNAME = 'lexgen.js';
+const PROGNAME = 'dfagen.js';
 
 setup(PROGNAME, 'DEBUG');
 

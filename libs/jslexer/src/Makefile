@@ -13,7 +13,7 @@ GOAL_SYMBOLS := $(shell \
 DFA_FILES := dfa/mod.rs $(patsubst %,dfa/%.rs,$(GOAL_SYMBOLS))
 
 # Specify `-d` if you want to see debug logs.
-LEXGEN_ARGS ?=
+DFAGEN_ARGS ?=
 
 .PHONY: codegen
 codegen: goals.rs tokens.rs $(DFA_FILES)
@@ -42,9 +42,9 @@ tokens.json: tokens.yaml
 	@cat $< | $(BEE_TOOLS) y2j | jq '[.goals[]] | flatten | unique' >$@
 
 .PRECIOUS: dfa/%.json
-dfa/%.json: es2022.lex.yaml tokens.yaml lexgen.js
+dfa/%.json: es2022.lex.yaml tokens.yaml dfagen.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run lexgen.js $(LEXGEN_ARGS) $(shell $(LIST_TOKENS)) | jq '.' >$@
+	@cat $< | deno run dfagen.js $(DFAGEN_ARGS) $(shell $(LIST_TOKENS)) | jq '.' >$@
 
 .PRECIOUS: es2022.lex.yaml
 es2022.lex.yaml: es2022.lex.txt transpile.js
