@@ -45,7 +45,7 @@ async function run(options, tokens) {
   const grammar = yaml.parse(await readAllText(Deno.stdin));
   const dfa = compile(grammar, tokens);
   const unicodeSets = dfa.buildUnicodeSets();
-  log.info(`#Tokens=${tokens.length} #UnicodeSets=${unicodeSets.length} #DFA=${dfa.size}`);
+  log.debug(`#Tokens=${tokens.length} #UnicodeSets=${unicodeSets.length} #DFA=${dfa.size}`);
   console.log(JSON.stringify({
     tokens: tokens.map((token) => {
       return { name: token };
@@ -83,17 +83,17 @@ async function run(options, tokens) {
 }
 
 function compile(grammar, tokens) {
-  log.info('Building NFA from the lexical grammar in CFG...');
+  log.debug('Building NFA from the lexical grammar in CFG...');
   const nfa = buildNfa(grammar, tokens);
-  log.info(`Total number of states in NFA: ${nfa.size}`);
+  log.debug(`Total number of states in NFA: ${nfa.size}`);
 
-  log.info('Building DFA...');
+  log.debug('Building DFA...');
   const dfa = nfa.buildDfa();
-  log.info(`Total number of states in DFA: ${dfa.size}`);
+  log.debug(`Total number of states in DFA: ${dfa.size}`);
 
-  log.info('Minifying DFA...');
+  log.debug('Minifying DFA...');
   const min = dfa.minify(tokens);
-  log.info(`Total number of states in DFA: ${min.size}`);
+  log.debug(`Total number of states in DFA: ${min.size}`);
 
   return min;
 }

@@ -134,7 +134,7 @@ function readRules(esgrammar) {
 }
 
 function rewriteReservedWord(rules) {
-  log.info('Rewriting ReservedWord...');
+  log.debug('Rewriting ReservedWord...');
   const rule = rules.find((rule) => rule.name === 'ReservedWord');
   assert(rule !== undefined);
   const values = rule.values;
@@ -264,7 +264,7 @@ function rewritePunctuator(rules) {
 }
 
 function expandOptionals(rules) {
-  log.info('Expanding optionals...');
+  log.debug('Expanding optionals...');
   const expanded = [];
   for (const rule of rules) {
     const values = [];
@@ -297,7 +297,7 @@ function expandOptionals(rules) {
 }
 
 function expandParameterizedRules(rules) {
-  log.info('Expanding parameterized rules...');
+  log.debug('Expanding parameterized rules...');
   const expanded = [];
 
   for (const rule of rules) {
@@ -360,7 +360,7 @@ function expandParameterizedRules(rules) {
 function translateRules(rules) {
   const grammar = [];
   for (const rule of rules) {
-    log.info(`Translating ${rule.name}...`);
+    log.debug(`Translating ${rule.name}...`);
     grammar.push({
       type: 'one-of',
       name: rule.name,
@@ -552,7 +552,7 @@ function mergeCharClasses(rules) {
   for (const rule of rules) {
     if (rule.type === 'one-of' &&
         rule.data.every((item) => item.type === 'unicode-set')) {
-      log.info(`Merging character classes in ${rule.name}...`);
+      log.debug(`Merging character classes in ${rule.name}...`);
       let data = rule.data.reduce((data, item) => data.concat(item.data), []);
       rule.type = 'unicode-set';
       rule.data = data;
@@ -564,7 +564,7 @@ function mergeCharClasses(rules) {
 function simplify(rules) {
   for (const rule of rules) {
     if (rule.type === 'one-of' && rule.data.length === 1) {
-      log.info(`Simplify ${rule.name}...`);
+      log.debug(`Simplify ${rule.name}...`);
       rule.type = rule.data[0].type;
       rule.data = rule.data[0].data;
     }
