@@ -1,0 +1,59 @@
+#!/usr/bin/env -S deno run -q -A --unstable
+
+'use strict';
+
+import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
+import * as path from 'https://deno.land/std@0.186.0/path/mod.ts';
+import * as yaml from 'https://deno.land/std@0.186.0/yaml/mod.ts';
+import Handlebars from 'npm:handlebars@4.7.7'
+import { parseCommand, readAllText } from '../lib/cli.js';
+import { setup } from '../lib/log.js';
+import { Grammar } from '../lib/lexgen/grammar.js';
+
+const PROGNAME = path.basename(Deno.mainModule);
+
+const DOC = `
+Compile a lexical grammar into a DFA definition.
+
+Usage:
+  ${PROGNAME} [options] [<lex.yaml>]
+  ${PROGNAME} -h | --help
+
+Options:
+  -d, --debug
+    Show debug logs.
+
+Arguments:
+  <lex.yaml>
+    The path to the lexical grammer file.
+
+    Read the lexical grammer from STDIN if this argument is not specified.
+
+Description:
+  This command reads the lexical grammer in a YAML format from STDIN, and
+  outputs the DFA definition in a JSON format to STDOUT.
+
+Lexical Grammar in YAML:
+  TODO
+
+DFA Definition in JSON:
+  TODO
+
+`.trim();
+
+const { options, args } = await parseCommand({
+  doc: DOC,
+});
+
+Deno.exit(await run(args, options));
+
+async function run(args, options) {
+  if (options.debug) {
+    await setup(PROGNAME, 'DEBUG');
+  } else {
+    await setup(PROGNAME, 'INFO');
+  }
+  const grammar = await Grammar.fromYaml(args.lexYaml);
+  const dfa = grammar.compile();
+  console.log(JSON.stringify(dfa));
+}
