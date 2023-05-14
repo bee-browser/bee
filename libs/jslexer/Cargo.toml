@@ -1,0 +1,22 @@
+[package]
+name = "bee-jslexer"
+version = "0.1.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+tracing = "0.1.37"
+
+[dev-dependencies]
+anyhow = "1.0.70"
+clap = { version = "4.2.7", features = ["derive", "wrap_help"] }
+ctor = "0.2.0"
+tracing-subscriber = "0.3.17"
+
+[lib]
+bench = false
+
+[[example]]
+name = "bee-jslexer-demo"
+path = "examples/demo.rs"

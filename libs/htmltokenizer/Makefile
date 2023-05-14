@@ -1,4 +1,4 @@
-BEE_TOOLS_CODEGEN := ../../tools/bin/bee-tools-codegen
+BEE_TOOLS := ../../tools/bin/bee-tools
 
 .PHONY: all
 all:
@@ -20,7 +20,8 @@ update-data:
 
 src/charref/trie.rs: src/charref/trie.codegen.json src/charref/trie.rs.hbs
 	@echo 'Generating $@'...
-	@$(BEE_TOOLS_CODEGEN) --no-escape src/charref/trie.rs.hbs $< >$@
+	@$(BEE_TOOLS) codegen --no-escape src/charref/trie.rs.hbs $< | \
+	  rustfmt --emit=stdout >$@
 
 # TODO: Use JSON5 and add comments at the beginning of the file like other
 #       generated files.

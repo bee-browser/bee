@@ -39,11 +39,8 @@ CLEAN_TARGETS = $(addprefix clean-,\
 CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/htmltokenizer \
   libs/htmlparser \
+  libs/jslexer \
   libs/layout \
-)
-
-UPDATE_DEPS_TARGETS = $(addprefix update-deps-,\
-  tools \
 )
 
 COVERAGE_TEST_ENV_VARS = \
@@ -80,6 +77,7 @@ build: format codegen $(BUILD_TARGETS)
 .PHONY: test
 test: format codegen install-nextest
 	cargo nextest run --all-features
+	deno test --parallel --shuffle
 
 .PHONY: bench
 bench:
@@ -117,7 +115,8 @@ update-deps-crates:
 
 .PHONY: update-deps-deno
 update-deps-deno:
-	@git ls-files '*.js' | xargs deno run --allow-net --allow-read --allow-write https://raw.githubusercontent.com/masnagam/deno-udd/fix-issue-86/main.ts
+	@find -name '*.js' | xargs deno run --allow-net --allow-read --allow-write https://raw.githubusercontent.com/masnagam/deno-udd/fix-issue-86/main.ts
+	@ls -1 tools/bin/* | xargs deno run --allow-net --allow-read --allow-write https://raw.githubusercontent.com/masnagam/deno-udd/fix-issue-86/main.ts
 
 .PHONY: doc
 doc: format
@@ -154,10 +153,6 @@ $(CODEGEN_TARGETS):
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):
 	@make -s -C $(subst clean-,,$@) clean
-
-.PHONY: $(UPDATE_DEPS_TARGETS)
-$(UPDATE_DEPS_TARGETS):
-	@make -s -C $(subst update-deps-,,$@) update-deps
 
 $(PROJDIR)/target/coverage:
 	@mkdir -p $@

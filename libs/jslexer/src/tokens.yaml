@@ -1,0 +1,168 @@
+# Multiple goal symbols defined in the ECMA-262 specification are defined in
+# this YAML file.  Each goal symbol is defined with a list of tokens and
+# generates a separate DFA.
+
+ReservedWord: &ReservedWord
+  - AWAIT
+  - BREAK
+  - CASE
+  - CATCH
+  - CLASS
+  - CONST
+  - CONTINUE
+  - DEBUGGER
+  - DEFAULT
+  - DELETE
+  - DO
+  - ELSE
+  - ENUM
+  - EXPORT
+  - EXTENDS
+  - 'FALSE'
+  - FINALLY
+  - FOR
+  - FUNCTION
+  - IF
+  - IMPORT
+  - IN
+  - INSTANCEOF
+  - NEW
+  - 'NULL'
+  - RETURN
+  - SUPER
+  - SWITCH
+  - THIS
+  - THROW
+  - 'TRUE'
+  - TRY
+  - TYPEOF
+  - VAR
+  - VOID
+  - WHILE
+  - WITH
+  - YIELD
+  - ASYNC
+  - FROM
+  - GET
+  - META
+  - OF
+  - SET
+  - TARGET
+  - LET
+  - STATIC
+  - IMPLEMENTS
+  - INTERFACE
+  - PACKEGE
+  - PRIVATE
+  - PROTECTED
+  - PUBLIC
+
+Punctuator: &Punctuator
+  - OPTIONAL_CHAINING
+  - LBRACE
+  - LPAREN
+  - RPAREN
+  - LBRACK
+  - RBRACK
+  - DOT
+  - ELLIPSIS
+  - SEMI_COLON
+  - COMMA
+  - LT
+  - GT
+  - LTE
+  - GTE
+  - EQ
+  - NE
+  - EQ_STRICT
+  - NE_STRICT
+  - ADD
+  - SUB
+  - MUL
+  - MOD
+  - EXP
+  - INC
+  - DEC
+  - SHL
+  - SAR
+  - SHR
+  - BIT_AND
+  - BIT_OR
+  - BIT_XOR
+  - NOT
+  - BIT_NOT
+  - AND
+  - OR
+  - NULLISH
+  - CONDITIONAL
+  - COLON
+  - ASSIGN
+  - ADD_ASSIGN
+  - SUB_ASSIGN
+  - MUL_ASSIGN
+  - MOD_ASSIGN
+  - EXP_ASSIGN
+  - SHL_ASSIGN
+  - SAR_ASSIGN
+  - SHR_ASSIGN
+  - BIT_AND_ASSIGN
+  - BIT_OR_ASSIGN
+  - BIT_XOR_ASSIGN
+  - AND_ASSIGN
+  - OR_ASSIGN
+  - NULLISH_ASSIGN
+  - ARROW
+
+DivPpunctuator: &DivPunctuator
+  - DIV
+  - DIV_ASSIGN
+
+RightBracePunctuator: &RightBracePunctuator
+  - RBRACE
+
+CommonToken: &CommonToken
+  - *ReservedWord
+  - IdentifierName
+  - PrivateIdentifier
+  - *Punctuator
+  - NumericLiteral
+  - StringLiteral
+  - Template
+
+# As described in https://github.com/yaml/yaml/issues/35,
+# YAML doesn't support merging a list referred by an alias at this point.
+#
+# As a workaround, we expand a list referred by an alias inside a list element.
+# This makes a nested list but we can flatten it by using a function provided by
+# a tool or script language.  In our case, `jq flatten` is used before using a
+# token list.
+goals:
+  # For simplifying Makefile, we convert the goal symbols to snake case.
+  input_element_div:
+    - WhiteSpaceSequence
+    - LineTerminatorSequence
+    - Comment
+    - *CommonToken
+    - *DivPunctuator
+    - *RightBracePunctuator
+  input_element_reg_exp:
+    - WhiteSpaceSequence
+    - LineTerminatorSequence
+    - Comment
+    - *CommonToken
+    - *RightBracePunctuator
+    - RegularExpressionLiteral
+  input_element_reg_exp_or_template_tail:
+    - WhiteSpaceSequence
+    - LineTerminatorSequence
+    - Comment
+    - *CommonToken
+    - RegularExpressionLiteral
+    - TemplateSubstitutionTail
+  input_element_template_tail:
+    - WhiteSpaceSequence
+    - LineTerminatorSequence
+    - Comment
+    - *CommonToken
+    - *DivPunctuator
+    - TemplateSubstitutionTail

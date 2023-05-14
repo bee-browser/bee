@@ -1,0 +1,17 @@
+digraph {
+  graph [rankdir = LR];
+
+  // accept states
+  {{#each states}}
+  {{#if accept}}
+  "{{@index}}" [peripheries=2, label="{{accept.name}}"];
+  {{/if}}
+  {{/each}}
+
+  // state transition
+  {{#each states}}
+  {{#each transitions}}
+  "{{@../index}}" -> "{{this}}" [label="{{@index}}"];
+  {{/each}}
+  {{/each}}
+}
