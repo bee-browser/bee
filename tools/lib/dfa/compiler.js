@@ -1,7 +1,7 @@
 'use strict';
 
-import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
-import { assert, unreachable } from "https://deno.land/std@0.186.0/testing/asserts.ts";
+import * as log from 'https://deno.land/std@0.187.0/log/mod.ts';
+import { assert, unreachable } from "https://deno.land/std@0.187.0/testing/asserts.ts";
 import { Pattern, oneOf } from './pattern.js';
 import { UnicodeSpan, UnicodeSet, UnicodeSetsBuilder } from './unicode.js';
 

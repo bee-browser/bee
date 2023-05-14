@@ -111,7 +111,7 @@ update-deps: update-deps-crates update-deps-deno
 
 .PHONY: update-deps-crates
 update-deps-crates:
-	cargo upgrade --locked
+	cargo upgrade -i allow
 
 .PHONY: update-deps-deno
 update-deps-deno:

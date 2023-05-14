@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 bee-htmlparser = { path = "../libs/htmlparser" }
 bee-toydom = { path = "../libs/toydom" }
-clap = { version = "4.2.4", features = ["derive"] }
+clap = { version = "4.2.7", features = ["derive"] }
