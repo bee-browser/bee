@@ -7,9 +7,9 @@ import {
   assertInstanceOf,
   fail,
   unimplemented,
-} from 'https://deno.land/std@0.186.0/testing/asserts.ts';
-import * as log from 'https://deno.land/std@0.186.0/log/mod.ts';
-import * as yaml from 'https://deno.land/std@0.186.0/yaml/mod.ts';
+} from 'https://deno.land/std@0.187.0/testing/asserts.ts';
+import * as log from 'https://deno.land/std@0.187.0/log/mod.ts';
+import * as yaml from 'https://deno.land/std@0.187.0/yaml/mod.ts';
 import { snakeCase } from 'https://deno.land/x/case@2.1.1/mod.ts'
 import { UnicodeSpan, UnicodeSet, UnicodeSetsBuilder } from '../../../tools/lib/dfa/unicode.js';
 import { buildAsciiTable, buildNonAsciiList } from '../../../tools/lib/dfa/compiler.js';

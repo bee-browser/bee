@@ -9,7 +9,7 @@ publish = false
 tracing = "0.1.37"
 
 [dev-dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 clap = { version = "4.2.7", features = ["derive", "wrap_help"] }
 ctor = "0.2.0"
 tracing-subscriber = "0.3.17"

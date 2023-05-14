@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.186.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.187.0/path/mod.ts';
 // npm:puppeteer doesn't work with deno.
 // See https://github.com/denoland/deno/issues/17496
 //import puppeteer from 'npm:puppeteer@19.8.2';
