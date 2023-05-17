@@ -79,10 +79,12 @@ async function launch_puppeteer(options) {
     executablePath: options.executable || DEFAULT_EXECUTABLE,
     devtools: options.debug || false,
     dumpio: options.logging || false,
+    args: [],
   };
 
-  if (!options.sandbox) {
-    opts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
+  if (options.noSandbox) {
+    opts.args.push('--no-sandbox');
+    opts.args.push('--disable-setuid-sandbox');
   }
 
   return await puppeteer.launch(opts);
