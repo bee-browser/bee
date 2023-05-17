@@ -1,8 +1,13 @@
-use crate::cursor::SourceCursor;
-use crate::dfa::recognize;
-use crate::goals::Goal;
-use crate::tokens::Token;
-use crate::tokens::TokenKind;
+mod cursor;
+mod dfa;
+mod goals;
+mod tokens;
+
+use cursor::SourceCursor;
+use dfa::recognize;
+pub use goals::Goal;
+pub use tokens::Token;
+pub use tokens::TokenKind;
 
 pub struct Lexer<'a> {
     cursor: SourceCursor<'a>,

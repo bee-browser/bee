@@ -1,8 +1,8 @@
-# bee-jslexer
+# bee-jsparser
 
-> A JavaScript lexer compliant with ECMA-262 13th edition (ES2022)
+> A JavaScript parser compliant with ECMA-262 13th edition (ES2022)
 
-`bee-jslexer` provides an implementation of a JavaScript lexer compliant with
+`bee-jsparser` provides an implementation of a JavaScript parser compliant with
 [ECMA-262 13th edition (ES2022)](https://262.ecma-international.org/13.0/).
 
 ## Generating DFAs
@@ -16,10 +16,10 @@ make codegen
 make -B codegen
 
 # Enable debug logs.
-make codegen TRANSPILE_ARGS=-d DFAGEN_ARGS=-d
+make codegen TRANSPILE_ARGS=-d LEXER_DFAGEN_ARGS=-d
 ```
 
-See `src/Makefile` for details of the code generation steps.
+See `src/lexer/Makefile` for details of the code generation steps.
 
 ## TODO
 

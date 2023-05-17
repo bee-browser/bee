@@ -11,10 +11,10 @@ import {
 import * as log from 'https://deno.land/std@0.187.0/log/mod.ts';
 import * as yaml from 'https://deno.land/std@0.187.0/yaml/mod.ts';
 import { snakeCase } from 'https://deno.land/x/case@2.1.1/mod.ts'
-import { UnicodeSpan, UnicodeSet, UnicodeSetsBuilder } from '../../../tools/lib/dfa/unicode.js';
-import { buildAsciiTable, buildNonAsciiList } from '../../../tools/lib/dfa/compiler.js';
-import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
-import { setup } from '../../../tools/lib/log.js';
+import { UnicodeSpan, UnicodeSet, UnicodeSetsBuilder } from '../../../../tools/lib/dfa/unicode.js';
+import { buildAsciiTable, buildNonAsciiList } from '../../../../tools/lib/dfa/compiler.js';
+import { parseCommand, readAllText } from '../../../../tools/lib/cli.js';
+import { setup } from '../../../../tools/lib/log.js';
 
 const PROGNAME = 'dfagen.js';
 

@@ -39,7 +39,7 @@ CLEAN_TARGETS = $(addprefix clean-,\
 CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/htmltokenizer \
   libs/htmlparser \
-  libs/jslexer \
+  libs/jsparser \
   libs/layout \
 )
 

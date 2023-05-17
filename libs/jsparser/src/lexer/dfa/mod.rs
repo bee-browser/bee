@@ -8,9 +8,9 @@ mod input_element_reg_exp;
 mod input_element_reg_exp_or_template_tail;
 mod input_element_template_tail;
 
-use crate::cursor::SourceCursor;
-use crate::goals::Goal;
-use crate::tokens::TokenKind;
+use super::cursor::SourceCursor;
+use super::goals::Goal;
+use super::tokens::TokenKind;
 
 pub fn recognize<'a>(goal: Goal, cursor: &mut SourceCursor<'a>) -> TokenKind {
     match goal {

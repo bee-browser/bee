@@ -1,15 +1,18 @@
 # Specify `-d` if you want to see debug logs.
-TRANSPILE_ARGS ?=
-DFAGEN_ARGS ?=
+LEXER_DFAGEN_ARGS ?=
 
-BEE_TOOLS := ../../../tools/bin/bee-tools
+BEE_TOOLS := ../../../../tools/bin/bee-tools
 
 GOAL_SYMBOLS := $(shell \
   cat tokens.yaml | \
   bee-tools y2j | jq -r '.goals | keys | join(" ")' \
 )
 
-DFA_FILES := dfa/mod.rs $(patsubst %,dfa/%.rs,$(GOAL_SYMBOLS))
+CODEGEN_TARGETS := \
+  goals.rs \
+  tokens.rs \
+  dfa/mod.rs \
+  $(patsubst %,dfa/%.rs,$(GOAL_SYMBOLS))
 
 # Lazy evaluation.
 # The following variable will be evaluated in substitution time.
@@ -25,52 +28,13 @@ LIST_TOKENS = \
 all: codegen
 
 .PHONY: codegen
-codegen: $(DFA_FILES) goals.rs tokens.rs
+codegen: $(CODEGEN_TARGETS)
 
 # Usually, we define targets in descending order in the dependency tree order.
 # However, we define targets here in the reverse order in order to explain the
 # code generation steps.
 
-# 1. Download an ECMA-262 specification
-.PRECIOUS: es2022.spec.html
-es2022.spec.html:
-	@echo 'Downloading $(abspath $@)...'
-	@curl https://raw.githubusercontent.com/tc39/ecma262/es2022/spec.html -sG >$@
-
-# 2. Extract the lexical grammar from the specification
-#
-# The `xtask` crate will be built and executed.  Texts contained in special tags
-# will be output to STDOUT.
-#
-# We learned this approach from mozilla-spidermonkey/jsparagus.
-# See js_parser/extract_es_grammar.py.
-es2022.lex.txt: es2022.spec.html
-	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -q --package xtask esgrammar >$@
-
-# 3. Transpile the extracted lexical grammar into an equivalent but more
-#    computer-friendly data
-#
-# The ECMA-262 specification defines the lexical grammar with CFG and uses
-# special notations like below:
-#
-#   DecimalDigits[Sep] ::
-#     DecimalDigit
-#     DecimalDigits[?Sep] DecimalDigit
-#     [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
-#
-# Those special notations are very useful for writing the specification but a
-# little bit complicated as an input for our code generator.
-#
-# `transpile.js` interprets the lexical grammar and translates production rules
-# including special notations into equivalent production rules.  `transpile.js`
-# adds some production rules for convenience in further processing.
-.PRECIOUS: es2022.lex.yaml
-es2022.lex.yaml: es2022.lex.txt transpile.js
-	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run transpile.js $(TRANSPILE_ARGS) >$@
-
-# 4. Build a minimized DFA for each goal symbol defined in the lexical grammar
+# 1. Build a minimized DFA for each goal symbol defined in the lexical grammar
 #
 # Many existing lexer generators use regular expressions in order to define
 # tokens.  However, the ECMA-262 specification uses CFG.  In general, CFG can
@@ -92,14 +56,15 @@ es2022.lex.yaml: es2022.lex.txt transpile.js
 .PRECIOUS: dfa/%.json
 dfa/%.json: es2022.lex.yaml tokens.yaml dfagen.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run dfagen.js $(DFAGEN_ARGS) $(shell $(LIST_TOKENS)) | jq '.' >$@
+	@cat $< | deno run dfagen.js $(LEXER_DFAGEN_ARGS) $(shell $(LIST_TOKENS)) | \
+	  jq '.' >$@
 
-# 5. Generate code for each DFA
+# 2. Generate code for each DFA
 dfa/%.rs: dfa/%.json dfa/dfa.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@$(BEE_TOOLS) codegen dfa/dfa.rs.hbs $< | rustfmt --emit=stdout >$@
 
-# 6. Generate a wrapper function
+# 3. Generate a wrapper function
 #
 # A wrapper function that selects a DFA according to the specified goal symbol.
 # Goal symbols are defined in `tokens.yaml` and extracted from it by using `jq`.
@@ -108,13 +73,13 @@ dfa/mod.rs: dfa/mod.rs.hbs
 	@cat tokens.yaml | $(BEE_TOOLS) y2j | jq -r '.goals | keys' | \
 	  $(BEE_TOOLS) codegen --input-stdin $< | rustfmt --emit=stdout >$@
 
-# 7. Generate an enum type for goal symbols
+# 4. Generate an enum type for goal symbols
 goals.rs: goals.rs.hbs tokens.yaml
 	@echo 'Generating $(abspath $@)...'
 	@cat tokens.yaml | $(BEE_TOOLS) y2j | jq -r '.goals | keys' | \
 	  $(BEE_TOOLS) codegen --input-stdin $< | rustfmt --emit=stdout >$@
 
-# 8. Collect tokens from tokens.yaml
+# 5. Collect tokens from tokens.yaml
 #
 # We collect union of token used in each goal symbols.  The `unique` filter
 # doesn't preserve the definition order of tokens, but it's OK because
@@ -124,7 +89,7 @@ tokens.json: tokens.yaml
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | $(BEE_TOOLS) y2j | jq '[.goals[]] | flatten | unique' >$@
 
-# 9. Generate an enum type for tokens.
+# 6. Generate an enum type for tokens.
 tokens.rs: tokens.json tokens.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@$(BEE_TOOLS) codegen tokens.rs.hbs $< | rustfmt --emit=stdout >$@
