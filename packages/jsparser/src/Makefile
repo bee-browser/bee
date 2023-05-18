@@ -36,7 +36,7 @@ es2022.spec.html: FORCE
 .PRECIOUS: lexer/es2022.lex.txt
 lexer/es2022.lex.txt: es2022.spec.html
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -q --package xtask esgrammar >$@
+	@cat $< | cargo run -q --package bee-esgrammar extract lexical-grammar >$@
 
 # 3. Transpile the extracted lexical grammar into an equivalent but more
 #    computer-friendly data

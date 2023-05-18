@@ -1,4 +1,4 @@
-mod esgrammar;
+mod extract;
 
 use anyhow::Result;
 use clap::Parser;
@@ -13,14 +13,14 @@ struct Opt {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Extracts grammar from an ECMA specification.
-    Esgrammar(esgrammar::Opt),
+    /// Extracts grammar from an ECMA specification written in HTML.
+    Extract(extract::Opt),
 }
 
 fn main() -> Result<()> {
     let opt = Opt::parse();
     match opt.command {
-        Some(Command::Esgrammar(opt)) => esgrammar::main(opt),
+        Some(Command::Extract(opt)) => extract::main(opt),
         None => Ok(()),
     }
 }

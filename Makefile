@@ -40,9 +40,9 @@ CLEAN_TARGETS = $(addprefix clean-,\
 # bee-tools-dom-scrape doesn't work with deno/1.33.0 + Chrome/113.
 # puppeteer.launch() fails due to "NetworkError: failed to connect to WebSocket: Invalid status code".
 CODEGEN_TARGETS = $(addprefix codegen-,\
-  libs/htmltokenizer \
-  libs/htmlparser \
-  libs/jsparser \
+  packages/htmltokenizer \
+  packages/htmlparser \
+  packages/jsparser \
 )
 
 COVERAGE_TEST_ENV_VARS = \

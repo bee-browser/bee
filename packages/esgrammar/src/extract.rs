@@ -6,16 +6,27 @@ use bee_toydom::delegate;
 use bee_toydom::ToyBuilder;
 use bee_toydom::ToyNode;
 use clap::Args;
+use clap::ValueEnum;
 
 #[derive(Args)]
-pub struct Opt {}
+pub struct Opt {
+    /// A type of grammar to extract.
+    #[arg(value_enum)]
+    grammar: GrammarKind,
+}
 
-pub fn main(_opt: Opt) -> Result<()> {
+#[derive(Clone, ValueEnum)]
+enum GrammarKind {
+    LexicalGrammar,
+    SyntacticGrammar,
+}
+
+pub fn main(opt: Opt) -> Result<()> {
     let mut html = String::new();
     std::io::stdin().read_to_string(&mut html)?;
     let data: Vec<u16> = html.encode_utf16().collect();
 
-    let mut parser = Parser::new(GrammarPrinter::new());
+    let mut parser = Parser::new(GrammarPrinter::new(opt.grammar));
     parser.feed_data(&data);
     parser.feed_end();
     parser.parse();
@@ -24,14 +35,17 @@ pub fn main(_opt: Opt) -> Result<()> {
 
 struct GrammarPrinter {
     inner: ToyBuilder,
-    sec_id: &'static str,
+    sec_ids: &'static [&'static str],
 }
 
 impl GrammarPrinter {
-    fn new() -> Self {
+    fn new(grammar: GrammarKind) -> Self {
         GrammarPrinter {
             inner: ToyBuilder::new(),
-            sec_id: "sec-ecmascript-language-lexical-grammar",
+            sec_ids: match grammar {
+                GrammarKind::LexicalGrammar => &["sec-ecmascript-language-lexical-grammar"],
+                GrammarKind::SyntacticGrammar => &[],
+            },
         }
     }
 
@@ -57,7 +71,7 @@ impl GrammarPrinter {
                         Some(id) => id,
                         None => return,
                     };
-                    if id != self.sec_id {
+                    if !self.sec_ids.contains(&id.as_str()) {
                         return;
                     }
                     for &child_id in child_nodes.iter() {

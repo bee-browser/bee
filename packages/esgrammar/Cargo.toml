@@ -1,5 +1,5 @@
 [package]
-name = "xtask"
+name = "bee-esgrammar"
 version = "0.0.0"
 edition = "2021"
 authors = ["BEE project contributors"]
@@ -7,6 +7,6 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.71"
-bee-htmlparser = { path = "../libs/htmlparser" }
-bee-toydom = { path = "../libs/toydom" }
+bee-htmlparser = { path = "../htmlparser" }
+bee-toydom = { path = "../toydom" }
 clap = { version = "4.2.7", features = ["derive"] }
