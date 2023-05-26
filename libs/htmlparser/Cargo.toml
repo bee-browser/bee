@@ -16,7 +16,7 @@ unicase = "2.6.0"
 [dev-dependencies]
 anyhow = "1.0.71"
 bee-toydom = { path = "../toydom" }
-criterion = "0.4.0"
+criterion = "0.5.1"
 ctor = "0.2.0"
 tracing-subscriber = "0.3.17"
 
