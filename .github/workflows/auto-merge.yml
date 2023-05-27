@@ -16,12 +16,11 @@ jobs:
   auto-merge:
     runs-on: ubuntu-latest
     if: |
+      github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/github-script@v6
         with:
-          # Use PAT in order to invoke other workflows.
-          github-token: ${{ secrets.BOT_GITHUB_TOKEN }}
           script: |
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
