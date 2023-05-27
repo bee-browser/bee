@@ -4,6 +4,7 @@ import {
   assert,
   assertEquals,
   assertExists,
+  unreachable,
 } from 'https://deno.land/std@0.187.0/testing/asserts.ts';
 import * as log from 'https://deno.land/std@0.187.0/log/mod.ts';
 import * as yaml from 'https://deno.land/std@0.187.0/yaml/mod.ts';
@@ -22,6 +23,9 @@ Usage:
 Options:
   -d, --debug
     Enable debug logs.
+
+  -g, --grammar-type=<grammar-type>
+    The type of grammar to transpile.
 `.trim();
 
 const HEADER = `
@@ -36,24 +40,56 @@ async function run(options) {
   } else {
     setup(PROGNAME, 'INFO');
   }
-  const esgrammar = await readAllText(Deno.stdin);
-  let rules = readRules(esgrammar);
-  rules = rewriteReservedWord(rules);
-  rules = rewritePunctuator(rules);
-  rules = expandOptionals(rules);
-  rules = expandParameterizedRules(rules);
-  rules = translateRules(rules);
-  rules = mergeCharClasses(rules);
-  rules = simplify(rules);
+  const transpiler = new Transpiler(options);
+  const rules = await transpiler.transpile();
   printYaml(rules.reduce((grammar, rule) => {
-    grammar[rule.name] = {
-      type: rule.type,
-      data: rule.data,
-    };
+    grammar[rule.name] = { type: rule.type };
+    if (rule.data !== undefined) {
+      grammar[rule.name].data = rule.data;
+    }
     return grammar;
-  }, {
-    SourceCharacter: { type: 'any' },
-  }));
+  }, {}));
+}
+
+class Transpiler {
+  constructor(options) {
+    this.options_ = options;
+    switch (options.grammarType) {
+    case 'lexical':
+      this.passes_ = [
+        addLexicalRules,
+        rewriteReservedWord,
+        rewritePunctuator,
+        expandOptionals,
+        expandParameterizedRules,
+        translateRules,
+        addSourceCharacter,
+        mergeUnicodeSets,
+        simplify,
+      ];
+      break;
+    case 'syntactic':
+      this.passes_ = [
+        rewriteIdentifierRule,
+        expandOptionals,
+        expandParameterizedRules,
+        translateRules,
+        simplify,
+      ];
+      break;
+    default:
+      unreachable();
+    }
+  }
+
+  async transpile() {
+    const esgrammar = await readAllText(Deno.stdin);
+    let rules = readRules(esgrammar);
+    for (const pass of this.passes_) {
+      rules = pass(rules, this.options_);
+    }
+    return rules;
+  }
 }
 
 function readRules(esgrammar) {
@@ -71,9 +107,9 @@ function readRules(esgrammar) {
       if (line.trim().length === 0) {
         continue;
       }
-      const parts = line.trim().split(/\s+/u);
+      const parts = line.trim().split(/\s*[:]+\s*/u);
       name = parts.shift();
-      if (parts[1] === 'one' && parts[2] === 'of') {
+      if (parts[0] !== undefined && parts[0].startsWith('one of')) {
         oneOf = true;
       } else {
         oneOf = false;
@@ -81,7 +117,7 @@ function readRules(esgrammar) {
       values = [];
       state = STATE_MEMBER;
     } else if (state === STATE_MEMBER) {
-      const trimed = line.trim();
+      let trimed = line.trim();
       if (trimed.length === 0) {
         if (name === 'CodePoint') {
           // Special case: CodePoint
@@ -115,11 +151,21 @@ function readRules(esgrammar) {
       if (oneOf) {
         values = values.concat(trimed.split(/\s+/u));
       } else {
+        // A production rule in the syntactic grammar ends with '#<name>' which
+        // may be used for generating an anchor to it.  Remove '#<name>'.
+        const pos = trimed.search(/#\w+$/);
+        if (pos !== -1) {
+          trimed = trimed.slice(0, pos).trim();
+        }
         values.push(trimed);
       }
     }
   }
 
+  return rules;
+}
+
+function addLexicalRules(rules) {
   // Additional rules.
   rules.push({
     name: 'NonZeroHexDigit',
@@ -161,7 +207,68 @@ function rewriteReservedWord(rules) {
   return rules;
 }
 
+const PUNCTUATORS = {
+  '?.': 'OPTIONAL_CHAINING',
+  '{': 'LBRACE',
+  '}': 'RBRACE',
+  '[': 'LBRACK',
+  ']': 'RBRACK',
+  '(': 'LPAREN',
+  ')': 'RPAREN',
+  '.': 'DOT',
+  '...': 'ELLIPSIS',
+  ';': 'SEMI_COLON',
+  ',': 'COMMA',
+  '<': 'LT',
+  '>': 'GT',
+  '<=': 'LTE',
+  '>=': 'GTE',
+  '==': 'EQ',
+  '!=': 'NE',
+  '===': 'EQ_STRICT',
+  '!==': 'NE_STRICT',
+  '+': 'ADD',
+  '-': 'SUB',
+  '*': 'MUL',
+  '/': 'DIV',
+  '%': 'MOD',
+  '**': 'EXP',
+  '++': 'INC',
+  '--': 'DEC',
+  '<<': 'SHL',
+  '>>': 'SAR',
+  '>>>': 'SHR',
+  '&': 'BIT_AND',
+  '|': 'BIT_OR',
+  '^': 'BIT_XOR',
+  '!': 'NOT',
+  '~': 'BIT_NOT',
+  '&&': 'AND',
+  '||': 'OR',
+  '??': 'NULLISH',
+  '?': 'CONDITIONAL',
+  ':': 'COLON',
+  '=': 'ASSIGN',
+  '+=': 'ADD_ASSIGN',
+  '-=': 'SUB_ASSIGN',
+  '*=': 'MUL_ASSIGN',
+  '/=': 'DIV_ASSIGN',
+  '%=': 'MOD_ASSIGN',
+  '**=': 'EXP_ASSIGN',
+  '<<=': 'SHL_ASSIGN',
+  '>>=': 'SAR_ASSIGN',
+  '>>>=': 'SHR_ASSIGN',
+  '&=': 'BIT_AND_ASSIGN',
+  '|=': 'BIT_OR_ASSIGN',
+  '^=': 'BIT_XOR_ASSIGN',
+  '&&=': 'AND_ASSIGN',
+  '||=': 'OR_ASSIGN',
+  '??=': 'NULLISH_ASSIGN',
+  '=>': 'ARROW',
+};
+
 function rewritePunctuator(rules) {
+  log.debug('Rewriting Punctuators...');
   const optionalChaining = rules.find((rule) => rule.name === 'OptionalChainingPunctuator');
   rules.push({
     name: 'OPTIONAL_CHAINING',
@@ -170,64 +277,6 @@ function rewritePunctuator(rules) {
   optionalChaining.values = ['OPTIONAL_CHAINING'];
 
   const otherPunctuator = rules.find((rule) => rule.name === 'OtherPunctuator');
-  const PUNCTUATORS = {
-    '{': 'LBRACE',
-    '}': 'RBRACE',
-    '[': 'LBRACK',
-    ']': 'RBRACK',
-    '(': 'LPAREN',
-    ')': 'RPAREN',
-    '.': 'DOT',
-    '...': 'ELLIPSIS',
-    ';': 'SEMI_COLON',
-    ',': 'COMMA',
-    '<': 'LT',
-    '>': 'GT',
-    '<=': 'LTE',
-    '>=': 'GTE',
-    '==': 'EQ',
-    '!=': 'NE',
-    '===': 'EQ_STRICT',
-    '!==': 'NE_STRICT',
-    '+': 'ADD',
-    '-': 'SUB',
-    '*': 'MUL',
-    '/': 'DIV',
-    '%': 'MOD',
-    '**': 'EXP',
-    '++': 'INC',
-    '--': 'DEC',
-    '<<': 'SHL',
-    '>>': 'SAR',
-    '>>>': 'SHR',
-    '&': 'BIT_AND',
-    '|': 'BIT_OR',
-    '^': 'BIT_XOR',
-    '!': 'NOT',
-    '~': 'BIT_NOT',
-    '&&': 'AND',
-    '||': 'OR',
-    '??': 'NULLISH',
-    '?': 'CONDITIONAL',
-    ':': 'COLON',
-    '=': 'ASSIGN',
-    '+=': 'ADD_ASSIGN',
-    '-=': 'SUB_ASSIGN',
-    '*=': 'MUL_ASSIGN',
-    '/=': 'DIV_ASSIGN',
-    '%=': 'MOD_ASSIGN',
-    '**=': 'EXP_ASSIGN',
-    '<<=': 'SHL_ASSIGN',
-    '>>=': 'SAR_ASSIGN',
-    '>>>=': 'SHR_ASSIGN',
-    '&=': 'BIT_AND_ASSIGN',
-    '|=': 'BIT_OR_ASSIGN',
-    '^=': 'BIT_XOR_ASSIGN',
-    '&&=': 'AND_ASSIGN',
-    '||=': 'OR_ASSIGN',
-    '??=': 'NULLISH_ASSIGN',
-    '=>': 'ARROW',
-  };
   otherPunctuator.values.forEach((value) => {
     rules.push({
       name: PUNCTUATORS[value.slice(1, -1)],
@@ -263,6 +312,16 @@ function rewritePunctuator(rules) {
   return rules;
 }
 
+function rewriteIdentifierRule(rules) {
+  log.debug('Rewriting Identifier rule...');
+  const rule = rules.find((rule) => rule.name === 'Identifier');
+  assert(rule !== undefined);
+  assert(rule.values[0] === 'IdentifierName but not ReservedWord');
+  // A generated lexer recognizes the reserved words as separate tokens.
+  rule.values = ['IdentifierName'];
+  return rules;
+}
+
 function expandOptionals(rules) {
   log.debug('Expanding optionals...');
   const expanded = [];
@@ -270,7 +329,11 @@ function expandOptionals(rules) {
     const values = [];
     let hasOptionals = false;
     for (const value of rule.values) {
-      const parts = value.split(/\s+/u);
+      // A parameter list contains spaces like below:
+      //
+      //  AssignmentRestProperty[?Yield, ?Await]?
+      //
+      const parts = value.split(/(?<!,)\s+/u);
       let patterns = [[]];
       for (let part of parts) {
         if (part.endsWith('?')) {
@@ -283,7 +346,13 @@ function expandOptionals(rules) {
           patterns.forEach((pattern) => pattern.push(part));
         }
       }
-      patterns.forEach((pattern) => values.push(pattern.join(' ')));
+      patterns.forEach((pattern) => {
+        if (pattern.length === 0) {
+          values.push('[empty]');
+        } else {
+          values.push(pattern.join(' '));
+        }
+      });
     }
     if (hasOptionals) {
       log.debug(`  ${rule.name}`);
@@ -303,74 +372,132 @@ function expandParameterizedRules(rules) {
   for (const rule of rules) {
     if (rule.name.endsWith(']')) {
       log.debug(`  ${rule.name}`);
-      // TODO: multiple parameters.
-      const [name, param] = rule.name.split(/[\]\[]/u);
-      // Append name without param
-      const valuesWithoutParam = [];
-      for (let value of rule.values) {
-        if (value.startsWith(`[+${param}]`)) {
-          continue;
+      const [name, paramList] = rule.name.split(/[\[\]]/u);
+      const params = paramList.split(', ');
+      const combinations = buildParameterCombinations(params);
+      for (const combination of combinations) {
+        log.debug(`    combination:  ${JSON.stringify(combination)}`);
+        const values = [];
+        for (let value of rule.values) {
+          let valueToBeExpanded;
+          if (value.startsWith('[+')) {
+            const pos = value.indexOf(']');
+            assert(pos !== -1);
+            const param = value.slice(2, pos);
+            const remaining = value.slice(pos + 1).trim();
+            if (!combination.includes(param)) {
+              log.debug(`      ${value} ->`);
+              continue;
+            }
+            valueToBeExpanded = remaining;
+          } else if (value.startsWith('[~')) {
+            const pos = value.indexOf(']');
+            assert(pos !== -1);
+            const param = value.slice(2, pos);
+            const remaining = value.slice(pos + 1).trim();
+            if (combination.includes(param)) {
+              log.debug(`      ${value} ->`);
+              continue;
+            }
+            valueToBeExpanded = remaining;
+          } else {
+            valueToBeExpanded = value;
+          }
+          const expandedValue = expandParameterizedValue(valueToBeExpanded, combination);
+          log.debug(`      ${value}`);
+          log.debug(`       -> ${expandedValue}`);
+          values.push(expandedValue);
         }
-        if (value.startsWith(`[~${param}]`)) {
-          value = value.slice(param.length + 3).trim();
+        if (values.length > 0) {
+          expanded.push({
+            name: expandRuleName(name, combination),
+            values,
+          });
         }
-        valuesWithoutParam.push(
-          value
-            .replaceAll(`[?${param}]`, '')
-            .replaceAll(`[~${param}]`, '')
-            .replaceAll(`[+${param}]`, `_${param}`));
       }
-      expanded.push({
-        name,
-        values: valuesWithoutParam,
-      });
-      // Append name with param.
-      const valuesWithParam = [];
-      for (let value of rule.values) {
-        if (value.startsWith(`[~${param}]`)) {
-          continue;
-        }
-        if (value.startsWith(`[+${param}]`)) {
-          value = value.slice(param.length + 3).trim();
-        }
-        valuesWithParam.push(
-          value
-            .replaceAll(`[?${param}]`, `_${param}`)
-            .replaceAll(`[~${param}]`, '')
-            .replaceAll(`[+${param}]`, `_${param}`));
-      }
-      expanded.push({
-        name: `${name}_${param}`,
-        values: valuesWithParam,
-      });
     } else {
       expanded.push({
         name: rule.name,
-        values: rule.values.map((value) => {
-          value = value.replaceAll(/\[\+(\w+)\]/g, '_$1');
-          value = value.replaceAll(/\[~\w+\]/g, '');
-          return value;
-        }),
+        values: rule.values.map(expandParameterizedValue),
       });
     }
   }
   return expanded;
 }
 
-function translateRules(rules) {
+function buildParameterCombinations(params) {
+  assert(params.length > 0);
+  const param = params[0];
+  if (params.length === 1) {
+    return [[], [param]];
+  }
+  const remaining = params.slice(1);
+  const combinations = buildParameterCombinations(remaining);
+  return combinations.concat(combinations.map((params) => [param].concat(params)));
+}
+
+function expandRuleName(name, combination) {
+  return [name, ...combination].join('_');
+}
+
+function expandParameterizedValue(value, combination) {
+  let expanded = '';
+  for (;;) {
+    let pos = value.search(/\[[?+~]/);
+    if (pos === -1) {
+      expanded = expanded + value;
+      break;
+    }
+    expanded = expanded + value.slice(0, pos);
+    value = value.slice(pos);
+    pos = value.indexOf(']');
+    assert(pos !== -1);
+    const patterns = value
+          .slice(1, pos)  // remove '[' and ']'
+          .split(', ');
+    const suffix = expandSuffixPatterns(patterns, combination);
+    if (suffix.length > 0) {
+      expanded = expanded + '_' + suffix;
+    }
+    value = value.slice(pos + 1);  // remove '[...]'
+  }
+  return expanded;
+}
+
+function expandSuffixPatterns(patterns, combination) {
+  let params = [];
+  for (const pattern of patterns) {
+    if (pattern.startsWith('~')) {
+      continue;
+    }
+    if (pattern.startsWith('+')) {
+      params.push(pattern.slice(1))
+      continue;
+    }
+    if (pattern.startsWith('?')) {
+      const param = pattern.slice(1);
+      if (combination.includes(param)) {
+        params.push(param);
+      }
+    }
+  }
+  return params.join('_');
+}
+
+function translateRules(rules, options) {
   const grammar = [];
   for (const rule of rules) {
     log.debug(`Translating ${rule.name}...`);
     grammar.push({
       type: 'one-of',
       name: rule.name,
-      data: rule.values.map((value) => translateProduction(value)),
+      data: rule.values.map((value) => translateProduction(value, options)),
     });
   }
   return grammar;
 }
 
-function translateProduction(production) {
+function translateProduction(production, options) {
   log.debug(`  ${production}`);
 
   // Special case: ID_Start
@@ -447,28 +574,47 @@ function translateProduction(production) {
     };
   }
 
+  // Special case: [no LineTerminator here]
+  production = production.replaceAll(
+    '[no LineTerminator here]', '[no-line-terminator]');
+
   let seq = [];
   const items = production.split(/\s+/u);
   while (items.length > 0) {
     let item = items.shift();
     if (item.startsWith('`')) {
       const str = item.slice(1, -1);
-      // We assume that `str` contains only ASCII characters.
-      if (str.length === 1) {
-        seq.push({
-          type: 'unicode-set',
-          data: [{ type: 'char', data: str }],
-        });
+      if (options.grammarType === 'lexical') {
+        // We assume that `str` contains only ASCII characters.
+        if (str.length === 1) {
+          seq.push({
+            type: 'unicode-set',
+            data: [{ type: 'char', data: str }],
+          });
+        } else {
+          seq.push({ type: 'word', data: str });
+        }
       } else {
-        seq.push({ type: 'word', data: str });
+        assertEquals(options.grammarType, 'syntactic');
+        let token = PUNCTUATORS[str];
+        if (token === undefined) {
+          token = str.toUpperCase();
+        }
+        seq.push({
+          type: 'token',
+          data: token,
+        });
       }
     } else if (item.startsWith('<')) {
+      assertEquals(options.grammarType, 'lexical');
       seq.push({
         type: 'unicode-set',
         data: [{ type: 'built-in', data: item.slice(1, -1) }],
       });
     } else if (item === '[lookahead') {
-      seq = seq.concat(translateLookahead(items));
+      seq = seq.concat(translateLookahead(items, options));
+    } else if (item === '[no-line-terminator]') {
+      seq.push({ type: 'no-line-terminator' });
     } else if (item === '[empty]') {
       seq.push({ type: 'empty' });
     } else {
@@ -482,65 +628,92 @@ function translateProduction(production) {
   return { type: 'sequence', data: seq };
 }
 
-function translateLookahead(items) {
+function translateLookahead(items, options) {
   let op = items.shift();
   let target = items.shift();
-  let value;
+  let values;
   if (target === '{') {
-    value = [];
+    values = [];
+    let seq = [];
     target = items.shift();
-    while (target !== '}]') {
-      if (target.endsWith(',')) {
-        target = target.slice(0, -1);
+    for (;;) {
+      if (target === '}]') {
+        if (seq.length > 0) {
+          values.push(seq);
+        }
+        break;
       }
-      value.push(target);
+      if (target.endsWith(',')) {
+        seq.push(target.slice(0, -1));
+        values.push(seq);
+        seq = [];
+      } else {
+        seq.push(target);
+      }
       target = items.shift();
     }
   } else {
-    value = target.slice(0, -1);  // remove the last ']'
+    const seq = [];
+    for (;;) {
+      if (target.endsWith(']')) {
+        seq.push(target.slice(0, -1));  // remove the last ']'
+        break;
+      } else {
+        seq.push(target);
+      }
+      target = items.shift();
+    }
+    values = [seq];
   }
   switch (op) {
   case '=':
-    return translateLookaheadSet([value]);
+    return translateLookaheadSet(values, false, options);
   case '!=':
-    return translateLookaheadSet([value], true/* negate */);
+    return translateLookaheadSet(values, true/* negate */, options);
   case '\u2208':
-    return translateLookaheadSet(value);
+    return translateLookaheadSet(values, false, options);
   case '\u2209':
-    return translateLookaheadSet(value, true/* negate */);
+    return translateLookaheadSet(values, true/* negate */, options);
   default:
     log.error(`translateLookahead: Unknown op: U+${op.codePointAt(0).toString(16)}`);
     Deno.exit(1);
   }
 }
 
-function translateLookaheadSet(values, negate = false) {
+function translateLookaheadSet(values, negate, options) {
   const set = [];
-  if (Array.isArray(values)) {
-    for (let value of values) {
+  for (let seq of values) {
+    const data = seq.map((value) => {
       if (value.startsWith('`')) {
-        set.push({
-          type: 'char',
-          data: value.slice(1, -1),
-        });
+        if (options.grammarType === 'lexical') {
+          return { type: 'char', data: value.slice(1, -1) };
+        } else {
+          assertEquals(options.grammarType, 'syntactic');
+          const str = value.slice(1, -1);
+          let token = PUNCTUATORS[str];
+          if (token === undefined) {
+            token = str.toUpperCase();
+          }
+          return  { type: 'token', data: token };
+        }
       } else if (value.startsWith('<')) {
-        set.push({
-          type: 'built-in',
-          data: value.slice(1, -1),
-        });
+        assertEquals(options.grammarType, 'lexical');
+        return { type: 'built-in', data: value.slice(1, -1) };
+      } else if (value === '[no-line-terminator]') {
+        assertEquals(options.grammarType, 'syntactic');
+        return { type: 'no-line-terminator' };
       } else {
-        set.push({
-          type: 'non-terminal',
-          data: value,
-        });
+        assertEquals(options.grammarType, 'lexical');
+        return { type: 'non-terminal', data: value };
       }
-    }
-  } else {
-    set.push({
-      type: 'non-terminal',
-      data: values,
     });
+    if (data.length === 1) {
+      set.push(data[0]);
+    } else {
+      set.push({ type: 'sequence', data });
+    }
   }
+  log.debug(JSON.stringify(set));
   return {
     type: 'lookahead',
     data: set,
@@ -548,11 +721,22 @@ function translateLookaheadSet(values, negate = false) {
   };
 }
 
-function mergeCharClasses(rules) {
+function addSourceCharacter(rules) {
+  log.debug(`Adding SourceCharacter...`);
+  return [
+    {
+      name: 'SourceCharacter',
+      type: 'any',
+    },
+    ...rules
+  ];
+}
+
+function mergeUnicodeSets(rules) {
   for (const rule of rules) {
     if (rule.type === 'one-of' &&
         rule.data.every((item) => item.type === 'unicode-set')) {
-      log.debug(`Merging character classes in ${rule.name}...`);
+      log.debug(`Merging unicode sets in ${rule.name}...`);
       let data = rule.data.reduce((data, item) => data.concat(item.data), []);
       rule.type = 'unicode-set';
       rule.data = data;
@@ -566,7 +750,9 @@ function simplify(rules) {
     if (rule.type === 'one-of' && rule.data.length === 1) {
       log.debug(`Simplify ${rule.name}...`);
       rule.type = rule.data[0].type;
-      rule.data = rule.data[0].data;
+      if (rule.data[0] !== undefined) {
+        rule.data = rule.data[0].data;
+      }
     }
   }
   return rules;
@@ -578,8 +764,36 @@ function printYaml(rules) {
   console.log(yaml.stringify(rules).trim());
 }
 
-const { options, args } = await parseCommand({
-  doc: DOC,
+if (import.meta.main) {
+  const { options, args } = await parseCommand({
+    doc: DOC,
+  });
+  Deno.exit(await run(options));
+}
+
+// tests
+
+setup(PROGNAME, 'DEBUG');
+
+Deno.test('expandRuleName', () => {
+  assertEquals(expandRuleName('R', []), 'R');
+  assertEquals(expandRuleName('R', ['A']), 'R_A');
+  assertEquals(expandRuleName('R', ['A', 'B']), 'R_A_B');
 });
 
-Deno.exit(await run(options));
+Deno.test('expandSuffixPatterns', () => {
+  assertEquals(expandSuffixPatterns(['+A', '~B', '?C'], []), 'A');
+  assertEquals(expandSuffixPatterns(['+A', '~B', '?C'], ['C']), 'A_C');
+});
+
+Deno.test('expandParameterizedValue', () => {
+  const VALUE = 'R1[+A] R2[~B] R3[?C] R4[+A, ~B, ?C] R5'
+  assertEquals(
+    expandParameterizedValue(VALUE, []),
+    'R1_A R2 R3 R4_A R5'
+  );
+  assertEquals(
+    expandParameterizedValue(VALUE, ['C']),
+    'R1_A R2 R3_C R4_A_C R5'
+  );
+});

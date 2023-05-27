@@ -43,8 +43,15 @@ impl GrammarPrinter {
         GrammarPrinter {
             inner: ToyBuilder::new(),
             sec_ids: match grammar {
-                GrammarKind::LexicalGrammar => &["sec-ecmascript-language-lexical-grammar"],
-                GrammarKind::SyntacticGrammar => &[],
+                GrammarKind::LexicalGrammar => &[
+                    "sec-ecmascript-language-lexical-grammar",
+                ],
+                GrammarKind::SyntacticGrammar => &[
+                    "sec-ecmascript-language-expressions",
+                    "sec-ecmascript-language-statements-and-declarations",
+                    "sec-ecmascript-language-functions-and-classes",
+                    "sec-ecmascript-language-scripts-and-modules",
+                ],
             },
         }
     }

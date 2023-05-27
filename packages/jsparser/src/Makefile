@@ -4,7 +4,8 @@ TRANSPILE_ARGS ?=
 BEE_TOOLS := ../../../tools/bin/bee-tools
 
 CODEGEN_TARGETS := \
-  lexer/es2022.lex.yaml
+  lexer/es2022.lex.yaml \
+  parser/es2022.syn.yaml
 
 # targets
 
@@ -20,29 +21,36 @@ codegen: $(CODEGEN_TARGETS)
 # code generation steps.
 
 # 1. Download an ECMA-262 specification written in HTML.
+
 .PRECIOUS: es2022.spec.html
 es2022.spec.html: FORCE
 	@echo 'Updating $(abspath $@)...'
 	@curl https://raw.githubusercontent.com/tc39/ecma262/es2022/spec.html -sG | \
 	  $(BEE_TOOLS) update-file $@
 
-# 2. Extract the lexical grammar from the specification
+# 2. Extract the lexical and syntactic grammars from the specification
 #
-# The `xtask` crate will be built and executed.  Texts contained in special tags
-# will be output to STDOUT.
+# The `bee-esgrammar` crate will be built and executed.  Texts contained in
+# special tags will be output to STDOUT.
 #
 # We learned this approach from mozilla-spidermonkey/jsparagus.
 # See js_parser/extract_es_grammar.py.
+
 .PRECIOUS: lexer/es2022.lex.txt
 lexer/es2022.lex.txt: es2022.spec.html
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | cargo run -q --package bee-esgrammar extract lexical-grammar >$@
 
-# 3. Transpile the extracted lexical grammar into an equivalent but more
+.PRECIOUS: parser/es2022.syn.txt
+parser/es2022.syn.txt: es2022.spec.html
+	@echo 'Generating $(abspath $@)...'
+	@cat $< | cargo run -q --package bee-esgrammar extract syntactic-grammar >$@
+
+# 3. Transpile the extracted grammars into an equivalent but more
 #    computer-friendly data
 #
-# The ECMA-262 specification defines the lexical grammar with CFG and uses
-# special notations like below:
+# The ECMA-262 specification defines the grammar with CFG and uses special
+# notations like below:
 #
 #   DecimalDigits[Sep] ::
 #     DecimalDigit
@@ -52,13 +60,19 @@ lexer/es2022.lex.txt: es2022.spec.html
 # Those special notations are very useful for writing the specification but a
 # little bit complicated as an input for our code generator.
 #
-# `transpile.js` interprets the lexical grammar and translates production rules
-# including special notations into equivalent production rules.  `transpile.js`
-# adds some production rules for convenience in further processing.
+# `transpile.js` interprets a grammar and translates production rules including
+# special notations into equivalent production rules.  `transpile.js` adds some
+# production rules for convenience in further processing.
+
 .PRECIOUS: lexer/es2022.lex.yaml
 lexer/es2022.lex.yaml: lexer/es2022.lex.txt transpile.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run transpile.js $(TRANSPILE_ARGS) >$@
+	@cat $< | deno run transpile.js -g lexical $(TRANSPILE_ARGS) >$@
+
+.PRECIOUS: parser/es2022.syn.yaml
+parser/es2022.syn.yaml: parser/es2022.syn.txt transpile.js
+	@echo 'Generating $(abspath $@)...'
+	@cat $< | deno run transpile.js -g syntactic $(TRANSPILE_ARGS) >$@
 
 .PHONY: FORCE
 FORCE:
