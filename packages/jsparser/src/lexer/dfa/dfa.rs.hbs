@@ -50,12 +50,12 @@ impl TryFrom<char> for UnicodeSet {
             return Ok(UnicodeSet(ASCII_TABLE[c]));
         }
         {{#each nonAsciiList}}
-        {{#if codePoint}}
-        if c == {{codePoint}} {
+        {{#if span}}
+        if c >= {{firstCodePoint}} && c <= {{lastCodePoint}} {
             return Ok(UnicodeSet({{unicodeSet}}));
         }
         {{else}}
-        if c >= {{firstCodePoint}} && c <= {{lastCodePoint}} {
+        if c == {{firstCodePoint}} {
             return Ok(UnicodeSet({{unicodeSet}}));
         }
         {{/if}}

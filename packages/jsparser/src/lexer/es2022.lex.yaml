@@ -103,9 +103,10 @@ LineTerminatorSequence:
               data: CR
         - type: lookahead
           data:
-            - type: built-in
-              data: LF
-          negate: true
+            patterns:
+              - type: built-in
+                data: LF
+            negate: true
     - type: unicode-set
       data:
         - type: built-in
@@ -1393,9 +1394,10 @@ EscapeSequence:
               data: '0'
         - type: lookahead
           data:
-            - type: non-terminal
-              data: DecimalDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: DecimalDigit
+            negate: true
     - type: non-terminal
       data: LegacyOctalEscapeSequence
     - type: non-terminal
@@ -1467,20 +1469,22 @@ LegacyOctalEscapeSequence:
               data: '0'
         - type: lookahead
           data:
-            - type: char
-              data: '8'
-            - type: char
-              data: '9'
-          negate: false
+            patterns:
+              - type: char
+                data: '8'
+              - type: char
+                data: '9'
+            negate: false
     - type: sequence
       data:
         - type: non-terminal
           data: NonZeroOctalDigit
         - type: lookahead
           data:
-            - type: non-terminal
-              data: OctalDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: OctalDigit
+            negate: true
     - type: sequence
       data:
         - type: non-terminal
@@ -1489,9 +1493,10 @@ LegacyOctalEscapeSequence:
           data: OctalDigit
         - type: lookahead
           data:
-            - type: non-terminal
-              data: OctalDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: OctalDigit
+            negate: true
     - type: sequence
       data:
         - type: non-terminal
@@ -1843,9 +1848,10 @@ TemplateCharacter:
               data: $
         - type: lookahead
           data:
-            - type: char
-              data: '{'
-          negate: true
+            patterns:
+              - type: char
+                data: '{'
+            negate: true
     - type: sequence
       data:
         - type: unicode-set
@@ -1891,9 +1897,10 @@ TemplateEscapeSequence:
               data: '0'
         - type: lookahead
           data:
-            - type: non-terminal
-              data: DecimalDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: DecimalDigit
+            negate: true
     - type: non-terminal
       data: HexEscapeSequence
     - type: non-terminal
@@ -1923,9 +1930,10 @@ NotEscapeSequence:
               data: x
         - type: lookahead
           data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
     - type: sequence
       data:
         - type: unicode-set
@@ -1936,9 +1944,10 @@ NotEscapeSequence:
           data: HexDigit
         - type: lookahead
           data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
     - type: sequence
       data:
         - type: unicode-set
@@ -1947,74 +1956,80 @@ NotEscapeSequence:
               data: u
         - type: lookahead
           data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
         - type: lookahead
+          data:
+            patterns:
+              - type: char
+                data: '{'
+            negate: true
+    - type: sequence
+      data:
+        - type: unicode-set
+          data:
+            - type: char
+              data: u
+        - type: non-terminal
+          data: HexDigit
+        - type: lookahead
+          data:
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
+    - type: sequence
+      data:
+        - type: unicode-set
+          data:
+            - type: char
+              data: u
+        - type: non-terminal
+          data: HexDigit
+        - type: non-terminal
+          data: HexDigit
+        - type: lookahead
+          data:
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
+    - type: sequence
+      data:
+        - type: unicode-set
+          data:
+            - type: char
+              data: u
+        - type: non-terminal
+          data: HexDigit
+        - type: non-terminal
+          data: HexDigit
+        - type: non-terminal
+          data: HexDigit
+        - type: lookahead
+          data:
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
+    - type: sequence
+      data:
+        - type: unicode-set
+          data:
+            - type: char
+              data: u
+        - type: unicode-set
           data:
             - type: char
               data: '{'
-          negate: true
-    - type: sequence
-      data:
-        - type: unicode-set
-          data:
-            - type: char
-              data: u
-        - type: non-terminal
-          data: HexDigit
         - type: lookahead
           data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
-    - type: sequence
-      data:
-        - type: unicode-set
-          data:
-            - type: char
-              data: u
-        - type: non-terminal
-          data: HexDigit
-        - type: non-terminal
-          data: HexDigit
-        - type: lookahead
-          data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
-    - type: sequence
-      data:
-        - type: unicode-set
-          data:
-            - type: char
-              data: u
-        - type: non-terminal
-          data: HexDigit
-        - type: non-terminal
-          data: HexDigit
-        - type: non-terminal
-          data: HexDigit
-        - type: lookahead
-          data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
-    - type: sequence
-      data:
-        - type: unicode-set
-          data:
-            - type: char
-              data: u
-        - type: unicode-set
-          data:
-            - type: char
-              data: '{'
-        - type: lookahead
-          data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
     - type: sequence
       data:
         - type: unicode-set
@@ -2029,9 +2044,10 @@ NotEscapeSequence:
           data: NotCodePoint
         - type: lookahead
           data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
     - type: sequence
       data:
         - type: unicode-set
@@ -2046,14 +2062,16 @@ NotEscapeSequence:
           data: CodePoint
         - type: lookahead
           data:
-            - type: non-terminal
-              data: HexDigit
-          negate: true
+            patterns:
+              - type: non-terminal
+                data: HexDigit
+            negate: true
         - type: lookahead
           data:
-            - type: char
-              data: '}'
-          negate: true
+            patterns:
+              - type: char
+                data: '}'
+            negate: true
 NotCodePoint:
   type: one-of
   data:
@@ -2296,9 +2314,10 @@ OPTIONAL_CHAINING:
       data: '?.'
     - type: lookahead
       data:
-        - type: non-terminal
-          data: DecimalDigit
-      negate: true
+        patterns:
+          - type: non-terminal
+            data: DecimalDigit
+        negate: true
 LBRACE:
   type: unicode-set
   data:

@@ -5,9 +5,9 @@ import {
   assertEquals,
   assertExists,
   unreachable,
-} from 'https://deno.land/std@0.187.0/testing/asserts.ts';
-import * as log from 'https://deno.land/std@0.187.0/log/mod.ts';
-import * as yaml from 'https://deno.land/std@0.187.0/yaml/mod.ts';
+} from 'https://deno.land/std@0.193.0/testing/asserts.ts';
+import * as log from 'https://deno.land/std@0.193.0/log/mod.ts';
+import * as yaml from 'https://deno.land/std@0.193.0/yaml/mod.ts';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';
 
@@ -26,6 +26,9 @@ Options:
 
   -g, --grammar-type=<grammar-type>
     The type of grammar to transpile.
+
+  -t, --tokens=<tokens-json>
+    Path to a tokens.json.
 `.trim();
 
 const HEADER = `
@@ -41,14 +44,40 @@ async function run(options) {
     setup(PROGNAME, 'INFO');
   }
   const transpiler = new Transpiler(options);
-  const rules = await transpiler.transpile();
-  printYaml(rules.reduce((grammar, rule) => {
+  printYaml(await transpiler.transpile());
+}
+
+function transform(rules) {
+  return rules.reduce((grammar, rule) => {
     grammar[rule.name] = { type: rule.type };
     if (rule.data !== undefined) {
       grammar[rule.name].data = rule.data;
     }
     return grammar;
-  }, {}));
+  }, {});
+}
+
+function transformSyntactic(rules) {
+  const result = [];
+  for (const rule of rules) {
+    for (const production of rule.data) {
+      let obj;
+      if (production.type === 'sequence') {
+        obj = {
+          name: rule.name,
+          production: production.data,
+        };
+      } else {
+        obj = {
+          name: rule.name,
+          production: [production],
+        };
+      }
+      log.info(JSON.stringify(obj));
+      result.push(obj);
+    }
+  }
+  return result;
 }
 
 class Transpiler {
@@ -66,6 +95,7 @@ class Transpiler {
         addSourceCharacter,
         mergeUnicodeSets,
         simplify,
+        transform,
       ];
       break;
     case 'syntactic':
@@ -74,7 +104,9 @@ class Transpiler {
         expandOptionals,
         expandParameterizedRules,
         translateRules,
-        simplify,
+        processLookaheads,
+        addLiterals,
+        transformSyntactic,
       ];
       break;
     default:
@@ -614,9 +646,11 @@ function translateProduction(production, options) {
     } else if (item === '[lookahead') {
       seq = seq.concat(translateLookahead(items, options));
     } else if (item === '[no-line-terminator]') {
-      seq.push({ type: 'no-line-terminator' });
+      //seq.push({ type: 'no-line-terminator' });  TODO
     } else if (item === '[empty]') {
       seq.push({ type: 'empty' });
+    } else if (options.tokens?.includes(item)) {
+      seq.push({ type: 'token', data: item });
     } else {
       seq.push({ type: 'non-terminal', data: item });
     }
@@ -683,7 +717,9 @@ function translateLookahead(items, options) {
 function translateLookaheadSet(values, negate, options) {
   const set = [];
   for (let seq of values) {
-    const data = seq.map((value) => {
+    const data = seq.filter((value) => {
+      return value !== '[no-line-terminator]';  // TODO
+    }).map((value) => {
       if (value.startsWith('`')) {
         if (options.grammarType === 'lexical') {
           return { type: 'char', data: value.slice(1, -1) };
@@ -716,8 +752,10 @@ function translateLookaheadSet(values, negate, options) {
   log.debug(JSON.stringify(set));
   return {
     type: 'lookahead',
-    data: set,
-    negate,
+    data: {
+      patterns: set,
+      negate,
+    },
   };
 }
 
@@ -745,6 +783,87 @@ function mergeUnicodeSets(rules) {
   return rules;
 }
 
+function processLookaheads(rules) {
+  const context = {
+    ruleMap: {},
+    newRules: [],
+  };
+  for (const rule of rules) {
+    context.ruleMap[rule.name] = rule;
+  }
+  for (const rule of rules) {
+    log.debug(`Processing lookaheads in ${rule.name}...`);
+    rule.data.forEach((production, index) => {
+      return processLookaheadsInProduction(context, rule.name, production, index);
+    });
+  }
+  return rules;
+}
+
+function processLookaheadsInProduction(context, name, production, index) {
+  switch (production.type) {
+  case 'sequence':
+    for (const symbol of production.data) {
+      switch (symbol.type) {
+      case 'lookahead':
+        const data = symbol.data.patterns.map((symbol) => {
+          switch (symbol.type) {
+          case 'token':
+            return [symbol.data];
+          case 'sequence':
+            return symbol.data.map((data) => data.data);
+          }
+        });
+        if (symbol.data.negate) {
+          symbol.data = { type: 'exclude', data };
+        } else {
+          symbol.data = { type: 'include', data };
+        }
+        break;
+      }
+    }
+  }
+}
+
+function rewriteProduction(context, name, lookahead) {
+}
+
+function matchPrefix(seq, prefix) {
+  // TODO: logging
+  const prefixList = prefix.data.patterns.map((sym) => {
+    if (sym.type === 'token') {
+      return sym.data;
+    }
+    assertEquals(sym.type, 'sequence');
+    return sym.data.map((s) => s.data).join(' ');
+  });
+
+  const tokens= [];
+  for (const sym of seq) {
+    if (sym.type !== 'token') {
+      break;
+    }
+    tokens.push(sym.data);
+  }
+
+  const tokenSeq = tokens.join(' ');
+  if (prefix.data.negate) {
+    return prefixList.every((prefix) => {
+      if (prefix.length < tokenSeq.length) {
+        return !tokenSeq.startsWith(prefix);
+      }
+      return !prefix.startsWith(tokenSeq);
+    });
+  } else {
+    return prefixList.some((prefix) => {
+      if (prefix.length < tokenSeq.length) {
+        return tokenSeq.startsWith(prefix);
+      }
+      return prefix.startsWith(tokenSeq);
+    });
+  }
+}
+
 function simplify(rules) {
   for (const rule of rules) {
     if (rule.type === 'one-of' && rule.data.length === 1) {
@@ -758,6 +877,25 @@ function simplify(rules) {
   return rules;
 }
 
+function addLiterals(rules) {
+  rules.push({
+    name: 'NullLiteral',
+    type: 'one-of',
+    data: [
+      { type: 'token', data: 'NULL' },
+    ]
+  });
+  rules.push({
+    name: 'BooleanLiteral',
+    type: 'one-of',
+    data: [
+      { type: 'token', data: 'TRUE' },
+      { type: 'token', data: 'FALSE' },
+    ]
+  });
+  return rules;
+}
+
 function printYaml(rules) {
   console.log(HEADER);
   console.log('');
@@ -767,6 +905,17 @@ function printYaml(rules) {
 if (import.meta.main) {
   const { options, args } = await parseCommand({
     doc: DOC,
+    conv: async (name, value) => {
+      switch (name) {
+      case '--tokens':
+        if (value) {
+          return JSON.parse(await Deno.readTextFile(value));
+        }
+        return value;
+      default:
+        return value;
+      }
+    },
   });
   Deno.exit(await run(options));
 }

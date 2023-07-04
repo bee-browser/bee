@@ -6,6 +6,7 @@ mod tokens;
 use cursor::SourceCursor;
 use dfa::recognize;
 pub use goals::Goal;
+pub use tokens::NUM_TOKENS;
 pub use tokens::Token;
 pub use tokens::TokenKind;
 

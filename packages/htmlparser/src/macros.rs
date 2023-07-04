@@ -24,7 +24,7 @@ macro_rules! tags {
         tag!($tag)
     };
     ($($tags:ident,)+) => {
-        tags!($($tags:ident),+)
+        tags!($($tags),+)
     };
     ($($tags:ident),+) => {
         [$(tags!($tags)),+]

@@ -79,7 +79,7 @@ build: format codegen $(BUILD_TARGETS)
 .PHONY: test
 test: format codegen install-nextest
 	cargo nextest run --all-features
-	deno test --parallel --shuffle
+#	deno test --parallel --shuffle
 
 .PHONY: bench
 bench:

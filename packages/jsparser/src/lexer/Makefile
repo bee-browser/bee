@@ -1,11 +1,8 @@
-# Specify `-d` if you want to see debug logs.
-LEXER_DFAGEN_ARGS ?=
-
 BEE_TOOLS := ../../../../tools/bin/bee-tools
 
 GOAL_SYMBOLS := $(shell \
   cat tokens.yaml | \
-  bee-tools y2j | jq -r '.goals | keys | join(" ")' \
+  $(BEE_TOOLS) y2j | jq -r '.goals | keys | join(" ")' \
 )
 
 CODEGEN_TARGETS := \
@@ -20,7 +17,7 @@ CODEGEN_TARGETS := \
 LIST_TOKENS = \
   cat tokens.yaml | \
   $(BEE_TOOLS) y2j | \
-  jq -r '.goals.$(patsubst dfa/%.json,%,$@) | flatten | join(" ")'
+  jq -r '.goals.$(patsubst dfa/%.json.xz,%,$@) | flatten | join(" ")'
 
 # targets
 
@@ -48,21 +45,20 @@ codegen: $(CODEGEN_TARGETS)
 # of them.  This means that we can build a NFA directly from CFG without
 # converting production rules to regular expressions.
 #
-# `dfagen.js` reads the lexical grammar and builds an intermediate large NFA
-# which recognizes specified tokens.  Then, `dfagen.js` converts the NFA to an
-# equivalent minimized DFA by using well-known algorithms.  Finally, `dfagen.js`
+# `bee-dfagen` reads the lexical grammar and builds an intermediate large NFA
+# which recognizes specified tokens.  Then, `bee-dfagen` converts the NFA to an
+# equivalent minimized DFA by using well-known algorithms.  Finally, `bee-dfagen`
 # outputs the DFA in a JSON format which contains enough information for code
 # generation.
-.PRECIOUS: dfa/%.json
-dfa/%.json: es2022.lex.yaml tokens.yaml dfagen.js
+.PRECIOUS: dfa/%.json.xz
+dfa/%.json.xz: es2022.lex.yaml tokens.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run dfagen.js $(LEXER_DFAGEN_ARGS) $(shell $(LIST_TOKENS)) | \
-	  jq '.' >$@
+	@cat $< | cargo run -q -r -p bee-dfagen -- $(shell $(LIST_TOKENS)) | jq -c '.' | xz >$@
 
 # 2. Generate code for each DFA
-dfa/%.rs: dfa/%.json dfa/dfa.rs.hbs
+dfa/%.rs: dfa/%.json.xz dfa/dfa.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen dfa/dfa.rs.hbs $< | rustfmt --emit=stdout >$@
+	@xzcat $< | $(BEE_TOOLS) codegen --input-stdin dfa/dfa.rs.hbs | rustfmt --emit=stdout >$@
 
 # 3. Generate a wrapper function
 #

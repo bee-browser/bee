@@ -15,6 +15,7 @@ all: codegen
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 	@$(MAKE) -s -C lexer codegen
+	@$(MAKE) -s -C parser codegen
 
 # Usually, we define targets in descending order in the dependency tree order.
 # However, we define targets here in the reverse order in order to explain the
@@ -26,7 +27,7 @@ codegen: $(CODEGEN_TARGETS)
 es2022.spec.html: FORCE
 	@echo 'Updating $(abspath $@)...'
 	@curl https://raw.githubusercontent.com/tc39/ecma262/es2022/spec.html -sG | \
-	  $(BEE_TOOLS) update-file $@
+	  $(BEE_TOOLS)-update-file $@
 
 # 2. Extract the lexical and syntactic grammars from the specification
 #
@@ -70,9 +71,9 @@ lexer/es2022.lex.yaml: lexer/es2022.lex.txt transpile.js
 	@cat $< | deno run transpile.js -g lexical $(TRANSPILE_ARGS) >$@
 
 .PRECIOUS: parser/es2022.syn.yaml
-parser/es2022.syn.yaml: parser/es2022.syn.txt transpile.js
+parser/es2022.syn.yaml: parser/es2022.syn.txt transpile.js lexer/tokens.json
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run transpile.js -g syntactic $(TRANSPILE_ARGS) >$@
+	@cat $< | deno run --allow-read transpile.js -g syntactic -t lexer/tokens.json $(TRANSPILE_ARGS) >$@
 
 .PHONY: FORCE
 FORCE:

@@ -1,4 +1,5 @@
 mod lexer;
+mod parser;
 
 /// A goal symbol that a JavaScript lexer recognizes.
 pub use lexer::Goal as JsLexerGoal;
@@ -11,3 +12,5 @@ pub use lexer::Token as JsToken;
 
 /// Token types.
 pub use lexer::TokenKind as JsTokenKind;
+
+pub use parser::Parser as JsParser;

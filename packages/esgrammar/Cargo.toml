@@ -9,4 +9,4 @@ publish = false
 anyhow = "1.0.71"
 bee-htmlparser = { path = "../htmlparser" }
 bee-toydom = { path = "../toydom" }
-clap = { version = "4.2.7", features = ["derive"] }
+clap = { version = "4.3.11", features = ["derive"] }

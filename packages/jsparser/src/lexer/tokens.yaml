@@ -127,7 +127,8 @@ CommonToken: &CommonToken
   - *Punctuator
   - NumericLiteral
   - StringLiteral
-  - Template
+  - NoSubstitutionTemplate
+  - TemplateHead
 
 # As described in https://github.com/yaml/yaml/issues/35,
 # YAML doesn't support merging a list referred by an alias at this point.
@@ -158,11 +159,13 @@ goals:
     - Comment
     - *CommonToken
     - RegularExpressionLiteral
-    - TemplateSubstitutionTail
+    - TemplateMiddle
+    - TemplateTail
   input_element_template_tail:
     - WhiteSpaceSequence
     - LineTerminatorSequence
     - Comment
     - *CommonToken
     - *DivPunctuator
-    - TemplateSubstitutionTail
+    - TemplateMiddle
+    - TemplateTail
