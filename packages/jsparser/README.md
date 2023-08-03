@@ -16,7 +16,7 @@ make codegen
 make -B codegen
 
 # Enable debug logs.
-make codegen TRANSPILE_ARGS=-d LEXER_DFAGEN_ARGS=-d
+RUST_LOG=debug make codegen
 ```
 
 See `src/lexer/Makefile` for details of the code generation steps.

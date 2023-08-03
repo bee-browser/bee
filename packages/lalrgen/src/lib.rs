@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 pub mod closure;
 pub mod firstset;
 mod grammar;

@@ -17,9 +17,8 @@ codegen: $(CODEGEN_TARGETS)
 	@$(MAKE) -s -C lexer codegen
 	@$(MAKE) -s -C parser codegen
 
-# Usually, we define targets in descending order in the dependency tree order.
-# However, we define targets here in the reverse order in order to explain the
-# code generation steps.
+# Usually, we define targets in descending order in the dependency tree order.  However, we define
+# targets here in the reverse order in order to explain the code generation steps.
 
 # 1. Download an ECMA-262 specification written in HTML.
 
@@ -31,8 +30,8 @@ es2022.spec.html: FORCE
 
 # 2. Extract the lexical and syntactic grammars from the specification
 #
-# The `bee-esgrammar` crate will be built and executed.  Texts contained in
-# special tags will be output to STDOUT.
+# The `bee-esgrammar` crate will be built and executed.  Texts contained in special tags will be
+# output to STDOUT.
 #
 # We learned this approach from mozilla-spidermonkey/jsparagus.
 # See js_parser/extract_es_grammar.py.
@@ -47,23 +46,21 @@ parser/es2022.syn.txt: es2022.spec.html
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | cargo run -q --package bee-esgrammar extract syntactic-grammar >$@
 
-# 3. Transpile the extracted grammars into an equivalent but more
-#    computer-friendly data
+# 3. Transpile the extracted grammars into an equivalent but more computer-friendly data
 #
-# The ECMA-262 specification defines the grammar with CFG and uses special
-# notations like below:
+# The ECMA-262 specification defines the grammar with CFG and uses special notations like below:
 #
 #   DecimalDigits[Sep] ::
 #     DecimalDigit
 #     DecimalDigits[?Sep] DecimalDigit
 #     [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
 #
-# Those special notations are very useful for writing the specification but a
-# little bit complicated as an input for our code generator.
+# Those special notations are very useful for the programming language designers but a little bit
+# complicated as an input for code generators.
 #
-# `transpile.js` interprets a grammar and translates production rules including
-# special notations into equivalent production rules.  `transpile.js` adds some
-# production rules for convenience in further processing.
+# `transpile.js` interprets a grammar and translates production rules including special notations
+# into equivalent production rules.  `transpile.js` adds some production rules for convenience in
+# further processing.
 
 .PRECIOUS: lexer/es2022.lex.yaml
 lexer/es2022.lex.yaml: lexer/es2022.lex.txt transpile.js
