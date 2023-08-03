@@ -3,7 +3,7 @@ use std::io::Read;
 use anyhow::Result;
 use clap::Parser;
 
-use bee_jslexer::JsParser;
+use bee_jsparser::JsParser;
 
 #[derive(Parser)]
 #[command(author, version, about)]
