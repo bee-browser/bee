@@ -13,7 +13,6 @@ use crate::lexer::Token;
 pub struct State(u16);
 
 const NUM_STATES: usize = {{length input.states}};
-const NO_STATE: State = State(u16::MAX);
 
 impl State {
     #[inline(always)]

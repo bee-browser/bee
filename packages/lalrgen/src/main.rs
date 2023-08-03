@@ -58,13 +58,14 @@ fn main() -> Result<()> {
     let grammar = Grammar::new(production_rules);
     grammar.validate();
 
+    // We must create the augmented grammar before preprocessing.
+    let grammar = grammar.create_augmented_grammar(&opt.goal_symbol);
+    grammar.validate();
+
     // Preprocess the syntactic grammar for making subsequent translations easier.
     // The ECMA-262 specification uses non-tail lookahead notations.
     tracing::info!("Preprocessing the grammar...");
     let grammar = grammar.preprocess();
-    grammar.validate();
-
-    let grammar = grammar.create_augmented_grammar(&opt.goal_symbol);
     grammar.validate();
 
     // Check the maximum number of lookahead tokens in the grammar.

@@ -24,6 +24,7 @@ impl<'a> Parser<'a> {
         self.stack.push(state);
         let mut token = self.lexer.next_token();
         loop {
+            // TODO: no-lime-terminator, auto-semicolon
             match token.kind {
                 TokenKind::WhiteSpaceSequence | TokenKind::LineTerminatorSequence => {
                     token = self.lexer.next_token();
@@ -31,7 +32,6 @@ impl<'a> Parser<'a> {
                 }
                 _ => {}
             }
-            tracing::info!(?token);
             match state.action(&token) {
                 Action::Accept => {
                     tracing::info!(action = "accept");
@@ -39,16 +39,16 @@ impl<'a> Parser<'a> {
                 }
                 Action::Shift(next) => {
                     self.stack.push(next);
+                    tracing::info!(action = "shift", ?state, ?token, ?next);
                     state = next;
-                    tracing::info!(action = "shift", ?state);
                     token = self.lexer.next_token();
                 }
                 Action::Reduce(non_terminal, n, rule) => {
                     self.stack.truncate(self.stack.len() - n as usize);
                     let next = self.stack.last().unwrap().goto(non_terminal);
+                    tracing::info!(action = "reduce", ?state, ?rule, ?next);
                     self.stack.push(next);
                     state = next;
-                    tracing::info!(action = "reduce", rule, ?state);
                 }
                 Action::Error => {
                     tracing::error!(?state, ?token);

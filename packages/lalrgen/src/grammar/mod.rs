@@ -2,6 +2,8 @@
 pub(crate) mod macros;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::Arc;
 
 use serde::Deserialize;
@@ -50,12 +52,49 @@ impl Grammar {
     }
 
     pub fn create_augmented_grammar(&self, goal_symbol: &str) -> Self {
+        let goal_symbol = NonTerminal::from(goal_symbol);
+
+        // Allocate enough space in order to avoid re-allocation.
         let mut rules = Vec::with_capacity(1 + self.rules.len());
+
+        // Add the production rule for the start symbol of the augmented grammar.
         rules.push(Arc::new(Rule {
             name: NonTerminal::GoalOfAugmentedGrammar,
-            production: vec![Term::NonTerminal(goal_symbol.into())],
+            production: vec![Term::NonTerminal(goal_symbol.clone())],
         }));
-        rules.extend(self.rules.iter().cloned());
+
+        // Collect only rules actually used.
+        let mut collected: HashSet<NonTerminal> = Default::default();
+        let mut remaining: VecDeque<NonTerminal> = Default::default();
+        remaining.push_back(goal_symbol);
+        while let Some(non_terminal) = remaining.pop_front() {
+            // `remaining` may contain a non-terminal already collected.
+            if collected.contains(&non_terminal) {
+                continue;
+            }
+            collected.insert(non_terminal.clone());
+            for rule in self.non_terminal_rules(&non_terminal).iter() {
+                rules.push(rule.clone());
+                for term in rule.production.iter() {
+                    if let Term::NonTerminal(non_terminal) = term {
+                        if !collected.contains(non_terminal) {
+                            // `remaining` may already contain the same non-terminal.
+                            remaining.push_back(non_terminal.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        // Report removed non-terminals.
+        for non_terminal in self.non_terminals() {
+            if !collected.contains(non_terminal) {
+                tracing::debug!(removed = %non_terminal);
+            }
+        }
+
+        // Shrink the allocated space before creating a grammar object.
+        rules.shrink_to_fit();
         Grammar::new(rules)
     }
 
