@@ -113,7 +113,7 @@ Punctuator: &Punctuator
   - NULLISH_ASSIGN
   - ARROW
 
-DivPpunctuator: &DivPunctuator
+DivPunctuator: &DivPunctuator
   - DIV
   - DIV_ASSIGN
 
@@ -139,33 +139,37 @@ CommonToken: &CommonToken
 # token list.
 goals:
   # For simplifying Makefile, we convert the goal symbols to snake case.
-  input_element_div:
-    - WhiteSpaceSequence
-    - LineTerminatorSequence
-    - Comment
-    - *CommonToken
-    - *DivPunctuator
-    - *RightBracePunctuator
-  input_element_reg_exp:
-    - WhiteSpaceSequence
-    - LineTerminatorSequence
-    - Comment
-    - *CommonToken
-    - *RightBracePunctuator
-    - RegularExpressionLiteral
-  input_element_reg_exp_or_template_tail:
-    - WhiteSpaceSequence
-    - LineTerminatorSequence
-    - Comment
-    - *CommonToken
-    - RegularExpressionLiteral
-    - TemplateMiddle
-    - TemplateTail
-  input_element_template_tail:
-    - WhiteSpaceSequence
-    - LineTerminatorSequence
-    - Comment
-    - *CommonToken
-    - *DivPunctuator
-    - TemplateMiddle
-    - TemplateTail
+  - name: input_element_div
+    tokens:
+      - WhiteSpaceSequence
+      - LineTerminatorSequence
+      - Comment
+      - *CommonToken
+      - *DivPunctuator
+      - *RightBracePunctuator
+  - name: input_element_reg_exp
+    tokens:
+      - WhiteSpaceSequence
+      - LineTerminatorSequence
+      - Comment
+      - *CommonToken
+      - *RightBracePunctuator
+      - RegularExpressionLiteral
+  - name: input_element_reg_exp_or_template_tail
+    tokens:
+      - WhiteSpaceSequence
+      - LineTerminatorSequence
+      - Comment
+      - *CommonToken
+      - RegularExpressionLiteral
+      - TemplateMiddle
+      - TemplateTail
+  - name: input_element_template_tail
+    tokens:
+      - WhiteSpaceSequence
+      - LineTerminatorSequence
+      - Comment
+      - *CommonToken
+      - *DivPunctuator
+      - TemplateMiddle
+      - TemplateTail

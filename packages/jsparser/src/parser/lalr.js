@@ -1,3 +1,6 @@
+'use strict';
+
+import { assert } from 'https://deno.land/std@0.193.0/testing/asserts.ts';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
 const spec = JSON.parse(await readAllText(Deno.stdin));
@@ -15,7 +18,23 @@ for (let i = 0; i < spec.non_terminals.length; ++i) {
 }
 
 for (const state of spec.states) {
+  let permitRegularExpressionLiteral = false;
+  let permitTemplateMiddle = false;
+  let permitTemplateTail = false;
+
   for (const action of state.actions) {
+    switch (action[0]) {
+    case 'RegularExpressionLiteral':
+      permitRegularExpressionLiteral = true;
+      break;
+    case 'TemplateMiddle':
+      permitTemplateMiddle = true;
+      break;
+    case 'TemplateTail':
+      permitTemplateTail = true;
+      break;
+    }
+
     action[0] = tokenIndexMap[action[0]];
     switch (action[1].type) {
     case 'Accept':
@@ -29,10 +48,43 @@ for (const state of spec.states) {
       break;
     }
   }
+
+  // The lexical goal symbol.
+  //
+  // InputElementRegExpOrTemplateTail
+  //   In syntactic grammar contexts where a RegularExpressionLiteral, a TemplateMiddle, or a
+  //   TemplateTail is permitted.
+  //
+  // InputElementRegExp
+  //   In syntactic grammar contexts where a RegularExpressionLiteral is permitted but
+  //   neither a TemplateMiddle, nor a TemplateTail is permitted.
+  //
+  // InputElementTemplateTail
+  //   In syntactic grammar contexts where a TemplateMiddle or a TemplateTail is permitted
+  //   but a RegularExpressionLiteral is not permitted.
+  //
+  // InputElementDiv
+  //   In all other contexts.
+  //
+  // See the section #sec-ecmascript-language-lexical-grammar in the ECMA-262 specification.
+  if (permitRegularExpressionLiteral && permitTemplateMiddle && permitTemplateTail) {
+    state.lexical_goal = 'InputElementRegExpOrTemplateTail';
+  } else if (permitRegularExpressionLiteral && !permitTemplateMiddle && !permitTemplateTail) {
+    state.lexical_goal = 'InputElementRegExp';
+  } else if (!permitRegularExpressionLiteral && permitTemplateMiddle && permitTemplateTail) {
+    state.lexical_goal = 'InputElementTemplateTail';
+  } else {
+    assert(!permitRegularExpressionLiteral);
+    assert(!permitTemplateMiddle);
+    assert(!permitTemplateTail);
+    state.lexical_goal = 'InputElementDiv';
+  }
+
   for (const goto_ of state.gotos) {
     goto_[0] = nonTerminalIndexMap[goto_[0]];
     goto_[1] = `State(${goto_[1]})`;
   }
+
   state.kernel_items = state.kernel_items.join(', ');
 }
 
