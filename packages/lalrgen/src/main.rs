@@ -105,7 +105,7 @@ fn main() -> Result<()> {
                 .sorted()
                 .collect(),
             states: lalr1_states,
-        }
+        },
     )?;
 
     Ok(())

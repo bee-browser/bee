@@ -155,7 +155,10 @@ pub struct Rule {
 
 impl Rule {
     pub fn count_symbols(&self) -> usize {
-        self.production.iter().filter(|term| term.is_symbol()).count()
+        self.production
+            .iter()
+            .filter(|term| term.is_symbol())
+            .count()
     }
 
     pub fn to_grammatical(&self) -> Self {

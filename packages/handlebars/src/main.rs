@@ -88,7 +88,9 @@ fn length(
     _: &mut handlebars::RenderContext<'_, '_>,
     out: &mut dyn handlebars::Output,
 ) -> handlebars::HelperResult {
-    let value = h.param(0).map(|v| v.value())
+    let value = h
+        .param(0)
+        .map(|v| v.value())
         .ok_or(handlebars::RenderError::new("param not found"))?;
     let len = match value {
         serde_json::Value::String(s) => s.len(),

@@ -309,7 +309,7 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
                     LalrAction::Reduce(
                         item.rule.name.symbol().to_owned(),
                         item.rule.count_symbols(),
-                        format!("{}", item.rule),  // for debugging purposes
+                        format!("{}", item.rule), // for debugging purposes
                     )
                 };
                 tracing::trace!(state.id = i, %token, %action);

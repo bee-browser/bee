@@ -70,8 +70,7 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
                 }
                 Term::NonTerminal(non_terminal) => {
                     let lookahead_set = if item.k() > 0 {
-                        context
-                            .compute_first_set_of_followers(item.k(), followers, &item.lookahead)
+                        context.compute_first_set_of_followers(item.k(), followers, &item.lookahead)
                     } else {
                         phrase_set![phrase!()]
                     };
@@ -106,10 +105,15 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
         item_set
     }
 
-    fn compute_first_set_of_followers(&self, k: usize, terms: &[Term], lookahead: &Phrase) -> PhraseSet {
+    fn compute_first_set_of_followers(
+        &self,
+        k: usize,
+        terms: &[Term],
+        lookahead: &Phrase,
+    ) -> PhraseSet {
         let (terms, cond) = match terms.split_last() {
             Some((Term::Lookahead(cond), terms)) => (terms, Some(cond)),
-            _ => (terms, None)
+            _ => (terms, None),
         };
 
         let mut first_set = phrase_set![phrase!()];

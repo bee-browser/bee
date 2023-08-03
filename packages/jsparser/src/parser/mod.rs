@@ -3,8 +3,8 @@ mod lalr;
 use crate::lexer::Lexer;
 use crate::lexer::TokenKind;
 
-use lalr::State;
 use lalr::Action;
+use lalr::State;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
