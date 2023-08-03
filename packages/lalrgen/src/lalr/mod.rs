@@ -320,6 +320,7 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
         lalr_states.push(LalrState {
             actions: actions.into_iter().collect(),
             gotos: gotos.into_iter().collect(),
+            kernel_items: state.kernel_items().map(|item| format!("{item}")).collect(),
         });
     }
 
@@ -337,6 +338,7 @@ pub struct LalrSpec {
 pub struct LalrState {
     pub actions: Vec<(String, LalrAction)>,
     pub gotos: Vec<(String, usize)>,
+    pub kernel_items: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

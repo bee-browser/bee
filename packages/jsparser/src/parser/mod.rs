@@ -21,12 +21,14 @@ impl<'a> Parser<'a> {
 
     pub fn parse(&mut self) {
         let mut state = State::default();
-        self.stack.push(state);
+        self.push_state(state);
         let mut token = self.lexer.next_token();
         loop {
             // TODO: no-lime-terminator, auto-semicolon
             match token.kind {
-                TokenKind::WhiteSpaceSequence | TokenKind::LineTerminatorSequence => {
+                TokenKind::WhiteSpaceSequence
+                | TokenKind::LineTerminatorSequence
+                | TokenKind::Comment => {
                     token = self.lexer.next_token();
                     continue;
                 }
@@ -38,23 +40,28 @@ impl<'a> Parser<'a> {
                     break;
                 }
                 Action::Shift(next) => {
-                    self.stack.push(next);
-                    tracing::info!(action = "shift", ?state, ?token, ?next);
+                    tracing::info!(action = "shift", ?token);
+                    self.push_state(next);
                     state = next;
                     token = self.lexer.next_token();
                 }
                 Action::Reduce(non_terminal, n, rule) => {
+                    tracing::info!(action = "reduce", ?rule);
                     self.stack.truncate(self.stack.len() - n as usize);
                     let next = self.stack.last().unwrap().goto(non_terminal);
-                    tracing::info!(action = "reduce", ?state, ?rule, ?next);
-                    self.stack.push(next);
+                    self.push_state(next);
                     state = next;
                 }
                 Action::Error => {
-                    tracing::error!(?state, ?token);
+                    tracing::error!(?token);
                     break;
                 }
             }
         }
+    }
+
+    fn push_state(&mut self, state: State) {
+        tracing::info!(state = state.debug_info());
+        self.stack.push(state);
     }
 }

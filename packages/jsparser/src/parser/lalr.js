@@ -33,6 +33,7 @@ for (const state of spec.states) {
     goto_[0] = nonTerminalIndexMap[goto_[0]];
     goto_[1] = `State(${goto_[1]})`;
   }
+  state.kernel_items = state.kernel_items.join(', ');
 }
 
 console.log(JSON.stringify(spec));

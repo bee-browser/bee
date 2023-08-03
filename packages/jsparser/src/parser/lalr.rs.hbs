@@ -26,6 +26,10 @@ impl State {
         let non_terminal = non_terminal as u16;
         GOTOS[self.0 as usize].get(&non_terminal).unwrap().clone()
     }
+
+    pub fn debug_info(&self) -> &'static str {
+        KERNEL_ITEMS[self.0 as usize]
+    }
 }
 
 // non-terminals
@@ -68,5 +72,13 @@ const GOTOS: [Map<u16, State>; NUM_STATES] = [
         {{this.[0]}}u16 => {{this.[1]}},
         {{/each}}
     },
+    {{/each}}
+];
+
+// debug info
+
+const KERNEL_ITEMS: [&'static str; NUM_STATES] = [
+    {{#each input.states}}
+    "{{kernel_items}}",
     {{/each}}
 ];
