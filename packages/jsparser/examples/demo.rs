@@ -1,28 +1,59 @@
 use std::io::Read;
+use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::Parser;
+use clap::ValueEnum;
+use tracing_subscriber::filter::EnvFilter;
 
 use bee_jsparser::JsParser;
 
+/// Parse a JavaScript script.
 #[derive(Parser)]
 #[command(author, version, about)]
-struct CommandLine;
+struct CommandLine {
+    /// Logging format.
+    #[arg(long, value_enum, env = "BEE_LOG_FORMAT", default_value = "text")]
+    log_format: LogFormat,
 
-/// `bee-jslexer-demo` reads a JavaScript source text from STDIN and prints
-/// recognized tokens to STDOUT.
-///
-/// `bee-jslexer-demo` cannot recognize tokens in real-world JavaScript files.
-/// Because ES2022 requires that we have to switch the goal symbol recognized by
-/// the lexer while parsing the source file depending on a parsing context, but
-/// `bee-jslexer-demo` doesn't implement such a function.
+    /// A path to a JavaScript file.
+    #[arg()]
+    script_file: Option<PathBuf>,
+}
+
+#[derive(Clone, ValueEnum)]
+enum LogFormat {
+    Text,
+    Json,
+}
+
 fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    let cl = CommandLine::parse();
 
-    let _cl = CommandLine::parse();
+    match cl.log_format {
+        LogFormat::Text => {
+            tracing_subscriber::fmt()
+                .with_writer(std::io::stderr)
+                .with_env_filter(EnvFilter::from_default_env())
+                .init();
+        }
+        LogFormat::Json => {
+            tracing_subscriber::fmt()
+                .json()
+                .with_writer(std::io::stderr)
+                .with_env_filter(EnvFilter::from_default_env())
+                .init();
+        }
+    }
 
-    let mut script = String::new();
-    std::io::stdin().read_to_string(&mut script)?;
+    let script = match cl.script_file {
+        Some(ref file) => std::fs::read_to_string(file)?,
+        None => {
+            let mut script = String::new();
+            std::io::stdin().read_to_string(&mut script)?;
+            script
+        }
+    };
 
     let mut parser = JsParser::new(&script);
     parser.parse();

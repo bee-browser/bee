@@ -29,6 +29,7 @@ impl<'a> Lexer<'a> {
 
     /// Sets a goal symbol that the JavaScript lexer will recognize.
     pub fn set_goal(&mut self, goal: Goal) {
+        tracing::trace!(opcode = "set_goal", ?goal);
         self.goal = goal;
     }
 
@@ -40,7 +41,6 @@ impl<'a> Lexer<'a> {
             _ => self.cursor.lexeme(),
         };
         let token = Token { kind, lexeme };
-        tracing::debug!(?token);
         self.cursor.advance();
         if kind == TokenKind::Eof && !self.cursor.eof() {
             tracing::error!(cursor.pos = self.cursor.pos(), "Invalid source");

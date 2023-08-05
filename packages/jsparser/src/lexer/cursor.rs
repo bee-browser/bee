@@ -36,19 +36,19 @@ impl<'a> SourceCursor<'a> {
     pub fn consume(&mut self) {
         self.next_pos += 1;
         self.token_end = self.next_pos;
-        tracing::debug!(cursor.token_end = self.token_end);
+        tracing::trace!(opcode = "consume", cursor.token_end = self.token_end);
     }
 
     #[inline(always)]
     pub fn lookahead(&mut self) {
         self.next_pos += 1;
-        tracing::debug!(cursor.next_pos = self.next_pos);
+        tracing::trace!(opcode = "lookahead", cursor.next_pos = self.next_pos);
     }
 
     #[inline(always)]
     pub fn advance(&mut self) {
         self.pos = self.token_end;
-        tracing::debug!(cursor.pos = self.pos);
+        tracing::trace!(opcode = "advance", cursor.pos = self.pos);
     }
 
     #[inline(always)]

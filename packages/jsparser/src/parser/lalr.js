@@ -35,7 +35,10 @@ for (const state of spec.states) {
       break;
     }
 
-    action[0] = tokenIndexMap[action[0]];
+    action[0] = {
+      index: tokenIndexMap[action[0]],
+      label: action[0],
+    };
     switch (action[1].type) {
     case 'Accept':
       action[1] = 'Action::Accept';
@@ -81,11 +84,17 @@ for (const state of spec.states) {
   }
 
   for (const goto_ of state.gotos) {
-    goto_[0] = nonTerminalIndexMap[goto_[0]];
-    goto_[1] = `State(${goto_[1]})`;
+    goto_[0] = {
+      index: nonTerminalIndexMap[goto_[0]],
+      label: goto_[0],
+    };
+    goto_[1] = {
+      index: goto_[1],
+      label: spec.states[goto_[1]].kernel_items.join(', '),
+    };
   }
 
-  state.kernel_items = state.kernel_items.join(', ');
+  state.label = state.kernel_items.join(', ');
 }
 
 console.log(JSON.stringify(spec));

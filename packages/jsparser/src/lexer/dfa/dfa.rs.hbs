@@ -9,19 +9,17 @@ use super::TokenKind;
 pub fn recognize<'a>(cursor: &mut SourceCursor<'a>) -> TokenKind {
     let mut token = TokenKind::Eof;
     let mut state = State::default();
+    tracing::trace!(opcode = "state", ?state);
 
     while let Some(ch) = cursor.get() {
-        tracing::debug!(?state, ?ch);
+        tracing::trace!(opcode = "char", char = ?ch);
         let unicode_set = match UnicodeSet::try_from(ch) {
             Ok(unicode_set) => unicode_set,
             Err(_) => break,
         };
+        tracing::trace!(opcode = "unicode-set", ?unicode_set);
         state = state.next_state(unicode_set);
-        tracing::debug!(
-            ?unicode_set,
-            next_state = ?state,
-            next_state.invalid = state.is_invalid(),
-        );
+        tracing::trace!(opcode = "state", ?state);
         if state.is_invalid() {
             break;
         }
@@ -32,7 +30,7 @@ pub fn recognize<'a>(cursor: &mut SourceCursor<'a>) -> TokenKind {
         }
         if let Some(kind) = state.accept() {
             token = kind;
-            tracing::debug!(candidate = ?token);
+            tracing::trace!(opcode = "candidate", ?token, lexeme = cursor.lexeme());
         }
     }
     token
