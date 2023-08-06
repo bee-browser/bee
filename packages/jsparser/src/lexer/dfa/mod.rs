@@ -10,9 +10,11 @@ mod input_element_template_tail;
 
 use super::cursor::SourceCursor;
 use super::goals::Goal;
+use super::tokens::Token;
 use super::tokens::TokenKind;
 
-pub fn recognize<'a>(goal: Goal, cursor: &mut SourceCursor<'a>) -> TokenKind {
+#[inline(always)]
+pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Token<'a> {
     match goal {
         Goal::InputElementDiv => input_element_div::recognize(cursor),
         Goal::InputElementRegExp => input_element_reg_exp::recognize(cursor),

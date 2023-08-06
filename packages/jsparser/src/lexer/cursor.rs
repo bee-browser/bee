@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct SourceCursor<'a> {
     src: &'a str,
     chars: Vec<(usize, char)>,
@@ -46,8 +47,10 @@ impl<'a> SourceCursor<'a> {
     }
 
     #[inline(always)]
-    pub fn advance(&mut self) {
-        self.pos = self.token_end;
+    pub fn advance(&mut self, n: usize) {
+        self.pos += n;
+        self.next_pos = self.pos;
+        self.token_end = self.pos;
         tracing::trace!(opcode = "advance", cursor.pos = self.pos);
     }
 

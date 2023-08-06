@@ -6,8 +6,9 @@ use crate::lexer::Goal;
 
 pub const TABLE: [Goal; {{length input.states}}] = [
     {{#each input.states}}
+    // State#{{@index}}:
     {{#each kernel_items}}
-    // {{this}}
+    //   {{this}}
     {{/each}}
     Goal::{{lexical_goal}},
     {{/each}}

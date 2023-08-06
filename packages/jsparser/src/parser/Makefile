@@ -1,4 +1,11 @@
-CODEGEN_FILES := action.rs debug.rs goto.rs lexical_goal.rs non_terminals.rs
+CODEGEN_FILES := \
+  action.rs \
+  debug.rs \
+  goto.rs \
+  lexical_goal.rs \
+  non_terminals.rs \
+  auto_semicolon.rs
+
 CODEGEN_TARGETS := $(addprefix lalr/,$(CODEGEN_FILES))
 
 # targets

@@ -10,8 +10,9 @@ use super::State;
 // TODO: compress
 pub const TABLE: [Map<u16, State>; {{length input.states}}] = [
     {{#each input.states}}
+    // State#{{@index}}:
     {{#each kernel_items}}
-    // {{this}}
+    //   {{this}}
     {{/each}}
     phf_map! {
         {{#each gotos}}

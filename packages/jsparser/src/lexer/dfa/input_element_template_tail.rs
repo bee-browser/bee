@@ -4,10 +4,13 @@
 // bee-tools-codegen --input-stdin dfa/dfa.rs.hbs
 
 use super::SourceCursor;
+use super::Token;
 use super::TokenKind;
 
-pub fn recognize<'a>(cursor: &mut SourceCursor<'a>) -> TokenKind {
-    let mut token = TokenKind::Eof;
+pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
+    let mut cursor = cursor.clone();
+
+    let mut token = Token::default();
     let mut state = State::default();
     tracing::trace!(opcode = "state", ?state);
 
@@ -29,8 +32,9 @@ pub fn recognize<'a>(cursor: &mut SourceCursor<'a>) -> TokenKind {
             cursor.consume();
         }
         if let Some(kind) = state.accept() {
-            token = kind;
-            tracing::trace!(opcode = "candidate", ?token, lexeme = cursor.lexeme());
+            token.kind = kind;
+            token.lexeme = cursor.lexeme();
+            tracing::trace!(opcode = "candidate", ?token.kind, token.lexeme);
         }
     }
     token

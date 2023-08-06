@@ -4,6 +4,7 @@
 
 pub const LABELS: [&'static str; {{length input.states}}] = [
     {{#each input.states}}
+    // State#{{@index}}
     "{{label}}",
     {{/each}}
 ];

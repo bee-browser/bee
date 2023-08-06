@@ -12,7 +12,7 @@ tracing = "0.1.37"
 [dev-dependencies]
 anyhow = "1.0.71"
 clap = { version = "4.3.11", features = ["env", "derive", "wrap_help"] }
-ctor = "0.2.3"
+test-log = { version = "0.2.12", default-features = false, features = ["trace"] }
 tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
 
 [lib]

@@ -20,6 +20,7 @@ impl<'a> Lexer<'a> {
     /// `src` must contain a complete source text.
     ///
     /// The initial goal symbol of the created JavaScript lexer is [`Goal::InputElementDiv`].
+    #[inline(always)]
     pub fn new(src: &'a str) -> Lexer {
         Lexer {
             cursor: SourceCursor::new(src),
@@ -28,24 +29,31 @@ impl<'a> Lexer<'a> {
     }
 
     /// Sets a goal symbol that the JavaScript lexer will recognize.
+    #[inline(always)]
     pub fn set_goal(&mut self, goal: Goal) {
         tracing::trace!(opcode = "set_goal", ?goal);
         self.goal = goal;
     }
 
     /// Gets a next token in the source text.
-    pub fn next_token(&mut self) -> Token<'a> {
-        let kind = recognize(self.goal, &mut self.cursor);
-        let lexeme = match kind {
-            TokenKind::Eof => "",
-            _ => self.cursor.lexeme(),
-        };
-        let token = Token { kind, lexeme };
-        self.cursor.advance();
-        if kind == TokenKind::Eof && !self.cursor.eof() {
-            tracing::error!(cursor.pos = self.cursor.pos(), "Invalid source");
+    #[inline(always)]
+    pub fn next_token(&self) -> Token<'a> {
+        recognize(self.goal, &self.cursor)
+    }
+
+    /// Consumes the token and advances the cursor.
+    #[inline(always)]
+    pub fn consume_token(&mut self, token: Token<'a>) {
+        match token.kind {
+            TokenKind::Eof => {
+                if !self.cursor.eof() {
+                    tracing::error!(cursor.pos = self.cursor.pos(), "Invalid source");
+                }
+            }
+            _ => {
+                self.cursor.advance(token.lexeme.len());
+            }
         }
-        token
     }
 }
 
@@ -53,6 +61,7 @@ impl<'a> Lexer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_log::test;
 
     macro_rules! token {
         ($kind:ident, $lexeme:literal) => {
@@ -65,7 +74,9 @@ mod tests {
 
     macro_rules! assert_token {
         ($lexer:ident, $kind:ident, $lexeme:literal) => {
-            assert_eq!($lexer.next_token(), token!($kind, $lexeme));
+            let token = $lexer.next_token();
+            assert_eq!(token, token!($kind, $lexeme));
+            $lexer.consume_token(token);
         };
     }
 
@@ -73,11 +84,6 @@ mod tests {
         ($lexer:ident) => {
             assert_token!($lexer, Eof, "");
         };
-    }
-
-    #[ctor::ctor]
-    fn init() {
-        tracing_subscriber::fmt::init();
     }
 
     #[test]

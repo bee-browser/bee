@@ -17,10 +17,44 @@ for (let i = 0; i < spec.non_terminals.length; ++i) {
   nonTerminalIndexMap[spec.non_terminals[i]] = i;
 }
 
+function isAutoSemicolonDisallowed(state) {
+  for (const item of state.kernel_items) {
+    // 12.9.1 Rules of Automatic Semicolon Insertion
+    //
+    //   However, there is an additional overriding condition on the preceding rules: a semicolon
+    //   is never inserted automatically if the semicolon would then be parsed as an empty
+    //   statement or if that semicolon would become one of the two semicolons in the header of a
+    //   for statement (see 14.7.4).
+    if (item === '[EmptyStatement -> SEMI_COLON .]*') {
+      return true;
+    }
+    if (item.startsWith('[ForStatement')) {
+      if (item.includes(' SEMI_COLON . ')) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function isAutoSemicolonDoWhile(state) {
+  for (const item of state.kernel_items) {
+    // ';' at the end of a do-white statement.
+    if (item.startsWith('[DoWhileStatement')) {
+      if (item.endsWith(' RPAREN . SEMI_COLON]*')) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 for (const state of spec.states) {
   let permitRegularExpressionLiteral = false;
   let permitTemplateMiddle = false;
   let permitTemplateTail = false;
+
+  state.isAutoSemicolonDoWhile = isAutoSemicolonDoWhile(state);
 
   for (const action of state.actions) {
     switch (action[0]) {
@@ -44,6 +78,10 @@ for (const state of spec.states) {
       action[1] = 'Action::Accept';
       break;
     case 'Shift':
+      if (action[0].label === 'SEMI_COLON') {
+        const nextState = spec.states[action[1].data];
+        nextState.isAutoSemicolonDisallowed = isAutoSemicolonDisallowed(nextState);
+      }
       action[1] = `Action::Shift(State(${action[1].data}))`;
       break;
     case 'Reduce':
@@ -95,6 +133,15 @@ for (const state of spec.states) {
   }
 
   state.label = state.kernel_items.join(', ');
+}
+
+for (const state of spec.states) {
+  if (state.isAutoSemicolonDisallowed) {
+    assert(!state.isAutoSemicolonDoWhile);
+  }
+  if (state.isAutoSemicolonDoWhile) {
+    assert(!state.isAutoSemicolonDisallowed);
+  }
 }
 
 console.log(JSON.stringify(spec));

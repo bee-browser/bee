@@ -11,8 +11,9 @@ use super::State;
 
 pub const TABLE: [Map<u8, Action>; {{length input.states}}] = [
     {{#each input.states}}
+    // State#{{@index}}:
     {{#each kernel_items}}
-    // {{this}}
+    //   {{this}}
     {{/each}}
     phf_map! {
         {{#each actions}}

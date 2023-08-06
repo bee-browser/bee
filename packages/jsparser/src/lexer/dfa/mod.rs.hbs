@@ -9,9 +9,11 @@ mod {{.}};
 
 use super::cursor::SourceCursor;
 use super::goals::Goal;
+use super::tokens::Token;
 use super::tokens::TokenKind;
 
-pub fn recognize<'a>(goal: Goal, cursor: &mut SourceCursor<'a>) -> TokenKind {
+#[inline(always)]
+pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Token<'a> {
     match goal {
         {{#each .}}
         Goal::{{pascalCase .}} => {{.}}::recognize(cursor),
