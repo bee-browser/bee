@@ -78,6 +78,7 @@ impl Default for Spec {
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug)]
+#[allow(unused)]
 pub(crate) enum NodeSpec {
     None,
     Block,
