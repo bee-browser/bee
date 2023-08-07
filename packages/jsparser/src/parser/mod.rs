@@ -1,5 +1,6 @@
 mod lalr;
 
+use crate::lexer::Goal;
 use crate::lexer::Lexer;
 use crate::lexer::Token;
 use crate::lexer::TokenKind;
@@ -10,6 +11,7 @@ use lalr::State;
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     stack: Vec<State>,
+    template_depth: usize,
     new_line: bool,
 }
 
@@ -18,6 +20,7 @@ impl<'a> Parser<'a> {
         Self {
             lexer: Lexer::new(src),
             stack: Vec::with_capacity(2048),
+            template_depth: 0,
             new_line: false,
         }
     }
@@ -79,7 +82,13 @@ impl<'a> Parser<'a> {
     fn push_state(&mut self, state: State) {
         tracing::trace!(opcode = "push", state = state.debug_info());
         self.stack.push(state);
-        self.lexer.set_goal(state.lexical_goal());
+        self.lexer.set_goal(match state.lexical_goal() {
+            Goal::InputElementRegExpOrTemplateTail if self.template_depth == 0 => {
+                Goal::InputElementRegExp
+            }
+            Goal::InputElementTemplateTail if self.template_depth == 0 => Goal::InputElementDiv,
+            goal @ _ => goal,
+        });
     }
 
     fn pop_states(&mut self, n: usize) {
@@ -98,6 +107,11 @@ impl<'a> Parser<'a> {
             Action::Shift(next) => {
                 tracing::trace!(opcode = "shift");
                 self.push_state(next);
+                match token.kind {
+                    TokenKind::TemplateHead => self.template_depth += 1,
+                    TokenKind::TemplateTail => self.template_depth -= 1,
+                    _ => (),
+                }
                 ParserResult::NextToken
             }
             Action::Reduce(non_terminal, n, rule) => {
@@ -118,7 +132,12 @@ impl<'a> Parser<'a> {
         if token.kind == TokenKind::Eof || token.kind == TokenKind::Rbrace {
             return true;
         }
-        if self.stack.last().unwrap().is_auto_semicolon_do_while_statement() {
+        if self
+            .stack
+            .last()
+            .unwrap()
+            .is_auto_semicolon_do_while_statement()
+        {
             return true;
         }
         // TODO: no-line-terminator
@@ -160,7 +179,7 @@ impl<'a> Parser<'a> {
         let src = self.lexer.src();
         tracing::error!(
             pos,
-            src = &src[pos-10..pos+10],
+            src = &src[pos - 10..pos + 10],
             ?token,
             state = self.stack.last().unwrap().debug_info(),
         );
