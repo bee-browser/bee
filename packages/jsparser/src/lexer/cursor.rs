@@ -28,10 +28,6 @@ impl<'a> SourceCursor<'a> {
         self.pos
     }
 
-    pub fn remaining(&self) -> &'a str {
-        &self.src[self.pos..]
-    }
-
     #[inline(always)]
     pub fn get(&self) -> Option<char> {
         self.chars.get(self.next_pos).map(|(_, ch)| *ch)

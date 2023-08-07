@@ -58,9 +58,17 @@ fn main() -> Result<()> {
     let now = std::time::Instant::now();
     let mut parser = JsParser::new(&script);
     if parser.parse() {
-        println!("Parsed successfully: bytes={} elapsed={}", script.len(), humantime::format_duration(now.elapsed()));
+        println!(
+            "Parsed successfully: bytes={} elapsed={}",
+            script.len(),
+            humantime::format_duration(now.elapsed())
+        );
     } else {
-        println!("Failed parsing: bytes={} elapsed={}", script.len(), humantime::format_duration(now.elapsed()));
+        println!(
+            "Failed parsing: bytes={} elapsed={}",
+            script.len(),
+            humantime::format_duration(now.elapsed())
+        );
     }
 
     Ok(())

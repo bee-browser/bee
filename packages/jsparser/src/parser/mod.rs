@@ -179,7 +179,8 @@ impl<'a> Parser<'a> {
         let src = self.lexer.src();
         tracing::error!(
             pos,
-            src = &src[pos - 10..pos + 10],
+            parsed = &src[pos.saturating_sub(10)..pos],
+            remaianing = &src[pos..(pos + 10).min(src.len())],
             ?token,
             state = self.stack.last().unwrap().debug_info(),
         );
