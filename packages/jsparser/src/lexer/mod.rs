@@ -55,6 +55,14 @@ impl<'a> Lexer<'a> {
             }
         }
     }
+
+    pub fn src(&self) -> &'a str {
+        self.cursor.src()
+    }
+
+    pub fn location(&self) -> usize {
+        self.cursor.pos()
+    }
 }
 
 //<coverage:exclude>

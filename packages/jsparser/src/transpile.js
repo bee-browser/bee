@@ -80,6 +80,60 @@ function transformSyntactic(rules) {
   return result;
 }
 
+function rewriteIdentifierName(rules) {
+  log.debug('Rewriting rules using IdentifierName...');
+
+  for (const rule of rules) {
+    let changed = false;
+    for (const term of rule.production) {
+      if (term.type === 'token'  && term.data === 'IdentifierName') {
+        term.type = 'non-terminal';
+        term.data = 'KeywordOrIdentifierName';
+        changed = true;
+      }
+    }
+    if (changed) {
+      log.debug(`  Rewrite ${rule.name}`);
+    }
+  }
+
+  log.debug(`  Adding IdentifierNameButNotReservedWord...`);
+  rules.push({
+    name: 'IdentifierNameButNotReservedWord',
+    production: [{ type: 'token', data: 'IdentifierName' }],
+  });
+  for (const kw of ADDITIONAL_KEYWORDS) {
+    // TODO: temporarily removed `async` and `let` in order to avoid conflicts.
+    if (kw === 'async' || kw === 'let') {
+      continue;
+    }
+    rules.push({
+      name: 'IdentifierNameButNotReservedWord',
+      production: [{ type: 'token', data: kw.toUpperCase() }],
+    });
+  }
+
+  log.debug(`  Adding KeywordOrIdentifierName...`);
+  rules.push({
+    name: 'KeywordOrIdentifierName',
+    production: [{ type: 'token', data: 'IdentifierName' }],
+  });
+  for (const kw of RESERVED_KEYWORDS) {
+    rules.push({
+      name: 'KeywordOrIdentifierName',
+      production: [{ type: 'token', data: kw.toUpperCase() }],
+    });
+  }
+  for (const kw of ADDITIONAL_KEYWORDS) {
+    rules.push({
+      name: 'KeywordOrIdentifierName',
+      production: [{ type: 'token', data: kw.toUpperCase() }],
+    });
+  }
+
+  return rules;
+}
+
 class Transpiler {
   constructor(options) {
     this.options_ = options;
@@ -107,6 +161,7 @@ class Transpiler {
         processLookaheads,
         addLiterals,
         transformSyntactic,
+        rewriteIdentifierName,
       ];
       break;
     default:
@@ -211,6 +266,23 @@ function addLexicalRules(rules) {
   return rules;
 }
 
+// TODO: Read keywords from lexer/tokens.yaml.
+const RESERVED_KEYWORDS = [
+  'await', 'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
+  'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false',
+  'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new',
+  'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof',
+  'var', 'void', 'while', 'with', 'yield'
+];
+
+// TODO: Read keywords from lexer/tokens.yaml.
+const ADDITIONAL_KEYWORDS = [
+  // KeywordInStrictMode
+  'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public',
+  // UnreservedKeyword
+  'as', 'async', 'from', 'get', 'meta', 'of', 'set', 'target',
+];
+
 function rewriteReservedWord(rules) {
   log.debug('Rewriting ReservedWord...');
   const rule = rules.find((rule) => rule.name === 'ReservedWord');
@@ -224,12 +296,7 @@ function rewriteReservedWord(rules) {
       values: [reserved],
     });
   }
-  const ADDITIONAL = [
-    'async', 'from', 'get', 'meta', 'of', 'set', 'target',
-    // For the strict mode
-    'let', 'static', 'implements', 'interface', 'packege', 'private', 'protected', 'public',
-  ];
-  for (const word of ADDITIONAL) {
+  for (const word of ADDITIONAL_KEYWORDS) {
     rule.values.push(word.toUpperCase());
     rules.push({
       name: word.toUpperCase(),
@@ -350,7 +417,7 @@ function rewriteIdentifierRule(rules) {
   assert(rule !== undefined);
   assert(rule.values[0] === 'IdentifierName but not ReservedWord');
   // A generated lexer recognizes the reserved words as separate tokens.
-  rule.values = ['IdentifierName'];
+  rule.values = ['IdentifierNameButNotReservedWord'];
   return rules;
 }
 
@@ -823,9 +890,6 @@ function processLookaheadsInProduction(context, name, production, index) {
       }
     }
   }
-}
-
-function rewriteProduction(context, name, lookahead) {
 }
 
 function matchPrefix(seq, prefix) {

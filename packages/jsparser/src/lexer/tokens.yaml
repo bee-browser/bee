@@ -2,8 +2,8 @@
 # this YAML file.  Each goal symbol is defined with a list of tokens and
 # generates a separate DFA.
 
-ReservedWord: &ReservedWord
-  - AWAIT
+# Tokens in `Keyword` cannot be used as identifiers.
+Keyword: &Keyword
   - BREAK
   - CASE
   - CATCH
@@ -40,7 +40,28 @@ ReservedWord: &ReservedWord
   - VOID
   - WHILE
   - WITH
+
+# Tokens in `ContextualKeyword` can be used as identifiers in particular syntactic contexts.
+# See `IdentifierReference`, `BindingIdentifier` and `LabelIdentifier` in the syntactic grammar.
+ContextualKeyword: &ContextualKeyword
+  - AWAIT
   - YIELD
+
+# Tokens in `KeywordInStrictMode` cannot be used as identifiers in the strict mode.
+KeywordInStrictMode: &KeywordInStrictMode
+  - LET
+  - STATIC
+  - IMPLEMENTS
+  - INTERFACE
+  - PACKAGE
+  - PRIVATE
+  - PROTECTED
+  - PUBLIC
+
+# Tokens in `UnreservedKeyword` can be used as identifiers, but appear as keywords in particular
+# syntactic contexts.
+UnreservedKeyword: &UnreservedKeyword
+  - AS
   - ASYNC
   - FROM
   - GET
@@ -48,14 +69,6 @@ ReservedWord: &ReservedWord
   - OF
   - SET
   - TARGET
-  - LET
-  - STATIC
-  - IMPLEMENTS
-  - INTERFACE
-  - PACKEGE
-  - PRIVATE
-  - PROTECTED
-  - PUBLIC
 
 Punctuator: &Punctuator
   - OPTIONAL_CHAINING
@@ -120,8 +133,21 @@ DivPunctuator: &DivPunctuator
 RightBracePunctuator: &RightBracePunctuator
   - RBRACE
 
+# As described in https://github.com/yaml/yaml/issues/35,
+# YAML doesn't support merging a list referred by an alias at this point.
+#
+# As a workaround, we expand a list referred by an alias inside a list element.
+# This makes a nested list but we can flatten it by using a function provided by
+# a tool or script language.  In our case, `jq flatten` is used before using a
+# token list.
+
 CommonToken: &CommonToken
-  - *ReservedWord
+  # reserved keywords
+  - *Keyword
+  - *ContextualKeyword
+  # additional keywords
+  - *KeywordInStrictMode
+  - *UnreservedKeyword
   - IdentifierName
   - PrivateIdentifier
   - *Punctuator
@@ -130,13 +156,6 @@ CommonToken: &CommonToken
   - NoSubstitutionTemplate
   - TemplateHead
 
-# As described in https://github.com/yaml/yaml/issues/35,
-# YAML doesn't support merging a list referred by an alias at this point.
-#
-# As a workaround, we expand a list referred by an alias inside a list element.
-# This makes a nested list but we can flatten it by using a function provided by
-# a tool or script language.  In our case, `jq flatten` is used before using a
-# token list.
 goals:
   # For simplifying Makefile, we convert the goal symbols to snake case.
   - name: input_element_div

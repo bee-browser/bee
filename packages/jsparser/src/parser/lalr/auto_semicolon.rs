@@ -6,328 +6,328 @@ use phf::phf_set;
 use phf::Set;
 
 pub const DISALLOWED: Set<u16> = phf_set! {
-    // State#31
+    // State#42
     //   [EmptyStatement -> SEMI_COLON .]*
-    31u16,
-    // State#330
+    42u16,
+    // State#397
     //   [ForStatement -> FOR LPAREN SEMI_COLON . SEMI_COLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    330u16,
-    // State#592
+    397u16,
+    // State#682
     //   [ForStatement -> FOR LPAREN SEMI_COLON SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement]*
-    592u16,
-    // State#610
+    682u16,
+    // State#700
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON . SEMI_COLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    610u16,
-    // State#625
+    700u16,
+    // State#715
     //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON . Expression_In RPAREN Statement]*
-    625u16,
-    // State#940
+    715u16,
+    // State#1030
     //   [ForStatement -> FOR LPAREN SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
-    940u16,
-    // State#947
+    1030u16,
+    // State#1037
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    947u16,
-    // State#984
+    1037u16,
+    // State#1074
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement]*
-    984u16,
-    // State#1001
+    1074u16,
+    // State#1091
     //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
-    1001u16,
-    // State#1326
+    1091u16,
+    // State#1423
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement]*
-    1326u16,
-    // State#1356
+    1423u16,
+    // State#1453
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN Expression SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
-    1356u16,
-    // State#1387
+    1453u16,
+    // State#1484
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    1387u16,
-    // State#1436
+    1484u16,
+    // State#1533
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    1436u16,
-    // State#1655
+    1533u16,
+    // State#1754
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
-    1655u16,
-    // State#1708
+    1754u16,
+    // State#1807
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    1708u16,
-    // State#1712
+    1807u16,
+    // State#1811
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON . SEMI_COLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    1712u16,
-    // State#1717
+    1811u16,
+    // State#1816
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    1717u16,
-    // State#1746
+    1816u16,
+    // State#1845
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    1746u16,
-    // State#1754
+    1845u16,
+    // State#1853
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    1754u16,
-    // State#1764
+    1853u16,
+    // State#1863
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    1764u16,
-    // State#1894
+    1863u16,
+    // State#1993
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON . SEMI_COLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    1894u16,
-    // State#2121
+    1993u16,
+    // State#2221
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    2121u16,
-    // State#2124
+    2221u16,
+    // State#2224
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    2124u16,
-    // State#2125
+    2224u16,
+    // State#2225
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    2125u16,
-    // State#2133
+    2225u16,
+    // State#2233
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    2133u16,
-    // State#2156
+    2233u16,
+    // State#2256
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2156u16,
-    // State#2163
+    2256u16,
+    // State#2263
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    2163u16,
-    // State#2165
+    2263u16,
+    // State#2265
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2165u16,
-    // State#2177
+    2265u16,
+    // State#2277
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2177u16,
-    // State#2377
+    2277u16,
+    // State#2477
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    2377u16,
-    // State#2381
+    2477u16,
+    // State#2481
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    2381u16,
-    // State#2386
+    2481u16,
+    // State#2486
     //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    2386u16,
-    // State#2559
+    2486u16,
+    // State#2661
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    2559u16,
-    // State#2563
+    2661u16,
+    // State#2665
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN Expression SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    2563u16,
-    // State#2602
+    2665u16,
+    // State#2704
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2602u16,
-    // State#2606
+    2704u16,
+    // State#2708
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2606u16,
-    // State#2775
+    2708u16,
+    // State#2879
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    2775u16,
-    // State#2778
+    2879u16,
+    // State#2882
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    2778u16,
-    // State#2779
+    2882u16,
+    // State#2883
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    2779u16,
-    // State#2787
+    2883u16,
+    // State#2891
     //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    2787u16,
-    // State#2848
+    2891u16,
+    // State#2952
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON . Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON . Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    2848u16,
-    // State#2914
+    2952u16,
+    // State#3018
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
-    2914u16,
-    // State#2954
+    3018u16,
+    // State#3058
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    2954u16,
-    // State#3032
+    3058u16,
+    // State#3136
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON . Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON . Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3032u16,
-    // State#3094
+    3136u16,
+    // State#3198
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    3094u16,
-    // State#3098
+    3198u16,
+    // State#3202
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    3098u16,
-    // State#3142
+    3202u16,
+    // State#3246
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3142u16,
-    // State#3163
+    3246u16,
+    // State#3267
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3163u16,
-    // State#3178
+    3267u16,
+    // State#3282
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3178u16,
-    // State#3277
+    3282u16,
+    // State#3381
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3277u16,
-    // State#3298
+    3381u16,
+    // State#3402
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3298u16,
-    // State#3313
+    3402u16,
+    // State#3417
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3313u16,
-    // State#3346
+    3417u16,
+    // State#3450
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
-    3346u16,
-    // State#3383
+    3450u16,
+    // State#3487
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN SEMI_COLON Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3383u16,
-    // State#3390
+    3487u16,
+    // State#3494
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3390u16,
-    // State#3403
+    3494u16,
+    // State#3507
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3403u16,
-    // State#3420
+    3507u16,
+    // State#3524
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3420u16,
-    // State#3481
+    3524u16,
+    // State#3585
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN SEMI_COLON Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3481u16,
-    // State#3488
+    3585u16,
+    // State#3592
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3488u16,
-    // State#3501
+    3592u16,
+    // State#3605
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3501u16,
-    // State#3518
+    3605u16,
+    // State#3622
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3518u16,
-    // State#3577
+    3622u16,
+    // State#3681
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3577u16,
-    // State#3581
+    3681u16,
+    // State#3685
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3581u16,
-    // State#3631
+    3685u16,
+    // State#3735
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3631u16,
-    // State#3635
+    3735u16,
+    // State#3739
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3635u16,
-    // State#3681
+    3739u16,
+    // State#3785
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3681u16,
-    // State#3724
+    3785u16,
+    // State#3828
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3724u16,
+    3828u16,
 };
 
 pub const DO_WHITES: Set<u16> = phf_set! {
-    // State#1314
+    // State#1411
     //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN . SEMI_COLON]*
-    1314u16,
-    // State#2552
+    1411u16,
+    // State#2654
     //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN . SEMI_COLON]*
-    2552u16,
-    // State#2588
+    2654u16,
+    // State#2690
     //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . SEMI_COLON]*
-    2588u16,
-    // State#3084
+    2690u16,
+    // State#3188
     //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN . SEMI_COLON]*
-    3084u16,
-    // State#3565
+    3188u16,
+    // State#3669
     //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . SEMI_COLON]*
-    3565u16,
-    // State#3616
+    3669u16,
+    // State#3720
     //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . SEMI_COLON]*
-    3616u16,
+    3720u16,
 };

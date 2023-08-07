@@ -445,6 +445,24 @@ ReservedWord:
     - type: non-terminal
       data: YIELD
     - type: non-terminal
+      data: LET
+    - type: non-terminal
+      data: STATIC
+    - type: non-terminal
+      data: IMPLEMENTS
+    - type: non-terminal
+      data: INTERFACE
+    - type: non-terminal
+      data: PACKAGE
+    - type: non-terminal
+      data: PRIVATE
+    - type: non-terminal
+      data: PROTECTED
+    - type: non-terminal
+      data: PUBLIC
+    - type: non-terminal
+      data: AS
+    - type: non-terminal
       data: ASYNC
     - type: non-terminal
       data: FROM
@@ -458,22 +476,6 @@ ReservedWord:
       data: SET
     - type: non-terminal
       data: TARGET
-    - type: non-terminal
-      data: LET
-    - type: non-terminal
-      data: STATIC
-    - type: non-terminal
-      data: IMPLEMENTS
-    - type: non-terminal
-      data: INTERFACE
-    - type: non-terminal
-      data: PACKEGE
-    - type: non-terminal
-      data: PRIVATE
-    - type: non-terminal
-      data: PROTECTED
-    - type: non-terminal
-      data: PUBLIC
 Punctuator:
   type: one-of
   data:
@@ -2262,6 +2264,33 @@ WITH:
 YIELD:
   type: word
   data: yield
+LET:
+  type: word
+  data: let
+STATIC:
+  type: word
+  data: static
+IMPLEMENTS:
+  type: word
+  data: implements
+INTERFACE:
+  type: word
+  data: interface
+PACKAGE:
+  type: word
+  data: package
+PRIVATE:
+  type: word
+  data: private
+PROTECTED:
+  type: word
+  data: protected
+PUBLIC:
+  type: word
+  data: public
+AS:
+  type: word
+  data: as
 ASYNC:
   type: word
   data: async
@@ -2283,30 +2312,6 @@ SET:
 TARGET:
   type: word
   data: target
-LET:
-  type: word
-  data: let
-STATIC:
-  type: word
-  data: static
-IMPLEMENTS:
-  type: word
-  data: implements
-INTERFACE:
-  type: word
-  data: interface
-PACKEGE:
-  type: word
-  data: packege
-PRIVATE:
-  type: word
-  data: private
-PROTECTED:
-  type: word
-  data: protected
-PUBLIC:
-  type: word
-  data: public
 OPTIONAL_CHAINING:
   type: sequence
   data:

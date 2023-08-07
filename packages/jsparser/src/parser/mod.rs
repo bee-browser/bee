@@ -61,12 +61,13 @@ impl<'a> Parser<'a> {
                                 ParserResult::Reconsume => (),
                                 ParserResult::NextToken => break,
                                 ParserResult::Error => {
-                                    tracing::error!(?token);
+                                    self.report_error(&token);
                                     return false;
                                 }
                             }
                         }
                     } else {
+                        self.report_error(&token);
                         return false;
                     }
                 }
@@ -152,6 +153,17 @@ impl<'a> Parser<'a> {
             }
             _ => ParserResult::Error,
         }
+    }
+
+    fn report_error(&self, token: &Token<'_>) {
+        let pos = self.lexer.location();
+        let src = self.lexer.src();
+        tracing::error!(
+            pos,
+            src = &src[pos-10..pos+10],
+            ?token,
+            state = self.stack.last().unwrap().debug_info(),
+        );
     }
 }
 

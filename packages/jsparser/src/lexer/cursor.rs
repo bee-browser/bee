@@ -19,8 +19,17 @@ impl<'a> SourceCursor<'a> {
     }
 
     #[inline(always)]
+    pub fn src(&self) -> &'a str {
+        self.src
+    }
+
+    #[inline(always)]
     pub fn pos(&self) -> usize {
         self.pos
+    }
+
+    pub fn remaining(&self) -> &'a str {
+        &self.src[self.pos..]
     }
 
     #[inline(always)]

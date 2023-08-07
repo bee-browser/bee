@@ -116,8 +116,8 @@
       data: Identifier
 - name: Identifier
   production:
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: IdentifierNameButNotReservedWord
 - name: PrimaryExpression
   production:
     - type: token
@@ -1378,8 +1378,8 @@
       data: ComputedPropertyName_Yield_Await
 - name: LiteralPropertyName
   production:
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: LiteralPropertyName
   production:
     - type: token
@@ -1832,8 +1832,8 @@
       data: MemberExpression
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: MemberExpression
   production:
     - type: non-terminal
@@ -1884,8 +1884,8 @@
       data: MemberExpression_Await
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: MemberExpression_Await
   production:
     - type: non-terminal
@@ -1936,8 +1936,8 @@
       data: MemberExpression_Yield
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: MemberExpression_Yield
   production:
     - type: non-terminal
@@ -1988,8 +1988,8 @@
       data: MemberExpression_Yield_Await
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: MemberExpression_Yield_Await
   production:
     - type: non-terminal
@@ -2036,8 +2036,8 @@
       data: SUPER
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: SuperProperty_Await
   production:
     - type: token
@@ -2054,8 +2054,8 @@
       data: SUPER
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: SuperProperty_Yield
   production:
     - type: token
@@ -2072,8 +2072,8 @@
       data: SUPER
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: SuperProperty_Yield_Await
   production:
     - type: token
@@ -2090,8 +2090,8 @@
       data: SUPER
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: MetaProperty
   production:
     - type: non-terminal
@@ -2190,8 +2190,8 @@
       data: CallExpression
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: CallExpression
   production:
     - type: non-terminal
@@ -2240,8 +2240,8 @@
       data: CallExpression_Await
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: CallExpression_Await
   production:
     - type: non-terminal
@@ -2290,8 +2290,8 @@
       data: CallExpression_Yield
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: CallExpression_Yield
   production:
     - type: non-terminal
@@ -2340,8 +2340,8 @@
       data: CallExpression_Yield_Await
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: CallExpression_Yield_Await
   production:
     - type: non-terminal
@@ -2720,8 +2720,8 @@
   production:
     - type: token
       data: OPTIONAL_CHAINING
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain
   production:
     - type: token
@@ -2756,8 +2756,8 @@
       data: OptionalChain
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain
   production:
     - type: non-terminal
@@ -2792,8 +2792,8 @@
   production:
     - type: token
       data: OPTIONAL_CHAINING
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain_Await
   production:
     - type: token
@@ -2828,8 +2828,8 @@
       data: OptionalChain_Await
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain_Await
   production:
     - type: non-terminal
@@ -2864,8 +2864,8 @@
   production:
     - type: token
       data: OPTIONAL_CHAINING
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain_Yield
   production:
     - type: token
@@ -2900,8 +2900,8 @@
       data: OptionalChain_Yield
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain_Yield
   production:
     - type: non-terminal
@@ -2936,8 +2936,8 @@
   production:
     - type: token
       data: OPTIONAL_CHAINING
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain_Yield_Await
   production:
     - type: token
@@ -2972,8 +2972,8 @@
       data: OptionalChain_Yield_Await
     - type: token
       data: DOT
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: OptionalChain_Yield_Await
   production:
     - type: non-terminal
@@ -18187,8 +18187,8 @@
       data: StatementListItem_Await
 - name: ModuleExportName
   production:
-    - type: token
-      data: IdentifierName
+    - type: non-terminal
+      data: KeywordOrIdentifierName
 - name: ModuleExportName
   production:
     - type: token
@@ -18453,3 +18453,283 @@
   production:
     - type: token
       data: 'FALSE'
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: IdentifierName
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: STATIC
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: IMPLEMENTS
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: INTERFACE
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: PACKAGE
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: PRIVATE
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: PROTECTED
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: PUBLIC
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: AS
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: FROM
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: GET
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: META
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: OF
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: SET
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: TARGET
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: IdentifierName
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: AWAIT
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: BREAK
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: CASE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: CATCH
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: CLASS
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: CONST
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: CONTINUE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: DEBUGGER
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: DEFAULT
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: DELETE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: DO
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: ELSE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: ENUM
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: EXPORT
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: EXTENDS
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: 'FALSE'
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: FINALLY
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: FOR
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: FUNCTION
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: IF
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: IMPORT
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: IN
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: INSTANCEOF
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: NEW
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: 'NULL'
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: RETURN
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: SUPER
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: SWITCH
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: THIS
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: THROW
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: 'TRUE'
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: TRY
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: TYPEOF
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: VAR
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: VOID
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: WHILE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: WITH
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: YIELD
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: LET
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: STATIC
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: IMPLEMENTS
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: INTERFACE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: PACKAGE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: PRIVATE
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: PROTECTED
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: PUBLIC
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: AS
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: ASYNC
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: FROM
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: GET
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: META
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: OF
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: SET
+- name: KeywordOrIdentifierName
+  production:
+    - type: token
+      data: TARGET
