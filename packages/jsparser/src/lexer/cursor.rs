@@ -6,10 +6,7 @@ pub struct SourceCursor<'a> {
 
 impl<'a> SourceCursor<'a> {
     pub fn new(src: &'a str) -> Self {
-        SourceCursor {
-            src,
-            pos: 0,
-        }
+        SourceCursor { src, pos: 0 }
     }
 
     #[inline(always)]

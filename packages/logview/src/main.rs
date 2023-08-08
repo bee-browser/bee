@@ -6,8 +6,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::extract::State;
-use axum::http::header::CACHE_CONTROL;
 use axum::http::header::HeaderValue;
+use axum::http::header::CACHE_CONTROL;
 use axum::response::sse::Event;
 use axum::response::sse::Sse;
 use axum::response::IntoResponse;
@@ -102,8 +102,7 @@ async fn serve(workdir: PathBuf, config: Config, data: Vec<(String, String)>) {
                     let service = ServeDir::new(path);
                     router = router.nest(&mount.target, into_router!(service));
                 } else if path.is_file() {
-                    let service =
-                        ServeFile::new_with_mime(path, &mime::TEXT_HTML_UTF_8);
+                    let service = ServeFile::new_with_mime(path, &mime::TEXT_HTML_UTF_8);
                     router = router.nest(&mount.target, into_router!(service));
                 }
             }
@@ -111,7 +110,10 @@ async fn serve(workdir: PathBuf, config: Config, data: Vec<(String, String)>) {
     }
 
     router = router
-        .layer(SetResponseHeaderLayer::overriding(CACHE_CONTROL, HeaderValue::from_static("no-store")))
+        .layer(SetResponseHeaderLayer::overriding(
+            CACHE_CONTROL,
+            HeaderValue::from_static("no-store"),
+        ))
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Listening on {}", addr);
