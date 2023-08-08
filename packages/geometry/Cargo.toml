@@ -6,11 +6,11 @@ edition = "2021"
 publish = false
 
 [dependencies]
-num-traits = "0.2.15"
-serde = { version = "1.0.169", features = ["derive"], optional = true }
+num-traits = "0.2.16"
+serde = { version = "1.0.183", features = ["derive"], optional = true }
 
 [dev-dependencies]
-serde_test = "1.0.169"
+serde_test = "1.0.176"
 
 [lib]
 bench = false

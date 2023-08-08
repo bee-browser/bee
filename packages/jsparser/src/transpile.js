@@ -5,9 +5,9 @@ import {
   assertEquals,
   assertExists,
   unreachable,
-} from 'https://deno.land/std@0.193.0/testing/asserts.ts';
-import * as log from 'https://deno.land/std@0.193.0/log/mod.ts';
-import * as yaml from 'https://deno.land/std@0.193.0/yaml/mod.ts';
+} from 'https://deno.land/std@0.197.0/testing/asserts.ts';
+import * as log from 'https://deno.land/std@0.197.0/log/mod.ts';
+import * as yaml from 'https://deno.land/std@0.197.0/yaml/mod.ts';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';
 

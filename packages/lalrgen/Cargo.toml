@@ -6,9 +6,9 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.72"
 bee-macros = { path = "../macros" }
-clap = { version = "4.3.11", features = ["derive", "env"] }
+clap = { version = "4.3.21", features = ["derive", "env"] }
 dashmap = "5.5.0"
 humantime = "2.1.0"
 im = "15.1.0"
@@ -16,9 +16,9 @@ indexmap = "2.0.0"
 itertools = "0.11.0"
 maplit = "1.0.2"
 rayon = "1.7.0"
-serde = { version = "1.0.169", features = ["derive", "rc"] }
-serde_json = "1.0.100"
-serde_yaml = "0.9.22"
+serde = { version = "1.0.183", features = ["derive", "rc"] }
+serde_json = "1.0.104"
+serde_yaml = "0.9.25"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
 

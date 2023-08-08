@@ -1,8 +1,8 @@
 'use strict';
 
-import * as csv from 'https://deno.land/std@0.193.0/encoding/csv.ts';
-import * as io from 'https://deno.land/std@0.193.0/io/mod.ts';
-import * as zip from 'https://deno.land/x/zipjs@v2.7.17/index.js';
+import * as csv from 'https://deno.land/std@0.197.0/encoding/csv.ts';
+import * as io from 'https://deno.land/std@0.197.0/io/mod.ts';
+import * as zip from 'https://deno.land/x/zipjs@v2.7.21/index.js';
 
 zip.configure({
   // Deno supports only "module" type workers.

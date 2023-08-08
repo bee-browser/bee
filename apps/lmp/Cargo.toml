@@ -6,9 +6,9 @@ edition = "2021"
 publish = false
 
 [dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.72"
 bee-layout = { path = "../../packages/layout", features = ["service"] }
-serde_json = "1.0.100"
+serde_json = "1.0.104"
 structopt = "0.3.26"
 
 [[bin]]

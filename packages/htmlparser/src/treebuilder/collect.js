@@ -1,8 +1,8 @@
-import * as path from "https://deno.land/std@0.193.0/path/mod.ts";
-import * as yaml from 'https://deno.land/std@0.193.0/yaml/mod.ts';
+import * as path from "https://deno.land/std@0.197.0/path/mod.ts";
+import * as yaml from 'https://deno.land/std@0.197.0/yaml/mod.ts';
 import { pascalCase } from 'https://deno.land/x/case@2.1.1/mod.ts';
-import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.2/command/mod.ts";
-import Handlebars from 'npm:handlebars@4.7.7';
+import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
+import Handlebars from 'npm:handlebars@4.7.8';
 import * as log from '../../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(Deno.mainModule);
