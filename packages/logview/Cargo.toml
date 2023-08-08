@@ -1,0 +1,25 @@
+[package]
+name = "bee-logview"
+version = "0.0.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+anyhow = "1.0.71"
+async-stream = "0.3.5"
+axum = "0.6.18"
+bytes = "1.4.0"
+clap = { version = "4.3.11", features = ["derive"] }
+mime = "0.3.17"
+mustache = "0.9.0"
+open = "5.0.0"
+serde = { version = "1.0.169", features = ["derive", "rc"] }
+serde_yaml = "0.9.22"
+shell-words = "1.1.0"
+tempfile = "3.7.0"
+tokio = { version = "1.29.1", features = ["io-util", "macros", "process", "rt-multi-thread"] }
+tokio-stream = "0.1.14"
+tower-http = { version = "0.4.2", features = ["fs", "set-header", "trace"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }

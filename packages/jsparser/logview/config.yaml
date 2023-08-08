@@ -1,0 +1,8 @@
+mounts:
+  - target: /logview
+    source:
+      fs: assets
+
+event-source:
+  command: >-
+    sh run.sh {{url}}

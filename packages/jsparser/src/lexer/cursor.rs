@@ -35,7 +35,9 @@ impl<'a> SourceCursor<'a> {
 
     #[inline(always)]
     pub fn lexeme(&self) -> &'a str {
-        self.src.get(self.pos..self.token_end).unwrap()
+        assert!(self.pos <= self.token_end);
+        assert!(self.token_end <= self.src.len());
+        self.src.get(self.pos..self.token_end).unwrap_or("")
     }
 
     #[inline(always)]

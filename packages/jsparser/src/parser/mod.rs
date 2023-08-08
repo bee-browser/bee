@@ -27,23 +27,20 @@ impl<'a> Parser<'a> {
 
     pub fn parse(&mut self) -> bool {
         self.push_state(State::default());
+        let mut token = self.next_token();
         loop {
-            // TODO: Currently, we simply tokenize at the beginning of every loop.
-            // This is inefficient.
-            // Cache the token and invalidate when it's consumed or the lexical goal changes.
-            let token = self.lexer.next_token();
-            tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
-
             // TODO: no-line-terminator
             match token.kind {
                 TokenKind::WhiteSpaceSequence | TokenKind::Comment => {
                     self.lexer.consume_token(token);
                     self.new_line = false;
+                    token = self.next_token();
                     continue;
                 }
                 TokenKind::LineTerminatorSequence => {
                     self.lexer.consume_token(token);
                     self.new_line = true;
+                    token = self.next_token();
                     continue;
                 }
                 _ => {}
@@ -55,6 +52,7 @@ impl<'a> Parser<'a> {
                 ParserResult::NextToken => {
                     self.lexer.consume_token(token);
                     self.new_line = false;
+                    token = self.next_token();
                 }
                 ParserResult::Error => {
                     if self.is_auto_semicolon_allowed(&token) {
@@ -79,6 +77,13 @@ impl<'a> Parser<'a> {
         true
     }
 
+    #[inline(always)]
+    fn next_token(&mut self) -> Token<'a> {
+        let token = self.lexer.next_token();
+        tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
+        token
+    }
+
     fn push_state(&mut self, state: State) {
         tracing::trace!(opcode = "push", state = state.debug_info());
         self.stack.push(state);
@@ -101,21 +106,27 @@ impl<'a> Parser<'a> {
     fn handle_token(&mut self, token: &Token<'_>) -> ParserResult {
         match self.stack.last().unwrap().action(token) {
             Action::Accept => {
-                tracing::trace!(opcode = "accept");
+                tracing::trace!(opcode = "accept", ?token.kind);
                 ParserResult::Accept
             }
             Action::Shift(next) => {
-                tracing::trace!(opcode = "shift");
-                self.push_state(next);
+                tracing::trace!(opcode = "shift", ?token.kind);
                 match token.kind {
-                    TokenKind::TemplateHead => self.template_depth += 1,
-                    TokenKind::TemplateTail => self.template_depth -= 1,
+                    TokenKind::TemplateHead => {
+                        self.template_depth += 1;
+                        tracing::trace!(opcode = "template-depth", depth = self.template_depth);
+                    }
+                    TokenKind::TemplateTail => {
+                        self.template_depth -= 1;
+                        tracing::trace!(opcode = "template-depth", depth = self.template_depth);
+                    }
                     _ => (),
                 }
+                self.push_state(next);
                 ParserResult::NextToken
             }
             Action::Reduce(non_terminal, n, rule) => {
-                tracing::trace!(opcode = "reduce", ?rule);
+                tracing::trace!(opcode = "reduce", ?rule, ?token.kind);
                 self.pop_states(n as usize);
                 let next = self.stack.last().unwrap().goto(non_terminal);
                 self.push_state(next);
@@ -180,8 +191,9 @@ impl<'a> Parser<'a> {
         tracing::error!(
             pos,
             parsed = &src[pos.saturating_sub(10)..pos],
-            remaianing = &src[pos..(pos + 10).min(src.len())],
-            ?token,
+            remaianing = &src[pos..((pos + 10).min(src.len()))],
+            ?token.kind,
+            ?token.lexeme,
             state = self.stack.last().unwrap().debug_info(),
         );
     }

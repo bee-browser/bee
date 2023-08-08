@@ -1,0 +1,3 @@
+event-source:
+  command: >-
+    sh -c "echo 'Hello {{name}}' >&2"
