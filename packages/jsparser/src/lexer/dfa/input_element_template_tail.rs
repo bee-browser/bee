@@ -8,35 +8,36 @@ use super::Token;
 use super::TokenKind;
 
 pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
-    let mut cursor = cursor.clone();
-
     let mut token = Token::default();
-    let mut state = State::default();
-    tracing::trace!(opcode = "state", ?state);
 
-    while let Some(ch) = cursor.get() {
-        tracing::trace!(opcode = "char", char = ?ch);
+    let mut state = State::default();
+    tracing::trace!(opcode = "init", ?state);
+
+    let mut lexeme_end = 0;
+    for (i, ch) in cursor.chars() {
         let unicode_set = match UnicodeSet::try_from(ch) {
             Ok(unicode_set) => unicode_set,
-            Err(_) => break,
+            Err(_) => {
+                tracing::error!(invalid_char = ?ch, pos = cursor.pos() + i);
+                break;
+            }
         };
-        tracing::trace!(opcode = "unicode-set", ?unicode_set);
         state = state.next_state(unicode_set);
-        tracing::trace!(opcode = "state", ?state);
+        tracing::trace!(opcode = "next", ?state, char = ?ch, ?unicode_set, pos = cursor.pos() + i);
         if state.is_invalid() {
             break;
         }
-        if state.lookahead() {
-            cursor.lookahead();
-        } else {
-            cursor.consume();
+        if !state.lookahead() {
+            debug_assert_eq!(lexeme_end, i);
+            lexeme_end += ch.len_utf8();
         }
         if let Some(kind) = state.accept() {
             token.kind = kind;
-            token.lexeme = cursor.lexeme();
-            tracing::trace!(opcode = "candidate", ?token.kind, token.lexeme);
+            token.lexeme = cursor.lexeme(lexeme_end);
+            tracing::trace!(opcode = "accept", ?token.kind, ?token.lexeme);
         }
     }
+
     token
 }
 

@@ -233,23 +233,16 @@ class Widget extends EventEmitter {
 class ParserView extends Widget {
     constructor(){
         super();
-        this.tokenView_ = new TokenView();
         this.stackView_ = new StackView();
     }
     render() {
         this.elem_ = h('div', {
             id: 'parser-view'
-        }, this.tokenView_.render(), this.stackView_.render());
+        }, this.stackView_.render());
         return this.elem_;
     }
     feed(data) {
         switch(data.opcode){
-            case 'token':
-                this.tokenView_.setToken({
-                    kind: data['token.kind'],
-                    lexeme: data['token.lexeme']
-                });
-                break;
             case 'push':
                 this.stackView_.pushState(data.state);
                 break;
@@ -262,31 +255,6 @@ class ParserView extends Widget {
                 break;
             case 'reduce':
                 break;
-        }
-    }
-}
-class TokenView extends Widget {
-    constructor(){
-        super();
-        this.token_ = null;
-    }
-    render() {
-        this.elem_ = h('div', {
-            id: 'token'
-        }, h('div', {
-            id: 'token-kind'
-        }), h('div', {
-            id: 'token-lexeme'
-        }));
-        return this.elem_;
-    }
-    setToken(token) {
-        this.token_ = token;
-        document.getElementById('token-kind').innerHTML = '';
-        document.getElementById('token-lexeme').innerHTML = '';
-        if (this.token_) {
-            document.getElementById('token-kind').appendChild(t(this.token_.kind));
-            document.getElementById('token-lexeme').appendChild(t(this.token_.lexeme));
         }
     }
 }
@@ -339,7 +307,6 @@ class LexerView extends Widget {
     constructor(){
         super();
         this.cursorPos_ = 0;
-        this.cursorTokenEnd_ = 0;
     }
     render() {
         this.elem_ = h('div', {
@@ -352,6 +319,8 @@ class LexerView extends Widget {
             id: 'lexical-goal'
         }), h('div', {
             id: 'candidate-token'
+        }), h('div', {
+            id: 'candidate-lexeme'
         }));
         return this.elem_;
     }
@@ -360,14 +329,13 @@ class LexerView extends Widget {
             case 'set_goal':
                 this.setGoal_(data.goal);
                 break;
-            case 'state':
+            case 'init':
                 this.setState_(data.state);
                 break;
-            case 'char':
+            case 'next':
+                this.setState_(data.state);
                 break;
-            case 'unicode-set':
-                break;
-            case 'candidate':
+            case 'accept':
                 this.setToken_({
                     kind: data['token.kind'],
                     lexeme: data['token.lexeme']
@@ -377,8 +345,6 @@ class LexerView extends Widget {
                 this.cursorTokenEnd_ = data['cursor.token_end'];
                 this.updateCursor_();
                 break;
-            case 'lookahead':
-                break;
             case 'advance':
                 this.cursorPos_ = data['cursor.pos'];
                 this.updateCursor_();
@@ -386,7 +352,7 @@ class LexerView extends Widget {
         }
     }
     updateCursor_() {
-        document.getElementById('lexer-cursor').innerHTML = `${this.cursorPos_}, ${this.cursorTokenEnd_}`;
+        document.getElementById('lexer-cursor').innerHTML = `${this.cursorPos_}`;
     }
     setState_(state) {
         if (state === 'State(0)') {
@@ -401,8 +367,10 @@ class LexerView extends Widget {
     }
     setToken_(token) {
         document.getElementById('candidate-token').innerHTML = '';
+        document.getElementById('candidate-lexeme').innerHTML = '';
         if (token) {
-            document.getElementById('candidate-token').appendChild(t(token.lexeme));
+            document.getElementById('candidate-token').appendChild(t(token.kind));
+            document.getElementById('candidate-lexeme').appendChild(t(token.lexeme));
         }
     }
 }

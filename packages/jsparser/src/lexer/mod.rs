@@ -47,7 +47,7 @@ impl<'a> Lexer<'a> {
         match token.kind {
             TokenKind::Eof => {
                 if !self.cursor.eof() {
-                    tracing::error!(cursor.pos = self.cursor.pos(), "Invalid source");
+                    tracing::error!("Invalid source");
                 }
             }
             _ => {

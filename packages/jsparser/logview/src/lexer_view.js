@@ -5,7 +5,6 @@ export default class LexerView extends Widget {
   constructor() {
     super();
     this.cursorPos_ = 0;
-    this.cursorTokenEnd_ = 0;
   }
 
   render() {
@@ -14,7 +13,8 @@ export default class LexerView extends Widget {
         h('div', { id: 'lexer-cursor' }, t('0, 0')),
         h('div', { id: 'lexer-state' }),
         h('div', { id: 'lexical-goal' }),
-        h('div', { id: 'candidate-token' }));
+        h('div', { id: 'candidate-token' }),
+        h('div', { id: 'candidate-lexeme' }));
     return this.elem_;
   }
 
@@ -23,14 +23,13 @@ export default class LexerView extends Widget {
     case 'set_goal':
       this.setGoal_(data.goal);
       break;
-    case 'state':
+    case 'init':
       this.setState_(data.state);
       break;
-    case 'char':
+    case 'next':
+      this.setState_(data.state);
       break;
-    case 'unicode-set':
-      break;
-    case 'candidate':
+    case 'accept':
       this.setToken_({
         kind: data['token.kind'],
         lexeme: data['token.lexeme'],
@@ -40,8 +39,6 @@ export default class LexerView extends Widget {
       this.cursorTokenEnd_ = data['cursor.token_end'];
       this.updateCursor_();
       break;
-    case 'lookahead':
-      break;
     case 'advance':
       this.cursorPos_ = data['cursor.pos'];
       this.updateCursor_();
@@ -50,7 +47,7 @@ export default class LexerView extends Widget {
   }
 
   updateCursor_() {
-    document.getElementById('lexer-cursor').innerHTML = `${this.cursorPos_}, ${this.cursorTokenEnd_}`;
+    document.getElementById('lexer-cursor').innerHTML = `${this.cursorPos_}`;
   }
 
   setState_(state) {
@@ -68,8 +65,10 @@ export default class LexerView extends Widget {
 
   setToken_(token) {
     document.getElementById('candidate-token').innerHTML = '';
+    document.getElementById('candidate-lexeme').innerHTML = '';
     if (token) {
-      document.getElementById('candidate-token').appendChild(t(token.lexeme));
+      document.getElementById('candidate-token').appendChild(t(token.kind));
+      document.getElementById('candidate-lexeme').appendChild(t(token.lexeme));
     }
   }
 }

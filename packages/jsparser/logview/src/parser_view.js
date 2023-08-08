@@ -4,26 +4,18 @@ import Widget from '../../../../webui/src/widget.js';
 export default class ParserView extends Widget {
   constructor() {
     super();
-    this.tokenView_ = new TokenView();
     this.stackView_ = new StackView();
   }
 
   render() {
     this.elem_ =
       h('div', { id: 'parser-view' },
-        this.tokenView_.render(),
         this.stackView_.render());
     return this.elem_;
   }
 
   feed(data) {
     switch (data.opcode) {
-    case 'token':
-      this.tokenView_.setToken({
-        kind: data['token.kind'],
-        lexeme: data['token.lexeme'],
-      });
-      break;
     case 'push':
       this.stackView_.pushState(data.state);
       break;
@@ -36,31 +28,6 @@ export default class ParserView extends Widget {
       break;
     case 'reduce':
       break;
-    }
-  }
-}
-
-class TokenView extends Widget {
-  constructor() {
-    super();
-    this.token_ = null;
-  }
-
-  render() {
-    this.elem_ =
-      h('div', { id: 'token' },
-        h('div', { id: 'token-kind' }),
-        h('div', { id: 'token-lexeme' }));
-    return this.elem_;
-  }
-
-  setToken(token) {
-    this.token_ = token;
-    document.getElementById('token-kind').innerHTML = '';
-    document.getElementById('token-lexeme').innerHTML = '';
-    if (this.token_) {
-      document.getElementById('token-kind').appendChild(t(this.token_.kind));
-      document.getElementById('token-lexeme').appendChild(t(this.token_.lexeme));
     }
   }
 }
