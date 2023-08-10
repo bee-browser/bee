@@ -57,7 +57,7 @@ codegen: $(CODEGEN_TARGETS)
 .PRECIOUS: dfa/%.json.xz
 dfa/%.json.xz: es2022.lex.yaml tokens.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -q -r -p bee-dfagen -- $(shell $(LIST_TOKENS)) | jq -c '.' | xz >$@
+	@cargo run -qrp bee-dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' | xz >$@
 
 # 2. Generate code for each DFA
 dfa/%.rs: dfa/%.json.xz dfa/dfa.rs.hbs

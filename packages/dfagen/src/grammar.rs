@@ -10,13 +10,22 @@ use crate::unicode::unicode_span;
 use crate::unicode::UnicodeSet;
 
 pub struct Grammar<'a, 'b> {
-    pub rules: &'a HashMap<String, Rule>,
+    pub rules: &'a [Rule],
+    pub rule_map: HashMap<&'a str, Vec<&'a Rule>>,
     pub tokens: &'b [String],
 }
 
 impl<'a, 'b> Grammar<'a, 'b> {
-    pub fn new(rules: &'a HashMap<String, Rule>, tokens: &'b [String]) -> Self {
-        Grammar { rules, tokens }
+    pub fn new(rules: &'a [Rule], tokens: &'b [String]) -> Self {
+        let mut rule_map: HashMap<&'a str, Vec<&'a Rule>> = Default::default();
+        for rule in rules.iter() {
+            rule_map.entry(rule.name.as_str()).or_default().push(rule);
+        }
+        Grammar {
+            rules,
+            rule_map,
+            tokens,
+        }
     }
 
     pub fn compile(&self) -> Dfa {
@@ -36,7 +45,7 @@ impl<'a, 'b> Grammar<'a, 'b> {
     }
 
     fn build_nfa(&self) -> Nfa {
-        let mut builder = NfaBuilder::new(self.rules);
+        let mut builder = NfaBuilder::new(&self.rule_map);
         for token in self.tokens.iter() {
             tracing::debug!("Compiling {token} into NFA...");
             builder.add_token(token);
@@ -47,14 +56,19 @@ impl<'a, 'b> Grammar<'a, 'b> {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
+pub struct Rule {
+    name: String,
+    production: Vec<Term>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
 #[serde(tag = "type", content = "data")]
-pub enum Rule {
+pub enum Term {
     Empty,
     Any,
     UnicodeSet(Vec<UnicodePattern>),
     Word(String),
-    Sequence(Vec<Rule>),
-    OneOf(Vec<Rule>),
     NonTerminal(String),
     Lookahead {
         patterns: Vec<UnicodePattern>,
@@ -90,21 +104,21 @@ pub enum UnicodeBuiltInPattern {
     ZWNBSP,
 }
 
-pub struct NfaBuilder<'a> {
-    rules: &'a HashMap<String, Rule>,
+pub struct NfaBuilder<'a, 'b> {
+    rule_map: &'a HashMap<&'b str, Vec<&'b Rule>>,
     nfa: Nfa,
     start_id: StateId,
     recursion_stack: Vec<RecursionContext>,
 }
 
-impl<'a> NfaBuilder<'a> {
-    pub fn new(rules: &'a HashMap<String, Rule>) -> Self {
+impl<'a, 'b> NfaBuilder<'a, 'b> {
+    pub fn new(rule_map: &'a HashMap<&'b str, Vec<&'b Rule>>) -> Self {
         let mut nfa = Nfa::new();
         let start_id = nfa.create_state();
         nfa.set_label(start_id, "@start".to_string());
 
         NfaBuilder {
-            rules,
+            rule_map,
             nfa,
             start_id,
             recursion_stack: vec![],
@@ -112,85 +126,217 @@ impl<'a> NfaBuilder<'a> {
     }
 
     pub fn add_token(&mut self, token: &str) {
-        let rule = self.rules.get(token).unwrap();
-
         let start_id = self.nfa.create_state();
-        self.nfa.set_label(start_id, format!("{token}@start"));
+        self.nfa.set_label(start_id, format!("#{token}@start"));
 
         let accept_id = self.nfa.create_state();
-        self.nfa.set_label(accept_id, format!("{token}@accept"));
+        self.nfa.set_label(accept_id, format!("#{token}@accept"));
         self.nfa.accept(accept_id, token.to_string());
 
-        // RecursionContexts constitutes a stack used for detecting a recursion in production
-        // rules.
-        self.recursion_stack.push(RecursionContext {
-            label: token.to_string(),
-            item: Some((token.to_string(), (start_id, accept_id))),
-            recursion: false,
-        });
-        let (inner_start_id, inner_accept_id) = self.build_nfa(rule);
-        self.recursion_stack.pop();
+        let (inner_start_id, inner_end_id) = self.build_nfa_for_non_terminal(token);
 
-        self.nfa.epsilon_transition(start_id, inner_start_id);
-        self.nfa.epsilon_transition(inner_accept_id, accept_id);
         self.nfa.epsilon_transition(self.start_id, start_id);
+        self.nfa.epsilon_transition(start_id, inner_start_id);
+        self.nfa.epsilon_transition(inner_end_id, accept_id);
     }
 
     pub fn build(self) -> Nfa {
         self.nfa
     }
 
-    fn build_nfa(&mut self, rule: &Rule) -> (StateId, StateId) {
-        match rule {
-            Rule::Empty => self.build_empty_nfa(),
-            Rule::UnicodeSet(ref patterns) => self.build_unicode_set_nfa(patterns),
-            Rule::Word(ref word) => self.build_word_nfa(word),
-            Rule::NonTerminal(ref name) => self.build_non_terminal_nfa(name),
-            Rule::Sequence(ref rules) => self.build_sequence_nfa(rules),
-            Rule::OneOf(ref rules) => self.build_unified_nfa(rules),
+    fn build_nfa_for_non_terminal(&mut self, name: &str) -> (StateId, StateId) {
+        if let Some(endpoints) = self.find_recursion(name) {
+            self.mark_recursion();
+            return endpoints;
+        }
+
+        let start_id = self.nfa.create_state();
+        self.nfa.set_label(start_id, format!("{name}@start"));
+
+        let end_id = self.nfa.create_state();
+        self.nfa.set_label(end_id, format!("{name}@end"));
+
+        let rules = self.rule_map.get(name).unwrap();
+        self.recursion_stack.push(RecursionContext {
+            label: name.to_string(),
+            item: Some((name.to_string(), (start_id, end_id))),
+            recursion: false,
+        });
+        let (inner_start_id, inner_end_id) = self.build_nfa_for_rules(rules);
+        self.recursion_stack.pop();
+
+        self.nfa.epsilon_transition(start_id, inner_start_id);
+        self.nfa.epsilon_transition(inner_end_id, end_id);
+
+        (start_id, end_id)
+    }
+
+    fn build_nfa_for_rules(&mut self, rules: &[&'b Rule]) -> (StateId, StateId) {
+        let label = self.recursion_stack.last().unwrap().label.as_str();
+
+        let start_id = self.nfa.create_state();
+        self.nfa.set_label(start_id, format!("{label}/rules@start"));
+
+        let end_id = self.nfa.create_state();
+        self.nfa.set_label(end_id, format!("{label}/rules@end"));
+
+        for (i, rule) in rules.iter().enumerate() {
+            let label = self.recursion_stack.last().unwrap().label.as_str();
+
+            self.recursion_stack.push(RecursionContext {
+                label: format!("{label}/rules@{i}"),
+                item: None,
+                recursion: false,
+            });
+            let (rule_start_id, rule_end_id) = self.build_nfa_for_rule(rule);
+            self.recursion_stack.pop();
+
+            self.nfa.epsilon_transition(start_id, rule_start_id);
+            self.nfa.epsilon_transition(rule_end_id, end_id);
+        }
+
+        (start_id, end_id)
+    }
+
+    fn build_nfa_for_rule(&mut self, rule: &Rule) -> (StateId, StateId) {
+        let label = self.recursion_stack.last().unwrap().label.as_str();
+
+        let start_id = self.nfa.create_state();
+        self.nfa.set_label(start_id, format!("{label}@start"));
+
+        let end_id = self.nfa.create_state();
+        self.nfa.set_label(end_id, format!("{label}@end"));
+
+        let (prod_start_id, prod_end_id) = self.build_nfa_for_production(&rule.production);
+
+        self.nfa.epsilon_transition(start_id, prod_start_id);
+        self.nfa.epsilon_transition(prod_end_id, end_id);
+
+        (start_id, end_id)
+    }
+
+    fn build_nfa_for_production(&mut self, production: &[Term]) -> (StateId, StateId) {
+        let label = self.recursion_stack.last().unwrap().label.as_str();
+
+        let lookahead_index = production.iter().position(|term| match term {
+            Term::Lookahead { .. } => true,
+            _ => false,
+        });
+        let normal_seq_end = if let Some(i) = lookahead_index {
+            i
+        } else {
+            production.len()
+        };
+
+        let start_id = self.nfa.create_state();
+        self.nfa
+            .set_label(start_id, format!("{label}/production@start"));
+
+        let end_id = self.nfa.create_state();
+        self.nfa
+            .set_label(end_id, format!("{label}/production@end"));
+
+        let mut id = start_id;
+        for i in 0..normal_seq_end {
+            let label = self.recursion_stack.last().unwrap().label.as_str();
+            let term = &production[i];
+
+            self.recursion_stack.push(RecursionContext {
+                label: format!("{label}/terms@{i}"),
+                item: None,
+                recursion: false,
+            });
+            let (term_start_id, term_end_id) = self.build_nfa_for_term(term);
+            let context = self.recursion_stack.pop().unwrap();
+
+            // We build a DFA recognizing tokens defined in regular expressions.
+            // A production like `A -> aAb` is not allowed.
+            // A rule including such productions cannot be represented in a regular
+            // expression and a stack is needed for recognizing it.
+            if context.recursion {
+                assert!(i == 0 || i == production.len() - 1);
+            }
+
+            self.nfa.epsilon_transition(id, term_start_id);
+
+            id = term_end_id;
+        }
+
+        // Process lookahead items.
+        if let Some(i) = lookahead_index {
+            let label = self.recursion_stack.last().unwrap().label.as_str();
+
+            self.recursion_stack.push(RecursionContext {
+                label: format!("{label}/terms@{i}"),
+                item: None,
+                recursion: false,
+            });
+            let (lookahead_start_id, lookahead_end_id) =
+                self.build_nfa_for_lookahead(&production[i..]);
+            self.recursion_stack.pop();
+
+            self.nfa.epsilon_transition(id, lookahead_start_id);
+
+            id = lookahead_end_id;
+        }
+
+        self.nfa.epsilon_transition(id, end_id);
+
+        (start_id, end_id)
+    }
+
+    fn build_nfa_for_term(&mut self, term: &Term) -> (StateId, StateId) {
+        match term {
+            Term::Empty => self.build_nfa_for_empty(),
+            Term::UnicodeSet(ref patterns) => self.build_nfa_for_unicode_set(patterns),
+            Term::Word(ref word) => self.build_nfa_for_word(word),
+            Term::NonTerminal(ref name) => self.build_nfa_for_non_terminal(name),
             _ => unimplemented!(),
         }
     }
 
-    fn build_empty_nfa(&mut self) -> (StateId, StateId) {
+    fn build_nfa_for_empty(&mut self) -> (StateId, StateId) {
         let label = self.recursion_stack.last().unwrap().label.as_str();
 
         let start_id = self.nfa.create_state();
         self.nfa.set_label(start_id, format!("{label}/empty@start"));
 
-        let accept_id = self.nfa.create_state();
-        self.nfa
-            .set_label(accept_id, format!("{label}/empty@accept"));
+        let end_id = self.nfa.create_state();
+        self.nfa.set_label(end_id, format!("{label}/empty@end"));
 
-        self.nfa.epsilon_transition(start_id, accept_id);
+        self.nfa.epsilon_transition(start_id, end_id);
 
-        (start_id, accept_id)
+        (start_id, end_id)
     }
 
-    fn build_unicode_set_nfa(&mut self, patterns: &[UnicodePattern]) -> (StateId, StateId) {
+    fn build_nfa_for_unicode_set(&mut self, patterns: &[UnicodePattern]) -> (StateId, StateId) {
         let label = self.recursion_stack.last().unwrap().label.as_str();
 
         let start_id = self.nfa.create_state();
         self.nfa
             .set_label(start_id, format!("{label}/unicode_set@start"));
 
-        let accept_id = self.nfa.create_state();
+        let end_id = self.nfa.create_state();
         self.nfa
-            .set_label(accept_id, format!("{label}/unicode_set@accept"));
+            .set_label(end_id, format!("{label}/unicode_set@end"));
 
         let unicode_set = self.build_unicode_set(patterns);
-        self.nfa.transition(start_id, accept_id, unicode_set);
+        self.nfa.transition(start_id, end_id, unicode_set);
 
-        (start_id, accept_id)
+        (start_id, end_id)
     }
 
-    fn build_word_nfa(&mut self, word: &str) -> (StateId, StateId) {
+    fn build_nfa_for_word(&mut self, word: &str) -> (StateId, StateId) {
         let label = self.recursion_stack.last().unwrap().label.as_str();
 
         tracing::debug!(context.label = label, word);
         let start_id = self.nfa.create_state();
         self.nfa
             .set_label(start_id, format!("{label}/word({word})@start"));
+
+        let end_id = self.nfa.create_state();
+        self.nfa
+            .set_label(end_id, format!("{label}/word({word})@end"));
 
         let mut id = start_id;
         for (i, ch) in word.char_indices() {
@@ -201,143 +347,26 @@ impl<'a> NfaBuilder<'a> {
             id = next_id;
         }
 
-        (start_id, id)
+        self.nfa.epsilon_transition(id, end_id);
+
+        (start_id, end_id)
     }
 
-    fn build_non_terminal_nfa(&mut self, name: &str) -> (StateId, StateId) {
-        if let Some(endpoints) = self.find_recursion(name) {
-            self.mark_recursion();
-            return endpoints;
-        }
-
-        let start_id = self.nfa.create_state();
-        self.nfa.set_label(start_id, format!("{name}@start"));
-
-        let accept_id = self.nfa.create_state();
-        self.nfa.set_label(accept_id, format!("{name}@accept"));
-
-        let rule = self.rules.get(name).unwrap();
-        self.recursion_stack.push(RecursionContext {
-            label: name.to_string(),
-            item: Some((name.to_string(), (start_id, accept_id))),
-            recursion: false,
-        });
-        let (inner_start_id, inner_accept_id) = self.build_nfa(rule);
-        self.recursion_stack.pop();
-
-        self.nfa.epsilon_transition(start_id, inner_start_id);
-        self.nfa.epsilon_transition(inner_accept_id, accept_id);
-
-        (start_id, accept_id)
-    }
-
-    fn build_sequence_nfa(&mut self, rules: &[Rule]) -> (StateId, StateId) {
-        let label = self.recursion_stack.last().unwrap().label.as_str();
-
-        let lookahead_index = rules.iter().position(|rule| match rule {
-            Rule::Lookahead { .. } => true,
-            _ => false,
-        });
-        let normal_seq_end = if let Some(i) = lookahead_index {
-            i
-        } else {
-            rules.len()
-        };
-
-        let start_id = self.nfa.create_state();
-        self.nfa.set_label(start_id, format!("{label}/seq@start"));
-
-        let mut id = start_id;
-        for i in 0..normal_seq_end {
-            let label = self.recursion_stack.last().unwrap().label.as_str();
-            let rule = &rules[i];
-
-            self.recursion_stack.push(RecursionContext {
-                label: format!("{label}/seq@{i}"),
-                item: None,
-                recursion: false,
-            });
-            let (inner_start_id, inner_accept_id) = self.build_nfa(rule);
-            let context = self.recursion_stack.pop().unwrap();
-
-            // We build a DFA recognizing tokens defined in regular expressions.
-            // A production like `A -> aAb` is not allowed.
-            // A rule including such productions cannot be represented in a regular
-            // expression and a stack is needed for recognizing it.
-            if context.recursion {
-                assert!(i == 0 || i == rules.len() - 1);
-            }
-
-            self.nfa.epsilon_transition(id, inner_start_id);
-
-            id = inner_accept_id;
-        }
-
-        // Process lookahead items.
-        if let Some(i) = lookahead_index {
-            let label = self.recursion_stack.last().unwrap().label.as_str();
-
-            self.recursion_stack.push(RecursionContext {
-                label: format!("{label}/seq@{i}"),
-                item: None,
-                recursion: false,
-            });
-            let (inner_start_id, inner_accept_id) = self.build_lookahead_nfa(&rules[i..]);
-            self.recursion_stack.pop();
-
-            self.nfa.epsilon_transition(id, inner_start_id);
-
-            id = inner_accept_id;
-        }
-
-        (start_id, id)
-    }
-
-    fn build_unified_nfa(&mut self, rules: &[Rule]) -> (StateId, StateId) {
-        let label = self.recursion_stack.last().unwrap().label.as_str();
-
-        let start_id = self.nfa.create_state();
-        self.nfa
-            .set_label(start_id, format!("{label}/one-of@start"));
-
-        let accept_id = self.nfa.create_state();
-        self.nfa
-            .set_label(accept_id, format!("{label}/one-of@accept"));
-
-        for (i, rule) in rules.iter().enumerate() {
-            let label = self.recursion_stack.last().unwrap().label.as_str();
-
-            self.recursion_stack.push(RecursionContext {
-                label: format!("{label}/one-of@{i}"),
-                item: None,
-                recursion: false,
-            });
-            let (inner_start_id, inner_accept_id) = self.build_nfa(rule);
-            self.recursion_stack.pop();
-
-            self.nfa.epsilon_transition(start_id, inner_start_id);
-            self.nfa.epsilon_transition(inner_accept_id, accept_id);
-        }
-
-        (start_id, accept_id)
-    }
-
-    fn build_lookahead_nfa(&mut self, rules: &[Rule]) -> (StateId, StateId) {
+    fn build_nfa_for_lookahead(&mut self, rules: &[Term]) -> (StateId, StateId) {
         let label = self.recursion_stack.last().unwrap().label.as_str();
 
         let start_id = self.nfa.create_state();
         self.nfa
             .set_label(start_id, format!("{label}/lookahead@start"));
 
-        let accept_id = self.nfa.create_state();
-        self.nfa
-            .set_label(accept_id, format!("{label}/lookahead@accept"));
-        self.nfa.lookahead(accept_id);
+        let end_id = self.nfa.create_state();
+        self.nfa.set_label(end_id, format!("{label}/lookahead@end"));
+        self.nfa.lookahead(end_id);
 
         let mut unicode_set = UnicodeSet::any();
         for rule in rules {
             match rule {
-                Rule::Lookahead { patterns, negate } => {
+                Term::Lookahead { patterns, negate } => {
                     let mut us = self.build_unicode_set(patterns);
                     if *negate {
                         us = UnicodeSet::any().exclude(&us);
@@ -348,9 +377,9 @@ impl<'a> NfaBuilder<'a> {
             };
         }
 
-        self.nfa.transition(start_id, accept_id, unicode_set);
+        self.nfa.transition(start_id, end_id, unicode_set);
 
-        (start_id, accept_id)
+        (start_id, end_id)
     }
 
     fn build_unicode_set(&self, patterns: &[UnicodePattern]) -> UnicodeSet {
@@ -408,12 +437,12 @@ impl<'a> NfaBuilder<'a> {
                         let ch = value.chars().next().unwrap();
                         unicode_set = unicode_set.exclude_span(&unicode_span!(ch));
                     } else {
-                        let us = self.build_non_terminal_unicode_set(value);
+                        let us = self.build_unicode_set_for_non_terminal(value);
                         unicode_set = unicode_set.exclude(&us);
                     }
                 }
                 UnicodePattern::NonTerminal(name) => {
-                    let us = self.build_non_terminal_unicode_set(name);
+                    let us = self.build_unicode_set_for_non_terminal(name);
                     unicode_set = unicode_set.merge(&us);
                 }
             };
@@ -421,28 +450,32 @@ impl<'a> NfaBuilder<'a> {
         unicode_set
     }
 
-    fn build_non_terminal_unicode_set(&self, name: &str) -> UnicodeSet {
-        let rule = self.rules.get(name).unwrap();
-        match rule {
-            Rule::Any => UnicodeSet::any(),
-            Rule::NonTerminal(ref name) => self.build_non_terminal_unicode_set(name),
-            Rule::OneOf(ref rules) => self.build_unified_unicode_set(rules),
-            Rule::UnicodeSet(ref patterns) => self.build_unicode_set(patterns),
-            _ => unimplemented!(),
-        }
+    fn build_unicode_set_for_non_terminal(&self, name: &str) -> UnicodeSet {
+        let rules = self.rule_map.get(name).unwrap();
+        self.build_unicode_set_for_rules(rules)
     }
 
-    fn build_unified_unicode_set(&self, rules: &[Rule]) -> UnicodeSet {
+    fn build_unicode_set_for_rules(&self, rules: &[&'b Rule]) -> UnicodeSet {
         let mut unicode_set = UnicodeSet::empty();
-        for rule in rules {
-            let us = match rule {
-                Rule::NonTerminal(ref name) => self.build_non_terminal_unicode_set(name),
-                Rule::UnicodeSet(ref patterns) => self.build_unicode_set(patterns),
-                _ => unimplemented!(),
-            };
+        for &rule in rules {
+            let us = self.build_unicode_set_for_rule(rule);
             unicode_set = unicode_set.merge(&us);
         }
         unicode_set
+    }
+
+    fn build_unicode_set_for_rule(&self, rule: &Rule) -> UnicodeSet {
+        assert_eq!(rule.production.len(), 1);
+        self.build_unicode_set_for_term(&rule.production[0])
+    }
+
+    fn build_unicode_set_for_term(&self, term: &Term) -> UnicodeSet {
+        match term {
+            Term::Any => UnicodeSet::any(),
+            Term::NonTerminal(ref name) => self.build_unicode_set_for_non_terminal(name),
+            Term::UnicodeSet(ref patterns) => self.build_unicode_set(patterns),
+            _ => unimplemented!(),
+        }
     }
 
     fn find_recursion(&self, name: &str) -> Option<(StateId, StateId)> {

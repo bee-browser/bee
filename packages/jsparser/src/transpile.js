@@ -48,16 +48,6 @@ async function run(options) {
 }
 
 function transform(rules) {
-  return rules.reduce((grammar, rule) => {
-    grammar[rule.name] = { type: rule.type };
-    if (rule.data !== undefined) {
-      grammar[rule.name].data = rule.data;
-    }
-    return grammar;
-  }, {});
-}
-
-function transformSyntactic(rules) {
   const result = [];
   for (const rule of rules) {
     for (const production of rule.data) {
@@ -148,7 +138,6 @@ class Transpiler {
         translateRules,
         addSourceCharacter,
         mergeUnicodeSets,
-        simplify,
         transform,
       ];
       break;
@@ -160,7 +149,7 @@ class Transpiler {
         translateRules,
         processLookaheads,
         addLiterals,
-        transformSyntactic,
+        transform,
         rewriteIdentifierName,
       ];
       break;
@@ -723,9 +712,6 @@ function translateProduction(production, options) {
     }
   }
 
-  if (seq.length === 1) {
-    return seq[0];
-  }
   return { type: 'sequence', data: seq };
 }
 
@@ -831,7 +817,9 @@ function addSourceCharacter(rules) {
   return [
     {
       name: 'SourceCharacter',
-      type: 'any',
+      data: [{
+        type: 'any',
+      }],
     },
     ...rules
   ];
@@ -842,9 +830,10 @@ function mergeUnicodeSets(rules) {
     if (rule.type === 'one-of' &&
         rule.data.every((item) => item.type === 'unicode-set')) {
       log.debug(`Merging unicode sets in ${rule.name}...`);
-      let data = rule.data.reduce((data, item) => data.concat(item.data), []);
-      rule.type = 'unicode-set';
-      rule.data = data;
+      rule.data = [{
+        type: 'unicode-set',
+        data: rule.data.reduce((data, item) => data.concat(item.data), []),
+      }]
     }
   }
   return rules;
@@ -926,19 +915,6 @@ function matchPrefix(seq, prefix) {
       return prefix.startsWith(tokenSeq);
     });
   }
-}
-
-function simplify(rules) {
-  for (const rule of rules) {
-    if (rule.type === 'one-of' && rule.data.length === 1) {
-      log.debug(`Simplify ${rule.name}...`);
-      rule.type = rule.data[0].type;
-      if (rule.data[0] !== undefined) {
-        rule.data = rule.data[0].data;
-      }
-    }
-  }
-  return rules;
 }
 
 function addLiterals(rules) {
