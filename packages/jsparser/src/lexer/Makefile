@@ -60,9 +60,12 @@ dfa/%.json.xz: es2022.lex.yaml tokens.yaml
 	@cargo run -qrp bee-dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' | xz >$@
 
 # 2. Generate code for each DFA
-dfa/%.rs: dfa/%.json.xz dfa/dfa.rs.hbs
+dfa/%.rs: dfa/%.json.xz dfa.js dfa/dfa.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@xzcat $< | $(BEE_TOOLS) codegen --input-stdin dfa/dfa.rs.hbs | rustfmt --emit=stdout >$@
+	@xzcat $< | \
+	  deno run dfa.js | \
+	  $(BEE_TOOLS) codegen --input-stdin dfa/dfa.rs.hbs | \
+	  rustfmt --emit=stdout >$@
 
 # 3. Generate a wrapper function
 #

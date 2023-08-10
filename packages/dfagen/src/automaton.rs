@@ -320,33 +320,6 @@ impl Automaton {
         builder.build()
     }
 
-    pub fn export_states(&self) -> Vec<StateData> {
-        let unicode_sets = self.build_unicode_sets();
-        self.states
-            .iter()
-            .map(|state| {
-                let transitions: Vec<usize> = unicode_sets
-                    .iter()
-                    .map(|unicode_set| {
-                        state
-                            .transitions
-                            .iter()
-                            .find(|trans| trans.unicode_set.contains(&unicode_set))
-                            .map(|trans| trans.next_id.0)
-                            .unwrap_or(self.size())
-                    })
-                    .collect();
-                let dead = transitions.iter().all(|&i| state.id == StateId(i));
-                StateData {
-                    transitions,
-                    accept: state.accept.clone(),
-                    lookahead: state.lookahead,
-                    dead,
-                }
-            })
-            .collect()
-    }
-
     fn minify_all_transitions(&mut self) {
         for i in 0..self.states.len() {
             self.minify_transitions(i.into());
