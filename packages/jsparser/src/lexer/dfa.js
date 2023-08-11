@@ -18,7 +18,7 @@ for (const state of spec.dfa.states) {
       });
     });
     if (trans === undefined) {
-      return states.length;
+      return spec.dfa.states.length;
     }
     return trans.next_id;
   });

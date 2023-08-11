@@ -1,3 +1,5 @@
+// TODO: Rewrite the parser using dfagen and lalrgen.
+
 'use strict';
 
 import {
@@ -50,21 +52,9 @@ async function run(options) {
 function transform(rules) {
   const result = [];
   for (const rule of rules) {
-    for (const production of rule.data) {
-      let obj;
-      if (production.type === 'sequence') {
-        obj = {
-          name: rule.name,
-          production: production.data,
-        };
-      } else {
-        obj = {
-          name: rule.name,
-          production: [production],
-        };
-      }
-      log.info(JSON.stringify(obj));
-      result.push(obj);
+    for (const production of rule.productions) {
+      assert(Array.isArray(production), rule.name);
+      result.push({ name: rule.name, production });
     }
   }
   return result;
@@ -76,7 +66,7 @@ function rewriteIdentifierName(rules) {
   for (const rule of rules) {
     let changed = false;
     for (const term of rule.production) {
-      if (term.type === 'token'  && term.data === 'IdentifierName') {
+      if (term.type === 'token' && term.data === 'IdentifierName') {
         term.type = 'non-terminal';
         term.data = 'KeywordOrIdentifierName';
         changed = true;
@@ -168,6 +158,32 @@ class Transpiler {
   }
 }
 
+// The following rule
+//
+//   NonTerminal ::
+//     Term1 Term2
+//     Term3 Term4
+//
+// will be converted into
+//
+//   {
+//     name: 'NonTerminal',
+//     values: [ 'Term1 Term2', 'Term3 Term4' ]
+//   }
+//
+// The following rule
+//
+//   NonTerminal :: one of
+//     Term1 Term2
+//     Term3 Term4
+//
+// will be converted into
+//
+//   {
+//     name: 'NonTerminal',
+//     values: [ 'Term1', 'Term2', 'Term3', 'Term4' ]
+//   }
+//
 function readRules(esgrammar) {
   const STATE_RULE = 0;
   const STATE_MEMBER = 1;
@@ -577,25 +593,25 @@ function translateRules(rules, options) {
   for (const rule of rules) {
     log.debug(`Translating ${rule.name}...`);
     grammar.push({
-      type: 'one-of',
       name: rule.name,
-      data: rule.values.map((value) => translateProduction(value, options)),
+      productions: rule.values.map((value) => translateProduction(value, options)),
     });
   }
   return grammar;
 }
 
-function translateProduction(production, options) {
-  log.debug(`  ${production}`);
+// A production is an array of terms.
+function translateProduction(value, options) {
+  log.debug(`  ${value}`);
 
   // Special case: ID_Start
-  if (production === '> any Unicode code point with the Unicode property “ID_Start”') {
+  if (value === '> any Unicode code point with the Unicode property “ID_Start”') {
     // TODO:
-    // return {
+    // return [{
     //   type: 'unicode-set',
     //   data: [{ type: 'property', data: 'ID_Start' }],
-    // };
-    return {
+    // }];
+    return [{
       type: 'unicode-set',
       data: [
         { type: 'span', data: ['a', 'z'] },
@@ -603,17 +619,17 @@ function translateProduction(production, options) {
         { type: 'char', data: '$' },
         { type: 'char', data: '_' },
       ]
-    };
+    }];
   }
 
   // Special case: ID_Continue
-  if (production === '> any Unicode code point with the Unicode property “ID_Continue”') {
+  if (value === '> any Unicode code point with the Unicode property “ID_Continue”') {
     // TODO:
-    // return {
+    // return [{
     //   type: 'unicode-set',
     //   data: [{ type: 'property',  data: 'ID_Continue' }],
-    // };
-    return {
+    // }];
+    return [{
       type: 'unicode-set',
       data: [
         { type: 'span', data: ['0', '9'] },
@@ -622,15 +638,14 @@ function translateProduction(production, options) {
         { type: 'char', data: '$' },
         { type: 'char', data: '_' },
       ]
-    };
+    }];
   }
 
   // Special case: X but not one of ...
-  if (production.includes('but not one of')) {
-    production = production.replace('but not one of', '');
-    production = production.replaceAll(' or', '');
-    const [base, ...excludes] = production.split(/\s+/u);
-    return {
+  if (value.includes('but not one of')) {
+    const [base, ...excludes] =
+      value.replace('but not one of', '').replaceAll(' or', '').split(/\s+/u);
+    return [{
       type: 'unicode-set',
       data: [
         { type: 'non-terminal', data: base },
@@ -641,14 +656,13 @@ function translateProduction(production, options) {
           return { type: 'exclude', data: exclude };
         }),
       ]
-    };
+    }];
   }
 
   // Special case: X but not ...
-  if (production.includes('but not')) {
-    production = production.replace('but not', '');
-    const [base, ...excludes] = production.split(/\s+/u);
-    return {
+  if (value.includes('but not')) {
+    const [base, ...excludes] = value.replace('but not', '').split(/\s+/u);
+    return [{
       type: 'unicode-set',
       data: [
         { type: 'non-terminal', data: base },
@@ -659,28 +673,27 @@ function translateProduction(production, options) {
           return { type: 'exclude', data: exclude };
         }),
       ]
-    };
+    }];
   }
 
   // Special case: [no LineTerminator here]
-  production = production.replaceAll(
-    '[no LineTerminator here]', '[no-line-terminator]');
+  value = value.replaceAll('[no LineTerminator here]', '[no-line-terminator]');
 
-  let seq = [];
-  const items = production.split(/\s+/u);
-  while (items.length > 0) {
-    let item = items.shift();
-    if (item.startsWith('`')) {
-      const str = item.slice(1, -1);
+  let production = [];
+  const terms = value.split(/\s+/u);
+  while (terms.length > 0) {
+    let term = terms.shift();
+    if (term.startsWith('`')) {
+      const str = term.slice(1, -1);
       if (options.grammarType === 'lexical') {
         // We assume that `str` contains only ASCII characters.
         if (str.length === 1) {
-          seq.push({
+          production.push({
             type: 'unicode-set',
             data: [{ type: 'char', data: str }],
           });
         } else {
-          seq.push({ type: 'word', data: str });
+          production.push({ type: 'word', data: str });
         }
       } else {
         assertEquals(options.grammarType, 'syntactic');
@@ -688,41 +701,39 @@ function translateProduction(production, options) {
         if (token === undefined) {
           token = str.toUpperCase();
         }
-        seq.push({
-          type: 'token',
-          data: token,
-        });
+        production.push({ type: 'token', data: token });
       }
-    } else if (item.startsWith('<')) {
+    } else if (term.startsWith('<')) {
       assertEquals(options.grammarType, 'lexical');
-      seq.push({
+      // TODO: Use the Unicode escape sequence and remove the 'built-on' type.
+      production.push({
         type: 'unicode-set',
-        data: [{ type: 'built-in', data: item.slice(1, -1) }],
+        data: [{ type: 'built-in', data: term.slice(1, -1) }],
       });
-    } else if (item === '[lookahead') {
-      seq = seq.concat(translateLookahead(items, options));
-    } else if (item === '[no-line-terminator]') {
-      //seq.push({ type: 'no-line-terminator' });  TODO
-    } else if (item === '[empty]') {
-      seq.push({ type: 'empty' });
-    } else if (options.tokens?.includes(item)) {
-      seq.push({ type: 'token', data: item });
+    } else if (term === '[lookahead') {
+      production = production.concat(translateLookahead(terms, options));
+    } else if (term === '[no-line-terminator]') {
+      //production.push({ type: 'no-line-terminator' });  TODO
+    } else if (term === '[empty]') {
+      production.push({ type: 'empty' });
+    } else if (options.tokens?.includes(term)) {
+      production.push({ type: 'token', data: term });
     } else {
-      seq.push({ type: 'non-terminal', data: item });
+      production.push({ type: 'non-terminal', data: term });
     }
   }
 
-  return { type: 'sequence', data: seq };
+  return production;
 }
 
-function translateLookahead(items, options) {
-  let op = items.shift();
-  let target = items.shift();
+function translateLookahead(terms, options) {
+  let op = terms.shift();
+  let target = terms.shift();
   let values;
   if (target === '{') {
     values = [];
     let seq = [];
-    target = items.shift();
+    target = terms.shift();
     for (;;) {
       if (target === '}]') {
         if (seq.length > 0) {
@@ -737,7 +748,7 @@ function translateLookahead(items, options) {
       } else {
         seq.push(target);
       }
-      target = items.shift();
+      target = terms.shift();
     }
   } else {
     const seq = [];
@@ -748,7 +759,7 @@ function translateLookahead(items, options) {
       } else {
         seq.push(target);
       }
-      target = items.shift();
+      target = terms.shift();
     }
     values = [seq];
   }
@@ -768,9 +779,9 @@ function translateLookahead(items, options) {
 }
 
 function translateLookaheadSet(values, negate, options) {
-  const set = [];
+  const patterns = [];
   for (let seq of values) {
-    const data = seq.filter((value) => {
+    let pattern = seq.filter((value) => {
       return value !== '[no-line-terminator]';  // TODO
     }).map((value) => {
       if (value.startsWith('`')) {
@@ -796,44 +807,43 @@ function translateLookaheadSet(values, negate, options) {
         return { type: 'non-terminal', data: value };
       }
     });
-    if (data.length === 1) {
-      set.push(data[0]);
+    // In a lexical grammar, a pattern is a single term.
+    // In a syntactic grammar, a pattern is a sequence of terms.
+    if (options.grammarType === 'lexical') {
+      assertEquals(pattern.length, 1);
+      pattern = pattern[0];
     } else {
-      set.push({ type: 'sequence', data });
+      assertEquals(options.grammarType, 'syntactic');
     }
+    patterns.push(pattern);
   }
-  log.debug(JSON.stringify(set));
   return {
     type: 'lookahead',
-    data: {
-      patterns: set,
-      negate,
-    },
+    data: { patterns,  negate },
   };
 }
 
 function addSourceCharacter(rules) {
   log.debug(`Adding SourceCharacter...`);
   return [
-    {
-      name: 'SourceCharacter',
-      data: [{
-        type: 'any',
-      }],
-    },
+    { name: 'SourceCharacter',  productions: [[{ type: 'any' }]] },
     ...rules
   ];
 }
 
 function mergeUnicodeSets(rules) {
   for (const rule of rules) {
-    if (rule.type === 'one-of' &&
-        rule.data.every((item) => item.type === 'unicode-set')) {
+    const doMerge = rule.productions.every((production) => {
+      return production.length === 1 && production[0].type === 'unicode-set';
+    });
+    if (doMerge) {
       log.debug(`Merging unicode sets in ${rule.name}...`);
-      rule.data = [{
+      rule.productions = [[{
         type: 'unicode-set',
-        data: rule.data.reduce((data, item) => data.concat(item.data), []),
-      }]
+        data: rule.productions.reduce((data, production) => {
+          return data.concat(production[0].data);
+        }, []),
+      }]];
     }
   }
   return rules;
@@ -849,7 +859,7 @@ function processLookaheads(rules) {
   }
   for (const rule of rules) {
     log.debug(`Processing lookaheads in ${rule.name}...`);
-    rule.data.forEach((production, index) => {
+    rule.productions.forEach((production, index) => {
       return processLookaheadsInProduction(context, rule.name, production, index);
     });
   }
@@ -857,80 +867,38 @@ function processLookaheads(rules) {
 }
 
 function processLookaheadsInProduction(context, name, production, index) {
-  switch (production.type) {
-  case 'sequence':
-    for (const symbol of production.data) {
-      switch (symbol.type) {
-      case 'lookahead':
-        const data = symbol.data.patterns.map((symbol) => {
-          switch (symbol.type) {
-          case 'token':
-            return [symbol.data];
-          case 'sequence':
-            return symbol.data.map((data) => data.data);
-          }
+  for (const term of production) {
+    switch (term.type) {
+    case 'lookahead':
+      // A pattern is a sequence of tokens.
+      const tokens = term.data.patterns.map((pattern) => {
+        return pattern.map((term) => {
+          assertEquals(term.type, 'token');
+          return term.data;
         });
-        if (symbol.data.negate) {
-          symbol.data = { type: 'exclude', data };
-        } else {
-          symbol.data = { type: 'include', data };
-        }
-        break;
+      });
+      if (term.data.negate) {
+        term.data = { type: 'exclude', data: tokens };
+      } else {
+        term.data = { type: 'include', data: tokens };
       }
-    }
-  }
-}
-
-function matchPrefix(seq, prefix) {
-  // TODO: logging
-  const prefixList = prefix.data.patterns.map((sym) => {
-    if (sym.type === 'token') {
-      return sym.data;
-    }
-    assertEquals(sym.type, 'sequence');
-    return sym.data.map((s) => s.data).join(' ');
-  });
-
-  const tokens= [];
-  for (const sym of seq) {
-    if (sym.type !== 'token') {
       break;
     }
-    tokens.push(sym.data);
-  }
-
-  const tokenSeq = tokens.join(' ');
-  if (prefix.data.negate) {
-    return prefixList.every((prefix) => {
-      if (prefix.length < tokenSeq.length) {
-        return !tokenSeq.startsWith(prefix);
-      }
-      return !prefix.startsWith(tokenSeq);
-    });
-  } else {
-    return prefixList.some((prefix) => {
-      if (prefix.length < tokenSeq.length) {
-        return tokenSeq.startsWith(prefix);
-      }
-      return prefix.startsWith(tokenSeq);
-    });
   }
 }
 
 function addLiterals(rules) {
   rules.push({
     name: 'NullLiteral',
-    type: 'one-of',
-    data: [
-      { type: 'token', data: 'NULL' },
+    productions: [
+      [{ type: 'token', data: 'NULL' }],
     ]
   });
   rules.push({
     name: 'BooleanLiteral',
-    type: 'one-of',
-    data: [
-      { type: 'token', data: 'TRUE' },
-      { type: 'token', data: 'FALSE' },
+    productions: [
+      [{ type: 'token', data: 'TRUE' }],
+      [{ type: 'token', data: 'FALSE' }],
     ]
   });
   return rules;

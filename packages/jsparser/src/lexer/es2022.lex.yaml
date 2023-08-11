@@ -107,28 +107,12 @@
       data:
         - type: built-in
           data: TAB
-- name: WhiteSpace
-  production:
-    - type: unicode-set
-      data:
         - type: built-in
           data: VT
-- name: WhiteSpace
-  production:
-    - type: unicode-set
-      data:
         - type: built-in
           data: FF
-- name: WhiteSpace
-  production:
-    - type: unicode-set
-      data:
         - type: built-in
           data: ZWNBSP
-- name: WhiteSpace
-  production:
-    - type: unicode-set
-      data:
         - type: built-in
           data: USP
 - name: LineTerminator
@@ -137,22 +121,10 @@
       data:
         - type: built-in
           data: LF
-- name: LineTerminator
-  production:
-    - type: unicode-set
-      data:
         - type: built-in
           data: CR
-- name: LineTerminator
-  production:
-    - type: unicode-set
-      data:
         - type: built-in
           data: LS
-- name: LineTerminator
-  production:
-    - type: unicode-set
-      data:
         - type: built-in
           data: PS
 - name: LineTerminatorSequence
@@ -1135,58 +1107,22 @@
       data:
         - type: char
           data: '0'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '1'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '2'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '3'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '4'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '5'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '6'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '7'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '8'
-- name: DecimalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '9'
 - name: NonZeroDigit
@@ -1195,52 +1131,20 @@
       data:
         - type: char
           data: '1'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '2'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '3'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '4'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '5'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '6'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '7'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '8'
-- name: NonZeroDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '9'
 - name: ExponentPart
@@ -1261,10 +1165,6 @@
       data:
         - type: char
           data: e
-- name: ExponentIndicator
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: E
 - name: SignedInteger
@@ -1365,10 +1265,6 @@
       data:
         - type: char
           data: '0'
-- name: BinaryDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '1'
 - name: OctalIntegerLiteral
@@ -1477,46 +1373,18 @@
       data:
         - type: char
           data: '0'
-- name: OctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '1'
-- name: OctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '2'
-- name: OctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '3'
-- name: OctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '4'
-- name: OctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '5'
-- name: OctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '6'
-- name: OctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '7'
 - name: NonOctalDigit
@@ -1525,10 +1393,6 @@
       data:
         - type: char
           data: '8'
-- name: NonOctalDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '9'
 - name: HexIntegerLiteral
@@ -1589,130 +1453,46 @@
       data:
         - type: char
           data: '0'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '1'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '2'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '3'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '4'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '5'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '6'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '7'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '8'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '9'
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: a
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: b
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: c
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: d
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: e
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: f
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: A
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: B
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: C
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: D
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: E
-- name: HexDigit
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: F
 - name: StringLiteral
@@ -1905,52 +1685,20 @@
       data:
         - type: char
           data: ''''
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '"'
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: \
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: b
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: f
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: 'n'
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: r
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: t
-- name: SingleEscapeCharacter
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: v
 - name: NonEscapeCharacter
@@ -2047,22 +1795,10 @@
       data:
         - type: char
           data: '0'
-- name: ZeroToThree
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '1'
-- name: ZeroToThree
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '2'
-- name: ZeroToThree
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '3'
 - name: FourToSeven
@@ -2071,22 +1807,10 @@
       data:
         - type: char
           data: '4'
-- name: FourToSeven
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '5'
-- name: FourToSeven
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '6'
-- name: FourToSeven
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '7'
 - name: NonOctalDecimalEscapeSequence
@@ -2095,10 +1819,6 @@
       data:
         - type: char
           data: '8'
-- name: NonOctalDecimalEscapeSequence
-  production:
-    - type: unicode-set
-      data:
         - type: char
           data: '9'
 - name: HexEscapeSequence
