@@ -220,5 +220,12 @@ mod tests {
         assert_token!(lexer, StringLiteral, "'\\u{100001}'");
         assert_eof!(lexer);
     }
+
+    #[test]
+    fn test_template_tail() {
+        let mut lexer = Lexer::new("}$`1");
+        lexer.set_goal(Goal::InputElementTemplateTail);
+        assert_token!(lexer, TemplateTail, "}$`");
+    }
 }
 //</coverage:exclude>

@@ -177,18 +177,42 @@
       data: SingleLineComment
 - name: MultiLineComment
   production:
-    - type: word
-      data: /*
-    - type: word
-      data: '*/'
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
 - name: MultiLineComment
   production:
-    - type: word
-      data: /*
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
     - type: non-terminal
       data: MultiLineCommentChars
-    - type: word
-      data: '*/'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
 - name: MultiLineCommentChars
   production:
     - type: non-terminal
@@ -257,12 +281,24 @@
           data: '*'
 - name: SingleLineComment
   production:
-    - type: word
-      data: //
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
 - name: SingleLineComment
   production:
-    - type: word
-      data: //
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
     - type: non-terminal
       data: SingleLineCommentChars
 - name: SingleLineCommentChars
@@ -877,16 +913,62 @@
       data: RBRACE
 - name: NullLiteral
   production:
-    - type: word
-      data: 'null'
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
 - name: BooleanLiteral
   production:
-    - type: word
-      data: 'true'
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: BooleanLiteral
   production:
-    - type: word
-      data: 'false'
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: NumericLiteralSeparator
   production:
     - type: unicode-set
@@ -1209,26 +1291,50 @@
       data: DecimalDigits_Sep
 - name: BinaryIntegerLiteral
   production:
-    - type: word
-      data: 0b
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: b
     - type: non-terminal
       data: BinaryDigits
 - name: BinaryIntegerLiteral
   production:
-    - type: word
-      data: 0B
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: B
     - type: non-terminal
       data: BinaryDigits
 - name: BinaryIntegerLiteral_Sep
   production:
-    - type: word
-      data: 0b
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: b
     - type: non-terminal
       data: BinaryDigits_Sep
 - name: BinaryIntegerLiteral_Sep
   production:
-    - type: word
-      data: 0B
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: B
     - type: non-terminal
       data: BinaryDigits_Sep
 - name: BinaryDigits
@@ -1269,26 +1375,50 @@
           data: '1'
 - name: OctalIntegerLiteral
   production:
-    - type: word
-      data: 0o
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
     - type: non-terminal
       data: OctalDigits
 - name: OctalIntegerLiteral
   production:
-    - type: word
-      data: 0O
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: O
     - type: non-terminal
       data: OctalDigits
 - name: OctalIntegerLiteral_Sep
   production:
-    - type: word
-      data: 0o
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
     - type: non-terminal
       data: OctalDigits_Sep
 - name: OctalIntegerLiteral_Sep
   production:
-    - type: word
-      data: 0O
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: O
     - type: non-terminal
       data: OctalDigits_Sep
 - name: OctalDigits
@@ -1397,26 +1527,50 @@
           data: '9'
 - name: HexIntegerLiteral
   production:
-    - type: word
-      data: 0x
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: x
     - type: non-terminal
       data: HexDigits
 - name: HexIntegerLiteral
   production:
-    - type: word
-      data: 0X
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: X
     - type: non-terminal
       data: HexDigits
 - name: HexIntegerLiteral_Sep
   production:
-    - type: word
-      data: 0x
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: x
     - type: non-terminal
       data: HexDigits_Sep
 - name: HexIntegerLiteral_Sep
   production:
-    - type: word
-      data: 0X
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
+    - type: unicode-set
+      data:
+        - type: char
+          data: X
     - type: non-terminal
       data: HexDigits_Sep
 - name: HexDigits
@@ -1841,8 +1995,14 @@
       data: Hex4Digits
 - name: UnicodeEscapeSequence
   production:
-    - type: word
-      data: 'u{'
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: '{'
     - type: non-terminal
       data: CodePoint
     - type: unicode-set
@@ -2026,8 +2186,14 @@
       data:
         - type: char
           data: '`'
-    - type: word
-      data: '${'
+    - type: unicode-set
+      data:
+        - type: char
+          data: $
+    - type: unicode-set
+      data:
+        - type: char
+          data: '{'
 - name: TemplateHead
   production:
     - type: unicode-set
@@ -2036,8 +2202,14 @@
           data: '`'
     - type: non-terminal
       data: TemplateCharacters
-    - type: word
-      data: '${'
+    - type: unicode-set
+      data:
+        - type: char
+          data: $
+    - type: unicode-set
+      data:
+        - type: char
+          data: '{'
 - name: TemplateSubstitutionTail
   production:
     - type: non-terminal
@@ -2052,8 +2224,14 @@
       data:
         - type: char
           data: '}'
-    - type: word
-      data: '${'
+    - type: unicode-set
+      data:
+        - type: char
+          data: $
+    - type: unicode-set
+      data:
+        - type: char
+          data: '{'
 - name: TemplateMiddle
   production:
     - type: unicode-set
@@ -2062,8 +2240,14 @@
           data: '}'
     - type: non-terminal
       data: TemplateCharacters
-    - type: word
-      data: '${'
+    - type: unicode-set
+      data:
+        - type: char
+          data: $
+    - type: unicode-set
+      data:
+        - type: char
+          data: '{'
 - name: TemplateTail
   production:
     - type: unicode-set
@@ -2380,8 +2564,14 @@
       data: Hex4Digits
 - name: CodePoint
   production:
-    - type: word
-      data: '10'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '1'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '0'
     - type: non-terminal
       data: Hex4Digits
 - name: CodePoint
@@ -2412,224 +2602,1230 @@
       data: WhiteSpaceSequence
 - name: AWAIT
   production:
-    - type: word
-      data: await
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: w
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: BREAK
   production:
-    - type: word
-      data: break
+    - type: unicode-set
+      data:
+        - type: char
+          data: b
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: k
 - name: CASE
   production:
-    - type: word
-      data: case
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: CATCH
   production:
-    - type: word
-      data: catch
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: h
 - name: CLASS
   production:
-    - type: word
-      data: class
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
 - name: CONST
   production:
-    - type: word
-      data: const
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: CONTINUE
   production:
-    - type: word
-      data: continue
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: DEBUGGER
   production:
-    - type: word
-      data: debugger
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: b
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: g
+    - type: unicode-set
+      data:
+        - type: char
+          data: g
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
 - name: DEFAULT
   production:
-    - type: word
-      data: default
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: DELETE
   production:
-    - type: word
-      data: delete
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: DO
   production:
-    - type: word
-      data: do
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
 - name: ELSE
   production:
-    - type: word
-      data: else
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: ENUM
   production:
-    - type: word
-      data: enum
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: m
 - name: EXPORT
   production:
-    - type: word
-      data: export
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: x
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: EXTENDS
   production:
-    - type: word
-      data: extends
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: x
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
 - name: 'FALSE'
   production:
-    - type: word
-      data: 'false'
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: FINALLY
   production:
-    - type: word
-      data: finally
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'y'
 - name: FOR
   production:
-    - type: word
-      data: for
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
 - name: FUNCTION
   production:
-    - type: word
-      data: function
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
 - name: IF
   production:
-    - type: word
-      data: if
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
 - name: IMPORT
   production:
-    - type: word
-      data: import
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: m
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: IN
   production:
-    - type: word
-      data: in
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
 - name: INSTANCEOF
   production:
-    - type: word
-      data: instanceof
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
 - name: NEW
   production:
-    - type: word
-      data: new
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: w
 - name: 'NULL'
   production:
-    - type: word
-      data: 'null'
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
 - name: RETURN
   production:
-    - type: word
-      data: return
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
 - name: SUPER
   production:
-    - type: word
-      data: super
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
 - name: SWITCH
   production:
-    - type: word
-      data: switch
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: w
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: h
 - name: THIS
   production:
-    - type: word
-      data: this
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: h
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
 - name: THROW
   production:
-    - type: word
-      data: throw
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: h
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: w
 - name: 'TRUE'
   production:
-    - type: word
-      data: 'true'
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: TRY
   production:
-    - type: word
-      data: try
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'y'
 - name: TYPEOF
   production:
-    - type: word
-      data: typeof
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'y'
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
 - name: VAR
   production:
-    - type: word
-      data: var
+    - type: unicode-set
+      data:
+        - type: char
+          data: v
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
 - name: VOID
   production:
-    - type: word
-      data: void
+    - type: unicode-set
+      data:
+        - type: char
+          data: v
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
 - name: WHILE
   production:
-    - type: word
-      data: while
+    - type: unicode-set
+      data:
+        - type: char
+          data: w
+    - type: unicode-set
+      data:
+        - type: char
+          data: h
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: WITH
   production:
-    - type: word
-      data: with
+    - type: unicode-set
+      data:
+        - type: char
+          data: w
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: h
 - name: YIELD
   production:
-    - type: word
-      data: yield
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'y'
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
 - name: LET
   production:
-    - type: word
-      data: let
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: STATIC
   production:
-    - type: word
-      data: static
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
 - name: IMPLEMENTS
   production:
-    - type: word
-      data: implements
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: m
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: m
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
 - name: INTERFACE
   production:
-    - type: word
-      data: interface
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: PACKAGE
   production:
-    - type: word
-      data: package
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: k
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: g
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: PRIVATE
   production:
-    - type: word
-      data: private
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: v
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
 - name: PROTECTED
   production:
-    - type: word
-      data: protected
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: d
 - name: PUBLIC
   production:
-    - type: word
-      data: public
+    - type: unicode-set
+      data:
+        - type: char
+          data: p
+    - type: unicode-set
+      data:
+        - type: char
+          data: u
+    - type: unicode-set
+      data:
+        - type: char
+          data: b
+    - type: unicode-set
+      data:
+        - type: char
+          data: l
+    - type: unicode-set
+      data:
+        - type: char
+          data: i
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
 - name: AS
   production:
-    - type: word
-      data: as
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
 - name: ASYNC
   production:
-    - type: word
-      data: async
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'y'
+    - type: unicode-set
+      data:
+        - type: char
+          data: 'n'
+    - type: unicode-set
+      data:
+        - type: char
+          data: c
 - name: FROM
   production:
-    - type: word
-      data: from
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: m
 - name: GET
   production:
-    - type: word
-      data: get
+    - type: unicode-set
+      data:
+        - type: char
+          data: g
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: META
   production:
-    - type: word
-      data: meta
+    - type: unicode-set
+      data:
+        - type: char
+          data: m
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
 - name: OF
   production:
-    - type: word
-      data: of
+    - type: unicode-set
+      data:
+        - type: char
+          data: o
+    - type: unicode-set
+      data:
+        - type: char
+          data: f
 - name: SET
   production:
-    - type: word
-      data: set
+    - type: unicode-set
+      data:
+        - type: char
+          data: s
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: TARGET
   production:
-    - type: word
-      data: target
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+    - type: unicode-set
+      data:
+        - type: char
+          data: r
+    - type: unicode-set
+      data:
+        - type: char
+          data: g
+    - type: unicode-set
+      data:
+        - type: char
+          data: e
+    - type: unicode-set
+      data:
+        - type: char
+          data: t
 - name: OPTIONAL_CHAINING
   production:
-    - type: word
-      data: '?.'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '?'
+    - type: unicode-set
+      data:
+        - type: char
+          data: .
     - type: lookahead
       data:
         patterns:
@@ -2674,8 +3870,18 @@
           data: .
 - name: ELLIPSIS
   production:
-    - type: word
-      data: ...
+    - type: unicode-set
+      data:
+        - type: char
+          data: .
+    - type: unicode-set
+      data:
+        - type: char
+          data: .
+    - type: unicode-set
+      data:
+        - type: char
+          data: .
 - name: SEMI_COLON
   production:
     - type: unicode-set
@@ -2702,28 +3908,72 @@
           data: '>'
 - name: LTE
   production:
-    - type: word
-      data: <=
+    - type: unicode-set
+      data:
+        - type: char
+          data: <
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: GTE
   production:
-    - type: word
-      data: '>='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: EQ
   production:
-    - type: word
-      data: ==
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: NE
   production:
-    - type: word
-      data: '!='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '!'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: EQ_STRICT
   production:
-    - type: word
-      data: ===
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: NE_STRICT
   production:
-    - type: word
-      data: '!=='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '!'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: ADD
   production:
     - type: unicode-set
@@ -2750,28 +4000,68 @@
           data: '%'
 - name: EXP
   production:
-    - type: word
-      data: '**'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
 - name: INC
   production:
-    - type: word
-      data: ++
+    - type: unicode-set
+      data:
+        - type: char
+          data: +
+    - type: unicode-set
+      data:
+        - type: char
+          data: +
 - name: DEC
   production:
-    - type: word
-      data: '--'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '-'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '-'
 - name: SHL
   production:
-    - type: word
-      data: '<<'
+    - type: unicode-set
+      data:
+        - type: char
+          data: <
+    - type: unicode-set
+      data:
+        - type: char
+          data: <
 - name: SAR
   production:
-    - type: word
-      data: '>>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
 - name: SHR
   production:
-    - type: word
-      data: '>>>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
 - name: BIT_AND
   production:
     - type: unicode-set
@@ -2804,16 +4094,34 @@
           data: '~'
 - name: AND
   production:
-    - type: word
-      data: '&&'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '&'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '&'
 - name: OR
   production:
-    - type: word
-      data: '||'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '|'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '|'
 - name: NULLISH
   production:
-    - type: word
-      data: '??'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '?'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '?'
 - name: CONDITIONAL
   production:
     - type: unicode-set
@@ -2834,64 +4142,186 @@
           data: =
 - name: ADD_ASSIGN
   production:
-    - type: word
-      data: +=
+    - type: unicode-set
+      data:
+        - type: char
+          data: +
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: SUB_ASSIGN
   production:
-    - type: word
-      data: '-='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '-'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: MUL_ASSIGN
   production:
-    - type: word
-      data: '*='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: MOD_ASSIGN
   production:
-    - type: word
-      data: '%='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '%'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: EXP_ASSIGN
   production:
-    - type: word
-      data: '**='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '*'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: SHL_ASSIGN
   production:
-    - type: word
-      data: <<=
+    - type: unicode-set
+      data:
+        - type: char
+          data: <
+    - type: unicode-set
+      data:
+        - type: char
+          data: <
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: SAR_ASSIGN
   production:
-    - type: word
-      data: '>>='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: SHR_ASSIGN
   production:
-    - type: word
-      data: '>>>='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: BIT_AND_ASSIGN
   production:
-    - type: word
-      data: '&='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '&'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: BIT_OR_ASSIGN
   production:
-    - type: word
-      data: '|='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '|'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: BIT_XOR_ASSIGN
   production:
-    - type: word
-      data: ^=
+    - type: unicode-set
+      data:
+        - type: char
+          data: ^
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: AND_ASSIGN
   production:
-    - type: word
-      data: '&&='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '&'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '&'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: OR_ASSIGN
   production:
-    - type: word
-      data: '||='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '|'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '|'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: NULLISH_ASSIGN
   production:
-    - type: word
-      data: '??='
+    - type: unicode-set
+      data:
+        - type: char
+          data: '?'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '?'
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: ARROW
   production:
-    - type: word
-      data: =>
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
+    - type: unicode-set
+      data:
+        - type: char
+          data: '>'
 - name: DIV
   production:
     - type: unicode-set
@@ -2900,8 +4330,14 @@
           data: /
 - name: DIV_ASSIGN
   production:
-    - type: word
-      data: /=
+    - type: unicode-set
+      data:
+        - type: char
+          data: /
+    - type: unicode-set
+      data:
+        - type: char
+          data: =
 - name: RBRACE
   production:
     - type: unicode-set

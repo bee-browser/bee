@@ -27,6 +27,8 @@ for (const state of spec.dfa.states) {
     accept: state.accept,
     lookahead: state.lookahead,
     dead: transitions.every((i) => i == state.id),
+    labels: state.labels,
+    transitionLabels: state.transitions.map((trans) => trans.label),
   });
 }
 

@@ -64,7 +64,7 @@ dfa/%.rs: dfa/%.json.xz dfa.js dfa/dfa.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@xzcat $< | \
 	  deno run dfa.js | \
-	  $(BEE_TOOLS) codegen --input-stdin dfa/dfa.rs.hbs | \
+	  $(BEE_TOOLS) codegen --no-escape --input-stdin dfa/dfa.rs.hbs | \
 	  rustfmt --emit=stdout >$@
 
 # 3. Generate a wrapper function

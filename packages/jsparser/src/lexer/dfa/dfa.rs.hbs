@@ -96,12 +96,23 @@ impl State {
 
 const TRANSITION_TABLE: [[u16; {{length unicodeSets}}]; {{length states}}] = [
     {{#each states}}
+    // State({{@index}}):
+    {{#each labels}}
+    //   {{this}}
+    {{/each}}
+    {{#if transitionLabels}}
+    // Transitions:
+    {{#each transitionLabels}}
+    //   {{this}}
+    {{/each}}
+    {{/if}}
     {{json transitions}},
     {{/each}}
 ];
 
 const ACCEPT_TABLE: [Option<TokenKind>; {{length states}}] = [
     {{#each states}}
+    // State({{@index}})
     {{#if accept}}
     Some(TokenKind::{{pascalCase accept}}),
     {{else}}
@@ -112,6 +123,7 @@ const ACCEPT_TABLE: [Option<TokenKind>; {{length states}}] = [
 
 const LOOKAHEAD_TABLE: [bool; {{length states}}] = [
     {{#each states}}
+    // State({{@index}})
     {{#if lookahead}}
     true,
     {{else}}

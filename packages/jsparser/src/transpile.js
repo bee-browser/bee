@@ -693,7 +693,12 @@ function translateProduction(value, options) {
             data: [{ type: 'char', data: str }],
           });
         } else {
-          production.push({ type: 'word', data: str });
+          for (const ch of str) {
+            production.push({
+              type: 'unicode-set',
+              data: [{ type: 'char', data: ch }],
+            });
+          }
         }
       } else {
         assertEquals(options.grammarType, 'syntactic');
