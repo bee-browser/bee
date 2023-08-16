@@ -1,8 +1,8 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use serde::Deserialize;
 
-use crate::automaton::Dfa;
 use crate::automaton::Nfa;
 use crate::automaton::StateId;
 use crate::unicode::unicode_set;
@@ -11,56 +11,118 @@ use crate::unicode::CodePoint;
 use crate::unicode::UnicodeSet;
 use crate::unicode::UnicodeSpan;
 
-pub struct Grammar<'a, 'b> {
+pub struct Grammar<'a> {
     pub rules: &'a [Rule],
     pub rule_map: HashMap<&'a str, Vec<&'a Rule>>,
-    pub tokens: &'b [String],
 }
 
-impl<'a, 'b> Grammar<'a, 'b> {
-    pub fn new(rules: &'a [Rule], tokens: &'b [String]) -> Self {
+pub fn trim_rules(rules: &[Rule], tokens: &[String]) -> Vec<Rule> {
+    // Collect non-terminals needed for recognizing tokens.
+    let mut non_terminals: HashSet<String> = Default::default();
+    non_terminals.extend(tokens.iter().cloned());
+    loop {
+        let mut changed = false;
+        for rule in rules.iter() {
+            if !non_terminals.contains(&rule.name) {
+                continue;
+            }
+            for term in rule.production.iter() {
+                match term {
+                    Term::NonTerminal(name) => {
+                        if !non_terminals.contains(name) {
+                            non_terminals.insert(name.clone());
+                            changed = true;
+                        }
+                    }
+                    Term::UnicodeSet(patterns) | Term::Lookahead { patterns, .. } => {
+                        for pattern in patterns.iter() {
+                            let name = match pattern {
+                                UnicodePattern::Exclude(name) => name,
+                                UnicodePattern::NonTerminal(name) => name,
+                                _ => continue,
+                            };
+                            if !non_terminals.contains(name) {
+                                non_terminals.insert(name.clone());
+                                changed = true;
+                            }
+                        }
+                    }
+                    _ => continue,
+                }
+            }
+        }
+        if !changed {
+            break;
+        }
+    }
+
+    // And then remove unused rules.
+    rules
+        .iter()
+        .filter(|rule| {
+            let contains = non_terminals.contains(rule.name.as_str());
+            if !contains {
+                tracing::debug!(unused = %rule);
+            }
+            contains
+        })
+        .cloned()
+        .collect()
+}
+
+impl<'a> Grammar<'a> {
+    pub fn new(rules: &'a [Rule]) -> Self {
         let mut rule_map: HashMap<&'a str, Vec<&'a Rule>> = Default::default();
         for rule in rules.iter() {
             rule_map.entry(rule.name.as_str()).or_default().push(rule);
         }
-        Grammar {
-            rules,
-            rule_map,
-            tokens,
-        }
+        Grammar { rules, rule_map }
     }
 
-    pub fn compile(&self) -> Dfa {
-        tracing::info!("Building an NFA from the lexical grammar in CFG...");
-        let nfa = self.build_nfa();
-        tracing::info!("#States in NFA: {}", nfa.size());
+    pub fn build_nfa(&self, tokens: &[String]) -> Nfa {
+        let max_lookaheads = self.max_lookaheads();
+        assert!(max_lookaheads <= 1);
 
-        tracing::info!("Building DFA from NFA...");
-        let dfa = nfa.build_dfa();
-        tracing::info!("#States in DFA: {}", dfa.size());
-
-        tracing::info!("Minifying DFA...");
-        let minified = dfa.minify(self.tokens);
-        tracing::info!("#States in DFA (minified): {}", minified.size());
-
-        minified
-    }
-
-    fn build_nfa(&self) -> Nfa {
         let mut builder = NfaBuilder::new(&self.rule_map);
-        for token in self.tokens.iter() {
-            tracing::debug!("Compiling {token} into NFA...");
+        for token in tokens.iter() {
+            tracing::debug!(compile = token);
             builder.add_token(token);
         }
         builder.build()
     }
+
+    fn max_lookaheads(&self) -> usize {
+        assert!(!self.rules.is_empty());
+        self.rules.iter().map(Rule::max_lookaheads).max().unwrap()
+    }
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Rule {
     name: String,
     production: Vec<Term>,
+}
+
+impl Rule {
+    fn max_lookaheads(&self) -> usize {
+        assert!(!self.production.is_empty());
+        self.production
+            .iter()
+            .map(Term::max_lookaheads)
+            .max()
+            .unwrap()
+    }
+}
+
+impl std::fmt::Display for Rule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ->", self.name)?;
+        for term in self.production.iter() {
+            write!(f, " {term}")?;
+        }
+        Ok(())
+    }
 }
 
 struct Label<'a>(&'a Rule, usize);
@@ -81,7 +143,7 @@ impl<'a> std::fmt::Display for Label<'a> {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[serde(tag = "type", content = "data")]
 pub enum Term {
@@ -93,6 +155,22 @@ pub enum Term {
         patterns: Vec<UnicodePattern>,
         negate: bool,
     },
+}
+
+impl Term {
+    fn is_lookahead(&self) -> bool {
+        match self {
+            Self::Lookahead { .. } => true,
+            _ => false,
+        }
+    }
+
+    fn max_lookaheads(&self) -> usize {
+        match self {
+            Self::Lookahead { .. } => 1,
+            _ => 0,
+        }
+    }
 }
 
 impl std::fmt::Display for Term {
@@ -129,7 +207,7 @@ impl std::fmt::Display for Term {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[serde(tag = "type", content = "data")]
 pub enum UnicodePattern {
@@ -266,11 +344,12 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
     }
 
     fn build_nfa_for_rule(&mut self, rule: &Rule, accept: bool) -> (StateId, StateId) {
-        let lookahead_index = rule.production.iter().position(|term| match term {
-            Term::Lookahead { .. } => true,
-            _ => false,
-        });
+        let lookahead_index = rule.production.iter().position(Term::is_lookahead);
         let normal_seq_end = if let Some(i) = lookahead_index {
+            // We assume that a lookahead sequence always follows a non-lookahead term.
+            //
+            // This assumption may change in the future.
+            assert!(i > 0);
             i
         } else {
             rule.production.len()

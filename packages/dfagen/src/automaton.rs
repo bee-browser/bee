@@ -305,7 +305,11 @@ impl Automaton {
 
     pub(crate) fn transition(&mut self, id: StateId, next_id: StateId, unicode_set: UnicodeSet) {
         let label = format!("{unicode_set} => {}", self.state(next_id));
-        self.state_mut(id).transitions.push(Transition { next_id, unicode_set, label });
+        self.state_mut(id).transitions.push(Transition {
+            next_id,
+            unicode_set,
+            label,
+        });
     }
 
     pub(crate) fn epsilon_transition(&mut self, id: StateId, next_id: StateId) {
@@ -350,7 +354,11 @@ impl Automaton {
             .into_iter()
             .map(|(next_id, unicode_set)| {
                 let label = format!("{unicode_set} => {}", self.state(next_id));
-                Transition { next_id, unicode_set, label }
+                Transition {
+                    next_id,
+                    unicode_set,
+                    label,
+                }
             })
             .inspect(|trans| {
                 let next_state = self.states.get(trans.next_id.0).unwrap();
@@ -484,12 +492,12 @@ mod tests {
 
     #[test]
     fn test_state_format() {
-        assert_eq!(format!("{}", state!(0)), "State#0");
+        assert_eq!(format!("{}", state!(0)), "State(0)");
         let mut state = state!(0);
         state.accept = Some("token".to_string());
-        assert_eq!(format!("{}", state), "State#0(token)");
+        assert_eq!(format!("{}", state), "State(0):token");
         state.lookahead = true;
-        assert_eq!(format!("{}", state), "State#0(token)?");
+        assert_eq!(format!("{}", state), "State(0):token?");
     }
 }
 // </coverage:exclude>

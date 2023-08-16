@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
+use bee_dfagen::grammar;
 use clap::Parser;
 use clap::ValueEnum;
 use serde::Deserialize;
@@ -60,12 +61,29 @@ fn main() -> Result<()> {
         Some(grammar) => serde_yaml::from_reader(std::fs::File::open(grammar)?)?,
         None => serde_yaml::from_reader(std::io::stdin())?,
     };
-    let grammar = Grammar::new(&rules, &cl.tokens);
-    let dfa = grammar.compile();
+
+    tracing::info!("Trimming rules...");
+    let trimmed = grammar::trim_rules(&rules, &cl.tokens);
+    tracing::info!(original.size = rules.len(), trimmed.size = trimmed.len());
+
+    let grammar = Grammar::new(&trimmed);
+
+    tracing::info!("Building an NFA from the lexical grammar in CFG...");
+    let nfa = grammar.build_nfa(&cl.tokens);
+    tracing::info!("#States in NFA: {}", nfa.size());
+
+    tracing::info!("Building DFA from NFA...");
+    let dfa = nfa.build_dfa();
+    tracing::info!("#States in DFA: {}", dfa.size());
+
+    tracing::info!("Minifying DFA...");
+    let dfa = dfa.minify(&cl.tokens);
+    tracing::info!("#States in DFA (minified): {}", dfa.size());
+
     let unicode_sets = dfa.build_unicode_sets();
 
     tracing::info!(
-        rules.size = rules.len(),
+        rules.size = trimmed.len(),
         tokens.size = cl.tokens.len(),
         unicode_sets.size = unicode_sets.len(),
         dfa.size = dfa.size(),
