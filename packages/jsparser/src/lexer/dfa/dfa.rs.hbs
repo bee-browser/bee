@@ -112,22 +112,20 @@ const TRANSITION_TABLE: [[u16; {{length unicodeSets}}]; {{length states}}] = [
 
 const ACCEPT_TABLE: [Option<TokenKind>; {{length states}}] = [
     {{#each states}}
-    // State({{@index}})
     {{#if accept}}
-    Some(TokenKind::{{pascalCase accept}}),
+    Some(TokenKind::{{pascalCase accept}}), // State({{@index}})
     {{else}}
-    None,
+    None, // State({{@index}})
     {{/if}}
     {{/each}}
 ];
 
 const LOOKAHEAD_TABLE: [bool; {{length states}}] = [
     {{#each states}}
-    // State({{@index}})
     {{#if lookahead}}
-    true,
+    true, // State({{@index}})
     {{else}}
-    false,
+    false, // State({{@index}})
     {{/if}}
     {{/each}}
 ];

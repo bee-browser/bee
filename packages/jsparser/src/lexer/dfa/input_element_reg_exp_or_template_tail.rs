@@ -10556,1088 +10556,549 @@ const TRANSITION_TABLE: [[u16; 71]; 539] = [
 ];
 
 const ACCEPT_TABLE: [Option<TokenKind>; 539] = [
-    // State(0)
-    None,
-    // State(1)
-    None,
-    // State(2)
-    None,
-    // State(3)
-    None,
-    // State(4)
-    None,
-    // State(5)
-    None,
-    // State(6)
-    None,
-    // State(7)
-    None,
-    // State(8)
-    None,
-    // State(9)
-    None,
-    // State(10)
-    None,
-    // State(11)
-    None,
-    // State(12)
-    None,
-    // State(13)
-    None,
-    // State(14)
-    None,
-    // State(15)
-    None,
-    // State(16)
-    None,
-    // State(17)
-    None,
-    // State(18)
-    None,
-    // State(19)
-    None,
-    // State(20)
-    None,
-    // State(21)
-    None,
-    // State(22)
-    None,
-    // State(23)
-    None,
-    // State(24)
-    None,
-    // State(25)
-    None,
-    // State(26)
-    None,
-    // State(27)
-    None,
-    // State(28)
-    None,
-    // State(29)
-    None,
-    // State(30)
-    None,
-    // State(31)
-    None,
-    // State(32)
-    None,
-    // State(33)
-    None,
-    // State(34)
-    None,
-    // State(35)
-    None,
-    // State(36)
-    None,
-    // State(37)
-    None,
-    // State(38)
-    None,
-    // State(39)
-    None,
-    // State(40)
-    None,
-    // State(41)
-    None,
-    // State(42)
-    None,
-    // State(43)
-    None,
-    // State(44)
-    None,
-    // State(45)
-    None,
-    // State(46)
-    None,
-    // State(47)
-    None,
-    // State(48)
-    None,
-    // State(49)
-    None,
-    // State(50)
-    None,
-    // State(51)
-    None,
-    // State(52)
-    None,
-    // State(53)
-    None,
-    // State(54)
-    None,
-    // State(55)
-    None,
-    // State(56)
-    None,
-    // State(57)
-    None,
-    // State(58)
-    None,
-    // State(59)
-    None,
-    // State(60)
-    None,
-    // State(61)
-    None,
-    // State(62)
-    None,
-    // State(63)
-    None,
-    // State(64)
-    None,
-    // State(65)
-    None,
-    // State(66)
-    None,
-    // State(67)
-    None,
-    // State(68)
-    None,
-    // State(69)
-    None,
-    // State(70)
-    None,
-    // State(71)
-    None,
-    // State(72)
-    None,
-    // State(73)
-    None,
-    // State(74)
-    None,
-    // State(75)
-    None,
-    // State(76)
-    None,
-    // State(77)
-    None,
-    // State(78)
-    None,
-    // State(79)
-    None,
-    // State(80)
-    None,
-    // State(81)
-    None,
-    // State(82)
-    None,
-    // State(83)
-    None,
-    // State(84)
-    None,
-    // State(85)
-    None,
-    // State(86)
-    None,
-    // State(87)
-    None,
-    // State(88)
-    None,
-    // State(89)
-    None,
-    // State(90)
-    None,
-    // State(91)
-    None,
-    // State(92)
-    None,
-    // State(93)
-    None,
-    // State(94)
-    None,
-    // State(95)
-    None,
-    // State(96)
-    None,
-    // State(97)
-    None,
-    // State(98)
-    None,
-    // State(99)
-    None,
-    // State(100)
-    None,
-    // State(101)
-    None,
-    // State(102)
-    None,
-    // State(103)
-    None,
-    // State(104)
-    None,
-    // State(105)
-    None,
-    // State(106)
-    None,
-    // State(107)
-    None,
-    // State(108)
-    None,
-    // State(109)
-    None,
-    // State(110)
-    None,
-    // State(111)
-    None,
-    // State(112)
-    None,
-    // State(113)
-    None,
-    // State(114)
-    None,
-    // State(115)
-    None,
-    // State(116)
-    None,
-    // State(117)
-    None,
-    // State(118)
-    None,
-    // State(119)
-    None,
-    // State(120)
-    None,
-    // State(121)
-    None,
-    // State(122)
-    None,
-    // State(123)
-    None,
-    // State(124)
-    None,
-    // State(125)
-    None,
-    // State(126)
-    None,
-    // State(127)
-    None,
-    // State(128)
-    None,
-    // State(129)
-    None,
-    // State(130)
-    None,
-    // State(131)
-    None,
-    // State(132)
-    None,
-    // State(133)
-    None,
-    // State(134)
-    None,
-    // State(135)
-    None,
-    // State(136)
-    None,
-    // State(137)
-    None,
-    // State(138)
-    None,
-    // State(139)
-    None,
-    // State(140)
-    None,
-    // State(141)
-    None,
-    // State(142)
-    None,
-    // State(143)
-    None,
-    // State(144)
-    None,
-    // State(145)
-    None,
-    // State(146)
-    None,
-    // State(147)
-    None,
-    // State(148)
-    None,
-    // State(149)
-    None,
-    // State(150)
-    None,
-    // State(151)
-    None,
-    // State(152)
-    None,
-    // State(153)
-    None,
-    // State(154)
-    None,
-    // State(155)
-    None,
-    // State(156)
-    None,
-    // State(157)
-    None,
-    // State(158)
-    None,
-    // State(159)
-    None,
-    // State(160)
-    None,
-    // State(161)
-    None,
-    // State(162)
-    None,
-    // State(163)
-    None,
-    // State(164)
-    None,
-    // State(165)
-    None,
-    // State(166)
-    None,
-    // State(167)
-    None,
-    // State(168)
-    None,
-    // State(169)
-    None,
-    // State(170)
-    None,
-    // State(171)
-    None,
-    // State(172)
-    None,
-    // State(173)
-    None,
-    // State(174)
-    None,
-    // State(175)
-    None,
-    // State(176)
-    None,
-    // State(177)
-    None,
-    // State(178)
-    None,
-    // State(179)
-    None,
-    // State(180)
-    None,
-    // State(181)
-    None,
-    // State(182)
-    None,
-    // State(183)
-    None,
-    // State(184)
-    None,
-    // State(185)
-    None,
-    // State(186)
-    None,
-    // State(187)
-    None,
-    // State(188)
-    None,
-    // State(189)
-    None,
-    // State(190)
-    None,
-    // State(191)
-    None,
-    // State(192)
-    None,
-    // State(193)
-    None,
-    // State(194)
-    None,
-    // State(195)
-    None,
-    // State(196)
-    None,
-    // State(197)
-    None,
-    // State(198)
-    None,
-    // State(199)
-    None,
-    // State(200)
-    None,
-    // State(201)
-    None,
-    // State(202)
-    None,
-    // State(203)
-    None,
-    // State(204)
-    None,
-    // State(205)
-    None,
-    // State(206)
-    None,
-    // State(207)
-    None,
-    // State(208)
-    None,
-    // State(209)
-    None,
-    // State(210)
-    None,
-    // State(211)
-    None,
-    // State(212)
-    None,
-    // State(213)
-    None,
-    // State(214)
-    None,
-    // State(215)
-    None,
-    // State(216)
-    None,
-    // State(217)
-    None,
-    // State(218)
-    None,
-    // State(219)
-    None,
-    // State(220)
-    None,
-    // State(221)
-    None,
-    // State(222)
-    None,
-    // State(223)
-    None,
-    // State(224)
-    None,
-    // State(225)
-    None,
-    // State(226)
-    None,
-    // State(227)
-    None,
-    // State(228)
-    None,
-    // State(229)
-    None,
-    // State(230)
-    None,
-    // State(231)
-    None,
-    // State(232)
-    None,
-    // State(233)
-    Some(TokenKind::WhiteSpaceSequence),
-    // State(234)
-    Some(TokenKind::LineTerminatorSequence),
-    // State(235)
-    Some(TokenKind::LineTerminatorSequence),
-    // State(236)
-    Some(TokenKind::Comment),
-    // State(237)
-    Some(TokenKind::Comment),
-    // State(238)
-    Some(TokenKind::Break),
-    // State(239)
-    Some(TokenKind::Case),
-    // State(240)
-    Some(TokenKind::Catch),
-    // State(241)
-    Some(TokenKind::Class),
-    // State(242)
-    Some(TokenKind::Const),
-    // State(243)
-    Some(TokenKind::Continue),
-    // State(244)
-    Some(TokenKind::Debugger),
-    // State(245)
-    Some(TokenKind::Default),
-    // State(246)
-    Some(TokenKind::Delete),
-    // State(247)
-    Some(TokenKind::Do),
-    // State(248)
-    Some(TokenKind::Else),
-    // State(249)
-    Some(TokenKind::Enum),
-    // State(250)
-    Some(TokenKind::Export),
-    // State(251)
-    Some(TokenKind::Extends),
-    // State(252)
-    Some(TokenKind::False),
-    // State(253)
-    Some(TokenKind::Finally),
-    // State(254)
-    Some(TokenKind::For),
-    // State(255)
-    Some(TokenKind::Function),
-    // State(256)
-    Some(TokenKind::If),
-    // State(257)
-    Some(TokenKind::Import),
-    // State(258)
-    Some(TokenKind::In),
-    // State(259)
-    Some(TokenKind::Instanceof),
-    // State(260)
-    Some(TokenKind::New),
-    // State(261)
-    Some(TokenKind::Null),
-    // State(262)
-    Some(TokenKind::Return),
-    // State(263)
-    Some(TokenKind::Super),
-    // State(264)
-    Some(TokenKind::Switch),
-    // State(265)
-    Some(TokenKind::This),
-    // State(266)
-    Some(TokenKind::Throw),
-    // State(267)
-    Some(TokenKind::True),
-    // State(268)
-    Some(TokenKind::Try),
-    // State(269)
-    Some(TokenKind::Typeof),
-    // State(270)
-    Some(TokenKind::Var),
-    // State(271)
-    Some(TokenKind::Void),
-    // State(272)
-    Some(TokenKind::While),
-    // State(273)
-    Some(TokenKind::With),
-    // State(274)
-    Some(TokenKind::Await),
-    // State(275)
-    Some(TokenKind::Yield),
-    // State(276)
-    Some(TokenKind::Let),
-    // State(277)
-    Some(TokenKind::Static),
-    // State(278)
-    Some(TokenKind::Implements),
-    // State(279)
-    Some(TokenKind::Interface),
-    // State(280)
-    Some(TokenKind::Package),
-    // State(281)
-    Some(TokenKind::Private),
-    // State(282)
-    Some(TokenKind::Protected),
-    // State(283)
-    Some(TokenKind::Public),
-    // State(284)
-    Some(TokenKind::As),
-    // State(285)
-    Some(TokenKind::Async),
-    // State(286)
-    Some(TokenKind::From),
-    // State(287)
-    Some(TokenKind::Get),
-    // State(288)
-    Some(TokenKind::Meta),
-    // State(289)
-    Some(TokenKind::Of),
-    // State(290)
-    Some(TokenKind::Set),
-    // State(291)
-    Some(TokenKind::Target),
-    // State(292)
-    Some(TokenKind::IdentifierName),
-    // State(293)
-    Some(TokenKind::IdentifierName),
-    // State(294)
-    Some(TokenKind::IdentifierName),
-    // State(295)
-    Some(TokenKind::IdentifierName),
-    // State(296)
-    Some(TokenKind::IdentifierName),
-    // State(297)
-    Some(TokenKind::IdentifierName),
-    // State(298)
-    Some(TokenKind::IdentifierName),
-    // State(299)
-    Some(TokenKind::IdentifierName),
-    // State(300)
-    Some(TokenKind::IdentifierName),
-    // State(301)
-    Some(TokenKind::IdentifierName),
-    // State(302)
-    Some(TokenKind::IdentifierName),
-    // State(303)
-    Some(TokenKind::IdentifierName),
-    // State(304)
-    Some(TokenKind::IdentifierName),
-    // State(305)
-    Some(TokenKind::IdentifierName),
-    // State(306)
-    Some(TokenKind::IdentifierName),
-    // State(307)
-    Some(TokenKind::IdentifierName),
-    // State(308)
-    Some(TokenKind::IdentifierName),
-    // State(309)
-    Some(TokenKind::IdentifierName),
-    // State(310)
-    Some(TokenKind::IdentifierName),
-    // State(311)
-    Some(TokenKind::IdentifierName),
-    // State(312)
-    Some(TokenKind::IdentifierName),
-    // State(313)
-    Some(TokenKind::IdentifierName),
-    // State(314)
-    Some(TokenKind::IdentifierName),
-    // State(315)
-    Some(TokenKind::IdentifierName),
-    // State(316)
-    Some(TokenKind::IdentifierName),
-    // State(317)
-    Some(TokenKind::IdentifierName),
-    // State(318)
-    Some(TokenKind::IdentifierName),
-    // State(319)
-    Some(TokenKind::IdentifierName),
-    // State(320)
-    Some(TokenKind::IdentifierName),
-    // State(321)
-    Some(TokenKind::IdentifierName),
-    // State(322)
-    Some(TokenKind::IdentifierName),
-    // State(323)
-    Some(TokenKind::IdentifierName),
-    // State(324)
-    Some(TokenKind::IdentifierName),
-    // State(325)
-    Some(TokenKind::IdentifierName),
-    // State(326)
-    Some(TokenKind::IdentifierName),
-    // State(327)
-    Some(TokenKind::IdentifierName),
-    // State(328)
-    Some(TokenKind::IdentifierName),
-    // State(329)
-    Some(TokenKind::IdentifierName),
-    // State(330)
-    Some(TokenKind::IdentifierName),
-    // State(331)
-    Some(TokenKind::IdentifierName),
-    // State(332)
-    Some(TokenKind::IdentifierName),
-    // State(333)
-    Some(TokenKind::IdentifierName),
-    // State(334)
-    Some(TokenKind::IdentifierName),
-    // State(335)
-    Some(TokenKind::IdentifierName),
-    // State(336)
-    Some(TokenKind::IdentifierName),
-    // State(337)
-    Some(TokenKind::IdentifierName),
-    // State(338)
-    Some(TokenKind::IdentifierName),
-    // State(339)
-    Some(TokenKind::IdentifierName),
-    // State(340)
-    Some(TokenKind::IdentifierName),
-    // State(341)
-    Some(TokenKind::IdentifierName),
-    // State(342)
-    Some(TokenKind::IdentifierName),
-    // State(343)
-    Some(TokenKind::IdentifierName),
-    // State(344)
-    Some(TokenKind::IdentifierName),
-    // State(345)
-    Some(TokenKind::IdentifierName),
-    // State(346)
-    Some(TokenKind::IdentifierName),
-    // State(347)
-    Some(TokenKind::IdentifierName),
-    // State(348)
-    Some(TokenKind::IdentifierName),
-    // State(349)
-    Some(TokenKind::IdentifierName),
-    // State(350)
-    Some(TokenKind::IdentifierName),
-    // State(351)
-    Some(TokenKind::IdentifierName),
-    // State(352)
-    Some(TokenKind::IdentifierName),
-    // State(353)
-    Some(TokenKind::IdentifierName),
-    // State(354)
-    Some(TokenKind::IdentifierName),
-    // State(355)
-    Some(TokenKind::IdentifierName),
-    // State(356)
-    Some(TokenKind::IdentifierName),
-    // State(357)
-    Some(TokenKind::IdentifierName),
-    // State(358)
-    Some(TokenKind::IdentifierName),
-    // State(359)
-    Some(TokenKind::IdentifierName),
-    // State(360)
-    Some(TokenKind::IdentifierName),
-    // State(361)
-    Some(TokenKind::IdentifierName),
-    // State(362)
-    Some(TokenKind::IdentifierName),
-    // State(363)
-    Some(TokenKind::IdentifierName),
-    // State(364)
-    Some(TokenKind::IdentifierName),
-    // State(365)
-    Some(TokenKind::IdentifierName),
-    // State(366)
-    Some(TokenKind::IdentifierName),
-    // State(367)
-    Some(TokenKind::IdentifierName),
-    // State(368)
-    Some(TokenKind::IdentifierName),
-    // State(369)
-    Some(TokenKind::IdentifierName),
-    // State(370)
-    Some(TokenKind::IdentifierName),
-    // State(371)
-    Some(TokenKind::IdentifierName),
-    // State(372)
-    Some(TokenKind::IdentifierName),
-    // State(373)
-    Some(TokenKind::IdentifierName),
-    // State(374)
-    Some(TokenKind::IdentifierName),
-    // State(375)
-    Some(TokenKind::IdentifierName),
-    // State(376)
-    Some(TokenKind::IdentifierName),
-    // State(377)
-    Some(TokenKind::IdentifierName),
-    // State(378)
-    Some(TokenKind::IdentifierName),
-    // State(379)
-    Some(TokenKind::IdentifierName),
-    // State(380)
-    Some(TokenKind::IdentifierName),
-    // State(381)
-    Some(TokenKind::IdentifierName),
-    // State(382)
-    Some(TokenKind::IdentifierName),
-    // State(383)
-    Some(TokenKind::IdentifierName),
-    // State(384)
-    Some(TokenKind::IdentifierName),
-    // State(385)
-    Some(TokenKind::IdentifierName),
-    // State(386)
-    Some(TokenKind::IdentifierName),
-    // State(387)
-    Some(TokenKind::IdentifierName),
-    // State(388)
-    Some(TokenKind::IdentifierName),
-    // State(389)
-    Some(TokenKind::IdentifierName),
-    // State(390)
-    Some(TokenKind::IdentifierName),
-    // State(391)
-    Some(TokenKind::IdentifierName),
-    // State(392)
-    Some(TokenKind::IdentifierName),
-    // State(393)
-    Some(TokenKind::IdentifierName),
-    // State(394)
-    Some(TokenKind::IdentifierName),
-    // State(395)
-    Some(TokenKind::IdentifierName),
-    // State(396)
-    Some(TokenKind::IdentifierName),
-    // State(397)
-    Some(TokenKind::IdentifierName),
-    // State(398)
-    Some(TokenKind::IdentifierName),
-    // State(399)
-    Some(TokenKind::IdentifierName),
-    // State(400)
-    Some(TokenKind::IdentifierName),
-    // State(401)
-    Some(TokenKind::IdentifierName),
-    // State(402)
-    Some(TokenKind::IdentifierName),
-    // State(403)
-    Some(TokenKind::IdentifierName),
-    // State(404)
-    Some(TokenKind::IdentifierName),
-    // State(405)
-    Some(TokenKind::IdentifierName),
-    // State(406)
-    Some(TokenKind::IdentifierName),
-    // State(407)
-    Some(TokenKind::IdentifierName),
-    // State(408)
-    Some(TokenKind::IdentifierName),
-    // State(409)
-    Some(TokenKind::IdentifierName),
-    // State(410)
-    Some(TokenKind::IdentifierName),
-    // State(411)
-    Some(TokenKind::IdentifierName),
-    // State(412)
-    Some(TokenKind::IdentifierName),
-    // State(413)
-    Some(TokenKind::IdentifierName),
-    // State(414)
-    Some(TokenKind::IdentifierName),
-    // State(415)
-    Some(TokenKind::IdentifierName),
-    // State(416)
-    Some(TokenKind::IdentifierName),
-    // State(417)
-    Some(TokenKind::IdentifierName),
-    // State(418)
-    Some(TokenKind::IdentifierName),
-    // State(419)
-    Some(TokenKind::IdentifierName),
-    // State(420)
-    Some(TokenKind::IdentifierName),
-    // State(421)
-    Some(TokenKind::IdentifierName),
-    // State(422)
-    Some(TokenKind::IdentifierName),
-    // State(423)
-    Some(TokenKind::IdentifierName),
-    // State(424)
-    Some(TokenKind::IdentifierName),
-    // State(425)
-    Some(TokenKind::IdentifierName),
-    // State(426)
-    Some(TokenKind::IdentifierName),
-    // State(427)
-    Some(TokenKind::IdentifierName),
-    // State(428)
-    Some(TokenKind::IdentifierName),
-    // State(429)
-    Some(TokenKind::IdentifierName),
-    // State(430)
-    Some(TokenKind::IdentifierName),
-    // State(431)
-    Some(TokenKind::IdentifierName),
-    // State(432)
-    Some(TokenKind::IdentifierName),
-    // State(433)
-    Some(TokenKind::IdentifierName),
-    // State(434)
-    Some(TokenKind::IdentifierName),
-    // State(435)
-    Some(TokenKind::IdentifierName),
-    // State(436)
-    Some(TokenKind::IdentifierName),
-    // State(437)
-    Some(TokenKind::IdentifierName),
-    // State(438)
-    Some(TokenKind::IdentifierName),
-    // State(439)
-    Some(TokenKind::IdentifierName),
-    // State(440)
-    Some(TokenKind::IdentifierName),
-    // State(441)
-    Some(TokenKind::IdentifierName),
-    // State(442)
-    Some(TokenKind::IdentifierName),
-    // State(443)
-    Some(TokenKind::IdentifierName),
-    // State(444)
-    Some(TokenKind::IdentifierName),
-    // State(445)
-    Some(TokenKind::IdentifierName),
-    // State(446)
-    Some(TokenKind::IdentifierName),
-    // State(447)
-    Some(TokenKind::IdentifierName),
-    // State(448)
-    Some(TokenKind::IdentifierName),
-    // State(449)
-    Some(TokenKind::IdentifierName),
-    // State(450)
-    Some(TokenKind::IdentifierName),
-    // State(451)
-    Some(TokenKind::IdentifierName),
-    // State(452)
-    Some(TokenKind::IdentifierName),
-    // State(453)
-    Some(TokenKind::IdentifierName),
-    // State(454)
-    Some(TokenKind::IdentifierName),
-    // State(455)
-    Some(TokenKind::IdentifierName),
-    // State(456)
-    Some(TokenKind::IdentifierName),
-    // State(457)
-    Some(TokenKind::IdentifierName),
-    // State(458)
-    Some(TokenKind::IdentifierName),
-    // State(459)
-    Some(TokenKind::IdentifierName),
-    // State(460)
-    Some(TokenKind::IdentifierName),
-    // State(461)
-    Some(TokenKind::IdentifierName),
-    // State(462)
-    Some(TokenKind::IdentifierName),
-    // State(463)
-    Some(TokenKind::IdentifierName),
-    // State(464)
-    Some(TokenKind::IdentifierName),
-    // State(465)
-    Some(TokenKind::IdentifierName),
-    // State(466)
-    Some(TokenKind::IdentifierName),
-    // State(467)
-    Some(TokenKind::PrivateIdentifier),
-    // State(468)
-    Some(TokenKind::OptionalChaining),
-    // State(469)
-    Some(TokenKind::Lbrace),
-    // State(470)
-    Some(TokenKind::Lparen),
-    // State(471)
-    Some(TokenKind::Rparen),
-    // State(472)
-    Some(TokenKind::Lbrack),
-    // State(473)
-    Some(TokenKind::Rbrack),
-    // State(474)
-    Some(TokenKind::Dot),
-    // State(475)
-    Some(TokenKind::Ellipsis),
-    // State(476)
-    Some(TokenKind::SemiColon),
-    // State(477)
-    Some(TokenKind::Comma),
-    // State(478)
-    Some(TokenKind::Lt),
-    // State(479)
-    Some(TokenKind::Gt),
-    // State(480)
-    Some(TokenKind::Lte),
-    // State(481)
-    Some(TokenKind::Gte),
-    // State(482)
-    Some(TokenKind::Eq),
-    // State(483)
-    Some(TokenKind::Ne),
-    // State(484)
-    Some(TokenKind::EqStrict),
-    // State(485)
-    Some(TokenKind::NeStrict),
-    // State(486)
-    Some(TokenKind::Add),
-    // State(487)
-    Some(TokenKind::Sub),
-    // State(488)
-    Some(TokenKind::Mul),
-    // State(489)
-    Some(TokenKind::Mod),
-    // State(490)
-    Some(TokenKind::Exp),
-    // State(491)
-    Some(TokenKind::Inc),
-    // State(492)
-    Some(TokenKind::Dec),
-    // State(493)
-    Some(TokenKind::Shl),
-    // State(494)
-    Some(TokenKind::Sar),
-    // State(495)
-    Some(TokenKind::Shr),
-    // State(496)
-    Some(TokenKind::BitAnd),
-    // State(497)
-    Some(TokenKind::BitOr),
-    // State(498)
-    Some(TokenKind::BitXor),
-    // State(499)
-    Some(TokenKind::Not),
-    // State(500)
-    Some(TokenKind::BitNot),
-    // State(501)
-    Some(TokenKind::And),
-    // State(502)
-    Some(TokenKind::Or),
-    // State(503)
-    Some(TokenKind::Nullish),
-    // State(504)
-    Some(TokenKind::Conditional),
-    // State(505)
-    Some(TokenKind::Colon),
-    // State(506)
-    Some(TokenKind::Assign),
-    // State(507)
-    Some(TokenKind::AddAssign),
-    // State(508)
-    Some(TokenKind::SubAssign),
-    // State(509)
-    Some(TokenKind::MulAssign),
-    // State(510)
-    Some(TokenKind::ModAssign),
-    // State(511)
-    Some(TokenKind::ExpAssign),
-    // State(512)
-    Some(TokenKind::ShlAssign),
-    // State(513)
-    Some(TokenKind::SarAssign),
-    // State(514)
-    Some(TokenKind::ShrAssign),
-    // State(515)
-    Some(TokenKind::BitAndAssign),
-    // State(516)
-    Some(TokenKind::BitOrAssign),
-    // State(517)
-    Some(TokenKind::BitXorAssign),
-    // State(518)
-    Some(TokenKind::AndAssign),
-    // State(519)
-    Some(TokenKind::OrAssign),
-    // State(520)
-    Some(TokenKind::NullishAssign),
-    // State(521)
-    Some(TokenKind::Arrow),
-    // State(522)
-    Some(TokenKind::NumericLiteral),
-    // State(523)
-    Some(TokenKind::NumericLiteral),
-    // State(524)
-    Some(TokenKind::NumericLiteral),
-    // State(525)
-    Some(TokenKind::NumericLiteral),
-    // State(526)
-    Some(TokenKind::NumericLiteral),
-    // State(527)
-    Some(TokenKind::NumericLiteral),
-    // State(528)
-    Some(TokenKind::NumericLiteral),
-    // State(529)
-    Some(TokenKind::NumericLiteral),
-    // State(530)
-    Some(TokenKind::NumericLiteral),
-    // State(531)
-    Some(TokenKind::NumericLiteral),
-    // State(532)
-    Some(TokenKind::NumericLiteral),
-    // State(533)
-    Some(TokenKind::StringLiteral),
-    // State(534)
-    Some(TokenKind::NoSubstitutionTemplate),
-    // State(535)
-    Some(TokenKind::TemplateHead),
-    // State(536)
-    Some(TokenKind::RegularExpressionLiteral),
-    // State(537)
-    Some(TokenKind::TemplateMiddle),
-    // State(538)
-    Some(TokenKind::TemplateTail),
+    None,                                      // State(0)
+    None,                                      // State(1)
+    None,                                      // State(2)
+    None,                                      // State(3)
+    None,                                      // State(4)
+    None,                                      // State(5)
+    None,                                      // State(6)
+    None,                                      // State(7)
+    None,                                      // State(8)
+    None,                                      // State(9)
+    None,                                      // State(10)
+    None,                                      // State(11)
+    None,                                      // State(12)
+    None,                                      // State(13)
+    None,                                      // State(14)
+    None,                                      // State(15)
+    None,                                      // State(16)
+    None,                                      // State(17)
+    None,                                      // State(18)
+    None,                                      // State(19)
+    None,                                      // State(20)
+    None,                                      // State(21)
+    None,                                      // State(22)
+    None,                                      // State(23)
+    None,                                      // State(24)
+    None,                                      // State(25)
+    None,                                      // State(26)
+    None,                                      // State(27)
+    None,                                      // State(28)
+    None,                                      // State(29)
+    None,                                      // State(30)
+    None,                                      // State(31)
+    None,                                      // State(32)
+    None,                                      // State(33)
+    None,                                      // State(34)
+    None,                                      // State(35)
+    None,                                      // State(36)
+    None,                                      // State(37)
+    None,                                      // State(38)
+    None,                                      // State(39)
+    None,                                      // State(40)
+    None,                                      // State(41)
+    None,                                      // State(42)
+    None,                                      // State(43)
+    None,                                      // State(44)
+    None,                                      // State(45)
+    None,                                      // State(46)
+    None,                                      // State(47)
+    None,                                      // State(48)
+    None,                                      // State(49)
+    None,                                      // State(50)
+    None,                                      // State(51)
+    None,                                      // State(52)
+    None,                                      // State(53)
+    None,                                      // State(54)
+    None,                                      // State(55)
+    None,                                      // State(56)
+    None,                                      // State(57)
+    None,                                      // State(58)
+    None,                                      // State(59)
+    None,                                      // State(60)
+    None,                                      // State(61)
+    None,                                      // State(62)
+    None,                                      // State(63)
+    None,                                      // State(64)
+    None,                                      // State(65)
+    None,                                      // State(66)
+    None,                                      // State(67)
+    None,                                      // State(68)
+    None,                                      // State(69)
+    None,                                      // State(70)
+    None,                                      // State(71)
+    None,                                      // State(72)
+    None,                                      // State(73)
+    None,                                      // State(74)
+    None,                                      // State(75)
+    None,                                      // State(76)
+    None,                                      // State(77)
+    None,                                      // State(78)
+    None,                                      // State(79)
+    None,                                      // State(80)
+    None,                                      // State(81)
+    None,                                      // State(82)
+    None,                                      // State(83)
+    None,                                      // State(84)
+    None,                                      // State(85)
+    None,                                      // State(86)
+    None,                                      // State(87)
+    None,                                      // State(88)
+    None,                                      // State(89)
+    None,                                      // State(90)
+    None,                                      // State(91)
+    None,                                      // State(92)
+    None,                                      // State(93)
+    None,                                      // State(94)
+    None,                                      // State(95)
+    None,                                      // State(96)
+    None,                                      // State(97)
+    None,                                      // State(98)
+    None,                                      // State(99)
+    None,                                      // State(100)
+    None,                                      // State(101)
+    None,                                      // State(102)
+    None,                                      // State(103)
+    None,                                      // State(104)
+    None,                                      // State(105)
+    None,                                      // State(106)
+    None,                                      // State(107)
+    None,                                      // State(108)
+    None,                                      // State(109)
+    None,                                      // State(110)
+    None,                                      // State(111)
+    None,                                      // State(112)
+    None,                                      // State(113)
+    None,                                      // State(114)
+    None,                                      // State(115)
+    None,                                      // State(116)
+    None,                                      // State(117)
+    None,                                      // State(118)
+    None,                                      // State(119)
+    None,                                      // State(120)
+    None,                                      // State(121)
+    None,                                      // State(122)
+    None,                                      // State(123)
+    None,                                      // State(124)
+    None,                                      // State(125)
+    None,                                      // State(126)
+    None,                                      // State(127)
+    None,                                      // State(128)
+    None,                                      // State(129)
+    None,                                      // State(130)
+    None,                                      // State(131)
+    None,                                      // State(132)
+    None,                                      // State(133)
+    None,                                      // State(134)
+    None,                                      // State(135)
+    None,                                      // State(136)
+    None,                                      // State(137)
+    None,                                      // State(138)
+    None,                                      // State(139)
+    None,                                      // State(140)
+    None,                                      // State(141)
+    None,                                      // State(142)
+    None,                                      // State(143)
+    None,                                      // State(144)
+    None,                                      // State(145)
+    None,                                      // State(146)
+    None,                                      // State(147)
+    None,                                      // State(148)
+    None,                                      // State(149)
+    None,                                      // State(150)
+    None,                                      // State(151)
+    None,                                      // State(152)
+    None,                                      // State(153)
+    None,                                      // State(154)
+    None,                                      // State(155)
+    None,                                      // State(156)
+    None,                                      // State(157)
+    None,                                      // State(158)
+    None,                                      // State(159)
+    None,                                      // State(160)
+    None,                                      // State(161)
+    None,                                      // State(162)
+    None,                                      // State(163)
+    None,                                      // State(164)
+    None,                                      // State(165)
+    None,                                      // State(166)
+    None,                                      // State(167)
+    None,                                      // State(168)
+    None,                                      // State(169)
+    None,                                      // State(170)
+    None,                                      // State(171)
+    None,                                      // State(172)
+    None,                                      // State(173)
+    None,                                      // State(174)
+    None,                                      // State(175)
+    None,                                      // State(176)
+    None,                                      // State(177)
+    None,                                      // State(178)
+    None,                                      // State(179)
+    None,                                      // State(180)
+    None,                                      // State(181)
+    None,                                      // State(182)
+    None,                                      // State(183)
+    None,                                      // State(184)
+    None,                                      // State(185)
+    None,                                      // State(186)
+    None,                                      // State(187)
+    None,                                      // State(188)
+    None,                                      // State(189)
+    None,                                      // State(190)
+    None,                                      // State(191)
+    None,                                      // State(192)
+    None,                                      // State(193)
+    None,                                      // State(194)
+    None,                                      // State(195)
+    None,                                      // State(196)
+    None,                                      // State(197)
+    None,                                      // State(198)
+    None,                                      // State(199)
+    None,                                      // State(200)
+    None,                                      // State(201)
+    None,                                      // State(202)
+    None,                                      // State(203)
+    None,                                      // State(204)
+    None,                                      // State(205)
+    None,                                      // State(206)
+    None,                                      // State(207)
+    None,                                      // State(208)
+    None,                                      // State(209)
+    None,                                      // State(210)
+    None,                                      // State(211)
+    None,                                      // State(212)
+    None,                                      // State(213)
+    None,                                      // State(214)
+    None,                                      // State(215)
+    None,                                      // State(216)
+    None,                                      // State(217)
+    None,                                      // State(218)
+    None,                                      // State(219)
+    None,                                      // State(220)
+    None,                                      // State(221)
+    None,                                      // State(222)
+    None,                                      // State(223)
+    None,                                      // State(224)
+    None,                                      // State(225)
+    None,                                      // State(226)
+    None,                                      // State(227)
+    None,                                      // State(228)
+    None,                                      // State(229)
+    None,                                      // State(230)
+    None,                                      // State(231)
+    None,                                      // State(232)
+    Some(TokenKind::WhiteSpaceSequence),       // State(233)
+    Some(TokenKind::LineTerminatorSequence),   // State(234)
+    Some(TokenKind::LineTerminatorSequence),   // State(235)
+    Some(TokenKind::Comment),                  // State(236)
+    Some(TokenKind::Comment),                  // State(237)
+    Some(TokenKind::Break),                    // State(238)
+    Some(TokenKind::Case),                     // State(239)
+    Some(TokenKind::Catch),                    // State(240)
+    Some(TokenKind::Class),                    // State(241)
+    Some(TokenKind::Const),                    // State(242)
+    Some(TokenKind::Continue),                 // State(243)
+    Some(TokenKind::Debugger),                 // State(244)
+    Some(TokenKind::Default),                  // State(245)
+    Some(TokenKind::Delete),                   // State(246)
+    Some(TokenKind::Do),                       // State(247)
+    Some(TokenKind::Else),                     // State(248)
+    Some(TokenKind::Enum),                     // State(249)
+    Some(TokenKind::Export),                   // State(250)
+    Some(TokenKind::Extends),                  // State(251)
+    Some(TokenKind::False),                    // State(252)
+    Some(TokenKind::Finally),                  // State(253)
+    Some(TokenKind::For),                      // State(254)
+    Some(TokenKind::Function),                 // State(255)
+    Some(TokenKind::If),                       // State(256)
+    Some(TokenKind::Import),                   // State(257)
+    Some(TokenKind::In),                       // State(258)
+    Some(TokenKind::Instanceof),               // State(259)
+    Some(TokenKind::New),                      // State(260)
+    Some(TokenKind::Null),                     // State(261)
+    Some(TokenKind::Return),                   // State(262)
+    Some(TokenKind::Super),                    // State(263)
+    Some(TokenKind::Switch),                   // State(264)
+    Some(TokenKind::This),                     // State(265)
+    Some(TokenKind::Throw),                    // State(266)
+    Some(TokenKind::True),                     // State(267)
+    Some(TokenKind::Try),                      // State(268)
+    Some(TokenKind::Typeof),                   // State(269)
+    Some(TokenKind::Var),                      // State(270)
+    Some(TokenKind::Void),                     // State(271)
+    Some(TokenKind::While),                    // State(272)
+    Some(TokenKind::With),                     // State(273)
+    Some(TokenKind::Await),                    // State(274)
+    Some(TokenKind::Yield),                    // State(275)
+    Some(TokenKind::Let),                      // State(276)
+    Some(TokenKind::Static),                   // State(277)
+    Some(TokenKind::Implements),               // State(278)
+    Some(TokenKind::Interface),                // State(279)
+    Some(TokenKind::Package),                  // State(280)
+    Some(TokenKind::Private),                  // State(281)
+    Some(TokenKind::Protected),                // State(282)
+    Some(TokenKind::Public),                   // State(283)
+    Some(TokenKind::As),                       // State(284)
+    Some(TokenKind::Async),                    // State(285)
+    Some(TokenKind::From),                     // State(286)
+    Some(TokenKind::Get),                      // State(287)
+    Some(TokenKind::Meta),                     // State(288)
+    Some(TokenKind::Of),                       // State(289)
+    Some(TokenKind::Set),                      // State(290)
+    Some(TokenKind::Target),                   // State(291)
+    Some(TokenKind::IdentifierName),           // State(292)
+    Some(TokenKind::IdentifierName),           // State(293)
+    Some(TokenKind::IdentifierName),           // State(294)
+    Some(TokenKind::IdentifierName),           // State(295)
+    Some(TokenKind::IdentifierName),           // State(296)
+    Some(TokenKind::IdentifierName),           // State(297)
+    Some(TokenKind::IdentifierName),           // State(298)
+    Some(TokenKind::IdentifierName),           // State(299)
+    Some(TokenKind::IdentifierName),           // State(300)
+    Some(TokenKind::IdentifierName),           // State(301)
+    Some(TokenKind::IdentifierName),           // State(302)
+    Some(TokenKind::IdentifierName),           // State(303)
+    Some(TokenKind::IdentifierName),           // State(304)
+    Some(TokenKind::IdentifierName),           // State(305)
+    Some(TokenKind::IdentifierName),           // State(306)
+    Some(TokenKind::IdentifierName),           // State(307)
+    Some(TokenKind::IdentifierName),           // State(308)
+    Some(TokenKind::IdentifierName),           // State(309)
+    Some(TokenKind::IdentifierName),           // State(310)
+    Some(TokenKind::IdentifierName),           // State(311)
+    Some(TokenKind::IdentifierName),           // State(312)
+    Some(TokenKind::IdentifierName),           // State(313)
+    Some(TokenKind::IdentifierName),           // State(314)
+    Some(TokenKind::IdentifierName),           // State(315)
+    Some(TokenKind::IdentifierName),           // State(316)
+    Some(TokenKind::IdentifierName),           // State(317)
+    Some(TokenKind::IdentifierName),           // State(318)
+    Some(TokenKind::IdentifierName),           // State(319)
+    Some(TokenKind::IdentifierName),           // State(320)
+    Some(TokenKind::IdentifierName),           // State(321)
+    Some(TokenKind::IdentifierName),           // State(322)
+    Some(TokenKind::IdentifierName),           // State(323)
+    Some(TokenKind::IdentifierName),           // State(324)
+    Some(TokenKind::IdentifierName),           // State(325)
+    Some(TokenKind::IdentifierName),           // State(326)
+    Some(TokenKind::IdentifierName),           // State(327)
+    Some(TokenKind::IdentifierName),           // State(328)
+    Some(TokenKind::IdentifierName),           // State(329)
+    Some(TokenKind::IdentifierName),           // State(330)
+    Some(TokenKind::IdentifierName),           // State(331)
+    Some(TokenKind::IdentifierName),           // State(332)
+    Some(TokenKind::IdentifierName),           // State(333)
+    Some(TokenKind::IdentifierName),           // State(334)
+    Some(TokenKind::IdentifierName),           // State(335)
+    Some(TokenKind::IdentifierName),           // State(336)
+    Some(TokenKind::IdentifierName),           // State(337)
+    Some(TokenKind::IdentifierName),           // State(338)
+    Some(TokenKind::IdentifierName),           // State(339)
+    Some(TokenKind::IdentifierName),           // State(340)
+    Some(TokenKind::IdentifierName),           // State(341)
+    Some(TokenKind::IdentifierName),           // State(342)
+    Some(TokenKind::IdentifierName),           // State(343)
+    Some(TokenKind::IdentifierName),           // State(344)
+    Some(TokenKind::IdentifierName),           // State(345)
+    Some(TokenKind::IdentifierName),           // State(346)
+    Some(TokenKind::IdentifierName),           // State(347)
+    Some(TokenKind::IdentifierName),           // State(348)
+    Some(TokenKind::IdentifierName),           // State(349)
+    Some(TokenKind::IdentifierName),           // State(350)
+    Some(TokenKind::IdentifierName),           // State(351)
+    Some(TokenKind::IdentifierName),           // State(352)
+    Some(TokenKind::IdentifierName),           // State(353)
+    Some(TokenKind::IdentifierName),           // State(354)
+    Some(TokenKind::IdentifierName),           // State(355)
+    Some(TokenKind::IdentifierName),           // State(356)
+    Some(TokenKind::IdentifierName),           // State(357)
+    Some(TokenKind::IdentifierName),           // State(358)
+    Some(TokenKind::IdentifierName),           // State(359)
+    Some(TokenKind::IdentifierName),           // State(360)
+    Some(TokenKind::IdentifierName),           // State(361)
+    Some(TokenKind::IdentifierName),           // State(362)
+    Some(TokenKind::IdentifierName),           // State(363)
+    Some(TokenKind::IdentifierName),           // State(364)
+    Some(TokenKind::IdentifierName),           // State(365)
+    Some(TokenKind::IdentifierName),           // State(366)
+    Some(TokenKind::IdentifierName),           // State(367)
+    Some(TokenKind::IdentifierName),           // State(368)
+    Some(TokenKind::IdentifierName),           // State(369)
+    Some(TokenKind::IdentifierName),           // State(370)
+    Some(TokenKind::IdentifierName),           // State(371)
+    Some(TokenKind::IdentifierName),           // State(372)
+    Some(TokenKind::IdentifierName),           // State(373)
+    Some(TokenKind::IdentifierName),           // State(374)
+    Some(TokenKind::IdentifierName),           // State(375)
+    Some(TokenKind::IdentifierName),           // State(376)
+    Some(TokenKind::IdentifierName),           // State(377)
+    Some(TokenKind::IdentifierName),           // State(378)
+    Some(TokenKind::IdentifierName),           // State(379)
+    Some(TokenKind::IdentifierName),           // State(380)
+    Some(TokenKind::IdentifierName),           // State(381)
+    Some(TokenKind::IdentifierName),           // State(382)
+    Some(TokenKind::IdentifierName),           // State(383)
+    Some(TokenKind::IdentifierName),           // State(384)
+    Some(TokenKind::IdentifierName),           // State(385)
+    Some(TokenKind::IdentifierName),           // State(386)
+    Some(TokenKind::IdentifierName),           // State(387)
+    Some(TokenKind::IdentifierName),           // State(388)
+    Some(TokenKind::IdentifierName),           // State(389)
+    Some(TokenKind::IdentifierName),           // State(390)
+    Some(TokenKind::IdentifierName),           // State(391)
+    Some(TokenKind::IdentifierName),           // State(392)
+    Some(TokenKind::IdentifierName),           // State(393)
+    Some(TokenKind::IdentifierName),           // State(394)
+    Some(TokenKind::IdentifierName),           // State(395)
+    Some(TokenKind::IdentifierName),           // State(396)
+    Some(TokenKind::IdentifierName),           // State(397)
+    Some(TokenKind::IdentifierName),           // State(398)
+    Some(TokenKind::IdentifierName),           // State(399)
+    Some(TokenKind::IdentifierName),           // State(400)
+    Some(TokenKind::IdentifierName),           // State(401)
+    Some(TokenKind::IdentifierName),           // State(402)
+    Some(TokenKind::IdentifierName),           // State(403)
+    Some(TokenKind::IdentifierName),           // State(404)
+    Some(TokenKind::IdentifierName),           // State(405)
+    Some(TokenKind::IdentifierName),           // State(406)
+    Some(TokenKind::IdentifierName),           // State(407)
+    Some(TokenKind::IdentifierName),           // State(408)
+    Some(TokenKind::IdentifierName),           // State(409)
+    Some(TokenKind::IdentifierName),           // State(410)
+    Some(TokenKind::IdentifierName),           // State(411)
+    Some(TokenKind::IdentifierName),           // State(412)
+    Some(TokenKind::IdentifierName),           // State(413)
+    Some(TokenKind::IdentifierName),           // State(414)
+    Some(TokenKind::IdentifierName),           // State(415)
+    Some(TokenKind::IdentifierName),           // State(416)
+    Some(TokenKind::IdentifierName),           // State(417)
+    Some(TokenKind::IdentifierName),           // State(418)
+    Some(TokenKind::IdentifierName),           // State(419)
+    Some(TokenKind::IdentifierName),           // State(420)
+    Some(TokenKind::IdentifierName),           // State(421)
+    Some(TokenKind::IdentifierName),           // State(422)
+    Some(TokenKind::IdentifierName),           // State(423)
+    Some(TokenKind::IdentifierName),           // State(424)
+    Some(TokenKind::IdentifierName),           // State(425)
+    Some(TokenKind::IdentifierName),           // State(426)
+    Some(TokenKind::IdentifierName),           // State(427)
+    Some(TokenKind::IdentifierName),           // State(428)
+    Some(TokenKind::IdentifierName),           // State(429)
+    Some(TokenKind::IdentifierName),           // State(430)
+    Some(TokenKind::IdentifierName),           // State(431)
+    Some(TokenKind::IdentifierName),           // State(432)
+    Some(TokenKind::IdentifierName),           // State(433)
+    Some(TokenKind::IdentifierName),           // State(434)
+    Some(TokenKind::IdentifierName),           // State(435)
+    Some(TokenKind::IdentifierName),           // State(436)
+    Some(TokenKind::IdentifierName),           // State(437)
+    Some(TokenKind::IdentifierName),           // State(438)
+    Some(TokenKind::IdentifierName),           // State(439)
+    Some(TokenKind::IdentifierName),           // State(440)
+    Some(TokenKind::IdentifierName),           // State(441)
+    Some(TokenKind::IdentifierName),           // State(442)
+    Some(TokenKind::IdentifierName),           // State(443)
+    Some(TokenKind::IdentifierName),           // State(444)
+    Some(TokenKind::IdentifierName),           // State(445)
+    Some(TokenKind::IdentifierName),           // State(446)
+    Some(TokenKind::IdentifierName),           // State(447)
+    Some(TokenKind::IdentifierName),           // State(448)
+    Some(TokenKind::IdentifierName),           // State(449)
+    Some(TokenKind::IdentifierName),           // State(450)
+    Some(TokenKind::IdentifierName),           // State(451)
+    Some(TokenKind::IdentifierName),           // State(452)
+    Some(TokenKind::IdentifierName),           // State(453)
+    Some(TokenKind::IdentifierName),           // State(454)
+    Some(TokenKind::IdentifierName),           // State(455)
+    Some(TokenKind::IdentifierName),           // State(456)
+    Some(TokenKind::IdentifierName),           // State(457)
+    Some(TokenKind::IdentifierName),           // State(458)
+    Some(TokenKind::IdentifierName),           // State(459)
+    Some(TokenKind::IdentifierName),           // State(460)
+    Some(TokenKind::IdentifierName),           // State(461)
+    Some(TokenKind::IdentifierName),           // State(462)
+    Some(TokenKind::IdentifierName),           // State(463)
+    Some(TokenKind::IdentifierName),           // State(464)
+    Some(TokenKind::IdentifierName),           // State(465)
+    Some(TokenKind::IdentifierName),           // State(466)
+    Some(TokenKind::PrivateIdentifier),        // State(467)
+    Some(TokenKind::OptionalChaining),         // State(468)
+    Some(TokenKind::Lbrace),                   // State(469)
+    Some(TokenKind::Lparen),                   // State(470)
+    Some(TokenKind::Rparen),                   // State(471)
+    Some(TokenKind::Lbrack),                   // State(472)
+    Some(TokenKind::Rbrack),                   // State(473)
+    Some(TokenKind::Dot),                      // State(474)
+    Some(TokenKind::Ellipsis),                 // State(475)
+    Some(TokenKind::SemiColon),                // State(476)
+    Some(TokenKind::Comma),                    // State(477)
+    Some(TokenKind::Lt),                       // State(478)
+    Some(TokenKind::Gt),                       // State(479)
+    Some(TokenKind::Lte),                      // State(480)
+    Some(TokenKind::Gte),                      // State(481)
+    Some(TokenKind::Eq),                       // State(482)
+    Some(TokenKind::Ne),                       // State(483)
+    Some(TokenKind::EqStrict),                 // State(484)
+    Some(TokenKind::NeStrict),                 // State(485)
+    Some(TokenKind::Add),                      // State(486)
+    Some(TokenKind::Sub),                      // State(487)
+    Some(TokenKind::Mul),                      // State(488)
+    Some(TokenKind::Mod),                      // State(489)
+    Some(TokenKind::Exp),                      // State(490)
+    Some(TokenKind::Inc),                      // State(491)
+    Some(TokenKind::Dec),                      // State(492)
+    Some(TokenKind::Shl),                      // State(493)
+    Some(TokenKind::Sar),                      // State(494)
+    Some(TokenKind::Shr),                      // State(495)
+    Some(TokenKind::BitAnd),                   // State(496)
+    Some(TokenKind::BitOr),                    // State(497)
+    Some(TokenKind::BitXor),                   // State(498)
+    Some(TokenKind::Not),                      // State(499)
+    Some(TokenKind::BitNot),                   // State(500)
+    Some(TokenKind::And),                      // State(501)
+    Some(TokenKind::Or),                       // State(502)
+    Some(TokenKind::Nullish),                  // State(503)
+    Some(TokenKind::Conditional),              // State(504)
+    Some(TokenKind::Colon),                    // State(505)
+    Some(TokenKind::Assign),                   // State(506)
+    Some(TokenKind::AddAssign),                // State(507)
+    Some(TokenKind::SubAssign),                // State(508)
+    Some(TokenKind::MulAssign),                // State(509)
+    Some(TokenKind::ModAssign),                // State(510)
+    Some(TokenKind::ExpAssign),                // State(511)
+    Some(TokenKind::ShlAssign),                // State(512)
+    Some(TokenKind::SarAssign),                // State(513)
+    Some(TokenKind::ShrAssign),                // State(514)
+    Some(TokenKind::BitAndAssign),             // State(515)
+    Some(TokenKind::BitOrAssign),              // State(516)
+    Some(TokenKind::BitXorAssign),             // State(517)
+    Some(TokenKind::AndAssign),                // State(518)
+    Some(TokenKind::OrAssign),                 // State(519)
+    Some(TokenKind::NullishAssign),            // State(520)
+    Some(TokenKind::Arrow),                    // State(521)
+    Some(TokenKind::NumericLiteral),           // State(522)
+    Some(TokenKind::NumericLiteral),           // State(523)
+    Some(TokenKind::NumericLiteral),           // State(524)
+    Some(TokenKind::NumericLiteral),           // State(525)
+    Some(TokenKind::NumericLiteral),           // State(526)
+    Some(TokenKind::NumericLiteral),           // State(527)
+    Some(TokenKind::NumericLiteral),           // State(528)
+    Some(TokenKind::NumericLiteral),           // State(529)
+    Some(TokenKind::NumericLiteral),           // State(530)
+    Some(TokenKind::NumericLiteral),           // State(531)
+    Some(TokenKind::NumericLiteral),           // State(532)
+    Some(TokenKind::StringLiteral),            // State(533)
+    Some(TokenKind::NoSubstitutionTemplate),   // State(534)
+    Some(TokenKind::TemplateHead),             // State(535)
+    Some(TokenKind::RegularExpressionLiteral), // State(536)
+    Some(TokenKind::TemplateMiddle),           // State(537)
+    Some(TokenKind::TemplateTail),             // State(538)
 ];
 
 const LOOKAHEAD_TABLE: [bool; 539] = [
-    // State(0)
+    false, // State(0)
     false, // State(1)
     false, // State(2)
     false, // State(3)
@@ -11866,14 +11327,14 @@ const LOOKAHEAD_TABLE: [bool; 539] = [
     false, // State(226)
     false, // State(227)
     false, // State(228)
-    false, // State(229)
+    true,  // State(229)
     true,  // State(230)
     true,  // State(231)
     true,  // State(232)
-    true,  // State(233)
+    false, // State(233)
     false, // State(234)
-    false, // State(235)
-    true,  // State(236)
+    true,  // State(235)
+    false, // State(236)
     false, // State(237)
     false, // State(238)
     false, // State(239)
@@ -12105,8 +11566,8 @@ const LOOKAHEAD_TABLE: [bool; 539] = [
     false, // State(465)
     false, // State(466)
     false, // State(467)
-    false, // State(468)
-    true,  // State(469)
+    true,  // State(468)
+    false, // State(469)
     false, // State(470)
     false, // State(471)
     false, // State(472)
@@ -12176,5 +11637,4 @@ const LOOKAHEAD_TABLE: [bool; 539] = [
     false, // State(536)
     false, // State(537)
     false, // State(538)
-    false,
 ];
