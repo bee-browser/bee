@@ -579,14 +579,14 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_mineis_empty() {
+    fn test_unicode_span_is_empty() {
         assert!(UnicodeSpan::EMPTY.is_empty());
         assert!(UnicodeSpan::default().is_empty());
         assert!(!unicode_span!('0'..='0').is_empty());
     }
 
     #[test]
-    fn test_unicode_minelen() {
+    fn test_unicode_span_len() {
         assert_eq!(UnicodeSpan::EMPTY.len(), 0);
         assert_eq!(UnicodeSpan::default().len(), 0);
         assert_eq!(unicode_span!('a').len(), 1);
@@ -594,7 +594,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_first_code_point() {
+    fn test_unicode_span_first_code_point() {
         assert_eq!(
             unicode_span!('0'..='9').first_code_point(),
             code_point!('0')
@@ -602,7 +602,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_minecontains_char() {
+    fn test_unicode_span_contains_code_point() {
         let span = unicode_span!('2'..='7');
         assert!(!span.contains_code_point(code_point!('1')));
         assert!(span.contains_code_point(code_point!('2')));
@@ -612,7 +612,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_minecontains() {
+    fn test_unicode_span_contains() {
         assert!(unicode_span!('2'..='7').contains(&unicode_span!('2'..='7')));
         assert!(unicode_span!('2'..='7').contains(&unicode_span!('3'..='6')));
         assert!(!unicode_span!('2'..='7').contains(&unicode_span!('1'..='8')));
@@ -627,7 +627,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_mineexpand() {
+    fn test_unicode_span_expand() {
         assert_eq!(unicode_span!('2'..='7').expand(1), unicode_span!('1'..='8'));
         assert_eq!(unicode_span!('\0').expand(1), unicode_span!(0, 1));
         assert_eq!(UnicodeSpan::EMPTY.expand(1), UnicodeSpan::EMPTY);
@@ -635,7 +635,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_minecan_merge() {
+    fn test_unicode_span_can_merge() {
         assert!(!unicode_span!('2'..='7').can_merge(&unicode_span!('0')));
         assert!(unicode_span!('2'..='7').can_merge(&unicode_span!('1')));
         assert!(unicode_span!('2'..='7').can_merge(&unicode_span!('2')));
@@ -646,7 +646,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_minemerge() {
+    fn test_unicode_span_merge() {
         assert_eq!(
             unicode_span!('2'..='7').merge(&unicode_span!('5')),
             unicode_span!('2'..='7')
@@ -674,7 +674,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_mineintersect() {
+    fn test_unicode_span_intersect() {
         assert_eq!(
             unicode_span!('2'..='7').intersect(&UnicodeSpan::EMPTY),
             UnicodeSpan::EMPTY
@@ -706,7 +706,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_mineexclude() {
+    fn test_unicode_span_exclude() {
         let expected: SmallVec<[UnicodeSpan; 2]> = smallvec![unicode_span!('2'..='7')];
         assert_eq!(
             unicode_span!('2'..='7').exclude(&UnicodeSpan::EMPTY),
@@ -758,7 +758,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_mineformat() {
+    fn test_unicode_span_format() {
         assert_eq!(format!("{}", UnicodeSpan::EMPTY), "()");
         assert_eq!(format!("{}", unicode_span!('A')), "A");
         assert_eq!(format!("{}", unicode_span!('0'..='9')), "0..9");
