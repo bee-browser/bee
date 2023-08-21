@@ -57,16 +57,18 @@ fn main() -> Result<()> {
         }
     }
 
+    tracing::info!("Loading rules...");
     let rules: Vec<Rule> = match cl.grammar {
         Some(grammar) => serde_yaml::from_reader(std::fs::File::open(grammar)?)?,
         None => serde_yaml::from_reader(std::io::stdin())?,
     };
+    tracing::info!(rules.size = rules.len());
 
     tracing::info!("Trimming rules...");
-    let trimmed = grammar::trim_rules(&rules, &cl.tokens);
-    tracing::info!(original.size = rules.len(), trimmed.size = trimmed.len());
+    let rules = grammar::trim(&rules, &cl.tokens);
+    tracing::info!(rules = rules.len());
 
-    let grammar = Grammar::new(&trimmed);
+    let grammar = Grammar::new(&rules);
 
     tracing::info!("Building an NFA from the lexical grammar in CFG...");
     let nfa = grammar.build_nfa(&cl.tokens);
@@ -83,7 +85,7 @@ fn main() -> Result<()> {
     let unicode_sets = dfa.build_unicode_sets();
 
     tracing::info!(
-        rules.size = trimmed.len(),
+        rules.size = rules.len(),
         tokens.size = cl.tokens.len(),
         unicode_sets.size = unicode_sets.len(),
         dfa.size = dfa.size(),

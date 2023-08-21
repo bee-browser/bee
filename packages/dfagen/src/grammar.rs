@@ -11,12 +11,7 @@ use crate::unicode::CodePoint;
 use crate::unicode::UnicodeSet;
 use crate::unicode::UnicodeSpan;
 
-pub struct Grammar<'a> {
-    pub rules: &'a [Rule],
-    pub rule_map: HashMap<&'a str, Vec<&'a Rule>>,
-}
-
-pub fn trim_rules(rules: &[Rule], tokens: &[String]) -> Vec<Rule> {
+pub fn trim(rules: &[Rule], tokens: &[String]) -> Vec<Rule> {
     // Collect non-terminals needed for recognizing tokens.
     let mut non_terminals: HashSet<String> = Default::default();
     non_terminals.extend(tokens.iter().cloned());
@@ -68,6 +63,11 @@ pub fn trim_rules(rules: &[Rule], tokens: &[String]) -> Vec<Rule> {
         })
         .cloned()
         .collect()
+}
+
+pub struct Grammar<'a> {
+    pub rules: &'a [Rule],
+    pub rule_map: HashMap<&'a str, Vec<&'a Rule>>,
 }
 
 impl<'a> Grammar<'a> {
