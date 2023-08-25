@@ -15,6 +15,11 @@ pub struct State(u16);
 
 impl State {
     #[inline(always)]
+    pub fn id(&self) -> u16 {
+        self.0
+    }
+
+    #[inline(always)]
     pub fn action<'a>(&self, token: &Token<'a>) -> Action {
         let token = token.kind as u8;
         action::TABLE[self.0 as usize]
@@ -48,7 +53,7 @@ impl State {
     }
 
     #[inline(always)]
-    pub fn debug_info(&self) -> &'static str {
+    pub fn label(&self) -> &'static str {
         debug::LABELS[self.0 as usize]
     }
 }
