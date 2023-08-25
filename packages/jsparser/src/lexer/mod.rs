@@ -104,9 +104,45 @@ mod tests {
     }
 
     #[test]
-    fn test_line_terminator_sequence() {
+    fn test_line_terminator_sequence_lf() {
         let mut lexer = Lexer::new("\n");
         assert_token!(lexer, LineTerminatorSequence, "\n");
+        assert_eof!(lexer);
+    }
+
+    #[test]
+    fn test_line_terminator_sequence_cr() {
+        let mut lexer = Lexer::new("\r");
+        assert_token!(lexer, LineTerminatorSequence, "\r");
+        assert_eof!(lexer);
+    }
+
+    #[test]
+    fn test_line_terminator_sequence_ls() {
+        let mut lexer = Lexer::new("\u{2028}");
+        assert_token!(lexer, LineTerminatorSequence, "\u{2028}");
+        assert_eof!(lexer);
+    }
+
+    #[test]
+    fn test_line_terminator_sequence_ps() {
+        let mut lexer = Lexer::new("\u{2029}");
+        assert_token!(lexer, LineTerminatorSequence, "\u{2029}");
+        assert_eof!(lexer);
+    }
+
+    #[test]
+    fn test_line_terminator_sequence_cr_lf() {
+        let mut lexer = Lexer::new("\r\n");
+        assert_token!(lexer, LineTerminatorSequence, "\r\n");
+        assert_eof!(lexer);
+    }
+
+    #[test]
+    fn test_line_terminator_sequence_cr_cr() {
+        let mut lexer = Lexer::new("\r\r");
+        assert_token!(lexer, LineTerminatorSequence, "\r");
+        assert_token!(lexer, LineTerminatorSequence, "\r");
         assert_eof!(lexer);
     }
 
@@ -219,6 +255,17 @@ mod tests {
         let mut lexer = Lexer::new("'\\u{100001}'");
         assert_token!(lexer, StringLiteral, "'\\u{100001}'");
         assert_eof!(lexer);
+    }
+
+    #[test]
+    fn test_conditional_expression() {
+        // '?' must be recognized as a token.
+        let mut lexer = Lexer::new("x?.5:0");
+        assert_token!(lexer, IdentifierName, "x");
+        assert_token!(lexer, Conditional, "?");
+        assert_token!(lexer, NumericLiteral, ".5");
+        assert_token!(lexer, Colon, ":");
+        assert_token!(lexer, NumericLiteral, "0");
     }
 
     #[test]

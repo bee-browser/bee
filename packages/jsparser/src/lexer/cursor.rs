@@ -10,6 +10,11 @@ impl<'a> SourceCursor<'a> {
     }
 
     #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.src.len()
+    }
+
+    #[inline(always)]
     pub fn pos(&self) -> usize {
         self.pos
     }

@@ -9,3 +9,7 @@ test: codegen
 codegen:
 	@$(MAKE) -s -C src codegen
 	@$(MAKE) -s -C logview codegen
+
+.PHONY: test-cdnjs
+test-cdnjs: test-cdnjs.sh
+	@sh test-cdnjs.sh

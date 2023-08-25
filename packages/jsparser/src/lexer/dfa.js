@@ -10,8 +10,8 @@ for (const state of spec.dfa.states) {
   const transitions = spec.unicodeSets.map((us) => {
     const trans = state.transitions.find((trans) => {
       // trans.unicode_set.contains(us)
-      return us.every((span1) => {
-        return trans.unicode_set.some((span2) => {
+      return us.spans.every((span1) => {
+        return trans.unicode_set.spans.some((span2) => {
           return span2.base <= span1.base &&
             span1.base + span1.length <= span2.base + span2.length;
         });
@@ -22,6 +22,13 @@ for (const state of spec.dfa.states) {
     }
     return trans.next_id;
   });
+  // EOF
+  const trans = state.transitions.find((trans) => trans.unicode_set.eof);
+  if (trans === undefined) {
+    transitions.push(spec.dfa.states.length);
+  } else {
+    transitions.push(trans.next_id);
+  }
   states.push({
     transitions,
     accept: state.accept,
@@ -35,10 +42,10 @@ for (const state of spec.dfa.states) {
 const asciiTable = [];
 for (let ascii = 0; ascii < 0x80; ++ascii) {
   const i = spec.unicodeSets.findIndex((us) => {
-    return us.some((span) => ascii >= span.base && ascii < span.base + span.length);
+    return us.spans.some((span) => ascii >= span.base && ascii < span.base + span.length);
   });
   if (i === -1) {
-    asciiTable[ascii] = spec.unicodeSets.length;
+    asciiTable[ascii] = spec.unicodeSets.length;  // EOF
   } else {
     asciiTable[ascii] = i;
   }
@@ -46,7 +53,7 @@ for (let ascii = 0; ascii < 0x80; ++ascii) {
 
 const nonAsciiList = [];
 for (let i = 0; i < spec.unicodeSets.length; ++i) {
-  for (const span of spec.unicodeSets[i]) {
+  for (const span of spec.unicodeSets[i].spans) {
     let nonAscii;
     if (span.length === 0 || span.base > 0x7F) {
       nonAscii = span;
@@ -78,6 +85,8 @@ for (let i = 0; i < spec.unicodeSets.length; ++i) {
 }
 
 spec.states = states;
+spec.numStates = states.length;
+spec.numTransitions = spec.unicodeSets.length + 1;
 spec.asciiTable = asciiTable;
 spec.nonAsciiList = nonAsciiList;
 

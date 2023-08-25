@@ -14,26 +14,29 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
     tracing::trace!(opcode = "init", ?state);
 
     let mut lexeme_end = 0;
-    for (i, ch) in cursor.chars() {
-        let unicode_set = match UnicodeSet::try_from(ch) {
-            Ok(unicode_set) => unicode_set,
-            Err(_) => {
-                tracing::error!(invalid_char = ?ch, pos = cursor.pos() + i);
-                break;
-            }
+    let mut chars = cursor.chars();
+    loop {
+        let (pos, unicode_set) = match chars.next() {
+            Some((i, ch)) => (cursor.pos() + i, UnicodeSet::from(ch)),
+            None => (cursor.len(), UnicodeSet::EOF),
         };
-        state = state.next_state(unicode_set);
-        tracing::trace!(opcode = "next", ?state, char = ?ch, ?unicode_set, pos = cursor.pos() + i);
+
+        state = state.next_state(&unicode_set);
+        tracing::trace!(opcode = "next", ?state, ?unicode_set, pos);
         if state.is_invalid() {
             break;
         }
         if !state.lookahead() {
-            debug_assert_eq!(lexeme_end, i);
-            lexeme_end += ch.len_utf8();
+            //debug_assert_eq!(lexeme_end, i);
+            lexeme_end = pos
+                + match unicode_set.1 {
+                    Some(ch) => ch.len_utf8(),
+                    None => 0,
+                };
         }
         if let Some(kind) = state.accept() {
             token.kind = kind;
-            token.lexeme = cursor.lexeme(lexeme_end);
+            token.lexeme = cursor.lexeme(lexeme_end - cursor.pos());
             tracing::trace!(opcode = "accept", ?token.kind, ?token.lexeme);
         }
     }
@@ -42,78 +45,80 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct UnicodeSet(u8);
+struct UnicodeSet(u8, Option<char>);
 
-impl TryFrom<char> for UnicodeSet {
-    type Error = ();
+impl UnicodeSet {
+    const EOF: Self = UnicodeSet(71, None);
+}
 
-    fn try_from(ch: char) -> Result<Self, Self::Error> {
+impl From<char> for UnicodeSet {
+    fn from(ch: char) -> Self {
         let c = ch as usize;
         if c < 128 {
-            return Ok(UnicodeSet(ASCII_TABLE[c]));
+            return UnicodeSet(ASCII_TABLE[c], Some(ch));
         }
         if c == 160 {
-            return Ok(UnicodeSet(6));
+            return UnicodeSet(6, Some(ch));
         }
         if c == 5760 {
-            return Ok(UnicodeSet(6));
+            return UnicodeSet(6, Some(ch));
         }
         if c >= 8192 && c <= 8202 {
-            return Ok(UnicodeSet(6));
+            return UnicodeSet(6, Some(ch));
         }
         if c == 8207 {
-            return Ok(UnicodeSet(6));
+            return UnicodeSet(6, Some(ch));
         }
         if c == 8287 {
-            return Ok(UnicodeSet(6));
+            return UnicodeSet(6, Some(ch));
         }
         if c == 65279 {
-            return Ok(UnicodeSet(6));
+            return UnicodeSet(6, Some(ch));
         }
         if c >= 8232 && c <= 8233 {
-            return Ok(UnicodeSet(8));
+            return UnicodeSet(8, Some(ch));
         }
         if c >= 8204 && c <= 8205 {
-            return Ok(UnicodeSet(69));
+            return UnicodeSet(68, Some(ch));
         }
         if c >= 128 && c <= 159 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c >= 161 && c <= 5759 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c >= 5761 && c <= 8191 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c == 8203 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c == 8206 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c >= 8208 && c <= 8231 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c >= 8234 && c <= 8286 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c >= 8288 && c <= 65278 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
         if c >= 65280 && c <= 1114111 {
-            return Ok(UnicodeSet(70));
+            return UnicodeSet(69, Some(ch));
         }
-        Err(())
+        UnicodeSet(71, Some(ch))
     }
 }
 
 const ASCII_TABLE: [u8; 128] = [
-    70, 70, 70, 70, 70, 70, 70, 70, 70, 6, 7, 6, 6, 0, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70,
-    70, 70, 70, 70, 70, 70, 70, 6, 57, 3, 2, 22, 53, 54, 4, 41, 42, 52, 50, 47, 51, 45, 67, 66, 63,
-    64, 64, 65, 65, 65, 65, 62, 62, 60, 46, 48, 61, 49, 59, 70, 14, 13, 14, 14, 12, 14, 18, 18, 18,
-    18, 18, 18, 18, 18, 16, 18, 18, 18, 18, 18, 18, 18, 18, 17, 18, 18, 43, 1, 44, 56, 15, 5, 36,
-    9, 26, 39, 25, 34, 33, 19, 38, 18, 20, 31, 27, 32, 37, 23, 18, 10, 29, 30, 11, 35, 28, 21, 24,
-    18, 40, 55, 68, 58, 70,
+    69, 69, 69, 69, 69, 69, 69, 69, 69, 6, 7, 6, 6, 0, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69,
+    69, 69, 69, 69, 69, 69, 69, 6, 57, 3, 2, 22, 53, 54, 4, 41, 42, 52, 50, 47, 51, 45, 66, 65, 62,
+    63, 63, 63, 63, 63, 63, 64, 64, 60, 46, 48, 61, 49, 59, 69, 21, 20, 21, 21, 19, 21, 15, 15, 15,
+    15, 15, 15, 15, 15, 13, 15, 15, 15, 15, 15, 15, 15, 15, 14, 15, 15, 43, 1, 44, 56, 12, 5, 36,
+    9, 26, 39, 25, 34, 33, 16, 38, 15, 17, 31, 27, 32, 37, 23, 15, 10, 29, 30, 11, 35, 28, 18, 24,
+    15, 40, 55, 67, 58, 69,
 ];
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -122,11 +127,11 @@ struct State(u16);
 impl State {
     #[inline(always)]
     fn is_invalid(&self) -> bool {
-        self.0 == 458
+        self.0 == 419
     }
 
     #[inline(always)]
-    fn next_state(&self, unicode_set: UnicodeSet) -> State {
+    fn next_state(&self, unicode_set: &UnicodeSet) -> State {
         State(TRANSITION_TABLE[self.0 as usize][unicode_set.0 as usize])
     }
 
@@ -141,7 +146,7 @@ impl State {
     }
 }
 
-const TRANSITION_TABLE: [[u16; 71]; 458] = [
+const TRANSITION_TABLE: [[u16; 72]; 419] = [
     // State(0):
     //   @start
     // Transitions:
@@ -151,70 +156,70 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   ["] => State(5)
     //   ['] => State(6)
     //   [`] => State(7)
-    //   [<HT>, <VT>..<FF>, <SP>, U+00A0, U+1680, U+2000..U+200A, U+200F, U+205F, U+FEFF] => State(152):WhiteSpaceSequence
-    //   [<LF>, U+2028..U+2029] => State(153):LineTerminatorSequence
-    //   [b] => State(211):IdentifierName
-    //   [r] => State(212):IdentifierName
-    //   [$, A..Z, _, h, j..k, q, u, x, z] => State(213):IdentifierName
-    //   [p] => State(220):IdentifierName
-    //   [y] => State(230):IdentifierName
-    //   [e] => State(252):IdentifierName
-    //   [c] => State(253):IdentifierName
-    //   [m] => State(254):IdentifierName
-    //   [w] => State(255):IdentifierName
-    //   [s] => State(285):IdentifierName
-    //   [t] => State(286):IdentifierName
-    //   [l] => State(287):IdentifierName
-    //   [n] => State(288):IdentifierName
-    //   [g] => State(289):IdentifierName
-    //   [f] => State(290):IdentifierName
-    //   [v] => State(291):IdentifierName
-    //   [a] => State(333):IdentifierName
-    //   [o] => State(334):IdentifierName
-    //   [i] => State(335):IdentifierName
-    //   [d] => State(336):IdentifierName
-    //   [{] => State(388):LBRACE
-    //   [(] => State(389):LPAREN
-    //   [)] => State(390):RPAREN
-    //   [[] => State(391):LBRACK
-    //   []] => State(392):RBRACK
-    //   [.] => State(393):DOT
-    //   [;] => State(395):SEMI_COLON
-    //   [,] => State(396):COMMA
-    //   [<] => State(397):LT
-    //   [>] => State(398):GT
-    //   [+] => State(405):ADD
-    //   [-] => State(406):SUB
-    //   [*] => State(407):MUL
-    //   [%] => State(408):MOD
-    //   [&] => State(415):BIT_AND
-    //   [|] => State(416):BIT_OR
-    //   [^] => State(417):BIT_XOR
-    //   [!] => State(418):NOT
-    //   [~] => State(419):BIT_NOT
-    //   [?] => State(423):CONDITIONAL
-    //   [:] => State(424):COLON
-    //   [=] => State(425):ASSIGN
-    //   [1..9] => State(441):NumericLiteral
-    //   [0] => State(442):NumericLiteral
-    //   [/] => State(455):DIV
-    //   [}] => State(457):RBRACE
+    //   [<HT>, <VT>..<FF>, <SP>, U+00A0, U+1680, U+2000..U+200A, U+200F, U+205F, U+FEFF] => State(113):WhiteSpaceSequence
+    //   [<LF>, U+2028..U+2029] => State(114):LineTerminatorSequence
+    //   [b] => State(172):IdentifierName
+    //   [r] => State(173):IdentifierName
+    //   [$, A..Z, _, h, j..k, q, u, x, z] => State(174):IdentifierName
+    //   [p] => State(181):IdentifierName
+    //   [y] => State(191):IdentifierName
+    //   [e] => State(213):IdentifierName
+    //   [c] => State(214):IdentifierName
+    //   [m] => State(215):IdentifierName
+    //   [w] => State(216):IdentifierName
+    //   [s] => State(246):IdentifierName
+    //   [t] => State(247):IdentifierName
+    //   [l] => State(248):IdentifierName
+    //   [n] => State(249):IdentifierName
+    //   [g] => State(250):IdentifierName
+    //   [f] => State(251):IdentifierName
+    //   [v] => State(252):IdentifierName
+    //   [a] => State(294):IdentifierName
+    //   [o] => State(295):IdentifierName
+    //   [i] => State(296):IdentifierName
+    //   [d] => State(297):IdentifierName
+    //   [{] => State(349):LBRACE
+    //   [(] => State(350):LPAREN
+    //   [)] => State(351):RPAREN
+    //   [[] => State(352):LBRACK
+    //   []] => State(353):RBRACK
+    //   [.] => State(354):DOT
+    //   [;] => State(356):SEMI_COLON
+    //   [,] => State(357):COMMA
+    //   [<] => State(358):LT
+    //   [>] => State(359):GT
+    //   [+] => State(366):ADD
+    //   [-] => State(367):SUB
+    //   [*] => State(368):MUL
+    //   [%] => State(369):MOD
+    //   [&] => State(376):BIT_AND
+    //   [|] => State(377):BIT_OR
+    //   [^] => State(378):BIT_XOR
+    //   [!] => State(379):NOT
+    //   [~] => State(380):BIT_NOT
+    //   [?] => State(384):CONDITIONAL
+    //   [:] => State(385):COLON
+    //   [=] => State(386):ASSIGN
+    //   [1..9] => State(402):NumericLiteral
+    //   [0] => State(403):NumericLiteral
+    //   [/] => State(416):DIV
+    //   [}] => State(418):RBRACE
     [
-        1, 2, 4, 5, 6, 7, 152, 153, 153, 211, 212, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 220, 230, 252, 253, 254, 255, 285, 286, 287, 288, 289, 290, 291, 333, 334,
-        335, 336, 388, 389, 390, 391, 392, 393, 395, 396, 397, 398, 405, 406, 407, 408, 415, 416,
-        417, 418, 419, 423, 424, 425, 441, 441, 441, 441, 442, 455, 457, 458, 458,
+        1, 2, 4, 5, 6, 7, 113, 114, 114, 172, 173, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 181, 191, 213, 214, 215, 216, 246, 247, 248, 249, 250, 251, 252, 294, 295,
+        296, 297, 349, 350, 351, 352, 353, 354, 356, 357, 358, 359, 366, 367, 368, 369, 376, 377,
+        378, 379, 380, 384, 385, 386, 402, 402, 402, 403, 416, 418, 419, 419, 1, 419,
     ],
     // State(1):
     //   LineTerminatorSequence -> [<CR>] . [<LF>]
     // Transitions:
-    //   [<LF>] => State(153):LineTerminatorSequence
-    //   [<NUL>..<HT>, <VT>..U+10FFFF] => State(154):LineTerminatorSequence?
+    //   [<LF>] => State(114):LineTerminatorSequence
+    //   [<NUL>..<HT>, <VT>..U+10FFFF, (eof)] => State(115):LineTerminatorSequence?
     [
-        154, 154, 154, 154, 154, 154, 154, 153, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154,
-        154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154,
-        154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154,
-        154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154, 154,
+        115, 115, 115, 115, 115, 115, 115, 114, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115,
+        115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115,
+        115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115,
+        115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 114, 115,
     ],
     // State(2):
     //   IdentifierStart -> [\] . UnicodeEscapeSequence
@@ -222,12 +227,12 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   UnicodeEscapeSequence -> . [u] [{] CodePoint [}]
     //   IdentifierPart -> [\] . UnicodeEscapeSequence
     // Transitions:
-    //   [u] => State(12)
+    //   [u] => State(36)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 12, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 36, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 36, 419,
     ],
     // State(3):
     //   IdentifierStart -> [\] . UnicodeEscapeSequence
@@ -235,12 +240,12 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   UnicodeEscapeSequence -> . [u] [{] CodePoint [}]
     //   IdentifierPart -> [\] . UnicodeEscapeSequence
     // Transitions:
-    //   [u] => State(13)
+    //   [u] => State(37)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 13, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 37, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 37, 419,
     ],
     // State(4):
     //   IdentifierName -> . IdentifierName IdentifierPart
@@ -254,12 +259,12 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierStart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(3)
-    //   [$, A..Z, _, a..z] => State(386):PrivateIdentifier
+    //   [$, A..Z, _, a..z] => State(347):PrivateIdentifier
     [
-        458, 3, 458, 458, 458, 458, 458, 458, 458, 386, 386, 386, 386, 386, 386, 386, 386, 386,
-        386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386,
-        386, 386, 386, 386, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 3, 419, 419, 419, 419, 419, 419, 419, 347, 347, 347, 347, 347, 347, 347, 347, 347,
+        347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347,
+        347, 347, 347, 347, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 3, 419,
     ],
     // State(5):
     //   StringLiteral -> ["] . ["]
@@ -274,14 +279,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   LineContinuation -> . [\] LineTerminatorSequence
     //   DoubleStringCharacters -> . DoubleStringCharacter DoubleStringCharacters
     //   StringLiteral -> ["] DoubleStringCharacters . ["]
+    //   LegacyOctalEscapeSequence -> NonZeroOctalDigit . ?![OctalDigit]
+    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit ?![OctalDigit]
+    //   OctalDigit -> . [0 1 2 3 4 5 6 7]
+    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit OctalDigit
+    //   EscapeSequence -> [0] . ?![DecimalDigit]
+    //   LegacyOctalEscapeSequence -> [0] . ?=[8 9]
+    //   LegacyOctalEscapeSequence -> FourToSeven . OctalDigit
+    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . ?![OctalDigit]
+    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . OctalDigit
     // Transitions:
     //   [<NUL>..<HT>, <VT>..<FF>, <SO>..!, #..[, ]..U+10FFFF] => State(5)
-    //   [\] => State(9)
-    //   ["] => State(452):StringLiteral
+    //   [\] => State(33)
+    //   ["] => State(413):StringLiteral
     [
-        458, 9, 5, 452, 5, 5, 5, 458, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+        419, 33, 5, 413, 5, 5, 5, 419, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 419,
     ],
     // State(6):
     //   StringLiteral -> ['] . [']
@@ -296,28 +310,37 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   LineContinuation -> . [\] LineTerminatorSequence
     //   SingleStringCharacters -> . SingleStringCharacter SingleStringCharacters
     //   StringLiteral -> ['] SingleStringCharacters . [']
+    //   LegacyOctalEscapeSequence -> NonZeroOctalDigit . ?![OctalDigit]
+    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit ?![OctalDigit]
+    //   OctalDigit -> . [0 1 2 3 4 5 6 7]
+    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit OctalDigit
+    //   EscapeSequence -> [0] . ?![DecimalDigit]
+    //   LegacyOctalEscapeSequence -> [0] . ?=[8 9]
+    //   LegacyOctalEscapeSequence -> FourToSeven . OctalDigit
+    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . ?![OctalDigit]
+    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . OctalDigit
     // Transitions:
     //   [<NUL>..<HT>, <VT>..<FF>, <SO>..&, (..[, ]..U+10FFFF] => State(6)
-    //   [\] => State(10)
-    //   ['] => State(452):StringLiteral
+    //   [\] => State(34)
+    //   ['] => State(413):StringLiteral
     [
-        458, 10, 6, 6, 452, 6, 6, 458, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+        419, 34, 6, 6, 413, 6, 6, 419, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 419,
     ],
     // State(7):
     //   NoSubstitutionTemplate -> [`] . [`]
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
-    //   TemplateCharacter -> . [$] !?[{]
+    //   TemplateCharacter -> . [$] ?![{]
     //   TemplateCharacter -> . [\] TemplateEscapeSequence
     //   TemplateCharacter -> . [\] NotEscapeSequence
     //   TemplateCharacter -> . LineContinuation
     //   LineContinuation -> . [\] LineTerminatorSequence
     //   TemplateCharacter -> . LineTerminatorSequence
     //   LineTerminatorSequence -> . [<LF>]
-    //   LineTerminatorSequence -> . [<CR>] !?[<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
@@ -327,18 +350,1108 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   LineTerminatorSequence -> [<CR>] . ?![<LF>]
+    //   LineTerminatorSequence -> [<CR>] . [<LF>]
+    //   HexEscapeSequence -> [x] . HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotEscapeSequence -> [x] . ?![HexDigit]
+    //   NotEscapeSequence -> [x] . HexDigit ?![HexDigit]
+    //   TemplateEscapeSequence -> [0] . ?![DecimalDigit]
+    //   NotEscapeSequence -> [0] . DecimalDigit
+    //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   NotEscapeSequence -> [u] HexDigit . ?![HexDigit]
+    //   NotEscapeSequence -> [u] HexDigit . HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> [u] HexDigit . HexDigit HexDigit ?![HexDigit]
+    //   HexEscapeSequence -> [x] HexDigit . HexDigit
+    //   NotEscapeSequence -> [x] HexDigit . ?![HexDigit]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   NotEscapeSequence -> [u] HexDigit HexDigit . ?![HexDigit]
+    //   NotEscapeSequence -> [u] HexDigit HexDigit . HexDigit ?![HexDigit]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   NotEscapeSequence -> [u] HexDigit HexDigit HexDigit . ?![HexDigit]
     // Transitions:
-    //   [<NUL>..<FF>, <SO>..#, %..[, ].._, a..U+10FFFF] => State(7)
-    //   [\] => State(11)
-    //   [<CR>] => State(25)
-    //   [$] => State(28)
-    //   [`] => State(453):NoSubstitutionTemplate
+    //   [<NUL>..#, %..[, ].._, a..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
     [
-        25, 11, 7, 7, 7, 453, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 28, 7, 7, 7, 7, 7, 7,
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 49, 7, 7, 7, 7, 7, 7,
         7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 419,
     ],
     // State(8):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotEscapeSequence -> [u] . ?![HexDigit] ?![{]
+    //   NotEscapeSequence -> [u] . HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> [u] . HexDigit HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> [u] . HexDigit HexDigit HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> [u] . [{] ?![HexDigit]
+    //   NotEscapeSequence -> [u] . [{] NotCodePoint ?![HexDigit]
+    //   NotEscapeSequence -> [u] . [{] CodePoint ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %..[, ].._, a..z, |..U+10FFFF] => State(7)
+    //   [{] => State(9)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 49, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 9, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(9):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   CodePoint -> [0] . CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
+    //   CodePoint -> . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> . HexDigit HexDigit
+    //   CodePoint -> . HexDigit HexDigit HexDigit
+    //   CodePoint -> . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   CodePoint -> . HexDigit Hex4Digits
+    //   CodePoint -> . [1] [0] Hex4Digits
+    //   CodePoint -> . [0] CodePoint
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotEscapeSequence -> [u] [{] . ?![HexDigit]
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . CodePoint ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   CodePoint -> HexDigit . HexDigit
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [0] => State(9)
+    //   [1] => State(10)
+    //   [2..9, A..F, a..f] => State(11)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7, 7, 11, 11, 11, 49, 7, 7, 11, 11,
+        7, 7, 7, 7, 7, 7, 7, 11, 7, 11, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 10, 11, 11, 9, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(10):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   CodePoint -> [1] . [0] Hex4Digits
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(11)
+    //   [0] => State(12)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7, 7, 11, 11, 11, 49, 7, 7, 11, 11,
+        7, 7, 7, 7, 7, 7, 7, 11, 7, 11, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 11, 11, 11, 12, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(11):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(11)
+    //   [0] => State(13)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7, 7, 11, 11, 11, 49, 7, 7, 11, 11,
+        7, 7, 7, 7, 7, 7, 7, 11, 7, 11, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 11, 11, 11, 13, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(12):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> [1] [0] . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [0] => State(13)
+    //   [1..9, A..F, a..f] => State(14)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 14, 7, 7, 7, 7, 7, 7, 7, 7, 7, 14, 14, 14, 49, 7, 7, 14, 14,
+        7, 7, 7, 7, 7, 7, 7, 14, 7, 14, 7, 7, 14, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 14, 14, 14, 13, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(13):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(15)
+    //   [0] => State(16)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 15, 7, 7, 7, 7, 7, 7, 7, 7, 7, 15, 15, 15, 49, 7, 7, 15, 15,
+        7, 7, 7, 7, 7, 7, 7, 15, 7, 15, 7, 7, 15, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 15, 15, 15, 16, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(14):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [0] => State(16)
+    //   [1..9, A..F, a..f] => State(17)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 17, 7, 7, 7, 7, 7, 7, 7, 7, 7, 17, 17, 17, 49, 7, 7, 17, 17,
+        7, 7, 7, 7, 7, 7, 7, 17, 7, 17, 7, 7, 17, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 17, 17, 17, 16, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(15):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(18)
+    //   [0] => State(19)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 18, 7, 7, 7, 7, 7, 7, 7, 7, 7, 18, 18, 18, 49, 7, 7, 18, 18,
+        7, 7, 7, 7, 7, 7, 7, 18, 7, 18, 7, 7, 18, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 18, 18, 18, 19, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(16):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [0] => State(19)
+    //   [1..9, A..F, a..f] => State(20)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 20, 7, 7, 7, 7, 7, 7, 7, 7, 7, 20, 20, 20, 49, 7, 7, 20, 20,
+        7, 7, 7, 7, 7, 7, 7, 20, 7, 20, 7, 7, 20, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 20, 20, 20, 19, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(17):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(21)
+    //   [0] => State(22)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 21, 7, 7, 7, 7, 7, 7, 7, 7, 7, 21, 21, 21, 49, 7, 7, 21, 21,
+        7, 7, 7, 7, 7, 7, 7, 21, 7, 21, 7, 7, 21, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 21, 21, 21, 22, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(18):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(23)
+    //   [0] => State(24)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 23, 7, 7, 7, 7, 7, 7, 7, 7, 7, 23, 23, 23, 49, 7, 7, 23, 23,
+        7, 7, 7, 7, 7, 7, 7, 23, 7, 23, 7, 7, 23, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 23, 23, 23, 24, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(19):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(25)
+    //   [0] => State(26)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 25, 7, 7, 7, 7, 7, 7, 7, 7, 7, 25, 25, 25, 49, 7, 7, 25, 25,
+        7, 7, 7, 7, 7, 7, 7, 25, 7, 25, 7, 7, 25, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 25, 25, 25, 26, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(20):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [0] => State(26)
+    //   [1..9, A..F, a..f] => State(27)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 27, 7, 7, 7, 7, 7, 7, 7, 7, 7, 27, 27, 27, 49, 7, 7, 27, 27,
+        7, 7, 7, 7, 7, 7, 7, 27, 7, 27, 7, 7, 27, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 27, 27, 27, 26, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(21):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(28)
+    //   [0] => State(29)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 28, 7, 7, 7, 7, 7, 7, 7, 7, 7, 28, 28, 28, 49, 7, 7, 28, 28,
+        7, 7, 7, 7, 7, 7, 7, 28, 7, 28, 7, 7, 28, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 28, 28, 28, 29, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(22):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [1..9, A..F, a..f] => State(30)
+    //   [0] => State(31)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 30, 7, 7, 7, 7, 7, 7, 7, 7, 7, 30, 30, 30, 49, 7, 7, 30, 30,
+        7, 7, 7, 7, 7, 7, 7, 30, 7, 30, 7, 7, 30, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 30, 30, 30, 31, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(23):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [1..9, A..F, a..f] => State(62)
+    //   [0] => State(63)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 62, 7, 7, 7, 7, 7, 7, 7, 7, 7, 62, 62, 62, 49, 7, 7, 62, 62,
+        7, 7, 7, 7, 7, 7, 7, 62, 7, 62, 7, 7, 62, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 62, 62, 62, 63, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(24):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [1..9, A..F, a..f] => State(64)
+    //   [0] => State(65)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 64, 7, 7, 7, 7, 7, 7, 7, 7, 7, 64, 64, 64, 49, 7, 7, 64, 64,
+        7, 7, 7, 7, 7, 7, 7, 64, 7, 64, 7, 7, 64, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 64, 64, 64, 65, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(25):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [1..9, A..F, a..f] => State(57)
+    //   [0] => State(58)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 57, 7, 7, 7, 7, 7, 7, 7, 7, 7, 57, 57, 57, 49, 7, 7, 57, 57,
+        7, 7, 7, 7, 7, 7, 7, 57, 7, 57, 7, 7, 57, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 57, 57, 57, 58, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(26):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [0] => State(58)
+    //   [1..9, A..F, a..f] => State(59)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 59, 7, 7, 7, 7, 7, 7, 7, 7, 7, 59, 59, 59, 49, 7, 7, 59, 59,
+        7, 7, 7, 7, 7, 7, 7, 59, 7, 59, 7, 7, 59, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 59, 59, 59, 58, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(27):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [1..9, A..F, a..f] => State(60)
+    //   [0] => State(61)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 60, 7, 7, 7, 7, 7, 7, 7, 7, 7, 60, 60, 60, 49, 7, 7, 60, 60,
+        7, 7, 7, 7, 7, 7, 7, 60, 7, 60, 7, 7, 60, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 60, 60, 60, 61, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(28):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [1..9, A..F, a..f] => State(74)
+    //   [0] => State(75)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 74, 7, 7, 7, 7, 7, 7, 7, 7, 7, 74, 74, 74, 49, 7, 7, 74, 74,
+        7, 7, 7, 7, 7, 7, 7, 74, 7, 74, 7, 7, 74, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 74, 74, 74, 75, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(29):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [1..9, A..F, a..f] => State(76)
+    //   [0] => State(77)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 76, 7, 7, 7, 7, 7, 7, 7, 7, 7, 76, 76, 76, 49, 7, 7, 76, 76,
+        7, 7, 7, 7, 7, 7, 7, 76, 7, 76, 7, 7, 76, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 76, 76, 76, 77, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(30):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [1..9, A..F, a..f] => State(78)
+    //   [0] => State(79)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 78, 7, 7, 7, 7, 7, 7, 7, 7, 7, 78, 78, 78, 49, 7, 7, 78, 78,
+        7, 7, 7, 7, 7, 7, 7, 78, 7, 78, 7, 7, 78, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 78, 78, 78, 79, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(31):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotEscapeSequence -> [u] [{] CodePoint . ?![HexDigit] ?![}]
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
+    // Transitions:
+    //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [0] => State(79)
+    //   [1..9, A..F, a..f] => State(80)
+    //   [`] => State(414):NoSubstitutionTemplate
+    [
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 80, 7, 7, 7, 7, 7, 7, 7, 7, 7, 80, 80, 80, 49, 7, 7, 80, 80,
+        7, 7, 7, 7, 7, 7, 7, 80, 7, 80, 7, 7, 80, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 80, 80, 80, 79, 7, 7, 7, 7, 7, 419,
+    ],
+    // State(32):
     //   MultiLineComment -> [/] [*] . [*] [/]
     //   MultiLineCommentChars -> MultiLineNotAsteriskChar . MultiLineCommentChars
     //   PostAsteriskCommentChars -> MultiLineNotForwardSlashOrAsteriskChar . MultiLineCommentChars
@@ -350,26 +1463,27 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   MultiLineCommentChars -> . [*] PostAsteriskCommentChars
     //   MultiLineComment -> [/] [*] MultiLineCommentChars . [*] [/]
     // Transitions:
-    //   [<NUL>..), +..U+10FFFF] => State(8)
-    //   [*] => State(29)
+    //   [<NUL>..), +..U+10FFFF] => State(32)
+    //   [*] => State(50)
     [
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 29, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+        32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+        32, 32, 32, 32, 32, 32, 50, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+        32, 32, 419,
     ],
-    // State(9):
+    // State(33):
     //   DoubleStringCharacter -> [\] . EscapeSequence
     //   EscapeSequence -> . CharacterEscapeSequence
     //   CharacterEscapeSequence -> . SingleEscapeCharacter
     //   SingleEscapeCharacter -> . [' " \ b f n r t v]
     //   CharacterEscapeSequence -> . NonEscapeCharacter
     //   NonEscapeCharacter -> . [SourceCharacter -EscapeCharacter -LineTerminator]
-    //   EscapeSequence -> . [0] !?[DecimalDigit]
+    //   EscapeSequence -> . [0] ?![DecimalDigit]
     //   EscapeSequence -> . LegacyOctalEscapeSequence
-    //   LegacyOctalEscapeSequence -> . [0] ?[8 9]
-    //   LegacyOctalEscapeSequence -> . NonZeroOctalDigit !?[OctalDigit]
+    //   LegacyOctalEscapeSequence -> . [0] ?=[8 9]
+    //   LegacyOctalEscapeSequence -> . NonZeroOctalDigit ?![OctalDigit]
     //   NonZeroOctalDigit -> . [OctalDigit -0]
-    //   LegacyOctalEscapeSequence -> . ZeroToThree OctalDigit !?[OctalDigit]
+    //   LegacyOctalEscapeSequence -> . ZeroToThree OctalDigit ?![OctalDigit]
     //   ZeroToThree -> . [0 1 2 3]
     //   LegacyOctalEscapeSequence -> . FourToSeven OctalDigit
     //   FourToSeven -> . [4 5 6 7]
@@ -383,35 +1497,33 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   UnicodeEscapeSequence -> . [u] [{] CodePoint [}]
     //   LineContinuation -> [\] . LineTerminatorSequence
     //   LineTerminatorSequence -> . [<LF>]
-    //   LineTerminatorSequence -> . [<CR>] !?[<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
     // Transitions:
-    //   [<NUL>..<FF>, <SO>../, 8..t, v..w, y..U+10FFFF] => State(5)
-    //   [u] => State(14)
-    //   [<CR>] => State(26)
-    //   [x] => State(31)
-    //   [0..3] => State(60)
-    //   [4..7] => State(61)
+    //   [<NUL>..<FF>, <SO>..t, v..w, y..U+10FFFF] => State(5)
+    //   [u] => State(38)
+    //   [x] => State(52)
+    //   [<CR>] => State(81)
     [
-        26, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 14, 5, 5, 5, 5, 5, 5, 5, 5, 5, 31, 5, 5, 5, 5, 5, 5, 5,
+        81, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 38, 5, 5, 5, 5, 5, 5, 52, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-        5, 5, 5, 5, 60, 60, 61, 60, 5, 5, 5, 5,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 419,
     ],
-    // State(10):
+    // State(34):
     //   SingleStringCharacter -> [\] . EscapeSequence
     //   EscapeSequence -> . CharacterEscapeSequence
     //   CharacterEscapeSequence -> . SingleEscapeCharacter
     //   SingleEscapeCharacter -> . [' " \ b f n r t v]
     //   CharacterEscapeSequence -> . NonEscapeCharacter
     //   NonEscapeCharacter -> . [SourceCharacter -EscapeCharacter -LineTerminator]
-    //   EscapeSequence -> . [0] !?[DecimalDigit]
+    //   EscapeSequence -> . [0] ?![DecimalDigit]
     //   EscapeSequence -> . LegacyOctalEscapeSequence
-    //   LegacyOctalEscapeSequence -> . [0] ?[8 9]
-    //   LegacyOctalEscapeSequence -> . NonZeroOctalDigit !?[OctalDigit]
+    //   LegacyOctalEscapeSequence -> . [0] ?=[8 9]
+    //   LegacyOctalEscapeSequence -> . NonZeroOctalDigit ?![OctalDigit]
     //   NonZeroOctalDigit -> . [OctalDigit -0]
-    //   LegacyOctalEscapeSequence -> . ZeroToThree OctalDigit !?[OctalDigit]
+    //   LegacyOctalEscapeSequence -> . ZeroToThree OctalDigit ?![OctalDigit]
     //   ZeroToThree -> . [0 1 2 3]
     //   LegacyOctalEscapeSequence -> . FourToSeven OctalDigit
     //   FourToSeven -> . [4 5 6 7]
@@ -425,30 +1537,28 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   UnicodeEscapeSequence -> . [u] [{] CodePoint [}]
     //   LineContinuation -> [\] . LineTerminatorSequence
     //   LineTerminatorSequence -> . [<LF>]
-    //   LineTerminatorSequence -> . [<CR>] !?[<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
     // Transitions:
-    //   [<NUL>..<FF>, <SO>../, 8..t, v..w, y..U+10FFFF] => State(6)
-    //   [u] => State(15)
-    //   [<CR>] => State(27)
-    //   [x] => State(32)
-    //   [0..3] => State(62)
-    //   [4..7] => State(63)
+    //   [<NUL>..<FF>, <SO>..t, v..w, y..U+10FFFF] => State(6)
+    //   [u] => State(39)
+    //   [x] => State(53)
+    //   [<CR>] => State(82)
     [
-        27, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 15, 6, 6, 6, 6, 6, 6, 6, 6, 6, 32, 6, 6, 6, 6, 6, 6, 6,
+        82, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 39, 6, 6, 6, 6, 6, 6, 53, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 62, 62, 63, 62, 6, 6, 6, 6,
+        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 419,
     ],
-    // State(11):
+    // State(35):
     //   TemplateCharacter -> [\] . TemplateEscapeSequence
     //   TemplateEscapeSequence -> . CharacterEscapeSequence
     //   CharacterEscapeSequence -> . SingleEscapeCharacter
     //   SingleEscapeCharacter -> . [' " \ b f n r t v]
     //   CharacterEscapeSequence -> . NonEscapeCharacter
     //   NonEscapeCharacter -> . [SourceCharacter -EscapeCharacter -LineTerminator]
-    //   TemplateEscapeSequence -> . [0] !?[DecimalDigit]
+    //   TemplateEscapeSequence -> . [0] ?![DecimalDigit]
     //   TemplateEscapeSequence -> . HexEscapeSequence
     //   HexEscapeSequence -> . [x] HexDigit HexDigit
     //   TemplateEscapeSequence -> . UnicodeEscapeSequence
@@ -457,89 +1567,86 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   TemplateCharacter -> [\] . NotEscapeSequence
     //   NotEscapeSequence -> . [0] DecimalDigit
     //   NotEscapeSequence -> . [DecimalDigit -0]
-    //   NotEscapeSequence -> . [x] !?[HexDigit]
-    //   NotEscapeSequence -> . [x] HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> . [u] !?[HexDigit] !?[{]
-    //   NotEscapeSequence -> . [u] HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> . [u] HexDigit HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> . [u] HexDigit HexDigit HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> . [u] [{] !?[HexDigit]
-    //   NotEscapeSequence -> . [u] [{] NotCodePoint !?[HexDigit]
-    //   NotEscapeSequence -> . [u] [{] CodePoint !?[HexDigit] !?[}]
+    //   NotEscapeSequence -> . [x] ?![HexDigit]
+    //   NotEscapeSequence -> . [x] HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> . [u] ?![HexDigit] ?![{]
+    //   NotEscapeSequence -> . [u] HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> . [u] HexDigit HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> . [u] HexDigit HexDigit HexDigit ?![HexDigit]
+    //   NotEscapeSequence -> . [u] [{] ?![HexDigit]
+    //   NotEscapeSequence -> . [u] [{] NotCodePoint ?![HexDigit]
+    //   NotEscapeSequence -> . [u] [{] CodePoint ?![HexDigit] ?![}]
     //   LineContinuation -> [\] . LineTerminatorSequence
     //   LineTerminatorSequence -> . [<LF>]
-    //   LineTerminatorSequence -> . [<CR>] !?[<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
     // Transitions:
-    //   [<NUL>..<FF>, <SO>../, 1..t, v..w, y..U+10FFFF] => State(7)
-    //   [<CR>] => State(25)
-    //   [u] => State(64)
-    //   [x] => State(65)
-    //   [0] => State(81)
+    //   [<NUL>..t, v..U+10FFFF] => State(7)
+    //   [u] => State(8)
     [
-        25, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 64, 7, 7, 7, 7, 7, 7, 7, 7, 7, 65, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
         7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 81, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 419,
     ],
-    // State(12):
+    // State(36):
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
     // Transitions:
-    //   [0..9, A..F, a..f] => State(30)
-    //   [{] => State(45)
+    //   [0..9, A..F, a..f] => State(51)
+    //   [{] => State(66)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 30, 458, 458, 30, 30, 30, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 30, 30, 458, 458, 458, 458, 458, 458, 458, 30, 458, 30, 458,
-        458, 30, 45, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 30, 30, 30, 30, 30, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 51, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 51, 51, 51, 419, 419, 419, 51, 51, 419, 419, 419, 419, 419, 419, 419, 51, 419, 51,
+        419, 419, 51, 66, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 51, 51, 51, 51, 419, 419, 419, 419, 51, 419,
     ],
-    // State(13):
+    // State(37):
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
     // Transitions:
-    //   [0..9, A..F, a..f] => State(33)
-    //   [{] => State(47)
+    //   [0..9, A..F, a..f] => State(54)
+    //   [{] => State(68)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 33, 458, 458, 33, 33, 33, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 33, 33, 458, 458, 458, 458, 458, 458, 458, 33, 458, 33, 458,
-        458, 33, 47, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 33, 33, 33, 33, 33, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 54, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 54, 54, 54, 419, 419, 419, 54, 54, 419, 419, 419, 419, 419, 419, 419, 54, 419, 54,
+        419, 419, 54, 68, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 54, 54, 54, 54, 419, 419, 419, 419, 54, 419,
     ],
-    // State(14):
+    // State(38):
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
     // Transitions:
-    //   [0..9, A..F, a..f] => State(34)
-    //   [{] => State(48)
+    //   [0..9, A..F, a..f] => State(55)
+    //   [{] => State(69)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 34, 458, 458, 34, 34, 34, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 34, 34, 458, 458, 458, 458, 458, 458, 458, 34, 458, 34, 458,
-        458, 34, 48, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 34, 34, 34, 34, 34, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 55, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 55, 55, 55, 419, 419, 419, 55, 55, 419, 419, 419, 419, 419, 419, 419, 55, 419, 55,
+        419, 419, 55, 69, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 55, 55, 55, 55, 419, 419, 419, 419, 55, 419,
     ],
-    // State(15):
+    // State(39):
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
     // Transitions:
-    //   [0..9, A..F, a..f] => State(35)
-    //   [{] => State(49)
+    //   [0..9, A..F, a..f] => State(56)
+    //   [{] => State(70)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 35, 458, 458, 35, 35, 35, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 35, 35, 458, 458, 458, 458, 458, 458, 458, 35, 458, 35, 458,
-        458, 35, 49, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 35, 35, 35, 35, 35, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 56, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 56, 56, 56, 419, 419, 419, 56, 56, 419, 419, 419, 419, 419, 419, 419, 56, 419, 56,
+        419, 419, 56, 70, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 56, 56, 56, 56, 419, 419, 419, 419, 56, 419,
     ],
-    // State(16):
+    // State(40):
     //   ExponentPart_Sep -> ExponentIndicator . SignedInteger_Sep
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
@@ -549,15 +1656,15 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   SignedInteger_Sep -> . [+] DecimalDigits_Sep
     //   SignedInteger_Sep -> . [-] DecimalDigits_Sep
     // Transitions:
-    //   [+, -] => State(18)
-    //   [0..9] => State(448):NumericLiteral
+    //   [+, -] => State(42)
+    //   [0..9] => State(409):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 18, 18, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 448, 448, 448, 448, 448, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 42, 42, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 409, 409, 409, 409, 419, 419, 419, 419, 42, 419,
     ],
-    // State(17):
+    // State(41):
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
     //   DecimalIntegerLiteral -> NonZeroDigit NumericLiteralSeparator . DecimalDigits_Sep
@@ -566,14 +1673,14 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DecimalBigIntegerLiteral -> NonZeroDigit NumericLiteralSeparator . DecimalDigits_Sep BigIntLiteralSuffix
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator . DecimalDigit
     // Transitions:
-    //   [0..9] => State(441):NumericLiteral
+    //   [0..9] => State(402):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 441, 441, 441, 441, 441, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 402, 402, 402, 402, 419, 419, 419, 419, 402, 419,
     ],
-    // State(18):
+    // State(42):
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
     //   SignedInteger_Sep -> [+] . DecimalDigits_Sep
@@ -582,25 +1689,25 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   SignedInteger_Sep -> [-] . DecimalDigits_Sep
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator . DecimalDigit
     // Transitions:
-    //   [0..9] => State(448):NumericLiteral
+    //   [0..9] => State(409):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 448, 448, 448, 448, 448, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 409, 409, 409, 409, 419, 419, 419, 419, 409, 419,
     ],
-    // State(19):
+    // State(43):
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator . DecimalDigit
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     // Transitions:
-    //   [0..9] => State(447):NumericLiteral
+    //   [0..9] => State(408):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 447, 447, 447, 447, 447, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 408, 408, 408, 408, 419, 419, 419, 419, 408, 419,
     ],
-    // State(20):
+    // State(44):
     //   BinaryDigits_Sep -> . BinaryDigits_Sep BinaryDigit
     //   BinaryDigits_Sep -> . BinaryDigits_Sep NumericLiteralSeparator BinaryDigit
     //   BinaryIntegerLiteral_Sep -> [0] [b] . BinaryDigits_Sep
@@ -609,14 +1716,14 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   BinaryIntegerLiteral_Sep -> [0] [B] . BinaryDigits_Sep
     //   BinaryDigits_Sep -> BinaryDigits_Sep NumericLiteralSeparator . BinaryDigit
     // Transitions:
-    //   [0..1] => State(449):NumericLiteral
+    //   [0..1] => State(410):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 449, 458, 458, 449, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 410, 419, 419, 410, 419, 419, 419, 419, 410, 419,
     ],
-    // State(21):
+    // State(45):
     //   OctalDigits_Sep -> . OctalDigits_Sep OctalDigit
     //   OctalDigits_Sep -> . OctalDigits_Sep NumericLiteralSeparator OctalDigit
     //   OctalIntegerLiteral_Sep -> [0] [o] . OctalDigits_Sep
@@ -625,14 +1732,14 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   OctalIntegerLiteral_Sep -> [0] [O] . OctalDigits_Sep
     //   OctalDigits_Sep -> OctalDigits_Sep NumericLiteralSeparator . OctalDigit
     // Transitions:
-    //   [0..7] => State(450):NumericLiteral
+    //   [0..7] => State(411):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 450, 450, 450, 450, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 411, 411, 419, 411, 419, 419, 419, 419, 411, 419,
     ],
-    // State(22):
+    // State(46):
     //   HexDigits_Sep -> . HexDigits_Sep HexDigit
     //   HexDigits_Sep -> . HexDigits_Sep NumericLiteralSeparator HexDigit
     //   HexIntegerLiteral_Sep -> [0] [x] . HexDigits_Sep
@@ -641,78 +1748,67 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   HexIntegerLiteral_Sep -> [0] [X] . HexDigits_Sep
     //   HexDigits_Sep -> HexDigits_Sep NumericLiteralSeparator . HexDigit
     // Transitions:
-    //   [0..9, A..F, a..f] => State(451):NumericLiteral
+    //   [0..9, A..F, a..f] => State(412):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 451, 458, 458, 451, 451, 451, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 451, 451, 458, 458, 458, 458, 458, 458, 458, 451, 458,
-        451, 458, 458, 451, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 451, 451, 451, 451, 451, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 412, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 412, 412, 412, 419, 419, 419, 412, 412, 419, 419, 419, 419, 419, 419, 419, 412, 419,
+        412, 419, 419, 412, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 412, 412, 412, 412, 419, 419, 419, 419, 412, 419,
     ],
-    // State(23):
+    // State(47):
     // Transitions:
-    //   [<NUL>../, :..U+10FFFF] => State(387):OPTIONAL_CHAINING?
+    //   [<NUL>../, :..U+10FFFF, (eof)] => State(348):OPTIONAL_CHAINING?
     [
-        387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387,
-        387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387,
-        387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387, 387,
-        387, 387, 387, 387, 387, 387, 387, 387, 458, 458, 458, 458, 458, 387, 387, 387, 387,
+        348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348,
+        348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348,
+        348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348, 348,
+        348, 348, 348, 348, 348, 348, 348, 348, 419, 419, 419, 419, 348, 348, 348, 348, 348, 348,
     ],
-    // State(24):
+    // State(48):
     //   ELLIPSIS -> [.] [.] . [.]
     // Transitions:
-    //   [.] => State(394):ELLIPSIS
+    //   [.] => State(355):ELLIPSIS
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 394, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 355, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 355, 419,
     ],
-    // State(25):
-    //   LineTerminatorSequence -> [<CR>] . [<LF>]
-    // Transitions:
-    //   [<LF>] => State(7)
-    //   [<NUL>..<HT>, <VT>..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 7, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-    ],
-    // State(26):
-    //   LineTerminatorSequence -> [<CR>] . [<LF>]
-    // Transitions:
-    //   [<LF>] => State(5)
-    //   [<NUL>..<HT>, <VT>..U+10FFFF] => State(150)?
-    [
-        150, 150, 150, 150, 150, 150, 150, 5, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-    ],
-    // State(27):
-    //   LineTerminatorSequence -> [<CR>] . [<LF>]
-    // Transitions:
-    //   [<LF>] => State(6)
-    //   [<NUL>..<HT>, <VT>..U+10FFFF] => State(151)?
-    [
-        151, 151, 151, 151, 151, 151, 151, 6, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-    ],
-    // State(28):
+    // State(49):
+    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
+    //   TemplateCharacters -> . TemplateCharacter
+    //   TemplateCharacter -> . [$] ?![{]
+    //   TemplateCharacter -> [$] . ?![{]
+    //   TemplateCharacter -> . [\] TemplateEscapeSequence
+    //   TemplateCharacter -> . [\] NotEscapeSequence
+    //   TemplateCharacter -> . LineContinuation
+    //   LineContinuation -> . [\] LineTerminatorSequence
+    //   TemplateCharacter -> . LineTerminatorSequence
+    //   LineTerminatorSequence -> . [<LF>]
+    //   LineTerminatorSequence -> . [<CR>] ?![<LF>]
+    //   LineTerminatorSequence -> . [<LS>]
+    //   LineTerminatorSequence -> . [<PS>]
+    //   LineTerminatorSequence -> . [<CR>] [<LF>]
+    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
+    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
+    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] [$] . [{]
+    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
+    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   TemplateHead -> [`] TemplateCharacters [$] . [{]
     // Transitions:
-    //   [<NUL>..z, |..U+10FFFF] => State(149)?
-    //   [{] => State(454):TemplateHead
+    //   [<NUL>..#, %..[, ].._, a..z, |..U+10FFFF] => State(7)
+    //   [\] => State(35)
+    //   [$] => State(49)
+    //   [`] => State(414):NoSubstitutionTemplate
+    //   [{] => State(415):TemplateHead
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 454, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
+        7, 35, 7, 7, 7, 414, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 49, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 415, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 419,
     ],
-    // State(29):
+    // State(50):
     //   MultiLineComment -> [/] [*] [*] . [/]
     //   PostAsteriskCommentChars -> [*] . PostAsteriskCommentChars
     //   MultiLineCommentChars -> [*] . PostAsteriskCommentChars
@@ -724,85 +1820,86 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   MultiLineComment -> [/] [*] MultiLineCommentChars . [*] [/]
     //   MultiLineComment -> [/] [*] MultiLineCommentChars [*] . [/]
     // Transitions:
-    //   [<NUL>..), +..., 0..U+10FFFF] => State(8)
-    //   [*] => State(29)
-    //   [/] => State(156):Comment
+    //   [<NUL>..), +..., 0..U+10FFFF] => State(32)
+    //   [*] => State(50)
+    //   [/] => State(117):Comment
     [
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 29, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 156, 8, 8, 8,
+        32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+        32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+        32, 32, 32, 32, 32, 32, 50, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 117, 32,
+        32, 32, 32, 419,
     ],
-    // State(30):
+    // State(51):
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     // Transitions:
-    //   [0..9, A..F, a..f] => State(46)
+    //   [0..9, A..F, a..f] => State(67)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 46, 458, 458, 46, 46, 46, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 46, 46, 458, 458, 458, 458, 458, 458, 458, 46, 458, 46, 458,
-        458, 46, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 46, 46, 46, 46, 46, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 67, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 67, 67, 67, 419, 419, 419, 67, 67, 419, 419, 419, 419, 419, 419, 419, 67, 419, 67,
+        419, 419, 67, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 67, 67, 67, 67, 419, 419, 419, 419, 67, 419,
     ],
-    // State(31):
+    // State(52):
     //   HexEscapeSequence -> [x] . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     // Transitions:
-    //   [0..9, A..F, a..f] => State(50)
+    //   [0..9, A..F, a..f] => State(71)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 50, 458, 458, 50, 50, 50, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 50, 50, 458, 458, 458, 458, 458, 458, 458, 50, 458, 50, 458,
-        458, 50, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 50, 50, 50, 50, 50, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 71, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 71, 71, 71, 419, 419, 419, 71, 71, 419, 419, 419, 419, 419, 419, 419, 71, 419, 71,
+        419, 419, 71, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 71, 71, 71, 71, 419, 419, 419, 419, 71, 419,
     ],
-    // State(32):
+    // State(53):
     //   HexEscapeSequence -> [x] . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     // Transitions:
-    //   [0..9, A..F, a..f] => State(51)
+    //   [0..9, A..F, a..f] => State(72)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 51, 458, 458, 51, 51, 51, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 51, 51, 458, 458, 458, 458, 458, 458, 458, 51, 458, 51, 458,
-        458, 51, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 51, 51, 51, 51, 51, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 72, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 72, 72, 72, 419, 419, 419, 72, 72, 419, 419, 419, 419, 419, 419, 419, 72, 419, 72,
+        419, 419, 72, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 72, 72, 72, 72, 419, 419, 419, 419, 72, 419,
     ],
-    // State(33):
+    // State(54):
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(73)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 73, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 73, 73, 73, 419, 419, 419, 73, 73, 419, 419, 419, 419, 419, 419, 419, 73, 419, 73,
+        419, 419, 73, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 73, 73, 73, 73, 419, 419, 419, 419, 73, 419,
+    ],
+    // State(55):
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     // Transitions:
     //   [0..9, A..F, a..f] => State(52)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 52, 458, 458, 52, 52, 52, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 52, 52, 458, 458, 458, 458, 458, 458, 458, 52, 458, 52, 458,
-        458, 52, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 52, 52, 52, 52, 52, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 52, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 52, 52, 52, 419, 419, 419, 52, 52, 419, 419, 419, 419, 419, 419, 419, 52, 419, 52,
+        419, 419, 52, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 52, 52, 52, 52, 419, 419, 419, 419, 52, 419,
     ],
-    // State(34):
+    // State(56):
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     // Transitions:
-    //   [0..9, A..F, a..f] => State(31)
+    //   [0..9, A..F, a..f] => State(53)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 31, 458, 458, 31, 31, 31, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 31, 31, 458, 458, 458, 458, 458, 458, 458, 31, 458, 31, 458,
-        458, 31, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 31, 31, 31, 31, 31, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 53, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 53, 53, 53, 419, 419, 419, 53, 53, 419, 419, 419, 419, 419, 419, 419, 53, 419, 53,
+        419, 419, 53, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 53, 53, 53, 53, 419, 419, 419, 419, 53, 419,
     ],
-    // State(35):
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(32)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 32, 458, 458, 32, 32, 32, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 32, 32, 458, 458, 458, 458, 458, 458, 458, 32, 458, 32, 458,
-        458, 32, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 32, 32, 32, 32, 32, 458, 458, 458, 458,
-    ],
-    // State(36):
+    // State(57):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
@@ -811,159 +1908,159 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
-    //   [1..9, A..F, a..f] => State(39)
-    //   [0] => State(40)
+    //   [1..9, A..F, a..f] => State(60)
+    //   [0] => State(61)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 39, 458, 458, 39, 39, 39, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 39, 39, 458, 458, 458, 458, 458, 458, 458, 39, 458, 39, 458,
-        458, 39, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 39, 39, 39, 39, 40, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 60, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 60, 60, 60, 419, 419, 419, 60, 60, 419, 419, 419, 419, 419, 419, 419, 60, 419, 60,
+        419, 419, 60, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 60, 60, 60, 61, 419, 419, 419, 419, 60, 419,
     ],
-    // State(37):
+    // State(58):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> . HexDigit NotCodePoint
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [0] => State(37)
-    //   [1..9, A..F, a..f] => State(38)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 38, 458, 458, 38, 38, 38, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 38, 38, 458, 458, 458, 458, 458, 458, 458, 38, 458, 38, 458,
-        458, 38, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 38, 38, 38, 38, 37, 458, 458, 458, 458,
-    ],
-    // State(38):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(36)
-    //   [0] => State(37)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 36, 458, 458, 36, 36, 36, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 36, 36, 458, 458, 458, 458, 458, 458, 458, 36, 458, 36, 458,
-        458, 36, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 36, 36, 36, 36, 37, 458, 458, 458, 458,
-    ],
-    // State(39):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(41)
-    //   [0] => State(42)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 41, 458, 458, 41, 41, 41, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 41, 41, 458, 458, 458, 458, 458, 458, 458, 41, 458, 41, 458,
-        458, 41, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 41, 41, 41, 41, 42, 458, 458, 458, 458,
-    ],
-    // State(40):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(43)
-    //   [0] => State(44)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 43, 458, 458, 43, 43, 43, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 43, 43, 458, 458, 458, 458, 458, 458, 458, 43, 458, 43, 458,
-        458, 43, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 43, 43, 43, 43, 44, 458, 458, 458, 458,
-    ],
-    // State(41):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(53)
-    //   [0] => State(54)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 53, 458, 458, 53, 53, 53, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 53, 53, 458, 458, 458, 458, 458, 458, 458, 53, 458, 53, 458,
-        458, 53, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 53, 53, 53, 53, 54, 458, 458, 458, 458,
-    ],
-    // State(42):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(55)
-    //   [0] => State(56)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 55, 458, 458, 55, 55, 55, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 55, 55, 458, 458, 458, 458, 458, 458, 458, 55, 458, 55, 458,
-        458, 55, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 55, 55, 55, 55, 56, 458, 458, 458, 458,
-    ],
-    // State(43):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(57)
-    //   [0] => State(58)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 57, 458, 458, 57, 57, 57, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 57, 57, 458, 458, 458, 458, 458, 458, 458, 57, 458, 57, 458,
-        458, 57, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 57, 57, 57, 57, 58, 458, 458, 458, 458,
-    ],
-    // State(44):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
     //   [0] => State(58)
     //   [1..9, A..F, a..f] => State(59)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 59, 458, 458, 59, 59, 59, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 59, 59, 458, 458, 458, 458, 458, 458, 458, 59, 458, 59, 458,
-        458, 59, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 59, 59, 59, 59, 58, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 59, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 59, 59, 59, 419, 419, 419, 59, 59, 419, 419, 419, 419, 419, 419, 419, 59, 419, 59,
+        419, 419, 59, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 59, 59, 59, 58, 419, 419, 419, 419, 58, 419,
     ],
-    // State(45):
+    // State(59):
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    // Transitions:
+    //   [1..9, A..F, a..f] => State(57)
+    //   [0] => State(58)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 57, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 57, 57, 57, 419, 419, 419, 57, 57, 419, 419, 419, 419, 419, 419, 419, 57, 419, 57,
+        419, 419, 57, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 57, 57, 57, 58, 419, 419, 419, 419, 57, 419,
+    ],
+    // State(60):
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    // Transitions:
+    //   [1..9, A..F, a..f] => State(62)
+    //   [0] => State(63)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 62, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 62, 62, 62, 419, 419, 419, 62, 62, 419, 419, 419, 419, 419, 419, 419, 62, 419, 62,
+        419, 419, 62, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 62, 62, 62, 63, 419, 419, 419, 419, 62, 419,
+    ],
+    // State(61):
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    // Transitions:
+    //   [1..9, A..F, a..f] => State(64)
+    //   [0] => State(65)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 64, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 64, 64, 64, 419, 419, 419, 64, 64, 419, 419, 419, 419, 419, 419, 419, 64, 419, 64,
+        419, 419, 64, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 64, 64, 64, 65, 419, 419, 419, 419, 64, 419,
+    ],
+    // State(62):
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    // Transitions:
+    //   [1..9, A..F, a..f] => State(74)
+    //   [0] => State(75)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 74, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 74, 74, 74, 419, 419, 419, 74, 74, 419, 419, 419, 419, 419, 419, 419, 74, 419, 74,
+        419, 419, 74, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 74, 74, 74, 75, 419, 419, 419, 419, 74, 419,
+    ],
+    // State(63):
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    // Transitions:
+    //   [1..9, A..F, a..f] => State(76)
+    //   [0] => State(77)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 76, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 76, 76, 76, 419, 419, 419, 76, 76, 419, 419, 419, 419, 419, 419, 419, 76, 419, 76,
+        419, 419, 76, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 76, 76, 76, 77, 419, 419, 419, 419, 76, 419,
+    ],
+    // State(64):
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    // Transitions:
+    //   [1..9, A..F, a..f] => State(78)
+    //   [0] => State(79)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 78, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 78, 78, 78, 419, 419, 419, 78, 78, 419, 419, 419, 419, 419, 419, 419, 78, 419, 78,
+        419, 419, 78, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 78, 78, 78, 79, 419, 419, 419, 419, 78, 419,
+    ],
+    // State(65):
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
+    // Transitions:
+    //   [0] => State(79)
+    //   [1..9, A..F, a..f] => State(80)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 80, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 80, 80, 80, 419, 419, 419, 80, 80, 419, 419, 419, 419, 419, 419, 419, 80, 419, 80,
+        419, 419, 80, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 80, 80, 80, 79, 419, 419, 419, 419, 79, 419,
+    ],
+    // State(66):
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -976,27 +2073,27 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
     // Transitions:
-    //   [2..9, A..F, a..f] => State(82)
-    //   [1] => State(83)
-    //   [0] => State(84)
+    //   [2..9, A..F, a..f] => State(83)
+    //   [1] => State(84)
+    //   [0] => State(85)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 82, 458, 458, 82, 82, 82, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 82, 82, 458, 458, 458, 458, 458, 458, 458, 82, 458, 82, 458,
-        458, 82, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 82, 83, 82, 82, 84, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 83, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 83, 83, 83, 419, 419, 419, 83, 83, 419, 419, 419, 419, 419, 419, 419, 83, 419, 83,
+        419, 419, 83, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 84, 83, 83, 85, 419, 419, 419, 419, 83, 419,
     ],
-    // State(46):
+    // State(67):
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     // Transitions:
-    //   [0..9, A..F, a..f] => State(88)
+    //   [0..9, A..F, a..f] => State(89)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 88, 458, 458, 88, 88, 88, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 88, 88, 458, 458, 458, 458, 458, 458, 458, 88, 458, 88, 458,
-        458, 88, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 88, 88, 88, 88, 88, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 89, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 89, 89, 89, 419, 419, 419, 89, 89, 419, 419, 419, 419, 419, 419, 419, 89, 419, 89,
+        419, 419, 89, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 89, 89, 89, 89, 419, 419, 419, 419, 89, 419,
     ],
-    // State(47):
+    // State(68):
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -1009,16 +2106,16 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
     // Transitions:
-    //   [2..9, A..F, a..f] => State(89)
-    //   [1] => State(90)
-    //   [0] => State(91)
+    //   [2..9, A..F, a..f] => State(90)
+    //   [1] => State(91)
+    //   [0] => State(92)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 89, 458, 458, 89, 89, 89, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 89, 89, 458, 458, 458, 458, 458, 458, 458, 89, 458, 89, 458,
-        458, 89, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 89, 90, 89, 89, 91, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 90, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 90, 90, 90, 419, 419, 419, 90, 90, 419, 419, 419, 419, 419, 419, 419, 90, 419, 90,
+        419, 419, 90, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 91, 90, 90, 92, 419, 419, 419, 419, 90, 419,
     ],
-    // State(48):
+    // State(69):
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -1031,16 +2128,16 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
     // Transitions:
-    //   [2..9, A..F, a..f] => State(95)
-    //   [1] => State(96)
-    //   [0] => State(97)
+    //   [2..9, A..F, a..f] => State(96)
+    //   [1] => State(97)
+    //   [0] => State(98)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 95, 458, 458, 95, 95, 95, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 95, 95, 458, 458, 458, 458, 458, 458, 458, 95, 458, 95, 458,
-        458, 95, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 95, 96, 95, 95, 97, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 96, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 96, 96, 96, 419, 419, 419, 96, 96, 419, 419, 419, 419, 419, 419, 419, 96, 419, 96,
+        419, 419, 96, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 97, 96, 96, 98, 419, 419, 419, 419, 96, 419,
     ],
-    // State(49):
+    // State(70):
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -1053,1996 +2150,184 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
     // Transitions:
-    //   [2..9, A..F, a..f] => State(100)
-    //   [1] => State(101)
-    //   [0] => State(102)
+    //   [2..9, A..F, a..f] => State(101)
+    //   [1] => State(102)
+    //   [0] => State(103)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 100, 458, 458, 100, 100, 100, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 100, 100, 458, 458, 458, 458, 458, 458, 458, 100, 458,
-        100, 458, 458, 100, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 100, 101, 100, 100, 102, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 101, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 101, 101, 101, 419, 419, 419, 101, 101, 419, 419, 419, 419, 419, 419, 419, 101, 419,
+        101, 419, 419, 101, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 102, 101, 101, 103, 419, 419, 419, 419, 101, 419,
     ],
-    // State(50):
+    // State(71):
     //   HexEscapeSequence -> [x] HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     // Transitions:
     //   [0..9, A..F, a..f] => State(5)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 5, 458, 458, 5, 5, 5, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 5, 5, 458, 458, 458, 458, 458, 458, 458, 5, 458, 5, 458, 458, 5,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 5, 5, 5, 5, 5, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 5, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 5, 5, 5, 419, 419, 419, 5, 5, 419, 419, 419, 419, 419, 419, 419, 5, 419, 5, 419, 419,
+        5, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 5, 5, 5, 5, 419, 419, 419, 419, 5, 419,
     ],
-    // State(51):
+    // State(72):
     //   HexEscapeSequence -> [x] HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     // Transitions:
     //   [0..9, A..F, a..f] => State(6)
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 6, 458, 458, 6, 6, 6, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 6, 6, 458, 458, 458, 458, 458, 458, 458, 6, 458, 6, 458, 458, 6,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 6, 6, 6, 6, 6, 458, 458, 458, 458,
-    ],
-    // State(52):
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(144)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 144, 458, 458, 144, 144, 144, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 144, 144, 458, 458, 458, 458, 458, 458, 458, 144, 458,
-        144, 458, 458, 144, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 144, 144, 144, 144, 144, 458, 458, 458, 458,
-    ],
-    // State(53):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(67)
-    //   [0] => State(68)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 67, 458, 458, 67, 67, 67, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 67, 67, 458, 458, 458, 458, 458, 458, 458, 67, 458, 67, 458,
-        458, 67, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 67, 67, 67, 67, 68, 458, 458, 458, 458,
-    ],
-    // State(54):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(69)
-    //   [0] => State(70)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 69, 458, 458, 69, 69, 69, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 69, 69, 458, 458, 458, 458, 458, 458, 458, 69, 458, 69, 458,
-        458, 69, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 69, 69, 69, 69, 70, 458, 458, 458, 458,
-    ],
-    // State(55):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(71)
-    //   [0] => State(72)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 71, 458, 458, 71, 71, 71, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 71, 71, 458, 458, 458, 458, 458, 458, 458, 71, 458, 71, 458,
-        458, 71, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 71, 71, 71, 71, 72, 458, 458, 458, 458,
-    ],
-    // State(56):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [0] => State(72)
-    //   [1..9, A..F, a..f] => State(73)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 73, 458, 458, 73, 73, 73, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 73, 73, 458, 458, 458, 458, 458, 458, 458, 73, 458, 73, 458,
-        458, 73, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 73, 73, 73, 73, 72, 458, 458, 458, 458,
-    ],
-    // State(57):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(76)
-    //   [0] => State(77)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 76, 458, 458, 76, 76, 76, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 76, 76, 458, 458, 458, 458, 458, 458, 458, 76, 458, 76, 458,
-        458, 76, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 76, 76, 76, 76, 77, 458, 458, 458, 458,
-    ],
-    // State(58):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(78)
-    //   [0] => State(79)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 78, 458, 458, 78, 78, 78, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 78, 78, 458, 458, 458, 458, 458, 458, 458, 78, 458, 78, 458,
-        458, 78, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 78, 78, 78, 78, 79, 458, 458, 458, 458,
-    ],
-    // State(59):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [0] => State(79)
-    //   [1..9, A..F, a..f] => State(80)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 80, 458, 458, 80, 80, 80, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 80, 80, 458, 458, 458, 458, 458, 458, 458, 80, 458, 80, 458,
-        458, 80, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 80, 80, 80, 80, 79, 458, 458, 458, 458,
-    ],
-    // State(60):
-    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit !?[OctalDigit]
-    //   OctalDigit -> . [0 1 2 3 4 5 6 7]
-    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit OctalDigit
-    // Transitions:
-    //   [0..7] => State(61)
-    //   [<NUL>../, 8..U+10FFFF] => State(150)?
-    [
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 61, 61, 61, 61, 150, 150, 150, 150,
-    ],
-    // State(61):
-    //   LegacyOctalEscapeSequence -> FourToSeven . OctalDigit
-    //   OctalDigit -> . [0 1 2 3 4 5 6 7]
-    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . OctalDigit
-    // Transitions:
-    //   [0..7] => State(5)
-    //   [<NUL>../, 8..U+10FFFF] => State(150)?
-    [
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
-        150, 150, 150, 150, 150, 150, 150, 150, 150, 5, 5, 5, 5, 150, 150, 150, 150,
-    ],
-    // State(62):
-    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit !?[OctalDigit]
-    //   OctalDigit -> . [0 1 2 3 4 5 6 7]
-    //   LegacyOctalEscapeSequence -> ZeroToThree . OctalDigit OctalDigit
-    // Transitions:
-    //   [0..7] => State(63)
-    //   [<NUL>../, 8..U+10FFFF] => State(151)?
-    [
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 63, 63, 63, 63, 151, 151, 151, 151,
-    ],
-    // State(63):
-    //   LegacyOctalEscapeSequence -> FourToSeven . OctalDigit
-    //   OctalDigit -> . [0 1 2 3 4 5 6 7]
-    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . OctalDigit
-    // Transitions:
-    //   [0..7] => State(6)
-    //   [<NUL>../, 8..U+10FFFF] => State(151)?
-    [
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151, 151,
-        151, 151, 151, 151, 151, 151, 151, 151, 151, 6, 6, 6, 6, 151, 151, 151, 151,
-    ],
-    // State(64):
-    //   UnicodeEscapeSequence -> [u] . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
-    //   NotEscapeSequence -> [u] . HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> [u] . HexDigit HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> [u] . HexDigit HexDigit HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> [u] . [{] !?[HexDigit]
-    //   NotEscapeSequence -> [u] . [{] NotCodePoint !?[HexDigit]
-    //   NotEscapeSequence -> [u] . [{] CodePoint !?[HexDigit] !?[}]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(66)
-    //   [{] => State(74)
-    //   [<NUL>../, :..@, G..`, g..z, |..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 66, 149, 149, 66, 66, 66, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 66, 66, 149, 149, 149, 149, 149, 149, 149, 66, 149, 66, 149,
-        149, 66, 74, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 66, 66, 66, 66, 66, 149, 149, 149, 149,
-    ],
-    // State(65):
-    //   HexEscapeSequence -> [x] . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotEscapeSequence -> [x] . HexDigit !?[HexDigit]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotEscapeSequence -> [u] HexDigit HexDigit . HexDigit !?[HexDigit]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(75)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 75, 149, 149, 75, 75, 75, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 75, 75, 149, 149, 149, 149, 149, 149, 149, 75, 149, 75, 149,
-        149, 75, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 75, 75, 75, 75, 75, 149, 149, 149, 149,
-    ],
-    // State(66):
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotEscapeSequence -> [u] HexDigit . HexDigit !?[HexDigit]
-    //   NotEscapeSequence -> [u] HexDigit . HexDigit HexDigit !?[HexDigit]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(65)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 65, 149, 149, 65, 65, 65, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 65, 65, 149, 149, 149, 149, 149, 149, 149, 65, 149, 65, 149,
-        149, 65, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 65, 65, 65, 65, 65, 149, 149, 149, 149,
-    ],
-    // State(67):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(67)
-    //   [0] => State(68)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 67, 149, 149, 67, 67, 67, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 67, 67, 149, 149, 149, 149, 149, 149, 149, 67, 149, 67, 149,
-        149, 67, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 67, 67, 67, 67, 68, 149, 149, 149, 149,
-    ],
-    // State(68):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(69)
-    //   [0] => State(70)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 69, 149, 149, 69, 69, 69, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 69, 69, 149, 149, 149, 149, 149, 149, 149, 69, 149, 69, 149,
-        149, 69, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 69, 69, 69, 69, 70, 149, 149, 149, 149,
-    ],
-    // State(69):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(71)
-    //   [0] => State(72)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 71, 149, 149, 71, 71, 71, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 71, 71, 149, 149, 149, 149, 149, 149, 149, 71, 149, 71, 149,
-        149, 71, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 71, 71, 71, 71, 72, 149, 149, 149, 149,
-    ],
-    // State(70):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [0] => State(72)
-    //   [1..9, A..F, a..f] => State(73)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 73, 149, 149, 73, 73, 73, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 73, 73, 149, 149, 149, 149, 149, 149, 149, 73, 149, 73, 149,
-        149, 73, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 73, 73, 73, 73, 72, 149, 149, 149, 149,
-    ],
-    // State(71):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(76)
-    //   [0] => State(77)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 76, 149, 149, 76, 76, 76, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 76, 76, 149, 149, 149, 149, 149, 149, 149, 76, 149, 76, 149,
-        149, 76, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 76, 76, 76, 76, 77, 149, 149, 149, 149,
-    ],
-    // State(72):
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [1..9, A..F, a..f] => State(78)
-    //   [0] => State(79)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 78, 149, 149, 78, 78, 78, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 78, 78, 149, 149, 149, 149, 149, 149, 149, 78, 149, 78, 149,
-        149, 78, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 78, 78, 78, 78, 79, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 6, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 6, 6, 6, 419, 419, 419, 6, 6, 419, 419, 419, 419, 419, 419, 419, 6, 419, 6, 419, 419,
+        6, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 6, 6, 6, 6, 419, 419, 419, 419, 6, 419,
     ],
     // State(73):
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(108)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 108, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 108, 108, 108, 419, 419, 419, 108, 108, 419, 419, 419, 419, 419, 419, 419, 108, 419,
+        108, 419, 419, 108, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 108, 108, 108, 108, 419, 419, 419, 419, 108, 419,
+    ],
+    // State(74):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [0] => State(79)
-    //   [1..9, A..F, a..f] => State(80)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 80, 149, 149, 80, 80, 80, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 80, 80, 149, 149, 149, 149, 149, 149, 149, 80, 149, 80, 149,
-        149, 80, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 80, 80, 80, 80, 79, 149, 149, 149, 149,
-    ],
-    // State(74):
-    //   CodePoint -> [0] . CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
-    //   CodePoint -> . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> . HexDigit HexDigit
-    //   CodePoint -> . HexDigit HexDigit HexDigit
-    //   CodePoint -> . Hex4Digits
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   CodePoint -> . HexDigit Hex4Digits
-    //   CodePoint -> . [1] [0] Hex4Digits
-    //   CodePoint -> . [0] CodePoint
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . CodePoint !?[HexDigit] !?[}]
     // Transitions:
-    //   [2..9, A..F, a..f] => State(107)
-    //   [1] => State(108)
-    //   [0] => State(109)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
+    //   [1..9, A..F, a..f] => State(11)
+    //   [0] => State(13)
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 107, 149, 149, 107, 107, 107, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 107, 107, 149, 149, 149, 149, 149, 149, 149, 107, 149,
-        107, 149, 149, 107, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 107, 108, 107, 107, 109, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 11, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 11, 11, 11, 419, 419, 419, 11, 11, 419, 419, 419, 419, 419, 419, 419, 11, 419, 11,
+        419, 419, 11, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 11, 11, 11, 13, 419, 419, 419, 419, 11, 419,
     ],
     // State(75):
-    //   HexEscapeSequence -> [x] HexDigit . HexDigit
+    //   NotCodePoint -> HexDigit . NotCodePoint
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
+    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
+    //   NonZeroHexDigit -> . [HexDigit -0]
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
-    //   [0..9, A..F, a..f] => State(7)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
+    //   [1..9, A..F, a..f] => State(15)
+    //   [0] => State(16)
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 7, 149, 149, 7, 7, 7, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 7, 7, 149, 149, 149, 149, 149, 149, 149, 7, 149, 7, 149, 149, 7,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 7, 7, 7, 7, 7, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 15, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 15, 15, 15, 419, 419, 419, 15, 15, 419, 419, 419, 419, 419, 419, 419, 15, 419, 15,
+        419, 419, 15, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 15, 15, 15, 16, 419, 419, 419, 419, 15, 419,
     ],
     // State(76):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
-    //   [1..9, A..F, a..f] => State(41)
-    //   [0] => State(42)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
+    //   [1..9, A..F, a..f] => State(18)
+    //   [0] => State(19)
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 41, 149, 149, 41, 41, 41, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 41, 41, 149, 149, 149, 149, 149, 149, 149, 41, 149, 41, 149,
-        149, 41, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 41, 41, 41, 41, 42, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 18, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 18, 18, 18, 419, 419, 419, 18, 18, 419, 419, 419, 419, 419, 419, 419, 18, 419, 18,
+        419, 419, 18, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 18, 18, 18, 19, 419, 419, 419, 419, 18, 419,
     ],
     // State(77):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
-    //   [1..9, A..F, a..f] => State(43)
-    //   [0] => State(44)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
+    //   [0] => State(19)
+    //   [1..9, A..F, a..f] => State(20)
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 43, 149, 149, 43, 43, 43, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 43, 43, 149, 149, 149, 149, 149, 149, 149, 43, 149, 43, 149,
-        149, 43, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 43, 43, 43, 43, 44, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 20, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 20, 20, 20, 419, 419, 419, 20, 20, 419, 419, 419, 419, 419, 419, 419, 20, 419, 20,
+        419, 419, 20, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 20, 20, 20, 19, 419, 419, 419, 419, 19, 419,
     ],
     // State(78):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
-    //   [1..9, A..F, a..f] => State(36)
-    //   [0] => State(37)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
+    //   [1..9, A..F, a..f] => State(23)
+    //   [0] => State(24)
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 36, 149, 149, 36, 36, 36, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 36, 36, 149, 149, 149, 149, 149, 149, 149, 36, 149, 36, 149,
-        149, 36, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 36, 36, 36, 36, 37, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 23, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 23, 23, 23, 419, 419, 419, 23, 23, 419, 419, 419, 419, 419, 419, 419, 23, 419, 23,
+        419, 419, 23, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 23, 23, 23, 24, 419, 419, 419, 419, 23, 419,
     ],
     // State(79):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> . HexDigit NotCodePoint
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
-    //   [0] => State(37)
-    //   [1..9, A..F, a..f] => State(38)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
+    //   [1..9, A..F, a..f] => State(25)
+    //   [0] => State(26)
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 38, 149, 149, 38, 38, 38, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 38, 38, 149, 149, 149, 149, 149, 149, 149, 38, 149, 38, 149,
-        149, 38, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 38, 38, 38, 38, 37, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 25, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 25, 25, 25, 419, 419, 419, 25, 25, 419, 419, 419, 419, 419, 419, 419, 25, 419, 25,
+        419, 419, 25, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 25, 25, 25, 26, 419, 419, 419, 419, 25, 419,
     ],
     // State(80):
     //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
+    //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
     // Transitions:
-    //   [1..9, A..F, a..f] => State(39)
-    //   [0] => State(40)
-    //   [<NUL>../, :..@, G..`, g..U+10FFFF] => State(149)?
+    //   [0] => State(26)
+    //   [1..9, A..F, a..f] => State(27)
     [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 39, 149, 149, 39, 39, 39, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 39, 39, 149, 149, 149, 149, 149, 149, 149, 39, 149, 39, 149,
-        149, 39, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 39, 39, 39, 39, 40, 149, 149, 149, 149,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 27, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 27, 27, 27, 419, 419, 419, 27, 27, 419, 419, 419, 419, 419, 419, 419, 27, 419, 27,
+        419, 419, 27, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 27, 27, 27, 26, 419, 419, 419, 419, 26, 419,
     ],
     // State(81):
-    //   NotEscapeSequence -> [0] . DecimalDigit
-    //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
-    // Transitions:
-    //   [0..9] => State(7)
-    //   [<NUL>../, :..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 7, 7, 7, 7, 7, 149, 149, 149, 149,
-    ],
-    // State(82):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   CodePoint -> [1] [0] . Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(85)
-    //   [}] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 85, 458, 458, 85, 85, 85, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 85, 85, 458, 458, 458, 458, 458, 458, 458, 85, 458, 85, 458,
-        458, 85, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 85, 85, 85, 85, 85, 458, 213, 458, 458,
-    ],
-    // State(83):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   CodePoint -> [1] . [0] Hex4Digits
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [0] => State(82)
-    //   [1..9, A..F, a..f] => State(85)
-    //   [}] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 85, 458, 458, 85, 85, 85, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 85, 85, 458, 458, 458, 458, 458, 458, 458, 85, 458, 85, 458,
-        458, 85, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 85, 85, 85, 85, 82, 458, 213, 458, 458,
-    ],
-    // State(84):
-    //   CodePoint -> [0] . CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
-    //   CodePoint -> . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> . HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit
-    //   CodePoint -> . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   CodePoint -> . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> . HexDigit Hex4Digits
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   CodePoint -> . [1] [0] Hex4Digits
-    //   CodePoint -> . [0] CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [2..9, A..F, a..f] => State(82)
-    //   [1] => State(83)
-    //   [0] => State(84)
-    //   [}] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 82, 458, 458, 82, 82, 82, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 82, 82, 458, 458, 458, 458, 458, 458, 458, 82, 458, 82, 458,
-        458, 82, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 82, 83, 82, 82, 84, 458, 213, 458, 458,
-    ],
-    // State(85):
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(86)
-    //   [}] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 86, 458, 458, 86, 86, 86, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 86, 86, 458, 458, 458, 458, 458, 458, 458, 86, 458, 86, 458,
-        458, 86, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 86, 86, 86, 86, 86, 458, 213, 458, 458,
-    ],
-    // State(86):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(87)
-    //   [}] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 87, 458, 458, 87, 87, 87, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 87, 87, 458, 458, 458, 458, 458, 458, 458, 87, 458, 87, 458,
-        458, 87, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 87, 87, 87, 87, 87, 458, 213, 458, 458,
-    ],
-    // State(87):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(145)
-    //   [}] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 145, 458, 458, 145, 145, 145, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 145, 145, 458, 458, 458, 458, 458, 458, 458, 145, 458,
-        145, 458, 458, 145, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 145, 145, 145, 145, 145, 458, 213, 458, 458,
-    ],
-    // State(88):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 213, 458, 458, 213, 213, 213, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 213, 213, 458, 458, 458, 458, 458, 458, 458, 213, 458,
-        213, 458, 458, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 458, 458,
-    ],
-    // State(89):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   CodePoint -> [1] [0] . Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(92)
-    //   [}] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 92, 458, 458, 92, 92, 92, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 92, 92, 458, 458, 458, 458, 458, 458, 458, 92, 458, 92, 458,
-        458, 92, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 92, 92, 92, 92, 92, 458, 386, 458, 458,
-    ],
-    // State(90):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   CodePoint -> [1] . [0] Hex4Digits
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [0] => State(89)
-    //   [1..9, A..F, a..f] => State(92)
-    //   [}] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 92, 458, 458, 92, 92, 92, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 92, 92, 458, 458, 458, 458, 458, 458, 458, 92, 458, 92, 458,
-        458, 92, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 92, 92, 92, 92, 89, 458, 386, 458, 458,
-    ],
-    // State(91):
-    //   CodePoint -> [0] . CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
-    //   CodePoint -> . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> . HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit
-    //   CodePoint -> . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   CodePoint -> . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> . HexDigit Hex4Digits
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   CodePoint -> . [1] [0] Hex4Digits
-    //   CodePoint -> . [0] CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [2..9, A..F, a..f] => State(89)
-    //   [1] => State(90)
-    //   [0] => State(91)
-    //   [}] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 89, 458, 458, 89, 89, 89, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 89, 89, 458, 458, 458, 458, 458, 458, 458, 89, 458, 89, 458,
-        458, 89, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 89, 90, 89, 89, 91, 458, 386, 458, 458,
-    ],
-    // State(92):
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(93)
-    //   [}] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 93, 458, 458, 93, 93, 93, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 93, 93, 458, 458, 458, 458, 458, 458, 458, 93, 458, 93, 458,
-        458, 93, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 93, 93, 93, 93, 93, 458, 386, 458, 458,
-    ],
-    // State(93):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(94)
-    //   [}] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 94, 458, 458, 94, 94, 94, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 94, 94, 458, 458, 458, 458, 458, 458, 458, 94, 458, 94, 458,
-        458, 94, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 94, 94, 94, 94, 94, 458, 386, 458, 458,
-    ],
-    // State(94):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(146)
-    //   [}] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 146, 458, 458, 146, 146, 146, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 146, 146, 458, 458, 458, 458, 458, 458, 458, 146, 458,
-        146, 458, 458, 146, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 146, 146, 146, 146, 146, 458, 386, 458, 458,
-    ],
-    // State(95):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   CodePoint -> [1] [0] . Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(5)
-    //   [0..9, A..F, a..f] => State(98)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 98, 458, 458, 98, 98, 98, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 98, 98, 458, 458, 458, 458, 458, 458, 458, 98, 458, 98, 458,
-        458, 98, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 98, 98, 98, 98, 98, 458, 5, 458, 458,
-    ],
-    // State(96):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   CodePoint -> [1] . [0] Hex4Digits
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(5)
-    //   [0] => State(95)
-    //   [1..9, A..F, a..f] => State(98)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 98, 458, 458, 98, 98, 98, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 98, 98, 458, 458, 458, 458, 458, 458, 458, 98, 458, 98, 458,
-        458, 98, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 98, 98, 98, 98, 95, 458, 5, 458, 458,
-    ],
-    // State(97):
-    //   CodePoint -> [0] . CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
-    //   CodePoint -> . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> . HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit
-    //   CodePoint -> . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   CodePoint -> . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> . HexDigit Hex4Digits
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   CodePoint -> . [1] [0] Hex4Digits
-    //   CodePoint -> . [0] CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(5)
-    //   [2..9, A..F, a..f] => State(95)
-    //   [1] => State(96)
-    //   [0] => State(97)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 95, 458, 458, 95, 95, 95, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 95, 95, 458, 458, 458, 458, 458, 458, 458, 95, 458, 95, 458,
-        458, 95, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 95, 96, 95, 95, 97, 458, 5, 458, 458,
-    ],
-    // State(98):
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(5)
-    //   [0..9, A..F, a..f] => State(99)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 99, 458, 458, 99, 99, 99, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 99, 99, 458, 458, 458, 458, 458, 458, 458, 99, 458, 99, 458,
-        458, 99, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 99, 99, 99, 99, 99, 458, 5, 458, 458,
-    ],
-    // State(99):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(5)
-    //   [0..9, A..F, a..f] => State(105)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 105, 458, 458, 105, 105, 105, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 105, 105, 458, 458, 458, 458, 458, 458, 458, 105, 458,
-        105, 458, 458, 105, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 105, 105, 105, 105, 105, 458, 5, 458, 458,
-    ],
-    // State(100):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   CodePoint -> [1] [0] . Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(6)
-    //   [0..9, A..F, a..f] => State(103)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 103, 458, 458, 103, 103, 103, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 103, 103, 458, 458, 458, 458, 458, 458, 458, 103, 458,
-        103, 458, 458, 103, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 103, 103, 103, 103, 103, 458, 6, 458, 458,
-    ],
-    // State(101):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   CodePoint -> [1] . [0] Hex4Digits
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(6)
-    //   [0] => State(100)
-    //   [1..9, A..F, a..f] => State(103)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 103, 458, 458, 103, 103, 103, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 103, 103, 458, 458, 458, 458, 458, 458, 458, 103, 458,
-        103, 458, 458, 103, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 103, 103, 103, 103, 100, 458, 6, 458, 458,
-    ],
-    // State(102):
-    //   CodePoint -> [0] . CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
-    //   CodePoint -> . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> . HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit
-    //   CodePoint -> . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   CodePoint -> . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> . HexDigit Hex4Digits
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   CodePoint -> . [1] [0] Hex4Digits
-    //   CodePoint -> . [0] CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(6)
-    //   [2..9, A..F, a..f] => State(100)
-    //   [1] => State(101)
-    //   [0] => State(102)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 100, 458, 458, 100, 100, 100, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 100, 100, 458, 458, 458, 458, 458, 458, 458, 100, 458,
-        100, 458, 458, 100, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 100, 101, 100, 100, 102, 458, 6, 458, 458,
-    ],
-    // State(103):
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(6)
-    //   [0..9, A..F, a..f] => State(104)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 104, 458, 458, 104, 104, 104, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 104, 104, 458, 458, 458, 458, 458, 458, 458, 104, 458,
-        104, 458, 458, 104, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 104, 104, 104, 104, 104, 458, 6, 458, 458,
-    ],
-    // State(104):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(6)
-    //   [0..9, A..F, a..f] => State(106)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 106, 458, 458, 106, 106, 106, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 106, 106, 458, 458, 458, 458, 458, 458, 458, 106, 458,
-        106, 458, 458, 106, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 106, 106, 106, 106, 106, 458, 6, 458, 458,
-    ],
-    // State(105):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(5)
-    //   [0..9, A..F, a..f] => State(147)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 147, 458, 458, 147, 147, 147, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 147, 147, 458, 458, 458, 458, 458, 458, 458, 147, 458,
-        147, 458, 458, 147, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 147, 147, 147, 147, 147, 458, 5, 458, 458,
-    ],
-    // State(106):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(6)
-    //   [0..9, A..F, a..f] => State(148)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 148, 458, 458, 148, 148, 148, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 148, 148, 458, 458, 458, 458, 458, 458, 458, 148, 458,
-        148, 458, 458, 148, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 148, 148, 148, 148, 148, 458, 6, 458, 458,
-    ],
-    // State(107):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(111)
-    //   [0] => State(112)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 111, 149, 149, 111, 111, 111, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 111, 111, 149, 149, 149, 149, 149, 149, 149, 111, 149,
-        111, 149, 149, 111, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 111, 111, 111, 111, 112, 149, 7, 149, 149,
-    ],
-    // State(108):
-    //   CodePoint -> HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   CodePoint -> [1] . [0] Hex4Digits
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(110)
-    //   [1..9, A..F, a..f] => State(111)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 111, 149, 149, 111, 111, 111, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 111, 111, 149, 149, 149, 149, 149, 149, 149, 111, 149,
-        111, 149, 149, 111, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 111, 111, 111, 111, 110, 149, 7, 149, 149,
-    ],
-    // State(109):
-    //   CodePoint -> [0] . CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
-    //   CodePoint -> . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   CodePoint -> . HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit
-    //   CodePoint -> . HexDigit HexDigit HexDigit
-    //   CodePoint -> HexDigit . HexDigit HexDigit
-    //   CodePoint -> . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> . HexDigit Hex4Digits
-    //   CodePoint -> HexDigit . Hex4Digits
-    //   CodePoint -> . [1] [0] Hex4Digits
-    //   CodePoint -> . [0] CodePoint
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . CodePoint !?[HexDigit] !?[}]
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(7)
-    //   [2..9, A..F, a..f] => State(107)
-    //   [1] => State(108)
-    //   [0] => State(109)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 107, 149, 149, 107, 107, 107, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 107, 107, 149, 149, 149, 149, 149, 149, 149, 107, 149,
-        107, 149, 149, 107, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 107, 108, 107, 107, 109, 149, 7, 149, 149,
-    ],
-    // State(110):
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   CodePoint -> [1] [0] . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(112)
-    //   [1..9, A..F, a..f] => State(113)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 113, 149, 149, 113, 113, 113, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 113, 113, 149, 149, 149, 149, 149, 149, 149, 113, 149,
-        113, 149, 149, 113, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 113, 113, 113, 113, 112, 149, 7, 149, 149,
-    ],
-    // State(111):
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(114)
-    //   [0] => State(115)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 114, 149, 149, 114, 114, 114, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 114, 114, 149, 149, 149, 149, 149, 149, 149, 114, 149,
-        114, 149, 149, 114, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 114, 114, 114, 114, 115, 149, 7, 149, 149,
-    ],
-    // State(112):
-    //   CodePoint -> HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(116)
-    //   [0] => State(117)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 116, 149, 149, 116, 116, 116, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 116, 116, 149, 149, 149, 149, 149, 149, 149, 116, 149,
-        116, 149, 149, 116, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 116, 116, 116, 116, 117, 149, 7, 149, 149,
-    ],
-    // State(113):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(117)
-    //   [1..9, A..F, a..f] => State(118)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 118, 149, 149, 118, 118, 118, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 118, 118, 149, 149, 149, 149, 149, 149, 149, 118, 149,
-        118, 149, 149, 118, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 118, 118, 118, 118, 117, 149, 7, 149, 149,
-    ],
-    // State(114):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(119)
-    //   [0] => State(120)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 119, 149, 149, 119, 119, 119, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 119, 119, 149, 149, 149, 149, 149, 149, 149, 119, 149,
-        119, 149, 149, 119, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 119, 119, 119, 119, 120, 149, 7, 149, 149,
-    ],
-    // State(115):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(121)
-    //   [0] => State(122)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 121, 149, 149, 121, 121, 121, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 121, 121, 149, 149, 149, 149, 149, 149, 149, 121, 149,
-        121, 149, 149, 121, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 121, 121, 121, 121, 122, 149, 7, 149, 149,
-    ],
-    // State(116):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(123)
-    //   [0] => State(124)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 123, 149, 149, 123, 123, 123, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 123, 123, 149, 149, 149, 149, 149, 149, 149, 123, 149,
-        123, 149, 149, 123, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 123, 123, 123, 123, 124, 149, 7, 149, 149,
-    ],
-    // State(117):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(124)
-    //   [1..9, A..F, a..f] => State(125)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 125, 149, 149, 125, 125, 125, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 125, 125, 149, 149, 149, 149, 149, 149, 149, 125, 149,
-        125, 149, 149, 125, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 125, 125, 125, 125, 124, 149, 7, 149, 149,
-    ],
-    // State(118):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(126)
-    //   [0] => State(127)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 126, 149, 149, 126, 126, 126, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 126, 126, 149, 149, 149, 149, 149, 149, 149, 126, 149,
-        126, 149, 149, 126, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 126, 126, 126, 126, 127, 149, 7, 149, 149,
-    ],
-    // State(119):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(128)
-    //   [0] => State(129)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 128, 149, 149, 128, 128, 128, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 128, 128, 149, 149, 149, 149, 149, 149, 149, 128, 149,
-        128, 149, 149, 128, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 128, 128, 128, 128, 129, 149, 7, 149, 149,
-    ],
-    // State(120):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(130)
-    //   [0] => State(131)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 130, 149, 149, 130, 130, 130, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 130, 130, 149, 149, 149, 149, 149, 149, 149, 130, 149,
-        130, 149, 149, 130, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 130, 130, 130, 130, 131, 149, 7, 149, 149,
-    ],
-    // State(121):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(132)
-    //   [0] => State(133)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 132, 149, 149, 132, 132, 132, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 132, 132, 149, 149, 149, 149, 149, 149, 149, 132, 149,
-        132, 149, 149, 132, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 132, 132, 132, 132, 133, 149, 7, 149, 149,
-    ],
-    // State(122):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(133)
-    //   [1..9, A..F, a..f] => State(134)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 134, 149, 149, 134, 134, 134, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 134, 134, 149, 149, 149, 149, 149, 149, 149, 134, 149,
-        134, 149, 149, 134, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 134, 134, 134, 134, 133, 149, 7, 149, 149,
-    ],
-    // State(123):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(135)
-    //   [0] => State(136)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 135, 149, 149, 135, 135, 135, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 135, 135, 149, 149, 149, 149, 149, 149, 149, 135, 149,
-        135, 149, 149, 135, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 135, 135, 135, 135, 136, 149, 7, 149, 149,
-    ],
-    // State(124):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(137)
-    //   [0] => State(138)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 137, 149, 149, 137, 137, 137, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 137, 137, 149, 149, 149, 149, 149, 149, 149, 137, 149,
-        137, 149, 149, 137, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 137, 137, 137, 137, 138, 149, 7, 149, 149,
-    ],
-    // State(125):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(138)
-    //   [1..9, A..F, a..f] => State(139)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 139, 149, 149, 139, 139, 139, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 139, 139, 149, 149, 149, 149, 149, 149, 149, 139, 149,
-        139, 149, 149, 139, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 139, 139, 139, 139, 138, 149, 7, 149, 149,
-    ],
-    // State(126):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(140)
-    //   [0] => State(141)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 140, 149, 149, 140, 140, 140, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 140, 140, 149, 149, 149, 149, 149, 149, 149, 140, 149,
-        140, 149, 149, 140, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 140, 140, 140, 140, 141, 149, 7, 149, 149,
-    ],
-    // State(127):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(142)
-    //   [0] => State(143)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 142, 149, 149, 142, 142, 142, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 142, 142, 149, 149, 149, 149, 149, 149, 149, 142, 149,
-        142, 149, 149, 142, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 149, 149, 142, 142, 142, 142, 143, 149, 7, 149, 149,
-    ],
-    // State(128):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(67)
-    //   [0] => State(68)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 67, 149, 149, 67, 67, 67, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 67, 67, 149, 149, 149, 149, 149, 149, 149, 67, 149, 67, 149,
-        149, 67, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 67, 67, 67, 67, 68, 149, 7, 149, 149,
-    ],
-    // State(129):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(69)
-    //   [0] => State(70)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 69, 149, 149, 69, 69, 69, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 69, 69, 149, 149, 149, 149, 149, 149, 149, 69, 149, 69, 149,
-        149, 69, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 69, 69, 69, 69, 70, 149, 7, 149, 149,
-    ],
-    // State(130):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(71)
-    //   [0] => State(72)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 71, 149, 149, 71, 71, 71, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 71, 71, 149, 149, 149, 149, 149, 149, 149, 71, 149, 71, 149,
-        149, 71, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 71, 71, 71, 71, 72, 149, 7, 149, 149,
-    ],
-    // State(131):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(72)
-    //   [1..9, A..F, a..f] => State(73)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 73, 149, 149, 73, 73, 73, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 73, 73, 149, 149, 149, 149, 149, 149, 149, 73, 149, 73, 149,
-        149, 73, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 73, 73, 73, 73, 72, 149, 7, 149, 149,
-    ],
-    // State(132):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(76)
-    //   [0] => State(77)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 76, 149, 149, 76, 76, 76, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 76, 76, 149, 149, 149, 149, 149, 149, 149, 76, 149, 76, 149,
-        149, 76, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 76, 76, 76, 76, 77, 149, 7, 149, 149,
-    ],
-    // State(133):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(78)
-    //   [0] => State(79)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 78, 149, 149, 78, 78, 78, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 78, 78, 149, 149, 149, 149, 149, 149, 149, 78, 149, 78, 149,
-        149, 78, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 78, 78, 78, 78, 79, 149, 7, 149, 149,
-    ],
-    // State(134):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(79)
-    //   [1..9, A..F, a..f] => State(80)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 80, 149, 149, 80, 80, 80, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 80, 80, 149, 149, 149, 149, 149, 149, 149, 80, 149, 80, 149,
-        149, 80, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 80, 80, 80, 80, 79, 149, 7, 149, 149,
-    ],
-    // State(135):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(41)
-    //   [0] => State(42)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 41, 149, 149, 41, 41, 41, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 41, 41, 149, 149, 149, 149, 149, 149, 149, 41, 149, 41, 149,
-        149, 41, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 41, 41, 41, 41, 42, 149, 7, 149, 149,
-    ],
-    // State(136):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(43)
-    //   [0] => State(44)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 43, 149, 149, 43, 43, 43, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 43, 43, 149, 149, 149, 149, 149, 149, 149, 43, 149, 43, 149,
-        149, 43, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 43, 43, 43, 43, 44, 149, 7, 149, 149,
-    ],
-    // State(137):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(36)
-    //   [0] => State(37)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 36, 149, 149, 36, 36, 36, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 36, 36, 149, 149, 149, 149, 149, 149, 149, 36, 149, 36, 149,
-        149, 36, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 36, 36, 36, 36, 37, 149, 7, 149, 149,
-    ],
-    // State(138):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(37)
-    //   [1..9, A..F, a..f] => State(38)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 38, 149, 149, 38, 38, 38, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 38, 38, 149, 149, 149, 149, 149, 149, 149, 38, 149, 38, 149,
-        149, 38, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 38, 38, 38, 38, 37, 149, 7, 149, 149,
-    ],
-    // State(139):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(39)
-    //   [0] => State(40)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 39, 149, 149, 39, 39, 39, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 39, 39, 149, 149, 149, 149, 149, 149, 149, 39, 149, 39, 149,
-        149, 39, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 39, 39, 39, 39, 40, 149, 7, 149, 149,
-    ],
-    // State(140):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
-    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(53)
-    //   [0] => State(54)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 53, 149, 149, 53, 53, 53, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 53, 53, 149, 149, 149, 149, 149, 149, 149, 53, 149, 53, 149,
-        149, 53, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 53, 53, 53, 53, 54, 149, 7, 149, 149,
-    ],
-    // State(141):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(55)
-    //   [0] => State(56)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 55, 149, 149, 55, 55, 55, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 55, 55, 149, 149, 149, 149, 149, 149, 149, 55, 149, 55, 149,
-        149, 55, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 55, 55, 55, 55, 56, 149, 7, 149, 149,
-    ],
-    // State(142):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [1..9, A..F, a..f] => State(57)
-    //   [0] => State(58)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 57, 149, 149, 57, 57, 57, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 57, 57, 149, 149, 149, 149, 149, 149, 149, 57, 149, 57, 149,
-        149, 57, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 57, 57, 57, 57, 58, 149, 7, 149, 149,
-    ],
-    // State(143):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    //   NotCodePoint -> HexDigit . NotCodePoint
-    //   NotEscapeSequence -> [u] [{] . NotCodePoint !?[HexDigit]
-    //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
-    //   NonZeroHexDigit -> . [HexDigit -0]
-    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
-    //   [}] => State(7)
-    //   [0] => State(58)
-    //   [1..9, A..F, a..f] => State(59)
-    //   [<NUL>../, :..@, G..`, g..|, ~..U+10FFFF] => State(149)?
-    [
-        149, 149, 149, 149, 149, 149, 149, 149, 149, 59, 149, 149, 59, 59, 59, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 59, 59, 149, 149, 149, 149, 149, 149, 149, 59, 149, 59, 149,
-        149, 59, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149, 149,
-        149, 149, 149, 149, 149, 149, 59, 59, 59, 59, 58, 149, 7, 149, 149,
-    ],
-    // State(144):
-    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
-    //   [0..9, A..F, a..f] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 386, 458, 458, 386, 386, 386, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 386, 386, 458, 458, 458, 458, 458, 458, 458, 386, 458,
-        386, 458, 458, 386, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 386, 386, 386, 386, 386, 458, 458, 458, 458,
-    ],
-    // State(145):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(213):IdentifierName
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 213, 458, 458,
-    ],
-    // State(146):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(386):PrivateIdentifier
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 386, 458, 458,
-    ],
-    // State(147):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(5)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 5, 458, 458,
-    ],
-    // State(148):
-    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
-    //   [}] => State(6)
-    [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 6, 458, 458,
-    ],
-    // State(149):
-    //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
-    //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
-    //   TemplateCharacters -> . TemplateCharacter
-    //   TemplateCharacter -> . [$] !?[{]
-    //   TemplateCharacter -> . [\] TemplateEscapeSequence
-    //   TemplateCharacter -> . [\] NotEscapeSequence
-    //   TemplateCharacter -> . LineContinuation
-    //   LineContinuation -> . [\] LineTerminatorSequence
-    //   TemplateCharacter -> . LineTerminatorSequence
-    //   LineTerminatorSequence -> . [<LF>]
-    //   LineTerminatorSequence -> . [<CR>] !?[<LF>]
-    //   LineTerminatorSequence -> [<CR>] . !?[<LF>]
-    //   LineTerminatorSequence -> . [<LS>]
-    //   LineTerminatorSequence -> . [<PS>]
-    //   LineTerminatorSequence -> . [<CR>] [<LF>]
-    //   TemplateCharacter -> . [SourceCharacter -` -\ -$ -LineTerminator]
-    //   TemplateCharacters -> . TemplateCharacter TemplateCharacters
-    //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
-    //   TemplateHead -> [`] . TemplateCharacters [$] [{]
-    //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    //   TemplateCharacter -> [$] . !?[{]
-    //   NotEscapeSequence -> [u] . !?[HexDigit] !?[{]
-    //   NotEscapeSequence -> [x] . !?[HexDigit]
-    //   TemplateEscapeSequence -> [0] . !?[DecimalDigit]
-    //   NotEscapeSequence -> [u] HexDigit . !?[HexDigit]
-    //   NotEscapeSequence -> [u] [{] . !?[HexDigit]
-    //   NotEscapeSequence -> [x] HexDigit . !?[HexDigit]
-    //   NotEscapeSequence -> [u] HexDigit HexDigit . !?[HexDigit]
-    //   NotEscapeSequence -> [u] [{] CodePoint . !?[HexDigit] !?[}]
-    //   NotEscapeSequence -> [u] HexDigit HexDigit HexDigit . !?[HexDigit]
-    //   NotEscapeSequence -> [u] [{] NotCodePoint . !?[HexDigit]
-    // Transitions:
-    //   [<NUL>..<FF>, <SO>..#, %..[, ].._, a..U+10FFFF] => State(7)
-    //   [\] => State(11)
-    //   [<CR>] => State(25)
-    //   [$] => State(28)
-    //   [`] => State(453):NoSubstitutionTemplate
-    [
-        25, 11, 7, 7, 7, 453, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 28, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-    ],
-    // State(150):
     //   DoubleStringCharacters -> DoubleStringCharacter . DoubleStringCharacters
     //   StringLiteral -> ["] . DoubleStringCharacters ["]
     //   DoubleStringCharacters -> . DoubleStringCharacter
@@ -3052,23 +2337,20 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DoubleStringCharacter -> . [\] EscapeSequence
     //   DoubleStringCharacter -> . LineContinuation
     //   LineContinuation -> . [\] LineTerminatorSequence
-    //   LineTerminatorSequence -> [<CR>] . !?[<LF>]
+    //   LineTerminatorSequence -> [<CR>] . ?![<LF>]
+    //   LineTerminatorSequence -> [<CR>] . [<LF>]
     //   DoubleStringCharacters -> . DoubleStringCharacter DoubleStringCharacters
     //   StringLiteral -> ["] DoubleStringCharacters . ["]
-    //   LegacyOctalEscapeSequence -> NonZeroOctalDigit . !?[OctalDigit]
-    //   EscapeSequence -> [0] . !?[DecimalDigit]
-    //   LegacyOctalEscapeSequence -> [0] . ?[8 9]
-    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . !?[OctalDigit]
     // Transitions:
-    //   [<NUL>..<HT>, <VT>..<FF>, <SO>..!, #..[, ]..U+10FFFF] => State(5)
-    //   [\] => State(9)
-    //   ["] => State(452):StringLiteral
+    //   [<NUL>..<FF>, <SO>..!, #..[, ]..U+10FFFF] => State(5)
+    //   [\] => State(33)
+    //   ["] => State(413):StringLiteral
     [
-        458, 9, 5, 452, 5, 5, 5, 458, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+        419, 33, 5, 413, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 419,
     ],
-    // State(151):
+    // State(82):
     //   SingleStringCharacters -> SingleStringCharacter . SingleStringCharacters
     //   StringLiteral -> ['] . SingleStringCharacters [']
     //   SingleStringCharacters -> . SingleStringCharacter
@@ -3078,86 +2360,624 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   SingleStringCharacter -> . [\] EscapeSequence
     //   SingleStringCharacter -> . LineContinuation
     //   LineContinuation -> . [\] LineTerminatorSequence
-    //   LineTerminatorSequence -> [<CR>] . !?[<LF>]
+    //   LineTerminatorSequence -> [<CR>] . ?![<LF>]
+    //   LineTerminatorSequence -> [<CR>] . [<LF>]
     //   SingleStringCharacters -> . SingleStringCharacter SingleStringCharacters
     //   StringLiteral -> ['] SingleStringCharacters . [']
-    //   LegacyOctalEscapeSequence -> NonZeroOctalDigit . !?[OctalDigit]
-    //   EscapeSequence -> [0] . !?[DecimalDigit]
-    //   LegacyOctalEscapeSequence -> [0] . ?[8 9]
-    //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . !?[OctalDigit]
     // Transitions:
-    //   [<NUL>..<HT>, <VT>..<FF>, <SO>..&, (..[, ]..U+10FFFF] => State(6)
-    //   [\] => State(10)
-    //   ['] => State(452):StringLiteral
+    //   [<NUL>..<FF>, <SO>..&, (..[, ]..U+10FFFF] => State(6)
+    //   [\] => State(34)
+    //   ['] => State(413):StringLiteral
     [
-        458, 10, 6, 6, 452, 6, 6, 458, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+        419, 34, 6, 6, 413, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
         6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 419,
     ],
-    // State(152):
+    // State(83):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   CodePoint -> [1] [0] . Hex4Digits
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(86)
+    //   [}] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 86, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 86, 86, 86, 419, 419, 419, 86, 86, 419, 419, 419, 419, 419, 419, 419, 86, 419, 86,
+        419, 419, 86, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 86, 86, 86, 86, 419, 174, 419, 419, 86, 419,
+    ],
+    // State(84):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   CodePoint -> [1] . [0] Hex4Digits
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [0] => State(83)
+    //   [1..9, A..F, a..f] => State(86)
+    //   [}] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 86, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 86, 86, 86, 419, 419, 419, 86, 86, 419, 419, 419, 419, 419, 419, 419, 86, 419, 86,
+        419, 419, 86, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 86, 86, 86, 83, 419, 174, 419, 419, 83, 419,
+    ],
+    // State(85):
+    //   CodePoint -> [0] . CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
+    //   CodePoint -> . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> . HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit
+    //   CodePoint -> . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   CodePoint -> . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> . HexDigit Hex4Digits
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   CodePoint -> . [1] [0] Hex4Digits
+    //   CodePoint -> . [0] CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [2..9, A..F, a..f] => State(83)
+    //   [1] => State(84)
+    //   [0] => State(85)
+    //   [}] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 83, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 83, 83, 83, 419, 419, 419, 83, 83, 419, 419, 419, 419, 419, 419, 419, 83, 419, 83,
+        419, 419, 83, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 84, 83, 83, 85, 419, 174, 419, 419, 83, 419,
+    ],
+    // State(86):
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(87)
+    //   [}] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 87, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 87, 87, 87, 419, 419, 419, 87, 87, 419, 419, 419, 419, 419, 419, 419, 87, 419, 87,
+        419, 419, 87, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 87, 87, 87, 87, 419, 174, 419, 419, 87, 419,
+    ],
+    // State(87):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(88)
+    //   [}] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 88, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 88, 88, 88, 419, 419, 419, 88, 88, 419, 419, 419, 419, 419, 419, 419, 88, 419, 88,
+        419, 419, 88, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 88, 88, 88, 88, 419, 174, 419, 419, 88, 419,
+    ],
+    // State(88):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(109)
+    //   [}] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 109, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 109, 109, 109, 419, 419, 419, 109, 109, 419, 419, 419, 419, 419, 419, 419, 109, 419,
+        109, 419, 419, 109, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 109, 109, 109, 109, 419, 174, 419, 419, 109, 419,
+    ],
+    // State(89):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 174, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 174, 174, 174, 419, 419, 419, 174, 174, 419, 419, 419, 419, 419, 419, 419, 174, 419,
+        174, 419, 419, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 419, 419, 174, 419,
+    ],
+    // State(90):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   CodePoint -> [1] [0] . Hex4Digits
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(93)
+    //   [}] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 93, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 93, 93, 93, 419, 419, 419, 93, 93, 419, 419, 419, 419, 419, 419, 419, 93, 419, 93,
+        419, 419, 93, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 93, 93, 93, 93, 419, 347, 419, 419, 93, 419,
+    ],
+    // State(91):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   CodePoint -> [1] . [0] Hex4Digits
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [0] => State(90)
+    //   [1..9, A..F, a..f] => State(93)
+    //   [}] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 93, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 93, 93, 93, 419, 419, 419, 93, 93, 419, 419, 419, 419, 419, 419, 419, 93, 419, 93,
+        419, 419, 93, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 93, 93, 93, 90, 419, 347, 419, 419, 90, 419,
+    ],
+    // State(92):
+    //   CodePoint -> [0] . CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
+    //   CodePoint -> . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> . HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit
+    //   CodePoint -> . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   CodePoint -> . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> . HexDigit Hex4Digits
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   CodePoint -> . [1] [0] Hex4Digits
+    //   CodePoint -> . [0] CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [2..9, A..F, a..f] => State(90)
+    //   [1] => State(91)
+    //   [0] => State(92)
+    //   [}] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 90, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 90, 90, 90, 419, 419, 419, 90, 90, 419, 419, 419, 419, 419, 419, 419, 90, 419, 90,
+        419, 419, 90, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 91, 90, 90, 92, 419, 347, 419, 419, 90, 419,
+    ],
+    // State(93):
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(94)
+    //   [}] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 94, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 94, 94, 94, 419, 419, 419, 94, 94, 419, 419, 419, 419, 419, 419, 419, 94, 419, 94,
+        419, 419, 94, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 94, 94, 94, 94, 419, 347, 419, 419, 94, 419,
+    ],
+    // State(94):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(95)
+    //   [}] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 95, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 95, 95, 95, 419, 419, 419, 95, 95, 419, 419, 419, 419, 419, 419, 419, 95, 419, 95,
+        419, 419, 95, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 95, 95, 95, 95, 419, 347, 419, 419, 95, 419,
+    ],
+    // State(95):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(110)
+    //   [}] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 110, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 110, 110, 110, 419, 419, 419, 110, 110, 419, 419, 419, 419, 419, 419, 419, 110, 419,
+        110, 419, 419, 110, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 110, 110, 110, 110, 419, 347, 419, 419, 110, 419,
+    ],
+    // State(96):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   CodePoint -> [1] [0] . Hex4Digits
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(5)
+    //   [0..9, A..F, a..f] => State(99)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 99, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 99, 99, 99, 419, 419, 419, 99, 99, 419, 419, 419, 419, 419, 419, 419, 99, 419, 99,
+        419, 419, 99, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 99, 99, 99, 99, 419, 5, 419, 419, 5, 419,
+    ],
+    // State(97):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   CodePoint -> [1] . [0] Hex4Digits
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(5)
+    //   [0] => State(96)
+    //   [1..9, A..F, a..f] => State(99)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 99, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 99, 99, 99, 419, 419, 419, 99, 99, 419, 419, 419, 419, 419, 419, 419, 99, 419, 99,
+        419, 419, 99, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 99, 99, 99, 96, 419, 5, 419, 419, 5, 419,
+    ],
+    // State(98):
+    //   CodePoint -> [0] . CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
+    //   CodePoint -> . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> . HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit
+    //   CodePoint -> . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   CodePoint -> . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> . HexDigit Hex4Digits
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   CodePoint -> . [1] [0] Hex4Digits
+    //   CodePoint -> . [0] CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(5)
+    //   [2..9, A..F, a..f] => State(96)
+    //   [1] => State(97)
+    //   [0] => State(98)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 96, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 96, 96, 96, 419, 419, 419, 96, 96, 419, 419, 419, 419, 419, 419, 419, 96, 419, 96,
+        419, 419, 96, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 97, 96, 96, 98, 419, 5, 419, 419, 5, 419,
+    ],
+    // State(99):
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(5)
+    //   [0..9, A..F, a..f] => State(100)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 100, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 100, 100, 100, 419, 419, 419, 100, 100, 419, 419, 419, 419, 419, 419, 419, 100, 419,
+        100, 419, 419, 100, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 100, 100, 100, 100, 419, 5, 419, 419, 5, 419,
+    ],
+    // State(100):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(5)
+    //   [0..9, A..F, a..f] => State(106)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 106, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 106, 106, 106, 419, 419, 419, 106, 106, 419, 419, 419, 419, 419, 419, 419, 106, 419,
+        106, 419, 419, 106, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 106, 106, 106, 106, 419, 5, 419, 419, 5, 419,
+    ],
+    // State(101):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   CodePoint -> [1] [0] . Hex4Digits
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(6)
+    //   [0..9, A..F, a..f] => State(104)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 104, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 104, 104, 104, 419, 419, 419, 104, 104, 419, 419, 419, 419, 419, 419, 419, 104, 419,
+        104, 419, 419, 104, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 104, 104, 104, 104, 419, 6, 419, 419, 6, 419,
+    ],
+    // State(102):
+    //   CodePoint -> HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   CodePoint -> [1] . [0] Hex4Digits
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(6)
+    //   [0] => State(101)
+    //   [1..9, A..F, a..f] => State(104)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 104, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 104, 104, 104, 419, 419, 419, 104, 104, 419, 419, 419, 419, 419, 419, 419, 104, 419,
+        104, 419, 419, 104, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 104, 104, 104, 101, 419, 6, 419, 419, 6, 419,
+    ],
+    // State(103):
+    //   CodePoint -> [0] . CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
+    //   CodePoint -> . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   CodePoint -> . HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit
+    //   CodePoint -> . HexDigit HexDigit HexDigit
+    //   CodePoint -> HexDigit . HexDigit HexDigit
+    //   CodePoint -> . Hex4Digits
+    //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   CodePoint -> . HexDigit Hex4Digits
+    //   CodePoint -> HexDigit . Hex4Digits
+    //   CodePoint -> . [1] [0] Hex4Digits
+    //   CodePoint -> . [0] CodePoint
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(6)
+    //   [2..9, A..F, a..f] => State(101)
+    //   [1] => State(102)
+    //   [0] => State(103)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 101, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 101, 101, 101, 419, 419, 419, 101, 101, 419, 419, 419, 419, 419, 419, 419, 101, 419,
+        101, 419, 419, 101, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 102, 101, 101, 103, 419, 6, 419, 419, 6, 419,
+    ],
+    // State(104):
+    //   CodePoint -> HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    // Transitions:
+    //   [}] => State(6)
+    //   [0..9, A..F, a..f] => State(105)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 105, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 105, 105, 105, 419, 419, 419, 105, 105, 419, 419, 419, 419, 419, 419, 419, 105, 419,
+        105, 419, 419, 105, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 105, 105, 105, 105, 419, 6, 419, 419, 6, 419,
+    ],
+    // State(105):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(6)
+    //   [0..9, A..F, a..f] => State(107)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 107, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 107, 107, 107, 419, 419, 419, 107, 107, 419, 419, 419, 419, 419, 419, 419, 107, 419,
+        107, 419, 419, 107, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 107, 107, 107, 107, 419, 6, 419, 419, 6, 419,
+    ],
+    // State(106):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(5)
+    //   [0..9, A..F, a..f] => State(111)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 111, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 111, 111, 111, 419, 419, 419, 111, 111, 419, 419, 419, 419, 419, 419, 419, 111, 419,
+        111, 419, 419, 111, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 111, 111, 111, 111, 419, 5, 419, 419, 5, 419,
+    ],
+    // State(107):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(6)
+    //   [0..9, A..F, a..f] => State(112)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 112, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 112, 112, 112, 419, 419, 419, 112, 112, 419, 419, 419, 419, 419, 419, 419, 112, 419,
+        112, 419, 419, 112, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 112, 112, 112, 112, 419, 6, 419, 419, 6, 419,
+    ],
+    // State(108):
+    //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
+    //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
+    // Transitions:
+    //   [0..9, A..F, a..f] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 347, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 347, 347, 347, 419, 419, 419, 347, 347, 419, 419, 419, 419, 419, 419, 419, 347, 419,
+        347, 419, 419, 347, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 347, 347, 347, 347, 419, 419, 419, 419, 347, 419,
+    ],
+    // State(109):
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(174):IdentifierName
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 174, 419, 419, 174, 419,
+    ],
+    // State(110):
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(347):PrivateIdentifier
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 347, 419, 419, 347, 419,
+    ],
+    // State(111):
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(5)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 5, 419, 419, 5, 419,
+    ],
+    // State(112):
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
+    // Transitions:
+    //   [}] => State(6)
+    [
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 6, 419, 419, 6, 419,
+    ],
+    // State(113):
     //   WhiteSpaceSequence -> WhiteSpace . WhiteSpaceSequence
     //   WhiteSpaceSequence -> WhiteSpace .
     //   WhiteSpaceSequence -> . WhiteSpace
+    //   WhiteSpace -> [<TAB> <VT> <FF> <ZWNBSP> <USP>] .
     //   WhiteSpace -> . [<TAB> <VT> <FF> <ZWNBSP> <USP>]
     //   WhiteSpaceSequence -> WhiteSpace WhiteSpaceSequence .
     //   WhiteSpaceSequence -> . WhiteSpace WhiteSpaceSequence
     // Transitions:
-    //   [<HT>, <VT>..<FF>, <SP>, U+00A0, U+1680, U+2000..U+200A, U+200F, U+205F, U+FEFF] => State(152):WhiteSpaceSequence
+    //   [<HT>, <VT>..<FF>, <SP>, U+00A0, U+1680, U+2000..U+200A, U+200F, U+205F, U+FEFF] => State(113):WhiteSpaceSequence
     [
-        458, 458, 458, 458, 458, 458, 152, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 113, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 113, 419,
     ],
-    // State(153):
+    // State(114):
     //   LineTerminatorSequence -> [<LF>] .
     //   LineTerminatorSequence -> [<LS>] .
     //   LineTerminatorSequence -> [<PS>] .
     //   LineTerminatorSequence -> [<CR>] [<LF>] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(154):
-    //   LineTerminatorSequence -> [<CR>] !?[<LF>] .
-    //   LineTerminatorSequence -> [<CR>] . !?[<LF>]
+    // State(115):
+    //   LineTerminatorSequence -> [<CR>] ?![<LF>] .
+    //   LineTerminatorSequence -> [<CR>] . ?![<LF>]
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(155):
+    // State(116):
     //   Comment -> SingleLineComment .
+    //   SingleLineComment -> [/] [/] .
     //   SingleLineCommentChars -> SingleLineCommentChar . SingleLineCommentChars
     //   SingleLineComment -> [/] [/] . SingleLineCommentChars
     //   SingleLineCommentChars -> . SingleLineCommentChar
     //   SingleLineCommentChar -> . [SourceCharacter -LineTerminator]
     //   SingleLineCommentChars -> . SingleLineCommentChar SingleLineCommentChars
+    //   SingleLineComment -> [/] [/] SingleLineCommentChars .
+    //   SingleLineCommentChars -> SingleLineCommentChar .
+    //   SingleLineCommentChar -> [SourceCharacter -LineTerminator] .
+    //   SingleLineCommentChars -> SingleLineCommentChar SingleLineCommentChars .
     // Transitions:
-    //   [<NUL>..<HT>, <VT>..<FF>, <SO>..U+2027, U+202A..U+10FFFF] => State(155):Comment
+    //   [<NUL>..<HT>, <VT>..<FF>, <SO>..U+2027, U+202A..U+10FFFF] => State(116):Comment
     [
-        458, 155, 155, 155, 155, 155, 155, 458, 458, 155, 155, 155, 155, 155, 155, 155, 155, 155,
-        155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155,
-        155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155,
-        155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155, 155,
+        419, 116, 116, 116, 116, 116, 116, 419, 419, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
+        116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 116, 419,
     ],
-    // State(156):
+    // State(117):
     //   Comment -> MultiLineComment .
+    //   MultiLineComment -> [/] [*] [*] [/] .
+    //   MultiLineComment -> [/] [*] MultiLineCommentChars [*] [/] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(157):
+    // State(118):
     //   BREAK -> [b] [r] [e] [a] [k] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3165,19 +2985,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(158):
+    // State(119):
     //   CASE -> [c] [a] [s] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3185,19 +3008,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(159):
+    // State(120):
     //   CATCH -> [c] [a] [t] [c] [h] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3205,19 +3031,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(160):
+    // State(121):
     //   CLASS -> [c] [l] [a] [s] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3225,19 +3054,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(161):
+    // State(122):
     //   CONST -> [c] [o] [n] [s] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3245,19 +3077,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(162):
+    // State(123):
     //   CONTINUE -> [c] [o] [n] [t] [i] [n] [u] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3265,19 +3100,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(163):
+    // State(124):
     //   DEBUGGER -> [d] [e] [b] [u] [g] [g] [e] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3285,19 +3123,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(164):
+    // State(125):
     //   DEFAULT -> [d] [e] [f] [a] [u] [l] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3305,19 +3146,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(165):
+    // State(126):
     //   DELETE -> [d] [e] [l] [e] [t] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3325,19 +3169,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(166):
+    // State(127):
     //   DO -> [d] [o] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3345,19 +3192,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(167):
+    // State(128):
     //   ELSE -> [e] [l] [s] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3365,19 +3215,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(168):
+    // State(129):
     //   ENUM -> [e] [n] [u] [m] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3385,19 +3238,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(169):
+    // State(130):
     //   EXPORT -> [e] [x] [p] [o] [r] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3405,19 +3261,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(170):
+    // State(131):
     //   EXTENDS -> [e] [x] [t] [e] [n] [d] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3425,19 +3284,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(171):
+    // State(132):
     //   FALSE -> [f] [a] [l] [s] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3445,19 +3307,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(172):
+    // State(133):
     //   FINALLY -> [f] [i] [n] [a] [l] [l] [y] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3465,19 +3330,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(173):
+    // State(134):
     //   FOR -> [f] [o] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3485,19 +3353,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(174):
+    // State(135):
     //   FUNCTION -> [f] [u] [n] [c] [t] [i] [o] [n] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3505,19 +3376,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(175):
+    // State(136):
     //   IF -> [i] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3525,19 +3399,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(176):
+    // State(137):
     //   IMPORT -> [i] [m] [p] [o] [r] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3545,21 +3422,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(177):
+    // State(138):
     //   IN -> [i] [n] .
     //   INSTANCEOF -> [i] [n] . [s] [t] [a] [n] [c] [e] [o] [f]
     //   INTERFACE -> [i] [n] . [t] [e] [r] [f] [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3567,21 +3447,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [s] => State(214):IdentifierName
-    //   [t] => State(216):IdentifierName
+    //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [s] => State(175):IdentifierName
+    //   [t] => State(177):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 214, 216, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 175, 177, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(178):
+    // State(139):
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] [e] [o] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3589,19 +3472,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(179):
+    // State(140):
     //   NEW -> [n] [e] [w] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3609,19 +3495,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(180):
+    // State(141):
     //   NULL -> [n] [u] [l] [l] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3629,19 +3518,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(181):
+    // State(142):
     //   RETURN -> [r] [e] [t] [u] [r] [n] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3649,19 +3541,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(182):
+    // State(143):
     //   SUPER -> [s] [u] [p] [e] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3669,19 +3564,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(183):
+    // State(144):
     //   SWITCH -> [s] [w] [i] [t] [c] [h] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3689,19 +3587,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(184):
+    // State(145):
     //   THIS -> [t] [h] [i] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3709,19 +3610,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(185):
+    // State(146):
     //   THROW -> [t] [h] [r] [o] [w] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3729,19 +3633,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(186):
+    // State(147):
     //   TRUE -> [t] [r] [u] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3749,19 +3656,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(187):
+    // State(148):
     //   TRY -> [t] [r] [y] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3769,19 +3679,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(188):
+    // State(149):
     //   TYPEOF -> [t] [y] [p] [e] [o] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3789,19 +3702,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(189):
+    // State(150):
     //   VAR -> [v] [a] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3809,19 +3725,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(190):
+    // State(151):
     //   VOID -> [v] [o] [i] [d] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3829,19 +3748,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(191):
+    // State(152):
     //   WHILE -> [w] [h] [i] [l] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3849,19 +3771,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(192):
+    // State(153):
     //   WITH -> [w] [i] [t] [h] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3869,19 +3794,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(193):
+    // State(154):
     //   AWAIT -> [a] [w] [a] [i] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3889,19 +3817,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(194):
+    // State(155):
     //   YIELD -> [y] [i] [e] [l] [d] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3909,19 +3840,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(195):
+    // State(156):
     //   LET -> [l] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3929,19 +3863,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(196):
+    // State(157):
     //   STATIC -> [s] [t] [a] [t] [i] [c] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3949,19 +3886,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(197):
+    // State(158):
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] [n] [t] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3969,19 +3909,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(198):
+    // State(159):
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] [a] [c] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -3989,19 +3932,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(199):
+    // State(160):
     //   PACKAGE -> [p] [a] [c] [k] [a] [g] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4009,19 +3955,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(200):
+    // State(161):
     //   PRIVATE -> [p] [r] [i] [v] [a] [t] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4029,19 +3978,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(201):
+    // State(162):
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] [t] [e] [d] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4049,19 +4001,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(202):
+    // State(163):
     //   PUBLIC -> [p] [u] [b] [l] [i] [c] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4069,20 +4024,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(203):
+    // State(164):
     //   AS -> [a] [s] .
     //   ASYNC -> [a] [s] . [y] [n] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4090,20 +4048,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..x, z, U+200C..U+200D] => State(213):IdentifierName
-    //   [y] => State(302):IdentifierName
+    //   [$, 0..9, A..Z, _, a..x, z, U+200C..U+200D] => State(174):IdentifierName
+    //   [y] => State(263):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 302, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 263, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(204):
+    // State(165):
     //   ASYNC -> [a] [s] [y] [n] [c] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4111,19 +4072,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(205):
+    // State(166):
     //   FROM -> [f] [r] [o] [m] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4131,19 +4095,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(206):
+    // State(167):
     //   GET -> [g] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4151,19 +4118,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(207):
+    // State(168):
     //   META -> [m] [e] [t] [a] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4171,19 +4141,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(208):
+    // State(169):
     //   OF -> [o] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4191,19 +4164,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(209):
+    // State(170):
     //   SET -> [s] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4211,19 +4187,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(210):
+    // State(171):
     //   TARGET -> [t] [a] [r] [g] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4231,16 +4210,19 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(211):
+    // State(172):
     //   BREAK -> [b] . [r] [e] [a] [k]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -4251,17 +4233,20 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(256):IdentifierName
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(217):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 256, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 217, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(212):
+    // State(173):
     //   RETURN -> [r] . [e] [t] [u] [r] [n]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -4272,16 +4257,19 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(231):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(192):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 231, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 192, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(213):
+    // State(174):
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -4290,22 +4278,39 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
+    //   IdentifierStartChar -> [$] .
+    //   IdentifierStartChar -> [_] .
     //   IdentifierName -> IdentifierName IdentifierPart .
+    //   IdentifierPart -> IdentifierPartChar .
+    //   IdentifierPartChar -> UnicodeIDContinue .
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
+    //   IdentifierPartChar -> [$] .
+    //   IdentifierPartChar -> [<ZWNJ>] .
+    //   IdentifierPartChar -> [<ZWJ>] .
+    //   IdentifierStart -> [\] UnicodeEscapeSequence .
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint [}] .
+    //   IdentifierPart -> [\] UnicodeEscapeSequence .
+    //   UnicodeEscapeSequence -> [u] Hex4Digits .
+    //   Hex4Digits -> HexDigit HexDigit HexDigit HexDigit .
+    //   HexDigit -> [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F] .
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(214):
+    // State(175):
     //   INSTANCEOF -> [i] [n] [s] . [t] [a] [n] [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4313,20 +4318,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(218):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(179):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 218, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 179, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(215):
+    // State(176):
     //   FUNCTION -> [f] [u] . [n] [c] [t] [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4334,20 +4342,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(225):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(186):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 225, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 186, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(216):
+    // State(177):
     //   INTERFACE -> [i] [n] [t] . [e] [r] [f] [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4355,20 +4366,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(226):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(187):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 226, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 187, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(217):
+    // State(178):
     //   PROTECTED -> [p] [r] [o] . [t] [e] [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4376,20 +4390,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(227):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(188):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 227, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 188, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(218):
+    // State(179):
     //   INSTANCEOF -> [i] [n] [s] [t] . [a] [n] [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4397,20 +4414,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(228):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(189):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        228, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        189, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(219):
+    // State(180):
     //   IMPLEMENTS -> [i] [m] [p] [l] . [e] [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4418,20 +4438,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(229):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(190):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 229, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 190, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(220):
+    // State(181):
     //   PACKAGE -> [p] . [a] [c] [k] [a] [g] [e]
     //   PRIVATE -> [p] . [r] [i] [v] [a] [t] [e]
     //   PROTECTED -> [p] . [r] [o] [t] [e] [c] [t] [e] [d]
     //   PUBLIC -> [p] . [u] [b] [l] [i] [c]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -4442,22 +4465,25 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..q, s..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(222):IdentifierName
-    //   [a] => State(223):IdentifierName
-    //   [u] => State(239):IdentifierName
+    //   [$, 0..9, A..Z, _, b..q, s..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(183):IdentifierName
+    //   [a] => State(184):IdentifierName
+    //   [u] => State(200):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 222, 239, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        223, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 183, 200, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        184, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(221):
+    // State(182):
     //   FINALLY -> [f] [i] . [n] [a] [l] [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4465,21 +4491,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(242):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(203):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 242, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 203, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(222):
+    // State(183):
     //   PRIVATE -> [p] [r] . [i] [v] [a] [t] [e]
     //   PROTECTED -> [p] [r] . [o] [t] [e] [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4487,21 +4516,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(217):IdentifierName
-    //   [i] => State(243):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(178):IdentifierName
+    //   [i] => State(204):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 217, 243, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 178, 204, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(223):
+    // State(184):
     //   PACKAGE -> [p] [a] . [c] [k] [a] [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4509,20 +4541,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [c] => State(244):IdentifierName
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [c] => State(205):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 244, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 205, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(224):
+    // State(185):
     //   DEBUGGER -> [d] [e] [b] . [u] [g] [g] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4530,20 +4565,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(246):IdentifierName
+    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(207):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 246, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 207, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(225):
+    // State(186):
     //   FUNCTION -> [f] [u] [n] . [c] [t] [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4551,20 +4589,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [c] => State(247):IdentifierName
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [c] => State(208):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 247, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 208, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(226):
+    // State(187):
     //   INTERFACE -> [i] [n] [t] [e] . [r] [f] [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4572,20 +4613,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(248):IdentifierName
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(209):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 248, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 209, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(227):
+    // State(188):
     //   PROTECTED -> [p] [r] [o] [t] . [e] [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4593,20 +4637,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(249):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(210):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 249, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 210, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(228):
+    // State(189):
     //   INSTANCEOF -> [i] [n] [s] [t] [a] . [n] [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4614,20 +4661,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(250):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(211):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 250, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 211, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(229):
+    // State(190):
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] . [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4635,17 +4685,20 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [m] => State(251):IdentifierName
+    //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [m] => State(212):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 251, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 212, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(230):
+    // State(191):
     //   YIELD -> [y] . [i] [e] [l] [d]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -4656,20 +4709,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(262):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(223):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 262, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 223, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(231):
+    // State(192):
     //   RETURN -> [r] [e] . [t] [u] [r] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4677,21 +4733,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(264):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(225):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 264, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 225, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(232):
+    // State(193):
     //   EXPORT -> [e] [x] . [p] [o] [r] [t]
     //   EXTENDS -> [e] [x] . [t] [e] [n] [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4699,21 +4758,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..o, q..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(240):IdentifierName
-    //   [p] => State(265):IdentifierName
+    //   [$, 0..9, A..Z, _, a..o, q..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(201):IdentifierName
+    //   [p] => State(226):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 265, 213, 213, 213, 213, 213, 213, 240, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 226, 174, 174, 174, 174, 174, 174, 201, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(233):
+    // State(194):
     //   STATIC -> [s] [t] . [a] [t] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4721,20 +4783,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(266):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(227):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        266, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        227, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(234):
+    // State(195):
     //   SWITCH -> [s] [w] . [i] [t] [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4742,20 +4807,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(267):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(228):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 267, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 228, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(235):
+    // State(196):
     //   TARGET -> [t] [a] . [r] [g] [e] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4763,20 +4831,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(268):IdentifierName
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(229):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 268, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 229, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(236):
+    // State(197):
     //   TYPEOF -> [t] [y] . [p] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4784,21 +4855,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [p] => State(269):IdentifierName
+    //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [p] => State(230):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 269, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 230, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(237):
+    // State(198):
     //   IMPORT -> [i] [m] . [p] [o] [r] [t]
     //   IMPLEMENTS -> [i] [m] . [p] [l] [e] [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4806,22 +4880,25 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [p] => State(270):IdentifierName
+    //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [p] => State(231):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 270, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 231, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(238):
+    // State(199):
     //   DEBUGGER -> [d] [e] . [b] [u] [g] [g] [e] [r]
     //   DEFAULT -> [d] [e] . [f] [a] [u] [l] [t]
     //   DELETE -> [d] [e] . [l] [e] [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4829,22 +4906,25 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a, c..e, g..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [b] => State(224):IdentifierName
-    //   [f] => State(241):IdentifierName
-    //   [l] => State(271):IdentifierName
+    //   [$, 0..9, A..Z, _, a, c..e, g..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [b] => State(185):IdentifierName
+    //   [f] => State(202):IdentifierName
+    //   [l] => State(232):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 224, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 271, 213, 213, 241, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 185, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 232, 174, 174, 202, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(239):
+    // State(200):
     //   PUBLIC -> [p] [u] . [b] [l] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4852,20 +4932,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a, c..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [b] => State(272):IdentifierName
+    //   [$, 0..9, A..Z, _, a, c..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [b] => State(233):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 272, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 233, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(240):
+    // State(201):
     //   EXTENDS -> [e] [x] [t] . [e] [n] [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4873,20 +4956,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(273):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(234):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 273, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 234, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(241):
+    // State(202):
     //   DEFAULT -> [d] [e] [f] . [a] [u] [l] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4894,20 +4980,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(274):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(235):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        274, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        235, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(242):
+    // State(203):
     //   FINALLY -> [f] [i] [n] . [a] [l] [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4915,20 +5004,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(275):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(236):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        275, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        236, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(243):
+    // State(204):
     //   PRIVATE -> [p] [r] [i] . [v] [a] [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4936,20 +5028,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..u, w..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [v] => State(276):IdentifierName
+    //   [$, 0..9, A..Z, _, a..u, w..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [v] => State(237):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 276,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 237,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(244):
+    // State(205):
     //   PACKAGE -> [p] [a] [c] . [k] [a] [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4957,20 +5052,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..j, l..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [k] => State(277):IdentifierName
+    //   [$, 0..9, A..Z, _, a..j, l..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [k] => State(238):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 277, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 238,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(245):
+    // State(206):
     //   CONTINUE -> [c] [o] [n] [t] . [i] [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4978,20 +5076,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(278):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(239):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 278, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 239, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(246):
+    // State(207):
     //   DEBUGGER -> [d] [e] [b] [u] . [g] [g] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -4999,20 +5100,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [g] => State(279):IdentifierName
+    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [g] => State(240):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 279, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 240, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(247):
+    // State(208):
     //   FUNCTION -> [f] [u] [n] [c] . [t] [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5020,20 +5124,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(280):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(241):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 280, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 241, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(248):
+    // State(209):
     //   INTERFACE -> [i] [n] [t] [e] [r] . [f] [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5041,20 +5148,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [f] => State(281):IdentifierName
+    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [f] => State(242):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 281, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 242, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(249):
+    // State(210):
     //   PROTECTED -> [p] [r] [o] [t] [e] . [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5062,20 +5172,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [c] => State(282):IdentifierName
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [c] => State(243):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 282, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 243, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(250):
+    // State(211):
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] . [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5083,20 +5196,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [c] => State(283):IdentifierName
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [c] => State(244):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 283, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 244, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(251):
+    // State(212):
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] . [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5104,20 +5220,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(284):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(245):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 284, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 245, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(252):
+    // State(213):
     //   ELSE -> [e] . [l] [s] [e]
     //   ENUM -> [e] . [n] [u] [m]
     //   EXPORT -> [e] . [x] [p] [o] [r] [t]
     //   EXTENDS -> [e] . [x] [t] [e] [n] [d] [s]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5128,23 +5247,26 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m, o..w, y..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [x] => State(232):IdentifierName
-    //   [l] => State(292):IdentifierName
-    //   [n] => State(293):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m, o..w, y..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [x] => State(193):IdentifierName
+    //   [l] => State(253):IdentifierName
+    //   [n] => State(254):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 232, 213, 213, 213, 213, 213, 213, 213, 213, 213, 292, 293, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        193, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 253, 254, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(253):
+    // State(214):
     //   CASE -> [c] . [a] [s] [e]
     //   CATCH -> [c] . [a] [t] [c] [h]
     //   CLASS -> [c] . [l] [a] [s] [s]
     //   CONST -> [c] . [o] [n] [s] [t]
     //   CONTINUE -> [c] . [o] [n] [t] [i] [n] [u] [e]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5155,19 +5277,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..k, m..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(258):IdentifierName
-    //   [o] => State(259):IdentifierName
-    //   [a] => State(294):IdentifierName
+    //   [$, 0..9, A..Z, _, b..k, m..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(219):IdentifierName
+    //   [o] => State(220):IdentifierName
+    //   [a] => State(255):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 258, 213, 213, 213, 213,
-        294, 259, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 219, 174, 174, 174, 174,
+        255, 220, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(254):
+    // State(215):
     //   META -> [m] . [e] [t] [a]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5178,18 +5303,21 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(298):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(259):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 298, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 259, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(255):
+    // State(216):
     //   WHILE -> [w] . [h] [i] [l] [e]
     //   WITH -> [w] . [i] [t] [h]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5200,21 +5328,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..g, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [h] => State(263):IdentifierName
-    //   [i] => State(299):IdentifierName
+    //   [$, 0..9, A..Z, _, a..g, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [h] => State(224):IdentifierName
+    //   [i] => State(260):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 263, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 299, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 224, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 260, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(256):
+    // State(217):
     //   BREAK -> [b] [r] . [e] [a] [k]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5222,20 +5353,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(301):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(262):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 301, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 262, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(257):
+    // State(218):
     //   AWAIT -> [a] [w] . [a] [i] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5243,20 +5377,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(303):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(264):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        303, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        264, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(258):
+    // State(219):
     //   CLASS -> [c] [l] . [a] [s] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5264,21 +5401,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(305):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(266):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        305, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        266, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(259):
+    // State(220):
     //   CONST -> [c] [o] . [n] [s] [t]
     //   CONTINUE -> [c] [o] . [n] [t] [i] [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5286,20 +5426,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(306):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(267):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 306, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 267, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(260):
+    // State(221):
     //   SUPER -> [s] [u] . [p] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5307,20 +5450,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [p] => State(307):IdentifierName
+    //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [p] => State(268):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 307, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 268, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(261):
+    // State(222):
     //   FALSE -> [f] [a] . [l] [s] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5328,20 +5474,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(309):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(270):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 309, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 270, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(262):
+    // State(223):
     //   YIELD -> [y] [i] . [e] [l] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5349,20 +5498,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(310):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(271):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 310, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 271, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(263):
+    // State(224):
     //   WHILE -> [w] [h] . [i] [l] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5370,20 +5522,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(311):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(272):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 311, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 272, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(264):
+    // State(225):
     //   RETURN -> [r] [e] [t] . [u] [r] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5391,20 +5546,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(312):IdentifierName
+    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(273):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 312, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 273, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(265):
+    // State(226):
     //   EXPORT -> [e] [x] [p] . [o] [r] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5412,20 +5570,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(313):IdentifierName
+    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(274):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 313, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 274, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(266):
+    // State(227):
     //   STATIC -> [s] [t] [a] . [t] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5433,20 +5594,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(314):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(275):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 314, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 275, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(267):
+    // State(228):
     //   SWITCH -> [s] [w] [i] . [t] [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5454,20 +5618,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(315):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(276):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 315, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 276, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(268):
+    // State(229):
     //   TARGET -> [t] [a] [r] . [g] [e] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5475,20 +5642,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [g] => State(316):IdentifierName
+    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [g] => State(277):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 316, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 277, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(269):
+    // State(230):
     //   TYPEOF -> [t] [y] [p] . [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5496,21 +5666,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(317):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(278):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 317, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 278, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(270):
+    // State(231):
     //   IMPORT -> [i] [m] [p] . [o] [r] [t]
     //   IMPLEMENTS -> [i] [m] [p] . [l] [e] [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5518,21 +5691,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(219):IdentifierName
-    //   [o] => State(318):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(180):IdentifierName
+    //   [o] => State(279):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 219, 213, 213, 213, 213,
-        213, 318, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 180, 174, 174, 174, 174,
+        174, 279, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(271):
+    // State(232):
     //   DELETE -> [d] [e] [l] . [e] [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5540,20 +5716,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(319):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(280):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 319, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 280, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(272):
+    // State(233):
     //   PUBLIC -> [p] [u] [b] . [l] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5561,20 +5740,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(320):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(281):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 320, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 281, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(273):
+    // State(234):
     //   EXTENDS -> [e] [x] [t] [e] . [n] [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5582,20 +5764,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(321):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(282):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 321, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 282, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(274):
+    // State(235):
     //   DEFAULT -> [d] [e] [f] [a] . [u] [l] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5603,20 +5788,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(322):IdentifierName
+    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(283):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 322, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 283, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(275):
+    // State(236):
     //   FINALLY -> [f] [i] [n] [a] . [l] [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5624,20 +5812,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(323):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(284):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 323, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 284, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(276):
+    // State(237):
     //   PRIVATE -> [p] [r] [i] [v] . [a] [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5645,20 +5836,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(324):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(285):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        324, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        285, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(277):
+    // State(238):
     //   PACKAGE -> [p] [a] [c] [k] . [a] [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5666,20 +5860,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(325):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(286):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        325, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        286, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(278):
+    // State(239):
     //   CONTINUE -> [c] [o] [n] [t] [i] . [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5687,20 +5884,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(326):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(287):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 326, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 287, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(279):
+    // State(240):
     //   DEBUGGER -> [d] [e] [b] [u] [g] . [g] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5708,20 +5908,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [g] => State(327):IdentifierName
+    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [g] => State(288):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 327, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 288, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(280):
+    // State(241):
     //   FUNCTION -> [f] [u] [n] [c] [t] . [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5729,20 +5932,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(328):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(289):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 328, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 289, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(281):
+    // State(242):
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] . [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5750,20 +5956,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(329):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(290):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        329, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        290, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(282):
+    // State(243):
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] . [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5771,20 +5980,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(330):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(291):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 330, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 291, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(283):
+    // State(244):
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] . [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5792,20 +6004,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(331):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(292):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 331, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 292, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(284):
+    // State(245):
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] . [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -5813,20 +6028,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(332):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(293):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 332, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 293, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(285):
+    // State(246):
     //   SUPER -> [s] . [u] [p] [e] [r]
     //   SWITCH -> [s] . [w] [i] [t] [c] [h]
     //   STATIC -> [s] . [t] [a] [t] [i] [c]
     //   SET -> [s] . [e] [t]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5837,18 +6055,18 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..s, v, x..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(233):IdentifierName
-    //   [w] => State(234):IdentifierName
-    //   [u] => State(260):IdentifierName
-    //   [e] => State(337):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..s, v, x..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(194):IdentifierName
+    //   [w] => State(195):IdentifierName
+    //   [u] => State(221):IdentifierName
+    //   [e] => State(298):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 260, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 337, 213, 213, 234, 213, 233, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 221, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 298, 174, 174, 195, 174, 194, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(286):
+    // State(247):
     //   THIS -> [t] . [h] [i] [s]
     //   THROW -> [t] . [h] [r] [o] [w]
     //   TRUE -> [t] . [r] [u] [e]
@@ -5856,6 +6074,9 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   TYPEOF -> [t] . [y] [p] [e] [o] [f]
     //   TARGET -> [t] . [a] [r] [g] [e] [t]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5866,20 +6087,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..g, i..q, s..x, z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(235):IdentifierName
-    //   [y] => State(236):IdentifierName
-    //   [h] => State(295):IdentifierName
-    //   [r] => State(338):IdentifierName
+    //   [$, 0..9, A..Z, _, b..g, i..q, s..x, z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(196):IdentifierName
+    //   [y] => State(197):IdentifierName
+    //   [h] => State(256):IdentifierName
+    //   [r] => State(299):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 338, 213, 213, 213, 213, 213, 213, 213,
-        213, 295, 213, 213, 213, 213, 236, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        235, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 299, 174, 174, 174, 174, 174, 256, 174,
+        174, 174, 174, 174, 174, 174, 197, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        196, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(287):
+    // State(248):
     //   LET -> [l] . [e] [t]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5890,18 +6114,21 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(339):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(300):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 339, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 300, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(288):
+    // State(249):
     //   NEW -> [n] . [e] [w]
     //   NULL -> [n] . [u] [l] [l]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5912,18 +6139,21 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(296):IdentifierName
-    //   [e] => State(340):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(257):IdentifierName
+    //   [e] => State(301):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 296, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 340, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 257, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 301, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(289):
+    // State(250):
     //   GET -> [g] . [e] [t]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5934,21 +6164,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(341):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(302):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 341, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 302, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(290):
+    // State(251):
     //   FALSE -> [f] . [a] [l] [s] [e]
     //   FINALLY -> [f] . [i] [n] [a] [l] [l] [y]
     //   FOR -> [f] . [o] [r]
     //   FUNCTION -> [f] . [u] [n] [c] [t] [i] [o] [n]
     //   FROM -> [f] . [r] [o] [m]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5959,22 +6192,25 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..h, j..n, p..q, s..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(215):IdentifierName
-    //   [i] => State(221):IdentifierName
-    //   [a] => State(261):IdentifierName
-    //   [r] => State(297):IdentifierName
-    //   [o] => State(342):IdentifierName
+    //   [$, 0..9, A..Z, _, b..h, j..n, p..q, s..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(176):IdentifierName
+    //   [i] => State(182):IdentifierName
+    //   [a] => State(222):IdentifierName
+    //   [r] => State(258):IdentifierName
+    //   [o] => State(303):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 297, 215, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        261, 342, 221, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 258, 176, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        222, 303, 182, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(291):
+    // State(252):
     //   VAR -> [v] . [a] [r]
     //   VOID -> [v] . [o] [i] [d]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -5985,21 +6221,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(300):IdentifierName
-    //   [a] => State(343):IdentifierName
+    //   [$, 0..9, A..Z, _, b..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(261):IdentifierName
+    //   [a] => State(304):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        343, 300, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        304, 261, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(292):
+    // State(253):
     //   ELSE -> [e] [l] . [s] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6007,20 +6246,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [s] => State(344):IdentifierName
+    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [s] => State(305):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 344, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 305, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(293):
+    // State(254):
     //   ENUM -> [e] [n] . [u] [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6028,21 +6270,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(345):IdentifierName
+    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(306):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 345, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 306, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(294):
+    // State(255):
     //   CASE -> [c] [a] . [s] [e]
     //   CATCH -> [c] [a] . [t] [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6050,22 +6295,25 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(304):IdentifierName
-    //   [s] => State(346):IdentifierName
+    //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(265):IdentifierName
+    //   [s] => State(307):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 346, 304, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 307, 265, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(295):
+    // State(256):
     //   THIS -> [t] [h] . [i] [s]
     //   THROW -> [t] [h] . [r] [o] [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6073,21 +6321,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..q, s..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(308):IdentifierName
-    //   [i] => State(348):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..q, s..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(269):IdentifierName
+    //   [i] => State(309):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 308, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 348, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 269, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 309, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(296):
+    // State(257):
     //   NULL -> [n] [u] . [l] [l]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6095,20 +6346,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(349):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(310):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 349, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 310, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(297):
+    // State(258):
     //   FROM -> [f] [r] . [o] [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6116,20 +6370,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(350):IdentifierName
+    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(311):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 350, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 311, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(298):
+    // State(259):
     //   META -> [m] [e] . [t] [a]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6137,20 +6394,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(351):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(312):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 351, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 312, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(299):
+    // State(260):
     //   WITH -> [w] [i] . [t] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6158,20 +6418,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(352):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(313):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 352, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 313, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(300):
+    // State(261):
     //   VOID -> [v] [o] . [i] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6179,20 +6442,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(353):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(314):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 353, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 314, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(301):
+    // State(262):
     //   BREAK -> [b] [r] [e] . [a] [k]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6200,20 +6466,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [a] => State(354):IdentifierName
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [a] => State(315):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        354, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        315, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(302):
+    // State(263):
     //   ASYNC -> [a] [s] [y] . [n] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6221,20 +6490,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [n] => State(355):IdentifierName
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [n] => State(316):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 355, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 316, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(303):
+    // State(264):
     //   AWAIT -> [a] [w] [a] . [i] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6242,20 +6514,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(356):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(317):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 356, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 317, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(304):
+    // State(265):
     //   CATCH -> [c] [a] [t] . [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6263,20 +6538,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [c] => State(357):IdentifierName
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [c] => State(318):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 357, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 318, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(305):
+    // State(266):
     //   CLASS -> [c] [l] [a] . [s] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6284,21 +6562,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [s] => State(358):IdentifierName
+    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [s] => State(319):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 358, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 319, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(306):
+    // State(267):
     //   CONST -> [c] [o] [n] . [s] [t]
     //   CONTINUE -> [c] [o] [n] . [t] [i] [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6306,21 +6587,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(245):IdentifierName
-    //   [s] => State(359):IdentifierName
+    //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(206):IdentifierName
+    //   [s] => State(320):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 359, 245, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 320, 206, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(307):
+    // State(268):
     //   SUPER -> [s] [u] [p] . [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6328,20 +6612,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(360):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(321):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 360, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 321, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(308):
+    // State(269):
     //   THROW -> [t] [h] [r] . [o] [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6349,20 +6636,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(361):IdentifierName
+    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(322):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 361, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 322, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(309):
+    // State(270):
     //   FALSE -> [f] [a] [l] . [s] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6370,20 +6660,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [s] => State(362):IdentifierName
+    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [s] => State(323):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 362, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 323, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(310):
+    // State(271):
     //   YIELD -> [y] [i] [e] . [l] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6391,20 +6684,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(363):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(324):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 363, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 324, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(311):
+    // State(272):
     //   WHILE -> [w] [h] [i] . [l] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6412,20 +6708,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(364):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(325):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 364, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 325, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(312):
+    // State(273):
     //   RETURN -> [r] [e] [t] [u] . [r] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6433,20 +6732,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(365):IdentifierName
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(326):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 365, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 326, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(313):
+    // State(274):
     //   EXPORT -> [e] [x] [p] [o] . [r] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6454,20 +6756,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(366):IdentifierName
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(327):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 366, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 327, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(314):
+    // State(275):
     //   STATIC -> [s] [t] [a] [t] . [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6475,20 +6780,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(367):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(328):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 367, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 328, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(315):
+    // State(276):
     //   SWITCH -> [s] [w] [i] [t] . [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6496,20 +6804,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [c] => State(368):IdentifierName
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [c] => State(329):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 368, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 329, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(316):
+    // State(277):
     //   TARGET -> [t] [a] [r] [g] . [e] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6517,20 +6828,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(369):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(330):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 369, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 330, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(317):
+    // State(278):
     //   TYPEOF -> [t] [y] [p] [e] . [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6538,20 +6852,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(370):IdentifierName
+    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(331):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 370, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 331, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(318):
+    // State(279):
     //   IMPORT -> [i] [m] [p] [o] . [r] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6559,20 +6876,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [r] => State(371):IdentifierName
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [r] => State(332):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 371, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 332, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(319):
+    // State(280):
     //   DELETE -> [d] [e] [l] [e] . [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6580,20 +6900,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(372):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(333):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 372, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 333, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(320):
+    // State(281):
     //   PUBLIC -> [p] [u] [b] [l] . [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6601,20 +6924,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [i] => State(373):IdentifierName
+    //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [i] => State(334):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 373, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 334, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(321):
+    // State(282):
     //   EXTENDS -> [e] [x] [t] [e] [n] . [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6622,20 +6948,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [d] => State(374):IdentifierName
+    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [d] => State(335):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 374, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 335, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(322):
+    // State(283):
     //   DEFAULT -> [d] [e] [f] [a] [u] . [l] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6643,20 +6972,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(375):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(336):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 375, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 336, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(323):
+    // State(284):
     //   FINALLY -> [f] [i] [n] [a] [l] . [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6664,20 +6996,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [l] => State(376):IdentifierName
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [l] => State(337):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 376, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 337, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(324):
+    // State(285):
     //   PRIVATE -> [p] [r] [i] [v] [a] . [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6685,20 +7020,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(377):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(338):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 377, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 338, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(325):
+    // State(286):
     //   PACKAGE -> [p] [a] [c] [k] [a] . [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6706,20 +7044,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [g] => State(378):IdentifierName
+    //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [g] => State(339):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 378, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 339, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(326):
+    // State(287):
     //   CONTINUE -> [c] [o] [n] [t] [i] [n] . [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6727,20 +7068,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(379):IdentifierName
+    //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(340):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 379, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 340, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(327):
+    // State(288):
     //   DEBUGGER -> [d] [e] [b] [u] [g] [g] . [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6748,20 +7092,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(380):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(341):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 380, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 341, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(328):
+    // State(289):
     //   FUNCTION -> [f] [u] [n] [c] [t] [i] . [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6769,20 +7116,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(381):IdentifierName
+    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(342):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 381, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 342, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(329):
+    // State(290):
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] [a] . [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6790,20 +7140,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [c] => State(382):IdentifierName
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [c] => State(343):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 382, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 343, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(330):
+    // State(291):
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] [t] . [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6811,20 +7164,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(383):IdentifierName
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(344):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 383, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 344, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(331):
+    // State(292):
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] [e] . [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6832,20 +7188,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [o] => State(384):IdentifierName
+    //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [o] => State(345):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 384, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 345, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(332):
+    // State(293):
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] [n] . [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6853,19 +7212,22 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [t] => State(385):IdentifierName
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [t] => State(346):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 385, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 346, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(333):
+    // State(294):
     //   AWAIT -> [a] . [w] [a] [i] [t]
     //   AS -> [a] . [s]
     //   ASYNC -> [a] . [s] [y] [n] [c]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -6876,18 +7238,21 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [s] => State(203):AS
-    //   [$, 0..9, A..Z, _, a..r, t..v, x..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [w] => State(257):IdentifierName
+    //   [s] => State(164):AS
+    //   [$, 0..9, A..Z, _, a..r, t..v, x..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [w] => State(218):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 257, 203, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 218, 164, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(334):
+    // State(295):
     //   OF -> [o] . [f]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -6898,15 +7263,15 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [f] => State(208):OF
-    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [f] => State(169):OF
+    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 208, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 169, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(335):
+    // State(296):
     //   IF -> [i] . [f]
     //   IMPORT -> [i] . [m] [p] [o] [r] [t]
     //   IN -> [i] . [n]
@@ -6914,6 +7279,9 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IMPLEMENTS -> [i] . [m] [p] [l] [e] [m] [e] [n] [t] [s]
     //   INTERFACE -> [i] . [n] [t] [e] [r] [f] [a] [c] [e]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -6924,22 +7292,25 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [f] => State(175):IF
-    //   [n] => State(177):IN
-    //   [$, 0..9, A..Z, _, a..e, g..l, o..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [m] => State(237):IdentifierName
+    //   [f] => State(136):IF
+    //   [n] => State(138):IN
+    //   [$, 0..9, A..Z, _, a..e, g..l, o..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [m] => State(198):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 237, 213, 213, 213, 213, 177, 213, 175, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 198, 174, 174, 174, 174, 138, 174, 136, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(336):
+    // State(297):
     //   DEBUGGER -> [d] . [e] [b] [u] [g] [g] [e] [r]
     //   DEFAULT -> [d] . [e] [f] [a] [u] [l] [t]
     //   DELETE -> [d] . [e] [l] [e] [t] [e]
     //   DO -> [d] . [o]
     //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -6950,21 +7321,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [o] => State(166):DO
-    //   [$, 0..9, A..Z, _, a..d, f..n, p..z, U+200C..U+200D] => State(213):IdentifierName
-    //   [e] => State(238):IdentifierName
+    //   [o] => State(127):DO
+    //   [$, 0..9, A..Z, _, a..d, f..n, p..z, U+200C..U+200D] => State(174):IdentifierName
+    //   [e] => State(199):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 238, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 166, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 199, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 127, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(337):
+    // State(298):
     //   SET -> [s] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6972,21 +7346,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(209):SET
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(170):SET
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 209, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 170, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(338):
+    // State(299):
     //   TRUE -> [t] [r] . [u] [e]
     //   TRY -> [t] [r] . [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -6994,21 +7371,24 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [y] => State(187):TRY
-    //   [$, 0..9, A..Z, _, a..t, v..x, z, U+200C..U+200D] => State(213):IdentifierName
-    //   [u] => State(347):IdentifierName
+    //   [y] => State(148):TRY
+    //   [$, 0..9, A..Z, _, a..t, v..x, z, U+200C..U+200D] => State(174):IdentifierName
+    //   [u] => State(308):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 347, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 187, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 308, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 148, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(339):
+    // State(300):
     //   LET -> [l] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7016,20 +7396,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(195):LET
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(156):LET
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 195, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 156, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(340):
+    // State(301):
     //   NEW -> [n] [e] . [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7037,20 +7420,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [w] => State(179):NEW
-    //   [$, 0..9, A..Z, _, a..v, x..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [w] => State(140):NEW
+    //   [$, 0..9, A..Z, _, a..v, x..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 179, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 140, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(341):
+    // State(302):
     //   GET -> [g] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7058,20 +7444,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(206):GET
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(167):GET
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 206, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 167, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(342):
+    // State(303):
     //   FOR -> [f] [o] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7079,20 +7468,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [r] => State(173):FOR
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [r] => State(134):FOR
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 173, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 134, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(343):
+    // State(304):
     //   VAR -> [v] [a] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7100,20 +7492,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [r] => State(189):VAR
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [r] => State(150):VAR
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 189, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 150, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(344):
+    // State(305):
     //   ELSE -> [e] [l] [s] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7121,20 +7516,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(167):ELSE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(128):ELSE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 167, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 128, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(345):
+    // State(306):
     //   ENUM -> [e] [n] [u] . [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7142,20 +7540,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [m] => State(168):ENUM
-    //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [m] => State(129):ENUM
+    //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 168, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 129, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(346):
+    // State(307):
     //   CASE -> [c] [a] [s] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7163,20 +7564,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(158):CASE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(119):CASE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 158, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 119, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(347):
+    // State(308):
     //   TRUE -> [t] [r] [u] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7184,20 +7588,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(186):TRUE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(147):TRUE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 186, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 147, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(348):
+    // State(309):
     //   THIS -> [t] [h] [i] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7205,20 +7612,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [s] => State(184):THIS
-    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [s] => State(145):THIS
+    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 184, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 145, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(349):
+    // State(310):
     //   NULL -> [n] [u] [l] . [l]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7226,20 +7636,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [l] => State(180):NULL
-    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [l] => State(141):NULL
+    //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 180, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 141, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(350):
+    // State(311):
     //   FROM -> [f] [r] [o] . [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7247,20 +7660,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [m] => State(205):FROM
-    //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [m] => State(166):FROM
+    //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 205, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 166, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(351):
+    // State(312):
     //   META -> [m] [e] [t] . [a]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7268,20 +7684,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [a] => State(207):META
-    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [a] => State(168):META
+    //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        207, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        168, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(352):
+    // State(313):
     //   WITH -> [w] [i] [t] . [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7289,20 +7708,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [h] => State(192):WITH
-    //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [h] => State(153):WITH
+    //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 192, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 153, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(353):
+    // State(314):
     //   VOID -> [v] [o] [i] . [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7310,20 +7732,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [d] => State(190):VOID
-    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [d] => State(151):VOID
+    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 190, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 151, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(354):
+    // State(315):
     //   BREAK -> [b] [r] [e] [a] . [k]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7331,20 +7756,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [k] => State(157):BREAK
-    //   [$, 0..9, A..Z, _, a..j, l..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [k] => State(118):BREAK
+    //   [$, 0..9, A..Z, _, a..j, l..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 157, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 118,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(355):
+    // State(316):
     //   ASYNC -> [a] [s] [y] [n] . [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7352,20 +7780,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [c] => State(204):ASYNC
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [c] => State(165):ASYNC
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 204, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 165, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(356):
+    // State(317):
     //   AWAIT -> [a] [w] [a] [i] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7373,20 +7804,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(193):AWAIT
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(154):AWAIT
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 193, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 154, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(357):
+    // State(318):
     //   CATCH -> [c] [a] [t] [c] . [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7394,20 +7828,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [h] => State(159):CATCH
-    //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [h] => State(120):CATCH
+    //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 159, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 120, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(358):
+    // State(319):
     //   CLASS -> [c] [l] [a] [s] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7415,20 +7852,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [s] => State(160):CLASS
-    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [s] => State(121):CLASS
+    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 160, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 121, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(359):
+    // State(320):
     //   CONST -> [c] [o] [n] [s] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7436,20 +7876,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(161):CONST
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(122):CONST
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 161, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 122, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(360):
+    // State(321):
     //   SUPER -> [s] [u] [p] [e] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7457,20 +7900,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [r] => State(182):SUPER
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [r] => State(143):SUPER
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 182, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 143, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(361):
+    // State(322):
     //   THROW -> [t] [h] [r] [o] . [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7478,20 +7924,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [w] => State(185):THROW
-    //   [$, 0..9, A..Z, _, a..v, x..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [w] => State(146):THROW
+    //   [$, 0..9, A..Z, _, a..v, x..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 185, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 146, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(362):
+    // State(323):
     //   FALSE -> [f] [a] [l] [s] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7499,20 +7948,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(171):FALSE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(132):FALSE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 171, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 132, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(363):
+    // State(324):
     //   YIELD -> [y] [i] [e] [l] . [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7520,20 +7972,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [d] => State(194):YIELD
-    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [d] => State(155):YIELD
+    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 194, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 155, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(364):
+    // State(325):
     //   WHILE -> [w] [h] [i] [l] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7541,20 +7996,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(191):WHILE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(152):WHILE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 191, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 152, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(365):
+    // State(326):
     //   RETURN -> [r] [e] [t] [u] [r] . [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7562,20 +8020,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [n] => State(181):RETURN
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [n] => State(142):RETURN
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 181, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 142, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(366):
+    // State(327):
     //   EXPORT -> [e] [x] [p] [o] [r] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7583,20 +8044,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(169):EXPORT
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(130):EXPORT
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 169, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 130, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(367):
+    // State(328):
     //   STATIC -> [s] [t] [a] [t] [i] . [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7604,20 +8068,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [c] => State(196):STATIC
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [c] => State(157):STATIC
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 196, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 157, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(368):
+    // State(329):
     //   SWITCH -> [s] [w] [i] [t] [c] . [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7625,20 +8092,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [h] => State(183):SWITCH
-    //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [h] => State(144):SWITCH
+    //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 183, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 144, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(369):
+    // State(330):
     //   TARGET -> [t] [a] [r] [g] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7646,20 +8116,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(210):TARGET
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(171):TARGET
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 210, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 171, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(370):
+    // State(331):
     //   TYPEOF -> [t] [y] [p] [e] [o] . [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7667,20 +8140,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [f] => State(188):TYPEOF
-    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [f] => State(149):TYPEOF
+    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 188, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 149, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(371):
+    // State(332):
     //   IMPORT -> [i] [m] [p] [o] [r] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7688,20 +8164,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(176):IMPORT
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(137):IMPORT
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 176, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 137, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(372):
+    // State(333):
     //   DELETE -> [d] [e] [l] [e] [t] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7709,20 +8188,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(165):DELETE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(126):DELETE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 165, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 126, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(373):
+    // State(334):
     //   PUBLIC -> [p] [u] [b] [l] [i] . [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7730,20 +8212,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [c] => State(202):PUBLIC
-    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [c] => State(163):PUBLIC
+    //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 202, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 163, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(374):
+    // State(335):
     //   EXTENDS -> [e] [x] [t] [e] [n] [d] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7751,20 +8236,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [s] => State(170):EXTENDS
-    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [s] => State(131):EXTENDS
+    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 170, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 131, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(375):
+    // State(336):
     //   DEFAULT -> [d] [e] [f] [a] [u] [l] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7772,20 +8260,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [t] => State(164):DEFAULT
-    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [t] => State(125):DEFAULT
+    //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 164, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 125, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(376):
+    // State(337):
     //   FINALLY -> [f] [i] [n] [a] [l] [l] . [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7793,20 +8284,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [y] => State(172):FINALLY
-    //   [$, 0..9, A..Z, _, a..x, z, U+200C..U+200D] => State(213):IdentifierName
+    //   [y] => State(133):FINALLY
+    //   [$, 0..9, A..Z, _, a..x, z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 172, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 133, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(377):
+    // State(338):
     //   PRIVATE -> [p] [r] [i] [v] [a] [t] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7814,20 +8308,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(200):PRIVATE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(161):PRIVATE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 200, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 161, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(378):
+    // State(339):
     //   PACKAGE -> [p] [a] [c] [k] [a] [g] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7835,20 +8332,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(199):PACKAGE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(160):PACKAGE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 199, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 160, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(379):
+    // State(340):
     //   CONTINUE -> [c] [o] [n] [t] [i] [n] [u] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7856,20 +8356,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(162):CONTINUE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(123):CONTINUE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 162, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 123, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(380):
+    // State(341):
     //   DEBUGGER -> [d] [e] [b] [u] [g] [g] [e] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7877,20 +8380,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [r] => State(163):DEBUGGER
-    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [r] => State(124):DEBUGGER
+    //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 163, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 124, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(381):
+    // State(342):
     //   FUNCTION -> [f] [u] [n] [c] [t] [i] [o] . [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7898,20 +8404,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [n] => State(174):FUNCTION
-    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [n] => State(135):FUNCTION
+    //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 174, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 135, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(382):
+    // State(343):
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] [a] [c] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7919,20 +8428,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [e] => State(198):INTERFACE
-    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [e] => State(159):INTERFACE
+    //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 198, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 159, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(383):
+    // State(344):
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] [t] [e] . [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7940,20 +8452,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [d] => State(201):PROTECTED
-    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [d] => State(162):PROTECTED
+    //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 201, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 162, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(384):
+    // State(345):
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] [e] [o] . [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7961,20 +8476,23 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [f] => State(178):INSTANCEOF
-    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [f] => State(139):INSTANCEOF
+    //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 178, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 139, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(385):
+    // State(346):
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] [n] [t] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
+    //   IdentifierPart -> IdentifierPartChar .
     //   IdentifierPart -> . IdentifierPartChar
+    //   IdentifierPartChar -> UnicodeIDContinue .
     //   IdentifierPartChar -> . UnicodeIDContinue
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
     //   UnicodeIDContinue -> . [0..9 a..z A..Z $ _]
     //   IdentifierPartChar -> . [$]
     //   IdentifierPartChar -> . [<ZWNJ>]
@@ -7982,16 +8500,20 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
     // Transitions:
     //   [\] => State(2)
-    //   [s] => State(197):IMPLEMENTS
-    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(213):IdentifierName
+    //   [s] => State(158):IMPLEMENTS
+    //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(174):IdentifierName
     [
-        458, 2, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 197, 213, 213, 213, 213, 213, 213,
-        213, 213, 213, 213, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 213, 213, 213, 213, 213, 458, 458, 213, 458,
+        419, 2, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 174, 158, 174, 174, 174, 174, 174, 174,
+        174, 174, 174, 174, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 174, 174, 174, 174, 419, 419, 174, 419, 2, 419,
     ],
-    // State(386):
+    // State(347):
     //   PrivateIdentifier -> [#] IdentifierName .
+    //   IdentifierName -> IdentifierStart .
+    //   IdentifierStart -> IdentifierStartChar .
+    //   IdentifierStartChar -> UnicodeIDStart .
+    //   UnicodeIDStart -> [a..z A..Z $ _] .
     //   IdentifierName -> IdentifierName . IdentifierPart
     //   IdentifierPart -> . IdentifierPartChar
     //   IdentifierPartChar -> . UnicodeIDContinue
@@ -8000,65 +8522,80 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
+    //   IdentifierStartChar -> [$] .
+    //   IdentifierStartChar -> [_] .
+    //   IdentifierName -> IdentifierName IdentifierPart .
+    //   IdentifierPart -> IdentifierPartChar .
+    //   IdentifierPartChar -> UnicodeIDContinue .
+    //   UnicodeIDContinue -> [0..9 a..z A..Z $ _] .
+    //   IdentifierPartChar -> [$] .
+    //   IdentifierPartChar -> [<ZWNJ>] .
+    //   IdentifierPartChar -> [<ZWJ>] .
+    //   IdentifierStart -> [\] UnicodeEscapeSequence .
+    //   UnicodeEscapeSequence -> [u] [{] CodePoint [}] .
+    //   IdentifierPart -> [\] UnicodeEscapeSequence .
+    //   UnicodeEscapeSequence -> [u] Hex4Digits .
+    //   Hex4Digits -> HexDigit HexDigit HexDigit HexDigit .
+    //   HexDigit -> [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F] .
     // Transitions:
     //   [\] => State(3)
-    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(386):PrivateIdentifier
+    //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(347):PrivateIdentifier
     [
-        458, 3, 458, 458, 458, 458, 458, 458, 458, 386, 386, 386, 386, 386, 386, 386, 386, 386,
-        386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386, 386,
-        386, 386, 386, 386, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 386, 386, 386, 386, 386, 458, 458, 386, 458,
+        419, 3, 419, 419, 419, 419, 419, 419, 419, 347, 347, 347, 347, 347, 347, 347, 347, 347,
+        347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347, 347,
+        347, 347, 347, 347, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 347, 347, 347, 347, 419, 419, 347, 419, 3, 419,
     ],
-    // State(387):
-    //   OPTIONAL_CHAINING -> [?] [.] !?[DecimalDigit] .
-    //   OPTIONAL_CHAINING -> [?] [.] . !?[DecimalDigit]
+    // State(348):
+    //   OPTIONAL_CHAINING -> [?] [.] ?![DecimalDigit] .
+    //   OPTIONAL_CHAINING -> [?] [.] . ?![DecimalDigit]
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(388):
+    // State(349):
     //   LBRACE -> [{] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(389):
+    // State(350):
     //   LPAREN -> [(] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(390):
+    // State(351):
     //   RPAREN -> [)] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(391):
+    // State(352):
     //   LBRACK -> [[] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(392):
+    // State(353):
     //   RBRACK -> []] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(393):
+    // State(354):
     //   DOT -> [.] .
     //   ELLIPSIS -> [.] . [.] [.]
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
@@ -8068,53 +8605,53 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     //   DecimalLiteral -> [.] . DecimalDigits_Sep ExponentPart_Sep
     // Transitions:
-    //   [.] => State(24)
-    //   [0..9] => State(447):NumericLiteral
+    //   [.] => State(48)
+    //   [0..9] => State(408):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 24, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 447, 447, 447, 447, 447, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 48, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 408, 408, 408, 408, 419, 419, 419, 419, 48, 419,
     ],
-    // State(394):
+    // State(355):
     //   ELLIPSIS -> [.] [.] [.] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(395):
+    // State(356):
     //   SEMI_COLON -> [;] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(396):
+    // State(357):
     //   COMMA -> [,] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(397):
+    // State(358):
     //   LT -> [<] .
     //   LTE -> [<] . [=]
     //   SHL -> [<] . [<]
     //   SHL_ASSIGN -> [<] . [<] [=]
     // Transitions:
-    //   [=] => State(399):LTE
-    //   [<] => State(412):SHL
+    //   [=] => State(360):LTE
+    //   [<] => State(373):SHL
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 412, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 399, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 373, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 360, 419, 419, 419, 419, 419, 419, 419, 419, 360, 419,
     ],
-    // State(398):
+    // State(359):
     //   GT -> [>] .
     //   GTE -> [>] . [=]
     //   SAR -> [>] . [>]
@@ -8122,431 +8659,431 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   SAR_ASSIGN -> [>] . [>] [=]
     //   SHR_ASSIGN -> [>] . [>] [>] [=]
     // Transitions:
-    //   [=] => State(400):GTE
-    //   [>] => State(413):SAR
+    //   [=] => State(361):GTE
+    //   [>] => State(374):SAR
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 413, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 400, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 374, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 361, 419, 419, 419, 419, 419, 419, 419, 419, 361, 419,
     ],
-    // State(399):
+    // State(360):
     //   LTE -> [<] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(400):
+    // State(361):
     //   GTE -> [>] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(401):
+    // State(362):
     //   EQ -> [=] [=] .
     //   EQ_STRICT -> [=] [=] . [=]
     // Transitions:
-    //   [=] => State(403):EQ_STRICT
+    //   [=] => State(364):EQ_STRICT
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 403, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 364, 419, 419, 419, 419, 419, 419, 419, 419, 364, 419,
     ],
-    // State(402):
+    // State(363):
     //   NE -> [!] [=] .
     //   NE_STRICT -> [!] [=] . [=]
     // Transitions:
-    //   [=] => State(404):NE_STRICT
+    //   [=] => State(365):NE_STRICT
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 404, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 365, 419, 419, 419, 419, 419, 419, 419, 419, 365, 419,
     ],
-    // State(403):
+    // State(364):
     //   EQ_STRICT -> [=] [=] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(404):
+    // State(365):
     //   NE_STRICT -> [!] [=] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(405):
+    // State(366):
     //   ADD -> [+] .
     //   INC -> [+] . [+]
     //   ADD_ASSIGN -> [+] . [=]
     // Transitions:
-    //   [+] => State(410):INC
-    //   [=] => State(426):ADD_ASSIGN
+    //   [+] => State(371):INC
+    //   [=] => State(387):ADD_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 410, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 426, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 371, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 387, 419, 419, 419, 419, 419, 419, 419, 419, 371, 419,
     ],
-    // State(406):
+    // State(367):
     //   SUB -> [-] .
     //   DEC -> [-] . [-]
     //   SUB_ASSIGN -> [-] . [=]
     // Transitions:
-    //   [-] => State(411):DEC
-    //   [=] => State(427):SUB_ASSIGN
+    //   [-] => State(372):DEC
+    //   [=] => State(388):SUB_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 411, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 427, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 372, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 388, 419, 419, 419, 419, 419, 419, 419, 419, 372, 419,
     ],
-    // State(407):
+    // State(368):
     //   MUL -> [*] .
     //   EXP -> [*] . [*]
     //   MUL_ASSIGN -> [*] . [=]
     //   EXP_ASSIGN -> [*] . [*] [=]
     // Transitions:
-    //   [*] => State(409):EXP
-    //   [=] => State(428):MUL_ASSIGN
+    //   [*] => State(370):EXP
+    //   [=] => State(389):MUL_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 409, 458,
-        458, 458, 458, 458, 458, 458, 458, 428, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 370, 419,
+        419, 419, 419, 419, 419, 419, 419, 389, 419, 419, 419, 419, 419, 419, 419, 419, 370, 419,
     ],
-    // State(408):
+    // State(369):
     //   MOD -> [%] .
     //   MOD_ASSIGN -> [%] . [=]
     // Transitions:
-    //   [=] => State(429):MOD_ASSIGN
+    //   [=] => State(390):MOD_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 429, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 390, 419, 419, 419, 419, 419, 419, 419, 419, 390, 419,
     ],
-    // State(409):
+    // State(370):
     //   EXP -> [*] [*] .
     //   EXP_ASSIGN -> [*] [*] . [=]
     // Transitions:
-    //   [=] => State(430):EXP_ASSIGN
+    //   [=] => State(391):EXP_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 430, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 391, 419, 419, 419, 419, 419, 419, 419, 419, 391, 419,
     ],
-    // State(410):
+    // State(371):
     //   INC -> [+] [+] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(411):
+    // State(372):
     //   DEC -> [-] [-] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(412):
+    // State(373):
     //   SHL -> [<] [<] .
     //   SHL_ASSIGN -> [<] [<] . [=]
     // Transitions:
-    //   [=] => State(431):SHL_ASSIGN
+    //   [=] => State(392):SHL_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 431, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 392, 419, 419, 419, 419, 419, 419, 419, 419, 392, 419,
     ],
-    // State(413):
+    // State(374):
     //   SAR -> [>] [>] .
     //   SHR -> [>] [>] . [>]
     //   SAR_ASSIGN -> [>] [>] . [=]
     //   SHR_ASSIGN -> [>] [>] . [>] [=]
     // Transitions:
-    //   [>] => State(414):SHR
-    //   [=] => State(432):SAR_ASSIGN
+    //   [>] => State(375):SHR
+    //   [=] => State(393):SAR_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 414, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 432, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 375, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 393, 419, 419, 419, 419, 419, 419, 419, 419, 375, 419,
     ],
-    // State(414):
+    // State(375):
     //   SHR -> [>] [>] [>] .
     //   SHR_ASSIGN -> [>] [>] [>] . [=]
     // Transitions:
-    //   [=] => State(433):SHR_ASSIGN
+    //   [=] => State(394):SHR_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 433, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 394, 419, 419, 419, 419, 419, 419, 419, 419, 394, 419,
     ],
-    // State(415):
+    // State(376):
     //   BIT_AND -> [&] .
     //   AND -> [&] . [&]
     //   BIT_AND_ASSIGN -> [&] . [=]
     //   AND_ASSIGN -> [&] . [&] [=]
     // Transitions:
-    //   [&] => State(420):AND
-    //   [=] => State(434):BIT_AND_ASSIGN
+    //   [&] => State(381):AND
+    //   [=] => State(395):BIT_AND_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        420, 458, 458, 458, 458, 458, 458, 434, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        381, 419, 419, 419, 419, 419, 419, 395, 419, 419, 419, 419, 419, 419, 419, 419, 381, 419,
     ],
-    // State(416):
+    // State(377):
     //   BIT_OR -> [|] .
     //   OR -> [|] . [|]
     //   BIT_OR_ASSIGN -> [|] . [=]
     //   OR_ASSIGN -> [|] . [|] [=]
     // Transitions:
-    //   [|] => State(421):OR
-    //   [=] => State(435):BIT_OR_ASSIGN
+    //   [|] => State(382):OR
+    //   [=] => State(396):BIT_OR_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 421, 458, 458, 458, 458, 458, 435, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 382, 419, 419, 419, 419, 419, 396, 419, 419, 419, 419, 419, 419, 419, 419, 382, 419,
     ],
-    // State(417):
+    // State(378):
     //   BIT_XOR -> [^] .
     //   BIT_XOR_ASSIGN -> [^] . [=]
     // Transitions:
-    //   [=] => State(436):BIT_XOR_ASSIGN
+    //   [=] => State(397):BIT_XOR_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 436, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 397, 419, 419, 419, 419, 419, 419, 419, 419, 397, 419,
     ],
-    // State(418):
+    // State(379):
     //   NE -> [!] . [=]
     //   NE_STRICT -> [!] . [=] [=]
     //   NOT -> [!] .
     // Transitions:
-    //   [=] => State(402):NE
+    //   [=] => State(363):NE
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 402, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 363, 419, 419, 419, 419, 419, 419, 419, 419, 363, 419,
     ],
-    // State(419):
+    // State(380):
     //   BIT_NOT -> [~] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(420):
+    // State(381):
     //   AND -> [&] [&] .
     //   AND_ASSIGN -> [&] [&] . [=]
     // Transitions:
-    //   [=] => State(437):AND_ASSIGN
+    //   [=] => State(398):AND_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 437, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 398, 419, 419, 419, 419, 419, 419, 419, 419, 398, 419,
     ],
-    // State(421):
+    // State(382):
     //   OR -> [|] [|] .
     //   OR_ASSIGN -> [|] [|] . [=]
     // Transitions:
-    //   [=] => State(438):OR_ASSIGN
+    //   [=] => State(399):OR_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 438, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 399, 419, 419, 419, 419, 419, 419, 419, 419, 399, 419,
     ],
-    // State(422):
+    // State(383):
     //   NULLISH -> [?] [?] .
     //   NULLISH_ASSIGN -> [?] [?] . [=]
     // Transitions:
-    //   [=] => State(439):NULLISH_ASSIGN
+    //   [=] => State(400):NULLISH_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 439, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 400, 419, 419, 419, 419, 419, 419, 419, 419, 400, 419,
     ],
-    // State(423):
-    //   OPTIONAL_CHAINING -> [?] . [.] !?[DecimalDigit]
+    // State(384):
+    //   OPTIONAL_CHAINING -> [?] . [.] ?![DecimalDigit]
     //   NULLISH -> [?] . [?]
     //   CONDITIONAL -> [?] .
     //   NULLISH_ASSIGN -> [?] . [?] [=]
     // Transitions:
-    //   [.] => State(23)
-    //   [?] => State(422):NULLISH
+    //   [.] => State(47)
+    //   [?] => State(383):NULLISH
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 23, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 422, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 47, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 383, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 47, 419,
     ],
-    // State(424):
+    // State(385):
     //   COLON -> [:] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(425):
+    // State(386):
     //   EQ -> [=] . [=]
     //   EQ_STRICT -> [=] . [=] [=]
     //   ASSIGN -> [=] .
     //   ARROW -> [=] . [>]
     // Transitions:
-    //   [=] => State(401):EQ
-    //   [>] => State(440):ARROW
+    //   [=] => State(362):EQ
+    //   [>] => State(401):ARROW
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 440, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 401, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 401, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 362, 419, 419, 419, 419, 419, 419, 419, 419, 362, 419,
     ],
-    // State(426):
+    // State(387):
     //   ADD_ASSIGN -> [+] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(427):
+    // State(388):
     //   SUB_ASSIGN -> [-] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(428):
+    // State(389):
     //   MUL_ASSIGN -> [*] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(429):
+    // State(390):
     //   MOD_ASSIGN -> [%] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(430):
+    // State(391):
     //   EXP_ASSIGN -> [*] [*] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(431):
+    // State(392):
     //   SHL_ASSIGN -> [<] [<] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(432):
+    // State(393):
     //   SAR_ASSIGN -> [>] [>] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(433):
+    // State(394):
     //   SHR_ASSIGN -> [>] [>] [>] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(434):
+    // State(395):
     //   BIT_AND_ASSIGN -> [&] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(435):
+    // State(396):
     //   BIT_OR_ASSIGN -> [|] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(436):
+    // State(397):
     //   BIT_XOR_ASSIGN -> [^] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(437):
+    // State(398):
     //   AND_ASSIGN -> [&] [&] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(438):
+    // State(399):
     //   OR_ASSIGN -> [|] [|] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(439):
+    // State(400):
     //   NULLISH_ASSIGN -> [?] [?] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(440):
+    // State(401):
     //   ARROW -> [=] [>] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(441):
+    // State(402):
     //   NumericLiteral -> DecimalLiteral .
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
@@ -8559,6 +9096,9 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] DecimalDigits_Sep
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] ExponentPart_Sep
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] DecimalDigits_Sep ExponentPart_Sep
+    //   DecimalLiteral -> DecimalIntegerLiteral .
+    //   DecimalIntegerLiteral -> NonZeroDigit .
+    //   NonZeroDigit -> [1 2 3 4 5 6 7 8 9] .
     //   DecimalLiteral -> DecimalIntegerLiteral . ExponentPart_Sep
     //   ExponentPart_Sep -> . ExponentIndicator SignedInteger_Sep
     //   ExponentIndicator -> . [e E]
@@ -8568,21 +9108,27 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DecimalBigIntegerLiteral -> NonZeroDigit . NumericLiteralSeparator DecimalDigits_Sep BigIntLiteralSuffix
     //   DecimalDigits_Sep -> DecimalDigits_Sep . DecimalDigit
     //   DecimalDigits_Sep -> DecimalDigits_Sep . NumericLiteralSeparator DecimalDigit
+    //   DecimalIntegerLiteral -> NonZeroDigit DecimalDigits_Sep .
+    //   DecimalDigits_Sep -> DecimalDigit .
+    //   DecimalDigit -> [0 1 2 3 4 5 6 7 8 9] .
     //   DecimalBigIntegerLiteral -> NonZeroDigit DecimalDigits_Sep . BigIntLiteralSuffix
+    //   DecimalIntegerLiteral -> NonZeroDigit NumericLiteralSeparator DecimalDigits_Sep .
     //   DecimalBigIntegerLiteral -> NonZeroDigit NumericLiteralSeparator DecimalDigits_Sep . BigIntLiteralSuffix
+    //   DecimalDigits_Sep -> DecimalDigits_Sep DecimalDigit .
+    //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator DecimalDigit .
     // Transitions:
-    //   [E, e] => State(16)
-    //   [_] => State(17)
-    //   [0..9] => State(441):NumericLiteral
-    //   [n] => State(443):NumericLiteral
-    //   [.] => State(444):NumericLiteral
+    //   [E, e] => State(40)
+    //   [_] => State(41)
+    //   [0..9] => State(402):NumericLiteral
+    //   [n] => State(404):NumericLiteral
+    //   [.] => State(405):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 17, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 458, 458, 458, 458, 443, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 444, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 441, 441, 441, 441, 441, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 41, 419, 419, 419, 419, 419,
+        419, 40, 419, 419, 419, 419, 419, 40, 419, 419, 419, 419, 419, 419, 404, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 405, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 402, 402, 402, 402, 419, 419, 419, 419, 40, 419,
     ],
-    // State(442):
+    // State(403):
     //   NumericLiteral -> DecimalLiteral .
     //   NonOctalDecimalIntegerLiteral -> [0] . NonOctalDigit
     //   NonOctalDigit -> . [8 9]
@@ -8592,6 +9138,8 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] DecimalDigits_Sep
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] ExponentPart_Sep
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] DecimalDigits_Sep ExponentPart_Sep
+    //   DecimalLiteral -> DecimalIntegerLiteral .
+    //   DecimalIntegerLiteral -> [0] .
     //   DecimalLiteral -> DecimalIntegerLiteral . ExponentPart_Sep
     //   ExponentPart_Sep -> . ExponentIndicator SignedInteger_Sep
     //   ExponentIndicator -> . [e E]
@@ -8605,31 +9153,37 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   HexIntegerLiteral_Sep -> [0] . [X] HexDigits_Sep
     //   LegacyOctalIntegerLiteral -> [0] . OctalDigit
     // Transitions:
-    //   [E, e] => State(16)
-    //   [B, b] => State(20)
-    //   [O, o] => State(21)
-    //   [X, x] => State(22)
-    //   [n] => State(443):NumericLiteral
-    //   [.] => State(444):NumericLiteral
-    //   [0..7] => State(445):NumericLiteral
-    //   [8..9] => State(446):NumericLiteral
+    //   [E, e] => State(40)
+    //   [B, b] => State(44)
+    //   [O, o] => State(45)
+    //   [X, x] => State(46)
+    //   [n] => State(404):NumericLiteral
+    //   [.] => State(405):NumericLiteral
+    //   [0..7] => State(406):NumericLiteral
+    //   [8..9] => State(407):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 20, 458, 458, 16, 20, 458, 458, 21, 22, 458,
-        458, 458, 22, 458, 458, 458, 16, 458, 458, 458, 458, 458, 458, 443, 458, 458, 458, 458, 21,
-        458, 458, 458, 458, 458, 458, 458, 444, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 446, 445, 445, 445, 445, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 44, 419, 419, 419, 45, 46, 419, 419, 419, 46,
+        40, 44, 419, 419, 419, 419, 40, 419, 419, 419, 419, 419, 419, 404, 419, 419, 419, 419, 45,
+        419, 419, 419, 419, 419, 419, 419, 405, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 406, 406, 407, 406, 419, 419, 419, 419, 40, 419,
     ],
-    // State(443):
+    // State(404):
     //   NumericLiteral -> DecimalBigIntegerLiteral .
+    //   DecimalBigIntegerLiteral -> NonZeroDigit BigIntLiteralSuffix .
+    //   BigIntLiteralSuffix -> [n] .
+    //   DecimalBigIntegerLiteral -> [0] BigIntLiteralSuffix .
+    //   DecimalBigIntegerLiteral -> NonZeroDigit DecimalDigits_Sep BigIntLiteralSuffix .
+    //   DecimalBigIntegerLiteral -> NonZeroDigit NumericLiteralSeparator DecimalDigits_Sep BigIntLiteralSuffix .
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep BigIntLiteralSuffix .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(444):
+    // State(405):
     //   NumericLiteral -> DecimalLiteral .
+    //   DecimalLiteral -> DecimalIntegerLiteral [.] .
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
     //   DecimalLiteral -> DecimalIntegerLiteral [.] . DecimalDigits_Sep
@@ -8640,31 +9194,34 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   ExponentIndicator -> . [e E]
     //   DecimalLiteral -> DecimalIntegerLiteral [.] . DecimalDigits_Sep ExponentPart_Sep
     // Transitions:
-    //   [E, e] => State(16)
-    //   [0..9] => State(447):NumericLiteral
+    //   [E, e] => State(40)
+    //   [0..9] => State(408):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 447, 447, 447, 447, 447, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 40, 419, 419, 419, 419, 419, 40, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 408, 408, 408, 408, 419, 419, 419, 419, 40, 419,
     ],
-    // State(445):
+    // State(406):
     //   LegacyOctalLikeDecimalIntegerLiteral -> LegacyOctalLikeDecimalIntegerLiteral . OctalDigit
     //   OctalDigit -> . [0 1 2 3 4 5 6 7]
     //   NonOctalDecimalIntegerLiteral -> LegacyOctalLikeDecimalIntegerLiteral . NonOctalDigit
     //   NonOctalDigit -> . [8 9]
     //   NumericLiteral -> LegacyOctalIntegerLiteral .
+    //   LegacyOctalIntegerLiteral -> [0] OctalDigit .
+    //   OctalDigit -> [0 1 2 3 4 5 6 7] .
     //   LegacyOctalIntegerLiteral -> LegacyOctalIntegerLiteral . OctalDigit
+    //   LegacyOctalIntegerLiteral -> LegacyOctalIntegerLiteral OctalDigit .
     // Transitions:
-    //   [0..7] => State(445):NumericLiteral
-    //   [8..9] => State(446):NumericLiteral
+    //   [0..7] => State(406):NumericLiteral
+    //   [8..9] => State(407):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 446, 445, 445, 445, 445, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 406, 406, 407, 406, 419, 419, 419, 419, 406, 419,
     ],
-    // State(446):
+    // State(407):
     //   NumericLiteral -> DecimalLiteral .
     //   NonOctalDecimalIntegerLiteral -> NonOctalDecimalIntegerLiteral . DecimalDigit
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
@@ -8672,21 +9229,31 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] DecimalDigits_Sep
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] ExponentPart_Sep
     //   DecimalLiteral -> DecimalIntegerLiteral . [.] DecimalDigits_Sep ExponentPart_Sep
+    //   DecimalLiteral -> DecimalIntegerLiteral .
+    //   DecimalIntegerLiteral -> NonOctalDecimalIntegerLiteral .
+    //   NonOctalDecimalIntegerLiteral -> [0] NonOctalDigit .
+    //   NonOctalDigit -> [8 9] .
     //   DecimalLiteral -> DecimalIntegerLiteral . ExponentPart_Sep
     //   ExponentPart_Sep -> . ExponentIndicator SignedInteger_Sep
     //   ExponentIndicator -> . [e E]
+    //   NonOctalDecimalIntegerLiteral -> LegacyOctalLikeDecimalIntegerLiteral NonOctalDigit .
+    //   NonOctalDecimalIntegerLiteral -> NonOctalDecimalIntegerLiteral DecimalDigit .
+    //   DecimalDigit -> [0 1 2 3 4 5 6 7 8 9] .
     // Transitions:
-    //   [E, e] => State(16)
-    //   [.] => State(444):NumericLiteral
-    //   [0..9] => State(446):NumericLiteral
+    //   [E, e] => State(40)
+    //   [.] => State(405):NumericLiteral
+    //   [0..9] => State(407):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 444, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 446, 446, 446, 446, 446, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 40, 419, 419, 419, 419, 419, 40, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 405, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 407, 407, 407, 407, 419, 419, 419, 419, 40, 419,
     ],
-    // State(447):
+    // State(408):
     //   NumericLiteral -> DecimalLiteral .
+    //   DecimalLiteral -> [.] DecimalDigits_Sep .
+    //   DecimalDigits_Sep -> DecimalDigit .
+    //   DecimalDigit -> [0 1 2 3 4 5 6 7 8 9] .
     //   DecimalDigits_Sep -> DecimalDigits_Sep . DecimalDigit
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     //   DecimalDigits_Sep -> DecimalDigits_Sep . NumericLiteralSeparator DecimalDigit
@@ -8694,116 +9261,152 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DecimalLiteral -> [.] DecimalDigits_Sep . ExponentPart_Sep
     //   ExponentPart_Sep -> . ExponentIndicator SignedInteger_Sep
     //   ExponentIndicator -> . [e E]
+    //   DecimalLiteral -> DecimalIntegerLiteral [.] DecimalDigits_Sep .
     //   DecimalLiteral -> DecimalIntegerLiteral [.] DecimalDigits_Sep . ExponentPart_Sep
+    //   DecimalDigits_Sep -> DecimalDigits_Sep DecimalDigit .
+    //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator DecimalDigit .
     // Transitions:
-    //   [E, e] => State(16)
-    //   [_] => State(19)
-    //   [0..9] => State(447):NumericLiteral
+    //   [E, e] => State(40)
+    //   [_] => State(43)
+    //   [0..9] => State(408):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 19, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 16, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 447, 447, 447, 447, 447, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 43, 419, 419, 419, 419, 419,
+        419, 40, 419, 419, 419, 419, 419, 40, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 408, 408, 408, 408, 419, 419, 419, 419, 40, 419,
     ],
-    // State(448):
+    // State(409):
     //   NumericLiteral -> DecimalLiteral .
+    //   DecimalLiteral -> DecimalIntegerLiteral ExponentPart_Sep .
+    //   ExponentPart_Sep -> ExponentIndicator SignedInteger_Sep .
+    //   SignedInteger_Sep -> DecimalDigits_Sep .
+    //   DecimalDigits_Sep -> DecimalDigit .
+    //   DecimalDigit -> [0 1 2 3 4 5 6 7 8 9] .
     //   DecimalDigits_Sep -> DecimalDigits_Sep . DecimalDigit
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     //   DecimalDigits_Sep -> DecimalDigits_Sep . NumericLiteralSeparator DecimalDigit
     //   NumericLiteralSeparator -> . [_]
+    //   DecimalDigits_Sep -> DecimalDigits_Sep DecimalDigit .
+    //   SignedInteger_Sep -> [+] DecimalDigits_Sep .
+    //   SignedInteger_Sep -> [-] DecimalDigits_Sep .
+    //   DecimalLiteral -> DecimalIntegerLiteral [.] ExponentPart_Sep .
+    //   DecimalLiteral -> [.] DecimalDigits_Sep ExponentPart_Sep .
+    //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator DecimalDigit .
+    //   DecimalLiteral -> DecimalIntegerLiteral [.] DecimalDigits_Sep ExponentPart_Sep .
     // Transitions:
-    //   [_] => State(18)
-    //   [0..9] => State(448):NumericLiteral
+    //   [_] => State(42)
+    //   [0..9] => State(409):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 18, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 448, 448, 448, 448, 448, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 42, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 409, 409, 409, 409, 419, 419, 419, 419, 42, 419,
     ],
-    // State(449):
+    // State(410):
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep .
+    //   NonDecimalIntegerLiteral_Sep -> BinaryIntegerLiteral_Sep .
+    //   BinaryIntegerLiteral_Sep -> [0] [b] BinaryDigits_Sep .
+    //   BinaryDigits_Sep -> BinaryDigit .
+    //   BinaryDigit -> [0 1] .
     //   BinaryDigits_Sep -> BinaryDigits_Sep . BinaryDigit
     //   BinaryDigit -> . [0 1]
     //   BinaryDigits_Sep -> BinaryDigits_Sep . NumericLiteralSeparator BinaryDigit
     //   NumericLiteralSeparator -> . [_]
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep . BigIntLiteralSuffix
     //   BigIntLiteralSuffix -> . [n]
+    //   BinaryIntegerLiteral_Sep -> [0] [B] BinaryDigits_Sep .
+    //   BinaryDigits_Sep -> BinaryDigits_Sep BinaryDigit .
+    //   BinaryDigits_Sep -> BinaryDigits_Sep NumericLiteralSeparator BinaryDigit .
     // Transitions:
-    //   [_] => State(20)
-    //   [n] => State(443):NumericLiteral
-    //   [0..1] => State(449):NumericLiteral
+    //   [_] => State(44)
+    //   [n] => State(404):NumericLiteral
+    //   [0..1] => State(410):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 20, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 443, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 449, 458, 458, 449, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 44, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 404, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 410, 419, 419, 410, 419, 419, 419, 419, 44, 419,
     ],
-    // State(450):
+    // State(411):
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep .
+    //   NonDecimalIntegerLiteral_Sep -> OctalIntegerLiteral_Sep .
+    //   OctalIntegerLiteral_Sep -> [0] [o] OctalDigits_Sep .
+    //   OctalDigits_Sep -> OctalDigit .
+    //   OctalDigit -> [0 1 2 3 4 5 6 7] .
     //   OctalDigits_Sep -> OctalDigits_Sep . OctalDigit
     //   OctalDigit -> . [0 1 2 3 4 5 6 7]
     //   OctalDigits_Sep -> OctalDigits_Sep . NumericLiteralSeparator OctalDigit
     //   NumericLiteralSeparator -> . [_]
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep . BigIntLiteralSuffix
     //   BigIntLiteralSuffix -> . [n]
+    //   OctalIntegerLiteral_Sep -> [0] [O] OctalDigits_Sep .
+    //   OctalDigits_Sep -> OctalDigits_Sep OctalDigit .
+    //   OctalDigits_Sep -> OctalDigits_Sep NumericLiteralSeparator OctalDigit .
     // Transitions:
-    //   [_] => State(21)
-    //   [n] => State(443):NumericLiteral
-    //   [0..7] => State(450):NumericLiteral
+    //   [_] => State(45)
+    //   [n] => State(404):NumericLiteral
+    //   [0..7] => State(411):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 21, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 443, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 450, 450, 450, 450, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 45, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 404, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 411, 411, 419, 411, 419, 419, 419, 419, 45, 419,
     ],
-    // State(451):
+    // State(412):
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep .
+    //   NonDecimalIntegerLiteral_Sep -> HexIntegerLiteral_Sep .
+    //   HexIntegerLiteral_Sep -> [0] [x] HexDigits_Sep .
+    //   HexDigits_Sep -> HexDigit .
+    //   HexDigit -> [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F] .
     //   HexDigits_Sep -> HexDigits_Sep . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   HexDigits_Sep -> HexDigits_Sep . NumericLiteralSeparator HexDigit
     //   NumericLiteralSeparator -> . [_]
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep . BigIntLiteralSuffix
     //   BigIntLiteralSuffix -> . [n]
+    //   HexIntegerLiteral_Sep -> [0] [X] HexDigits_Sep .
+    //   HexDigits_Sep -> HexDigits_Sep HexDigit .
+    //   HexDigits_Sep -> HexDigits_Sep NumericLiteralSeparator HexDigit .
     // Transitions:
-    //   [_] => State(22)
-    //   [n] => State(443):NumericLiteral
-    //   [0..9, A..F, a..f] => State(451):NumericLiteral
+    //   [_] => State(46)
+    //   [n] => State(404):NumericLiteral
+    //   [0..9, A..F, a..f] => State(412):NumericLiteral
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 451, 458, 458, 451, 451, 451, 22, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 451, 451, 458, 458, 458, 458, 458, 443, 458, 451, 458,
-        451, 458, 458, 451, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 451, 451, 451, 451, 451, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 412, 419, 419, 46, 419, 419, 419, 419, 419,
+        419, 412, 412, 412, 419, 419, 419, 412, 412, 419, 419, 419, 419, 419, 404, 419, 412, 419,
+        412, 419, 419, 412, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 412, 412, 412, 412, 419, 419, 419, 419, 46, 419,
     ],
-    // State(452):
+    // State(413):
     //   StringLiteral -> ["] ["] .
     //   StringLiteral -> ['] ['] .
     //   StringLiteral -> ["] DoubleStringCharacters ["] .
     //   StringLiteral -> ['] SingleStringCharacters ['] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(453):
+    // State(414):
     //   NoSubstitutionTemplate -> [`] [`] .
     //   NoSubstitutionTemplate -> [`] TemplateCharacters [`] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(454):
+    // State(415):
     //   TemplateHead -> [`] [$] [{] .
     //   TemplateHead -> [`] TemplateCharacters [$] [{] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(455):
+    // State(416):
     //   MultiLineComment -> [/] . [*] [*] [/]
     //   MultiLineComment -> [/] . [*] MultiLineCommentChars [*] [/]
     //   SingleLineComment -> [/] . [/]
@@ -8811,34 +9414,34 @@ const TRANSITION_TABLE: [[u16; 71]; 458] = [
     //   DIV -> [/] .
     //   DIV_ASSIGN -> [/] . [=]
     // Transitions:
-    //   [*] => State(8)
-    //   [/] => State(155):Comment
-    //   [=] => State(456):DIV_ASSIGN
+    //   [*] => State(32)
+    //   [/] => State(116):Comment
+    //   [=] => State(417):DIV_ASSIGN
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 8, 458,
-        458, 458, 458, 458, 458, 458, 458, 456, 458, 458, 458, 458, 458, 155, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 32, 419,
+        419, 419, 419, 419, 419, 419, 419, 417, 419, 419, 419, 419, 116, 419, 419, 419, 32, 419,
     ],
-    // State(456):
+    // State(417):
     //   DIV_ASSIGN -> [/] [=] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
-    // State(457):
+    // State(418):
     //   RBRACE -> [}] .
     [
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
-        458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458, 458,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
+        419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419, 419,
     ],
 ];
 
-const ACCEPT_TABLE: [Option<TokenKind>; 458] = [
+const ACCEPT_TABLE: [Option<TokenKind>; 419] = [
     None,                                    // State(0)
     None,                                    // State(1)
     None,                                    // State(2)
@@ -8952,104 +9555,104 @@ const ACCEPT_TABLE: [Option<TokenKind>; 458] = [
     None,                                    // State(110)
     None,                                    // State(111)
     None,                                    // State(112)
-    None,                                    // State(113)
-    None,                                    // State(114)
-    None,                                    // State(115)
-    None,                                    // State(116)
-    None,                                    // State(117)
-    None,                                    // State(118)
-    None,                                    // State(119)
-    None,                                    // State(120)
-    None,                                    // State(121)
-    None,                                    // State(122)
-    None,                                    // State(123)
-    None,                                    // State(124)
-    None,                                    // State(125)
-    None,                                    // State(126)
-    None,                                    // State(127)
-    None,                                    // State(128)
-    None,                                    // State(129)
-    None,                                    // State(130)
-    None,                                    // State(131)
-    None,                                    // State(132)
-    None,                                    // State(133)
-    None,                                    // State(134)
-    None,                                    // State(135)
-    None,                                    // State(136)
-    None,                                    // State(137)
-    None,                                    // State(138)
-    None,                                    // State(139)
-    None,                                    // State(140)
-    None,                                    // State(141)
-    None,                                    // State(142)
-    None,                                    // State(143)
-    None,                                    // State(144)
-    None,                                    // State(145)
-    None,                                    // State(146)
-    None,                                    // State(147)
-    None,                                    // State(148)
-    None,                                    // State(149)
-    None,                                    // State(150)
-    None,                                    // State(151)
-    Some(TokenKind::WhiteSpaceSequence),     // State(152)
-    Some(TokenKind::LineTerminatorSequence), // State(153)
-    Some(TokenKind::LineTerminatorSequence), // State(154)
-    Some(TokenKind::Comment),                // State(155)
-    Some(TokenKind::Comment),                // State(156)
-    Some(TokenKind::Break),                  // State(157)
-    Some(TokenKind::Case),                   // State(158)
-    Some(TokenKind::Catch),                  // State(159)
-    Some(TokenKind::Class),                  // State(160)
-    Some(TokenKind::Const),                  // State(161)
-    Some(TokenKind::Continue),               // State(162)
-    Some(TokenKind::Debugger),               // State(163)
-    Some(TokenKind::Default),                // State(164)
-    Some(TokenKind::Delete),                 // State(165)
-    Some(TokenKind::Do),                     // State(166)
-    Some(TokenKind::Else),                   // State(167)
-    Some(TokenKind::Enum),                   // State(168)
-    Some(TokenKind::Export),                 // State(169)
-    Some(TokenKind::Extends),                // State(170)
-    Some(TokenKind::False),                  // State(171)
-    Some(TokenKind::Finally),                // State(172)
-    Some(TokenKind::For),                    // State(173)
-    Some(TokenKind::Function),               // State(174)
-    Some(TokenKind::If),                     // State(175)
-    Some(TokenKind::Import),                 // State(176)
-    Some(TokenKind::In),                     // State(177)
-    Some(TokenKind::Instanceof),             // State(178)
-    Some(TokenKind::New),                    // State(179)
-    Some(TokenKind::Null),                   // State(180)
-    Some(TokenKind::Return),                 // State(181)
-    Some(TokenKind::Super),                  // State(182)
-    Some(TokenKind::Switch),                 // State(183)
-    Some(TokenKind::This),                   // State(184)
-    Some(TokenKind::Throw),                  // State(185)
-    Some(TokenKind::True),                   // State(186)
-    Some(TokenKind::Try),                    // State(187)
-    Some(TokenKind::Typeof),                 // State(188)
-    Some(TokenKind::Var),                    // State(189)
-    Some(TokenKind::Void),                   // State(190)
-    Some(TokenKind::While),                  // State(191)
-    Some(TokenKind::With),                   // State(192)
-    Some(TokenKind::Await),                  // State(193)
-    Some(TokenKind::Yield),                  // State(194)
-    Some(TokenKind::Let),                    // State(195)
-    Some(TokenKind::Static),                 // State(196)
-    Some(TokenKind::Implements),             // State(197)
-    Some(TokenKind::Interface),              // State(198)
-    Some(TokenKind::Package),                // State(199)
-    Some(TokenKind::Private),                // State(200)
-    Some(TokenKind::Protected),              // State(201)
-    Some(TokenKind::Public),                 // State(202)
-    Some(TokenKind::As),                     // State(203)
-    Some(TokenKind::Async),                  // State(204)
-    Some(TokenKind::From),                   // State(205)
-    Some(TokenKind::Get),                    // State(206)
-    Some(TokenKind::Meta),                   // State(207)
-    Some(TokenKind::Of),                     // State(208)
-    Some(TokenKind::Set),                    // State(209)
-    Some(TokenKind::Target),                 // State(210)
+    Some(TokenKind::WhiteSpaceSequence),     // State(113)
+    Some(TokenKind::LineTerminatorSequence), // State(114)
+    Some(TokenKind::LineTerminatorSequence), // State(115)
+    Some(TokenKind::Comment),                // State(116)
+    Some(TokenKind::Comment),                // State(117)
+    Some(TokenKind::Break),                  // State(118)
+    Some(TokenKind::Case),                   // State(119)
+    Some(TokenKind::Catch),                  // State(120)
+    Some(TokenKind::Class),                  // State(121)
+    Some(TokenKind::Const),                  // State(122)
+    Some(TokenKind::Continue),               // State(123)
+    Some(TokenKind::Debugger),               // State(124)
+    Some(TokenKind::Default),                // State(125)
+    Some(TokenKind::Delete),                 // State(126)
+    Some(TokenKind::Do),                     // State(127)
+    Some(TokenKind::Else),                   // State(128)
+    Some(TokenKind::Enum),                   // State(129)
+    Some(TokenKind::Export),                 // State(130)
+    Some(TokenKind::Extends),                // State(131)
+    Some(TokenKind::False),                  // State(132)
+    Some(TokenKind::Finally),                // State(133)
+    Some(TokenKind::For),                    // State(134)
+    Some(TokenKind::Function),               // State(135)
+    Some(TokenKind::If),                     // State(136)
+    Some(TokenKind::Import),                 // State(137)
+    Some(TokenKind::In),                     // State(138)
+    Some(TokenKind::Instanceof),             // State(139)
+    Some(TokenKind::New),                    // State(140)
+    Some(TokenKind::Null),                   // State(141)
+    Some(TokenKind::Return),                 // State(142)
+    Some(TokenKind::Super),                  // State(143)
+    Some(TokenKind::Switch),                 // State(144)
+    Some(TokenKind::This),                   // State(145)
+    Some(TokenKind::Throw),                  // State(146)
+    Some(TokenKind::True),                   // State(147)
+    Some(TokenKind::Try),                    // State(148)
+    Some(TokenKind::Typeof),                 // State(149)
+    Some(TokenKind::Var),                    // State(150)
+    Some(TokenKind::Void),                   // State(151)
+    Some(TokenKind::While),                  // State(152)
+    Some(TokenKind::With),                   // State(153)
+    Some(TokenKind::Await),                  // State(154)
+    Some(TokenKind::Yield),                  // State(155)
+    Some(TokenKind::Let),                    // State(156)
+    Some(TokenKind::Static),                 // State(157)
+    Some(TokenKind::Implements),             // State(158)
+    Some(TokenKind::Interface),              // State(159)
+    Some(TokenKind::Package),                // State(160)
+    Some(TokenKind::Private),                // State(161)
+    Some(TokenKind::Protected),              // State(162)
+    Some(TokenKind::Public),                 // State(163)
+    Some(TokenKind::As),                     // State(164)
+    Some(TokenKind::Async),                  // State(165)
+    Some(TokenKind::From),                   // State(166)
+    Some(TokenKind::Get),                    // State(167)
+    Some(TokenKind::Meta),                   // State(168)
+    Some(TokenKind::Of),                     // State(169)
+    Some(TokenKind::Set),                    // State(170)
+    Some(TokenKind::Target),                 // State(171)
+    Some(TokenKind::IdentifierName),         // State(172)
+    Some(TokenKind::IdentifierName),         // State(173)
+    Some(TokenKind::IdentifierName),         // State(174)
+    Some(TokenKind::IdentifierName),         // State(175)
+    Some(TokenKind::IdentifierName),         // State(176)
+    Some(TokenKind::IdentifierName),         // State(177)
+    Some(TokenKind::IdentifierName),         // State(178)
+    Some(TokenKind::IdentifierName),         // State(179)
+    Some(TokenKind::IdentifierName),         // State(180)
+    Some(TokenKind::IdentifierName),         // State(181)
+    Some(TokenKind::IdentifierName),         // State(182)
+    Some(TokenKind::IdentifierName),         // State(183)
+    Some(TokenKind::IdentifierName),         // State(184)
+    Some(TokenKind::IdentifierName),         // State(185)
+    Some(TokenKind::IdentifierName),         // State(186)
+    Some(TokenKind::IdentifierName),         // State(187)
+    Some(TokenKind::IdentifierName),         // State(188)
+    Some(TokenKind::IdentifierName),         // State(189)
+    Some(TokenKind::IdentifierName),         // State(190)
+    Some(TokenKind::IdentifierName),         // State(191)
+    Some(TokenKind::IdentifierName),         // State(192)
+    Some(TokenKind::IdentifierName),         // State(193)
+    Some(TokenKind::IdentifierName),         // State(194)
+    Some(TokenKind::IdentifierName),         // State(195)
+    Some(TokenKind::IdentifierName),         // State(196)
+    Some(TokenKind::IdentifierName),         // State(197)
+    Some(TokenKind::IdentifierName),         // State(198)
+    Some(TokenKind::IdentifierName),         // State(199)
+    Some(TokenKind::IdentifierName),         // State(200)
+    Some(TokenKind::IdentifierName),         // State(201)
+    Some(TokenKind::IdentifierName),         // State(202)
+    Some(TokenKind::IdentifierName),         // State(203)
+    Some(TokenKind::IdentifierName),         // State(204)
+    Some(TokenKind::IdentifierName),         // State(205)
+    Some(TokenKind::IdentifierName),         // State(206)
+    Some(TokenKind::IdentifierName),         // State(207)
+    Some(TokenKind::IdentifierName),         // State(208)
+    Some(TokenKind::IdentifierName),         // State(209)
+    Some(TokenKind::IdentifierName),         // State(210)
     Some(TokenKind::IdentifierName),         // State(211)
     Some(TokenKind::IdentifierName),         // State(212)
     Some(TokenKind::IdentifierName),         // State(213)
@@ -9186,120 +9789,81 @@ const ACCEPT_TABLE: [Option<TokenKind>; 458] = [
     Some(TokenKind::IdentifierName),         // State(344)
     Some(TokenKind::IdentifierName),         // State(345)
     Some(TokenKind::IdentifierName),         // State(346)
-    Some(TokenKind::IdentifierName),         // State(347)
-    Some(TokenKind::IdentifierName),         // State(348)
-    Some(TokenKind::IdentifierName),         // State(349)
-    Some(TokenKind::IdentifierName),         // State(350)
-    Some(TokenKind::IdentifierName),         // State(351)
-    Some(TokenKind::IdentifierName),         // State(352)
-    Some(TokenKind::IdentifierName),         // State(353)
-    Some(TokenKind::IdentifierName),         // State(354)
-    Some(TokenKind::IdentifierName),         // State(355)
-    Some(TokenKind::IdentifierName),         // State(356)
-    Some(TokenKind::IdentifierName),         // State(357)
-    Some(TokenKind::IdentifierName),         // State(358)
-    Some(TokenKind::IdentifierName),         // State(359)
-    Some(TokenKind::IdentifierName),         // State(360)
-    Some(TokenKind::IdentifierName),         // State(361)
-    Some(TokenKind::IdentifierName),         // State(362)
-    Some(TokenKind::IdentifierName),         // State(363)
-    Some(TokenKind::IdentifierName),         // State(364)
-    Some(TokenKind::IdentifierName),         // State(365)
-    Some(TokenKind::IdentifierName),         // State(366)
-    Some(TokenKind::IdentifierName),         // State(367)
-    Some(TokenKind::IdentifierName),         // State(368)
-    Some(TokenKind::IdentifierName),         // State(369)
-    Some(TokenKind::IdentifierName),         // State(370)
-    Some(TokenKind::IdentifierName),         // State(371)
-    Some(TokenKind::IdentifierName),         // State(372)
-    Some(TokenKind::IdentifierName),         // State(373)
-    Some(TokenKind::IdentifierName),         // State(374)
-    Some(TokenKind::IdentifierName),         // State(375)
-    Some(TokenKind::IdentifierName),         // State(376)
-    Some(TokenKind::IdentifierName),         // State(377)
-    Some(TokenKind::IdentifierName),         // State(378)
-    Some(TokenKind::IdentifierName),         // State(379)
-    Some(TokenKind::IdentifierName),         // State(380)
-    Some(TokenKind::IdentifierName),         // State(381)
-    Some(TokenKind::IdentifierName),         // State(382)
-    Some(TokenKind::IdentifierName),         // State(383)
-    Some(TokenKind::IdentifierName),         // State(384)
-    Some(TokenKind::IdentifierName),         // State(385)
-    Some(TokenKind::PrivateIdentifier),      // State(386)
-    Some(TokenKind::OptionalChaining),       // State(387)
-    Some(TokenKind::Lbrace),                 // State(388)
-    Some(TokenKind::Lparen),                 // State(389)
-    Some(TokenKind::Rparen),                 // State(390)
-    Some(TokenKind::Lbrack),                 // State(391)
-    Some(TokenKind::Rbrack),                 // State(392)
-    Some(TokenKind::Dot),                    // State(393)
-    Some(TokenKind::Ellipsis),               // State(394)
-    Some(TokenKind::SemiColon),              // State(395)
-    Some(TokenKind::Comma),                  // State(396)
-    Some(TokenKind::Lt),                     // State(397)
-    Some(TokenKind::Gt),                     // State(398)
-    Some(TokenKind::Lte),                    // State(399)
-    Some(TokenKind::Gte),                    // State(400)
-    Some(TokenKind::Eq),                     // State(401)
-    Some(TokenKind::Ne),                     // State(402)
-    Some(TokenKind::EqStrict),               // State(403)
-    Some(TokenKind::NeStrict),               // State(404)
-    Some(TokenKind::Add),                    // State(405)
-    Some(TokenKind::Sub),                    // State(406)
-    Some(TokenKind::Mul),                    // State(407)
-    Some(TokenKind::Mod),                    // State(408)
-    Some(TokenKind::Exp),                    // State(409)
-    Some(TokenKind::Inc),                    // State(410)
-    Some(TokenKind::Dec),                    // State(411)
-    Some(TokenKind::Shl),                    // State(412)
-    Some(TokenKind::Sar),                    // State(413)
-    Some(TokenKind::Shr),                    // State(414)
-    Some(TokenKind::BitAnd),                 // State(415)
-    Some(TokenKind::BitOr),                  // State(416)
-    Some(TokenKind::BitXor),                 // State(417)
-    Some(TokenKind::Not),                    // State(418)
-    Some(TokenKind::BitNot),                 // State(419)
-    Some(TokenKind::And),                    // State(420)
-    Some(TokenKind::Or),                     // State(421)
-    Some(TokenKind::Nullish),                // State(422)
-    Some(TokenKind::Conditional),            // State(423)
-    Some(TokenKind::Colon),                  // State(424)
-    Some(TokenKind::Assign),                 // State(425)
-    Some(TokenKind::AddAssign),              // State(426)
-    Some(TokenKind::SubAssign),              // State(427)
-    Some(TokenKind::MulAssign),              // State(428)
-    Some(TokenKind::ModAssign),              // State(429)
-    Some(TokenKind::ExpAssign),              // State(430)
-    Some(TokenKind::ShlAssign),              // State(431)
-    Some(TokenKind::SarAssign),              // State(432)
-    Some(TokenKind::ShrAssign),              // State(433)
-    Some(TokenKind::BitAndAssign),           // State(434)
-    Some(TokenKind::BitOrAssign),            // State(435)
-    Some(TokenKind::BitXorAssign),           // State(436)
-    Some(TokenKind::AndAssign),              // State(437)
-    Some(TokenKind::OrAssign),               // State(438)
-    Some(TokenKind::NullishAssign),          // State(439)
-    Some(TokenKind::Arrow),                  // State(440)
-    Some(TokenKind::NumericLiteral),         // State(441)
-    Some(TokenKind::NumericLiteral),         // State(442)
-    Some(TokenKind::NumericLiteral),         // State(443)
-    Some(TokenKind::NumericLiteral),         // State(444)
-    Some(TokenKind::NumericLiteral),         // State(445)
-    Some(TokenKind::NumericLiteral),         // State(446)
-    Some(TokenKind::NumericLiteral),         // State(447)
-    Some(TokenKind::NumericLiteral),         // State(448)
-    Some(TokenKind::NumericLiteral),         // State(449)
-    Some(TokenKind::NumericLiteral),         // State(450)
-    Some(TokenKind::NumericLiteral),         // State(451)
-    Some(TokenKind::StringLiteral),          // State(452)
-    Some(TokenKind::NoSubstitutionTemplate), // State(453)
-    Some(TokenKind::TemplateHead),           // State(454)
-    Some(TokenKind::Div),                    // State(455)
-    Some(TokenKind::DivAssign),              // State(456)
-    Some(TokenKind::Rbrace),                 // State(457)
+    Some(TokenKind::PrivateIdentifier),      // State(347)
+    Some(TokenKind::OptionalChaining),       // State(348)
+    Some(TokenKind::Lbrace),                 // State(349)
+    Some(TokenKind::Lparen),                 // State(350)
+    Some(TokenKind::Rparen),                 // State(351)
+    Some(TokenKind::Lbrack),                 // State(352)
+    Some(TokenKind::Rbrack),                 // State(353)
+    Some(TokenKind::Dot),                    // State(354)
+    Some(TokenKind::Ellipsis),               // State(355)
+    Some(TokenKind::SemiColon),              // State(356)
+    Some(TokenKind::Comma),                  // State(357)
+    Some(TokenKind::Lt),                     // State(358)
+    Some(TokenKind::Gt),                     // State(359)
+    Some(TokenKind::Lte),                    // State(360)
+    Some(TokenKind::Gte),                    // State(361)
+    Some(TokenKind::Eq),                     // State(362)
+    Some(TokenKind::Ne),                     // State(363)
+    Some(TokenKind::EqStrict),               // State(364)
+    Some(TokenKind::NeStrict),               // State(365)
+    Some(TokenKind::Add),                    // State(366)
+    Some(TokenKind::Sub),                    // State(367)
+    Some(TokenKind::Mul),                    // State(368)
+    Some(TokenKind::Mod),                    // State(369)
+    Some(TokenKind::Exp),                    // State(370)
+    Some(TokenKind::Inc),                    // State(371)
+    Some(TokenKind::Dec),                    // State(372)
+    Some(TokenKind::Shl),                    // State(373)
+    Some(TokenKind::Sar),                    // State(374)
+    Some(TokenKind::Shr),                    // State(375)
+    Some(TokenKind::BitAnd),                 // State(376)
+    Some(TokenKind::BitOr),                  // State(377)
+    Some(TokenKind::BitXor),                 // State(378)
+    Some(TokenKind::Not),                    // State(379)
+    Some(TokenKind::BitNot),                 // State(380)
+    Some(TokenKind::And),                    // State(381)
+    Some(TokenKind::Or),                     // State(382)
+    Some(TokenKind::Nullish),                // State(383)
+    Some(TokenKind::Conditional),            // State(384)
+    Some(TokenKind::Colon),                  // State(385)
+    Some(TokenKind::Assign),                 // State(386)
+    Some(TokenKind::AddAssign),              // State(387)
+    Some(TokenKind::SubAssign),              // State(388)
+    Some(TokenKind::MulAssign),              // State(389)
+    Some(TokenKind::ModAssign),              // State(390)
+    Some(TokenKind::ExpAssign),              // State(391)
+    Some(TokenKind::ShlAssign),              // State(392)
+    Some(TokenKind::SarAssign),              // State(393)
+    Some(TokenKind::ShrAssign),              // State(394)
+    Some(TokenKind::BitAndAssign),           // State(395)
+    Some(TokenKind::BitOrAssign),            // State(396)
+    Some(TokenKind::BitXorAssign),           // State(397)
+    Some(TokenKind::AndAssign),              // State(398)
+    Some(TokenKind::OrAssign),               // State(399)
+    Some(TokenKind::NullishAssign),          // State(400)
+    Some(TokenKind::Arrow),                  // State(401)
+    Some(TokenKind::NumericLiteral),         // State(402)
+    Some(TokenKind::NumericLiteral),         // State(403)
+    Some(TokenKind::NumericLiteral),         // State(404)
+    Some(TokenKind::NumericLiteral),         // State(405)
+    Some(TokenKind::NumericLiteral),         // State(406)
+    Some(TokenKind::NumericLiteral),         // State(407)
+    Some(TokenKind::NumericLiteral),         // State(408)
+    Some(TokenKind::NumericLiteral),         // State(409)
+    Some(TokenKind::NumericLiteral),         // State(410)
+    Some(TokenKind::NumericLiteral),         // State(411)
+    Some(TokenKind::NumericLiteral),         // State(412)
+    Some(TokenKind::StringLiteral),          // State(413)
+    Some(TokenKind::NoSubstitutionTemplate), // State(414)
+    Some(TokenKind::TemplateHead),           // State(415)
+    Some(TokenKind::Div),                    // State(416)
+    Some(TokenKind::DivAssign),              // State(417)
+    Some(TokenKind::Rbrace),                 // State(418)
 ];
 
-const LOOKAHEAD_TABLE: [bool; 458] = [
+const LOOKAHEAD_TABLE: [bool; 419] = [
     false, // State(0)
     false, // State(1)
     false, // State(2)
@@ -9415,7 +9979,7 @@ const LOOKAHEAD_TABLE: [bool; 458] = [
     false, // State(112)
     false, // State(113)
     false, // State(114)
-    false, // State(115)
+    true,  // State(115)
     false, // State(116)
     false, // State(117)
     false, // State(118)
@@ -9449,12 +10013,12 @@ const LOOKAHEAD_TABLE: [bool; 458] = [
     false, // State(146)
     false, // State(147)
     false, // State(148)
-    true,  // State(149)
-    true,  // State(150)
-    true,  // State(151)
+    false, // State(149)
+    false, // State(150)
+    false, // State(151)
     false, // State(152)
     false, // State(153)
-    true,  // State(154)
+    false, // State(154)
     false, // State(155)
     false, // State(156)
     false, // State(157)
@@ -9648,7 +10212,7 @@ const LOOKAHEAD_TABLE: [bool; 458] = [
     false, // State(345)
     false, // State(346)
     false, // State(347)
-    false, // State(348)
+    true,  // State(348)
     false, // State(349)
     false, // State(350)
     false, // State(351)
@@ -9687,7 +10251,7 @@ const LOOKAHEAD_TABLE: [bool; 458] = [
     false, // State(384)
     false, // State(385)
     false, // State(386)
-    true,  // State(387)
+    false, // State(387)
     false, // State(388)
     false, // State(389)
     false, // State(390)
@@ -9719,43 +10283,4 @@ const LOOKAHEAD_TABLE: [bool; 458] = [
     false, // State(416)
     false, // State(417)
     false, // State(418)
-    false, // State(419)
-    false, // State(420)
-    false, // State(421)
-    false, // State(422)
-    false, // State(423)
-    false, // State(424)
-    false, // State(425)
-    false, // State(426)
-    false, // State(427)
-    false, // State(428)
-    false, // State(429)
-    false, // State(430)
-    false, // State(431)
-    false, // State(432)
-    false, // State(433)
-    false, // State(434)
-    false, // State(435)
-    false, // State(436)
-    false, // State(437)
-    false, // State(438)
-    false, // State(439)
-    false, // State(440)
-    false, // State(441)
-    false, // State(442)
-    false, // State(443)
-    false, // State(444)
-    false, // State(445)
-    false, // State(446)
-    false, // State(447)
-    false, // State(448)
-    false, // State(449)
-    false, // State(450)
-    false, // State(451)
-    false, // State(452)
-    false, // State(453)
-    false, // State(454)
-    false, // State(455)
-    false, // State(456)
-    false, // State(457)
 ];

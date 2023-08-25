@@ -191,9 +191,10 @@ impl std::fmt::Display for Term {
             Self::NonTerminal(non_terminal) => write!(f, "{non_terminal}")?,
             Self::Lookahead { patterns, negate } => {
                 if *negate {
-                    write!(f, "!")?;
+                    write!(f, "?![")?;
+                } else {
+                    write!(f, "?=[")?;
                 }
-                write!(f, "?[")?;
                 if let Some((last, patterns)) = patterns.split_last() {
                     for pattern in patterns.iter() {
                         write!(f, "{pattern} ")?;
@@ -296,21 +297,21 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
         let accept_id = self.nfa.create_state();
         self.nfa.accept(accept_id, token.to_string());
 
-        let (inner_start_id, inner_end_id) = self.build_nfa_for_non_terminal(token, true);
+        let partial = self.build_nfa_for_non_terminal(token, true);
 
         self.nfa.epsilon_transition(self.start_id, start_id);
-        self.nfa.epsilon_transition(start_id, inner_start_id);
-        self.nfa.epsilon_transition(inner_end_id, accept_id);
+        self.nfa.epsilon_transition(start_id, partial.start_id);
+        self.nfa.epsilon_transition(partial.end_id, accept_id);
     }
 
     pub fn build(self) -> Nfa {
         self.nfa
     }
 
-    fn build_nfa_for_non_terminal(&mut self, name: &str, accept: bool) -> (StateId, StateId) {
-        if let Some(endpoints) = self.find_recursion(name) {
+    fn build_nfa_for_non_terminal(&mut self, name: &str, accept: bool) -> PartialNfa {
+        if let Some(partial) = self.find_recursion(name) {
             self.mark_recursion();
-            return endpoints;
+            return partial;
         }
 
         let start_id = self.nfa.create_state();
@@ -318,32 +319,32 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
 
         let rules = self.rule_map.get(name).unwrap();
         self.recursion_stack.push(RecursionContext {
-            item: Some((name.to_string(), (start_id, end_id))),
+            item: Some((name.to_string(), PartialNfa { start_id, end_id })),
             recursion: false,
         });
-        let (inner_start_id, inner_end_id) = self.build_nfa_for_rules(rules, accept);
+        let partial = self.build_nfa_for_rules(rules, accept);
         self.recursion_stack.pop();
 
-        self.nfa.epsilon_transition(start_id, inner_start_id);
-        self.nfa.epsilon_transition(inner_end_id, end_id);
+        self.nfa.epsilon_transition(start_id, partial.start_id);
+        self.nfa.epsilon_transition(partial.end_id, end_id);
 
-        (start_id, end_id)
+        PartialNfa { start_id, end_id }
     }
 
-    fn build_nfa_for_rules(&mut self, rules: &[&'b Rule], accept: bool) -> (StateId, StateId) {
+    fn build_nfa_for_rules(&mut self, rules: &[&'b Rule], accept: bool) -> PartialNfa {
         let start_id = self.nfa.create_state();
         let end_id = self.nfa.create_state();
 
         for &rule in rules.iter() {
-            let (rule_start_id, rule_end_id) = self.build_nfa_for_rule(rule, accept);
-            self.nfa.epsilon_transition(start_id, rule_start_id);
-            self.nfa.epsilon_transition(rule_end_id, end_id);
+            let partial = self.build_nfa_for_rule(rule, accept);
+            self.nfa.epsilon_transition(start_id, partial.start_id);
+            self.nfa.epsilon_transition(partial.end_id, end_id);
         }
 
-        (start_id, end_id)
+        PartialNfa { start_id, end_id }
     }
 
-    fn build_nfa_for_rule(&mut self, rule: &Rule, accept: bool) -> (StateId, StateId) {
+    fn build_nfa_for_rule(&mut self, rule: &Rule, accept: bool) -> PartialNfa {
         let lookahead_index = rule.production.iter().position(Term::is_lookahead);
         let normal_seq_end = if let Some(i) = lookahead_index {
             // We assume that a lookahead sequence always follows a non-lookahead term.
@@ -371,7 +372,8 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
                 item: None,
                 recursion: false,
             });
-            let (term_start_id, term_end_id) = self.build_nfa_for_term(term);
+            let accept = accept && i == normal_seq_end - 1;
+            let partial = self.build_nfa_for_term(term, accept);
             let context = self.recursion_stack.pop().unwrap();
 
             // We build a DFA recognizing tokens that can be defined in regular expressions.
@@ -383,145 +385,144 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
             }
 
             let label = Label(rule, i);
-            self.nfa.add_label(term_start_id, format!("{label}"));
+            self.nfa.add_label(partial.start_id, format!("{label}"));
 
-            self.nfa.epsilon_transition(id, term_start_id);
+            self.nfa.epsilon_transition(id, partial.start_id);
 
-            id = term_end_id;
+            id = partial.end_id;
         }
 
         // Process lookahead items.
         if let Some(i) = lookahead_index {
-            let (lookahead_start_id, lookahead_end_id) =
-                self.build_nfa_for_lookahead(&rule.production[i..]);
-
+            let partial = self.build_nfa_for_lookahead(&rule.production[i..], accept);
             let label = Label(rule, i);
-            self.nfa.add_label(lookahead_end_id, format!("{label}"));
-
-            self.nfa.epsilon_transition(id, lookahead_start_id);
-
-            id = lookahead_end_id;
+            self.nfa.add_label(partial.end_id, format!("{label}"));
+            self.nfa.epsilon_transition(id, partial.start_id);
+            id = partial.end_id;
         }
 
         self.nfa.epsilon_transition(id, end_id);
 
-        (start_id, end_id)
+        PartialNfa { start_id, end_id }
     }
 
-    fn build_nfa_for_term(&mut self, term: &Term) -> (StateId, StateId) {
+    fn build_nfa_for_term(&mut self, term: &Term, accept: bool) -> PartialNfa {
         match term {
             Term::Empty => self.build_nfa_for_empty(),
             Term::UnicodeSet(ref patterns) => self.build_nfa_for_unicode_set(patterns),
-            Term::NonTerminal(ref name) => self.build_nfa_for_non_terminal(name, false),
+            Term::NonTerminal(ref name) => self.build_nfa_for_non_terminal(name, accept),
             _ => unimplemented!(),
         }
     }
 
-    fn build_nfa_for_empty(&mut self) -> (StateId, StateId) {
+    fn build_nfa_for_empty(&mut self) -> PartialNfa {
         let start_id = self.nfa.create_state();
         let end_id = self.nfa.create_state();
         self.nfa.epsilon_transition(start_id, end_id);
-        (start_id, end_id)
+        PartialNfa { start_id, end_id }
     }
 
-    fn build_nfa_for_unicode_set(&mut self, patterns: &[UnicodePattern]) -> (StateId, StateId) {
+    fn build_nfa_for_unicode_set(&mut self, patterns: &[UnicodePattern]) -> PartialNfa {
         let start_id = self.nfa.create_state();
         let end_id = self.nfa.create_state();
-        let unicode_set = self.build_unicode_set(patterns);
+        let unicode_set = self.build_unicode_set_for_patterns(patterns);
         self.nfa.transition(start_id, end_id, unicode_set);
-        (start_id, end_id)
+        PartialNfa { start_id, end_id }
     }
 
-    fn build_nfa_for_lookahead(&mut self, rules: &[Term]) -> (StateId, StateId) {
+    fn build_nfa_for_lookahead(&mut self, terms: &[Term], accept: bool) -> PartialNfa {
         let start_id = self.nfa.create_state();
         let end_id = self.nfa.create_state();
-        self.nfa.lookahead(end_id);
 
-        let mut unicode_set = UnicodeSet::any();
-        for rule in rules {
-            match rule {
-                Term::Lookahead { patterns, negate } => {
-                    let mut us = self.build_unicode_set(patterns);
-                    if *negate {
-                        us = UnicodeSet::any().exclude(&us);
-                    }
-                    unicode_set = unicode_set.intersect(&us);
-                }
-                _ => unreachable!(),
-            };
+        let unicode_set = self.build_unicode_set_for_lookahead(terms);
+
+        if accept {
+            self.nfa.lookahead(end_id);
+            self.nfa.transition(start_id, end_id, unicode_set);
+        } else {
+            self.nfa.pre_condition(end_id, unicode_set);
+            self.nfa.epsilon_transition(start_id, end_id);
         }
 
-        self.nfa.transition(start_id, end_id, unicode_set);
-
-        (start_id, end_id)
+        PartialNfa { start_id, end_id }
     }
 
-    fn build_unicode_set(&self, patterns: &[UnicodePattern]) -> UnicodeSet {
-        let mut unicode_set = UnicodeSet::empty();
-        for pattern in patterns {
-            match pattern {
-                UnicodePattern::Any => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::any());
+    fn build_unicode_set_for_lookahead(&mut self, terms: &[Term]) -> UnicodeSet {
+        terms.iter().fold(
+            UnicodeSet::any().merge_eof(),
+            |unicode_set, term| match term {
+                Term::Lookahead { patterns, negate } => {
+                    let mut us = self.build_unicode_set_for_patterns(patterns);
+                    if *negate {
+                        us = UnicodeSet::any().merge_eof().exclude(&us);
+                    }
+                    unicode_set.intersect(&us)
                 }
+                _ => unreachable!(),
+            },
+        )
+    }
+
+    fn build_unicode_set_for_patterns(&self, patterns: &[UnicodePattern]) -> UnicodeSet {
+        patterns
+            .iter()
+            .fold(UnicodeSet::empty(), |unicode_set, pattern| match pattern {
+                UnicodePattern::Any => unicode_set.merge(&UnicodeSet::any()),
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::TAB) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::tab());
+                    unicode_set.merge(&UnicodeSet::tab())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::VT) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::vt());
+                    unicode_set.merge(&UnicodeSet::vt())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::FF) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::ff());
+                    unicode_set.merge(&UnicodeSet::ff())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::SP) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::sp());
+                    unicode_set.merge(&UnicodeSet::sp())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::USP) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::usp());
+                    unicode_set.merge(&UnicodeSet::usp())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::LF) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::lf());
+                    unicode_set.merge(&UnicodeSet::lf())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::CR) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::cr());
+                    unicode_set.merge(&UnicodeSet::cr())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::LS) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::ls());
+                    unicode_set.merge(&UnicodeSet::ls())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::PS) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::ps());
+                    unicode_set.merge(&UnicodeSet::ps())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::ZWNJ) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::zwnj());
+                    unicode_set.merge(&UnicodeSet::zwnj())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::ZWJ) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::zwj());
+                    unicode_set.merge(&UnicodeSet::zwj())
                 }
                 UnicodePattern::BuiltIn(UnicodeBuiltInPattern::ZWNBSP) => {
-                    unicode_set = unicode_set.merge(&UnicodeSet::zwnbsp());
+                    unicode_set.merge(&UnicodeSet::zwnbsp())
                 }
-                UnicodePattern::Char(ch) => {
-                    unicode_set = unicode_set.merge(&unicode_set![*ch]);
-                }
+                UnicodePattern::Char(ch) => unicode_set.merge(&unicode_set![*ch]),
                 UnicodePattern::Span(first, last) => {
-                    unicode_set = unicode_set.merge(&unicode_set![*first..=*last]);
+                    unicode_set.merge(&unicode_set![*first..=*last])
                 }
                 UnicodePattern::Exclude(value) => {
                     assert!(!value.is_empty());
                     if value.chars().count() == 1 {
                         let ch = value.chars().next().unwrap();
-                        unicode_set = unicode_set.exclude_span(&unicode_span!(ch));
+                        unicode_set.exclude_span(&unicode_span!(ch))
                     } else {
                         let us = self.build_unicode_set_for_non_terminal(value);
-                        unicode_set = unicode_set.exclude(&us);
+                        unicode_set.exclude(&us)
                     }
                 }
                 UnicodePattern::NonTerminal(name) => {
                     let us = self.build_unicode_set_for_non_terminal(name);
-                    unicode_set = unicode_set.merge(&us);
+                    unicode_set.merge(&us)
                 }
-            };
-        }
-        unicode_set
+            })
     }
 
     fn build_unicode_set_for_non_terminal(&self, name: &str) -> UnicodeSet {
@@ -530,12 +531,10 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
     }
 
     fn build_unicode_set_for_rules(&self, rules: &[&'b Rule]) -> UnicodeSet {
-        let mut unicode_set = UnicodeSet::empty();
-        for &rule in rules {
+        rules.iter().fold(UnicodeSet::empty(), |unicode_set, rule| {
             let us = self.build_unicode_set_for_rule(rule);
-            unicode_set = unicode_set.merge(&us);
-        }
-        unicode_set
+            unicode_set.merge(&us)
+        })
     }
 
     fn build_unicode_set_for_rule(&self, rule: &Rule) -> UnicodeSet {
@@ -547,12 +546,12 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
         match term {
             Term::Any => UnicodeSet::any(),
             Term::NonTerminal(ref name) => self.build_unicode_set_for_non_terminal(name),
-            Term::UnicodeSet(ref patterns) => self.build_unicode_set(patterns),
+            Term::UnicodeSet(ref patterns) => self.build_unicode_set_for_patterns(patterns),
             _ => unimplemented!(),
         }
     }
 
-    fn find_recursion(&self, name: &str) -> Option<(StateId, StateId)> {
+    fn find_recursion(&self, name: &str) -> Option<PartialNfa> {
         self.recursion_stack
             .iter()
             .rev()
@@ -566,7 +565,13 @@ impl<'a, 'b> NfaBuilder<'a, 'b> {
     }
 }
 
+#[derive(Clone, Debug)]
+struct PartialNfa {
+    start_id: StateId,
+    end_id: StateId,
+}
+
 struct RecursionContext {
-    item: Option<(String, (StateId, StateId))>,
+    item: Option<(String, PartialNfa)>,
     recursion: bool,
 }

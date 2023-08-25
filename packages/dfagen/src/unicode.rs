@@ -32,7 +32,7 @@ macro_rules! unicode_set {
         unicode_set![$($spans),+]
     };
     ($($spans:expr),+) => {
-        crate::unicode::UnicodeSet::from(vec![$(crate::unicode::unicode_span!($spans)),+])
+        crate::unicode::UnicodeSet::from(vec![$(crate::unicode::unicode_span!($spans).into()),+])
     };
 }
 
@@ -84,7 +84,7 @@ impl std::fmt::Display for CodePoint {
 }
 
 /// Represents a continuous range in Unicode code points.
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Eq, Hash, PartialEq, Deserialize, Serialize)]
 pub struct UnicodeSpan {
     base: u32,
     length: u32,
@@ -317,7 +317,7 @@ impl From<RangeInclusive<char>> for UnicodeSpan {
 impl std::fmt::Display for UnicodeSpan {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_empty() {
-            write!(f, "()")
+            write!(f, "(empty)")
         } else if self.len() == 1 {
             write!(f, "{}", self.first_code_point())
         } else {
@@ -327,8 +327,46 @@ impl std::fmt::Display for UnicodeSpan {
 }
 
 /// Represents a set of Unicode spans.
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct UnicodeSet(Arc<Vec<UnicodeSpan>>); // sorted
+#[derive(Clone, Debug, Default, Eq, Hash, PartialEq, Deserialize, Serialize)]
+pub struct UnicodeSet {
+    spans: Arc<Vec<UnicodeSpan>>, // sorted
+
+    /// `true` if the EOF is allowed, otherwise `false`.
+    ///
+    /// The EOF has no actual code point in Unicode, but it's needed for processing a transition
+    /// generated from lookahead terms in a lexical grammar.  We call such a transition a lookahead
+    /// transition.
+    ///
+    /// For example, the ES2022 lexical grammar contains the following rule:
+    ///
+    /// ```text
+    /// LineTerminatorSequence ::
+    ///   <LF>
+    ///   <CR> [lookahead != <LF>]
+    ///   <LS>
+    ///   <PS>
+    ///   <CR> <LF>
+    /// ```
+    ///
+    /// The `LineTerminatorSequenec` can be recognized by the following NFA:
+    ///
+    /// ```text
+    ///                    { <LF>, <LS>, <PS> }
+    /// [State(0):Start] ------------------------> [State(1):LineTerminatorSequence]
+    ///    |                                          A
+    ///    |                                          |
+    ///    +------------> [State(2)]------------------+
+    ///       { <CR> }       :               { <LF> }
+    ///                      : { Others }
+    ///                      : (lookahead transition)
+    ///                      V
+    ///                   [State(3):LineTerminatorSequence]
+    /// ```
+    ///
+    /// Where `{ Others }` must include the EOF so that a single `<CR>` character can be recognized
+    /// as the `LineTerminatorSequenec`.
+    eof: bool,
+}
 
 macro_rules! define_builtin_unicode_set {
     ($fname:ident, $unicode_set:expr) => {
@@ -340,11 +378,17 @@ macro_rules! define_builtin_unicode_set {
 
 impl UnicodeSet {
     pub fn empty() -> Self {
-        UnicodeSet(Arc::new(vec![]))
+        UnicodeSet {
+            spans: Arc::new(vec![]),
+            eof: false,
+        }
     }
 
     pub fn any() -> Self {
-        UnicodeSet(Arc::new(vec![UnicodeSpan::ANY]))
+        UnicodeSet {
+            spans: Arc::new(vec![UnicodeSpan::ANY.into()]),
+            eof: false,
+        }
     }
 
     define_builtin_unicode_set! {tab, unicode_set!['\u{0009}']}
@@ -363,29 +407,39 @@ impl UnicodeSet {
     define_builtin_unicode_set! {zwnbsp, unicode_set!['\u{FEFF}']}
 
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.spans.is_empty() && !self.eof
     }
 
     pub fn spans(&self) -> &[UnicodeSpan] {
-        self.0.as_slice()
+        self.spans.as_slice()
     }
 
     pub fn first_code_point(&self) -> Option<CodePoint> {
-        self.0.first().map(UnicodeSpan::first_code_point)
+        self.spans.first().map(UnicodeSpan::first_code_point)
     }
 
     pub fn last_code_point(&self) -> Option<CodePoint> {
-        self.0.last().map(UnicodeSpan::last_code_point)
+        self.spans.last().map(UnicodeSpan::last_code_point)
     }
 
-    pub fn contains_span(&self, span: &UnicodeSpan) -> bool {
-        self.0.iter().any(|mine| mine.contains(span))
+    pub fn contains_eof(&self) -> bool {
+        self.eof
+    }
+
+    pub fn contains_span(&self, other: &UnicodeSpan) -> bool {
+        self.spans.iter().any(|span| span.contains(other))
     }
 
     pub fn contains(&self, other: &Self) -> bool {
         // There are more efficient algorithms, but we choice a simple one which
         // takes O(N*M) time complexity, from maintenance cost point of view.
-        other.0.iter().all(|span| self.contains_span(span))
+        (!other.eof || self.eof) && other.spans.iter().all(|other| self.contains_span(other))
+    }
+
+    pub fn merge_eof(&self) -> Self {
+        let mut set = self.clone();
+        set.eof = true;
+        set
     }
 
     pub fn merge_span(&self, span: &UnicodeSpan) -> Self {
@@ -393,7 +447,7 @@ impl UnicodeSet {
         let mut spans = vec![];
         let mut added = false;
         let mut span = span.clone();
-        for mine in self.0.iter() {
+        for mine in self.spans.iter() {
             if span.can_merge(mine) {
                 span = span.merge(mine);
             } else if span.first_code_point() > mine.last_code_point() {
@@ -410,7 +464,10 @@ impl UnicodeSet {
         if !added {
             spans.push(span.clone());
         }
-        spans.into()
+        UnicodeSet {
+            spans: Arc::new(spans),
+            eof: self.eof,
+        }
     }
 
     pub fn merge(&self, other: &Self) -> Self {
@@ -420,8 +477,11 @@ impl UnicodeSet {
         // There are more efficient algorithms, but we choice a simple one which
         // takes O(N*M) time complexity, from maintenance cost point of view.
         let mut set = self.clone();
-        for span in other.0.iter() {
+        for span in other.spans.iter() {
             set = set.merge_span(span);
+        }
+        if other.eof {
+            set.eof = true;
         }
         set
     }
@@ -433,16 +493,19 @@ impl UnicodeSet {
         // There are more efficient algorithms, but we choice a simple one which
         // takes O(N*M) time complexity, from maintenance cost point of view.
         let mut spans = vec![];
-        for span in other.0.iter() {
+        for span in other.spans.iter() {
             let intersection = self.intersect_span(span);
-            spans.extend(intersection.0.iter().cloned());
+            spans.extend(intersection.spans.iter().cloned());
         }
-        spans.into()
+        UnicodeSet {
+            spans: Arc::new(spans),
+            eof: self.eof && other.eof,
+        }
     }
 
     pub fn intersect_span(&self, span: &UnicodeSpan) -> Self {
         let mut spans = vec![];
-        for mine in self.0.iter() {
+        for mine in self.spans.iter() {
             let intersection = span.intersect(mine);
             if !intersection.is_empty() {
                 spans.push(intersection);
@@ -458,42 +521,64 @@ impl UnicodeSet {
         // There are more efficient algorithms, but we choice a simple one which
         // takes O(N*M) time complexity, from maintenance cost point of view.
         let mut set = self.clone();
-        for span in other.0.iter() {
+        for span in other.spans.iter() {
             set = set.exclude_span(span);
+        }
+        if other.eof {
+            set.eof = false;
         }
         set
     }
 
     pub fn exclude_span(&self, span: &UnicodeSpan) -> Self {
         let mut spans = vec![];
-        for mine in self.0.iter() {
+        for mine in self.spans.iter() {
             spans.extend(mine.exclude(span).iter().cloned());
         }
-        spans.into()
+        UnicodeSet {
+            spans: Arc::new(spans),
+            eof: self.eof,
+        }
     }
 }
 
 impl From<UnicodeSpan> for UnicodeSet {
     fn from(span: UnicodeSpan) -> Self {
         debug_assert!(!span.is_empty());
-        UnicodeSet(Arc::new(vec![span]))
+        UnicodeSet {
+            spans: Arc::new(vec![span]),
+            eof: false,
+        }
     }
 }
 
 impl From<Vec<UnicodeSpan>> for UnicodeSet {
     fn from(spans: Vec<UnicodeSpan>) -> Self {
-        UnicodeSet(Arc::new(spans))
+        UnicodeSet {
+            spans: Arc::new(spans),
+            eof: false,
+        }
     }
 }
 
 impl std::fmt::Display for UnicodeSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[")?;
-        if let Some((last, leadings)) = self.0.split_last() {
-            for span in leadings.iter() {
-                write!(f, "{}, ", span)?;
+        match self.spans.split_last() {
+            Some((last, leadings)) => {
+                for span in leadings.iter() {
+                    write!(f, "{}, ", span)?;
+                }
+                write!(f, "{}", last)?;
+                if self.eof {
+                    write!(f, ", (eof)")?;
+                }
             }
-            write!(f, "{}", last)?;
+            None => {
+                if self.eof {
+                    write!(f, "(eof)")?;
+                }
+            }
         }
         write!(f, "]")
     }
@@ -562,6 +647,7 @@ impl std::fmt::Display for UnicodeSetsBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test_log::test;
 
     #[test]
     fn test_code_point_get_char() {
@@ -643,6 +729,7 @@ mod tests {
         assert!(unicode_span!('2'..='7').can_merge(&unicode_span!('7')));
         assert!(unicode_span!('2'..='7').can_merge(&unicode_span!('8')));
         assert!(!unicode_span!('2'..='7').can_merge(&unicode_span!('9')));
+        assert!(!unicode_span!('2'..='7').can_merge(&UnicodeSpan::EMPTY));
     }
 
     #[test]
@@ -759,7 +846,7 @@ mod tests {
 
     #[test]
     fn test_unicode_span_format() {
-        assert_eq!(format!("{}", UnicodeSpan::EMPTY), "()");
+        assert_eq!(format!("{}", UnicodeSpan::EMPTY), "(empty)");
         assert_eq!(format!("{}", unicode_span!('A')), "A");
         assert_eq!(format!("{}", unicode_span!('0'..='9')), "0..9");
     }
@@ -772,10 +859,14 @@ mod tests {
         let upper_alnum = unicode_set!['0'..='9', 'A'..='Z'];
         let lower_alnum = unicode_set!['0'..='9', 'a'..='z'];
         assert!(lower_alnum.contains(&digit));
+        assert!(lower_alnum.contains(&digit));
         assert!(lower_alnum.contains(&lower));
         assert!(lower_alnum.contains(&lower_alnum));
         assert!(!lower_alnum.contains(&upper));
         assert!(!lower_alnum.contains(&upper_alnum));
+        assert!(lower_alnum.merge_eof().contains(&digit));
+        assert!(!lower_alnum.contains(&digit.merge_eof()));
+        assert!(lower_alnum.merge_eof().contains(&digit.merge_eof()));
     }
 
     #[test]
@@ -832,6 +923,8 @@ mod tests {
         let alnum = unicode_set!['0'..='9', 'a'..='z'];
         assert_eq!(format!("{}", digit), "[0..9]");
         assert_eq!(format!("{}", alnum), "[0..9, a..z]");
+        assert_eq!(format!("{}", UnicodeSet::empty().merge_eof()), "[(eof)]");
+        assert_eq!(format!("{}", alnum.merge_eof()), "[0..9, a..z, (eof)]");
     }
 
     #[test]

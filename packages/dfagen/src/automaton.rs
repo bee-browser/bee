@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 
 use indexmap::IndexMap;
@@ -60,7 +61,7 @@ impl Nfa {
                     tracing::debug!(
                         state = %dfa.state(dfa_id),
                         %unicode_set,
-                        next = ?(),
+                        next = "(none)",
                     );
                     continue;
                 }
@@ -76,8 +77,8 @@ impl Nfa {
                         if self.determine_lookahead(&nfa_next_group) {
                             dfa.lookahead(dfa_next_id);
                         }
-                        for &nfa_id in nfa_next_group.iter() {
-                            for label in self.state(nfa_id).labels.iter() {
+                        for nfa_value in nfa_next_group.iter() {
+                            for label in self.state(nfa_value.id).labels.iter() {
                                 dfa.add_label(dfa_next_id, label.clone());
                             }
                         }
@@ -85,11 +86,6 @@ impl Nfa {
                         dfa_next_id
                     })
                     .clone();
-                tracing::debug!(
-                    state = %dfa.state(dfa_id),
-                    %unicode_set,
-                    next = %dfa.state(dfa_next_id),
-                );
                 dfa.transition(dfa_id, dfa_next_id, unicode_set.clone());
             }
         }
@@ -100,10 +96,18 @@ impl Nfa {
     fn compute_move(&self, group: &StateGroup, unicode_set: &UnicodeSet) -> StateGroup {
         let mut new_group = StateGroup::new();
 
-        for &id in group.iter() {
-            for trans in self.state(id).transitions.iter() {
-                if trans.unicode_set.contains(unicode_set) {
-                    new_group.push(trans.next_id);
+        for value in group.iter() {
+            let filtered = if let Some(ref cond) = value.pre_condition {
+                cond.intersect(unicode_set)
+            } else {
+                unicode_set.clone()
+            };
+            if filtered.is_empty() {
+                continue;
+            }
+            for trans in self.state(value.id).transitions.iter() {
+                if trans.unicode_set.contains(&filtered) {
+                    new_group.push(trans.next_id.into());
                 }
             }
         }
@@ -114,27 +118,45 @@ impl Nfa {
     }
 
     fn compute_closure(&self, group: &StateGroup) -> StateGroup {
-        // Use BTreeSet internally for efficiency.
-        let mut closure = BTreeSet::new();
-        closure.extend(group.iter());
+        let mut closure = HashSet::new();
+        closure.extend(group.iter().cloned());
 
-        let mut remaining: Vec<StateId> = group.iter().cloned().collect();
-        while let Some(id) = remaining.pop() {
-            let ids: Vec<StateId> = self
-                .state(id)
+        let mut remaining = VecDeque::new();
+        remaining.extend(group.iter().cloned());
+
+        while let Some(value) = remaining.pop_front() {
+            let state = self.state(value.id);
+            let ids = state
                 .transitions
                 .iter()
-                .filter(|trans| trans.unicode_set.is_empty())
-                .filter(|trans| !closure.contains(&trans.next_id))
-                .map(|trans| trans.next_id)
-                .collect();
-            for &id in ids.iter() {
-                closure.insert(id);
-                remaining.push(id);
+                .filter(|trans| trans.is_epsilon())
+                .map(|trans| trans.next_id);
+            for id in ids {
+                let value = StateIdWithPreCondition {
+                    id,
+                    pre_condition: match value.pre_condition {
+                        Some(ref cond) => {
+                            assert!(self.state(id).pre_condition.is_none());
+                            //tracing::debug!(lookahead = "propagate", from = %state, to = %self.state(id));
+                            Some(cond.clone())
+                        }
+                        None => {
+                            //tracing::debug!(lookahead = "generate", state = %self.state(id));
+                            state.pre_condition.clone()
+                        }
+                    },
+                };
+                if closure.contains(&value) {
+                    continue;
+                }
+                closure.insert(value.clone());
+                remaining.push_back(value);
             }
         }
 
-        closure.into()
+        let mut closure: Vec<_> = closure.into_iter().collect();
+        closure.sort_by(|a, b| a.id.partial_cmp(&b.id).unwrap());
+        StateGroup(closure)
     }
 }
 
@@ -171,12 +193,12 @@ impl Dfa {
                 self.validate_group(&group);
                 // Collect states having the same transition table in `groups`.
                 let mut trans_map: IndexMap<Vec<Option<usize>>, StateGroup> = Default::default();
-                for &id in group.iter() {
-                    let transitions = self.build_transition_table(id, &unicode_sets, &groups);
+                for value in group.iter() {
+                    let transitions = self.build_transition_table(value.id, &unicode_sets, &groups);
                     trans_map
                         .entry(transitions)
-                        .and_modify(|group| group.push(id))
-                        .or_insert_with(|| StateGroup::from(id));
+                        .or_default()
+                        .push(value.clone());
                 }
                 new_groups.extend(trans_map.into_values());
             }
@@ -200,8 +222,8 @@ impl Dfa {
             if self.determine_lookahead(&group) {
                 dfa.lookahead(new_id);
             }
-            for &id in group.iter() {
-                for label in self.state(id).labels.iter() {
+            for value in group.iter() {
+                for label in self.state(value.id).labels.iter() {
                     dfa.add_label(new_id, label.clone());
                 }
             }
@@ -211,11 +233,11 @@ impl Dfa {
         for (i, group) in groups.iter().enumerate() {
             // Every state in `group` has the same transitions.  So, we can use
             // `group.first()` for rebuilding the transitions of the new state.
-            let &id = group.first().unwrap();
-            for trans in self.state(id).transitions.iter() {
+            let value = group.first().unwrap();
+            for trans in self.state(value.id).transitions.iter() {
                 let next = groups
                     .iter()
-                    .position(|group| group.contains(&trans.next_id))
+                    .position(|group| group.iter().any(|value| value.id == trans.next_id))
                     .unwrap();
                 dfa.transition(i.into(), next.into(), trans.unicode_set.clone());
             }
@@ -236,7 +258,7 @@ impl Dfa {
             .map(|state| state.id)
             .collect();
         if !state_ids.is_empty() {
-            groups.push(StateGroup(state_ids));
+            groups.push(state_ids.into());
         }
     }
 
@@ -256,7 +278,7 @@ impl Dfa {
             if let Some(trans) = trans {
                 let next = groups
                     .iter()
-                    .position(|group| group.contains(&trans.next_id));
+                    .position(|group| group.iter().any(|value| value.id == trans.next_id));
                 assert!(next.is_some());
                 transitions.push(next);
             } else {
@@ -303,8 +325,13 @@ impl Automaton {
         self.state_mut(id).lookahead = true;
     }
 
+    pub(crate) fn pre_condition(&mut self, id: StateId, unicode_set: UnicodeSet) {
+        self.state_mut(id).pre_condition = Some(unicode_set);
+    }
+
     pub(crate) fn transition(&mut self, id: StateId, next_id: StateId, unicode_set: UnicodeSet) {
         let label = format!("{unicode_set} => {}", self.state(next_id));
+        tracing::debug!(state = %self.state(id), transition = label);
         self.state_mut(id).transitions.push(Transition {
             next_id,
             unicode_set,
@@ -313,7 +340,13 @@ impl Automaton {
     }
 
     pub(crate) fn epsilon_transition(&mut self, id: StateId, next_id: StateId) {
-        self.transition(id, next_id, UnicodeSet::empty());
+        let label = format!("(epsilon) => {}", self.state(next_id));
+        tracing::debug!(state = %self.state(id), transition = label);
+        self.state_mut(id).transitions.push(Transition {
+            next_id,
+            unicode_set: UnicodeSet::empty(),
+            label,
+        });
     }
 
     pub fn build_unicode_sets(&self) -> Vec<UnicodeSet> {
@@ -335,11 +368,9 @@ impl Automaton {
     #[tracing::instrument(level = "debug", skip_all, fields(state = %self.state(state_id)))]
     fn minify_transitions(&mut self, state_id: StateId) {
         // Merge Unicode sets which make a transition to the same state.
-        let unicode_sets: BTreeMap<StateId, UnicodeSet> = self
-            .state(state_id)
-            .transitions
-            .iter()
-            .fold(Default::default(), |mut unicode_sets, trans| {
+        let minified: BTreeMap<StateId, UnicodeSet> = self.state(state_id).transitions.iter().fold(
+            Default::default(),
+            |mut unicode_sets, trans| {
                 unicode_sets
                     .entry(trans.next_id)
                     .and_modify(|unicode_set| {
@@ -347,30 +378,14 @@ impl Automaton {
                     })
                     .or_insert_with(|| trans.unicode_set.clone());
                 unicode_sets
-            });
+            },
+        );
 
-        // Build a new transition table.
-        let transitions: Vec<Transition> = unicode_sets
-            .into_iter()
-            .map(|(next_id, unicode_set)| {
-                let label = format!("{unicode_set} => {}", self.state(next_id));
-                Transition {
-                    next_id,
-                    unicode_set,
-                    label,
-                }
-            })
-            .inspect(|trans| {
-                let next_state = self.states.get(trans.next_id.0).unwrap();
-                tracing::debug!(
-                    transition.next_state = %next_state,
-                    transition.unicode_set = %trans.unicode_set
-                );
-            })
-            .collect();
-
-        // And then update the transition table.
-        self.state_mut(state_id).transitions = transitions;
+        // Rebuild a new transition table.
+        self.state_mut(state_id).transitions.clear();
+        for (next_id, unicode_set) in minified.into_iter() {
+            self.transition(state_id, next_id, unicode_set);
+        }
     }
 
     fn determine_token(&self, group: &StateGroup) -> Option<String> {
@@ -378,35 +393,42 @@ impl Automaton {
         // order of priority.  A higher priority token has a smaller identifier and
         // the `ids` have been sorted in ascending order.  So, we return the
         // identifier of the first accept state.
-        group.iter().find_map(|&id| self.state(id).accept.clone())
+        group
+            .iter()
+            .find_map(|value| self.state(value.id).accept.clone())
     }
 
     fn determine_lookahead(&self, group: &StateGroup) -> bool {
-        group.iter().any(|&id| self.state(id).lookahead)
+        group.iter().any(|value| self.state(value.id).lookahead)
     }
 
     fn validate_group(&self, group: &StateGroup) {
-        if group.iter().any(|&id| self.state(id).lookahead) {
-            // If a group has a state generated by a lookahead item, every state in
-            // the group must be a state generated by a lookahead item.
-            if !group.iter().all(|&id| self.state(id).lookahead) {
-                tracing::error!("Ambiguous lexical grammer");
-                for &id in group.iter() {
-                    let state = self.state(id);
-                    if !state.lookahead {
-                        tracing::error!(%state);
+        if group
+            .iter()
+            .any(|value| self.state(value.id).accept.is_some())
+        {
+            if group.iter().any(|value| self.state(value.id).lookahead) {
+                // If a group has a state generated by a lookahead item, every state in
+                // the group must be a state generated by a lookahead item.
+                if !group.iter().all(|value| self.state(value.id).lookahead) {
+                    tracing::error!("Ambiguous lexical grammer");
+                    for value in group.iter() {
+                        let state = self.state(value.id);
+                        if !state.lookahead {
+                            tracing::error!(%state);
+                        }
                     }
+                    panic!();
                 }
-                panic!();
             }
         }
     }
 }
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
-struct StateGroup(Vec<StateId>);
+struct StateGroup(Vec<StateIdWithPreCondition>);
 
-delegate_all! {StateGroup => Vec<StateId>}
+delegate_all! {StateGroup => Vec<StateIdWithPreCondition>}
 
 impl StateGroup {
     fn new() -> Self {
@@ -415,14 +437,25 @@ impl StateGroup {
 }
 
 impl From<StateId> for StateGroup {
-    fn from(value: StateId) -> Self {
-        StateGroup(vec![value])
+    fn from(id: StateId) -> Self {
+        StateGroup(vec![id.into()])
+    }
+}
+
+impl From<Vec<StateId>> for StateGroup {
+    fn from(ids: Vec<StateId>) -> Self {
+        StateGroup(ids.into_iter().map(StateIdWithPreCondition::from).collect())
     }
 }
 
 impl From<BTreeSet<StateId>> for StateGroup {
     fn from(value: BTreeSet<StateId>) -> Self {
-        StateGroup(value.into_iter().collect())
+        StateGroup(
+            value
+                .into_iter()
+                .map(StateIdWithPreCondition::from)
+                .collect(),
+        )
     }
 }
 
@@ -430,12 +463,36 @@ impl std::fmt::Display for StateGroup {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[")?;
         if let Some((last, leadings)) = self.split_last() {
-            for id in leadings.iter() {
-                write!(f, "{},", id)?;
+            for value in leadings.iter() {
+                write!(f, "{}", value)?;
             }
-            write!(f, "{}", last)?;
+            write!(f, "{}", last.id)?;
         }
         write!(f, "]")
+    }
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct StateIdWithPreCondition {
+    id: StateId,
+    pre_condition: Option<UnicodeSet>,
+}
+
+impl From<StateId> for StateIdWithPreCondition {
+    fn from(id: StateId) -> Self {
+        StateIdWithPreCondition {
+            id,
+            pre_condition: None,
+        }
+    }
+}
+
+impl std::fmt::Display for StateIdWithPreCondition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(ref cond) = self.pre_condition {
+            write!(f, "?{} ", cond)?;
+        }
+        write!(f, "{},", self.id)
     }
 }
 
@@ -446,6 +503,8 @@ pub struct State {
     lookahead: bool,
     transitions: Vec<Transition>,
     labels: IndexSet<String>,
+    // TODO: used only in NFAs
+    pre_condition: Option<UnicodeSet>,
 }
 
 impl std::fmt::Display for State {
@@ -483,6 +542,12 @@ struct Transition {
     next_id: StateId,
     unicode_set: UnicodeSet,
     label: String,
+}
+
+impl Transition {
+    fn is_epsilon(&self) -> bool {
+        self.unicode_set.is_empty()
+    }
 }
 
 // <coverage:exclude>

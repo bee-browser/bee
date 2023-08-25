@@ -1,6 +1,7 @@
 use std::io::Read;
 use std::path::PathBuf;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use clap::Parser;
 use clap::ValueEnum;
@@ -63,13 +64,8 @@ fn main() -> Result<()> {
             script.len(),
             humantime::format_duration(now.elapsed())
         );
+        Ok(())
     } else {
-        println!(
-            "Failed parsing: bytes={} elapsed={}",
-            script.len(),
-            humantime::format_duration(now.elapsed())
-        );
+        Err(anyhow!("Parse error"))
     }
-
-    Ok(())
 }
