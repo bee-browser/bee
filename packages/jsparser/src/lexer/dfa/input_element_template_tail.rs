@@ -27,16 +27,11 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
             break;
         }
         if !state.lookahead() {
-            //debug_assert_eq!(lexeme_end, i);
-            lexeme_end = pos
-                + match unicode_set.1 {
-                    Some(ch) => ch.len_utf8(),
-                    None => 0,
-                };
+            lexeme_end = pos + unicode_set.1.map(|ch| ch.len_utf8()).unwrap_or(0);
         }
         if let Some(kind) = state.accept() {
             token.kind = kind;
-            token.lexeme = cursor.lexeme(lexeme_end - cursor.pos());
+            token.lexeme = cursor.lexeme(lexeme_end);
             tracing::trace!(opcode = "accept", ?token.kind, ?token.lexeme);
         }
     }
@@ -147,9 +142,9 @@ impl State {
 }
 
 const TRANSITION_TABLE: [[u16; 72]; 463] = [
-    // State(0):
+    // State(0)
     //   @start
-    // Transitions:
+    // Transitions
     //   [<CR>] => State(1)
     //   [\] => State(2)
     //   [}] => State(4)
@@ -210,9 +205,9 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         338, 339, 340, 392, 393, 394, 395, 396, 397, 399, 400, 401, 402, 409, 410, 411, 412, 419,
         420, 421, 422, 423, 427, 428, 429, 445, 445, 445, 446, 459, 463, 463, 1, 463,
     ],
-    // State(1):
+    // State(1)
     //   LineTerminatorSequence -> [<CR>] . [<LF>]
-    // Transitions:
+    // Transitions
     //   [<LF>] => State(157):LineTerminatorSequence
     //   [<NUL>..<HT>, <VT>..U+10FFFF, (eof)] => State(158):LineTerminatorSequence?
     [
@@ -221,12 +216,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158,
         158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 158, 157, 158,
     ],
-    // State(2):
+    // State(2)
     //   IdentifierStart -> [\] . UnicodeEscapeSequence
     //   UnicodeEscapeSequence -> . [u] Hex4Digits
     //   UnicodeEscapeSequence -> . [u] [{] CodePoint [}]
     //   IdentifierPart -> [\] . UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [u] => State(62)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 62, 463, 463, 463, 463, 463,
@@ -234,12 +229,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 62, 463,
     ],
-    // State(3):
+    // State(3)
     //   IdentifierStart -> [\] . UnicodeEscapeSequence
     //   UnicodeEscapeSequence -> . [u] Hex4Digits
     //   UnicodeEscapeSequence -> . [u] [{] CodePoint [}]
     //   IdentifierPart -> [\] . UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [u] => State(63)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 63, 463, 463, 463, 463, 463,
@@ -247,7 +242,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 63, 463,
     ],
-    // State(4):
+    // State(4)
     //   TemplateMiddle -> [}] . [$] [{]
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
@@ -289,7 +284,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NotEscapeSequence -> [u] HexDigit HexDigit . HexDigit ?![HexDigit]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotEscapeSequence -> [u] HexDigit HexDigit HexDigit . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %..[, ].._, a..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -299,7 +294,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 463,
     ],
-    // State(5):
+    // State(5)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -330,7 +325,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %..[, ].._, a..z, |..U+10FFFF] => State(4)
     //   [{] => State(6)
     //   [\] => State(58)
@@ -341,7 +336,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 463,
     ],
-    // State(6):
+    // State(6)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -388,7 +383,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [0] => State(6)
     //   [1] => State(7)
@@ -401,7 +396,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         4, 4, 4, 4, 4, 4, 8, 4, 8, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 7, 8, 8, 6, 4, 4, 4, 4, 463,
     ],
-    // State(7):
+    // State(7)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -439,7 +434,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(8)
     //   [0] => State(9)
@@ -451,7 +446,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         4, 4, 4, 4, 4, 4, 8, 4, 8, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 8, 8, 8, 9, 4, 4, 4, 4, 463,
     ],
-    // State(8):
+    // State(8)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -490,7 +485,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(8)
     //   [0] => State(10)
@@ -502,7 +497,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         4, 4, 4, 4, 4, 4, 8, 4, 8, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 8, 8, 8, 10, 4, 4, 4, 4, 463,
     ],
-    // State(9):
+    // State(9)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -536,7 +531,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [0] => State(10)
     //   [1..9, A..F, a..f] => State(11)
@@ -548,7 +543,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         11, 4, 4, 4, 4, 4, 4, 4, 11, 4, 11, 4, 4, 11, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 11, 11, 11, 10, 4, 4, 4, 4, 463,
     ],
-    // State(10):
+    // State(10)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -581,7 +576,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(12)
     //   [0] => State(13)
@@ -593,7 +588,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         12, 4, 4, 4, 4, 4, 4, 4, 12, 4, 12, 4, 4, 12, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 12, 12, 12, 13, 4, 4, 4, 4, 463,
     ],
-    // State(11):
+    // State(11)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -625,7 +620,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [0] => State(13)
     //   [1..9, A..F, a..f] => State(14)
@@ -637,7 +632,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         14, 4, 4, 4, 4, 4, 4, 4, 14, 4, 14, 4, 4, 14, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 14, 14, 14, 13, 4, 4, 4, 4, 463,
     ],
-    // State(12):
+    // State(12)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -669,7 +664,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(15)
     //   [0] => State(16)
@@ -681,7 +676,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         15, 4, 4, 4, 4, 4, 4, 4, 15, 4, 15, 4, 4, 15, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 15, 15, 15, 16, 4, 4, 4, 4, 463,
     ],
-    // State(13):
+    // State(13)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -712,7 +707,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [0] => State(16)
     //   [1..9, A..F, a..f] => State(17)
@@ -724,7 +719,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         17, 4, 4, 4, 4, 4, 4, 4, 17, 4, 17, 4, 4, 17, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 17, 17, 17, 16, 4, 4, 4, 4, 463,
     ],
-    // State(14):
+    // State(14)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -757,7 +752,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(18)
     //   [0] => State(19)
@@ -769,7 +764,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         18, 4, 4, 4, 4, 4, 4, 4, 18, 4, 18, 4, 4, 18, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 18, 18, 18, 19, 4, 4, 4, 4, 463,
     ],
-    // State(15):
+    // State(15)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -802,7 +797,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(20)
     //   [0] => State(21)
@@ -814,7 +809,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         20, 4, 4, 4, 4, 4, 4, 4, 20, 4, 20, 4, 4, 20, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 20, 20, 20, 21, 4, 4, 4, 4, 463,
     ],
-    // State(16):
+    // State(16)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -844,7 +839,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(22)
     //   [0] => State(23)
@@ -856,7 +851,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         22, 4, 4, 4, 4, 4, 4, 4, 22, 4, 22, 4, 4, 22, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 22, 22, 22, 23, 4, 4, 4, 4, 463,
     ],
-    // State(17):
+    // State(17)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -887,7 +882,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [0] => State(23)
     //   [1..9, A..F, a..f] => State(24)
@@ -899,7 +894,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         24, 4, 4, 4, 4, 4, 4, 4, 24, 4, 24, 4, 4, 24, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 24, 24, 24, 23, 4, 4, 4, 4, 463,
     ],
-    // State(18):
+    // State(18)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -932,7 +927,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(25)
     //   [0] => State(26)
@@ -944,7 +939,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         25, 4, 4, 4, 4, 4, 4, 4, 25, 4, 25, 4, 4, 25, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 25, 25, 25, 26, 4, 4, 4, 4, 463,
     ],
-    // State(19):
+    // State(19)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -974,7 +969,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [1..9, A..F, a..f] => State(27)
     //   [0] => State(28)
@@ -986,7 +981,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         27, 4, 4, 4, 4, 4, 4, 4, 27, 4, 27, 4, 4, 27, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 27, 27, 27, 28, 4, 4, 4, 4, 463,
     ],
-    // State(20):
+    // State(20)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1019,7 +1014,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1031,7 +1026,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         94, 4, 4, 4, 4, 4, 4, 4, 94, 4, 94, 4, 4, 94, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 94, 94, 94, 95, 4, 4, 4, 4, 463,
     ],
-    // State(21):
+    // State(21)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1061,7 +1056,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1073,7 +1068,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         96, 4, 4, 4, 4, 4, 4, 4, 96, 4, 96, 4, 4, 96, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 96, 96, 96, 97, 4, 4, 4, 4, 463,
     ],
-    // State(22):
+    // State(22)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1103,7 +1098,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1115,7 +1110,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         84, 4, 4, 4, 4, 4, 4, 4, 84, 4, 84, 4, 4, 84, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 84, 84, 84, 85, 4, 4, 4, 4, 463,
     ],
-    // State(23):
+    // State(23)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1144,7 +1139,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1156,7 +1151,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         87, 4, 4, 4, 4, 4, 4, 4, 87, 4, 87, 4, 4, 87, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 87, 87, 87, 85, 4, 4, 4, 4, 463,
     ],
-    // State(24):
+    // State(24)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1188,7 +1183,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1200,7 +1195,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         90, 4, 4, 4, 4, 4, 4, 4, 90, 4, 90, 4, 4, 90, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 90, 90, 90, 91, 4, 4, 4, 4, 463,
     ],
-    // State(25):
+    // State(25)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1233,7 +1228,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1245,7 +1240,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         110, 110, 4, 4, 4, 4, 4, 4, 4, 110, 4, 110, 4, 4, 110, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 110, 110, 110, 111, 4, 4, 4, 4, 463,
     ],
-    // State(26):
+    // State(26)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1275,7 +1270,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1287,7 +1282,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         112, 112, 4, 4, 4, 4, 4, 4, 4, 112, 4, 112, 4, 4, 112, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 112, 112, 112, 113, 4, 4, 4, 4, 463,
     ],
-    // State(27):
+    // State(27)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1317,7 +1312,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1329,7 +1324,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         114, 114, 4, 4, 4, 4, 4, 4, 4, 114, 4, 114, 4, 4, 114, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 114, 114, 114, 115, 4, 4, 4, 4, 463,
     ],
-    // State(28):
+    // State(28)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1358,7 +1353,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateMiddle -> [}] TemplateCharacters . [$] [{]
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -1370,7 +1365,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         116, 116, 4, 4, 4, 4, 4, 4, 4, 116, 4, 116, 4, 4, 116, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 116, 116, 116, 115, 4, 4, 4, 4, 463,
     ],
-    // State(29):
+    // State(29)
     //   IdentifierName -> . IdentifierName IdentifierPart
     //   PrivateIdentifier -> [#] . IdentifierName
     //   IdentifierName -> . IdentifierStart
@@ -1380,7 +1375,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierStartChar -> . [$]
     //   IdentifierStartChar -> . [_]
     //   IdentifierStart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(3)
     //   [$, A..Z, _, a..z] => State(390):PrivateIdentifier
     [
@@ -1389,7 +1384,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         390, 390, 390, 390, 390, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 3, 463,
     ],
-    // State(30):
+    // State(30)
     //   StringLiteral -> ["] . ["]
     //   DoubleStringCharacters -> DoubleStringCharacter . DoubleStringCharacters
     //   StringLiteral -> ["] . DoubleStringCharacters ["]
@@ -1411,7 +1406,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LegacyOctalEscapeSequence -> FourToSeven . OctalDigit
     //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . ?![OctalDigit]
     //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . OctalDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..<HT>, <VT>..<FF>, <SO>..!, #..[, ]..U+10FFFF] => State(30)
     //   [\] => State(59)
     //   ["] => State(456):StringLiteral
@@ -1421,7 +1416,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
         30, 30, 30, 463,
     ],
-    // State(31):
+    // State(31)
     //   StringLiteral -> ['] . [']
     //   SingleStringCharacters -> SingleStringCharacter . SingleStringCharacters
     //   StringLiteral -> ['] . SingleStringCharacters [']
@@ -1443,7 +1438,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LegacyOctalEscapeSequence -> FourToSeven . OctalDigit
     //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . ?![OctalDigit]
     //   LegacyOctalEscapeSequence -> ZeroToThree OctalDigit . OctalDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..<HT>, <VT>..<FF>, <SO>..&, (..[, ]..U+10FFFF] => State(31)
     //   [\] => State(60)
     //   ['] => State(456):StringLiteral
@@ -1453,7 +1448,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
         31, 31, 31, 463,
     ],
-    // State(32):
+    // State(32)
     //   NoSubstitutionTemplate -> [`] . [`]
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
@@ -1495,7 +1490,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NotEscapeSequence -> [u] HexDigit HexDigit . HexDigit ?![HexDigit]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotEscapeSequence -> [u] HexDigit HexDigit HexDigit . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %..[, ].._, a..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -1506,7 +1501,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 32, 463,
     ],
-    // State(33):
+    // State(33)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1537,7 +1532,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %..[, ].._, a..z, |..U+10FFFF] => State(32)
     //   [{] => State(34)
     //   [\] => State(61)
@@ -1549,7 +1544,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 32, 463,
     ],
-    // State(34):
+    // State(34)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1596,7 +1591,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [0] => State(34)
     //   [1] => State(35)
@@ -1610,7 +1605,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 35, 36, 36, 34, 32,
         32, 32, 32, 463,
     ],
-    // State(35):
+    // State(35)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1648,7 +1643,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(36)
     //   [0] => State(37)
@@ -1661,7 +1656,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 36, 36, 36, 37, 32,
         32, 32, 32, 463,
     ],
-    // State(36):
+    // State(36)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1700,7 +1695,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NotCodePoint -> NonZeroHexDigit NonZeroHexDigit . Hex4Digits
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(36)
     //   [0] => State(38)
@@ -1713,7 +1708,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 36, 36, 36, 38, 32,
         32, 32, 32, 463,
     ],
-    // State(37):
+    // State(37)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1747,7 +1742,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [0] => State(38)
     //   [1..9, A..F, a..f] => State(39)
@@ -1760,7 +1755,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 39, 39, 39, 38, 32,
         32, 32, 32, 463,
     ],
-    // State(38):
+    // State(38)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1793,7 +1788,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(40)
     //   [0] => State(41)
@@ -1806,7 +1801,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 40, 40, 40, 41, 32,
         32, 32, 32, 463,
     ],
-    // State(39):
+    // State(39)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1838,7 +1833,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [0] => State(41)
     //   [1..9, A..F, a..f] => State(42)
@@ -1851,7 +1846,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 42, 42, 42, 41, 32,
         32, 32, 32, 463,
     ],
-    // State(40):
+    // State(40)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1883,7 +1878,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(43)
     //   [0] => State(44)
@@ -1896,7 +1891,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 43, 43, 43, 44, 32,
         32, 32, 32, 463,
     ],
-    // State(41):
+    // State(41)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1927,7 +1922,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [0] => State(44)
     //   [1..9, A..F, a..f] => State(45)
@@ -1940,7 +1935,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 45, 45, 45, 44, 32,
         32, 32, 32, 463,
     ],
-    // State(42):
+    // State(42)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -1973,7 +1968,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(46)
     //   [0] => State(47)
@@ -1986,7 +1981,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 46, 46, 46, 47, 32,
         32, 32, 32, 463,
     ],
-    // State(43):
+    // State(43)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2019,7 +2014,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(48)
     //   [0] => State(49)
@@ -2032,7 +2027,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 48, 48, 48, 49, 32,
         32, 32, 32, 463,
     ],
-    // State(44):
+    // State(44)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2062,7 +2057,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(50)
     //   [0] => State(51)
@@ -2075,7 +2070,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 50, 50, 50, 51, 32,
         32, 32, 32, 463,
     ],
-    // State(45):
+    // State(45)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2106,7 +2101,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [0] => State(51)
     //   [1..9, A..F, a..f] => State(52)
@@ -2119,7 +2114,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 52, 52, 52, 51, 32,
         32, 32, 32, 463,
     ],
-    // State(46):
+    // State(46)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2152,7 +2147,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(53)
     //   [0] => State(54)
@@ -2165,7 +2160,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 53, 53, 53, 54, 32,
         32, 32, 32, 463,
     ],
-    // State(47):
+    // State(47)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2195,7 +2190,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [1..9, A..F, a..f] => State(55)
     //   [0] => State(56)
@@ -2208,7 +2203,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 55, 55, 55, 56, 32,
         32, 32, 32, 463,
     ],
-    // State(48):
+    // State(48)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2241,7 +2236,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2254,7 +2249,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 98, 98, 98, 99, 32,
         32, 32, 32, 463,
     ],
-    // State(49):
+    // State(49)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2284,7 +2279,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2297,7 +2292,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 100, 100,
         100, 101, 32, 32, 32, 32, 463,
     ],
-    // State(50):
+    // State(50)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2327,7 +2322,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2340,7 +2335,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 89, 89, 89, 86, 32,
         32, 32, 32, 463,
     ],
-    // State(51):
+    // State(51)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2369,7 +2364,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2382,7 +2377,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 88, 88, 88, 86, 32,
         32, 32, 32, 463,
     ],
-    // State(52):
+    // State(52)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2414,7 +2409,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   NotEscapeSequence -> [u] [{] NotCodePoint . ?![HexDigit]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2427,7 +2422,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 92, 92, 92, 93, 32,
         32, 32, 32, 463,
     ],
-    // State(53):
+    // State(53)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2460,7 +2455,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2473,7 +2468,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 117, 117,
         117, 118, 32, 32, 32, 32, 463,
     ],
-    // State(54):
+    // State(54)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2503,7 +2498,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2516,7 +2511,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 119, 119,
         119, 120, 32, 32, 32, 32, 463,
     ],
-    // State(55):
+    // State(55)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2546,7 +2541,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2559,7 +2554,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 121, 121,
         121, 122, 32, 32, 32, 32, 463,
     ],
-    // State(56):
+    // State(56)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -2588,7 +2583,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NoSubstitutionTemplate -> [`] TemplateCharacters . [`]
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %../, :..@, G..[, ].._, g..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -2601,7 +2596,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 123, 123,
         123, 122, 32, 32, 32, 32, 463,
     ],
-    // State(57):
+    // State(57)
     //   MultiLineComment -> [/] [*] . [*] [/]
     //   MultiLineCommentChars -> MultiLineNotAsteriskChar . MultiLineCommentChars
     //   PostAsteriskCommentChars -> MultiLineNotForwardSlashOrAsteriskChar . MultiLineCommentChars
@@ -2612,7 +2607,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   MultiLineCommentChars -> . [*]
     //   MultiLineCommentChars -> . [*] PostAsteriskCommentChars
     //   MultiLineComment -> [/] [*] MultiLineCommentChars . [*] [/]
-    // Transitions:
+    // Transitions
     //   [<NUL>..), +..U+10FFFF] => State(57)
     //   [*] => State(77)
     [
@@ -2621,7 +2616,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         57, 57, 57, 57, 57, 57, 57, 77, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57,
         57, 57, 463,
     ],
-    // State(58):
+    // State(58)
     //   TemplateCharacter -> [\] . TemplateEscapeSequence
     //   TemplateEscapeSequence -> . CharacterEscapeSequence
     //   CharacterEscapeSequence -> . SingleEscapeCharacter
@@ -2652,7 +2647,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
-    // Transitions:
+    // Transitions
     //   [<NUL>..t, v..U+10FFFF] => State(4)
     //   [u] => State(5)
     [
@@ -2660,7 +2655,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 463,
     ],
-    // State(59):
+    // State(59)
     //   DoubleStringCharacter -> [\] . EscapeSequence
     //   EscapeSequence -> . CharacterEscapeSequence
     //   CharacterEscapeSequence -> . SingleEscapeCharacter
@@ -2690,7 +2685,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
-    // Transitions:
+    // Transitions
     //   [<NUL>..<FF>, <SO>..t, v..w, y..U+10FFFF] => State(30)
     //   [u] => State(64)
     //   [x] => State(79)
@@ -2701,7 +2696,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
         30, 30, 30, 463,
     ],
-    // State(60):
+    // State(60)
     //   SingleStringCharacter -> [\] . EscapeSequence
     //   EscapeSequence -> . CharacterEscapeSequence
     //   CharacterEscapeSequence -> . SingleEscapeCharacter
@@ -2731,7 +2726,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
-    // Transitions:
+    // Transitions
     //   [<NUL>..<FF>, <SO>..t, v..w, y..U+10FFFF] => State(31)
     //   [u] => State(65)
     //   [x] => State(80)
@@ -2742,7 +2737,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
         31, 31, 31, 463,
     ],
-    // State(61):
+    // State(61)
     //   TemplateCharacter -> [\] . TemplateEscapeSequence
     //   TemplateEscapeSequence -> . CharacterEscapeSequence
     //   CharacterEscapeSequence -> . SingleEscapeCharacter
@@ -2773,7 +2768,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LineTerminatorSequence -> . [<LS>]
     //   LineTerminatorSequence -> . [<PS>]
     //   LineTerminatorSequence -> . [<CR>] [<LF>]
-    // Transitions:
+    // Transitions
     //   [<NUL>..t, v..U+10FFFF] => State(32)
     //   [u] => State(33)
     [
@@ -2782,12 +2777,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 463,
     ],
-    // State(62):
+    // State(62)
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(78)
     //   [{] => State(102)
     [
@@ -2796,12 +2791,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         78, 463, 463, 78, 102, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 78, 78, 78, 78, 463, 463, 463, 78, 463,
     ],
-    // State(63):
+    // State(63)
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(81)
     //   [{] => State(104)
     [
@@ -2810,12 +2805,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         81, 463, 463, 81, 104, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 81, 81, 81, 81, 463, 463, 463, 81, 463,
     ],
-    // State(64):
+    // State(64)
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(82)
     //   [{] => State(105)
     [
@@ -2824,12 +2819,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         82, 463, 463, 82, 105, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 82, 82, 82, 82, 463, 463, 463, 82, 463,
     ],
-    // State(65):
+    // State(65)
     //   UnicodeEscapeSequence -> [u] . Hex4Digits
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] . [{] CodePoint [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(83)
     //   [{] => State(106)
     [
@@ -2838,7 +2833,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         83, 463, 463, 83, 106, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 83, 83, 83, 83, 463, 463, 463, 83, 463,
     ],
-    // State(66):
+    // State(66)
     //   ExponentPart_Sep -> ExponentIndicator . SignedInteger_Sep
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
@@ -2847,7 +2842,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     //   SignedInteger_Sep -> . [+] DecimalDigits_Sep
     //   SignedInteger_Sep -> . [-] DecimalDigits_Sep
-    // Transitions:
+    // Transitions
     //   [+, -] => State(68)
     //   [0..9] => State(452):NumericLiteral
     [
@@ -2856,7 +2851,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 68, 68, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 452, 452, 452, 452, 463, 463, 463, 68, 463,
     ],
-    // State(67):
+    // State(67)
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
     //   DecimalIntegerLiteral -> NonZeroDigit NumericLiteralSeparator . DecimalDigits_Sep
@@ -2864,7 +2859,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     //   DecimalBigIntegerLiteral -> NonZeroDigit NumericLiteralSeparator . DecimalDigits_Sep BigIntLiteralSuffix
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator . DecimalDigit
-    // Transitions:
+    // Transitions
     //   [0..9] => State(445):NumericLiteral
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -2872,7 +2867,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 445, 445, 445, 445, 463, 463, 463, 445, 463,
     ],
-    // State(68):
+    // State(68)
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
     //   SignedInteger_Sep -> [+] . DecimalDigits_Sep
@@ -2880,7 +2875,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     //   SignedInteger_Sep -> [-] . DecimalDigits_Sep
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator . DecimalDigit
-    // Transitions:
+    // Transitions
     //   [0..9] => State(452):NumericLiteral
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -2888,10 +2883,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 452, 452, 452, 452, 463, 463, 463, 452, 463,
     ],
-    // State(69):
+    // State(69)
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator . DecimalDigit
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
-    // Transitions:
+    // Transitions
     //   [0..9] => State(451):NumericLiteral
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -2899,7 +2894,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 451, 451, 451, 451, 463, 463, 463, 451, 463,
     ],
-    // State(70):
+    // State(70)
     //   BinaryDigits_Sep -> . BinaryDigits_Sep BinaryDigit
     //   BinaryDigits_Sep -> . BinaryDigits_Sep NumericLiteralSeparator BinaryDigit
     //   BinaryIntegerLiteral_Sep -> [0] [b] . BinaryDigits_Sep
@@ -2907,7 +2902,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   BinaryDigit -> . [0 1]
     //   BinaryIntegerLiteral_Sep -> [0] [B] . BinaryDigits_Sep
     //   BinaryDigits_Sep -> BinaryDigits_Sep NumericLiteralSeparator . BinaryDigit
-    // Transitions:
+    // Transitions
     //   [0..1] => State(453):NumericLiteral
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -2915,7 +2910,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 453, 463, 463, 453, 463, 463, 463, 453, 463,
     ],
-    // State(71):
+    // State(71)
     //   OctalDigits_Sep -> . OctalDigits_Sep OctalDigit
     //   OctalDigits_Sep -> . OctalDigits_Sep NumericLiteralSeparator OctalDigit
     //   OctalIntegerLiteral_Sep -> [0] [o] . OctalDigits_Sep
@@ -2923,7 +2918,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   OctalDigit -> . [0 1 2 3 4 5 6 7]
     //   OctalIntegerLiteral_Sep -> [0] [O] . OctalDigits_Sep
     //   OctalDigits_Sep -> OctalDigits_Sep NumericLiteralSeparator . OctalDigit
-    // Transitions:
+    // Transitions
     //   [0..7] => State(454):NumericLiteral
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -2931,7 +2926,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 454, 454, 463, 454, 463, 463, 463, 454, 463,
     ],
-    // State(72):
+    // State(72)
     //   HexDigits_Sep -> . HexDigits_Sep HexDigit
     //   HexDigits_Sep -> . HexDigits_Sep NumericLiteralSeparator HexDigit
     //   HexIntegerLiteral_Sep -> [0] [x] . HexDigits_Sep
@@ -2939,7 +2934,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   HexIntegerLiteral_Sep -> [0] [X] . HexDigits_Sep
     //   HexDigits_Sep -> HexDigits_Sep NumericLiteralSeparator . HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(455):NumericLiteral
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 455, 463, 463, 463, 463, 463, 463, 463,
@@ -2947,7 +2942,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 455, 463, 463, 455, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 455, 455, 455, 455, 463, 463, 463, 455, 463,
     ],
-    // State(73):
+    // State(73)
     //   TemplateMiddle -> [}] [$] . [{]
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   TemplateMiddle -> [}] . TemplateCharacters [$] [{]
@@ -2970,7 +2965,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateTail -> [}] . TemplateCharacters [`]
     //   TemplateTail -> [}] TemplateCharacters . [`]
     //   TemplateMiddle -> [}] TemplateCharacters [$] . [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %..[, ].._, a..z, |..U+10FFFF] => State(4)
     //   [\] => State(58)
     //   [$] => State(73)
@@ -2981,8 +2976,8 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 461, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
         4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 463,
     ],
-    // State(74):
-    // Transitions:
+    // State(74)
+    // Transitions
     //   [<NUL>../, :..U+10FFFF, (eof)] => State(391):OPTIONAL_CHAINING?
     [
         391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391,
@@ -2990,9 +2985,9 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391, 391,
         391, 391, 391, 391, 391, 391, 391, 391, 391, 463, 463, 463, 463, 391, 391, 391, 391, 391,
     ],
-    // State(75):
+    // State(75)
     //   ELLIPSIS -> [.] [.] . [.]
-    // Transitions:
+    // Transitions
     //   [.] => State(398):ELLIPSIS
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -3000,7 +2995,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 398, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 398, 463,
     ],
-    // State(76):
+    // State(76)
     //   TemplateCharacters -> TemplateCharacter . TemplateCharacters
     //   NoSubstitutionTemplate -> [`] . TemplateCharacters [`]
     //   TemplateCharacters -> . TemplateCharacter
@@ -3023,7 +3018,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   TemplateHead -> [`] . TemplateCharacters [$] [{]
     //   TemplateHead -> [`] TemplateCharacters . [$] [{]
     //   TemplateHead -> [`] TemplateCharacters [$] . [{]
-    // Transitions:
+    // Transitions
     //   [<NUL>..#, %..[, ].._, a..z, |..U+10FFFF] => State(32)
     //   [\] => State(61)
     //   [$] => State(76)
@@ -3035,7 +3030,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
         32, 32, 32, 32, 463,
     ],
-    // State(77):
+    // State(77)
     //   MultiLineComment -> [/] [*] [*] . [/]
     //   PostAsteriskCommentChars -> [*] . PostAsteriskCommentChars
     //   MultiLineCommentChars -> [*] . PostAsteriskCommentChars
@@ -3046,7 +3041,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   PostAsteriskCommentChars -> . [*] PostAsteriskCommentChars
     //   MultiLineComment -> [/] [*] MultiLineCommentChars . [*] [/]
     //   MultiLineComment -> [/] [*] MultiLineCommentChars [*] . [/]
-    // Transitions:
+    // Transitions
     //   [<NUL>..), +..., 0..U+10FFFF] => State(57)
     //   [*] => State(77)
     //   [/] => State(160):Comment
@@ -3056,10 +3051,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         57, 57, 57, 57, 57, 57, 57, 77, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 160,
         57, 57, 57, 463,
     ],
-    // State(78):
+    // State(78)
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(103)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 103, 463, 463, 463, 463, 463, 463, 463,
@@ -3067,11 +3062,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 103, 463, 463, 103, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 103, 103, 103, 103, 463, 463, 463, 103, 463,
     ],
-    // State(79):
+    // State(79)
     //   HexEscapeSequence -> [x] . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(107)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 107, 463, 463, 463, 463, 463, 463, 463,
@@ -3079,11 +3074,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 107, 463, 463, 107, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 107, 107, 107, 107, 463, 463, 463, 107, 463,
     ],
-    // State(80):
+    // State(80)
     //   HexEscapeSequence -> [x] . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(108)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 108, 463, 463, 463, 463, 463, 463, 463,
@@ -3091,10 +3086,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 108, 463, 463, 108, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 108, 108, 108, 108, 463, 463, 463, 108, 463,
     ],
-    // State(81):
+    // State(81)
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(109)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 109, 463, 463, 463, 463, 463, 463, 463,
@@ -3102,10 +3097,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 109, 463, 463, 109, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 109, 109, 109, 109, 463, 463, 463, 109, 463,
     ],
-    // State(82):
+    // State(82)
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(79)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 79, 463, 463, 463, 463, 463, 463, 463,
@@ -3113,10 +3108,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         79, 463, 463, 79, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 79, 79, 79, 79, 463, 463, 463, 79, 463,
     ],
-    // State(83):
+    // State(83)
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(80)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 80, 463, 463, 463, 463, 463, 463, 463,
@@ -3124,7 +3119,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         80, 463, 463, 80, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 80, 80, 80, 80, 463, 463, 463, 80, 463,
     ],
-    // State(84):
+    // State(84)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3134,7 +3129,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(90)
     //   [0] => State(91)
     [
@@ -3143,14 +3138,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         90, 463, 463, 90, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 90, 90, 90, 91, 463, 463, 463, 90, 463,
     ],
-    // State(85):
+    // State(85)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> . HexDigit NotCodePoint
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0] => State(85)
     //   [1..9, A..F, a..f] => State(87)
     [
@@ -3159,14 +3154,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         87, 463, 463, 87, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 87, 87, 87, 85, 463, 463, 463, 85, 463,
     ],
-    // State(86):
+    // State(86)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
     //   NonZeroHexDigit -> . [HexDigit -0]
     //   NotCodePoint -> . HexDigit NotCodePoint
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0] => State(86)
     //   [1..9, A..F, a..f] => State(88)
     [
@@ -3175,7 +3170,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         88, 463, 463, 88, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 88, 88, 88, 86, 463, 463, 463, 86, 463,
     ],
-    // State(87):
+    // State(87)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3183,7 +3178,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
     //   NotCodePoint -> . HexDigit NotCodePoint
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(84)
     //   [0] => State(85)
     [
@@ -3192,7 +3187,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         84, 463, 463, 84, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 84, 84, 84, 85, 463, 463, 463, 84, 463,
     ],
-    // State(88):
+    // State(88)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3200,7 +3195,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NotCodePoint -> NonZeroHexDigit . NonZeroHexDigit Hex4Digits
     //   NotCodePoint -> . HexDigit NotCodePoint
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0] => State(86)
     //   [1..9, A..F, a..f] => State(89)
     [
@@ -3209,7 +3204,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         89, 463, 463, 89, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 89, 89, 89, 86, 463, 463, 463, 86, 463,
     ],
-    // State(89):
+    // State(89)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3219,7 +3214,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> . HexDigit HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(92)
     //   [0] => State(93)
     [
@@ -3228,7 +3223,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         92, 463, 463, 92, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 92, 92, 92, 93, 463, 463, 463, 92, 463,
     ],
-    // State(90):
+    // State(90)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3239,7 +3234,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(94)
     //   [0] => State(95)
     [
@@ -3248,7 +3243,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         94, 463, 463, 94, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 94, 94, 94, 95, 463, 463, 463, 94, 463,
     ],
-    // State(91):
+    // State(91)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3256,7 +3251,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(96)
     //   [0] => State(97)
     [
@@ -3265,7 +3260,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         96, 463, 463, 96, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 96, 96, 96, 97, 463, 463, 463, 96, 463,
     ],
-    // State(92):
+    // State(92)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3276,7 +3271,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(98)
     //   [0] => State(99)
     [
@@ -3285,7 +3280,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         98, 463, 463, 98, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 98, 98, 98, 99, 463, 463, 463, 98, 463,
     ],
-    // State(93):
+    // State(93)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3293,7 +3288,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(100)
     //   [0] => State(101)
     [
@@ -3302,7 +3297,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 100, 463, 463, 100, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 100, 100, 100, 101, 463, 463, 463, 100, 463,
     ],
-    // State(94):
+    // State(94)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3314,7 +3309,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(110)
     //   [0] => State(111)
     [
@@ -3323,7 +3318,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 110, 463, 463, 110, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 110, 110, 110, 111, 463, 463, 463, 110, 463,
     ],
-    // State(95):
+    // State(95)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3332,7 +3327,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(112)
     //   [0] => State(113)
     [
@@ -3341,7 +3336,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 112, 463, 463, 112, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 112, 112, 112, 113, 463, 463, 463, 112, 463,
     ],
-    // State(96):
+    // State(96)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3350,7 +3345,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(114)
     //   [0] => State(115)
     [
@@ -3359,7 +3354,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 114, 463, 463, 114, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 114, 114, 114, 115, 463, 463, 463, 114, 463,
     ],
-    // State(97):
+    // State(97)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3367,7 +3362,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [0] => State(115)
     //   [1..9, A..F, a..f] => State(116)
     [
@@ -3376,7 +3371,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 116, 463, 463, 116, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 116, 116, 116, 115, 463, 463, 463, 115, 463,
     ],
-    // State(98):
+    // State(98)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3388,7 +3383,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(117)
     //   [0] => State(118)
     [
@@ -3397,7 +3392,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 117, 463, 463, 117, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 117, 117, 117, 118, 463, 463, 463, 117, 463,
     ],
-    // State(99):
+    // State(99)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3406,7 +3401,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(119)
     //   [0] => State(120)
     [
@@ -3415,7 +3410,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 119, 463, 463, 119, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 119, 119, 119, 120, 463, 463, 463, 119, 463,
     ],
-    // State(100):
+    // State(100)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3424,7 +3419,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(121)
     //   [0] => State(122)
     [
@@ -3433,7 +3428,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 121, 463, 463, 121, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 121, 121, 121, 122, 463, 463, 463, 121, 463,
     ],
-    // State(101):
+    // State(101)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3441,7 +3436,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [0] => State(122)
     //   [1..9, A..F, a..f] => State(123)
     [
@@ -3450,7 +3445,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 123, 463, 463, 123, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 123, 123, 123, 122, 463, 463, 463, 122, 463,
     ],
-    // State(102):
+    // State(102)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -3462,7 +3457,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> . HexDigit Hex4Digits
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
-    // Transitions:
+    // Transitions
     //   [2..9, A..F, a..f] => State(126)
     //   [1] => State(127)
     //   [0] => State(128)
@@ -3472,10 +3467,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 126, 463, 463, 126, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 127, 126, 126, 128, 463, 463, 463, 126, 463,
     ],
-    // State(103):
+    // State(103)
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(132)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 132, 463, 463, 463, 463, 463, 463, 463,
@@ -3483,7 +3478,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 132, 463, 463, 132, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 132, 132, 132, 132, 463, 463, 463, 132, 463,
     ],
-    // State(104):
+    // State(104)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -3495,7 +3490,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> . HexDigit Hex4Digits
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
-    // Transitions:
+    // Transitions
     //   [2..9, A..F, a..f] => State(133)
     //   [1] => State(134)
     //   [0] => State(135)
@@ -3505,7 +3500,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 133, 463, 463, 133, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 134, 133, 133, 135, 463, 463, 463, 133, 463,
     ],
-    // State(105):
+    // State(105)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -3517,7 +3512,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> . HexDigit Hex4Digits
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
-    // Transitions:
+    // Transitions
     //   [2..9, A..F, a..f] => State(139)
     //   [1] => State(140)
     //   [0] => State(141)
@@ -3527,7 +3522,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 139, 463, 463, 139, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 140, 139, 139, 141, 463, 463, 463, 139, 463,
     ],
-    // State(106):
+    // State(106)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -3539,7 +3534,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> . HexDigit Hex4Digits
     //   CodePoint -> . [1] [0] Hex4Digits
     //   CodePoint -> . [0] CodePoint
-    // Transitions:
+    // Transitions
     //   [2..9, A..F, a..f] => State(144)
     //   [1] => State(145)
     //   [0] => State(146)
@@ -3549,11 +3544,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 144, 463, 463, 144, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 145, 144, 144, 146, 463, 463, 463, 144, 463,
     ],
-    // State(107):
+    // State(107)
     //   HexEscapeSequence -> [x] HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(30)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 30, 463, 463, 463, 463, 463, 463, 463,
@@ -3561,11 +3556,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         30, 463, 463, 30, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 30, 30, 30, 30, 463, 463, 463, 30, 463,
     ],
-    // State(108):
+    // State(108)
     //   HexEscapeSequence -> [x] HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(31)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 31, 463, 463, 463, 463, 463, 463, 463,
@@ -3573,10 +3568,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         31, 463, 463, 31, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 31, 31, 31, 31, 463, 463, 463, 31, 463,
     ],
-    // State(109):
+    // State(109)
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(151)
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 151, 463, 463, 463, 463, 463, 463, 463,
@@ -3584,7 +3579,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 151, 463, 463, 151, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 151, 151, 151, 151, 463, 463, 463, 151, 463,
     ],
-    // State(110):
+    // State(110)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3597,7 +3592,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(8)
     //   [0] => State(10)
     [
@@ -3606,7 +3601,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 8, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 8, 8, 8, 10, 463, 463, 463, 8, 463,
     ],
-    // State(111):
+    // State(111)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3616,7 +3611,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(12)
     //   [0] => State(13)
     [
@@ -3625,7 +3620,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         12, 463, 463, 12, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 12, 12, 12, 13, 463, 463, 463, 12, 463,
     ],
-    // State(112):
+    // State(112)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3635,7 +3630,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(15)
     //   [0] => State(16)
     [
@@ -3644,7 +3639,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         15, 463, 463, 15, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 15, 15, 15, 16, 463, 463, 463, 15, 463,
     ],
-    // State(113):
+    // State(113)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3653,7 +3648,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [0] => State(16)
     //   [1..9, A..F, a..f] => State(17)
     [
@@ -3662,7 +3657,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         17, 463, 463, 17, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 17, 17, 17, 16, 463, 463, 463, 16, 463,
     ],
-    // State(114):
+    // State(114)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3673,7 +3668,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(20)
     //   [0] => State(21)
     [
@@ -3682,7 +3677,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         20, 463, 463, 20, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 20, 20, 20, 21, 463, 463, 463, 20, 463,
     ],
-    // State(115):
+    // State(115)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3690,7 +3685,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(22)
     //   [0] => State(23)
     [
@@ -3699,7 +3694,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         22, 463, 463, 22, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 22, 22, 22, 23, 463, 463, 463, 22, 463,
     ],
-    // State(116):
+    // State(116)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3708,7 +3703,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [0] => State(23)
     //   [1..9, A..F, a..f] => State(24)
     [
@@ -3717,7 +3712,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         24, 463, 463, 24, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 24, 24, 24, 23, 463, 463, 463, 23, 463,
     ],
-    // State(117):
+    // State(117)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3730,7 +3725,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(36)
     //   [0] => State(38)
     [
@@ -3739,7 +3734,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         36, 463, 463, 36, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 36, 36, 36, 38, 463, 463, 463, 36, 463,
     ],
-    // State(118):
+    // State(118)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3749,7 +3744,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(40)
     //   [0] => State(41)
     [
@@ -3758,7 +3753,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         40, 463, 463, 40, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 40, 40, 40, 41, 463, 463, 463, 40, 463,
     ],
-    // State(119):
+    // State(119)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3768,7 +3763,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(43)
     //   [0] => State(44)
     [
@@ -3777,7 +3772,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         43, 463, 463, 43, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 43, 43, 43, 44, 463, 463, 463, 43, 463,
     ],
-    // State(120):
+    // State(120)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3786,7 +3781,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [0] => State(44)
     //   [1..9, A..F, a..f] => State(45)
     [
@@ -3795,7 +3790,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         45, 463, 463, 45, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 45, 45, 45, 44, 463, 463, 463, 44, 463,
     ],
-    // State(121):
+    // State(121)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3806,7 +3801,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(48)
     //   [0] => State(49)
     [
@@ -3815,7 +3810,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         48, 463, 463, 48, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 48, 48, 48, 49, 463, 463, 463, 48, 463,
     ],
-    // State(122):
+    // State(122)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3823,7 +3818,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [1..9, A..F, a..f] => State(50)
     //   [0] => State(51)
     [
@@ -3832,7 +3827,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         50, 463, 463, 50, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 50, 50, 50, 51, 463, 463, 463, 50, 463,
     ],
-    // State(123):
+    // State(123)
     //   NotCodePoint -> HexDigit . NotCodePoint
     //   NotEscapeSequence -> [u] [{] . NotCodePoint ?![HexDigit]
     //   NotCodePoint -> . NonZeroHexDigit NonZeroHexDigit Hex4Digits
@@ -3841,7 +3836,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   NotCodePoint -> . HexDigit NotCodePoint
-    // Transitions:
+    // Transitions
     //   [0] => State(51)
     //   [1..9, A..F, a..f] => State(52)
     [
@@ -3850,7 +3845,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         52, 463, 463, 52, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 52, 52, 52, 51, 463, 463, 463, 51, 463,
     ],
-    // State(124):
+    // State(124)
     //   DoubleStringCharacters -> DoubleStringCharacter . DoubleStringCharacters
     //   StringLiteral -> ["] . DoubleStringCharacters ["]
     //   DoubleStringCharacters -> . DoubleStringCharacter
@@ -3864,7 +3859,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LineTerminatorSequence -> [<CR>] . [<LF>]
     //   DoubleStringCharacters -> . DoubleStringCharacter DoubleStringCharacters
     //   StringLiteral -> ["] DoubleStringCharacters . ["]
-    // Transitions:
+    // Transitions
     //   [<NUL>..<FF>, <SO>..!, #..[, ]..U+10FFFF] => State(30)
     //   [\] => State(59)
     //   ["] => State(456):StringLiteral
@@ -3874,7 +3869,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
         30, 30, 30, 463,
     ],
-    // State(125):
+    // State(125)
     //   SingleStringCharacters -> SingleStringCharacter . SingleStringCharacters
     //   StringLiteral -> ['] . SingleStringCharacters [']
     //   SingleStringCharacters -> . SingleStringCharacter
@@ -3888,7 +3883,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   LineTerminatorSequence -> [<CR>] . [<LF>]
     //   SingleStringCharacters -> . SingleStringCharacter SingleStringCharacters
     //   StringLiteral -> ['] SingleStringCharacters . [']
-    // Transitions:
+    // Transitions
     //   [<NUL>..<FF>, <SO>..&, (..[, ]..U+10FFFF] => State(31)
     //   [\] => State(60)
     //   ['] => State(456):StringLiteral
@@ -3898,7 +3893,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
         31, 31, 31, 463,
     ],
-    // State(126):
+    // State(126)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -3910,7 +3905,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   CodePoint -> [1] [0] . Hex4Digits
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(129)
     //   [}] => State(217):IdentifierName
     [
@@ -3919,7 +3914,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 129, 463, 463, 129, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 129, 129, 129, 129, 463, 463, 463, 129, 463,
     ],
-    // State(127):
+    // State(127)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -3931,7 +3926,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0] => State(126)
     //   [1..9, A..F, a..f] => State(129)
     //   [}] => State(217):IdentifierName
@@ -3941,7 +3936,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 129, 463, 463, 129, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 129, 129, 129, 126, 463, 463, 463, 126, 463,
     ],
-    // State(128):
+    // State(128)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -3961,7 +3956,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [2..9, A..F, a..f] => State(126)
     //   [1] => State(127)
     //   [0] => State(128)
@@ -3972,14 +3967,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 126, 463, 463, 126, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 127, 126, 126, 128, 463, 463, 463, 126, 463,
     ],
-    // State(129):
+    // State(129)
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(130)
     //   [}] => State(217):IdentifierName
     [
@@ -3988,12 +3983,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 130, 463, 463, 130, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 130, 130, 130, 130, 463, 463, 463, 130, 463,
     ],
-    // State(130):
+    // State(130)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(131)
     //   [}] => State(217):IdentifierName
     [
@@ -4002,11 +3997,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 131, 463, 463, 131, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 131, 131, 131, 131, 463, 463, 463, 131, 463,
     ],
-    // State(131):
+    // State(131)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(152)
     //   [}] => State(217):IdentifierName
     [
@@ -4015,10 +4010,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 152, 463, 463, 152, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 152, 152, 152, 152, 463, 463, 463, 152, 463,
     ],
-    // State(132):
+    // State(132)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(217):IdentifierName
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 463, 463, 463, 463, 463, 463, 463,
@@ -4026,7 +4021,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 217, 463, 463, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 463, 463, 217, 463,
     ],
-    // State(133):
+    // State(133)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -4038,7 +4033,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   CodePoint -> [1] [0] . Hex4Digits
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(136)
     //   [}] => State(390):PrivateIdentifier
     [
@@ -4047,7 +4042,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 136, 463, 463, 136, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 136, 136, 136, 136, 463, 463, 463, 136, 463,
     ],
-    // State(134):
+    // State(134)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -4059,7 +4054,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0] => State(133)
     //   [1..9, A..F, a..f] => State(136)
     //   [}] => State(390):PrivateIdentifier
@@ -4069,7 +4064,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 136, 463, 463, 136, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 136, 136, 136, 133, 463, 463, 463, 133, 463,
     ],
-    // State(135):
+    // State(135)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -4089,7 +4084,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [2..9, A..F, a..f] => State(133)
     //   [1] => State(134)
     //   [0] => State(135)
@@ -4100,14 +4095,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 133, 463, 463, 133, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 134, 133, 133, 135, 463, 463, 463, 133, 463,
     ],
-    // State(136):
+    // State(136)
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(137)
     //   [}] => State(390):PrivateIdentifier
     [
@@ -4116,12 +4111,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 137, 463, 463, 137, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 137, 137, 137, 137, 463, 463, 463, 137, 463,
     ],
-    // State(137):
+    // State(137)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(138)
     //   [}] => State(390):PrivateIdentifier
     [
@@ -4130,11 +4125,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 138, 463, 463, 138, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 138, 138, 138, 138, 463, 463, 463, 138, 463,
     ],
-    // State(138):
+    // State(138)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(153)
     //   [}] => State(390):PrivateIdentifier
     [
@@ -4143,7 +4138,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 153, 463, 463, 153, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 153, 153, 153, 153, 463, 463, 463, 153, 463,
     ],
-    // State(139):
+    // State(139)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -4155,7 +4150,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   CodePoint -> [1] [0] . Hex4Digits
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(30)
     //   [0..9, A..F, a..f] => State(142)
     [
@@ -4164,7 +4159,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 142, 463, 463, 142, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 142, 142, 142, 142, 463, 463, 463, 30, 463,
     ],
-    // State(140):
+    // State(140)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -4176,7 +4171,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(30)
     //   [0] => State(139)
     //   [1..9, A..F, a..f] => State(142)
@@ -4186,7 +4181,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 142, 463, 463, 142, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 142, 142, 142, 139, 463, 463, 463, 30, 463,
     ],
-    // State(141):
+    // State(141)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -4206,7 +4201,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(30)
     //   [2..9, A..F, a..f] => State(139)
     //   [1] => State(140)
@@ -4217,14 +4212,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 139, 463, 463, 139, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 140, 139, 139, 141, 463, 463, 463, 30, 463,
     ],
-    // State(142):
+    // State(142)
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(30)
     //   [0..9, A..F, a..f] => State(143)
     [
@@ -4233,12 +4228,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 143, 463, 463, 143, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 143, 143, 143, 143, 463, 463, 463, 30, 463,
     ],
-    // State(143):
+    // State(143)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(30)
     //   [0..9, A..F, a..f] => State(149)
     [
@@ -4247,7 +4242,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 149, 463, 463, 149, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 149, 149, 149, 149, 463, 463, 463, 30, 463,
     ],
-    // State(144):
+    // State(144)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -4259,7 +4254,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   CodePoint -> [1] [0] . Hex4Digits
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(31)
     //   [0..9, A..F, a..f] => State(147)
     [
@@ -4268,7 +4263,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 147, 463, 463, 147, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 147, 147, 147, 147, 463, 463, 463, 31, 463,
     ],
-    // State(145):
+    // State(145)
     //   CodePoint -> HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   CodePoint -> HexDigit . HexDigit HexDigit
@@ -4280,7 +4275,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(31)
     //   [0] => State(144)
     //   [1..9, A..F, a..f] => State(147)
@@ -4290,7 +4285,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 147, 463, 463, 147, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 147, 147, 147, 144, 463, 463, 463, 31, 463,
     ],
-    // State(146):
+    // State(146)
     //   CodePoint -> [0] . CodePoint
     //   UnicodeEscapeSequence -> [u] [{] . CodePoint [}]
     //   CodePoint -> . HexDigit
@@ -4310,7 +4305,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(31)
     //   [2..9, A..F, a..f] => State(144)
     //   [1] => State(145)
@@ -4321,14 +4316,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 144, 463, 463, 144, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 145, 144, 144, 146, 463, 463, 463, 31, 463,
     ],
-    // State(147):
+    // State(147)
     //   CodePoint -> HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   Hex4Digits -> HexDigit . HexDigit HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
-    // Transitions:
+    // Transitions
     //   [}] => State(31)
     //   [0..9, A..F, a..f] => State(148)
     [
@@ -4337,12 +4332,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 148, 463, 463, 148, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 148, 148, 148, 148, 463, 463, 463, 31, 463,
     ],
-    // State(148):
+    // State(148)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   Hex4Digits -> HexDigit HexDigit . HexDigit HexDigit
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(31)
     //   [0..9, A..F, a..f] => State(150)
     [
@@ -4351,11 +4346,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 150, 463, 463, 150, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 150, 150, 150, 150, 463, 463, 463, 31, 463,
     ],
-    // State(149):
+    // State(149)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(30)
     //   [0..9, A..F, a..f] => State(154)
     [
@@ -4364,11 +4359,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 154, 463, 463, 154, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 154, 154, 154, 154, 463, 463, 463, 30, 463,
     ],
-    // State(150):
+    // State(150)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(31)
     //   [0..9, A..F, a..f] => State(155)
     [
@@ -4377,10 +4372,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 155, 463, 463, 155, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 155, 155, 155, 155, 463, 463, 463, 31, 463,
     ],
-    // State(151):
+    // State(151)
     //   Hex4Digits -> HexDigit HexDigit HexDigit . HexDigit
     //   HexDigit -> . [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F]
-    // Transitions:
+    // Transitions
     //   [0..9, A..F, a..f] => State(390):PrivateIdentifier
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 390, 463, 463, 463, 463, 463, 463, 463,
@@ -4388,9 +4383,9 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 390, 463, 463, 390, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 390, 390, 390, 390, 463, 463, 463, 390, 463,
     ],
-    // State(152):
+    // State(152)
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(217):IdentifierName
     [
         463, 463, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -4398,9 +4393,9 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 463,
     ],
-    // State(153):
+    // State(153)
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(390):PrivateIdentifier
     [
         463, 463, 390, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -4408,9 +4403,9 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 390, 463,
     ],
-    // State(154):
+    // State(154)
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(30)
     [
         463, 463, 30, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -4418,9 +4413,9 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 30, 463,
     ],
-    // State(155):
+    // State(155)
     //   UnicodeEscapeSequence -> [u] [{] CodePoint . [}]
-    // Transitions:
+    // Transitions
     //   [}] => State(31)
     [
         463, 463, 31, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -4428,7 +4423,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 31, 463,
     ],
-    // State(156):
+    // State(156)
     //   WhiteSpaceSequence -> WhiteSpace . WhiteSpaceSequence
     //   WhiteSpaceSequence -> WhiteSpace .
     //   WhiteSpaceSequence -> . WhiteSpace
@@ -4436,7 +4431,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   WhiteSpace -> . [<TAB> <VT> <FF> <ZWNBSP> <USP>]
     //   WhiteSpaceSequence -> WhiteSpace WhiteSpaceSequence .
     //   WhiteSpaceSequence -> . WhiteSpace WhiteSpaceSequence
-    // Transitions:
+    // Transitions
     //   [<HT>, <VT>..<FF>, <SP>, U+00A0, U+1680, U+2000..U+200A, U+200F, U+205F, U+FEFF] => State(156):WhiteSpaceSequence
     [
         463, 463, 463, 463, 463, 463, 463, 156, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -4444,7 +4439,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 156, 463,
     ],
-    // State(157):
+    // State(157)
     //   LineTerminatorSequence -> [<LF>] .
     //   LineTerminatorSequence -> [<LS>] .
     //   LineTerminatorSequence -> [<PS>] .
@@ -4455,7 +4450,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(158):
+    // State(158)
     //   LineTerminatorSequence -> [<CR>] ?![<LF>] .
     //   LineTerminatorSequence -> [<CR>] . ?![<LF>]
     [
@@ -4464,7 +4459,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(159):
+    // State(159)
     //   Comment -> SingleLineComment .
     //   SingleLineComment -> [/] [/] .
     //   SingleLineCommentChars -> SingleLineCommentChar . SingleLineCommentChars
@@ -4476,7 +4471,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   SingleLineCommentChars -> SingleLineCommentChar .
     //   SingleLineCommentChar -> [SourceCharacter -LineTerminator] .
     //   SingleLineCommentChars -> SingleLineCommentChar SingleLineCommentChars .
-    // Transitions:
+    // Transitions
     //   [<NUL>..<HT>, <VT>..<FF>, <SO>..U+2027, U+202A..U+10FFFF] => State(159):Comment
     [
         463, 159, 159, 159, 159, 159, 159, 159, 463, 463, 159, 159, 159, 159, 159, 159, 159, 159,
@@ -4484,7 +4479,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159,
         159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 463,
     ],
-    // State(160):
+    // State(160)
     //   Comment -> MultiLineComment .
     //   MultiLineComment -> [/] [*] [*] [/] .
     //   MultiLineComment -> [/] [*] MultiLineCommentChars [*] [/] .
@@ -4494,7 +4489,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(161):
+    // State(161)
     //   BREAK -> [b] [r] [e] [a] [k] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4508,7 +4503,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4517,7 +4512,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(162):
+    // State(162)
     //   CASE -> [c] [a] [s] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4531,7 +4526,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4540,7 +4535,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(163):
+    // State(163)
     //   CATCH -> [c] [a] [t] [c] [h] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4554,7 +4549,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4563,7 +4558,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(164):
+    // State(164)
     //   CLASS -> [c] [l] [a] [s] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4577,7 +4572,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4586,7 +4581,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(165):
+    // State(165)
     //   CONST -> [c] [o] [n] [s] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4600,7 +4595,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4609,7 +4604,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(166):
+    // State(166)
     //   CONTINUE -> [c] [o] [n] [t] [i] [n] [u] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4623,7 +4618,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4632,7 +4627,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(167):
+    // State(167)
     //   DEBUGGER -> [d] [e] [b] [u] [g] [g] [e] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4646,7 +4641,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4655,7 +4650,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(168):
+    // State(168)
     //   DEFAULT -> [d] [e] [f] [a] [u] [l] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4669,7 +4664,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4678,7 +4673,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(169):
+    // State(169)
     //   DELETE -> [d] [e] [l] [e] [t] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4692,7 +4687,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4701,7 +4696,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(170):
+    // State(170)
     //   DO -> [d] [o] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4715,7 +4710,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4724,7 +4719,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(171):
+    // State(171)
     //   ELSE -> [e] [l] [s] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4738,7 +4733,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4747,7 +4742,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(172):
+    // State(172)
     //   ENUM -> [e] [n] [u] [m] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4761,7 +4756,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4770,7 +4765,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(173):
+    // State(173)
     //   EXPORT -> [e] [x] [p] [o] [r] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4784,7 +4779,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4793,7 +4788,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(174):
+    // State(174)
     //   EXTENDS -> [e] [x] [t] [e] [n] [d] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4807,7 +4802,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4816,7 +4811,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(175):
+    // State(175)
     //   FALSE -> [f] [a] [l] [s] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4830,7 +4825,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4839,7 +4834,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(176):
+    // State(176)
     //   FINALLY -> [f] [i] [n] [a] [l] [l] [y] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4853,7 +4848,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4862,7 +4857,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(177):
+    // State(177)
     //   FOR -> [f] [o] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4876,7 +4871,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4885,7 +4880,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(178):
+    // State(178)
     //   FUNCTION -> [f] [u] [n] [c] [t] [i] [o] [n] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4899,7 +4894,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4908,7 +4903,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(179):
+    // State(179)
     //   IF -> [i] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4922,7 +4917,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4931,7 +4926,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(180):
+    // State(180)
     //   IMPORT -> [i] [m] [p] [o] [r] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4945,7 +4940,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -4954,7 +4949,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(181):
+    // State(181)
     //   IN -> [i] [n] .
     //   INSTANCEOF -> [i] [n] . [s] [t] [a] [n] [c] [e] [o] [f]
     //   INTERFACE -> [i] [n] . [t] [e] [r] [f] [a] [c] [e]
@@ -4970,7 +4965,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [s] => State(218):IdentifierName
@@ -4981,7 +4976,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(182):
+    // State(182)
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] [e] [o] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -4995,7 +4990,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5004,7 +4999,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(183):
+    // State(183)
     //   NEW -> [n] [e] [w] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5018,7 +5013,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5027,7 +5022,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(184):
+    // State(184)
     //   NULL -> [n] [u] [l] [l] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5041,7 +5036,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5050,7 +5045,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(185):
+    // State(185)
     //   RETURN -> [r] [e] [t] [u] [r] [n] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5064,7 +5059,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5073,7 +5068,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(186):
+    // State(186)
     //   SUPER -> [s] [u] [p] [e] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5087,7 +5082,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5096,7 +5091,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(187):
+    // State(187)
     //   SWITCH -> [s] [w] [i] [t] [c] [h] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5110,7 +5105,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5119,7 +5114,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(188):
+    // State(188)
     //   THIS -> [t] [h] [i] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5133,7 +5128,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5142,7 +5137,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(189):
+    // State(189)
     //   THROW -> [t] [h] [r] [o] [w] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5156,7 +5151,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5165,7 +5160,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(190):
+    // State(190)
     //   TRUE -> [t] [r] [u] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5179,7 +5174,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5188,7 +5183,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(191):
+    // State(191)
     //   TRY -> [t] [r] [y] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5202,7 +5197,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5211,7 +5206,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(192):
+    // State(192)
     //   TYPEOF -> [t] [y] [p] [e] [o] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5225,7 +5220,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5234,7 +5229,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(193):
+    // State(193)
     //   VAR -> [v] [a] [r] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5248,7 +5243,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5257,7 +5252,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(194):
+    // State(194)
     //   VOID -> [v] [o] [i] [d] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5271,7 +5266,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5280,7 +5275,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(195):
+    // State(195)
     //   WHILE -> [w] [h] [i] [l] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5294,7 +5289,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5303,7 +5298,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(196):
+    // State(196)
     //   WITH -> [w] [i] [t] [h] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5317,7 +5312,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5326,7 +5321,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(197):
+    // State(197)
     //   AWAIT -> [a] [w] [a] [i] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5340,7 +5335,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5349,7 +5344,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(198):
+    // State(198)
     //   YIELD -> [y] [i] [e] [l] [d] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5363,7 +5358,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5372,7 +5367,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(199):
+    // State(199)
     //   LET -> [l] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5386,7 +5381,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5395,7 +5390,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(200):
+    // State(200)
     //   STATIC -> [s] [t] [a] [t] [i] [c] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5409,7 +5404,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5418,7 +5413,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(201):
+    // State(201)
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] [n] [t] [s] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5432,7 +5427,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5441,7 +5436,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(202):
+    // State(202)
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] [a] [c] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5455,7 +5450,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5464,7 +5459,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(203):
+    // State(203)
     //   PACKAGE -> [p] [a] [c] [k] [a] [g] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5478,7 +5473,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5487,7 +5482,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(204):
+    // State(204)
     //   PRIVATE -> [p] [r] [i] [v] [a] [t] [e] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5501,7 +5496,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5510,7 +5505,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(205):
+    // State(205)
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] [t] [e] [d] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5524,7 +5519,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5533,7 +5528,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(206):
+    // State(206)
     //   PUBLIC -> [p] [u] [b] [l] [i] [c] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5547,7 +5542,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5556,7 +5551,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(207):
+    // State(207)
     //   AS -> [a] [s] .
     //   ASYNC -> [a] [s] . [y] [n] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -5571,7 +5566,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..x, z, U+200C..U+200D] => State(217):IdentifierName
     //   [y] => State(306):IdentifierName
@@ -5581,7 +5576,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(208):
+    // State(208)
     //   ASYNC -> [a] [s] [y] [n] [c] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5595,7 +5590,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5604,7 +5599,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(209):
+    // State(209)
     //   FROM -> [f] [r] [o] [m] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5618,7 +5613,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5627,7 +5622,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(210):
+    // State(210)
     //   GET -> [g] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5641,7 +5636,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5650,7 +5645,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(211):
+    // State(211)
     //   META -> [m] [e] [t] [a] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5664,7 +5659,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5673,7 +5668,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(212):
+    // State(212)
     //   OF -> [o] [f] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5687,7 +5682,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5696,7 +5691,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(213):
+    // State(213)
     //   SET -> [s] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5710,7 +5705,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5719,7 +5714,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(214):
+    // State(214)
     //   TARGET -> [t] [a] [r] [g] [e] [t] .
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5733,7 +5728,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5742,7 +5737,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(215):
+    // State(215)
     //   BREAK -> [b] . [r] [e] [a] [k]
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -5756,7 +5751,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(260):IdentifierName
@@ -5766,7 +5761,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(216):
+    // State(216)
     //   RETURN -> [r] . [e] [t] [u] [r] [n]
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -5780,7 +5775,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(235):IdentifierName
@@ -5790,7 +5785,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(217):
+    // State(217)
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
     //   IdentifierStartChar -> UnicodeIDStart .
@@ -5818,7 +5813,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   UnicodeEscapeSequence -> [u] Hex4Digits .
     //   Hex4Digits -> HexDigit HexDigit HexDigit HexDigit .
     //   HexDigit -> [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F] .
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(217):IdentifierName
     [
@@ -5827,7 +5822,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(218):
+    // State(218)
     //   INSTANCEOF -> [i] [n] [s] . [t] [a] [n] [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5841,7 +5836,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(222):IdentifierName
@@ -5851,7 +5846,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(219):
+    // State(219)
     //   FUNCTION -> [f] [u] . [n] [c] [t] [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5865,7 +5860,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(229):IdentifierName
@@ -5875,7 +5870,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(220):
+    // State(220)
     //   INTERFACE -> [i] [n] [t] . [e] [r] [f] [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5889,7 +5884,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(230):IdentifierName
@@ -5899,7 +5894,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(221):
+    // State(221)
     //   PROTECTED -> [p] [r] [o] . [t] [e] [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5913,7 +5908,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(231):IdentifierName
@@ -5923,7 +5918,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(222):
+    // State(222)
     //   INSTANCEOF -> [i] [n] [s] [t] . [a] [n] [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5937,7 +5932,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(232):IdentifierName
@@ -5947,7 +5942,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 232, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(223):
+    // State(223)
     //   IMPLEMENTS -> [i] [m] [p] [l] . [e] [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -5961,7 +5956,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(233):IdentifierName
@@ -5971,7 +5966,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(224):
+    // State(224)
     //   PACKAGE -> [p] . [a] [c] [k] [a] [g] [e]
     //   PRIVATE -> [p] . [r] [i] [v] [a] [t] [e]
     //   PROTECTED -> [p] . [r] [o] [t] [e] [c] [t] [e] [d]
@@ -5988,7 +5983,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..q, s..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(226):IdentifierName
@@ -6000,7 +5995,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 227, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(225):
+    // State(225)
     //   FINALLY -> [f] [i] . [n] [a] [l] [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6014,7 +6009,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(246):IdentifierName
@@ -6024,7 +6019,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(226):
+    // State(226)
     //   PRIVATE -> [p] [r] . [i] [v] [a] [t] [e]
     //   PROTECTED -> [p] [r] . [o] [t] [e] [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -6039,7 +6034,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(221):IdentifierName
@@ -6050,7 +6045,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 221, 247, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(227):
+    // State(227)
     //   PACKAGE -> [p] [a] . [c] [k] [a] [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6064,7 +6059,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
     //   [c] => State(248):IdentifierName
@@ -6074,7 +6069,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(228):
+    // State(228)
     //   DEBUGGER -> [d] [e] [b] . [u] [g] [g] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6088,7 +6083,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [u] => State(250):IdentifierName
@@ -6098,7 +6093,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(229):
+    // State(229)
     //   FUNCTION -> [f] [u] [n] . [c] [t] [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6112,7 +6107,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
     //   [c] => State(251):IdentifierName
@@ -6122,7 +6117,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(230):
+    // State(230)
     //   INTERFACE -> [i] [n] [t] [e] . [r] [f] [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6136,7 +6131,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(252):IdentifierName
@@ -6146,7 +6141,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(231):
+    // State(231)
     //   PROTECTED -> [p] [r] [o] [t] . [e] [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6160,7 +6155,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(253):IdentifierName
@@ -6170,7 +6165,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(232):
+    // State(232)
     //   INSTANCEOF -> [i] [n] [s] [t] [a] . [n] [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6184,7 +6179,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(254):IdentifierName
@@ -6194,7 +6189,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(233):
+    // State(233)
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] . [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6208,7 +6203,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(217):IdentifierName
     //   [m] => State(255):IdentifierName
@@ -6218,7 +6213,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(234):
+    // State(234)
     //   YIELD -> [y] . [i] [e] [l] [d]
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -6232,7 +6227,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(266):IdentifierName
@@ -6242,7 +6237,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 266, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(235):
+    // State(235)
     //   RETURN -> [r] [e] . [t] [u] [r] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6256,7 +6251,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(268):IdentifierName
@@ -6266,7 +6261,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(236):
+    // State(236)
     //   EXPORT -> [e] [x] . [p] [o] [r] [t]
     //   EXTENDS -> [e] [x] . [t] [e] [n] [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -6281,7 +6276,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..o, q..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(244):IdentifierName
@@ -6292,7 +6287,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(237):
+    // State(237)
     //   STATIC -> [s] [t] . [a] [t] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6306,7 +6301,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(270):IdentifierName
@@ -6316,7 +6311,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 270, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(238):
+    // State(238)
     //   SWITCH -> [s] [w] . [i] [t] [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6330,7 +6325,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(271):IdentifierName
@@ -6340,7 +6335,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 271, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(239):
+    // State(239)
     //   TARGET -> [t] [a] . [r] [g] [e] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6354,7 +6349,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(272):IdentifierName
@@ -6364,7 +6359,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(240):
+    // State(240)
     //   TYPEOF -> [t] [y] . [p] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6378,7 +6373,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(217):IdentifierName
     //   [p] => State(273):IdentifierName
@@ -6388,7 +6383,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(241):
+    // State(241)
     //   IMPORT -> [i] [m] . [p] [o] [r] [t]
     //   IMPLEMENTS -> [i] [m] . [p] [l] [e] [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -6403,7 +6398,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(217):IdentifierName
     //   [p] => State(274):IdentifierName
@@ -6413,7 +6408,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(242):
+    // State(242)
     //   DEBUGGER -> [d] [e] . [b] [u] [g] [g] [e] [r]
     //   DEFAULT -> [d] [e] . [f] [a] [u] [l] [t]
     //   DELETE -> [d] [e] . [l] [e] [t] [e]
@@ -6429,7 +6424,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a, c..e, g..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [b] => State(228):IdentifierName
@@ -6441,7 +6436,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(243):
+    // State(243)
     //   PUBLIC -> [p] [u] . [b] [l] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6455,7 +6450,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a, c..z, U+200C..U+200D] => State(217):IdentifierName
     //   [b] => State(276):IdentifierName
@@ -6465,7 +6460,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(244):
+    // State(244)
     //   EXTENDS -> [e] [x] [t] . [e] [n] [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6479,7 +6474,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(277):IdentifierName
@@ -6489,7 +6484,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(245):
+    // State(245)
     //   DEFAULT -> [d] [e] [f] . [a] [u] [l] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6503,7 +6498,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(278):IdentifierName
@@ -6513,7 +6508,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 278, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(246):
+    // State(246)
     //   FINALLY -> [f] [i] [n] . [a] [l] [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6527,7 +6522,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(279):IdentifierName
@@ -6537,7 +6532,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 279, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(247):
+    // State(247)
     //   PRIVATE -> [p] [r] [i] . [v] [a] [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6551,7 +6546,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..u, w..z, U+200C..U+200D] => State(217):IdentifierName
     //   [v] => State(280):IdentifierName
@@ -6561,7 +6556,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         280, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(248):
+    // State(248)
     //   PACKAGE -> [p] [a] [c] . [k] [a] [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6575,7 +6570,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..j, l..z, U+200C..U+200D] => State(217):IdentifierName
     //   [k] => State(281):IdentifierName
@@ -6585,7 +6580,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(249):
+    // State(249)
     //   CONTINUE -> [c] [o] [n] [t] . [i] [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6599,7 +6594,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(282):IdentifierName
@@ -6609,7 +6604,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 282, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(250):
+    // State(250)
     //   DEBUGGER -> [d] [e] [b] [u] . [g] [g] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6623,7 +6618,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(217):IdentifierName
     //   [g] => State(283):IdentifierName
@@ -6633,7 +6628,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(251):
+    // State(251)
     //   FUNCTION -> [f] [u] [n] [c] . [t] [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6647,7 +6642,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(284):IdentifierName
@@ -6657,7 +6652,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(252):
+    // State(252)
     //   INTERFACE -> [i] [n] [t] [e] [r] . [f] [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6671,7 +6666,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(217):IdentifierName
     //   [f] => State(285):IdentifierName
@@ -6681,7 +6676,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(253):
+    // State(253)
     //   PROTECTED -> [p] [r] [o] [t] [e] . [c] [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6695,7 +6690,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
     //   [c] => State(286):IdentifierName
@@ -6705,7 +6700,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(254):
+    // State(254)
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] . [c] [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6719,7 +6714,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
     //   [c] => State(287):IdentifierName
@@ -6729,7 +6724,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(255):
+    // State(255)
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] . [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6743,7 +6738,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(288):IdentifierName
@@ -6753,7 +6748,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(256):
+    // State(256)
     //   ELSE -> [e] . [l] [s] [e]
     //   ENUM -> [e] . [n] [u] [m]
     //   EXPORT -> [e] . [x] [p] [o] [r] [t]
@@ -6770,7 +6765,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m, o..w, y..z, U+200C..U+200D] => State(217):IdentifierName
     //   [x] => State(236):IdentifierName
@@ -6782,7 +6777,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(257):
+    // State(257)
     //   CASE -> [c] . [a] [s] [e]
     //   CATCH -> [c] . [a] [t] [c] [h]
     //   CLASS -> [c] . [l] [a] [s] [s]
@@ -6800,7 +6795,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..k, m..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(262):IdentifierName
@@ -6812,7 +6807,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 298, 263, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(258):
+    // State(258)
     //   META -> [m] . [e] [t] [a]
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -6826,7 +6821,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(302):IdentifierName
@@ -6836,7 +6831,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(259):
+    // State(259)
     //   WHILE -> [w] . [h] [i] [l] [e]
     //   WITH -> [w] . [i] [t] [h]
     //   IdentifierName -> IdentifierStart .
@@ -6851,7 +6846,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..g, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [h] => State(267):IdentifierName
@@ -6862,7 +6857,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 303, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(260):
+    // State(260)
     //   BREAK -> [b] [r] . [e] [a] [k]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6876,7 +6871,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(305):IdentifierName
@@ -6886,7 +6881,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(261):
+    // State(261)
     //   AWAIT -> [a] [w] . [a] [i] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6900,7 +6895,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(307):IdentifierName
@@ -6910,7 +6905,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 307, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(262):
+    // State(262)
     //   CLASS -> [c] [l] . [a] [s] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6924,7 +6919,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(309):IdentifierName
@@ -6934,7 +6929,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 309, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(263):
+    // State(263)
     //   CONST -> [c] [o] . [n] [s] [t]
     //   CONTINUE -> [c] [o] . [n] [t] [i] [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -6949,7 +6944,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(310):IdentifierName
@@ -6959,7 +6954,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(264):
+    // State(264)
     //   SUPER -> [s] [u] . [p] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6973,7 +6968,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..o, q..z, U+200C..U+200D] => State(217):IdentifierName
     //   [p] => State(311):IdentifierName
@@ -6983,7 +6978,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(265):
+    // State(265)
     //   FALSE -> [f] [a] . [l] [s] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -6997,7 +6992,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(313):IdentifierName
@@ -7007,7 +7002,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(266):
+    // State(266)
     //   YIELD -> [y] [i] . [e] [l] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7021,7 +7016,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(314):IdentifierName
@@ -7031,7 +7026,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(267):
+    // State(267)
     //   WHILE -> [w] [h] . [i] [l] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7045,7 +7040,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(315):IdentifierName
@@ -7055,7 +7050,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 315, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(268):
+    // State(268)
     //   RETURN -> [r] [e] [t] . [u] [r] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7069,7 +7064,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [u] => State(316):IdentifierName
@@ -7079,7 +7074,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(269):
+    // State(269)
     //   EXPORT -> [e] [x] [p] . [o] [r] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7093,7 +7088,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(317):IdentifierName
@@ -7103,7 +7098,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 317, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(270):
+    // State(270)
     //   STATIC -> [s] [t] [a] . [t] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7117,7 +7112,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(318):IdentifierName
@@ -7127,7 +7122,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(271):
+    // State(271)
     //   SWITCH -> [s] [w] [i] . [t] [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7141,7 +7136,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(319):IdentifierName
@@ -7151,7 +7146,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(272):
+    // State(272)
     //   TARGET -> [t] [a] [r] . [g] [e] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7165,7 +7160,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(217):IdentifierName
     //   [g] => State(320):IdentifierName
@@ -7175,7 +7170,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(273):
+    // State(273)
     //   TYPEOF -> [t] [y] [p] . [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7189,7 +7184,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(321):IdentifierName
@@ -7199,7 +7194,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(274):
+    // State(274)
     //   IMPORT -> [i] [m] [p] . [o] [r] [t]
     //   IMPLEMENTS -> [i] [m] [p] . [l] [e] [m] [e] [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -7214,7 +7209,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(223):IdentifierName
@@ -7225,7 +7220,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 322, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(275):
+    // State(275)
     //   DELETE -> [d] [e] [l] . [e] [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7239,7 +7234,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(323):IdentifierName
@@ -7249,7 +7244,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(276):
+    // State(276)
     //   PUBLIC -> [p] [u] [b] . [l] [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7263,7 +7258,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(324):IdentifierName
@@ -7273,7 +7268,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(277):
+    // State(277)
     //   EXTENDS -> [e] [x] [t] [e] . [n] [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7287,7 +7282,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(325):IdentifierName
@@ -7297,7 +7292,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(278):
+    // State(278)
     //   DEFAULT -> [d] [e] [f] [a] . [u] [l] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7311,7 +7306,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [u] => State(326):IdentifierName
@@ -7321,7 +7316,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(279):
+    // State(279)
     //   FINALLY -> [f] [i] [n] [a] . [l] [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7335,7 +7330,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(327):IdentifierName
@@ -7345,7 +7340,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(280):
+    // State(280)
     //   PRIVATE -> [p] [r] [i] [v] . [a] [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7359,7 +7354,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(328):IdentifierName
@@ -7369,7 +7364,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 328, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(281):
+    // State(281)
     //   PACKAGE -> [p] [a] [c] [k] . [a] [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7383,7 +7378,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(329):IdentifierName
@@ -7393,7 +7388,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 329, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(282):
+    // State(282)
     //   CONTINUE -> [c] [o] [n] [t] [i] . [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7407,7 +7402,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(330):IdentifierName
@@ -7417,7 +7412,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(283):
+    // State(283)
     //   DEBUGGER -> [d] [e] [b] [u] [g] . [g] [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7431,7 +7426,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(217):IdentifierName
     //   [g] => State(331):IdentifierName
@@ -7441,7 +7436,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(284):
+    // State(284)
     //   FUNCTION -> [f] [u] [n] [c] [t] . [i] [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7455,7 +7450,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(332):IdentifierName
@@ -7465,7 +7460,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 332, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(285):
+    // State(285)
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] . [a] [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7479,7 +7474,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(333):IdentifierName
@@ -7489,7 +7484,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 333, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(286):
+    // State(286)
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] . [t] [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7503,7 +7498,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(334):IdentifierName
@@ -7513,7 +7508,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(287):
+    // State(287)
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] . [e] [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7527,7 +7522,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(335):IdentifierName
@@ -7537,7 +7532,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(288):
+    // State(288)
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] . [n] [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7551,7 +7546,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(336):IdentifierName
@@ -7561,7 +7556,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(289):
+    // State(289)
     //   SUPER -> [s] . [u] [p] [e] [r]
     //   SWITCH -> [s] . [w] [i] [t] [c] [h]
     //   STATIC -> [s] . [t] [a] [t] [i] [c]
@@ -7578,7 +7573,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..s, v, x..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(237):IdentifierName
@@ -7591,7 +7586,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(290):
+    // State(290)
     //   THIS -> [t] . [h] [i] [s]
     //   THROW -> [t] . [h] [r] [o] [w]
     //   TRUE -> [t] . [r] [u] [e]
@@ -7610,7 +7605,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..g, i..q, s..x, z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(239):IdentifierName
@@ -7623,7 +7618,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 239, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(291):
+    // State(291)
     //   LET -> [l] . [e] [t]
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -7637,7 +7632,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(343):IdentifierName
@@ -7647,7 +7642,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(292):
+    // State(292)
     //   NEW -> [n] . [e] [w]
     //   NULL -> [n] . [u] [l] [l]
     //   IdentifierName -> IdentifierStart .
@@ -7662,7 +7657,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [u] => State(300):IdentifierName
@@ -7673,7 +7668,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(293):
+    // State(293)
     //   GET -> [g] . [e] [t]
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -7687,7 +7682,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(345):IdentifierName
@@ -7697,7 +7692,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(294):
+    // State(294)
     //   FALSE -> [f] . [a] [l] [s] [e]
     //   FINALLY -> [f] . [i] [n] [a] [l] [l] [y]
     //   FOR -> [f] . [o] [r]
@@ -7715,7 +7710,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..h, j..n, p..q, s..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [u] => State(219):IdentifierName
@@ -7729,7 +7724,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 265, 346, 225, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(295):
+    // State(295)
     //   VAR -> [v] . [a] [r]
     //   VOID -> [v] . [o] [i] [d]
     //   IdentifierName -> IdentifierStart .
@@ -7744,7 +7739,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(304):IdentifierName
@@ -7755,7 +7750,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 347, 304, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(296):
+    // State(296)
     //   ELSE -> [e] [l] . [s] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7769,7 +7764,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(217):IdentifierName
     //   [s] => State(348):IdentifierName
@@ -7779,7 +7774,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(297):
+    // State(297)
     //   ENUM -> [e] [n] . [u] [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7793,7 +7788,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [u] => State(349):IdentifierName
@@ -7803,7 +7798,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(298):
+    // State(298)
     //   CASE -> [c] [a] . [s] [e]
     //   CATCH -> [c] [a] . [t] [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -7818,7 +7813,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(308):IdentifierName
@@ -7829,7 +7824,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(299):
+    // State(299)
     //   THIS -> [t] [h] . [i] [s]
     //   THROW -> [t] [h] . [r] [o] [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -7844,7 +7839,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..q, s..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(312):IdentifierName
@@ -7855,7 +7850,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 352, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(300):
+    // State(300)
     //   NULL -> [n] [u] . [l] [l]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7869,7 +7864,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(353):IdentifierName
@@ -7879,7 +7874,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(301):
+    // State(301)
     //   FROM -> [f] [r] . [o] [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7893,7 +7888,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(354):IdentifierName
@@ -7903,7 +7898,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 354, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(302):
+    // State(302)
     //   META -> [m] [e] . [t] [a]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7917,7 +7912,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(355):IdentifierName
@@ -7927,7 +7922,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(303):
+    // State(303)
     //   WITH -> [w] [i] . [t] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7941,7 +7936,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(356):IdentifierName
@@ -7951,7 +7946,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(304):
+    // State(304)
     //   VOID -> [v] [o] . [i] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7965,7 +7960,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(357):IdentifierName
@@ -7975,7 +7970,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 357, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(305):
+    // State(305)
     //   BREAK -> [b] [r] [e] . [a] [k]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -7989,7 +7984,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
     //   [a] => State(358):IdentifierName
@@ -7999,7 +7994,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 358, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(306):
+    // State(306)
     //   ASYNC -> [a] [s] [y] . [n] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8013,7 +8008,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
     //   [n] => State(359):IdentifierName
@@ -8023,7 +8018,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(307):
+    // State(307)
     //   AWAIT -> [a] [w] [a] . [i] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8037,7 +8032,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(360):IdentifierName
@@ -8047,7 +8042,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 360, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(308):
+    // State(308)
     //   CATCH -> [c] [a] [t] . [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8061,7 +8056,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
     //   [c] => State(361):IdentifierName
@@ -8071,7 +8066,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(309):
+    // State(309)
     //   CLASS -> [c] [l] [a] . [s] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8085,7 +8080,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(217):IdentifierName
     //   [s] => State(362):IdentifierName
@@ -8095,7 +8090,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(310):
+    // State(310)
     //   CONST -> [c] [o] [n] . [s] [t]
     //   CONTINUE -> [c] [o] [n] . [t] [i] [n] [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -8110,7 +8105,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..r, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(249):IdentifierName
@@ -8121,7 +8116,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(311):
+    // State(311)
     //   SUPER -> [s] [u] [p] . [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8135,7 +8130,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(364):IdentifierName
@@ -8145,7 +8140,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(312):
+    // State(312)
     //   THROW -> [t] [h] [r] . [o] [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8159,7 +8154,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(365):IdentifierName
@@ -8169,7 +8164,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 365, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(313):
+    // State(313)
     //   FALSE -> [f] [a] [l] . [s] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8183,7 +8178,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(217):IdentifierName
     //   [s] => State(366):IdentifierName
@@ -8193,7 +8188,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(314):
+    // State(314)
     //   YIELD -> [y] [i] [e] . [l] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8207,7 +8202,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(367):IdentifierName
@@ -8217,7 +8212,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(315):
+    // State(315)
     //   WHILE -> [w] [h] [i] . [l] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8231,7 +8226,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(368):IdentifierName
@@ -8241,7 +8236,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(316):
+    // State(316)
     //   RETURN -> [r] [e] [t] [u] . [r] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8255,7 +8250,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(369):IdentifierName
@@ -8265,7 +8260,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(317):
+    // State(317)
     //   EXPORT -> [e] [x] [p] [o] . [r] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8279,7 +8274,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(370):IdentifierName
@@ -8289,7 +8284,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(318):
+    // State(318)
     //   STATIC -> [s] [t] [a] [t] . [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8303,7 +8298,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(371):IdentifierName
@@ -8313,7 +8308,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 371, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(319):
+    // State(319)
     //   SWITCH -> [s] [w] [i] [t] . [c] [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8327,7 +8322,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
     //   [c] => State(372):IdentifierName
@@ -8337,7 +8332,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(320):
+    // State(320)
     //   TARGET -> [t] [a] [r] [g] . [e] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8351,7 +8346,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(373):IdentifierName
@@ -8361,7 +8356,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(321):
+    // State(321)
     //   TYPEOF -> [t] [y] [p] [e] . [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8375,7 +8370,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(374):IdentifierName
@@ -8385,7 +8380,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 374, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(322):
+    // State(322)
     //   IMPORT -> [i] [m] [p] [o] . [r] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8399,7 +8394,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
     //   [r] => State(375):IdentifierName
@@ -8409,7 +8404,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(323):
+    // State(323)
     //   DELETE -> [d] [e] [l] [e] . [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8423,7 +8418,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(376):IdentifierName
@@ -8433,7 +8428,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(324):
+    // State(324)
     //   PUBLIC -> [p] [u] [b] [l] . [i] [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8447,7 +8442,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..h, j..z, U+200C..U+200D] => State(217):IdentifierName
     //   [i] => State(377):IdentifierName
@@ -8457,7 +8452,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 377, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(325):
+    // State(325)
     //   EXTENDS -> [e] [x] [t] [e] [n] . [d] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8471,7 +8466,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(217):IdentifierName
     //   [d] => State(378):IdentifierName
@@ -8481,7 +8476,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 378, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(326):
+    // State(326)
     //   DEFAULT -> [d] [e] [f] [a] [u] . [l] [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8495,7 +8490,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(379):IdentifierName
@@ -8505,7 +8500,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(327):
+    // State(327)
     //   FINALLY -> [f] [i] [n] [a] [l] . [l] [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8519,7 +8514,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
     //   [l] => State(380):IdentifierName
@@ -8529,7 +8524,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(328):
+    // State(328)
     //   PRIVATE -> [p] [r] [i] [v] [a] . [t] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8543,7 +8538,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(381):IdentifierName
@@ -8553,7 +8548,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(329):
+    // State(329)
     //   PACKAGE -> [p] [a] [c] [k] [a] . [g] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8567,7 +8562,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..f, h..z, U+200C..U+200D] => State(217):IdentifierName
     //   [g] => State(382):IdentifierName
@@ -8577,7 +8572,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(330):
+    // State(330)
     //   CONTINUE -> [c] [o] [n] [t] [i] [n] . [u] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8591,7 +8586,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..t, v..z, U+200C..U+200D] => State(217):IdentifierName
     //   [u] => State(383):IdentifierName
@@ -8601,7 +8596,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(331):
+    // State(331)
     //   DEBUGGER -> [d] [e] [b] [u] [g] [g] . [e] [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8615,7 +8610,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(384):IdentifierName
@@ -8625,7 +8620,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(332):
+    // State(332)
     //   FUNCTION -> [f] [u] [n] [c] [t] [i] . [o] [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8639,7 +8634,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(385):IdentifierName
@@ -8649,7 +8644,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 385, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(333):
+    // State(333)
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] [a] . [c] [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8663,7 +8658,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
     //   [c] => State(386):IdentifierName
@@ -8673,7 +8668,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(334):
+    // State(334)
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] [t] . [e] [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8687,7 +8682,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
     //   [e] => State(387):IdentifierName
@@ -8697,7 +8692,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(335):
+    // State(335)
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] [e] . [o] [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8711,7 +8706,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..n, p..z, U+200C..U+200D] => State(217):IdentifierName
     //   [o] => State(388):IdentifierName
@@ -8721,7 +8716,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 388, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(336):
+    // State(336)
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] [n] . [t] [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8735,7 +8730,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
     //   [t] => State(389):IdentifierName
@@ -8745,7 +8740,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(337):
+    // State(337)
     //   AWAIT -> [a] . [w] [a] [i] [t]
     //   AS -> [a] . [s]
     //   ASYNC -> [a] . [s] [y] [n] [c]
@@ -8761,7 +8756,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [s] => State(207):AS
     //   [$, 0..9, A..Z, _, a..r, t..v, x..z, U+200C..U+200D] => State(217):IdentifierName
@@ -8772,7 +8767,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(338):
+    // State(338)
     //   OF -> [o] . [f]
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -8786,7 +8781,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [f] => State(212):OF
     //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(217):IdentifierName
@@ -8796,7 +8791,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(339):
+    // State(339)
     //   IF -> [i] . [f]
     //   IMPORT -> [i] . [m] [p] [o] [r] [t]
     //   IN -> [i] . [n]
@@ -8815,7 +8810,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [f] => State(179):IF
     //   [n] => State(181):IN
@@ -8827,7 +8822,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(340):
+    // State(340)
     //   DEBUGGER -> [d] . [e] [b] [u] [g] [g] [e] [r]
     //   DEFAULT -> [d] . [e] [f] [a] [u] [l] [t]
     //   DELETE -> [d] . [e] [l] [e] [t] [e]
@@ -8844,7 +8839,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [o] => State(170):DO
     //   [$, 0..9, A..Z, _, a..d, f..n, p..z, U+200C..U+200D] => State(217):IdentifierName
@@ -8855,7 +8850,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 170, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(341):
+    // State(341)
     //   SET -> [s] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8869,7 +8864,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(213):SET
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -8879,7 +8874,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(342):
+    // State(342)
     //   TRUE -> [t] [r] . [u] [e]
     //   TRY -> [t] [r] . [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
@@ -8894,7 +8889,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [y] => State(191):TRY
     //   [$, 0..9, A..Z, _, a..t, v..x, z, U+200C..U+200D] => State(217):IdentifierName
@@ -8905,7 +8900,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(343):
+    // State(343)
     //   LET -> [l] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8919,7 +8914,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(199):LET
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -8929,7 +8924,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(344):
+    // State(344)
     //   NEW -> [n] [e] . [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8943,7 +8938,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [w] => State(183):NEW
     //   [$, 0..9, A..Z, _, a..v, x..z, U+200C..U+200D] => State(217):IdentifierName
@@ -8953,7 +8948,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(345):
+    // State(345)
     //   GET -> [g] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8967,7 +8962,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(210):GET
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -8977,7 +8972,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(346):
+    // State(346)
     //   FOR -> [f] [o] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -8991,7 +8986,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [r] => State(177):FOR
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9001,7 +8996,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(347):
+    // State(347)
     //   VAR -> [v] [a] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9015,7 +9010,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [r] => State(193):VAR
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9025,7 +9020,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(348):
+    // State(348)
     //   ELSE -> [e] [l] [s] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9039,7 +9034,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(171):ELSE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9049,7 +9044,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(349):
+    // State(349)
     //   ENUM -> [e] [n] [u] . [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9063,7 +9058,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [m] => State(172):ENUM
     //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9073,7 +9068,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(350):
+    // State(350)
     //   CASE -> [c] [a] [s] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9087,7 +9082,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(162):CASE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9097,7 +9092,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(351):
+    // State(351)
     //   TRUE -> [t] [r] [u] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9111,7 +9106,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(190):TRUE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9121,7 +9116,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(352):
+    // State(352)
     //   THIS -> [t] [h] [i] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9135,7 +9130,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [s] => State(188):THIS
     //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9145,7 +9140,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(353):
+    // State(353)
     //   NULL -> [n] [u] [l] . [l]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9159,7 +9154,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [l] => State(184):NULL
     //   [$, 0..9, A..Z, _, a..k, m..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9169,7 +9164,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(354):
+    // State(354)
     //   FROM -> [f] [r] [o] . [m]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9183,7 +9178,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [m] => State(209):FROM
     //   [$, 0..9, A..Z, _, a..l, n..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9193,7 +9188,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(355):
+    // State(355)
     //   META -> [m] [e] [t] . [a]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9207,7 +9202,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [a] => State(211):META
     //   [$, 0..9, A..Z, _, b..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9217,7 +9212,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 211, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(356):
+    // State(356)
     //   WITH -> [w] [i] [t] . [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9231,7 +9226,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [h] => State(196):WITH
     //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9241,7 +9236,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(357):
+    // State(357)
     //   VOID -> [v] [o] [i] . [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9255,7 +9250,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [d] => State(194):VOID
     //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9265,7 +9260,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 194, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(358):
+    // State(358)
     //   BREAK -> [b] [r] [e] [a] . [k]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9279,7 +9274,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [k] => State(161):BREAK
     //   [$, 0..9, A..Z, _, a..j, l..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9289,7 +9284,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(359):
+    // State(359)
     //   ASYNC -> [a] [s] [y] [n] . [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9303,7 +9298,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [c] => State(208):ASYNC
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9313,7 +9308,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(360):
+    // State(360)
     //   AWAIT -> [a] [w] [a] [i] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9327,7 +9322,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(197):AWAIT
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9337,7 +9332,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(361):
+    // State(361)
     //   CATCH -> [c] [a] [t] [c] . [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9351,7 +9346,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [h] => State(163):CATCH
     //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9361,7 +9356,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(362):
+    // State(362)
     //   CLASS -> [c] [l] [a] [s] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9375,7 +9370,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [s] => State(164):CLASS
     //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9385,7 +9380,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(363):
+    // State(363)
     //   CONST -> [c] [o] [n] [s] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9399,7 +9394,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(165):CONST
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9409,7 +9404,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(364):
+    // State(364)
     //   SUPER -> [s] [u] [p] [e] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9423,7 +9418,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [r] => State(186):SUPER
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9433,7 +9428,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(365):
+    // State(365)
     //   THROW -> [t] [h] [r] [o] . [w]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9447,7 +9442,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [w] => State(189):THROW
     //   [$, 0..9, A..Z, _, a..v, x..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9457,7 +9452,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(366):
+    // State(366)
     //   FALSE -> [f] [a] [l] [s] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9471,7 +9466,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(175):FALSE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9481,7 +9476,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(367):
+    // State(367)
     //   YIELD -> [y] [i] [e] [l] . [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9495,7 +9490,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [d] => State(198):YIELD
     //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9505,7 +9500,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 198, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(368):
+    // State(368)
     //   WHILE -> [w] [h] [i] [l] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9519,7 +9514,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(195):WHILE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9529,7 +9524,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(369):
+    // State(369)
     //   RETURN -> [r] [e] [t] [u] [r] . [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9543,7 +9538,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [n] => State(185):RETURN
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9553,7 +9548,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(370):
+    // State(370)
     //   EXPORT -> [e] [x] [p] [o] [r] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9567,7 +9562,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(173):EXPORT
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9577,7 +9572,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(371):
+    // State(371)
     //   STATIC -> [s] [t] [a] [t] [i] . [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9591,7 +9586,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [c] => State(200):STATIC
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9601,7 +9596,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(372):
+    // State(372)
     //   SWITCH -> [s] [w] [i] [t] [c] . [h]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9615,7 +9610,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [h] => State(187):SWITCH
     //   [$, 0..9, A..Z, _, a..g, i..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9625,7 +9620,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(373):
+    // State(373)
     //   TARGET -> [t] [a] [r] [g] [e] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9639,7 +9634,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(214):TARGET
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9649,7 +9644,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(374):
+    // State(374)
     //   TYPEOF -> [t] [y] [p] [e] [o] . [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9663,7 +9658,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [f] => State(192):TYPEOF
     //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9673,7 +9668,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(375):
+    // State(375)
     //   IMPORT -> [i] [m] [p] [o] [r] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9687,7 +9682,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(180):IMPORT
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9697,7 +9692,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(376):
+    // State(376)
     //   DELETE -> [d] [e] [l] [e] [t] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9711,7 +9706,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(169):DELETE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9721,7 +9716,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(377):
+    // State(377)
     //   PUBLIC -> [p] [u] [b] [l] [i] . [c]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9735,7 +9730,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [c] => State(206):PUBLIC
     //   [$, 0..9, A..Z, _, a..b, d..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9745,7 +9740,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(378):
+    // State(378)
     //   EXTENDS -> [e] [x] [t] [e] [n] [d] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9759,7 +9754,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [s] => State(174):EXTENDS
     //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9769,7 +9764,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(379):
+    // State(379)
     //   DEFAULT -> [d] [e] [f] [a] [u] [l] . [t]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9783,7 +9778,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [t] => State(168):DEFAULT
     //   [$, 0..9, A..Z, _, a..s, u..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9793,7 +9788,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(380):
+    // State(380)
     //   FINALLY -> [f] [i] [n] [a] [l] [l] . [y]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9807,7 +9802,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [y] => State(176):FINALLY
     //   [$, 0..9, A..Z, _, a..x, z, U+200C..U+200D] => State(217):IdentifierName
@@ -9817,7 +9812,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(381):
+    // State(381)
     //   PRIVATE -> [p] [r] [i] [v] [a] [t] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9831,7 +9826,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(204):PRIVATE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9841,7 +9836,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(382):
+    // State(382)
     //   PACKAGE -> [p] [a] [c] [k] [a] [g] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9855,7 +9850,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(203):PACKAGE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9865,7 +9860,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(383):
+    // State(383)
     //   CONTINUE -> [c] [o] [n] [t] [i] [n] [u] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9879,7 +9874,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(166):CONTINUE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9889,7 +9884,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(384):
+    // State(384)
     //   DEBUGGER -> [d] [e] [b] [u] [g] [g] [e] . [r]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9903,7 +9898,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [r] => State(167):DEBUGGER
     //   [$, 0..9, A..Z, _, a..q, s..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9913,7 +9908,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(385):
+    // State(385)
     //   FUNCTION -> [f] [u] [n] [c] [t] [i] [o] . [n]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9927,7 +9922,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [n] => State(178):FUNCTION
     //   [$, 0..9, A..Z, _, a..m, o..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9937,7 +9932,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(386):
+    // State(386)
     //   INTERFACE -> [i] [n] [t] [e] [r] [f] [a] [c] . [e]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9951,7 +9946,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [e] => State(202):INTERFACE
     //   [$, 0..9, A..Z, _, a..d, f..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9961,7 +9956,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(387):
+    // State(387)
     //   PROTECTED -> [p] [r] [o] [t] [e] [c] [t] [e] . [d]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9975,7 +9970,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [d] => State(205):PROTECTED
     //   [$, 0..9, A..Z, _, a..c, e..z, U+200C..U+200D] => State(217):IdentifierName
@@ -9985,7 +9980,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 205, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(388):
+    // State(388)
     //   INSTANCEOF -> [i] [n] [s] [t] [a] [n] [c] [e] [o] . [f]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -9999,7 +9994,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [f] => State(182):INSTANCEOF
     //   [$, 0..9, A..Z, _, a..e, g..z, U+200C..U+200D] => State(217):IdentifierName
@@ -10009,7 +10004,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(389):
+    // State(389)
     //   IMPLEMENTS -> [i] [m] [p] [l] [e] [m] [e] [n] [t] . [s]
     //   IdentifierName -> IdentifierName IdentifierPart .
     //   IdentifierName -> IdentifierName . IdentifierPart
@@ -10023,7 +10018,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   IdentifierPartChar -> . [<ZWNJ>]
     //   IdentifierPartChar -> . [<ZWJ>]
     //   IdentifierPart -> . [\] UnicodeEscapeSequence
-    // Transitions:
+    // Transitions
     //   [\] => State(2)
     //   [s] => State(201):IMPLEMENTS
     //   [$, 0..9, A..Z, _, a..r, t..z, U+200C..U+200D] => State(217):IdentifierName
@@ -10033,7 +10028,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         217, 217, 217, 217, 217, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 217, 217, 217, 217, 463, 217, 463, 2, 463,
     ],
-    // State(390):
+    // State(390)
     //   PrivateIdentifier -> [#] IdentifierName .
     //   IdentifierName -> IdentifierStart .
     //   IdentifierStart -> IdentifierStartChar .
@@ -10062,7 +10057,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   UnicodeEscapeSequence -> [u] Hex4Digits .
     //   Hex4Digits -> HexDigit HexDigit HexDigit HexDigit .
     //   HexDigit -> [0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F] .
-    // Transitions:
+    // Transitions
     //   [\] => State(3)
     //   [$, 0..9, A..Z, _, a..z, U+200C..U+200D] => State(390):PrivateIdentifier
     [
@@ -10071,7 +10066,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         390, 390, 390, 390, 390, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 390, 390, 390, 390, 463, 390, 463, 3, 463,
     ],
-    // State(391):
+    // State(391)
     //   OPTIONAL_CHAINING -> [?] [.] ?![DecimalDigit] .
     //   OPTIONAL_CHAINING -> [?] [.] . ?![DecimalDigit]
     [
@@ -10080,7 +10075,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(392):
+    // State(392)
     //   LBRACE -> [{] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10088,7 +10083,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(393):
+    // State(393)
     //   LPAREN -> [(] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10096,7 +10091,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(394):
+    // State(394)
     //   RPAREN -> [)] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10104,7 +10099,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(395):
+    // State(395)
     //   LBRACK -> [[] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10112,7 +10107,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(396):
+    // State(396)
     //   RBRACK -> []] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10120,7 +10115,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(397):
+    // State(397)
     //   DOT -> [.] .
     //   ELLIPSIS -> [.] . [.] [.]
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
@@ -10129,7 +10124,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   DecimalDigits_Sep -> . DecimalDigit
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
     //   DecimalLiteral -> [.] . DecimalDigits_Sep ExponentPart_Sep
-    // Transitions:
+    // Transitions
     //   [.] => State(75)
     //   [0..9] => State(451):NumericLiteral
     [
@@ -10138,7 +10133,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 75, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 451, 451, 451, 451, 463, 463, 463, 75, 463,
     ],
-    // State(398):
+    // State(398)
     //   ELLIPSIS -> [.] [.] [.] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10146,7 +10141,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(399):
+    // State(399)
     //   SEMI_COLON -> [;] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10154,7 +10149,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(400):
+    // State(400)
     //   COMMA -> [,] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10162,12 +10157,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(401):
+    // State(401)
     //   LT -> [<] .
     //   LTE -> [<] . [=]
     //   SHL -> [<] . [<]
     //   SHL_ASSIGN -> [<] . [<] [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(403):LTE
     //   [<] => State(416):SHL
     [
@@ -10176,14 +10171,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 416, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 403, 463, 463, 463, 463, 463, 463, 463, 403, 463,
     ],
-    // State(402):
+    // State(402)
     //   GT -> [>] .
     //   GTE -> [>] . [=]
     //   SAR -> [>] . [>]
     //   SHR -> [>] . [>] [>]
     //   SAR_ASSIGN -> [>] . [>] [=]
     //   SHR_ASSIGN -> [>] . [>] [>] [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(404):GTE
     //   [>] => State(417):SAR
     [
@@ -10192,7 +10187,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 417, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 404, 463, 463, 463, 463, 463, 463, 463, 404, 463,
     ],
-    // State(403):
+    // State(403)
     //   LTE -> [<] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10200,7 +10195,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(404):
+    // State(404)
     //   GTE -> [>] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10208,10 +10203,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(405):
+    // State(405)
     //   EQ -> [=] [=] .
     //   EQ_STRICT -> [=] [=] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(407):EQ_STRICT
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10219,10 +10214,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 407, 463, 463, 463, 463, 463, 463, 463, 407, 463,
     ],
-    // State(406):
+    // State(406)
     //   NE -> [!] [=] .
     //   NE_STRICT -> [!] [=] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(408):NE_STRICT
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10230,7 +10225,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 408, 463, 463, 463, 463, 463, 463, 463, 408, 463,
     ],
-    // State(407):
+    // State(407)
     //   EQ_STRICT -> [=] [=] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10238,7 +10233,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(408):
+    // State(408)
     //   NE_STRICT -> [!] [=] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10246,11 +10241,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(409):
+    // State(409)
     //   ADD -> [+] .
     //   INC -> [+] . [+]
     //   ADD_ASSIGN -> [+] . [=]
-    // Transitions:
+    // Transitions
     //   [+] => State(414):INC
     //   [=] => State(430):ADD_ASSIGN
     [
@@ -10259,11 +10254,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 414, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 430, 463, 463, 463, 463, 463, 463, 463, 414, 463,
     ],
-    // State(410):
+    // State(410)
     //   SUB -> [-] .
     //   DEC -> [-] . [-]
     //   SUB_ASSIGN -> [-] . [=]
-    // Transitions:
+    // Transitions
     //   [-] => State(415):DEC
     //   [=] => State(431):SUB_ASSIGN
     [
@@ -10272,12 +10267,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 415, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 431, 463, 463, 463, 463, 463, 463, 463, 415, 463,
     ],
-    // State(411):
+    // State(411)
     //   MUL -> [*] .
     //   EXP -> [*] . [*]
     //   MUL_ASSIGN -> [*] . [=]
     //   EXP_ASSIGN -> [*] . [*] [=]
-    // Transitions:
+    // Transitions
     //   [*] => State(413):EXP
     //   [=] => State(432):MUL_ASSIGN
     [
@@ -10286,10 +10281,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 413,
         463, 463, 463, 463, 463, 463, 463, 463, 432, 463, 463, 463, 463, 463, 463, 463, 413, 463,
     ],
-    // State(412):
+    // State(412)
     //   MOD -> [%] .
     //   MOD_ASSIGN -> [%] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(433):MOD_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10297,10 +10292,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 433, 463, 463, 463, 463, 463, 463, 463, 433, 463,
     ],
-    // State(413):
+    // State(413)
     //   EXP -> [*] [*] .
     //   EXP_ASSIGN -> [*] [*] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(434):EXP_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10308,7 +10303,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 434, 463, 463, 463, 463, 463, 463, 463, 434, 463,
     ],
-    // State(414):
+    // State(414)
     //   INC -> [+] [+] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10316,7 +10311,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(415):
+    // State(415)
     //   DEC -> [-] [-] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10324,10 +10319,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(416):
+    // State(416)
     //   SHL -> [<] [<] .
     //   SHL_ASSIGN -> [<] [<] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(435):SHL_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10335,12 +10330,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 435, 463, 463, 463, 463, 463, 463, 463, 435, 463,
     ],
-    // State(417):
+    // State(417)
     //   SAR -> [>] [>] .
     //   SHR -> [>] [>] . [>]
     //   SAR_ASSIGN -> [>] [>] . [=]
     //   SHR_ASSIGN -> [>] [>] . [>] [=]
-    // Transitions:
+    // Transitions
     //   [>] => State(418):SHR
     //   [=] => State(436):SAR_ASSIGN
     [
@@ -10349,10 +10344,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 418, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 436, 463, 463, 463, 463, 463, 463, 463, 418, 463,
     ],
-    // State(418):
+    // State(418)
     //   SHR -> [>] [>] [>] .
     //   SHR_ASSIGN -> [>] [>] [>] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(437):SHR_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10360,12 +10355,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 437, 463, 463, 463, 463, 463, 463, 463, 437, 463,
     ],
-    // State(419):
+    // State(419)
     //   BIT_AND -> [&] .
     //   AND -> [&] . [&]
     //   BIT_AND_ASSIGN -> [&] . [=]
     //   AND_ASSIGN -> [&] . [&] [=]
-    // Transitions:
+    // Transitions
     //   [&] => State(424):AND
     //   [=] => State(438):BIT_AND_ASSIGN
     [
@@ -10374,12 +10369,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 424, 463, 463, 463, 463, 463, 463, 438, 463, 463, 463, 463, 463, 463, 463, 424, 463,
     ],
-    // State(420):
+    // State(420)
     //   BIT_OR -> [|] .
     //   OR -> [|] . [|]
     //   BIT_OR_ASSIGN -> [|] . [=]
     //   OR_ASSIGN -> [|] . [|] [=]
-    // Transitions:
+    // Transitions
     //   [|] => State(425):OR
     //   [=] => State(439):BIT_OR_ASSIGN
     [
@@ -10388,10 +10383,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 425, 463, 463, 463, 463, 463, 439, 463, 463, 463, 463, 463, 463, 463, 425, 463,
     ],
-    // State(421):
+    // State(421)
     //   BIT_XOR -> [^] .
     //   BIT_XOR_ASSIGN -> [^] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(440):BIT_XOR_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10399,11 +10394,11 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 440, 463, 463, 463, 463, 463, 463, 463, 440, 463,
     ],
-    // State(422):
+    // State(422)
     //   NE -> [!] . [=]
     //   NE_STRICT -> [!] . [=] [=]
     //   NOT -> [!] .
-    // Transitions:
+    // Transitions
     //   [=] => State(406):NE
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10411,7 +10406,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 406, 463, 463, 463, 463, 463, 463, 463, 406, 463,
     ],
-    // State(423):
+    // State(423)
     //   BIT_NOT -> [~] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10419,10 +10414,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(424):
+    // State(424)
     //   AND -> [&] [&] .
     //   AND_ASSIGN -> [&] [&] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(441):AND_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10430,10 +10425,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 441, 463, 463, 463, 463, 463, 463, 463, 441, 463,
     ],
-    // State(425):
+    // State(425)
     //   OR -> [|] [|] .
     //   OR_ASSIGN -> [|] [|] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(442):OR_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10441,10 +10436,10 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 442, 463, 463, 463, 463, 463, 463, 463, 442, 463,
     ],
-    // State(426):
+    // State(426)
     //   NULLISH -> [?] [?] .
     //   NULLISH_ASSIGN -> [?] [?] . [=]
-    // Transitions:
+    // Transitions
     //   [=] => State(443):NULLISH_ASSIGN
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10452,12 +10447,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 443, 463, 463, 463, 463, 463, 463, 463, 443, 463,
     ],
-    // State(427):
+    // State(427)
     //   OPTIONAL_CHAINING -> [?] . [.] ?![DecimalDigit]
     //   NULLISH -> [?] . [?]
     //   CONDITIONAL -> [?] .
     //   NULLISH_ASSIGN -> [?] . [?] [=]
-    // Transitions:
+    // Transitions
     //   [.] => State(74)
     //   [?] => State(426):NULLISH
     [
@@ -10466,7 +10461,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 74, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 426, 463, 463, 463, 463, 463, 463, 463, 463, 463, 74, 463,
     ],
-    // State(428):
+    // State(428)
     //   COLON -> [:] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10474,12 +10469,12 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(429):
+    // State(429)
     //   EQ -> [=] . [=]
     //   EQ_STRICT -> [=] . [=] [=]
     //   ASSIGN -> [=] .
     //   ARROW -> [=] . [>]
-    // Transitions:
+    // Transitions
     //   [=] => State(405):EQ
     //   [>] => State(444):ARROW
     [
@@ -10488,7 +10483,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 444, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 405, 463, 463, 463, 463, 463, 463, 463, 405, 463,
     ],
-    // State(430):
+    // State(430)
     //   ADD_ASSIGN -> [+] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10496,7 +10491,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(431):
+    // State(431)
     //   SUB_ASSIGN -> [-] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10504,7 +10499,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(432):
+    // State(432)
     //   MUL_ASSIGN -> [*] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10512,7 +10507,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(433):
+    // State(433)
     //   MOD_ASSIGN -> [%] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10520,7 +10515,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(434):
+    // State(434)
     //   EXP_ASSIGN -> [*] [*] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10528,7 +10523,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(435):
+    // State(435)
     //   SHL_ASSIGN -> [<] [<] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10536,7 +10531,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(436):
+    // State(436)
     //   SAR_ASSIGN -> [>] [>] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10544,7 +10539,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(437):
+    // State(437)
     //   SHR_ASSIGN -> [>] [>] [>] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10552,7 +10547,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(438):
+    // State(438)
     //   BIT_AND_ASSIGN -> [&] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10560,7 +10555,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(439):
+    // State(439)
     //   BIT_OR_ASSIGN -> [|] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10568,7 +10563,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(440):
+    // State(440)
     //   BIT_XOR_ASSIGN -> [^] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10576,7 +10571,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(441):
+    // State(441)
     //   AND_ASSIGN -> [&] [&] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10584,7 +10579,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(442):
+    // State(442)
     //   OR_ASSIGN -> [|] [|] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10592,7 +10587,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(443):
+    // State(443)
     //   NULLISH_ASSIGN -> [?] [?] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10600,7 +10595,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(444):
+    // State(444)
     //   ARROW -> [=] [>] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10608,7 +10603,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(445):
+    // State(445)
     //   NumericLiteral -> DecimalLiteral .
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
     //   DecimalDigits_Sep -> . DecimalDigits_Sep NumericLiteralSeparator DecimalDigit
@@ -10641,7 +10636,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   DecimalBigIntegerLiteral -> NonZeroDigit NumericLiteralSeparator DecimalDigits_Sep . BigIntLiteralSuffix
     //   DecimalDigits_Sep -> DecimalDigits_Sep DecimalDigit .
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator DecimalDigit .
-    // Transitions:
+    // Transitions
     //   [E, e] => State(66)
     //   [_] => State(67)
     //   [0..9] => State(445):NumericLiteral
@@ -10653,7 +10648,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 448, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 445, 445, 445, 445, 463, 463, 463, 66, 463,
     ],
-    // State(446):
+    // State(446)
     //   NumericLiteral -> DecimalLiteral .
     //   NonOctalDecimalIntegerLiteral -> [0] . NonOctalDigit
     //   NonOctalDigit -> . [8 9]
@@ -10677,7 +10672,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexIntegerLiteral_Sep -> [0] . [x] HexDigits_Sep
     //   HexIntegerLiteral_Sep -> [0] . [X] HexDigits_Sep
     //   LegacyOctalIntegerLiteral -> [0] . OctalDigit
-    // Transitions:
+    // Transitions
     //   [E, e] => State(66)
     //   [B, b] => State(70)
     //   [O, o] => State(71)
@@ -10692,7 +10687,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         71, 463, 463, 463, 463, 463, 463, 463, 448, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 449, 449, 450, 449, 463, 463, 463, 66, 463,
     ],
-    // State(447):
+    // State(447)
     //   NumericLiteral -> DecimalBigIntegerLiteral .
     //   DecimalBigIntegerLiteral -> NonZeroDigit BigIntLiteralSuffix .
     //   BigIntLiteralSuffix -> [n] .
@@ -10706,7 +10701,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(448):
+    // State(448)
     //   NumericLiteral -> DecimalLiteral .
     //   DecimalLiteral -> DecimalIntegerLiteral [.] .
     //   DecimalDigits_Sep -> . DecimalDigits_Sep DecimalDigit
@@ -10718,7 +10713,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   ExponentPart_Sep -> . ExponentIndicator SignedInteger_Sep
     //   ExponentIndicator -> . [e E]
     //   DecimalLiteral -> DecimalIntegerLiteral [.] . DecimalDigits_Sep ExponentPart_Sep
-    // Transitions:
+    // Transitions
     //   [E, e] => State(66)
     //   [0..9] => State(451):NumericLiteral
     [
@@ -10727,7 +10722,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 451, 451, 451, 451, 463, 463, 463, 66, 463,
     ],
-    // State(449):
+    // State(449)
     //   LegacyOctalLikeDecimalIntegerLiteral -> LegacyOctalLikeDecimalIntegerLiteral . OctalDigit
     //   OctalDigit -> . [0 1 2 3 4 5 6 7]
     //   NonOctalDecimalIntegerLiteral -> LegacyOctalLikeDecimalIntegerLiteral . NonOctalDigit
@@ -10737,7 +10732,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   OctalDigit -> [0 1 2 3 4 5 6 7] .
     //   LegacyOctalIntegerLiteral -> LegacyOctalIntegerLiteral . OctalDigit
     //   LegacyOctalIntegerLiteral -> LegacyOctalIntegerLiteral OctalDigit .
-    // Transitions:
+    // Transitions
     //   [0..7] => State(449):NumericLiteral
     //   [8..9] => State(450):NumericLiteral
     [
@@ -10746,7 +10741,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 449, 449, 450, 449, 463, 463, 463, 449, 463,
     ],
-    // State(450):
+    // State(450)
     //   NumericLiteral -> DecimalLiteral .
     //   NonOctalDecimalIntegerLiteral -> NonOctalDecimalIntegerLiteral . DecimalDigit
     //   DecimalDigit -> . [0 1 2 3 4 5 6 7 8 9]
@@ -10764,7 +10759,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   NonOctalDecimalIntegerLiteral -> LegacyOctalLikeDecimalIntegerLiteral NonOctalDigit .
     //   NonOctalDecimalIntegerLiteral -> NonOctalDecimalIntegerLiteral DecimalDigit .
     //   DecimalDigit -> [0 1 2 3 4 5 6 7 8 9] .
-    // Transitions:
+    // Transitions
     //   [E, e] => State(66)
     //   [.] => State(448):NumericLiteral
     //   [0..9] => State(450):NumericLiteral
@@ -10774,7 +10769,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 448, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 450, 450, 450, 450, 463, 463, 463, 66, 463,
     ],
-    // State(451):
+    // State(451)
     //   NumericLiteral -> DecimalLiteral .
     //   DecimalLiteral -> [.] DecimalDigits_Sep .
     //   DecimalDigits_Sep -> DecimalDigit .
@@ -10790,7 +10785,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   DecimalLiteral -> DecimalIntegerLiteral [.] DecimalDigits_Sep . ExponentPart_Sep
     //   DecimalDigits_Sep -> DecimalDigits_Sep DecimalDigit .
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator DecimalDigit .
-    // Transitions:
+    // Transitions
     //   [E, e] => State(66)
     //   [_] => State(69)
     //   [0..9] => State(451):NumericLiteral
@@ -10800,7 +10795,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 451, 451, 451, 451, 463, 463, 463, 66, 463,
     ],
-    // State(452):
+    // State(452)
     //   NumericLiteral -> DecimalLiteral .
     //   DecimalLiteral -> DecimalIntegerLiteral ExponentPart_Sep .
     //   ExponentPart_Sep -> ExponentIndicator SignedInteger_Sep .
@@ -10818,7 +10813,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   DecimalLiteral -> [.] DecimalDigits_Sep ExponentPart_Sep .
     //   DecimalDigits_Sep -> DecimalDigits_Sep NumericLiteralSeparator DecimalDigit .
     //   DecimalLiteral -> DecimalIntegerLiteral [.] DecimalDigits_Sep ExponentPart_Sep .
-    // Transitions:
+    // Transitions
     //   [_] => State(68)
     //   [0..9] => State(452):NumericLiteral
     [
@@ -10827,7 +10822,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 452, 452, 452, 452, 463, 463, 463, 68, 463,
     ],
-    // State(453):
+    // State(453)
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep .
     //   NonDecimalIntegerLiteral_Sep -> BinaryIntegerLiteral_Sep .
     //   BinaryIntegerLiteral_Sep -> [0] [b] BinaryDigits_Sep .
@@ -10842,7 +10837,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   BinaryIntegerLiteral_Sep -> [0] [B] BinaryDigits_Sep .
     //   BinaryDigits_Sep -> BinaryDigits_Sep BinaryDigit .
     //   BinaryDigits_Sep -> BinaryDigits_Sep NumericLiteralSeparator BinaryDigit .
-    // Transitions:
+    // Transitions
     //   [_] => State(70)
     //   [n] => State(447):NumericLiteral
     //   [0..1] => State(453):NumericLiteral
@@ -10852,7 +10847,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 453, 463, 463, 453, 463, 463, 463, 70, 463,
     ],
-    // State(454):
+    // State(454)
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep .
     //   NonDecimalIntegerLiteral_Sep -> OctalIntegerLiteral_Sep .
     //   OctalIntegerLiteral_Sep -> [0] [o] OctalDigits_Sep .
@@ -10867,7 +10862,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   OctalIntegerLiteral_Sep -> [0] [O] OctalDigits_Sep .
     //   OctalDigits_Sep -> OctalDigits_Sep OctalDigit .
     //   OctalDigits_Sep -> OctalDigits_Sep NumericLiteralSeparator OctalDigit .
-    // Transitions:
+    // Transitions
     //   [_] => State(71)
     //   [n] => State(447):NumericLiteral
     //   [0..7] => State(454):NumericLiteral
@@ -10877,7 +10872,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 454, 454, 463, 454, 463, 463, 463, 71, 463,
     ],
-    // State(455):
+    // State(455)
     //   NumericLiteral -> NonDecimalIntegerLiteral_Sep .
     //   NonDecimalIntegerLiteral_Sep -> HexIntegerLiteral_Sep .
     //   HexIntegerLiteral_Sep -> [0] [x] HexDigits_Sep .
@@ -10892,7 +10887,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     //   HexIntegerLiteral_Sep -> [0] [X] HexDigits_Sep .
     //   HexDigits_Sep -> HexDigits_Sep HexDigit .
     //   HexDigits_Sep -> HexDigits_Sep NumericLiteralSeparator HexDigit .
-    // Transitions:
+    // Transitions
     //   [_] => State(72)
     //   [n] => State(447):NumericLiteral
     //   [0..9, A..F, a..f] => State(455):NumericLiteral
@@ -10902,7 +10897,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 455, 463, 463, 455, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 455, 455, 455, 455, 463, 463, 463, 72, 463,
     ],
-    // State(456):
+    // State(456)
     //   StringLiteral -> ["] ["] .
     //   StringLiteral -> ['] ['] .
     //   StringLiteral -> ["] DoubleStringCharacters ["] .
@@ -10913,7 +10908,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(457):
+    // State(457)
     //   NoSubstitutionTemplate -> [`] [`] .
     //   NoSubstitutionTemplate -> [`] TemplateCharacters [`] .
     [
@@ -10922,7 +10917,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(458):
+    // State(458)
     //   TemplateHead -> [`] [$] [{] .
     //   TemplateHead -> [`] TemplateCharacters [$] [{] .
     [
@@ -10931,14 +10926,14 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(459):
+    // State(459)
     //   MultiLineComment -> [/] . [*] [*] [/]
     //   MultiLineComment -> [/] . [*] MultiLineCommentChars [*] [/]
     //   SingleLineComment -> [/] . [/]
     //   SingleLineComment -> [/] . [/] SingleLineCommentChars
     //   DIV -> [/] .
     //   DIV_ASSIGN -> [/] . [=]
-    // Transitions:
+    // Transitions
     //   [*] => State(57)
     //   [/] => State(159):Comment
     //   [=] => State(460):DIV_ASSIGN
@@ -10948,7 +10943,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 57,
         463, 463, 463, 463, 463, 463, 463, 463, 460, 463, 463, 463, 463, 159, 463, 463, 57, 463,
     ],
-    // State(460):
+    // State(460)
     //   DIV_ASSIGN -> [/] [=] .
     [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
@@ -10956,7 +10951,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(461):
+    // State(461)
     //   TemplateMiddle -> [}] [$] [{] .
     //   TemplateMiddle -> [}] TemplateCharacters [$] [{] .
     [
@@ -10965,7 +10960,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
         463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463, 463,
     ],
-    // State(462):
+    // State(462)
     //   TemplateTail -> [}] [`] .
     //   TemplateTail -> [}] TemplateCharacters [`] .
     [

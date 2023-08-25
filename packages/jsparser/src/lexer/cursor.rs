@@ -26,7 +26,7 @@ impl<'a> SourceCursor<'a> {
 
     #[inline(always)]
     pub fn lexeme(&self, end: usize) -> &'a str {
-        self.src.get(self.pos..(self.pos + end)).unwrap()
+        self.src.get(self.pos..end).unwrap()
     }
 
     #[inline(always)]

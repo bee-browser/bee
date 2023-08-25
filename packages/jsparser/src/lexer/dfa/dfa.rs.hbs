@@ -27,15 +27,11 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
             break;
         }
         if !state.lookahead() {
-            //debug_assert_eq!(lexeme_end, i);
-            lexeme_end = pos + match unicode_set.1 {
-                Some(ch) => ch.len_utf8(),
-                None => 0,
-            };
+            lexeme_end = pos + unicode_set.1.map(|ch| ch.len_utf8()).unwrap_or(0);
         }
         if let Some(kind) = state.accept() {
             token.kind = kind;
-            token.lexeme = cursor.lexeme(lexeme_end - cursor.pos());
+            token.lexeme = cursor.lexeme(lexeme_end);
             tracing::trace!(opcode = "accept", ?token.kind, ?token.lexeme);
         }
     }
@@ -100,12 +96,12 @@ impl State {
 
 const TRANSITION_TABLE: [[u16; {{numTransitions}}]; {{numStates}}] = [
     {{#each states}}
-    // State({{@index}}):
+    // State({{@index}})
     {{#each labels}}
     //   {{this}}
     {{/each}}
     {{#if transitionLabels}}
-    // Transitions:
+    // Transitions
     {{#each transitionLabels}}
     //   {{this}}
     {{/each}}
