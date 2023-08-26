@@ -10,19 +10,21 @@ coming from a command spawned by `bee-logview`.
 A typical usage is like this:
 
 ```shell
-cargo run -qrp bee-logview -- -c path/to/lalrgenlogview/config.yaml -d grammar=grammar.yaml
+cargo run -r -p bee-logview -- -c jsparser/logview/config.yaml \
+  -d url=https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js
 ```
 
 `config.yaml`:
 
 ```yaml
+mounts:
+  - target: /logview
+    source:
+      fs: assets
+
 event-source:
-  process:
-    command: >-
-      cargo run -qrp bee-lalrgen -- '{{grammar}}'
-    env:
-      RUST_LOG: trace
-      BEE_LOG_FORMAT: json
+  command: >-
+    sh run.sh {{url}}
 ```
 
 Once performing the above command, a tab (or window) will be created in the default web browser and

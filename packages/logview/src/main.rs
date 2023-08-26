@@ -47,8 +47,9 @@ async fn main() -> Result<()> {
 
     // Start a web server to serve static resources and events to a web browser
     // that will be opened by `open::that()`.
+    let workdir = std::fs::canonicalize(&cl.config)?.parent().unwrap().to_owned();
     let handle = tokio::spawn(async move {
-        serve(cl.config.parent().unwrap().to_owned(), config, cl.data).await
+        serve(workdir, config, cl.data).await
     });
 
     // Load the web UI.
