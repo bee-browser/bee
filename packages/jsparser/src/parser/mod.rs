@@ -85,7 +85,11 @@ impl<'a> Parser<'a> {
     }
 
     fn push_state(&mut self, state: State) {
-        tracing::trace!(opcode = "push", state.id = state.id(), state.label = state.label());
+        tracing::trace!(
+            opcode = "push",
+            state.id = state.id(),
+            state.label = state.label()
+        );
         self.stack.push(state);
         self.lexer.set_goal(match state.lexical_goal() {
             Goal::InputElementRegExpOrTemplateTail if self.template_depth == 0 => {
