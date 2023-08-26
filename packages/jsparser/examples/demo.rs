@@ -60,9 +60,10 @@ fn main() -> Result<()> {
     let mut parser = JsParser::new(&script);
     if parser.parse() {
         println!(
-            "Parsed successfully: bytes={} elapsed={}",
+            "Parsed successfully: bytes={} elapsed={} max-stack-depth={}",
             script.len(),
-            humantime::format_duration(now.elapsed())
+            humantime::format_duration(now.elapsed()),
+            parser.max_stack_depth(),
         );
         Ok(())
     } else {
