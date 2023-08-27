@@ -101,9 +101,7 @@ impl<'a> Parser<'a> {
             Goal::InputElementRegExpOrTemplateTail if template_tail_disallowed => {
                 Goal::InputElementRegExp
             }
-            Goal::InputElementTemplateTail if template_tail_disallowed => {
-                Goal::InputElementDiv
-            }
+            Goal::InputElementTemplateTail if template_tail_disallowed => Goal::InputElementDiv,
             goal @ _ => goal,
         }
     }
@@ -324,5 +322,15 @@ mod tests {
     #[test]
     fn test_parser_template_literal() {
         assert!(Parser::new("`${`${a}`}`").parse());
+    }
+
+    #[test]
+    fn test_parser_arrow_function() {
+        assert!(Parser::new("()=>{}").parse());
+    }
+
+    #[test]
+    fn test_parser_async_arrow_function() {
+        assert!(Parser::new("async()=>{}").parse());
     }
 }

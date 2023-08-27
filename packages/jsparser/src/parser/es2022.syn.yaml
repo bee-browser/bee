@@ -17938,7 +17938,7 @@
 - name: AsyncArrowFunction
   production:
     - type: non-terminal
-      data: CoverCallExpressionAndAsyncArrowHead
+      data: AsyncArrowHead
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17956,7 +17956,7 @@
 - name: AsyncArrowFunction_Await
   production:
     - type: non-terminal
-      data: CoverCallExpressionAndAsyncArrowHead_Await
+      data: AsyncArrowHead_Await
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18010,7 +18010,7 @@
 - name: AsyncArrowFunction_In
   production:
     - type: non-terminal
-      data: CoverCallExpressionAndAsyncArrowHead
+      data: AsyncArrowHead
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18028,7 +18028,7 @@
 - name: AsyncArrowFunction_In_Await
   production:
     - type: non-terminal
-      data: CoverCallExpressionAndAsyncArrowHead_Await
+      data: AsyncArrowHead_Await
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18136,6 +18136,12 @@
     - type: non-terminal
       data: Arguments_Yield_Await
 - name: AsyncArrowHead
+  production:
+    - type: token
+      data: ASYNC
+    - type: non-terminal
+      data: ArrowFormalParameters
+- name: AsyncArrowHead_Await
   production:
     - type: token
       data: ASYNC
