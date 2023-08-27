@@ -59,12 +59,10 @@ fn main() -> Result<()> {
     let now = std::time::Instant::now();
     let mut parser = JsParser::new(&script);
     if parser.parse() {
-        println!(
-            "Parsed successfully: bytes={} elapsed={} max-stack-depth={}",
-            script.len(),
-            humantime::format_duration(now.elapsed()),
-            parser.max_stack_depth(),
-        );
+        let elapsed = now.elapsed().as_micros();
+        let bytes = script.len();
+        let depth = parser.max_stack_depth();
+        println!("time={elapsed} size={bytes} max-stack-depth={depth}");
         Ok(())
     } else {
         Err(anyhow!("Parse error"))

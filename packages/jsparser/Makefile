@@ -10,6 +10,6 @@ codegen:
 	@$(MAKE) -s -C src codegen
 	@$(MAKE) -s -C logview codegen
 
-.PHONY: test-cdnjs
-test-cdnjs: test-cdnjs.sh
-	@sh test-cdnjs.sh
+.PHONY: metrics-cdnjs
+metrics-cdnjs:
+	@$(MAKE) -s -C metrics cdnjs
