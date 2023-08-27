@@ -39,6 +39,9 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
     token
 }
 
+{{#each unicodeSetLabels}}
+// UnicodeSet({{@index}}): {{this}}
+{{/each}}
 #[derive(Clone, Copy, Debug)]
 struct UnicodeSet(u8, Option<char>);
 

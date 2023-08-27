@@ -83,6 +83,10 @@ fn main() -> Result<()> {
     tracing::info!("#States in DFA (minified): {}", dfa.size());
 
     let unicode_sets = dfa.build_unicode_sets();
+    let unicode_set_labels = unicode_sets
+        .iter()
+        .map(|unicode_set| format!("{unicode_set}"))
+        .collect();
 
     tracing::info!(
         rules.size = rules.len(),
@@ -96,6 +100,7 @@ fn main() -> Result<()> {
         &DfaSpec {
             tokens: cl.tokens,
             unicode_sets,
+            unicode_set_labels,
             dfa,
         },
     )?;
@@ -106,9 +111,10 @@ fn main() -> Result<()> {
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DfaSpec {
-    pub tokens: Vec<String>,
-    pub unicode_sets: Vec<UnicodeSet>,
-    pub dfa: Dfa,
+    tokens: Vec<String>,
+    unicode_sets: Vec<UnicodeSet>,
+    unicode_set_labels: Vec<String>,
+    dfa: Dfa,
 }
 
 #[derive(Deserialize, Serialize)]
