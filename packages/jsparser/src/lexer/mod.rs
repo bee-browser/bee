@@ -274,5 +274,19 @@ mod tests {
         lexer.set_goal(Goal::InputElementTemplateTail);
         assert_token!(lexer, TemplateTail, "}$`");
     }
+
+    #[test]
+    fn test_id_start() {
+        let mut lexer = Lexer::new("あa");
+        assert_token!(lexer, IdentifierName, "あa");
+        assert_eof!(lexer);
+    }
+
+    #[test]
+    fn test_id_continue() {
+        let mut lexer = Lexer::new("aあ");
+        assert_token!(lexer, IdentifierName, "aあ");
+        assert_eof!(lexer);
+    }
 }
 //</coverage:exclude>

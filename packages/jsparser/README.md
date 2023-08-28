@@ -23,9 +23,10 @@ See `src/lexer/Makefile` for details of the code generation steps.
 
 ## TODO
 
-* [ ] Support `ID_Start` and `ID_Continue` Unicode properties
-  * Currently, we support only ASCII character identifier names
+* [ ] Generate own tables for `UnicodeSet` instead of use [unicode-id-start]
 * [ ] Streaming
 * [ ] Text encoding
 * [ ] Source location
 * [ ] Fuzz testing
+
+[unicode-id-start]: https://crates.io/crates/unicode-id-start

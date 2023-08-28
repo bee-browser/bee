@@ -84,6 +84,17 @@ for (let i = 0; i < spec.unicodeSets.length; ++i) {
   }
 }
 
+// A special hack for supporting ID_Start and ID_Continue.
+for (let state of states) {
+  state.checkIdStart =
+    state.labels.some((label) => label.startsWith('UnicodeIDStart -> . '));
+  state.checkIdContinue =
+    state.labels.some((label) => label.startsWith('UnicodeIDContinue -> . '));
+  assert(!(state.checkIdStart && state.checkIdContinue));
+}
+states[0].checkIdStart = true;
+assert(!states[0].checkIdContinue);
+
 spec.states = states;
 spec.numStates = states.length;
 spec.numTransitions = spec.unicodeSets.length + 1;

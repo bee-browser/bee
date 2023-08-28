@@ -122,3 +122,7 @@ There is no such term in the ES2022 lexical specification, but lookbehind terms 
 in the second approach in general.  Imagine what if there is a lookbehind term at the beginning of
 the production rule of a token.  Probably, we need to introduce a new mechanism to process such
 lookbehind terms.  For example, we have to use multiple DFAs or a DFA having multiple start states.
+
+## TODO
+
+* [ ] Support Unicode properties including `ID_Start` and `ID_Continue` in `UnicodeSet`
