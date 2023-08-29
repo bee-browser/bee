@@ -160,7 +160,13 @@ goals:
   # For simplifying Makefile, we convert the goal symbols to snake case.
   - name: input_element_div
     tokens:
+      # For efficiency, we replace WhiteSpace with WhiteSpaceSequence.
+      # TODO: Should we ignore WhiteSpace in the lexer for further efficiency?
       - WhiteSpaceSequence
+      # For efficiency, we replace LineTerminator with LineTerminatorSequence.
+      # The parser has to recognize LineTerminatorSequence in order to handle
+      # `[no LineTerminator here]` properly.
+      # TODO: We can simple use LineTerminator if we don't provide a source location.
       - LineTerminatorSequence
       - Comment
       - *CommonToken
