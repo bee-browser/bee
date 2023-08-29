@@ -12,7 +12,7 @@ COUNT=1
 for LIB in $(curl https://api.cdnjs.com/libraries?fields=fileType -sG | jq -c "$FILTER")
 do
   URL=$(echo "$LIB" | jq -r '.latest')
-  if ! curl "$URL" -sGf >/dev/null
+  if ! curl "$URL" -fsI >/dev/null
   then
     echo "$COUNT/$TOTAL: ! $URL"
   else
