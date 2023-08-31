@@ -63,5 +63,6 @@ pub enum Action {
     Accept,
     Shift(State),
     Reduce(NonTerminal, u8, &'static str),
+    Ignore,
     Error,
 }

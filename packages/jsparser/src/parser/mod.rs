@@ -34,29 +34,11 @@ impl<'a> Parser<'a> {
         self.push_state(Default::default());
         let mut token = self.next_token();
         loop {
-            // TODO: no-line-terminator
-            match token.kind {
-                TokenKind::WhiteSpaceSequence | TokenKind::Comment => {
-                    self.lexer.consume_token(token);
-                    self.new_line = false;
-                    token = self.next_token();
-                    continue;
-                }
-                TokenKind::LineTerminatorSequence => {
-                    self.lexer.consume_token(token);
-                    self.new_line = true;
-                    token = self.next_token();
-                    continue;
-                }
-                _ => {}
-            }
-
             match self.handle_token(&token) {
                 ParserResult::Accept => break,
                 ParserResult::Reconsume => (),
                 ParserResult::NextToken => {
-                    self.lexer.consume_token(token);
-                    self.new_line = false;
+                    self.consume_token(token);
                     token = self.next_token();
                 }
                 ParserResult::Error => {
@@ -94,8 +76,18 @@ impl<'a> Parser<'a> {
         token
     }
 
+    #[inline(always)]
+    fn consume_token(&mut self, token: Token<'a>) {
+        self.new_line = match token.kind {
+            TokenKind::LineTerminatorSequence => true,
+            TokenKind::WhiteSpaceSequence | TokenKind::Comment => self.new_line,
+            _ => false,
+        };
+        self.lexer.consume_token(token)
+    }
+
     fn lexical_goal(&self) -> Goal {
-        let state = self.stack.last().unwrap();
+        let state = self.state();
         let template_tail_disallowed = state.block_depth > 0 || self.template_depth == 0;
         match state.lalr_state.lexical_goal() {
             Goal::InputElementRegExpOrTemplateTail if template_tail_disallowed => {
@@ -129,14 +121,15 @@ impl<'a> Parser<'a> {
     }
 
     fn handle_token(&mut self, token: &Token<'_>) -> ParserResult {
-        match self.stack.last().unwrap().lalr_state.action(token) {
+        // TODO: no-line-terminator
+        let result = match self.state().lalr_state.action(token) {
             Action::Accept => {
                 tracing::trace!(opcode = "accept", ?token.kind);
                 ParserResult::Accept
             }
             Action::Shift(next) => {
                 tracing::trace!(opcode = "shift", ?token.kind);
-                let mut state = self.stack.last().unwrap().clone();
+                let mut state = self.state().clone();
                 state.lalr_state = next;
                 match token.kind {
                     TokenKind::TemplateHead => {
@@ -156,18 +149,22 @@ impl<'a> Parser<'a> {
                     _ => (),
                 }
                 self.push_state(state);
+                self.new_line = false;
                 ParserResult::NextToken
             }
             Action::Reduce(non_terminal, n, rule) => {
                 tracing::trace!(opcode = "reduce", ?rule, ?token.kind);
                 self.pop_states(n as usize);
-                let mut state = self.stack.last().unwrap().clone();
+                let mut state = self.state().clone();
                 state.lalr_state = state.lalr_state.goto(non_terminal);
                 self.push_state(state);
                 ParserResult::Reconsume
             }
+            Action::Ignore => ParserResult::NextToken,
             Action::Error => ParserResult::Error,
-        }
+        };
+
+        result
     }
 
     fn is_auto_semicolon_allowed(&self, token: &Token<'_>) -> bool {
@@ -178,9 +175,7 @@ impl<'a> Parser<'a> {
             return true;
         }
         if self
-            .stack
-            .last()
-            .unwrap()
+            .state()
             .lalr_state
             .is_auto_semicolon_do_while_statement()
         {
@@ -195,7 +190,7 @@ impl<'a> Parser<'a> {
             kind: TokenKind::SemiColon,
             lexeme: ";",
         };
-        match self.stack.last().unwrap().lalr_state.action(&SEMICOLON) {
+        match self.state().lalr_state.action(&SEMICOLON) {
             Action::Accept => {
                 tracing::trace!(opcode = "accept", auto_semicolon = true);
                 ParserResult::Accept
@@ -205,7 +200,7 @@ impl<'a> Parser<'a> {
                 if next.is_auto_semicolon_disallowed() {
                     ParserResult::Error
                 } else {
-                    let mut state = self.stack.last().unwrap().clone();
+                    let mut state = self.state().clone();
                     state.lalr_state = next;
                     self.push_state(state);
                     ParserResult::NextToken
@@ -214,19 +209,20 @@ impl<'a> Parser<'a> {
             Action::Reduce(non_terminal, n, rule) => {
                 tracing::trace!(opcode = "reduce", ?rule, auto_semicolon = true);
                 self.pop_states(n as usize);
-                let mut state = self.stack.last().unwrap().clone();
+                let mut state = self.state().clone();
                 state.lalr_state = state.lalr_state.goto(non_terminal);
                 self.push_state(state);
                 ParserResult::Reconsume
             }
-            _ => ParserResult::Error,
+            Action::Ignore => panic!(),
+            Action::Error => ParserResult::Error,
         }
     }
 
     fn report_error(&self, token: &Token<'_>) {
         let pos = self.lexer.location();
         let src = self.lexer.src();
-        let state = self.stack.last().unwrap();
+        let state = self.state();
         tracing::error!(
             pos,
             parsed = &src[pos.saturating_sub(10)..pos],
@@ -238,6 +234,11 @@ impl<'a> Parser<'a> {
             state.block_depth,
             template_depth = self.template_depth
         );
+    }
+
+    #[inline(always)]
+    fn state(&self) -> &ParserState {
+        self.stack.last().unwrap()
     }
 }
 

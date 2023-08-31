@@ -90,6 +90,19 @@ for (const state of spec.states) {
     }
   }
 
+  state.actions.push([
+    { index: tokenIndexMap['WhiteSpaceSequence'], label: 'WhiteSpaceSequence' },
+    'Action::Ignore',
+  ]);
+  state.actions.push([
+    { index: tokenIndexMap['Comment'], label: 'Comment' },
+    'Action::Ignore',
+  ]);
+  state.actions.push([
+    { index: tokenIndexMap['LineTerminatorSequence'], label: 'LineTerminatorSequence' },
+    'Action::Ignore',
+  ]);
+
   // The lexical goal symbol.
   //
   // InputElementRegExpOrTemplateTail
