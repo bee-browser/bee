@@ -43,7 +43,6 @@ done
 
 VALID_LINKS=$(expr $TOTAL - $BROKEN_LINKS)
 
-echo cat <<EOF
+cat <<EOF
 FAILED: $FAILED/$VALID_LINKS ($(expr $FAILED \* 100 / $VALID_LINKS)%)
 EOF
-echo
