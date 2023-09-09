@@ -79,5 +79,6 @@ fn collect_first_set_of_term(
         Term::Token(token) => Some(phrase_set![phrase!(token)]),
         Term::NonTerminal(non_terminal) => table.get(non_terminal).cloned(),
         Term::Lookahead(_) => Some(phrase_set![phrase!()]),
+        Term::Disallow(_) => unreachable!(),
     }
 }

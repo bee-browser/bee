@@ -3068,12 +3068,16 @@
   production:
     - type: non-terminal
       data: LeftHandSideExpression
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: INC
 - name: UpdateExpression
   production:
     - type: non-terminal
       data: LeftHandSideExpression
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: DEC
 - name: UpdateExpression
@@ -3096,12 +3100,16 @@
   production:
     - type: non-terminal
       data: LeftHandSideExpression_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: INC
 - name: UpdateExpression_Await
   production:
     - type: non-terminal
       data: LeftHandSideExpression_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: DEC
 - name: UpdateExpression_Await
@@ -3124,12 +3132,16 @@
   production:
     - type: non-terminal
       data: LeftHandSideExpression_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: INC
 - name: UpdateExpression_Yield
   production:
     - type: non-terminal
       data: LeftHandSideExpression_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: DEC
 - name: UpdateExpression_Yield
@@ -3152,12 +3164,16 @@
   production:
     - type: non-terminal
       data: LeftHandSideExpression_Yield_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: INC
 - name: UpdateExpression_Yield_Await
   production:
     - type: non-terminal
       data: LeftHandSideExpression_Yield_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: DEC
 - name: UpdateExpression_Yield_Await
@@ -9053,6 +9069,7 @@
           - - LBRACE
           - - FUNCTION
           - - ASYNC
+            - (!LineTerminatorSequence)
             - FUNCTION
           - - CLASS
           - - LET
@@ -9070,6 +9087,7 @@
           - - LBRACE
           - - FUNCTION
           - - ASYNC
+            - (!LineTerminatorSequence)
             - FUNCTION
           - - CLASS
           - - LET
@@ -9087,6 +9105,7 @@
           - - LBRACE
           - - FUNCTION
           - - ASYNC
+            - (!LineTerminatorSequence)
             - FUNCTION
           - - CLASS
           - - LET
@@ -9104,6 +9123,7 @@
           - - LBRACE
           - - FUNCTION
           - - ASYNC
+            - (!LineTerminatorSequence)
             - FUNCTION
           - - CLASS
           - - LET
@@ -13566,6 +13586,8 @@
   production:
     - type: token
       data: CONTINUE
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier
     - type: token
@@ -13580,6 +13602,8 @@
   production:
     - type: token
       data: CONTINUE
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier_Await
     - type: token
@@ -13594,6 +13618,8 @@
   production:
     - type: token
       data: CONTINUE
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier_Yield
     - type: token
@@ -13608,6 +13634,8 @@
   production:
     - type: token
       data: CONTINUE
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier_Yield_Await
     - type: token
@@ -13622,6 +13650,8 @@
   production:
     - type: token
       data: BREAK
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier
     - type: token
@@ -13636,6 +13666,8 @@
   production:
     - type: token
       data: BREAK
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier_Await
     - type: token
@@ -13650,6 +13682,8 @@
   production:
     - type: token
       data: BREAK
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier_Yield
     - type: token
@@ -13664,6 +13698,8 @@
   production:
     - type: token
       data: BREAK
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: LabelIdentifier_Yield_Await
     - type: token
@@ -13678,6 +13714,8 @@
   production:
     - type: token
       data: RETURN
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -13692,6 +13730,8 @@
   production:
     - type: token
       data: RETURN
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -13706,6 +13746,8 @@
   production:
     - type: token
       data: RETURN
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -13720,6 +13762,8 @@
   production:
     - type: token
       data: RETURN
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -14816,6 +14860,8 @@
   production:
     - type: token
       data: THROW
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In
     - type: token
@@ -14824,6 +14870,8 @@
   production:
     - type: token
       data: THROW
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In_Await
     - type: token
@@ -14832,6 +14880,8 @@
   production:
     - type: token
       data: THROW
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
@@ -14840,6 +14890,8 @@
   production:
     - type: token
       data: THROW
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
@@ -15768,6 +15820,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -15776,6 +15830,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -15784,6 +15840,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -15792,6 +15850,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters_Yield_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -15800,6 +15860,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -15808,6 +15870,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -15816,6 +15880,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -15824,6 +15890,8 @@
   production:
     - type: non-terminal
       data: ArrowParameters_Yield_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -16548,12 +16616,16 @@
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AssignmentExpression_Yield
 - name: YieldExpression
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -16566,12 +16638,16 @@
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AssignmentExpression_Yield_Await
 - name: YieldExpression_Await
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -16584,12 +16660,16 @@
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AssignmentExpression_In_Yield
 - name: YieldExpression_In
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -16602,12 +16682,16 @@
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
 - name: YieldExpression_In_Await
   production:
     - type: token
       data: YIELD
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -16616,6 +16700,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16638,6 +16724,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16660,6 +16748,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16680,6 +16770,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16702,6 +16794,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16724,6 +16818,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16744,6 +16840,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16766,6 +16864,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16788,6 +16888,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16808,6 +16910,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16830,6 +16934,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16852,6 +16958,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16872,6 +16980,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16892,6 +17002,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -16914,6 +17026,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -16934,6 +17048,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -16954,6 +17070,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -16974,6 +17092,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: MUL
     - type: non-terminal
@@ -17571,6 +17691,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17591,6 +17713,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17611,6 +17735,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -17629,6 +17755,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17649,6 +17777,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17669,6 +17799,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -17687,6 +17819,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17707,6 +17841,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17727,6 +17863,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -17745,6 +17883,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17765,6 +17905,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17785,6 +17927,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -17803,6 +17947,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: token
@@ -17821,6 +17967,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: FUNCTION
     - type: non-terminal
@@ -17841,6 +17989,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: ClassElementName
     - type: token
@@ -17859,6 +18009,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: ClassElementName_Await
     - type: token
@@ -17877,6 +18029,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: ClassElementName_Yield
     - type: token
@@ -17895,6 +18049,8 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: ClassElementName_Yield_Await
     - type: token
@@ -17929,8 +18085,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17939,6 +18099,8 @@
   production:
     - type: non-terminal
       data: AsyncArrowHead
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17947,8 +18109,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17957,6 +18123,8 @@
   production:
     - type: non-terminal
       data: AsyncArrowHead_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17965,8 +18133,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17975,6 +18147,8 @@
   production:
     - type: non-terminal
       data: CoverCallExpressionAndAsyncArrowHead_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17983,8 +18157,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -17993,6 +18171,8 @@
   production:
     - type: non-terminal
       data: CoverCallExpressionAndAsyncArrowHead_Yield_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18001,8 +18181,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18011,6 +18195,8 @@
   production:
     - type: non-terminal
       data: AsyncArrowHead
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18019,8 +18205,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18029,6 +18219,8 @@
   production:
     - type: non-terminal
       data: AsyncArrowHead_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18037,8 +18229,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18047,6 +18243,8 @@
   production:
     - type: non-terminal
       data: CoverCallExpressionAndAsyncArrowHead_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18055,8 +18253,12 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: AsyncArrowBindingIdentifier_Yield
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18065,6 +18267,8 @@
   production:
     - type: non-terminal
       data: CoverCallExpressionAndAsyncArrowHead_Yield_Await
+    - type: disallow
+      data: LineTerminatorSequence
     - type: token
       data: ARROW
     - type: non-terminal
@@ -18139,12 +18343,16 @@
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: ArrowFormalParameters
 - name: AsyncArrowHead_Await
   production:
     - type: token
       data: ASYNC
+    - type: disallow
+      data: LineTerminatorSequence
     - type: non-terminal
       data: ArrowFormalParameters_Await
 - name: Script
@@ -18377,6 +18585,7 @@
         data:
           - - FUNCTION
           - - ASYNC
+            - (!LineTerminatorSequence)
             - FUNCTION
           - - CLASS
     - type: non-terminal

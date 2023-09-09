@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 
+use itertools::Itertools;
 use rayon::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
@@ -40,7 +41,7 @@ pub fn build_lookahead_tables(
     let mut iteration = 0;
     loop {
         tracing::debug!(iteration, phase = "collect");
-        let operations = states
+        let mut operations = states
             .par_iter()
             .map(|state| {
                 state
@@ -121,6 +122,49 @@ pub fn build_lookahead_tables(
                 }
             })
             .collect::<Vec<_>>();
+
+        for state in states.iter().filter(|state| state.is_conditional()) {
+            let closure_context = ClosureContext::new(grammar, first_set);
+            let disallowed_tokens = state.collect_disallowed_tokens();
+            for token in disallowed_tokens.into_iter() {
+                // `State::item_set` contains non-kernel items computed from conditional items.
+                // So, we need to remove non-kernel items related to conditional items.
+                let kernel_items = state
+                    .item_set
+                    .kernel_set()
+                    .remove_conditional_items(&token)
+                    .iter()
+                    .cloned()
+                    .collect_vec();
+                if kernel_items.is_empty() {
+                    continue;
+                }
+                // Then, re-compute the closure.
+                let item_set = closure_context.compute_closure(&kernel_items, &closure_cache);
+                let symbol = Symbol::Token(token);
+                let next_id = state.transitions.get(&symbol).unwrap().clone();
+                let next_state = &states[next_id.index()];
+                for item in item_set.iter() {
+                    assert!(state.item_set.contains(&item));
+                    assert!(next_state.item_set.contains(&item));
+                    if let Some(lookahead_set) =
+                        lookahead_tables[state.id.index()].get(item).cloned()
+                    {
+                        operations.push((
+                            next_id.index(),
+                            Operation::Propagate(OperationData {
+                                source_state: state.id,
+                                source_item: item.clone(),
+                                target_state: next_id,
+                                target_item: item.clone(),
+                                lookahead_set,
+                            }),
+                        ));
+                    }
+                }
+            }
+        }
+
         tracing::debug!(iteration, phase = "collect", operations = operations.len());
 
         // Collect operations for each state.
@@ -247,6 +291,7 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
     let mut lalr_states: Vec<LalrState> = Vec::with_capacity(states.len());
 
     for (i, state) in states.iter().enumerate() {
+        let disallowed_tokens = state.collect_disallowed_tokens();
         // Use BTreeMap instead of HashMap in order to keep the order of keys in serialized data.
         let mut actions: BTreeMap<String, LalrAction> = Default::default();
         let mut gotos: BTreeMap<String, usize> = Default::default();
@@ -254,7 +299,15 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
             match symbol {
                 Symbol::Token(token) => {
                     assert!(!actions.contains_key(token));
-                    let action = LalrAction::Shift(next_id.index());
+                    let action = if disallowed_tokens.contains(token) {
+                        LalrAction::Replace(LalrReplace {
+                            next_id: next_id.index(),
+                        })
+                    } else {
+                        LalrAction::Shift(LalrShift {
+                            next_id: next_id.index(),
+                        })
+                    };
                     tracing::trace!(state.id = i, token, %action);
                     actions.insert(token.clone(), action);
                 }
@@ -291,14 +344,14 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
                             %item,
                         );
                     }
-                    Some(LalrAction::Reduce(_, _, rule)) => {
+                    Some(LalrAction::Reduce(reduce)) => {
                         tracing::error!(
                             reason = "reduce-reduce-conflict",
                             state.id = i,
                             %state.item_set,
                             token,
                             %item,
-                            rule,
+                            rule = reduce.rule,
                         );
                     }
                     _ => {}
@@ -306,11 +359,11 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
                 let action = if token == "$" && item.rule.is_goal_of_augmented_grammar() {
                     LalrAction::Accept
                 } else {
-                    LalrAction::Reduce(
-                        item.rule.name.symbol().to_owned(),
-                        item.rule.count_symbols(),
-                        format!("{}", item.rule), // for debugging purposes
-                    )
+                    LalrAction::Reduce(LalrReduce {
+                        non_terminal: item.rule.name.symbol().to_owned(),
+                        num_pops: item.rule.count_symbols(),
+                        rule: format!("{}", item.rule),
+                    })
                 };
                 tracing::trace!(state.id = i, %token, %action);
                 actions.insert(token.clone(), action);
@@ -345,16 +398,53 @@ pub struct LalrState {
 #[serde(tag = "type", content = "data")]
 pub enum LalrAction {
     Accept,
-    Shift(usize),
-    Reduce(String, usize, String),
+    Shift(LalrShift),
+    Reduce(LalrReduce),
+    Replace(LalrReplace),
 }
 
 impl std::fmt::Display for LalrAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Accept => write!(f, "accept"),
-            Self::Shift(index) => write!(f, "shift({})", index),
-            Self::Reduce(_, _, rule) => write!(f, "reduce({rule})"),
+            Self::Shift(shift) => write!(f, "{shift}"),
+            Self::Reduce(reduce) => write!(f, "{reduce}"),
+            Self::Replace(replace) => write!(f, "{replace}"),
         }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LalrShift {
+    pub next_id: usize,
+}
+
+impl std::fmt::Display for LalrShift {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "shift({})", self.next_id)
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LalrReduce {
+    pub non_terminal: String,
+    pub num_pops: usize,
+    pub rule: String, // for debugging purposes
+}
+
+impl std::fmt::Display for LalrReduce {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "reduce({})", self.rule)
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct LalrReplace {
+    pub next_id: usize,
+}
+
+impl std::fmt::Display for LalrReplace {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "replace({})", self.next_id)
     }
 }

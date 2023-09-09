@@ -51,11 +51,13 @@ impl LrItem {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.rule.production.is_empty()
-            || self.rule.production.iter().all(|term| match term {
-                Term::Empty | Term::Lookahead(_) => true,
-                _ => false,
-            })
+        if self.rule.production.is_empty() {
+            return true;
+        }
+        self.rule.production.iter().all(|term| match term {
+            Term::Empty | Term::Lookahead(_) | Term::Disallow(_) => true,
+            _ => false,
+        })
     }
 
     pub fn k(&self) -> usize {
@@ -68,6 +70,20 @@ impl LrItem {
 
     pub fn is_reducible(&self) -> bool {
         self.next_term().is_none()
+    }
+
+    pub fn is_conditional(&self) -> bool {
+        match self.next_term() {
+            Some(Term::Disallow(_)) => true,
+            _ => false,
+        }
+    }
+
+    pub fn prev_term(&self) -> Option<&Term> {
+        if self.dot == 0 {
+            return None;
+        }
+        self.rule.production.get(self.dot - 1)
     }
 
     pub fn next_term(&self) -> Option<&Term> {
@@ -107,6 +123,17 @@ pub struct LrItemSet(BTreeSet<LrItem>);
 delegate_all! {LrItemSet => BTreeSet<LrItem>}
 
 impl LrItemSet {
+    pub fn kernel_set(&self) -> Self {
+        let mut set: BTreeSet<LrItem> = Default::default();
+        for item in self.iter() {
+            if !item.is_kernel() {
+                continue;
+            }
+            set.insert(item.clone());
+        }
+        LrItemSet(set)
+    }
+
     pub fn merge(&self, other: &Self) -> Self {
         let mut set = self.clone();
         if set.eq(other) {
@@ -116,6 +143,22 @@ impl LrItemSet {
             set.insert(item.clone());
         }
         set
+    }
+
+    pub fn remove_conditional_items(&self, token: &str) -> Self {
+        let mut set: BTreeSet<LrItem> = Default::default();
+        for item in self.iter() {
+            match item.next_term() {
+                Some(Term::Disallow(t)) if t == token => continue,
+                _ => (),
+            }
+            match item.prev_term() {
+                Some(Term::Disallow(t)) if t == token => continue,
+                _ => (),
+            }
+            set.insert(item.clone());
+        }
+        LrItemSet(set)
     }
 }
 

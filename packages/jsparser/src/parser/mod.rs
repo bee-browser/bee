@@ -83,7 +83,8 @@ impl<'a> Parser<'a> {
             TokenKind::WhiteSpaceSequence | TokenKind::Comment => self.new_line,
             _ => false,
         };
-        self.lexer.consume_token(token)
+        tracing::trace!(new_line = self.new_line, ?token.kind);
+        self.lexer.consume_token(token);
     }
 
     fn lexical_goal(&self) -> Goal {
@@ -149,7 +150,6 @@ impl<'a> Parser<'a> {
                     _ => (),
                 }
                 self.push_state(state);
-                self.new_line = false;
                 ParserResult::NextToken
             }
             Action::Reduce(non_terminal, n, rule) => {
@@ -157,10 +157,26 @@ impl<'a> Parser<'a> {
                 self.pop_states(n as usize);
                 let mut state = self.state().clone();
                 state.lalr_state = state.lalr_state.goto(non_terminal);
+                if self.new_line {
+                    if let Some(lalr_state) = state.lalr_state.can_replace() {
+                        state.lalr_state = lalr_state;
+                    }
+                }
                 self.push_state(state);
                 ParserResult::Reconsume
             }
-            Action::Ignore => ParserResult::NextToken,
+            Action::Replace(next) => {
+                tracing::trace!(opcode = "replace", ?token.kind);
+                let mut state = self.state().clone();
+                state.lalr_state = next;
+                self.pop_states(1);
+                self.push_state(state);
+                ParserResult::Reconsume
+            }
+            Action::Ignore => {
+                tracing::trace!(opcode = "ignore", ?token.kind);
+                ParserResult::NextToken
+            }
             Action::Error => ParserResult::Error,
         };
 
@@ -214,7 +230,8 @@ impl<'a> Parser<'a> {
                 self.push_state(state);
                 ParserResult::Reconsume
             }
-            Action::Ignore => panic!(),
+            Action::Replace(_) => unreachable!(),
+            Action::Ignore => unreachable!(),
             Action::Error => ParserResult::Error,
         }
     }

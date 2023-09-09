@@ -795,7 +795,7 @@ function translateProduction(value, options) {
     } else if (term === '[lookahead') {
       production = production.concat(translateLookahead(terms, options));
     } else if (term === '[no-line-terminator]') {
-      //production.push({ type: 'no-line-terminator' });  TODO
+      production.push({ type: 'disallow', data: 'LineTerminatorSequence' });
     } else if (term === '[empty]') {
       production.push({ type: 'empty' });
     } else if (options.tokens?.includes(term)) {
@@ -863,9 +863,7 @@ function translateLookahead(terms, options) {
 function translateLookaheadSet(values, negate, options) {
   const patterns = [];
   for (let seq of values) {
-    let pattern = seq.filter((value) => {
-      return value !== '[no-line-terminator]';  // TODO
-    }).map((value) => {
+    let pattern = seq.map((value) => {
       if (value.startsWith('`')) {
         if (options.grammarType === 'lexical') {
           return { type: 'char', data: value.slice(1, -1) };
@@ -883,7 +881,7 @@ function translateLookaheadSet(values, negate, options) {
         return { type: 'built-in', data: value.slice(1, -1) };
       } else if (value === '[no-line-terminator]') {
         assertEquals(options.grammarType, 'syntactic');
-        return { type: 'no-line-terminator' };
+        return { type: 'disallow',  data: 'LineTerminatorSequence' };
       } else {
         assertEquals(options.grammarType, 'lexical');
         return { type: 'non-terminal', data: value };
@@ -940,7 +938,6 @@ function processLookaheads(rules) {
     context.ruleMap[rule.name] = rule;
   }
   for (const rule of rules) {
-    log.debug(`Processing lookaheads in ${rule.name}...`);
     rule.productions.forEach((production, index) => {
       return processLookaheadsInProduction(context, rule.name, production, index);
     });
@@ -952,17 +949,24 @@ function processLookaheadsInProduction(context, name, production, index) {
   for (const term of production) {
     switch (term.type) {
     case 'lookahead':
+      log.debug(`Processing lookaheads in ${name}...`);
       // A pattern is a sequence of tokens.
-      const tokens = term.data.patterns.map((pattern) => {
+      const data = term.data.patterns.map((pattern) => {
         return pattern.map((term) => {
-          assertEquals(term.type, 'token');
-          return term.data;
+          switch (term.type) {
+          case 'token':
+            return term.data;
+          case 'disallow':
+            return `(!${term.data})`;
+          default:
+            unreachable();
+          }
         });
       });
       if (term.data.negate) {
-        term.data = { type: 'exclude', data: tokens };
+        term.data = { type: 'exclude', data };
       } else {
-        term.data = { type: 'include', data: tokens };
+        term.data = { type: 'include', data };
       }
       break;
     }

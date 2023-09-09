@@ -115,27 +115,9 @@ impl<'g, 't> LookaheadPreprocessor<'g, 't> {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip(self))]
+    #[tracing::instrument(level = "debug", skip_all, fields(%non_terminal, %term))]
     fn preprocess(&mut self, non_terminal: &NonTerminal, term: &Term) -> bool {
         match (term, self.lookahead.take()) {
-            (Term::Token(token), Some(lookahead)) => match lookahead.process_token(token) {
-                MatchStatus::Matched => {
-                    tracing::debug!("matched");
-                    self.production.push(term.clone());
-                    true
-                }
-                MatchStatus::Unmatched => {
-                    tracing::debug!("unmatched");
-                    self.invalid_rule = true;
-                    false
-                }
-                MatchStatus::Remaining(next_lookahead) => {
-                    tracing::debug!(%next_lookahead);
-                    self.production.push(term.clone());
-                    self.lookahead = Some(next_lookahead);
-                    true
-                }
-            },
             (Term::NonTerminal(non_terminal), Some(lookahead)) => {
                 tracing::debug!(%non_terminal, %lookahead);
                 let variant_name = self
@@ -164,6 +146,24 @@ impl<'g, 't> LookaheadPreprocessor<'g, 't> {
                     .push(Term::NonTerminal(variant_name.clone()));
                 true
             }
+            (term, Some(lookahead)) => match lookahead.process_token(&format!("{term}")) {
+                MatchStatus::Matched => {
+                    tracing::debug!("matched");
+                    self.production.push(term.clone());
+                    true
+                }
+                MatchStatus::Unmatched => {
+                    tracing::debug!("unmatched");
+                    self.invalid_rule = true;
+                    false
+                }
+                MatchStatus::Remaining(next_lookahead) => {
+                    tracing::debug!(%next_lookahead);
+                    self.production.push(term.clone());
+                    self.lookahead = Some(next_lookahead);
+                    true
+                }
+            },
             (term, None) => {
                 match term {
                     Term::Lookahead(lookahead) => {
@@ -176,7 +176,6 @@ impl<'g, 't> LookaheadPreprocessor<'g, 't> {
                 }
                 true
             }
-            _ => unimplemented!(),
         }
     }
 

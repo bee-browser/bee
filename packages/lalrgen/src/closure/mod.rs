@@ -61,7 +61,7 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
 
         if let Some((next_term, followers)) = item.follower_terms().split_first() {
             match next_term {
-                Term::Empty | Term::Lookahead(_) => {
+                Term::Empty | Term::Lookahead(_) | Term::Disallow(_) => {
                     item_set =
                         item_set.merge(&context.compute_closure_of_item(&item.shift(), cache));
                 }
@@ -119,7 +119,7 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
         let mut first_set = phrase_set![phrase!()];
         for term in terms {
             first_set = match term {
-                Term::Empty => first_set,
+                Term::Empty | Term::Disallow(_) => first_set,
                 Term::Token(token) => first_set.concat(&phrase_set![phrase!(token)]),
                 Term::NonTerminal(non_terminal) => {
                     first_set.concat(self.first_set.table.get(non_terminal).unwrap())

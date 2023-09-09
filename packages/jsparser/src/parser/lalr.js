@@ -53,6 +53,7 @@ for (const state of spec.states) {
   let permitRegularExpressionLiteral = false;
   let permitTemplateMiddle = false;
   let permitTemplateTail = false;
+  let ignoreLineTerminatorSequence = true;
 
   state.isAutoSemicolonDoWhile = isAutoSemicolonDoWhile(state);
 
@@ -67,6 +68,9 @@ for (const state of spec.states) {
     case 'TemplateTail':
       permitTemplateTail = true;
       break;
+    case 'LineTerminatorSequence':
+      ignoreLineTerminatorSequence = false;
+      break;
     }
 
     action[0] = {
@@ -78,14 +82,28 @@ for (const state of spec.states) {
       action[1] = 'Action::Accept';
       break;
     case 'Shift':
-      if (action[0].label === 'SEMI_COLON') {
-        const nextState = spec.states[action[1].data];
-        nextState.isAutoSemicolonDisallowed = isAutoSemicolonDisallowed(nextState);
+      {
+        const nextId = action[1].data.next_id;
+        if (action[0].label === 'SEMI_COLON') {
+          const nextState = spec.states[nextId];
+          nextState.isAutoSemicolonDisallowed = isAutoSemicolonDisallowed(nextState);
+        }
+        action[1] = `Action::Shift(State(${nextId}))`;
       }
-      action[1] = `Action::Shift(State(${action[1].data}))`;
       break;
     case 'Reduce':
-      action[1] = `Action::Reduce(NonTerminal::${action[1].data[0]}, ${action[1].data[1]}, "${action[1].data[2]}")`;
+      {
+        const nonTerminal = action[1].data.non_terminal;
+        const numPops = action[1].data.num_pops;
+        const rule = action[1].data.rule;
+        action[1] = `Action::Reduce(NonTerminal::${nonTerminal}, ${numPops}, "${rule}")`;
+      }
+      break;
+    case 'Replace':
+      {
+        const nextId = action[1].data.next_id;
+        action[1] = `Action::Replace(State(${nextId}))`;
+      }
       break;
     }
   }
@@ -98,10 +116,12 @@ for (const state of spec.states) {
     { index: tokenIndexMap['Comment'], label: 'Comment' },
     'Action::Ignore',
   ]);
-  state.actions.push([
-    { index: tokenIndexMap['LineTerminatorSequence'], label: 'LineTerminatorSequence' },
-    'Action::Ignore',
-  ]);
+  if (ignoreLineTerminatorSequence) {
+    state.actions.push([
+      { index: tokenIndexMap['LineTerminatorSequence'], label: 'LineTerminatorSequence' },
+      'Action::Ignore',
+    ]);
+  }
 
   // The lexical goal symbol.
   //

@@ -273,6 +273,7 @@ pub enum Term {
     Token(String),
     NonTerminal(NonTerminal),
     Lookahead(Arc<Lookahead>),
+    Disallow(String),
 }
 
 impl Term {
@@ -308,10 +309,11 @@ impl Term {
 impl std::fmt::Display for Term {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Empty => write!(f, "()"),
+            Self::Empty => write!(f, "(empty)"),
             Self::Token(token) => write!(f, "{token}"),
             Self::NonTerminal(non_terminal) => write!(f, "{non_terminal}"),
             Self::Lookahead(lookahead) => write!(f, "{lookahead}"),
+            Self::Disallow(token) => write!(f, "(!{token})"),
         }
     }
 }
@@ -355,15 +357,15 @@ impl std::fmt::Display for Lookahead {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let set = match self {
             Self::Include(set) => {
-                write!(f, "~")?;
+                write!(f, "(?=")?;
                 set
             }
             Self::Exclude(set) => {
-                write!(f, "!~")?;
+                write!(f, "(?!")?;
                 set
             }
         };
-        write!(f, "{set}")
+        write!(f, "{set})")
     }
 }
 
@@ -376,7 +378,7 @@ mod tests {
     fn test_rule_format() {
         let rule =
             rule!("A" -> token!("a") non_terminal!("B") lookahead!(x: phrase_set![phrase!("c")]));
-        assert_eq!(format!("{}", rule), "A -> a B !~[c]");
+        assert_eq!(format!("{}", rule), "A -> a B (?![c])");
 
         let rule = rule!("A" ->);
         assert_eq!(format!("{}", rule), "A ->");
@@ -384,9 +386,13 @@ mod tests {
 
     #[test]
     fn test_term_format() {
-        assert_eq!(format!("{}", empty!()), "()");
+        assert_eq!(format!("{}", empty!()), "(empty)");
         assert_eq!(format!("{}", token!("a")), "a");
         assert_eq!(format!("{}", non_terminal!("A")), "A");
-        assert_eq!(format!("{}", lookahead!(phrase_set![phrase!("a")])), "~[a]");
+        assert_eq!(
+            format!("{}", lookahead!(phrase_set![phrase!("a")])),
+            "(?=[a])"
+        );
+        assert_eq!(format!("{}", disallow!("a")), "(!a)");
     }
 }

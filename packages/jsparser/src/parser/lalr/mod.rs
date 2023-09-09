@@ -7,6 +7,7 @@ mod non_terminals;
 
 use crate::lexer::Goal;
 use crate::lexer::Token;
+use crate::lexer::TokenKind;
 
 pub use non_terminals::NonTerminal;
 
@@ -53,6 +54,15 @@ impl State {
     }
 
     #[inline(always)]
+    pub fn can_replace(&self) -> Option<State> {
+        let token = TokenKind::LineTerminatorSequence as u8;
+        match action::TABLE[self.0 as usize].get(&token) {
+            Some(Action::Replace(state)) => Some(*state),
+            _ => None,
+        }
+    }
+
+    #[inline(always)]
     pub fn label(&self) -> &'static str {
         debug::LABELS[self.0 as usize]
     }
@@ -63,6 +73,7 @@ pub enum Action {
     Accept,
     Shift(State),
     Reduce(NonTerminal, u8, &'static str),
+    Replace(State),
     Ignore,
     Error,
 }

@@ -29,6 +29,12 @@ macro_rules! lookahead {
     };
 }
 
+macro_rules! disallow {
+    ($name:literal) => {
+        crate::grammar::Term::Disallow($name.to_string())
+    };
+}
+
 macro_rules! rule {
     ($name:literal ->) => {
         crate::grammar::Rule {
@@ -44,6 +50,7 @@ macro_rules! rule {
     };
 }
 
+pub(crate) use disallow;
 pub(crate) use empty;
 pub(crate) use lookahead;
 pub(crate) use non_terminal;
