@@ -51,6 +51,10 @@ impl State {
         self.item_set.iter().filter(|item| item.is_kernel())
     }
 
+    pub fn non_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
+        self.item_set.iter().filter(|item| !item.is_kernel())
+    }
+
     pub fn is_conditional(&self) -> bool {
         self.kernel_items().any(LrItem::is_conditional)
     }

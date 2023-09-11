@@ -20,7 +20,7 @@ use crate::phrase::PhraseSet;
 use crate::state::State;
 use crate::state::StateId;
 
-type LookaheadTable = HashMap<LrItem, PhraseSet>;
+pub type LookaheadTable = HashMap<LrItem, PhraseSet>;
 
 pub fn build_lookahead_tables(
     grammar: &Grammar,
@@ -374,6 +374,11 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
             actions: actions.into_iter().collect(),
             gotos: gotos.into_iter().collect(),
             kernel_items: state.kernel_items().map(|item| format!("{item}")).collect(),
+            closure: state
+                .item_set
+                .iter()
+                .map(|item| format!("{item}"))
+                .collect(),
         });
     }
 
@@ -392,6 +397,7 @@ pub struct LalrState {
     pub actions: Vec<(String, LalrAction)>,
     pub gotos: Vec<(String, usize)>,
     pub kernel_items: Vec<String>,
+    pub closure: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

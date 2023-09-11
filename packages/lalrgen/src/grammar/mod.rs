@@ -133,10 +133,6 @@ impl Grammar {
             .max()
             .unwrap_or(0)
     }
-
-    pub fn preprocess(&self) -> Self {
-        crate::preprocess::preprocess(self)
-    }
 }
 
 impl PartialEq for Grammar {

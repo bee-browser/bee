@@ -9,9 +9,12 @@ mod phrase;
 mod preprocess;
 pub mod state;
 
+pub use firstset::FirstSet;
 pub use grammar::Grammar;
 pub use grammar::Rule;
 pub use grammar::Term;
 pub use lalr::LalrAction;
 pub use lalr::LalrSpec;
 pub use lalr::LalrState;
+pub use lalr::LookaheadTable;
+pub use preprocess::preprocess;
