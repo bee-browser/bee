@@ -67,7 +67,7 @@ pub fn build_lookahead_tables(
             })
             .flatten()
             .filter_map(|(state, item, temp_item)| {
-                let (target_state, target_item) = if temp_item.is_empty() {
+                let (target_state, target_item) = if temp_item.is_reducible() {
                     let kernel_item = temp_item.without_lookahead();
                     assert!(state.item_set.contains(&kernel_item));
                     (state.id, kernel_item)

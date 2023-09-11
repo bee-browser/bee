@@ -43,6 +43,7 @@ impl LrItem {
     }
 
     pub fn shift(&self) -> Self {
+        assert!(self.dot < self.rule.production.len(), "{self}");
         LrItem {
             rule: self.rule.clone(),
             dot: self.dot + 1,
