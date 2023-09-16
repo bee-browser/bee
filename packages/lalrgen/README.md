@@ -90,7 +90,7 @@ doesn't contain the LR item for the production rule.
 For representing `[no LineTerminator here]`, the [`Term::Disallow`] variant is added.  For example,
 the following production rule:
 
-```
+```text
 ThrowStatement :
   throw [no LineTerminator here] Expression ;
 ```

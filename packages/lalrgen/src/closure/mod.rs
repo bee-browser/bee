@@ -44,14 +44,18 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
         let mut item_set = LrItemSet::default();
 
         // Theoretically, lookahead restrictions in a production rule is processed in the closure
-        // computation of an LR item because an LR automaton for the grammar can recognizes only
-        // the symbols in the grammar.  However, we've processed all non-tail lookahead
+        // computation of an LR item because an LR automaton for a given grammar can recognizes
+        // only the symbols in the grammar.  However, we've processed all non-tail lookahead
         // restrictions in the grammar and created a new grammar including *variant* production
-        // rules before the closure computation for simplifying the closure computation.
+        // rules before the closure computation in order to simplify the closure computation.
         //
         // The closure computation here is performed using variant production rules.  However,
-        // **grammatical** representation of each resulting LR item will be added to the closure.
-        item_set.insert(item.to_gramatical());
+        // the LR(0) automaton and LARL parsing tables will be built with the original symbols in
+        // the grammar.
+        //
+        // `item_set` contains variant symbols.  So, we have to convert them to corresponding
+        //  **grammatical** symbols before building LR(0) states and LALR parsing tables.
+        item_set.insert(item.clone());
 
         if self.recursion.contains(item) {
             return item_set;

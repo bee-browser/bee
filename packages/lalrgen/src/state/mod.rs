@@ -16,6 +16,7 @@ use crate::lr::LrItem;
 use crate::lr::LrItemSet;
 use crate::phrase::macros::*;
 
+/// Represents the identifier of a state.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct StateId(usize);
 
@@ -31,28 +32,67 @@ impl From<usize> for StateId {
     }
 }
 
+impl std::fmt::Display for StateId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "State({})", self.0)
+    }
+}
+
+/// Represents a state of an LR(0) automaton.
 #[derive(Debug)]
 pub struct State {
+    /// The identifier of the state.
+    ///
+    /// The value of the identifier is used as the index of the state in the state list returned
+    /// from `build_lr0_states()`.
     pub id: StateId,
+
+    /// An LR item set used for distinguishing the state from others.
+    ///
+    /// Every LR item in this item set doesn't contain any variant symbols.  Therefore, this item
+    /// set must not be used for the closure computation.
     pub item_set: LrItemSet,
+
+    /// An LR item set used for the closure computation.
+    ///
+    /// Some of LR items in this item set may contain variant symbols.  Therefore, this item set
+    /// must not be used for identifying the state.
+    pub internal_item_set: LrItemSet,
+
+    /// A transition table of the state.  Every symbol used as a key of the map is not a variant
+    /// symbol.
     pub transitions: HashMap<Symbol, StateId>,
 }
 
 impl State {
-    fn new(id: StateId, item_set: LrItemSet) -> Self {
+    fn new(id: StateId, internal_item_set: LrItemSet) -> Self {
+        let item_set = internal_item_set.to_grammatical();
         State {
             id,
             item_set,
+            internal_item_set,
             transitions: Default::default(),
         }
     }
 
+    /// Returns an iterator over kernel items in `item_set`.
     pub fn kernel_items(&self) -> impl Iterator<Item = &LrItem> {
-        self.item_set.iter().filter(|item| item.is_kernel())
+        self.item_set.kernel_items()
     }
 
+    /// Returns an iterator over grammatical non-kernel items in `item_set`.
     pub fn non_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
-        self.item_set.iter().filter(|item| !item.is_kernel())
+        self.item_set.non_kernel_items()
+    }
+
+    /// Returns an iterator over kernel items in `internal_item_set`.
+    pub fn internal_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
+        self.internal_item_set.kernel_items()
+    }
+
+    /// Returns an iterator over grammatical non-kernel items in `internal_item_set`.
+    pub fn internal_non_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
+        self.internal_item_set.non_kernel_items()
     }
 
     pub fn is_conditional(&self) -> bool {
@@ -73,7 +113,8 @@ impl State {
     }
 }
 
-pub fn build_lr0_states(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
+/// Build the LR(0) automaton for a given grammar.
+pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
     let mut builder = StateBuilder::default();
 
     assert_eq!(
@@ -116,7 +157,9 @@ pub fn build_lr0_states(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
         // resulting vector.  If HashMap is used, the order (i.e. state.id) will change randomly
         // even if the grammar doesn't change.
         let mut next_kernel_table: BTreeMap<Symbol, Vec<LrItem>> = Default::default();
-        for item in builder.state(state_id).item_set.iter() {
+
+        // Iterate over items in `internal_item_set` for the closure computations.
+        for item in builder.state(state_id).internal_item_set.iter() {
             let term = match item.next_term() {
                 Some(term) => term,
                 None => continue,
@@ -125,7 +168,7 @@ pub fn build_lr0_states(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
                 Term::Empty | Term::Lookahead(_) | Term::Disallow(_) => continue,
                 Term::Token(token) => Symbol::Token(token.clone()),
                 Term::NonTerminal(non_terminal) => {
-                    assert!(!non_terminal.is_variant());
+                    // `non_terminal` may a variant symbol.
                     Symbol::NonTerminal(non_terminal.symbol().to_owned())
                 }
             };
@@ -135,10 +178,11 @@ pub fn build_lr0_states(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
                 .push(item.shift());
         }
 
+        // Add transitions for normal tokens.
         for (symbol, items) in next_kernel_table.into_iter() {
             let item_set = context.compute_closure(&items, &cache);
             let next_id = builder.create_state(item_set);
-            tracing::trace!(transition = %symbol, from = ?state_id, to = ?next_id);
+            tracing::trace!(transition = %symbol, from = %state_id, to = %next_id);
             builder
                 .state_mut(state_id)
                 .transitions
@@ -148,26 +192,27 @@ pub fn build_lr0_states(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
             }
         }
 
+        // Add special transitions for restricted tokens.
+        //
+        // The item set of a next state for each restricted token must not contain restricted
+        // items.  So, we have to re-compute the closure for the next state.
         let disallowed_tokens = builder.state(state_id).collect_disallowed_tokens();
         for token in disallowed_tokens.into_iter() {
-            // `State::item_set` contains non-kernel items computed from conditional items.
-            // So, we need to remove non-kernel items related to conditional items.
+            // Remove restricted items from the item set of the state.
             let kernel_items = builder
                 .state(state_id)
-                .item_set
-                .kernel_set()
-                .remove_conditional_items(&token)
-                .iter()
+                .internal_kernel_items()
+                .filter(|item| !item.is_disallowed(&token))
                 .cloned()
                 .collect_vec();
             if kernel_items.is_empty() {
                 continue;
             }
-            // Then, re-compute the closure.
+            // Then, re-compute its closure.
             let item_set = context.compute_closure(&kernel_items, &cache);
             let symbol = Symbol::Token(token);
             let next_id = builder.create_state(item_set);
-            tracing::trace!(transition = %symbol, from = ?state_id, to = ?next_id);
+            tracing::trace!(transition = %symbol, from = %state_id, to = %next_id);
             builder
                 .state_mut(state_id)
                 .transitions
@@ -197,13 +242,15 @@ impl StateBuilder {
     }
 
     fn create_state(&mut self, item_set: LrItemSet) -> StateId {
-        match self.item_set_map.get(&item_set) {
+        let grammatical = item_set.to_grammatical();
+        // Each state is identified by its *grammatical* item set.
+        match self.item_set_map.get(&grammatical) {
             Some(&state_id) => state_id,
             None => {
                 let state_id = StateId(self.states.len());
-                tracing::trace!(created = ?state_id, %item_set);
-                self.states.push(State::new(state_id, item_set.clone()));
-                self.item_set_map.insert(item_set, state_id);
+                tracing::trace!(created = %state_id, %item_set);
+                self.states.push(State::new(state_id, item_set));
+                self.item_set_map.insert(grammatical, state_id);
                 state_id
             }
         }

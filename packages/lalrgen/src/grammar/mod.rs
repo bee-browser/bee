@@ -207,6 +207,7 @@ pub enum NonTerminal {
 }
 
 impl NonTerminal {
+    /// Returns a symbol without a variant ID.
     pub fn symbol(&self) -> &str {
         match self {
             Self::Grammatical(symbol) => symbol,

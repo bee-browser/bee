@@ -10,6 +10,7 @@ use crate::grammar::Rule;
 use crate::grammar::Term;
 use crate::phrase::Phrase;
 
+/// Represents an immutable LR item.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct LrItem {
     pub rule: Arc<Rule>,
@@ -18,7 +19,7 @@ pub struct LrItem {
 }
 
 impl LrItem {
-    pub fn to_gramatical(&self) -> Self {
+    pub fn to_grammatical(&self) -> Self {
         LrItem {
             rule: Arc::new(self.rule.to_grammatical()),
             dot: self.dot,
@@ -73,6 +74,18 @@ impl LrItem {
         self.next_term().is_none()
     }
 
+    pub fn is_disallowed(&self, token: &str) -> bool {
+        match self.next_term() {
+            Some(Term::Disallow(t)) if t == token => return true,
+            _ => (),
+        }
+        match self.prev_term() {
+            Some(Term::Disallow(t)) if t == token => return true,
+            _ => (),
+        }
+        false
+    }
+
     pub fn is_conditional(&self) -> bool {
         match self.next_term() {
             Some(Term::Disallow(_)) => true,
@@ -123,40 +136,51 @@ impl std::fmt::Display for LrItem {
 pub struct LrItemSet(BTreeSet<LrItem>);
 delegate_all! {LrItemSet => BTreeSet<LrItem>}
 
+/// Represents an immutable LR item set.
 impl LrItemSet {
-    pub fn kernel_set(&self) -> Self {
+    pub fn to_grammatical(&self) -> Self {
         let mut set: BTreeSet<LrItem> = Default::default();
         for item in self.iter() {
-            if !item.is_kernel() {
-                continue;
-            }
-            set.insert(item.clone());
+            set.insert(item.to_grammatical());
         }
         LrItemSet(set)
     }
 
-    pub fn merge(&self, other: &Self) -> Self {
-        let mut set = self.clone();
-        if set.eq(other) {
-            return set;
-        }
-        for item in other.iter() {
-            set.insert(item.clone());
-        }
-        set
+    /// Returns an iterator over kernel items.
+    pub fn kernel_items(&self) -> impl Iterator<Item = &LrItem> {
+        self.iter().filter(|item| item.is_kernel())
     }
 
-    pub fn remove_conditional_items(&self, token: &str) -> Self {
+    /// Returns an iterator over non-kernel items.
+    pub fn non_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
+        self.iter().filter(|item| !item.is_kernel())
+    }
+
+    /// Returns the kernel item set.
+    pub fn kernel_set(&self) -> Self {
         let mut set: BTreeSet<LrItem> = Default::default();
-        for item in self.iter() {
-            match item.next_term() {
-                Some(Term::Disallow(t)) if t == token => continue,
-                _ => (),
-            }
-            match item.prev_term() {
-                Some(Term::Disallow(t)) if t == token => continue,
-                _ => (),
-            }
+        for item in self.kernel_items().cloned() {
+            set.insert(item);
+        }
+        LrItemSet(set)
+    }
+
+    /// Returns the non-kernel item set.
+    pub fn non_kernel_set(&self) -> Self {
+        let mut set: BTreeSet<LrItem> = Default::default();
+        for item in self.non_kernel_items().cloned() {
+            set.insert(item);
+        }
+        LrItemSet(set)
+    }
+
+    /// Merges two item sets.
+    pub fn merge(&self, other: &Self) -> Self {
+        let mut set = self.0.clone();
+        if set.eq(other) {
+            return LrItemSet(set);
+        }
+        for item in other.iter() {
             set.insert(item.clone());
         }
         LrItemSet(set)

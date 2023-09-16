@@ -45,9 +45,9 @@ pub fn build_lookahead_tables(
             .par_iter()
             .map(|state| {
                 state
-                    .kernel_items()
+                    .internal_kernel_items()
                     .map(move |item| (state, item))
-                    .collect::<Vec<(_, &LrItem)>>()
+                    .collect_vec()
             })
             .flatten()
             .filter_map(|(state, item)| {
@@ -61,8 +61,8 @@ pub fn build_lookahead_tables(
                 Some(
                     temp_item_set
                         .iter()
-                        .map(|temp_item| (state, item, temp_item.clone()))
-                        .collect::<Vec<(_, _, LrItem)>>(),
+                        .map(|temp_item| (state, item.to_grammatical(), temp_item.to_grammatical()))
+                        .collect_vec(),
                 )
             })
             .flatten()
@@ -123,17 +123,18 @@ pub fn build_lookahead_tables(
             })
             .collect::<Vec<_>>();
 
+        // Process transitions for restricted tokens.
+        //
+        // The item set of a next state for each restricted token must not contain restricted
+        // items.  So, we have to re-compute the closure for the next state.
         for state in states.iter().filter(|state| state.is_conditional()) {
             let closure_context = ClosureContext::new(grammar, first_set);
             let disallowed_tokens = state.collect_disallowed_tokens();
             for token in disallowed_tokens.into_iter() {
-                // `State::item_set` contains non-kernel items computed from conditional items.
-                // So, we need to remove non-kernel items related to conditional items.
+                // Remove restricted items from the item set of the state.
                 let kernel_items = state
-                    .item_set
-                    .kernel_set()
-                    .remove_conditional_items(&token)
-                    .iter()
+                    .internal_kernel_items()
+                    .filter(|item| !item.is_disallowed(&token))
                     .cloned()
                     .collect_vec();
                 if kernel_items.is_empty() {
@@ -144,7 +145,11 @@ pub fn build_lookahead_tables(
                 let symbol = Symbol::Token(token);
                 let next_id = state.transitions.get(&symbol).unwrap().clone();
                 let next_state = &states[next_id.index()];
-                for item in item_set.iter() {
+                // Iterate over *grammatical* items.  Because the lookahead table is built for the
+                // LR(0) automaton.  Variant symbols in items should be converted to corresponding
+                // symbols in the original grammar before updating the lookahead table with the
+                // items.
+                for item in item_set.to_grammatical().iter() {
                     assert!(state.item_set.contains(&item));
                     assert!(next_state.item_set.contains(&item));
                     if let Some(lookahead_set) =
@@ -287,7 +292,7 @@ struct OperationData {
     lookahead_set: PhraseSet,
 }
 
-pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Vec<LalrState> {
+pub fn build_lalr_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Vec<LalrState> {
     let mut lalr_states: Vec<LalrState> = Vec::with_capacity(states.len());
 
     for (i, state) in states.iter().enumerate() {
@@ -371,14 +376,17 @@ pub fn build_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Ve
         }
 
         lalr_states.push(LalrState {
-            actions: actions.into_iter().collect(),
-            gotos: gotos.into_iter().collect(),
-            kernel_items: state.kernel_items().map(|item| format!("{item}")).collect(),
+            actions: actions.into_iter().collect_vec(),
+            gotos: gotos.into_iter().collect_vec(),
+            kernel_items: state
+                .kernel_items()
+                .map(|item| format!("{item}"))
+                .collect_vec(),
             closure: state
                 .item_set
                 .iter()
                 .map(|item| format!("{item}"))
-                .collect(),
+                .collect_vec(),
         });
     }
 

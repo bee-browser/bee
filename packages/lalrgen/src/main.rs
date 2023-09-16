@@ -9,10 +9,10 @@ use itertools::Itertools;
 use serde::Serialize;
 use tracing_subscriber::filter::EnvFilter;
 
-use bee_lalrgen::state::State;
 use bee_lalrgen::FirstSet;
 use bee_lalrgen::Grammar;
 use bee_lalrgen::LookaheadTable;
+use bee_lalrgen::State;
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -94,27 +94,26 @@ fn main() -> Result<()> {
 
     tracing::info!("Collecting the first set of each non-terminal symbol...");
     // The collected sets will be used in computation of closure of an LR item set.
-    let first_set = bee_lalrgen::firstset::collect(&grammar, 1);
+    let first_set = bee_lalrgen::collect_first_set(&grammar, 1);
     if let Some(ref dir) = opt.report_dir {
         report_first_set(dir, &first_set)?;
     }
 
-    tracing::info!("Building LR(0) states...");
-    let lr0_states = bee_lalrgen::state::build_lr0_states(&grammar, &first_set);
-    tracing::info!("The number of the LR(0) states: {}", lr0_states.len());
+    tracing::info!("Building LR(0) automaton...");
+    let lr0_states = bee_lalrgen::build_lr0_automaton(&grammar, &first_set);
+    tracing::info!("The size of the LR(0) automaton: {}", lr0_states.len());
     if let Some(ref dir) = opt.report_dir {
         report_lr0_automaton(dir, &lr0_states)?;
     }
 
     tracing::info!("Building a lookahead table for each LR(0) state...");
-    let lookahead_tables =
-        bee_lalrgen::lalr::build_lookahead_tables(&grammar, &first_set, &lr0_states);
+    let lookahead_tables = bee_lalrgen::build_lookahead_tables(&grammar, &first_set, &lr0_states);
     if let Some(ref dir) = opt.report_dir {
         report_lalr_lookahead_tables(dir, &lookahead_tables)?;
     }
 
     tracing::info!("Building LALR(1) states...");
-    let lalr1_states = bee_lalrgen::lalr::build_states(&lr0_states, &lookahead_tables);
+    let lalr1_states = bee_lalrgen::build_lalr_states(&lr0_states, &lookahead_tables);
 
     tracing::info!(elapsed = %humantime::format_duration(now.elapsed()), "Done");
 
@@ -203,11 +202,11 @@ fn report_lr0_automaton(dir: &PathBuf, states: &[State]) -> Result<()> {
         .map(|state| StateReport {
             state: format!("State({})", state.id.index()),
             kernel_items: state
-                .kernel_items()
+                .internal_kernel_items()
                 .map(|item| format!("{item}"))
                 .collect_vec(),
             non_kernel_items: state
-                .non_kernel_items()
+                .internal_non_kernel_items()
                 .map(|item| format!("{item}"))
                 .collect_vec(),
             transitions: state

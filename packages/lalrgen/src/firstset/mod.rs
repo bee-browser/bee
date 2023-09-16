@@ -12,7 +12,7 @@ pub struct FirstSet {
     pub table: HashMap<NonTerminal, PhraseSet>,
 }
 
-pub fn collect(grammar: &Grammar, max_tokens: usize) -> FirstSet {
+pub fn collect_first_set(grammar: &Grammar, max_tokens: usize) -> FirstSet {
     let mut table = Default::default();
 
     let mut iteration = 0;
@@ -20,7 +20,7 @@ pub fn collect(grammar: &Grammar, max_tokens: usize) -> FirstSet {
         let mut num_changed = 0;
 
         for rule in grammar.rules() {
-            if let Some(set) = collect_first_set(max_tokens, rule, &table) {
+            if let Some(set) = collect_first_set_of_rule(max_tokens, rule, &table) {
                 match table.get_mut(&rule.name) {
                     Some(prev) => {
                         let set = set.merge(prev);
@@ -48,7 +48,7 @@ pub fn collect(grammar: &Grammar, max_tokens: usize) -> FirstSet {
     FirstSet { max_tokens, table }
 }
 
-fn collect_first_set(
+fn collect_first_set_of_rule(
     max_tokens: usize,
     rule: &Rule,
     table: &HashMap<NonTerminal, PhraseSet>,

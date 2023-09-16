@@ -83,8 +83,8 @@ function rewriteIdentifierName(rules) {
     production: [{ type: 'token', data: 'IdentifierName' }],
   });
   for (const kw of ADDITIONAL_KEYWORDS) {
-    // TODO: temporarily removed `async` and `let` in order to avoid conflicts.
-    if (kw === 'async' || kw === 'let') {
+    // TODO: temporarily removed `async` in order to avoid conflicts.
+    if (kw === 'async') {
       continue;
     }
     rules.push({

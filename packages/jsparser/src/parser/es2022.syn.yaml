@@ -18675,6 +18675,10 @@
 - name: IdentifierNameButNotReservedWord
   production:
     - type: token
+      data: LET
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
       data: STATIC
 - name: IdentifierNameButNotReservedWord
   production:
