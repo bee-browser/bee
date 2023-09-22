@@ -111,6 +111,7 @@ codegen: $(CODEGEN_TARGETS)
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno
 
+# Specify `CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git` if `make update-deps-crates` gets stuck.
 .PHONY: update-deps-crates
 update-deps-crates:
 	cargo upgrade -i allow

@@ -1,4 +1,4 @@
-import * as changeCase from 'https://deno.land/x/case@2.1.1/mod.ts';
+import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { default as docopt } from 'https://deno.land/x/docopt@v1.0.7/mod.ts';
 
 export async function parseCommand({ doc, conv, init }) {

@@ -7,14 +7,14 @@ publish = false
 
 [dependencies]
 bee-htmltokenizer = { path = "../htmltokenizer" }
-flagset = "0.4.3"
+flagset = "0.4.4"
 phf = { version = "0.11.2", features = ["macros"] }
-thiserror = "1.0.44"
+thiserror = "1.0.48"
 tracing = "0.1.37"
-unicase = "2.6.0"
+unicase = "2.7.0"
 
 [dev-dependencies]
-anyhow = "1.0.72"
+anyhow = "1.0.75"
 bee-toydom = { path = "../toydom" }
 criterion = "0.5.1"
 ctor = "0.2.4"
