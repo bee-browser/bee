@@ -31,7 +31,7 @@ lalr/%.rs: lalr/%.rs.hbs lalr.json.xz lalr.js ../lexer/tokens.json $(PROJ_DIR)/t
 # TODO: Remove this target.
 lalr.json.xz: es2022.syn.yaml $(PROJ_DIR)/target/release/bee-lalrgen
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -q -r -p bee-lalrgen -- $< Script | jq -c . | xz >$@
+	@cargo run -q -r -p bee-lalrgen -- $< Module | jq -c . | xz >$@
 
 include $(PROJ_DIR)/target/release/bee-handlebars.d
 $(PROJ_DIR)/target/release/bee-handlebars:
