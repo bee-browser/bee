@@ -243,11 +243,19 @@ class ParserView extends Widget {
     }
     feed(data) {
         switch(data.opcode){
-            case 'push':
+            case 'push-state':
                 this.stackView_.pushState(data['state.label']);
                 break;
-            case 'pop':
+            case 'pop-state':
                 this.stackView_.popStates(data.num_states);
+                break;
+            case 'push-block-context':
+                break;
+            case 'pop-block-context':
+                break;
+            case 'push-block':
+                break;
+            case 'pop-block':
                 break;
             case 'accept':
                 break;
