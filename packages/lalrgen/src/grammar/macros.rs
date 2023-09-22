@@ -37,16 +37,10 @@ macro_rules! disallow {
 
 macro_rules! rule {
     ($name:literal ->) => {
-        crate::grammar::Rule {
-            name: $name.into(),
-            production: vec![],
-        }
+        crate::grammar::Rule::new($name.into(), vec![])
     };
     ($name:literal -> $($term:expr) +) => {
-        crate::grammar::Rule {
-            name: $name.into(),
-            production: vec![$($term),+],
-        }
+        crate::grammar::Rule::new($name.into(), vec![$($term),+])
     };
 }
 

@@ -66,7 +66,7 @@ pub struct State {
 
 impl State {
     fn new(id: StateId, internal_item_set: LrItemSet) -> Self {
-        let item_set = internal_item_set.to_grammatical();
+        let item_set = internal_item_set.to_original();
         State {
             id,
             item_set,
@@ -75,12 +75,12 @@ impl State {
         }
     }
 
-    /// Returns an iterator over kernel items in `item_set`.
+    /// Returns an iterator over *original* kernel items in `item_set`.
     pub fn kernel_items(&self) -> impl Iterator<Item = &LrItem> {
         self.item_set.kernel_items()
     }
 
-    /// Returns an iterator over grammatical non-kernel items in `item_set`.
+    /// Returns an iterator over *original* non-kernel items in `item_set`.
     pub fn non_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
         self.item_set.non_kernel_items()
     }
@@ -90,18 +90,18 @@ impl State {
         self.internal_item_set.kernel_items()
     }
 
-    /// Returns an iterator over grammatical non-kernel items in `internal_item_set`.
+    /// Returns an iterator over non-kernel items in `internal_item_set`.
     pub fn internal_non_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
         self.internal_item_set.non_kernel_items()
     }
 
-    pub fn is_conditional(&self) -> bool {
-        self.kernel_items().any(LrItem::is_conditional)
+    pub fn is_restricted(&self) -> bool {
+        self.kernel_items().any(LrItem::is_restricted)
     }
 
     pub fn collect_disallowed_tokens(&self) -> HashSet<String> {
         let mut tokens: HashSet<String> = Default::default();
-        for item in self.kernel_items().filter(|item| item.is_conditional()) {
+        for item in self.kernel_items().filter(|item| item.is_restricted()) {
             match item.next_term().unwrap() {
                 Term::Disallow(token) => {
                     tokens.insert(token.clone());
@@ -228,7 +228,20 @@ pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Vec<State
 
 #[derive(Default)]
 struct StateBuilder {
+    /// A list of states.
     states: Vec<State>,
+
+    /// A map to identify a state with the *original* item set of an item set.
+    ///
+    /// Each state should be identified by its *original* item set.
+    ///
+    /// A non-terminal symbol may appear in multiple production rules.  This may cause multiple
+    /// variants of the same non-terminal symbols.  However, the variants should be processed as
+    /// the same non-terminal symbol in the original grammar in order to avoid conflicts when
+    /// generating the LALR parsing tables.
+    ///
+    /// Similarly, the LR(0) automaton should be built for the original grammar.  Therefore, we
+    /// identify item sets with their *original* item sets in the LR(0) automaton.
     item_set_map: HashMap<LrItemSet, StateId>,
 }
 
@@ -242,15 +255,14 @@ impl StateBuilder {
     }
 
     fn create_state(&mut self, item_set: LrItemSet) -> StateId {
-        let grammatical = item_set.to_grammatical();
-        // Each state is identified by its *grammatical* item set.
-        match self.item_set_map.get(&grammatical) {
+        let original = item_set.to_original();
+        match self.item_set_map.get(&original) {
             Some(&state_id) => state_id,
             None => {
                 let state_id = StateId(self.states.len());
                 tracing::trace!(created = %state_id, %item_set);
                 self.states.push(State::new(state_id, item_set));
-                self.item_set_map.insert(grammatical, state_id);
+                self.item_set_map.insert(original, state_id);
                 state_id
             }
         }

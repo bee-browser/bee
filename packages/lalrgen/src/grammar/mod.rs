@@ -58,10 +58,10 @@ impl Grammar {
         let mut rules = Vec::with_capacity(1 + self.rules.len());
 
         // Add the production rule for the start symbol of the augmented grammar.
-        rules.push(Arc::new(Rule {
-            name: NonTerminal::GoalOfAugmentedGrammar,
-            production: vec![Term::NonTerminal(goal_symbol.clone())],
-        }));
+        rules.push(Arc::new(Rule::new(
+            NonTerminal::GoalOfAugmentedGrammar,
+            vec![Term::NonTerminal(goal_symbol.clone())],
+        )));
 
         // Collect only rules actually used.
         let mut collected: HashSet<NonTerminal> = Default::default();
@@ -147,9 +147,28 @@ impl PartialEq for Grammar {
 pub struct Rule {
     pub name: NonTerminal,
     pub production: Vec<Term>,
+    // TODO: remove this property and use an external map.
+    #[serde(default)]
+    pub derived_from: Option<Arc<Rule>>,
 }
 
 impl Rule {
+    pub fn new(name: NonTerminal, production: Vec<Term>) -> Self {
+        Rule {
+            name,
+            production,
+            derived_from: None,
+        }
+    }
+
+    pub fn with_rule(name: NonTerminal, production: Vec<Term>, rule: Arc<Rule>) -> Self {
+        Rule {
+            name,
+            production,
+            derived_from: Some(rule),
+        }
+    }
+
     pub fn count_symbols(&self) -> usize {
         self.production
             .iter()
@@ -157,19 +176,23 @@ impl Rule {
             .count()
     }
 
-    pub fn to_grammatical(&self) -> Self {
-        Rule {
-            name: self.name.to_grammatical(),
-            production: self
-                .production
-                .iter()
-                .map(|term| term.to_grammatical())
-                .collect(),
+    pub fn to_original(&self) -> Self {
+        if let Some(ref rule) = self.derived_from {
+            rule.to_original()
+        } else {
+            self.clone()
         }
     }
 
     pub fn is_goal_of_augmented_grammar(&self) -> bool {
         self.name.is_goal_of_augmented_grammar()
+    }
+
+    pub fn has_tail_lookahead(&self) -> bool {
+        match self.production.last() {
+            Some(Term::Lookahead(_)) => true,
+            _ => false,
+        }
     }
 }
 
@@ -201,7 +224,7 @@ impl std::fmt::Display for Symbol {
 #[derive(Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(untagged)]
 pub enum NonTerminal {
-    Grammatical(String),
+    Original(String),
     Variant(String, usize),
     GoalOfAugmentedGrammar,
 }
@@ -210,7 +233,7 @@ impl NonTerminal {
     /// Returns a symbol without a variant ID.
     pub fn symbol(&self) -> &str {
         match self {
-            Self::Grammatical(symbol) => symbol,
+            Self::Original(symbol) => symbol,
             Self::Variant(symbol, _) => symbol,
             _ => "^",
         }
@@ -218,7 +241,7 @@ impl NonTerminal {
 
     pub fn with_variant(&self, variant: usize) -> Self {
         let symbol = match self {
-            Self::Grammatical(symbol) => symbol,
+            Self::Original(symbol) => symbol,
             Self::Variant(symbol, _) => symbol,
             _ => unreachable!(),
         };
@@ -238,25 +261,18 @@ impl NonTerminal {
             _ => false,
         }
     }
-
-    fn to_grammatical(&self) -> Self {
-        match self {
-            Self::Variant(symbol, _) => Self::Grammatical(symbol.clone()),
-            _ => self.clone(),
-        }
-    }
 }
 
 impl From<&str> for NonTerminal {
     fn from(symbol: &str) -> Self {
-        NonTerminal::Grammatical(symbol.to_owned())
+        NonTerminal::Original(symbol.to_owned())
     }
 }
 
 impl std::fmt::Display for NonTerminal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Grammatical(symbol) => write!(f, "{symbol}"),
+            Self::Original(symbol) => write!(f, "{symbol}"),
             Self::Variant(symbol, variant) => write!(f, "{symbol}.{variant}"),
             Self::GoalOfAugmentedGrammar => write!(f, "^"),
         }
@@ -292,13 +308,6 @@ impl Term {
         match self {
             Self::Lookahead(_) => true,
             _ => false,
-        }
-    }
-
-    fn to_grammatical(&self) -> Self {
-        match self {
-            Self::NonTerminal(v) => Self::NonTerminal(v.to_grammatical()),
-            _ => self.clone(),
         }
     }
 }

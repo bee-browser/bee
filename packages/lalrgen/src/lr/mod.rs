@@ -19,10 +19,25 @@ pub struct LrItem {
 }
 
 impl LrItem {
-    pub fn to_grammatical(&self) -> Self {
+    pub fn to_original(&self) -> Self {
+        let original = self.rule.to_original();
+        let dot = if self.dot > 0 {
+            // Re-compute the cursor position.
+            let mut i = 0;
+            let mut dot = 0;
+            while i < self.dot && dot < original.production.len() {
+                if !original.production[dot].is_lookahead() {
+                    i += 1;
+                }
+                dot += 1;
+            }
+            dot
+        } else {
+            self.dot
+        };
         LrItem {
-            rule: Arc::new(self.rule.to_grammatical()),
-            dot: self.dot,
+            rule: Arc::new(original),
+            dot,
             lookahead: self.lookahead.clone(),
         }
     }
@@ -74,19 +89,19 @@ impl LrItem {
         self.next_term().is_none()
     }
 
-    pub fn is_disallowed(&self, token: &str) -> bool {
+    pub fn is_disallowed(&self, disallowed: &str) -> bool {
         match self.next_term() {
-            Some(Term::Disallow(t)) if t == token => return true,
+            Some(Term::Disallow(token)) if token == disallowed => return true,
             _ => (),
         }
         match self.prev_term() {
-            Some(Term::Disallow(t)) if t == token => return true,
+            Some(Term::Disallow(token)) if token == disallowed => return true,
             _ => (),
         }
         false
     }
 
-    pub fn is_conditional(&self) -> bool {
+    pub fn is_restricted(&self) -> bool {
         match self.next_term() {
             Some(Term::Disallow(_)) => true,
             _ => false,
@@ -138,10 +153,10 @@ delegate_all! {LrItemSet => BTreeSet<LrItem>}
 
 /// Represents an immutable LR item set.
 impl LrItemSet {
-    pub fn to_grammatical(&self) -> Self {
+    pub fn to_original(&self) -> Self {
         let mut set: BTreeSet<LrItem> = Default::default();
         for item in self.iter() {
-            set.insert(item.to_grammatical());
+            set.insert(item.to_original());
         }
         LrItemSet(set)
     }

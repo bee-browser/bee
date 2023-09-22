@@ -66,6 +66,11 @@ impl Phrase {
             Self::new(tokens)
         }
     }
+
+    pub fn count_tokens(&self) -> usize {
+        // A token used for restrictions doesn't increase the number of lookahead tokens.
+        self.iter().filter(|token| !token.starts_with("(!")).count()
+    }
 }
 
 impl std::fmt::Display for Phrase {
@@ -96,11 +101,11 @@ impl PhraseSet {
     }
 
     pub fn max_tokens(&self) -> Option<usize> {
-        self.iter().map(|phrase| phrase.len()).max()
+        self.iter().map(Phrase::count_tokens).max()
     }
 
     pub fn min_tokens(&self) -> Option<usize> {
-        self.iter().map(|phrase| phrase.len()).min()
+        self.iter().map(Phrase::count_tokens).min()
     }
 
     pub fn concat(&self, other: &Self) -> Self {

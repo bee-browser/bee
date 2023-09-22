@@ -54,7 +54,7 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
         // the grammar.
         //
         // `item_set` contains variant symbols.  So, we have to convert them to corresponding
-        //  **grammatical** symbols before building LR(0) states and LALR parsing tables.
+        //  *original* symbols before building LR(0) states and LALR parsing tables.
         item_set.insert(item.clone());
 
         if self.recursion.contains(item) {

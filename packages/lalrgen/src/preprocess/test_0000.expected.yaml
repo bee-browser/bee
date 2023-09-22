@@ -1,3 +1,20 @@
+# LookaheadExample ::
+#   `n` DecimalDigits.1
+#   DecimalDigit [lookahead ∉ DecimalDigit]
+#
+# DecimalDigits ::
+#   DecimalDigit
+#   DecimalDigits DecimalDigit
+#
+# DecimalDigit :: one of
+#   `0` `1` `2` `3` `4` `5` `6` `7` `8` `9`
+#
+# DecimalDigits.1 ::
+#   DecimalDigit.2
+#   DecimalDigits.1 DecimalDigit
+#
+# DecimalDigit.2 :: one of
+#   `0` `2` `4` `6` `8`
 - name: LookaheadExample
   production:
     - type: token

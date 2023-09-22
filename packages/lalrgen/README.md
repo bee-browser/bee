@@ -40,22 +40,22 @@ Eventually, we select the first direction in this crate.
 
 In the above example, we transform the grammar like below:
 
-1. Create a new production rule called `DecimalDigits#1` from `DecimalDegits`
-2. Replace `DecimalDigits` in the first production of `LookaheadExample` with `DecimalDigits#1`
-3. Move the non-tail lookahead restriction into the head of each production of `DecimalDigits#1`
-4. Create a new production rule called `DecimalDigit#2` from `DecimalDegit`
-5. Replace `DecimalDigit` in the first production of `DecimalDigits#2` with `DecimalDigit#2`
-6. Move the non-tail lookahead restriction into the head of each production of `DecimalDigit#2`
-7. Remove `1`, `3`, `5`, `7`, `9` from `DecimalDigit#2` which do not meet the non-tail lookahead
+1. Create a new production rule called `DecimalDigits.1` from `DecimalDegits`
+2. Replace `DecimalDigits` in the first production of `LookaheadExample` with `DecimalDigits.1`
+3. Move the non-tail lookahead restriction into the head of each production of `DecimalDigits.1`
+4. Create a new production rule called `DecimalDigit.2` from `DecimalDegit`
+5. Replace `DecimalDigit` in the first production of `DecimalDigits.2` with `DecimalDigit.2`
+6. Move the non-tail lookahead restriction into the head of each production of `DecimalDigit.2`
+7. Remove `1`, `3`, `5`, `7`, `9` from `DecimalDigit.2` which do not meet the non-tail lookahead
    restriction and remove the non-tail lookahead restriction from the remaining productions
-8. Replace `DecimalDigits` in the second production with `DecimalDigits#1` and remove the non-tail
+8. Replace `DecimalDigits` in the second production with `DecimalDigits.1` and remove the non-tail
    lookahead restriction from the second production
 
 Finally, the following grammar is obtained:
 
 ```text
 LookaheadExample ::
-  `n` DecimalDigits#1
+  `n` DecimalDigits.1
   DecimalDigit [lookahead ∉ DecimalDigit]
 
 DecimalDigits ::
@@ -65,17 +65,17 @@ DecimalDigits ::
 DecimalDigit :: one of
   `0` `1` `2` `3` `4` `5` `6` `7` `8` `9`
 
-DecimalDigits#1 ::
-  DecimalDigit#2
+DecimalDigits.1 ::
+  DecimalDigit.2
   DecimalDigits.1 DecimalDigit
 
-DecimalDigit#2 :: one of
+DecimalDigit.2 :: one of
   `0` `2` `4` `6` `8`
 ```
 
-Production rules for `DecimalDigits#1` and `DecimalDigit#2` are internal *variant* rules.  Variant
+Production rules for `DecimalDigits.1` and `DecimalDigit.2` are internal *variant* rules.  Variant
 rules are used only in closure computations for restricted production rules.  And non-terminal
-symbols in a variant rule of an LR item are converted to corresponding *grammatical* symbols before
+symbols in a variant rule of an LR item are converted to corresponding *original* symbols before
 adding the LR item to the closure item set.  So, non-terminal variants never appear in the list of
 non-terminal symbols in [`LalrSpec`].  See the [`closure`] module for details.
 

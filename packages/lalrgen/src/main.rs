@@ -11,6 +11,7 @@ use tracing_subscriber::filter::EnvFilter;
 
 use bee_lalrgen::FirstSet;
 use bee_lalrgen::Grammar;
+use bee_lalrgen::LalrProblem;
 use bee_lalrgen::LookaheadTable;
 use bee_lalrgen::State;
 
@@ -79,7 +80,7 @@ fn main() -> Result<()> {
     // Preprocess the syntactic grammar for making subsequent translations easier.
     // The ECMA-262 specification uses non-tail lookahead notations.
     tracing::info!("Preprocessing the grammar...");
-    let grammar = bee_lalrgen::preprocess(&grammar);
+    let grammar = bee_lalrgen::preprocess(grammar);
     grammar.validate();
     if let Some(ref dir) = opt.report_dir {
         report_preprocessed_grammar(dir, &grammar)?;
@@ -113,7 +114,14 @@ fn main() -> Result<()> {
     }
 
     tracing::info!("Building LALR(1) states...");
-    let lalr1_states = bee_lalrgen::build_lalr_states(&lr0_states, &lookahead_tables);
+    let (lalr1_states, problems) = bee_lalrgen::build_lalr_states(&lr0_states, &lookahead_tables);
+    if let Some(ref dir) = opt.report_dir {
+        report_lalr_problems(dir, &problems)?;
+    }
+    if !problems.is_empty() {
+        tracing::error!("Problems occur while generating LALR(1) parsing tables");
+        std::process::exit(1);
+    }
 
     tracing::info!(elapsed = %humantime::format_duration(now.elapsed()), "Done");
 
@@ -273,4 +281,11 @@ struct LookaheadTableReport {
 struct LookaheadReport {
     item: String,
     lookaheads: Vec<String>,
+}
+
+fn report_lalr_problems(dir: &PathBuf, problems: &[LalrProblem]) -> Result<()> {
+    let path = dir.join("problems.json");
+    let file = std::fs::File::create(path)?;
+    serde_json::to_writer_pretty(file, problems)?;
+    Ok(())
 }

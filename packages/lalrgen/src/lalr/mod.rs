@@ -61,22 +61,22 @@ pub fn build_lookahead_tables(
                 Some(
                     temp_item_set
                         .iter()
-                        .map(|temp_item| (state, item.to_grammatical(), temp_item.to_grammatical()))
+                        .map(|temp_item| (state, item, temp_item.clone()))
                         .collect_vec(),
                 )
             })
             .flatten()
             .filter_map(|(state, item, temp_item)| {
                 let (target_state, target_item) = if temp_item.is_reducible() {
-                    let kernel_item = temp_item.without_lookahead();
+                    let kernel_item = temp_item.without_lookahead().to_original();
                     assert!(state.item_set.contains(&kernel_item));
                     (state.id, kernel_item)
                 } else {
-                    let kernel_item = temp_item.without_lookahead().shift();
+                    let kernel_item = temp_item.without_lookahead().shift().to_original();
                     let next_symbol = match temp_item.next_term() {
                         Some(Term::Token(token)) => Some(Symbol::Token(token.clone())),
                         Some(Term::NonTerminal(non_terminal)) => {
-                            assert!(!non_terminal.is_variant());
+                            // `non_terminal` may be a variant symbol.
                             Some(Symbol::NonTerminal(non_terminal.symbol().to_owned()))
                         }
                         _ => None,
@@ -94,14 +94,14 @@ pub fn build_lookahead_tables(
 
                 if temp_item.lookahead.iter().all(|token| token == "#") {
                     lookahead_tables[state.id.index()]
-                        .get(&item)
+                        .get(&item.to_original())
                         .cloned()
                         .map(|lookahead_set| {
                             (
                                 target_state.index(),
                                 Operation::Propagate(OperationData {
                                     source_state: state.id,
-                                    source_item: item.clone(),
+                                    source_item: item.to_original(),
                                     target_state,
                                     target_item,
                                     lookahead_set,
@@ -127,7 +127,7 @@ pub fn build_lookahead_tables(
         //
         // The item set of a next state for each restricted token must not contain restricted
         // items.  So, we have to re-compute the closure for the next state.
-        for state in states.iter().filter(|state| state.is_conditional()) {
+        for state in states.iter().filter(|state| state.is_restricted()) {
             let closure_context = ClosureContext::new(grammar, first_set);
             let disallowed_tokens = state.collect_disallowed_tokens();
             for token in disallowed_tokens.into_iter() {
@@ -145,11 +145,11 @@ pub fn build_lookahead_tables(
                 let symbol = Symbol::Token(token);
                 let next_id = state.transitions.get(&symbol).unwrap().clone();
                 let next_state = &states[next_id.index()];
-                // Iterate over *grammatical* items.  Because the lookahead table is built for the
+                // Iterate over *original* items.  Because the lookahead table is built for the
                 // LR(0) automaton.  Variant symbols in items should be converted to corresponding
                 // symbols in the original grammar before updating the lookahead table with the
                 // items.
-                for item in item_set.to_grammatical().iter() {
+                for item in item_set.to_original().iter() {
                     assert!(state.item_set.contains(&item));
                     assert!(next_state.item_set.contains(&item));
                     if let Some(lookahead_set) =
@@ -270,12 +270,6 @@ pub fn build_lookahead_tables(
         iteration += 1;
     }
 
-    for (i, lookahead_table) in lookahead_tables.iter().enumerate() {
-        for (item, lookahead_set) in lookahead_table.iter() {
-            tracing::debug!(state.id = i, %item, %lookahead_set);
-        }
-    }
-
     lookahead_tables
 }
 
@@ -292,8 +286,12 @@ struct OperationData {
     lookahead_set: PhraseSet,
 }
 
-pub fn build_lalr_states(states: &[State], lookahead_tables: &[LookaheadTable]) -> Vec<LalrState> {
+pub fn build_lalr_states(
+    states: &[State],
+    lookahead_tables: &[LookaheadTable],
+) -> (Vec<LalrState>, Vec<LalrProblem>) {
     let mut lalr_states: Vec<LalrState> = Vec::with_capacity(states.len());
+    let mut problems: Vec<LalrProblem> = vec![];
 
     for (i, state) in states.iter().enumerate() {
         let disallowed_tokens = state.collect_disallowed_tokens();
@@ -327,12 +325,18 @@ pub fn build_lalr_states(states: &[State], lookahead_tables: &[LookaheadTable]) 
             let lookahead_set = match lookahead_tables[i].get(item) {
                 Some(lookahead_set) => lookahead_set,
                 None => {
-                    tracing::error!(
-                        reason = "no-lookahead",
-                        state.id = i,
-                        %state.item_set,
-                        %item,
-                    );
+                    problems.push(LalrProblem::NoLookahead {
+                        state: format!("{}", state.id),
+                        kernel_items: state
+                            .internal_kernel_items()
+                            .map(|item| format!("{item}"))
+                            .collect_vec(),
+                        non_kernel_items: state
+                            .internal_non_kernel_items()
+                            .map(|item| format!("{item}"))
+                            .collect_vec(),
+                        item: format!("{item}"),
+                    });
                     continue;
                 }
             };
@@ -341,23 +345,35 @@ pub fn build_lalr_states(states: &[State], lookahead_tables: &[LookaheadTable]) 
                 let token = &lookahead[0];
                 match actions.get(token) {
                     Some(LalrAction::Shift(_)) => {
-                        tracing::error!(
-                            reason = "shift-reduce-conflict",
-                            state.id = i,
-                            %state.item_set,
-                            token,
-                            %item,
-                        );
+                        problems.push(LalrProblem::ShiftReduceConflict {
+                            state: format!("{}", state.id),
+                            kernel_items: state
+                                .internal_kernel_items()
+                                .map(|item| format!("{item}"))
+                                .collect_vec(),
+                            non_kernel_items: state
+                                .internal_non_kernel_items()
+                                .map(|item| format!("{item}"))
+                                .collect_vec(),
+                            token: token.clone(),
+                            item: format!("{item}"),
+                        });
                     }
                     Some(LalrAction::Reduce(reduce)) => {
-                        tracing::error!(
-                            reason = "reduce-reduce-conflict",
-                            state.id = i,
-                            %state.item_set,
-                            token,
-                            %item,
-                            rule = reduce.rule,
-                        );
+                        problems.push(LalrProblem::ReduceReduceConflict {
+                            state: format!("{}", state.id),
+                            kernel_items: state
+                                .internal_kernel_items()
+                                .map(|item| format!("{item}"))
+                                .collect_vec(),
+                            non_kernel_items: state
+                                .internal_non_kernel_items()
+                                .map(|item| format!("{item}"))
+                                .collect_vec(),
+                            token: token.clone(),
+                            item: format!("{item}"),
+                            rule: reduce.rule.clone(),
+                        });
                     }
                     _ => {}
                 }
@@ -390,7 +406,7 @@ pub fn build_lalr_states(states: &[State], lookahead_tables: &[LookaheadTable]) 
         });
     }
 
-    lalr_states
+    (lalr_states, problems)
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -461,4 +477,29 @@ impl std::fmt::Display for LalrReplace {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "replace({})", self.next_id)
     }
+}
+
+#[derive(Debug, Serialize)]
+pub enum LalrProblem {
+    NoLookahead {
+        state: String,
+        kernel_items: Vec<String>,
+        non_kernel_items: Vec<String>,
+        item: String,
+    },
+    ShiftReduceConflict {
+        state: String,
+        kernel_items: Vec<String>,
+        non_kernel_items: Vec<String>,
+        token: String,
+        item: String,
+    },
+    ReduceReduceConflict {
+        state: String,
+        kernel_items: Vec<String>,
+        non_kernel_items: Vec<String>,
+        token: String,
+        item: String,
+        rule: String,
+    },
 }

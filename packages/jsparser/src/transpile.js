@@ -83,10 +83,6 @@ function rewriteIdentifierName(rules) {
     production: [{ type: 'token', data: 'IdentifierName' }],
   });
   for (const kw of ADDITIONAL_KEYWORDS) {
-    // TODO: temporarily removed `async` in order to avoid conflicts.
-    if (kw === 'async') {
-      continue;
-    }
     rules.push({
       name: 'IdentifierNameButNotReservedWord',
       production: [{ type: 'token', data: kw.toUpperCase() }],
@@ -134,10 +130,8 @@ class Transpiler {
     case 'syntactic':
       this.passes_ = [
         rewriteIdentifierRule,
-        rewriteSupplementalRules,
         expandOptionals,
         expandParameterizedRules,
-        replaceWithSupplementalRules,
         translateRules,
         processLookaheads,
         addLiterals,
@@ -428,35 +422,6 @@ function rewriteIdentifierRule(rules) {
   return rules;
 }
 
-function rewriteSupplementalRules(rules) {
-  // In the original grammar, `ArrowFormalParameters` in the production rule for `AsyncArrowHead`
-  // is always expanded with `Await`.  If we replace `CoverCallExpressionAndAsyncArrowHead` in the
-  // production rule for `AsyncArrowFunction` as described in the ES2022 specification, it
-  // generates incorrect expressions.  Because the original production rule never contains the
-  // `await` token.
-  //
-  // As a workaround, we replace the production rule for `AsyncArrowHead` like below:
-  //
-  //   AsyncArrowHead[Await] :
-  //     `async` [no LineTerminator here] ArrowFormalParameters[~Yield, ?Await]
-  //
-  // And we replace `CoverCallExpressionAndAsyncArrowHead` and
-  // `CoverCallExpressionAndAsyncArrowHead_Await` with `AsyncArrowHead` and `AsyncArrowHead_Await`
-  // respectively in `rewriteWithSuplementalRules()`.
-  log.debug('Rewriting AsyncArrowHead rule...');
-  const asyncArrowHeadRule = rules.find((rule) => rule.name === 'AsyncArrowHead');
-  assert(asyncArrowHeadRule !== undefined);
-  assertEquals(asyncArrowHeadRule.values.length, 1);
-  assertEquals(
-    asyncArrowHeadRule.values[0],
-    '`async` [no LineTerminator here] ArrowFormalParameters[~Yield, +Await]');
-  asyncArrowHeadRule.name = 'AsyncArrowHead[Await]';
-  asyncArrowHeadRule.values[0] =
-    '`async` [no LineTerminator here] ArrowFormalParameters[~Yield, ?Await]';
-
-  return rules;
-}
-
 function expandOptionals(rules) {
   log.debug('Expanding optionals...');
   const expanded = [];
@@ -617,52 +582,6 @@ function expandSuffixPatterns(patterns, combination) {
     }
   }
   return params.join('_');
-}
-
-function replaceWithSupplementalRules(rules) {
-  // The original production rule
-  //
-  //   AsyncArrowFunction[In, Yield, Await] :
-  //     CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await] \
-  //       [no LineTerminator here] => AsyncConciseBody[?In]
-  //
-  // cannot parse `async()=>{}`.  Therefore, we have to replace
-  // `CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]` with an appropriate non-terminal symbol
-  // as described in the "Supplemental Syntax" section in 15.9.
-  //
-  // You will see a parse error when parsing `async()=>{}` if you rewrite the production rule for
-  // `AsyncArrowFunction` as described in the "Supplemental Syntax".  Because the `async` token is
-  // actually recognized in the production rule for `AsyncArrowFunction_In`.  The description in
-  // the ES2022 specification is quite ambiguous (or completely wrong).  Actually,
-  // `AsyncArrowFunction[In, Yield, Await]` will be expanded and generate 8 non-terminal symbols
-  // with their production rules.
-  //
-  // The production rule for `AsyncArrowHead` seems to permit the `await` token in the production
-  // rule for `ArrowFormalParameters`.  So, we replace `CoverCallExpressionAndAsyncArrowHead` and
-  // `CoverCallExpressionAndAsyncArrowHead_Await` with `AsyncArrowHead`.  We are not sure whether
-  // these replacements are correct or not, but let's see what happens.
-  //
-  // The specification says this is a supplemental refinement, but it's **impossible** to refine
-  // `CoverCallExpressionAndAsyncArrowHead` into `AsyncArrowHead`.
-  const RE_ASYNC_ARROW_FUNCTION = /^AsyncArrowFunction(_In)?(_Await)?$/;
-
-  for (const rule of rules) {
-    if (RE_ASYNC_ARROW_FUNCTION.test(rule.name)) {
-      log.debug(`Replacing CoverCallExpressionAndAsyncArrowHead with AsyncArrowHead in ${rule.name}...`);
-      rule.values = rule.values.map((value) => {
-        return value
-          .replace('CoverCallExpressionAndAsyncArrowHead_Await', 'AsyncArrowHead_Await')
-          .replace('CoverCallExpressionAndAsyncArrowHead', 'AsyncArrowHead');
-      });
-    }
-  }
-
-  // We don't need to process other supplemental rules.  For example, the original production rules
-  // for `ArrowFunction[In, Yield, Await]` can parse `()=>{}` properly without replacing
-  // `CoverParenthesizedExpressionAndArrowParameterList[?Yield, ?Await]` with
-  // `ArrowFormalParameters[Yield, Await]`.
-
-  return rules;
 }
 
 function translateRules(rules, options) {

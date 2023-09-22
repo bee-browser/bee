@@ -18098,7 +18098,7 @@
 - name: AsyncArrowFunction
   production:
     - type: non-terminal
-      data: AsyncArrowHead
+      data: CoverCallExpressionAndAsyncArrowHead
     - type: disallow
       data: LineTerminatorSequence
     - type: token
@@ -18122,7 +18122,7 @@
 - name: AsyncArrowFunction_Await
   production:
     - type: non-terminal
-      data: AsyncArrowHead_Await
+      data: CoverCallExpressionAndAsyncArrowHead_Await
     - type: disallow
       data: LineTerminatorSequence
     - type: token
@@ -18194,7 +18194,7 @@
 - name: AsyncArrowFunction_In
   production:
     - type: non-terminal
-      data: AsyncArrowHead
+      data: CoverCallExpressionAndAsyncArrowHead
     - type: disallow
       data: LineTerminatorSequence
     - type: token
@@ -18218,7 +18218,7 @@
 - name: AsyncArrowFunction_In_Await
   production:
     - type: non-terminal
-      data: AsyncArrowHead_Await
+      data: CoverCallExpressionAndAsyncArrowHead_Await
     - type: disallow
       data: LineTerminatorSequence
     - type: token
@@ -18340,14 +18340,6 @@
     - type: non-terminal
       data: Arguments_Yield_Await
 - name: AsyncArrowHead
-  production:
-    - type: token
-      data: ASYNC
-    - type: disallow
-      data: LineTerminatorSequence
-    - type: non-terminal
-      data: ArrowFormalParameters
-- name: AsyncArrowHead_Await
   production:
     - type: token
       data: ASYNC
@@ -18708,6 +18700,10 @@
   production:
     - type: token
       data: AS
+- name: IdentifierNameButNotReservedWord
+  production:
+    - type: token
+      data: ASYNC
 - name: IdentifierNameButNotReservedWord
   production:
     - type: token
