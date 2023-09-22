@@ -47,14 +47,19 @@ fn main() -> Result<()> {
         }
     }
 
-    let script = match cl.script_file {
-        Some(ref file) => std::fs::read_to_string(file)?,
+    // The source text should be a UTF-8 character sequence, but invalid UTF-8 character may
+    // appear.  So, we firstly read it as a byte sequence.
+    let raw = match cl.script_file {
+        Some(ref file) => std::fs::read(file)?,
         None => {
-            let mut script = String::new();
-            std::io::stdin().read_to_string(&mut script)?;
-            script
+            let mut raw = vec![];
+            std::io::stdin().read_to_end(&mut raw)?;
+            raw
         }
     };
+
+    // And then convert it into a UTF-8 string loosely.
+    let script = String::from_utf8_lossy(&raw);
 
     let now = std::time::Instant::now();
     let mut parser = JsParser::new(&script);
