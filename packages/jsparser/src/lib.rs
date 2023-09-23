@@ -1,5 +1,3 @@
-#![doc = include_str!("../README.md")]
-
 mod lexer;
 mod parser;
 
@@ -15,4 +13,5 @@ pub use lexer::Token as JsToken;
 /// Token types.
 pub use lexer::TokenKind as JsTokenKind;
 
+/// A JavaScript parser.
 pub use parser::Parser as JsParser;
