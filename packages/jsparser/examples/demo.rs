@@ -66,8 +66,12 @@ fn main() -> Result<()> {
     if parser.parse() {
         let elapsed = now.elapsed().as_micros();
         let bytes = script.len();
-        let depth = parser.max_stack_depth();
-        println!("time={elapsed} size={bytes} max-stack-depth={depth}");
+        let stack_depth = parser.max_stack_depth();
+        let template_literal_depth = parser.max_template_literal_depth();
+        println!(
+            "time={} size={} max-stack-depth={} max-template-literal-depth={}",
+            elapsed, bytes, stack_depth, template_literal_depth
+        );
         Ok(())
     } else {
         Err(anyhow!("Parse error"))

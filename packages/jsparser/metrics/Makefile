@@ -1,3 +1,6 @@
+.PHONY: all
+all: cdnjs
+
 .PHONY: cdnjs
 cdnjs:
 	@sh cdnjs.sh

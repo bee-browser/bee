@@ -26,9 +26,17 @@ do
       echo "$COUNT/$TOTAL: + $URL"
       TIME=$(echo "$METRICS" | cut -d ' ' -f 1 | cut -d '=' -f 2)
       SIZE=$(echo "$METRICS" | cut -d ' ' -f 2 | cut -d '=' -f 2)
-      DEPTH=$(echo "$METRICS" | cut -d ' ' -f 3 | cut -d '=' -f 2)
-      cat <<EOF >>$OUTPUT
-{"url":"$URL","parsed":true,"time":$TIME,"size":$SIZE,"maxStackDepth":$DEPTH}
+      MAX_STACK_DEPTH=$(echo "$METRICS" | cut -d ' ' -f 3 | cut -d '=' -f 2)
+      MAX_TEMPLATE_LITERAL_DEPTH=$(echo "$METRICS" | cut -d ' ' -f 4 | cut -d '=' -f 2)
+      cat <<EOF | tr -d '\n' >>$OUTPUT
+{
+"url":"$URL",
+"parsed":true,
+"time":$TIME,
+"size":$SIZE,
+"maxStackDepth":$MAX_STACK_DEPTH,
+"maxTemplateLiteralDepth":$MAX_TEMPLATE_LITERAL_DEPTH
+}
 EOF
     else
       echo "$COUNT/$TOTAL: - $URL"
