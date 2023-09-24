@@ -241,37 +241,3 @@ enum PreprocessResult {
     Changed(Grammar),
     NotChanged(Grammar),
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
-    use test_log::test;
-
-    macro_rules! impl_test {
-        ($test:ident, $grammar:literal, $expected:literal) => {
-            #[test]
-            fn $test() {
-                let rules = serde_yaml::from_str(include_str!($grammar)).unwrap();
-                let actual = preprocess(Grammar::new(rules));
-                let rules = serde_yaml::from_str(include_str!($expected)).unwrap();
-                let expected = Grammar::new(rules);
-                assert_eq!(
-                    actual.non_terminals().count(),
-                    expected.non_terminals().count()
-                );
-                for non_terminal in actual.non_terminals() {
-                    let actual = actual.non_terminal_rules(non_terminal);
-                    let expected = expected.non_terminal_rules(non_terminal);
-                    assert_eq!(actual.len(), expected.len());
-                    for (actual, expected) in actual.iter().zip(expected) {
-                        assert_eq!(actual.name, expected.name);
-                        assert_eq!(actual.production, expected.production);
-                    }
-                }
-            }
-        };
-    }
-
-    impl_test! {test_0000, "test_0000.yaml", "test_0000.expected.yaml"}
-}

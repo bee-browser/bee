@@ -77,7 +77,7 @@ Production rules for `DecimalDigits.1` and `DecimalDigit.2` are internal *varian
 rules are used only in closure computations for restricted production rules.  And non-terminal
 symbols in a variant rule of an LR item are converted to corresponding *original* symbols before
 adding the LR item to the closure item set.  So, non-terminal variants never appear in the list of
-non-terminal symbols in [`LalrSpec`].  See the [`closure`] module for details.
+non-terminal symbols in [`LalrSpec`].
 
 ## How does bee-lalrgen process [no LineTerminator here] restrictions in production rules?
 
