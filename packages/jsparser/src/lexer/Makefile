@@ -56,7 +56,7 @@ codegen: $(CODEGEN_TARGETS)
 # well-known algorithms.  Finally, `bee-dfagen` outputs the DFA in a JSON format which contains
 # enough information for code generation.
 .PRECIOUS: dfa/%.json.xz
-dfa/%.json.xz: es2022.lex.yaml tokens.yaml $(PROJ_DIR)/target/release/bee-dfagen
+dfa/%.json.xz: es2022.lex.yaml tokens.yaml
 	@echo 'Generating $(abspath $@)...'
 	@cargo run -qrp bee-dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' | xz >$@
 
@@ -97,7 +97,3 @@ tokens.json: tokens.yaml
 tokens.rs: tokens.json tokens.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@$(BEE_TOOLS) codegen tokens.rs.hbs $< | rustfmt --emit=stdout >$@
-
-include $(PROJ_DIR)/target/release/bee-dfagen.d
-$(PROJ_DIR)/target/release/bee-dfagen:
-	@cargo build -r -p bee-dfagen
