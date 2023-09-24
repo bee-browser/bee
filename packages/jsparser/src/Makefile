@@ -3,9 +3,11 @@ TRANSPILE_ARGS ?=
 
 BEE_TOOLS := ../../../tools/bin/bee-tools
 
+ECMA262_VERSION := es2022
+
 CODEGEN_TARGETS := \
-  lexer/es2022.lex.yaml \
-  parser/es2022.syn.yaml
+  lexer/grammar.yaml \
+  parser/grammar.yaml
 
 # targets
 
@@ -22,10 +24,10 @@ codegen: $(CODEGEN_TARGETS)
 
 # 1. Download an ECMA-262 specification written in HTML.
 
-.PRECIOUS: es2022.spec.html
-es2022.spec.html: FORCE
+.PRECIOUS: ecma262.html
+ecma262.html: FORCE
 	@echo 'Updating $(abspath $@)...'
-	@curl https://raw.githubusercontent.com/tc39/ecma262/es2022/spec.html -sG | \
+	@curl https://raw.githubusercontent.com/tc39/ecma262/$(ECMA262_VERSION)/spec.html -sG | \
 	  $(BEE_TOOLS)-update-file $@
 
 # 2. Extract the lexical and syntactic grammars from the specification
@@ -36,13 +38,13 @@ es2022.spec.html: FORCE
 # We learned this approach from mozilla-spidermonkey/jsparagus.
 # See js_parser/extract_es_grammar.py.
 
-.PRECIOUS: lexer/es2022.lex.txt
-lexer/es2022.lex.txt: es2022.spec.html
+.PRECIOUS: lexer/grammar.txt
+lexer/grammar.txt: ecma262.html
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | cargo run -q --package bee-esgrammar extract lexical-grammar >$@
 
-.PRECIOUS: parser/es2022.syn.txt
-parser/es2022.syn.txt: es2022.spec.html
+.PRECIOUS: parser/grammar.txt
+parser/grammar.txt: ecma262.html
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | cargo run -q --package bee-esgrammar extract syntactic-grammar >$@
 
@@ -62,13 +64,13 @@ parser/es2022.syn.txt: es2022.spec.html
 # into equivalent production rules.  `transpile.js` adds some production rules for convenience in
 # further processing.
 
-.PRECIOUS: lexer/es2022.lex.yaml
-lexer/es2022.lex.yaml: lexer/es2022.lex.txt transpile.js
+.PRECIOUS: lexer/grammar.yaml
+lexer/grammar.yaml: lexer/grammar.txt transpile.js
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | deno run transpile.js -g lexical $(TRANSPILE_ARGS) >$@
 
-.PRECIOUS: parser/es2022.syn.yaml
-parser/es2022.syn.yaml: parser/es2022.syn.txt transpile.js lexer/tokens.json
+.PRECIOUS: parser/grammar.yaml
+parser/grammar.yaml: parser/grammar.txt transpile.js lexer/tokens.json
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | deno run --allow-read transpile.js -g syntactic -t lexer/tokens.json $(TRANSPILE_ARGS) >$@
 

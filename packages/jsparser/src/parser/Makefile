@@ -27,6 +27,6 @@ lalr/%.rs: lalr/%.rs.hbs lalr.json.xz lalr.js
 
 # Generate an intermediate JSON data in order to avoid re-running bee-lalrgen when lalr.js or
 # lalr.rs.hbs changes.
-lalr.json.xz: es2022.syn.yaml
+lalr.json.xz: grammar.yaml
 	@echo 'Generating $(abspath $@)...'
 	@cargo run -q -r -p bee-lalrgen -- $< Module | jq -c . | xz >$@
