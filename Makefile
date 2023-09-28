@@ -73,11 +73,11 @@ check: format
 	cargo check --release --all-features
 
 .PHONY: build
-build: format codegen $(BUILD_TARGETS)
+build: format $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: format codegen install-nextest
+test: format install-nextest
 	cargo nextest run --all-features
 #	deno test --parallel --shuffle
 
@@ -90,11 +90,11 @@ clean: $(CLEAN_TARGETS)
 	cargo clean
 
 .PHONY: debug-build
-debug-build: format codegen $(BUILD_TARGETS)
+debug-build: format $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: coverage-test
-coverage-test: format codegen
+coverage-test: format
 	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features
 
 .PHONY: coverage-lcov
