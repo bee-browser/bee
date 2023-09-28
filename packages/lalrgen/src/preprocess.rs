@@ -35,6 +35,8 @@ fn preprocess_non_tail_lookaheads(
     grammar: Grammar,
     variant_table: &mut VariantNameTable,
 ) -> PreprocessResult {
+    let mut original_rules: HashMap<Arc<Rule>, Arc<Rule>> = Default::default();
+
     let mut remaining = VecDeque::with_capacity(grammar.len());
     remaining.extend(grammar.rules().iter().cloned());
 
@@ -59,7 +61,8 @@ fn preprocess_non_tail_lookaheads(
 
         changed = true;
 
-        let mut preprocessor = LookaheadPreprocessor::new(n, &grammar, variant_table);
+        let mut preprocessor =
+            LookaheadPreprocessor::new(n, &grammar, variant_table, &mut original_rules);
         for term in rule.production.iter() {
             if !preprocessor.preprocess(&rule.name, term) {
                 break;
@@ -74,19 +77,19 @@ fn preprocess_non_tail_lookaheads(
         // Add the modified rule which might be removed if a non-tail lookahead restriction
         // copied into a rule referred from the production doesn't meet.  See the next
         // `removal` loop for details.
-        let modified = Arc::new(Rule::with_rule(
-            rule.name.clone(),
-            preprocessor.take_production(),
-            rule.clone(),
-        ));
+        let modified = Arc::new(Rule {
+            name: rule.name.clone(),
+            production: preprocessor.take_production(),
+        });
         tracing::trace!(%modified, original = %rule);
+        original_rules.insert(modified.clone(), rule.clone());
         rules.push(modified);
     }
 
     tracing::debug!(changed);
     if changed {
         rules = remove_invalidated_rules(rules);
-        PreprocessResult::Changed(Grammar::new(rules))
+        PreprocessResult::Changed(Grammar::with_original_rules(rules, original_rules))
     } else {
         PreprocessResult::NotChanged(grammar)
     }
@@ -124,20 +127,27 @@ fn remove_invalidated_rules(mut rules: Vec<Arc<Rule>>) -> Vec<Arc<Rule>> {
     rules
 }
 
-struct LookaheadPreprocessor<'g, 't> {
+struct LookaheadPreprocessor<'g, 't, 'u> {
     grammar: &'g Grammar,
     table: &'t mut VariantNameTable,
+    original_rules: &'u mut HashMap<Arc<Rule>, Arc<Rule>>,
     lookahead: Option<Arc<Lookahead>>,
     production: Vec<Term>,
     variant_rules: Vec<Arc<Rule>>,
     invalid_rule: bool,
 }
 
-impl<'g, 't> LookaheadPreprocessor<'g, 't> {
-    fn new(n: usize, grammar: &'g Grammar, table: &'t mut VariantNameTable) -> Self {
+impl<'g, 't, 'u> LookaheadPreprocessor<'g, 't, 'u> {
+    fn new(
+        n: usize,
+        grammar: &'g Grammar,
+        table: &'t mut VariantNameTable,
+        original_rules: &'u mut HashMap<Arc<Rule>, Arc<Rule>>,
+    ) -> Self {
         LookaheadPreprocessor {
             grammar,
             table,
+            original_rules,
             lookahead: None,
             production: Vec::with_capacity(n),
             variant_rules: vec![],
@@ -162,12 +172,12 @@ impl<'g, 't> LookaheadPreprocessor<'g, 't> {
                         for rule in self.grammar.non_terminal_rules(non_terminal) {
                             let mut variant_production = vec![Term::Lookahead(lookahead.clone())];
                             variant_production.extend(rule.production.iter().cloned());
-                            let variant = Arc::new(Rule::with_rule(
-                                variant_name.clone(),
-                                variant_production,
-                                rule.clone(),
-                            ));
+                            let variant = Arc::new(Rule {
+                                name: variant_name.clone(),
+                                production: variant_production,
+                            });
                             tracing::trace!(%variant, original = %rule);
+                            self.original_rules.insert(variant.clone(), rule.clone());
                             self.variant_rules.push(variant);
                         }
 

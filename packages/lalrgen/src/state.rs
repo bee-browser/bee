@@ -65,8 +65,7 @@ pub struct State {
 }
 
 impl State {
-    fn new(id: StateId, internal_item_set: LrItemSet) -> Self {
-        let item_set = internal_item_set.to_original();
+    fn new(id: StateId, item_set: LrItemSet, internal_item_set: LrItemSet) -> Self {
         State {
             id,
             item_set,
@@ -115,7 +114,7 @@ impl State {
 
 /// Build the LR(0) automaton for a given grammar.
 pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
-    let mut builder = StateBuilder::default();
+    let mut builder = StateBuilder::new(grammar);
 
     assert_eq!(
         grammar
@@ -226,8 +225,9 @@ pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Vec<State
     builder.build()
 }
 
-#[derive(Default)]
-struct StateBuilder {
+struct StateBuilder<'g> {
+    grammar: &'g Grammar,
+
     /// A list of states.
     states: Vec<State>,
 
@@ -245,7 +245,15 @@ struct StateBuilder {
     item_set_map: HashMap<LrItemSet, StateId>,
 }
 
-impl StateBuilder {
+impl<'g> StateBuilder<'g> {
+    fn new(grammar: &'g Grammar) -> Self {
+        StateBuilder {
+            grammar,
+            states: Default::default(),
+            item_set_map: Default::default(),
+        }
+    }
+
     fn state(&self, id: StateId) -> &State {
         &self.states[id.0]
     }
@@ -254,15 +262,16 @@ impl StateBuilder {
         &mut self.states[id.0]
     }
 
-    fn create_state(&mut self, item_set: LrItemSet) -> StateId {
-        let original = item_set.to_original();
-        match self.item_set_map.get(&original) {
+    fn create_state(&mut self, internal_item_set: LrItemSet) -> StateId {
+        let item_set = internal_item_set.to_original(self.grammar);
+        match self.item_set_map.get(&item_set) {
             Some(&state_id) => state_id,
             None => {
                 let state_id = StateId(self.states.len());
-                tracing::trace!(created = %state_id, %item_set);
-                self.states.push(State::new(state_id, item_set));
-                self.item_set_map.insert(original, state_id);
+                self.item_set_map.insert(item_set.clone(), state_id);
+                tracing::trace!(created = %state_id, %internal_item_set);
+                self.states
+                    .push(State::new(state_id, item_set, internal_item_set));
                 state_id
             }
         }

@@ -68,11 +68,11 @@ pub fn build_lookahead_tables(
             .flatten()
             .filter_map(|(state, item, temp_item)| {
                 let (target_state, target_item) = if temp_item.is_reducible() {
-                    let kernel_item = temp_item.without_lookahead().to_original();
+                    let kernel_item = temp_item.without_lookahead().to_original(grammar);
                     assert!(state.item_set.contains(&kernel_item));
                     (state.id, kernel_item)
                 } else {
-                    let kernel_item = temp_item.without_lookahead().shift().to_original();
+                    let kernel_item = temp_item.without_lookahead().shift().to_original(grammar);
                     let next_symbol = match temp_item.next_term() {
                         Some(Term::Token(token)) => Some(Symbol::Token(token.clone())),
                         Some(Term::NonTerminal(non_terminal)) => {
@@ -94,14 +94,14 @@ pub fn build_lookahead_tables(
 
                 if temp_item.lookahead.iter().all(|token| token == "#") {
                     lookahead_tables[state.id.index()]
-                        .get(&item.to_original())
+                        .get(&item.to_original(grammar))
                         .cloned()
                         .map(|lookahead_set| {
                             (
                                 target_state.index(),
                                 Operation::Propagate(OperationData {
                                     source_state: state.id,
-                                    source_item: item.to_original(),
+                                    source_item: item.to_original(grammar),
                                     target_state,
                                     target_item,
                                     lookahead_set,
@@ -149,7 +149,7 @@ pub fn build_lookahead_tables(
                 // LR(0) automaton.  Variant symbols in items should be converted to corresponding
                 // symbols in the original grammar before updating the lookahead table with the
                 // items.
-                for item in item_set.to_original().iter() {
+                for item in item_set.to_original(grammar).iter() {
                     assert!(state.item_set.contains(&item));
                     assert!(next_state.item_set.contains(&item));
                     if let Some(lookahead_set) =

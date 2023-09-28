@@ -25,7 +25,7 @@ codegen: $(CODEGEN_TARGETS)
 # 1. Download an ECMA-262 specification written in HTML.
 
 .PRECIOUS: ecma262.html
-ecma262.html: FORCE
+ecma262.html:
 	@echo 'Updating $(abspath $@)...'
 	@curl https://raw.githubusercontent.com/tc39/ecma262/$(ECMA262_VERSION)/spec.html -sG | \
 	  $(BEE_TOOLS)-update-file $@
@@ -73,6 +73,3 @@ lexer/grammar.yaml: lexer/grammar.txt transpile.js
 parser/grammar.yaml: parser/grammar.txt transpile.js lexer/tokens.json
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | deno run --allow-read transpile.js -g syntactic -t lexer/tokens.json $(TRANSPILE_ARGS) >$@
-
-.PHONY: FORCE
-FORCE:

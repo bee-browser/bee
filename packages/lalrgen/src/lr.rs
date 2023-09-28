@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use bee_macros::delegate_all;
 
+use crate::grammar::Grammar;
 use crate::grammar::Rule;
 use crate::grammar::Term;
 use crate::phrase::Phrase;
@@ -16,8 +17,8 @@ pub struct LrItem {
 }
 
 impl LrItem {
-    pub fn to_original(&self) -> Self {
-        let original = self.rule.to_original();
+    pub fn to_original(&self, grammar: &Grammar) -> Self {
+        let original = grammar.to_original_rule(self.rule.clone());
         let dot = if self.dot > 0 {
             // Re-compute the cursor position.
             let mut i = 0;
@@ -33,7 +34,7 @@ impl LrItem {
             self.dot
         };
         LrItem {
-            rule: Arc::new(original),
+            rule: original,
             dot,
             lookahead: self.lookahead.clone(),
         }
@@ -150,10 +151,10 @@ delegate_all! {LrItemSet => BTreeSet<LrItem>}
 
 /// Represents an immutable LR item set.
 impl LrItemSet {
-    pub fn to_original(&self) -> Self {
+    pub fn to_original(&self, grammar: &Grammar) -> Self {
         let mut set: BTreeSet<LrItem> = Default::default();
         for item in self.iter() {
-            set.insert(item.to_original());
+            set.insert(item.to_original(grammar));
         }
         LrItemSet(set)
     }
