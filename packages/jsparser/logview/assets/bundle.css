@@ -1,0 +1,43 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-gap: 1px;
+  background-color: silver;  /* works as grid border */
+}
+
+.grid > * {
+  background-color: white;
+}
+
+.hide {
+  display: none;
+}
+
+#main-view {
+  display: flex;
+  width: 100%;
+}
+
+#parser-view {
+  flex-basis: 50%;
+}
+
+.parser-state {
+  border: solid 1px black;
+}
+
+#lexer-view {
+  flex-basis: 50%;
+}

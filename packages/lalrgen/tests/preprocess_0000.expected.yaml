@@ -1,0 +1,111 @@
+# LookaheadExample ::
+#   `n` DecimalDigits.1
+#   DecimalDigit [lookahead ∉ DecimalDigit]
+#
+# DecimalDigits ::
+#   DecimalDigit
+#   DecimalDigits DecimalDigit
+#
+# DecimalDigit :: one of
+#   `0` `1` `2` `3` `4` `5` `6` `7` `8` `9`
+#
+# DecimalDigits.1 ::
+#   DecimalDigit.2
+#   DecimalDigits.1 DecimalDigit
+#
+# DecimalDigit.2 :: one of
+#   `0` `2` `4` `6` `8`
+- name: LookaheadExample
+  production:
+    - type: token
+      data: 'n'
+    - type: non-terminal
+      data: [DecimalDigits, 1]
+- name: LookaheadExample
+  production:
+    - type: non-terminal
+      data: DecimalDigit
+    - type: lookahead
+      data:
+        type: exclude
+        data: [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
+- name: DecimalDigits
+  production:
+    - type: non-terminal
+      data: DecimalDigit
+- name: DecimalDigits
+  production:
+    - type: non-terminal
+      data: DecimalDigits
+    - type: non-terminal
+      data: DecimalDigit
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 0
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 1
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 2
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 3
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 4
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 5
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 6
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 7
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 8
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 9
+- name: [DecimalDigits, 1]
+  production:
+    - type: non-terminal
+      data: [DecimalDigit, 2]
+- name: [DecimalDigits, 1]
+  production:
+    - type: non-terminal
+      data: [DecimalDigits, 1]
+    - type: non-terminal
+      data: DecimalDigit
+- name: [DecimalDigit, 2]
+  production:
+    - type: token
+      data: 0
+- name: [DecimalDigit, 2]
+  production:
+    - type: token
+      data: 2
+- name: [DecimalDigit, 2]
+  production:
+    - type: token
+      data: 4
+- name: [DecimalDigit, 2]
+  production:
+    - type: token
+      data: 6
+- name: [DecimalDigit, 2]
+  production:
+    - type: token
+      data: 8
