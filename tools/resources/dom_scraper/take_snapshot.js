@@ -14,8 +14,9 @@ class Scraper {
   }
 
   async scrape() {
+    const url = new URL(this.document_.URL);
     const document = {
-      url: this.document_.URL,
+      filename: url.pathname.split('/').at(-1),
       title: this.document_.title,
       root: await this.scrapeNode_(this.document_.documentElement),
     };
