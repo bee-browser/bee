@@ -1,7 +1,5 @@
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
-export BEE_VENDOR_DIR := $(PROJDIR)/vendor
-export BEE_CARGO_CODEGEN_DIR := $(PROJDIR)/target/codegen
 
 # These are used in the "lldb.launch.sourceMap" property in //.vscode/settings.json.
 export BEE_DEV_RUSTC_COMMIT_HASH := $(shell rustc -vV | grep 'commit-hash' | cut -d ' ' -f 2)
@@ -66,7 +64,10 @@ all: build
 
 .PHONY: list
 list:
-	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | grep -E -v -e '^[^[:alnum:]]' -e '^$@$$'
+	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | \
+	  awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | \
+	  sort | \
+	  grep -E -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 .PHONY: check
 check: format
@@ -77,9 +78,8 @@ build: format $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: format install-nextest
+test: format
 	cargo nextest run --all-features
-#	deno test --parallel --shuffle
 
 .PHONY: bench
 bench:
@@ -98,11 +98,11 @@ coverage-test: format
 	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features
 
 .PHONY: coverage-lcov
-coverage-lcov: coverage-test install-grcov | $(PROJDIR)/target/coverage
+coverage-lcov: coverage-test | $(PROJDIR)/target/coverage
 	grcov $(GRCOV_COMMON_ARGS) -t lcov -o $(PROJDIR)/target/coverage/lcov.info
 
 .PHONY: coverage-html
-coverage-html: coverage-test install-grcov | $(PROJDIR)/target/coverage
+coverage-html: coverage-test | $(PROJDIR)/target/coverage
 	grcov $(GRCOV_COMMON_ARGS) -t html -o $(PROJDIR)/target/coverage
 
 .PHONE: codegen
@@ -129,16 +129,16 @@ doc: format
 format:
 	cargo fmt --all
 
-.PHONY: install-grcov
-install-grcov:
-	cargo install grcov
-
 .PHONY: install-nextest
 install-nextest:
 	cargo install cargo-nextest
 
+.PHONY: install-grcov
+install-grcov:
+	cargo install grcov
+
 .PHONY: github-ci
-github-ci:
+github-ci: install-nextest install-grcov
 	@echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
 
 .PHONY: github-workflows
