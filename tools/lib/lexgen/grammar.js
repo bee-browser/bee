@@ -1,7 +1,7 @@
-import * as log from 'https://deno.land/std@0.187.0/log/mod.ts';
-import * as yaml from 'https://deno.land/std@0.187.0/yaml/mod.ts';
-import { assert } from 'https://deno.land/std@0.187.0/testing/asserts.ts';
-import Handlebars from 'npm:handlebars@4.7.7'
+import * as log from 'https://deno.land/std@0.202.0/log/mod.ts';
+import * as yaml from 'https://deno.land/std@0.202.0/yaml/mod.ts';
+import { assert } from 'https://deno.land/std@0.202.0/testing/asserts.ts';
+import Handlebars from 'npm:handlebars@4.7.8'
 import { parseRegExpLiteral, validateRegExpLiteral, visitRegExpAST, } from 'npm:regexpp@3.2.0';
 import { readAllText } from '../cli.js';
 import { Pattern, EMPTY } from '../dfa/pattern.js';

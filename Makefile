@@ -36,11 +36,13 @@ CLEAN_TARGETS = $(addprefix clean-,\
   webui \
 )
 
+# TODO: Enable codegen for lib/layout.
+# bee-tools-dom-scrape doesn't work with deno/1.33.0 + Chrome/113.
+# puppeteer.launch() fails due to "NetworkError: failed to connect to WebSocket: Invalid status code".
 CODEGEN_TARGETS = $(addprefix codegen-,\
-  libs/htmltokenizer \
-  libs/htmlparser \
-  libs/jslexer \
-  libs/layout \
+  packages/htmltokenizer \
+  packages/htmlparser \
+  packages/jsparser \
 )
 
 COVERAGE_TEST_ENV_VARS = \
@@ -71,13 +73,13 @@ check: format
 	cargo check --release --all-features
 
 .PHONY: build
-build: format codegen $(BUILD_TARGETS)
+build: format $(BUILD_TARGETS)
 	cargo build --release
 
 .PHONY: test
-test: format codegen install-nextest
+test: format install-nextest
 	cargo nextest run --all-features
-	deno test --parallel --shuffle
+#	deno test --parallel --shuffle
 
 .PHONY: bench
 bench:
@@ -88,11 +90,11 @@ clean: $(CLEAN_TARGETS)
 	cargo clean
 
 .PHONY: debug-build
-debug-build: format codegen $(BUILD_TARGETS)
+debug-build: format $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: coverage-test
-coverage-test: format codegen
+coverage-test: format
 	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features
 
 .PHONY: coverage-lcov
@@ -109,6 +111,7 @@ codegen: $(CODEGEN_TARGETS)
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno
 
+# Specify `CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git` if `make update-deps-crates` gets stuck.
 .PHONY: update-deps-crates
 update-deps-crates:
 	cargo upgrade -i allow

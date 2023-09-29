@@ -1,0 +1,16 @@
+<body></body>
+<script>
+  const es = new EventSource('/logs');
+
+  function showMessage(event) {
+    console.log(event);
+    const li = document.createElement('li');
+    li.appendChild(document.createTextNode(`${event.type}: ${event.data}`));
+    document.body.appendChild(li);
+  }
+
+  es.addEventListener('spawned', showMessage);
+  es.addEventListener('log', showMessage);
+  es.addEventListener('terminated', showMessage);
+  es.addEventListener('error', (event) => es.close());
+</script>

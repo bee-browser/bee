@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.187.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.202.0/path/mod.ts';
 // npm:puppeteer doesn't work with deno.
 // See https://github.com/denoland/deno/issues/17496
 //import puppeteer from 'npm:puppeteer@19.8.2';
@@ -79,10 +79,12 @@ async function launch_puppeteer(options) {
     executablePath: options.executable || DEFAULT_EXECUTABLE,
     devtools: options.debug || false,
     dumpio: options.logging || false,
+    args: [],
   };
 
-  if (!options.sandbox) {
-    opts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
+  if (options.noSandbox) {
+    opts.args.push('--no-sandbox');
+    opts.args.push('--disable-setuid-sandbox');
   }
 
   return await puppeteer.launch(opts);

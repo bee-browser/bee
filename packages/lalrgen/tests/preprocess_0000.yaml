@@ -1,0 +1,78 @@
+# LookaheadExample :
+#   `n` [lookahead ∉ { `1`, `3`, `5`, `7`, `9` }] DecimalDigits
+#   DecimalDigit [lookahead ∉ DecimalDigit]
+#
+# DecimalDigits :
+#   DecimalDigit
+#   DecimalDigits DecimalDigit
+#
+# DecimalDigit : one of
+#   `0` `1` `2` `3` `4` `5` `6` `7` `8` `9`
+- name: LookaheadExample
+  production:
+    - type: token
+      data: 'n'
+    - type: lookahead
+      data:
+        type: exclude
+        data: [[1], [3], [5], [7], [9]]
+    - type: non-terminal
+      data: DecimalDigits
+- name: LookaheadExample
+  production:
+    - type: non-terminal
+      data: DecimalDigit
+    - type: lookahead
+      data:
+        type: exclude
+        data: [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
+- name: DecimalDigits
+  production:
+    - type: non-terminal
+      data: DecimalDigit
+- name: DecimalDigits
+  production:
+    - type: non-terminal
+      data: DecimalDigits
+    - type: non-terminal
+      data: DecimalDigit
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 0
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 1
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 2
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 3
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 4
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 5
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 6
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 7
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 8
+- name: DecimalDigit
+  production:
+    - type: token
+      data: 9

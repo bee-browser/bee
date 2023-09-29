@@ -1,0 +1,22 @@
+[package]
+name = "bee-dfagen"
+version = "0.0.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+anyhow = "1.0.75"
+bee-macros = { path = "../macros" }
+clap = { version = "4.4.4", features = ["derive", "env"] }
+indexmap = { version = "2.0.0", features = ["serde"] }
+maplit = "1.0.2"
+serde = { version = "1.0.188", features = ["derive", "rc"] }
+serde_json = "1.0.107"
+serde_yaml = "0.9.25"
+smallvec = "1.11.1"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
+
+[dev-dependencies]
+test-log = { version = "0.2.12", default-features = false, features = ["trace"] }

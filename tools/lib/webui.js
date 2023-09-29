@@ -1,7 +1,7 @@
 'use strict';
 
-import * as log from 'https://deno.land/std@0.187.0/log/mod.ts';
-import * as path from 'https://deno.land/std@0.187.0/path/mod.ts';
+import * as log from 'https://deno.land/std@0.202.0/log/mod.ts';
+import * as path from 'https://deno.land/std@0.202.0/path/mod.ts';
 import * as servest from 'https://deno.land/x/servest@v1.3.4/mod.ts';
 import { PROJ_DIR, WORKERS_DIR } from './consts.js';
 import { scrape } from './chrome_devtools.js';
