@@ -1,9 +1,9 @@
 'use strict';
 
 import * as path from 'https://deno.land/std@0.202.0/path/mod.ts';
-// npm:puppeteer doesn't work with deno.
-// See https://github.com/denoland/deno/issues/17496
-//import puppeteer from 'npm:puppeteer@19.8.2';
+// npm:puppeteer work with deno, but warning messages are shown.
+// See https://github.com/denoland/deno/issues/19507
+//import puppeteer from 'npm:puppeteer@21.3.6';
 import { default as puppeteer } from 'https://deno.land/x/puppeteer@16.2.0/mod.ts';
 import { RESOURCES_DIR, } from './consts.js';
 
@@ -76,6 +76,7 @@ export async function tracing(url, options) {
 
 async function launch_puppeteer(options) {
   let opts = {
+    headless: 'new',
     executablePath: options.executable || DEFAULT_EXECUTABLE,
     devtools: options.debug || false,
     dumpio: options.logging || false,
