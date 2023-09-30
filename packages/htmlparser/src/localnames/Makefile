@@ -7,6 +7,6 @@ codegen: $(SRCS)
 %.rs: %.yaml %.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
-	  $(BEE_TOOLS) y2j | \
+	  yq -o=json | \
 	  $(BEE_TOOLS) codegen --no-escape --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@

@@ -3,7 +3,8 @@ BEE_TOOLS := $(PROJ_DIR)/tools/bin/bee-tools
 
 GOAL_SYMBOLS := $(shell \
   cat tokens.yaml | \
-  $(BEE_TOOLS) y2j | jq -r '[.goals[].name] | join(" ")' \
+  yq -o=json | \
+  jq -r '[.goals[].name] | join(" ")' \
 )
 
 CODEGEN_TARGETS := \
@@ -17,7 +18,7 @@ CODEGEN_TARGETS := \
 # The definition order of tokens will be preserved.
 LIST_TOKENS = \
   cat tokens.yaml | \
-  $(BEE_TOOLS) y2j | \
+  yq -o=json | \
   jq -r '.goals[] | select(.name == "$(patsubst dfa/%.json.xz,%,$@)") | .tokens | flatten | join(" ")'
 
 # targets
@@ -74,13 +75,13 @@ dfa/%.rs: dfa/%.json.xz dfa.js dfa/dfa.rs.hbs
 # defined in `tokens.yaml` and extracted from it by using `jq`.
 dfa/mod.rs: dfa/mod.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@cat tokens.yaml | $(BEE_TOOLS) y2j | jq -r '[.goals[].name]' | \
+	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
 	  $(BEE_TOOLS) codegen --input-stdin $< | rustfmt --emit=stdout >$@
 
 # 4. Generate an enum type for goal symbols
 goals.rs: goals.rs.hbs tokens.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cat tokens.yaml | $(BEE_TOOLS) y2j | jq -r '[.goals[].name]' | \
+	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
 	  $(BEE_TOOLS) codegen --input-stdin $< | rustfmt --emit=stdout >$@
 
 # 5. Collect tokens from tokens.yaml
@@ -91,7 +92,7 @@ goals.rs: goals.rs.hbs tokens.yaml
 .PRECIOUS: tokens.json
 tokens.json: tokens.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | $(BEE_TOOLS) y2j | jq '[.goals[].tokens] | flatten | unique' >$@
+	@cat $< | yq -o=json | jq '[.goals[].tokens] | flatten | unique' >$@
 
 # 6. Generate an enum type for tokens.
 tokens.rs: tokens.json tokens.rs.hbs
