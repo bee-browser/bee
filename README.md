@@ -18,6 +18,8 @@ Install the following software:
 * [Deno]
 * [Nextest]
 * [grcov]
+* [jq]
+* [yq]
 
 Then:
 
@@ -63,5 +65,7 @@ shall be dual licensed as above, without any additional terms or conditions.
 [Deno]: https://deno.com/
 [Nextest]: https://github.com/nextest-rs/nextest
 [grcov]: https://github.com/mozilla/grcov
+[jq]: https://jqlang.github.io/jq/
+[yq]: https://mikefarah.gitbook.io/yq/
 [LICENSE-APACHE]: ./LICENSE-APACHE
 [LICENSE-MIT]: ./LICENSE-MIT

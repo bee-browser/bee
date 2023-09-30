@@ -76,7 +76,7 @@ html/%.test.html: %.test.json html/test.html.hbs
 .PRECIOUS: %.test.json
 %.test.json: %.test.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | $(BEE_TOOLS) y2j >$@
+	@cat $< | yq -o=json | jq -c '.' >$@
 
 .PRECIOUS: %.test.yaml
 %.test.yaml: data/%.test.yaml.hbs
