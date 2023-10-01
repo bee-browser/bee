@@ -81,6 +81,10 @@ ECMA-262 specification and bee-jsparser stops due to an syntax error.  Because
 * [ ] Source location
 * [ ] Fuzz testing
 
+## References
+
+* [Understanding ECMAScript - V8](https://v8.dev/blog/tags/understanding-ecmascript)
+
 [bee-dfagen]: ../dfagen
 [bee-lalrgen]: ../lalrgen
 [unicode-id-start]: https://crates.io/crates/unicode-id-start

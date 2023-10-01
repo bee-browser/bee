@@ -129,3 +129,9 @@ details.
 An [`LalrAction::Replace`] action must be implicitly performed if a state after an
 [`LalrAction::Reduce`] action has a transition caused by the last processed token and the token is
 one of disallowed tokens in the state.
+
+## References
+
+* [LALR Parser - Wikipedia](https://en.wikipedia.org/wiki/LALR_parser)
+* [Practical LR(k) Parser Construction](http://david.tribble.com/text/lrk_parsing.html)
+* [A Tutorial Explaining LALR(1) Parsing - web.archive.org](https://web.archive.org/web/20210507215636/http://web.cs.dal.ca:80/~sjackson/lalr1.html)
