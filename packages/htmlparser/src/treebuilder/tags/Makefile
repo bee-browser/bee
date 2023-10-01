@@ -1,4 +1,6 @@
-BEE_TOOLS := ../../../../../tools/bin/bee-tools
+PROJ_DIR := ../../../../..
+TOOLS_BIN := $(PROJ_DIR)/tools/bin
+
 SPEC_YAML := ../spec.yaml
 COLLECT_JS := ../collect.js
 
@@ -12,18 +14,18 @@ codegen: $(SRCS)
 mod.rs: mod.rs.hbs tags.txt
 	@echo 'Generating $(abspath $@)...'
 	@echo -n $(TAGS) | jq -Rsc 'split(" ")' | \
-	  $(BEE_TOOLS) codegen --no-escape --input-stdin mod.rs.hbs | \
+	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin mod.rs.hbs | \
 	  rustfmt --emit=stdout >$@
 
 any_other.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read $(COLLECT_JS) rules -s $(SPEC_YAML) any_other '<_>' '</_>' | \
-	  $(BEE_TOOLS) codegen --no-escape --input-stdin $< | \
+	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
 	  rustfmt --emit=stdout >$@
 
 %.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read $(COLLECT_JS) rules -s $(SPEC_YAML) $(subst .rs,,$@) \
 	  '<$(subst .rs,,$@)>' '</$(subst .rs,,$@)>' | \
-	  $(BEE_TOOLS) codegen --no-escape --input-stdin $< | \
+	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
 	  rustfmt --emit=stdout >$@

@@ -6,9 +6,9 @@ import * as io from 'https://deno.land/std@0.202.0/io/mod.ts';
 import * as path from 'https://deno.land/std@0.202.0/path/mod.ts';
 
 const TOOLS_DIR = path.resolve(path.dirname(path.fromFileUrl(import.meta.url)), '..', '..');
-const TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'bee-tools-text-to-dot-matrix');
-const DOM_SCRAPER = path.join(TOOLS_DIR, 'bin', 'bee-tools-dom-scraper');
-const LAYOUT_BUILDER = path.join(TOOLS_DIR, 'bin', 'bee-tools-layout-builder');
+const TEXT_TO_DOT_MATRIX = path.join(TOOLS_DIR, 'bin', 'text_to_dot_matrix.js');
+const DOM_SCRAPER = path.join(TOOLS_DIR, 'bin', 'scrape_dom.js');
+const LAYOUT_BUILDER = path.join(TOOLS_DIR, 'bin', 'build_layout.js');
 
 self.onmessage = async ({ data }) => {
   try {
@@ -34,10 +34,10 @@ async function scrape({ uri, width, height }) {
 
   if (uri.startsWith('text:')) {
     const text = uri.slice(5);
-    commands.push(`${TEXT_TO_DOT_MATRIX} ${JSON.stringify(text)}`);
-    commands.push(`${DOM_SCRAPER} --viewport=${width}x${height}`);
+    commands.push(`deno run -qA ${TEXT_TO_DOT_MATRIX} ${JSON.stringify(text)}`);
+    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height}`);
   } else {
-    commands.push(`${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
+    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
   }
 
   const script = commands.join(' | ');
@@ -102,10 +102,10 @@ function buildScript({ uri, width, height, layouter}) {
 
   if (uri.startsWith('text:')) {
     const text = uri.slice(5);
-    commands.push(`${TEXT_TO_DOT_MATRIX} ${JSON.stringify(text)}`);
-    commands.push(`${DOM_SCRAPER} --viewport=${width}x${height}`);
+    commands.push(`deno run -qA ${TEXT_TO_DOT_MATRIX} ${JSON.stringify(text)}`);
+    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height}`);
   } else {
-    commands.push(`${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
+    commands.push(`deno run -qA ${DOM_SCRAPER} --viewport=${width}x${height} ${uri}`);
   }
   commands.push(LAYOUT_BUILDER);
   commands.push(layouter);

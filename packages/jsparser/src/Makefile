@@ -1,7 +1,8 @@
 # Specify `-d` if you want to see debug logs.
 TRANSPILE_ARGS ?=
 
-BEE_TOOLS := ../../../tools/bin/bee-tools
+PROJ_DIR := ../../..
+TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 ECMA262_VERSION := es2022
 
@@ -28,7 +29,7 @@ codegen: $(CODEGEN_TARGETS)
 ecma262.html:
 	@echo 'Updating $(abspath $@)...'
 	@curl https://raw.githubusercontent.com/tc39/ecma262/$(ECMA262_VERSION)/spec.html -sG | \
-	  $(BEE_TOOLS)-update-file $@
+	  deno run -qA $(TOOLS_BIN)/update_file.js $@
 
 # 2. Extract the lexical and syntactic grammars from the specification
 #

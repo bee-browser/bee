@@ -1,4 +1,5 @@
-BEE_TOOLS := ../../../tools/bin/bee-tools
+PROJ_DIR := ../../../
+TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
@@ -39,7 +40,7 @@ codegen-rust: layout_tests.rs
 
 html/index.html: html/index.html.hbs html/index.json html/tests.js
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen $< html/index.json >$@
+	@deno run -qA $(TOOLS_BIN)/codegen.js $< html/index.json >$@
 
 html/index.json: $(LAYOUT_TEST_SRC_FILES)
 	@echo 'Generating $(abspath $@)...'
@@ -53,7 +54,7 @@ html/tests.js: $(LAYOUT_TEST_JSON_FILES) $(LAYOUT_TEST_HTML_FILES)
 
 layout_tests.rs: layout_test.rs.hbs layout_tests.json $(LAYOUT_TEST_SCENARIO_FILES)
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen $< layout_tests.json >$@
+	@deno run -qA $(TOOLS_BIN)/codegen.js $< layout_tests.json >$@
 
 layout_tests.json: $(LAYOUT_TEST_EXPECTED_FILES)
 	@echo 'Generating $(abspath $@)...'
@@ -61,17 +62,17 @@ layout_tests.json: $(LAYOUT_TEST_EXPECTED_FILES)
 
 %.scenario.jsonl: %.dom.json
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) layout-builder $< >$@
+	@deno run -qA $(TOOLS_BIN)/build_layout.js $< >$@
 
 .PRECIOUS: %.dom.json
 %.dom.json: html/%.test.html
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) dom-scraper --viewport=$(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@
+	@deno run -qA $(TOOLS_BIN)/scrape_dom.js --viewport=$(LAYOUT_TEST_VIEWPORT_SIZE) $< >$@
 
 .PRECIOUS: html/%.test.html
 html/%.test.html: %.test.json html/test.html.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen html/test.html.hbs $< >$@
+	@deno run -qA $(TOOLS_BIN)/codegen.js html/test.html.hbs $< >$@
 
 .PRECIOUS: %.test.json
 %.test.json: %.test.yaml
@@ -81,9 +82,9 @@ html/%.test.html: %.test.json html/test.html.hbs
 .PRECIOUS: %.test.yaml
 %.test.yaml: data/%.test.yaml.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen -p data/partials $< >$@
+	@deno run -qA $(TOOLS_BIN)/codegen.js -p data/partials $< >$@
 
 .PRECIOUS: %.test.yaml.d
 %.test.yaml.d: data/%.test.yaml.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen -p data/partials --deps $(subst .d,,$@) $< >$@
+	@deno run -qA $(TOOLS_BIN)/codegen.js -p data/partials --deps $(subst .d,,$@) $< >$@
