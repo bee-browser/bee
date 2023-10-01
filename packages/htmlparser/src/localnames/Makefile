@@ -1,4 +1,6 @@
-BEE_TOOLS := ../../../../tools/bin/bee-tools
+PROJ_DIR := ../../../..
+TOOLS_BIN := $(PROJ_DIR)/tools/bin
+
 SRCS := tags.rs svgattrs.rs
 
 .PHONY: codegen
@@ -8,5 +10,5 @@ codegen: $(SRCS)
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
 	  yq -o=json | \
-	  $(BEE_TOOLS) codegen --no-escape --input-stdin $@.hbs | \
+	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $@.hbs | \
 	  rustfmt --emit=stdout >$@

@@ -1,6 +1,6 @@
 'use strict';
 
-import * as csv from 'https://deno.land/std@0.202.0/encoding/csv.ts';
+import * as csv from 'https://deno.land/std@0.202.0/csv/mod.ts';
 import * as io from 'https://deno.land/std@0.202.0/io/mod.ts';
 import * as zip from 'https://deno.land/x/zipjs@v2.7.29/index.js';
 
@@ -32,9 +32,8 @@ async function downloadAlexaTop1M() {
 async function downloadMajesticMillion() {
   const url = 'https://downloads.majestic.com/majestic_million.csv';
   const res = await fetch(url);
-  const reader = new io.BufReader(io.readerFromStreamReader(res.body.getReader()));
   // TODO: very slow
-  return await csv.parse(reader, {
+  return await csv.parse(await res.text(), {
     skipFirstRow: true,
     parse: (data) => data.Domain,
   });

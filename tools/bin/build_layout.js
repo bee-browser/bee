@@ -1,5 +1,3 @@
-#!/usr/bin/env -S deno run -q -A --unstable
-
 'use strict';
 
 import * as path from 'https://deno.land/std@0.202.0/path/mod.ts';

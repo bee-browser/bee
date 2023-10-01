@@ -1,5 +1,5 @@
 PROJ_DIR := $(realpath ../../../..)
-BEE_TOOLS := $(PROJ_DIR)/tools/bin/bee-tools
+TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
 GOAL_SYMBOLS := $(shell \
   cat tokens.yaml | \
@@ -66,7 +66,7 @@ dfa/%.rs: dfa/%.json.xz dfa.js dfa/dfa.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@xzcat $< | \
 	  deno run dfa.js | \
-	  $(BEE_TOOLS) codegen --no-escape --input-stdin dfa/dfa.rs.hbs | \
+	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
 	  rustfmt --emit=stdout >$@
 
 # 3. Generate a wrapper function
@@ -76,13 +76,15 @@ dfa/%.rs: dfa/%.json.xz dfa.js dfa/dfa.rs.hbs
 dfa/mod.rs: dfa/mod.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
-	  $(BEE_TOOLS) codegen --input-stdin $< | rustfmt --emit=stdout >$@
+	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin $< | \
+	  rustfmt --emit=stdout >$@
 
 # 4. Generate an enum type for goal symbols
 goals.rs: goals.rs.hbs tokens.yaml
 	@echo 'Generating $(abspath $@)...'
 	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
-	  $(BEE_TOOLS) codegen --input-stdin $< | rustfmt --emit=stdout >$@
+	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin $< | \
+	  rustfmt --emit=stdout >$@
 
 # 5. Collect tokens from tokens.yaml
 #
@@ -97,4 +99,5 @@ tokens.json: tokens.yaml
 # 6. Generate an enum type for tokens.
 tokens.rs: tokens.json tokens.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@$(BEE_TOOLS) codegen tokens.rs.hbs $< | rustfmt --emit=stdout >$@
+	@deno run -qA $(TOOLS_BIN)/codegen.js tokens.rs.hbs $< | \
+	  rustfmt --emit=stdout >$@
