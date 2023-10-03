@@ -9,7 +9,6 @@ use crate::closure::ClosureCache;
 use crate::closure::ClosureContext;
 use crate::firstset::FirstSet;
 use crate::grammar::Grammar;
-use crate::grammar::NonTerminal;
 use crate::grammar::Symbol;
 use crate::grammar::Term;
 use crate::lr::LrItem;
@@ -113,34 +112,30 @@ impl State {
 }
 
 /// Build the LR(0) automaton for a given grammar.
-pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Vec<State> {
+pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Automaton {
     let mut builder = StateBuilder::new(grammar);
 
-    assert_eq!(
-        grammar
-            .non_terminal_rules(&NonTerminal::GoalOfAugmentedGrammar)
-            .len(),
-        1
-    );
-
-    let item = LrItem {
-        rule: grammar
-            .non_terminal_rules(&NonTerminal::GoalOfAugmentedGrammar)
-            .first()
-            .unwrap()
-            .clone(),
-        dot: 0,
-        lookahead: phrase!(),
-    };
+    // The grammar may have multiple goal symbols.
+    assert!(grammar.augmented_rules().count() > 0);
 
     let cache = ClosureCache::default();
     let context = ClosureContext::new(grammar, first_set);
 
-    let item_set = context.compute_closure(&[item], &cache);
-    let state_id = builder.create_state(item_set);
-
     let mut remaining = VecDeque::default();
-    remaining.push_back(state_id);
+
+    for (symbol, rule) in grammar.augmented_rules() {
+        let item = LrItem {
+            rule: rule.clone(),
+            dot: 0,
+            lookahead: phrase!(),
+        };
+
+        let item_set = context.compute_closure(&[item], &cache);
+        let state_id = builder.create_state(item_set);
+        builder.add_start(symbol, state_id);
+
+        remaining.push_back(state_id);
+    }
 
     let mut processed: HashSet<StateId> = HashSet::default();
 
@@ -228,6 +223,9 @@ pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Vec<State
 struct StateBuilder<'g> {
     grammar: &'g Grammar,
 
+    /// A list of start state IDs.
+    starts: Vec<(String, StateId)>,
+
     /// A list of states.
     states: Vec<State>,
 
@@ -249,6 +247,7 @@ impl<'g> StateBuilder<'g> {
     fn new(grammar: &'g Grammar) -> Self {
         StateBuilder {
             grammar,
+            starts: Default::default(),
             states: Default::default(),
             item_set_map: Default::default(),
         }
@@ -277,7 +276,42 @@ impl<'g> StateBuilder<'g> {
         }
     }
 
-    fn build(self) -> Vec<State> {
-        self.states
+    fn add_start(&mut self, symbol: &str, id: StateId) {
+        self.starts.push((symbol.to_string(), id));
+    }
+
+    fn build(self) -> Automaton {
+        Automaton {
+            starts: self.starts,
+            states: self.states,
+        }
+    }
+}
+
+/// Represents an LR(0) automaton built from a grammar.
+pub struct Automaton {
+    /// A list of start state IDs.
+    pub starts: Vec<(String, StateId)>,
+
+    /// A list of states.
+    pub states: Vec<State>,
+}
+
+impl Automaton {
+    /// Returns the size of the automaton.
+    pub fn size(&self) -> usize {
+        self.states.len()
+    }
+
+    /// Returns a state identified by a specified ID.
+    pub fn state(&self, id: StateId) -> &State {
+        self.states.get(id.index()).unwrap()
+    }
+
+    /// Returns an iterator over start states.
+    pub fn start_states(&self) -> impl Iterator<Item = (&str, &State)> {
+        self.starts
+            .iter()
+            .map(|(symbol, id)| (symbol.as_str(), self.state(*id)))
     }
 }

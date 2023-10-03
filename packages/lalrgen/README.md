@@ -5,6 +5,13 @@
 The main goal of this crate is generating a LALR(1) parsing tables for the `bee-jsparser` crate
 from a syntactic grammar defined in the ECMA-262 specification.
 
+## Notable features
+
+* Multiple goal symbols
+  * The ECMA-262 specification defines multiple goal symbols such as `Script` and `Module`
+* Lookahead restrictions
+  * The ECMA-262 specification uses special notations to restrict follower tokens
+
 ## How does bee-lalrgen process lookahead restrictions in production rules?
 
 One of special notations in the ECMA-262 specification is **lookahead restrictions**.  For example:
