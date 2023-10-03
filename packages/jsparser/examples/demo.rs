@@ -7,12 +7,17 @@ use clap::Parser;
 use clap::ValueEnum;
 use tracing_subscriber::filter::EnvFilter;
 
+use bee_jsparser::JsGoalSymbol;
 use bee_jsparser::JsParser;
 
 /// Parse a JavaScript script.
 #[derive(Parser)]
 #[command(author, version, about)]
 struct CommandLine {
+    /// Parse as an ES module.
+    #[arg(short, long)]
+    module: bool,
+
     /// Logging format.
     #[arg(long, value_enum, env = "BEE_LOG_FORMAT", default_value = "text")]
     log_format: LogFormat,
@@ -62,7 +67,11 @@ fn main() -> Result<()> {
     let script = String::from_utf8_lossy(&raw);
 
     let now = std::time::Instant::now();
-    let mut parser = JsParser::new(&script);
+    let mut parser = if cl.module {
+        JsParser::new(&script, JsGoalSymbol::Module)
+    } else {
+        JsParser::new(&script, JsGoalSymbol::Script)
+    };
     if parser.parse() {
         let elapsed = now.elapsed().as_micros();
         let bytes = script.len();

@@ -20,7 +20,8 @@ do
     echo "$COUNT/$TOTAL: ! $URL"
     BROKEN_LINKS=$(expr $BROKEN_LINKS + 1)
   else
-    METRICS=$(curl "$URL" -sG | cargo run -r -q --example=bee-jsparser-demo 2>/dev/null)
+    METRICS=$(curl "$URL" -sG | \
+              cargo run -r -q --example=bee-jsparser-demo -- --module 2>/dev/null)
     if [ "$?" = 0 ]
     then
       echo "$COUNT/$TOTAL: + $URL"

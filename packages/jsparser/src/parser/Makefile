@@ -4,6 +4,7 @@ TOOLS_BIN := $(PROJ_DIR)/tools/bin
 CODEGEN_FILES := \
   action.rs \
   debug.rs \
+  goal_symbols.rs \
   goto.rs \
   lexical_goal.rs \
   non_terminals.rs \
@@ -30,4 +31,4 @@ lalr/%.rs: lalr/%.rs.hbs lalr.json.xz lalr.js
 # lalr.rs.hbs changes.
 lalr.json.xz: grammar.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -q -r -p bee-lalrgen -- $< Module | jq -c . | xz >$@
+	@cargo run -q -r -p bee-lalrgen -- $< Script Module | jq -c . | xz >$@

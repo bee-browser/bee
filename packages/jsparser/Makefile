@@ -2,7 +2,7 @@
 all:
 
 .PHONY: test
-test: codegen
+test:
 	cargo nextest run --all-features
 
 .PHONY: codegen
