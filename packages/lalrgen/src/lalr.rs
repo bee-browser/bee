@@ -17,7 +17,7 @@ use crate::lr::LrItem;
 use crate::phrase::macros::*;
 use crate::phrase::MatchStatus;
 use crate::phrase::PhraseSet;
-use crate::state::State;
+use crate::state::Automaton;
 use crate::state::StateId;
 
 pub type LookaheadTable = HashMap<LrItem, PhraseSet>;
@@ -25,15 +25,18 @@ pub type LookaheadTable = HashMap<LrItem, PhraseSet>;
 pub fn build_lookahead_tables(
     grammar: &Grammar,
     first_set: &FirstSet,
-    states: &[State],
+    automaton: &Automaton,
 ) -> Vec<LookaheadTable> {
-    let mut lookahead_tables = Vec::with_capacity(states.len());
-    for _ in 0..states.len() {
+    let mut lookahead_tables = Vec::with_capacity(automaton.size());
+    for _ in 0..automaton.size() {
         lookahead_tables.push(LookaheadTable::default());
     }
 
-    for item in states[0].kernel_items() {
-        lookahead_tables[0].insert(item.clone(), phrase_set![phrase!("$")]);
+    for (_, start_state) in automaton.start_states() {
+        for item in start_state.kernel_items() {
+            lookahead_tables[start_state.id.index()]
+                .insert(item.clone(), phrase_set![phrase!("$")]);
+        }
     }
 
     let closure_cache = ClosureCache::default();
@@ -41,7 +44,8 @@ pub fn build_lookahead_tables(
     let mut iteration = 0;
     loop {
         tracing::debug!(iteration, phase = "collect");
-        let mut operations = states
+        let mut operations = automaton
+            .states
             .par_iter()
             .map(|state| {
                 state
@@ -83,8 +87,8 @@ pub fn build_lookahead_tables(
                     };
                     match next_symbol {
                         Some(next_symbol) => {
-                            let next_index = state.transitions.get(&next_symbol).unwrap().index();
-                            let next_state = &states[next_index];
+                            let next_id = state.transitions.get(&next_symbol).unwrap().clone();
+                            let next_state = automaton.state(next_id);
                             assert!(next_state.item_set.contains(&kernel_item));
                             (next_state.id, kernel_item)
                         }
@@ -127,7 +131,11 @@ pub fn build_lookahead_tables(
         //
         // The item set of a next state for each restricted token must not contain restricted
         // items.  So, we have to re-compute the closure for the next state.
-        for state in states.iter().filter(|state| state.is_restricted()) {
+        for state in automaton
+            .states
+            .iter()
+            .filter(|state| state.is_restricted())
+        {
             let closure_context = ClosureContext::new(grammar, first_set);
             let disallowed_tokens = state.collect_disallowed_tokens();
             for token in disallowed_tokens.into_iter() {
@@ -144,7 +152,7 @@ pub fn build_lookahead_tables(
                 let item_set = closure_context.compute_closure(&kernel_items, &closure_cache);
                 let symbol = Symbol::Token(token);
                 let next_id = state.transitions.get(&symbol).unwrap().clone();
-                let next_state = &states[next_id.index()];
+                let next_state = automaton.state(next_id);
                 // Iterate over *original* items.  Because the lookahead table is built for the
                 // LR(0) automaton.  Variant symbols in items should be converted to corresponding
                 // symbols in the original grammar before updating the lookahead table with the
@@ -287,13 +295,13 @@ struct OperationData {
 }
 
 pub fn build_lalr_states(
-    states: &[State],
+    automaton: &Automaton,
     lookahead_tables: &[LookaheadTable],
 ) -> (Vec<LalrState>, Vec<LalrProblem>) {
-    let mut lalr_states: Vec<LalrState> = Vec::with_capacity(states.len());
+    let mut lalr_states: Vec<LalrState> = Vec::with_capacity(automaton.size());
     let mut problems: Vec<LalrProblem> = vec![];
 
-    for (i, state) in states.iter().enumerate() {
+    for (i, state) in automaton.states.iter().enumerate() {
         let disallowed_tokens = state.collect_disallowed_tokens();
         // Use BTreeMap instead of HashMap in order to keep the order of keys in serialized data.
         let mut actions: BTreeMap<String, LalrAction> = Default::default();
@@ -411,8 +419,9 @@ pub fn build_lalr_states(
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LalrSpec {
-    pub goal_symbol: String,
+    pub goal_symbols: Vec<String>,
     pub non_terminals: Vec<String>,
+    pub starts: Vec<(String, usize)>,
     pub states: Vec<LalrState>,
 }
 

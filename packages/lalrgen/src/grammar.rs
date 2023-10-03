@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+use itertools::Itertools;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -67,26 +68,44 @@ impl Grammar {
         self.non_terminals.get(non_terminal).unwrap()
     }
 
-    /// Creates the augmented grammar of a particular goal symbol in the grammar.
+    /// Returns an iterator over augmented production rules.
+    pub fn augmented_rules(&self) -> impl Iterator<Item = (&str, &Arc<Rule>)> {
+        self.non_terminals
+            .iter()
+            .filter_map(|(non_terminal, rules)| match non_terminal {
+                NonTerminal::GoalOfAugmentedGrammar(symbol) => {
+                    assert_eq!(rules.len(), 1);
+                    Some((symbol.as_str(), &rules[0]))
+                }
+                _ => None,
+            })
+    }
+
+    /// Creates the augmented grammar for multiple goal symbols.
     ///
     /// Production rules for non-terminal symbols that are unreachable from the goal symbol will be
     /// removed from the grammar.
-    pub fn create_augmented_grammar(&self, goal_symbol: &str) -> Self {
-        let goal_symbol = NonTerminal::from(goal_symbol);
+    pub fn create_augmented_grammar(&self, goal_symbols: &[String]) -> Self {
+        let goal_symbols = goal_symbols
+            .iter()
+            .map(|goal_symbol| NonTerminal::from(goal_symbol.as_str()))
+            .collect_vec();
 
         // Allocate enough space in order to avoid re-allocation.
-        let mut rules = Vec::with_capacity(1 + self.rules.len());
+        let mut rules = Vec::with_capacity(goal_symbols.len() + self.rules.len());
 
-        // Add the production rule for the start symbol of the augmented grammar.
-        rules.push(Arc::new(Rule {
-            name: NonTerminal::GoalOfAugmentedGrammar,
-            production: vec![Term::NonTerminal(goal_symbol.clone())],
-        }));
+        // Add the augmented production rule for each goal symbol.
+        for goal_symbol in goal_symbols.iter() {
+            rules.push(Arc::new(Rule {
+                name: NonTerminal::GoalOfAugmentedGrammar(goal_symbol.symbol().to_owned()),
+                production: vec![Term::NonTerminal(goal_symbol.clone())],
+            }));
+        }
 
         // Collect only rules actually used.
         let mut collected: HashSet<NonTerminal> = Default::default();
         let mut remaining: VecDeque<NonTerminal> = Default::default();
-        remaining.push_back(goal_symbol);
+        remaining.extend(goal_symbols.into_iter());
         while let Some(non_terminal) = remaining.pop_front() {
             // `remaining` may contain a non-terminal already collected.
             if collected.contains(&non_terminal) {
@@ -245,7 +264,7 @@ pub enum NonTerminal {
     Variant(String, usize),
 
     /// The goal symbol in the augmented grammar.
-    GoalOfAugmentedGrammar,
+    GoalOfAugmentedGrammar(String),
 }
 
 impl NonTerminal {
@@ -270,7 +289,7 @@ impl NonTerminal {
     /// Returns `true` if this is the goal symbol in the augmented grammar.
     pub fn is_goal_of_augmented_grammar(&self) -> bool {
         match self {
-            Self::GoalOfAugmentedGrammar => true,
+            Self::GoalOfAugmentedGrammar(_) => true,
             _ => false,
         }
     }
@@ -296,7 +315,7 @@ impl std::fmt::Display for NonTerminal {
         match self {
             Self::Original(symbol) => write!(f, "{symbol}"),
             Self::Variant(symbol, variant) => write!(f, "{symbol}.{variant}"),
-            Self::GoalOfAugmentedGrammar => write!(f, "^"),
+            Self::GoalOfAugmentedGrammar(_) => write!(f, "^"),
         }
     }
 }

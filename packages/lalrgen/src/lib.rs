@@ -23,5 +23,6 @@ pub use lalr::LalrState;
 pub use lalr::LookaheadTable;
 pub use preprocess::preprocess;
 pub use state::build_lr0_automaton;
+pub use state::Automaton;
 pub use state::State;
 pub use state::StateId;

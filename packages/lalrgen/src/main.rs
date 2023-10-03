@@ -9,11 +9,11 @@ use itertools::Itertools;
 use serde::Serialize;
 use tracing_subscriber::filter::EnvFilter;
 
+use bee_lalrgen::Automaton;
 use bee_lalrgen::FirstSet;
 use bee_lalrgen::Grammar;
 use bee_lalrgen::LalrProblem;
 use bee_lalrgen::LookaheadTable;
-use bee_lalrgen::State;
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -36,9 +36,9 @@ struct Opt {
     #[arg()]
     grammar: PathBuf,
 
-    /// A symbol in the syntactic grammar used as the goal symbol.
+    /// Goal symbols.
     #[arg()]
-    goal_symbol: String,
+    goal_symbols: Vec<String>,
 }
 
 #[derive(Clone, ValueEnum)]
@@ -74,7 +74,7 @@ fn main() -> Result<()> {
     grammar.validate();
 
     // We must create the augmented grammar before preprocessing.
-    let grammar = grammar.create_augmented_grammar(&opt.goal_symbol);
+    let grammar = grammar.create_augmented_grammar(&opt.goal_symbols);
     grammar.validate();
 
     // Preprocess the syntactic grammar for making subsequent translations easier.
@@ -101,20 +101,20 @@ fn main() -> Result<()> {
     }
 
     tracing::info!("Building LR(0) automaton...");
-    let lr0_states = bee_lalrgen::build_lr0_automaton(&grammar, &first_set);
-    tracing::info!("The size of the LR(0) automaton: {}", lr0_states.len());
+    let automaton = bee_lalrgen::build_lr0_automaton(&grammar, &first_set);
+    tracing::info!("The size of the LR(0) automaton: {}", automaton.size());
     if let Some(ref dir) = opt.report_dir {
-        report_lr0_automaton(dir, &lr0_states)?;
+        report_lr0_automaton(dir, &automaton)?;
     }
 
     tracing::info!("Building a lookahead table for each LR(0) state...");
-    let lookahead_tables = bee_lalrgen::build_lookahead_tables(&grammar, &first_set, &lr0_states);
+    let lookahead_tables = bee_lalrgen::build_lookahead_tables(&grammar, &first_set, &automaton);
     if let Some(ref dir) = opt.report_dir {
         report_lalr_lookahead_tables(dir, &lookahead_tables)?;
     }
 
     tracing::info!("Building LALR(1) states...");
-    let (lalr1_states, problems) = bee_lalrgen::build_lalr_states(&lr0_states, &lookahead_tables);
+    let (lalr1_states, problems) = bee_lalrgen::build_lalr_states(&automaton, &lookahead_tables);
     if let Some(ref dir) = opt.report_dir {
         report_lalr_problems(dir, &problems)?;
     }
@@ -128,7 +128,7 @@ fn main() -> Result<()> {
     serde_json::to_writer(
         std::io::stdout(),
         &bee_lalrgen::LalrSpec {
-            goal_symbol: opt.goal_symbol,
+            goal_symbols: opt.goal_symbols,
             non_terminals: grammar
                 .non_terminals()
                 .filter(|non_terminal| !non_terminal.is_goal_of_augmented_grammar())
@@ -136,6 +136,10 @@ fn main() -> Result<()> {
                 .unique()
                 .map(|symbol| symbol.to_owned())
                 .sorted()
+                .collect(),
+            starts: automaton
+                .start_states()
+                .map(|(symbol, state)| (symbol.to_owned(), state.id.index()))
                 .collect(),
             states: lalr1_states,
         },
@@ -204,33 +208,47 @@ struct FirstSetEntryReport {
     first_set: Vec<String>,
 }
 
-fn report_lr0_automaton(dir: &PathBuf, states: &[State]) -> Result<()> {
-    let states = states
-        .iter()
-        .map(|state| StateReport {
-            state: format!("State({})", state.id.index()),
-            kernel_items: state
-                .internal_kernel_items()
-                .map(|item| format!("{item}"))
-                .collect_vec(),
-            non_kernel_items: state
-                .internal_non_kernel_items()
-                .map(|item| format!("{item}"))
-                .collect_vec(),
-            transitions: state
-                .transitions
-                .iter()
-                .map(|(symbol, next_id)| TransitionReport {
-                    symbol: format!("{symbol}"),
-                    next_state: format!("State({})", next_id.index()),
-                })
-                .collect_vec(),
-        })
-        .collect_vec();
+fn report_lr0_automaton(dir: &PathBuf, automaton: &Automaton) -> Result<()> {
+    let report = Lr0AutomatonReport {
+        starts: automaton
+            .starts
+            .iter()
+            .map(|(symbol, id)| (symbol.to_owned(), format!("State({})", id.index())))
+            .collect_vec(),
+        states: automaton
+            .states
+            .iter()
+            .map(|state| StateReport {
+                state: format!("State({})", state.id.index()),
+                kernel_items: state
+                    .internal_kernel_items()
+                    .map(|item| format!("{item}"))
+                    .collect_vec(),
+                non_kernel_items: state
+                    .internal_non_kernel_items()
+                    .map(|item| format!("{item}"))
+                    .collect_vec(),
+                transitions: state
+                    .transitions
+                    .iter()
+                    .map(|(symbol, next_id)| TransitionReport {
+                        symbol: format!("{symbol}"),
+                        next_state: format!("State({})", next_id.index()),
+                    })
+                    .collect_vec(),
+            })
+            .collect_vec(),
+    };
     let path = dir.join("lr0_automaton.json");
     let file = std::fs::File::create(path)?;
-    serde_json::to_writer_pretty(file, &states)?;
+    serde_json::to_writer_pretty(file, &report)?;
     Ok(())
+}
+
+#[derive(Debug, Serialize)]
+struct Lr0AutomatonReport {
+    starts: Vec<(String, String)>,
+    states: Vec<StateReport>,
 }
 
 #[derive(Debug, Serialize)]
