@@ -1,5 +1,7 @@
 mod lalr;
 
+pub use lalr::GoalSymbol;
+
 use crate::lexer::Goal;
 use crate::lexer::Lexer;
 use crate::lexer::Token;
@@ -12,6 +14,7 @@ const INITIAL_STATE_STACK_SIZE: usize = 512;
 const INITIAL_BLOCK_STACK_SIZE: usize = 32;
 
 pub struct Parser<'a> {
+    goal_symbol: GoalSymbol,
     lexer: Lexer<'a>,
     state_stack: Vec<State>,
     block_stack: Vec<BlockContext>,
@@ -22,8 +25,9 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(src: &'a str) -> Self {
+    pub fn new(src: &'a str, goal_symbol: GoalSymbol) -> Self {
         Self {
+            goal_symbol,
             lexer: Lexer::new(src),
             state_stack: Vec::with_capacity(INITIAL_STATE_STACK_SIZE),
             block_stack: Vec::with_capacity(INITIAL_BLOCK_STACK_SIZE),
@@ -34,7 +38,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> bool {
-        self.push_state(Default::default());
+        self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
         let mut token = self.next_token();
         loop {
@@ -300,78 +304,84 @@ mod tests {
     use super::*;
     use test_log::test;
 
+    macro_rules! parse {
+        ($src:literal) => {
+            Parser::new($src, GoalSymbol::Script).parse()
+        };
+    }
+
     #[test]
     fn test_parse_empty_script() {
-        assert!(Parser::new("").parse());
+        assert!(parse!(""));
     }
 
     #[test]
     fn test_parse_auto_semicolon1() {
-        assert!(Parser::new("{ 1\n2 } 3").parse());
+        assert!(parse!("{ 1\n2 } 3"));
     }
 
     #[test]
     fn test_parse_auto_semicolon2() {
-        assert!(Parser::new("function x() { return\na + b }").parse());
+        assert!(parse!("function x() { return\na + b }"));
     }
 
     #[test]
     fn test_parse_auto_semicolon_variable_statement() {
-        assert!(Parser::new("var x = 1").parse());
+        assert!(parse!("var x = 1"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement1() {
-        assert!(!Parser::new("for () {}").parse());
+        assert!(!parse!("for () {}"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement2() {
-        assert!(!Parser::new("for (true) {}").parse());
+        assert!(!parse!("for (true) {}"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement3() {
-        assert!(!Parser::new("for (;) {}").parse());
+        assert!(!parse!("for (;) {}"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement4() {
-        assert!(!Parser::new("for (true;) {}").parse());
+        assert!(!parse!("for (true;) {}"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement5() {
-        assert!(!Parser::new("for (;true) {}").parse());
+        assert!(!parse!("for (;true) {}"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_do_while1() {
-        assert!(Parser::new("do {} while (0)").parse());
+        assert!(parse!("do {} while (0)"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_do_while2() {
-        assert!(Parser::new("do {} while (0) 0;").parse());
+        assert!(parse!("do {} while (0) 0;"));
     }
 
     #[test]
     fn test_parser_auto_semicolon_template_literal() {
-        assert!(Parser::new("`${x.x(x=>{return()})}`").parse());
+        assert!(parse!("`${x.x(x=>{return()})}`"));
     }
 
     #[test]
     fn test_parser_template_literal() {
-        assert!(Parser::new("`${`${a}`}`").parse());
+        assert!(parse!("`${`${a}`}`"));
     }
 
     #[test]
     fn test_parser_arrow_function() {
-        assert!(Parser::new("()=>{}").parse());
+        assert!(parse!("()=>{}"));
     }
 
     #[test]
     fn test_parser_async_arrow_function() {
-        assert!(Parser::new("async()=>{}").parse());
+        assert!(parse!("async()=>{}"));
     }
 }

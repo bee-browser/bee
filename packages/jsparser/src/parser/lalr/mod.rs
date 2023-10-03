@@ -1,6 +1,7 @@
 mod action;
 mod auto_semicolon;
 mod debug;
+mod goal_symbols;
 mod goto;
 mod lexical_goal;
 mod non_terminals;
@@ -9,6 +10,7 @@ use crate::lexer::Goal;
 use crate::lexer::Token;
 use crate::lexer::TokenKind;
 
+pub use goal_symbols::GoalSymbol;
 pub use non_terminals::NonTerminal;
 
 #[derive(Clone, Copy, Debug, Default)]

@@ -15,3 +15,6 @@ pub use lexer::TokenKind as JsTokenKind;
 
 /// A JavaScript parser.
 pub use parser::Parser as JsParser;
+
+/// A goal symbol that a JavaScript parser recognizes.
+pub use parser::GoalSymbol as JsGoalSymbol;
