@@ -70,13 +70,12 @@ impl Grammar {
 
     /// Returns an iterator over augmented production rules.
     pub fn augmented_rules(&self) -> impl Iterator<Item = (&str, &Arc<Rule>)> {
-        self.non_terminals
+        // Iterate over `rules` instead of `non_terminals` in order to keep the order of start
+        // state for each goal symbol.  `non_terminals` is a `HashMap`.
+        self.rules
             .iter()
-            .filter_map(|(non_terminal, rules)| match non_terminal {
-                NonTerminal::GoalOfAugmentedGrammar(symbol) => {
-                    assert_eq!(rules.len(), 1);
-                    Some((symbol.as_str(), &rules[0]))
-                }
+            .filter_map(|rule| match rule.name {
+                NonTerminal::GoalOfAugmentedGrammar(ref symbol) => Some((symbol.as_str(), rule)),
                 _ => None,
             })
     }
