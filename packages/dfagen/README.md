@@ -2,20 +2,20 @@
 
 > A deterministic finite automaton generator for lexer generators
 
-The main goal of this crate is generating a DFA (deterministic finite automaton) recognizing tokens
-defined in the ECMA-262 specification.
+The main goal of this crate is generating a [DFA] (deterministic finite automaton) recognizing
+tokens defined in the [ECMA-262] specification.
 
-The lexical grammar defined in the ECMA-262 specification is written in some kind of a CFG
-(context-free grammar).  Most popular existing lexer generators such as flex define tokens by using
-regular expressions.  Therefore, we have to convert the ECMA-262 CFG into a corresponding regular
-expressions that cab be acceptable for a lexer generator to use.
+The lexical grammar defined in the ECMA-262 specification is written in some kind of a [CFG]
+(context-free grammar).  Most popular existing lexer generators such as [flex] define tokens by
+using [regular expressions].  Therefore, we have to convert the ECMA-262 CFG into a corresponding
+regular expressions that can be acceptable for a lexer generator to use.
 
 Eventually, we decided to build a new DFA generator for the following reasons:
 
 * Manually converting the grammar tends to make hard-to-find mistakes easily
   * This implies that we should write a script for the conversion, but it's not an efficient way
     for the next reason
-* We can easily build a NFA (non-deterministic finite automaton) from a production rule in a CFG
+* We can easily build a [NFA] (non-deterministic finite automaton) from a production rule in a CFG
 
 `bee-dfagen` generates a DFA recognizing tokens defined in a CFG.  The CFG is written in an YAML
 format so that we don't need to build another parser for the input lexical grammar.
@@ -26,13 +26,13 @@ writing a small script or template files processed by a template engine such as 
 
 You don't need to use it in most cases, but this package supplementarily provides a library crate.
 
-## How to process lookahead terms in lexical production rules
+## How to process lookahead restrictions in lexical production rules
 
 Generally, there are two approaches:
 
 1. Use a sequence of characters (to be precise, a sequence of Unicode character sets) instead of a
    single character as an index of the state transition table of a DFA
-2. Take lookahead terms into account when generating a DFA
+2. Take lookahead restrictions into account when generating a DFA
 
 `bee-dfagen` generates a DFA in the fist approach.
 
@@ -115,14 +115,28 @@ TemplateCharacter#4 ::
   SourceCharacter but not one of ``` or `\` or `$` or LineTerminator or `{`
 ```
 
-In this example, the lookahead term is completed removed, but generally lookahead terms remain in
-the converted grammar.
+In this example, the lookahead restriction is completed removed, but generally lookahead terms
+remain in the converted grammar.
 
-There is no such term in the ES2022 lexical specification, but lookbehind terms cannot be processed
-in the second approach in general.  Imagine what if there is a lookbehind term at the beginning of
-the production rule of a token.  Probably, we need to introduce a new mechanism to process such
-lookbehind terms.  For example, we have to use multiple DFAs or a DFA having multiple start states.
+There is no lookbehind restriction in the ECMA-262 lexical grammar, but lookbehind restrictions
+cannot be processed in the second approach in general.  Imagine what if there is a lookbehind
+restriction at the beginning of the production rule of a token.  Probably, we need to introduce a
+new mechanism to process such lookbehind restrictions.  For example, we have to use multiple DFAs
+or a DFA having multiple start states.
 
 ## TODO
 
 * [ ] Support Unicode properties including `ID_Start` and `ID_Continue` in `UnicodeSet`
+* [ ] Single DFA + multiple start states
+  * Currently, we need to create a dedicated DFA for each token set
+
+## References
+
+* [Dragon Book](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)
+
+[DFA]: https://en.wikipedia.org/wiki/Deterministic_finite_automaton
+[ECMA-262]: https://www.ecma-international.org/publications-and-standards/standards/ecma-262/
+[CFG]: https://en.wikipedia.org/wiki/Context-free_grammar
+[regular expressions]: https://en.wikipedia.org/wiki/Regular_expression
+[flex]: https://github.com/westes/flex
+[NFA]: https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton

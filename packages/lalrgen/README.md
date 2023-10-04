@@ -2,8 +2,8 @@
 
 > A LALR parsing tables generator
 
-The main goal of this crate is generating a LALR(1) parsing tables for the `bee-jsparser` crate
-from a syntactic grammar defined in the ECMA-262 specification.
+The main goal of this crate is generating a [LALR(1)] parsing tables for the `bee-jsparser` crate
+from a syntactic grammar defined in the [ECMA-262] specification.
 
 ## Notable features
 
@@ -139,6 +139,9 @@ one of disallowed tokens in the state.
 
 ## References
 
-* [LALR Parser - Wikipedia](https://en.wikipedia.org/wiki/LALR_parser)
+* [Dragon Book](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)
 * [Practical LR(k) Parser Construction](http://david.tribble.com/text/lrk_parsing.html)
 * [A Tutorial Explaining LALR(1) Parsing - web.archive.org](https://web.archive.org/web/20210507215636/http://web.cs.dal.ca:80/~sjackson/lalr1.html)
+
+[LALR(1)]: https://en.wikipedia.org/wiki/LALR_parser
+[ECMA-262]: https://www.ecma-international.org/publications-and-standards/standards/ecma-262/
