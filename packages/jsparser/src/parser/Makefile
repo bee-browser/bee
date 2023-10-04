@@ -1,5 +1,6 @@
 PROJ_DIR := $(realpath ../../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
+CODEGEN_DIR := $(PROJ_DIR)/target/codegen/packages/jsparser/lalrgen
 
 CODEGEN_FILES := \
   action.rs \
@@ -20,15 +21,19 @@ all: codegen
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
-lalr/%.rs: lalr/%.rs.hbs lalr.json.xz lalr.js
+lalr/%.rs: lalr/%.rs.hbs lalr.js $(CODEGEN_DIR)/lalr.json
 	@echo 'Generating $(abspath $@)...'
-	@xzcat lalr.json.xz | \
+	@cat $(CODEGEN_DIR)/lalr.json | \
 	  deno run --allow-read lalr.js | \
 	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $< | \
 	  rustfmt --emit=stdout >$@
 
 # Generate an intermediate JSON data in order to avoid re-running bee-lalrgen when lalr.js or
 # lalr.rs.hbs changes.
-lalr.json.xz: grammar.yaml
+.PRECIOUS: $(CODEGEN_DIR)/lalr.json
+$(CODEGEN_DIR)/lalr.json: grammar.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -q -r -p bee-lalrgen -- $< Script Module | jq -c . | xz >$@
+	@cargo run -rqp bee-lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq -c '.' >$@
+
+$(CODEGEN_DIR):
+	@mkdir -p $@

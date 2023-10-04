@@ -1,5 +1,6 @@
 PROJ_DIR := $(realpath ../../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
+CODEGEN_DIR := $(PROJ_DIR)/target/codegen/packages/jsparser/dfagen
 
 GOAL_SYMBOLS := $(shell \
   cat tokens.yaml | \
@@ -19,7 +20,7 @@ CODEGEN_TARGETS := \
 LIST_TOKENS = \
   cat tokens.yaml | \
   yq -o=json | \
-  jq -r '.goals[] | select(.name == "$(patsubst dfa/%.json.xz,%,$@)") | .tokens | flatten | join(" ")'
+  jq -r '.goals[] | select(.name == "$(patsubst $(CODEGEN_DIR)/%.json,%,$@)") | .tokens | flatten | join(" ")'
 
 # targets
 
@@ -56,15 +57,15 @@ codegen: $(CODEGEN_TARGETS)
 # specified tokens.  Then, `bee-dfagen` converts the NFA to an equivalent minimized DFA by using
 # well-known algorithms.  Finally, `bee-dfagen` outputs the DFA in a JSON format which contains
 # enough information for code generation.
-.PRECIOUS: dfa/%.json.xz
-dfa/%.json.xz: grammar.yaml tokens.yaml
+.PRECIOUS: $(CODEGEN_DIR)/%.json
+$(CODEGEN_DIR)/%.json: grammar.yaml tokens.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -qrp bee-dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' | xz >$@
+	@cargo run -rqp bee-dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' >$@
 
 # 2. Generate code for each DFA
-dfa/%.rs: dfa/%.json.xz dfa.js dfa/dfa.rs.hbs
+dfa/%.rs: $(CODEGEN_DIR)/%.json dfa.js dfa/dfa.rs.hbs
 	@echo 'Generating $(abspath $@)...'
-	@xzcat $< | \
+	@cat $< | \
 	  deno run dfa.js | \
 	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
 	  rustfmt --emit=stdout >$@
@@ -101,3 +102,6 @@ tokens.rs: tokens.json tokens.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@deno run -qA $(TOOLS_BIN)/codegen.js tokens.rs.hbs $< | \
 	  rustfmt --emit=stdout >$@
+
+$(CODEGEN_DIR):
+	@mkdir -p $@
