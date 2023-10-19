@@ -30,11 +30,16 @@ jobs:
         uses: taiki-e/install-action@nextest
       - name: Build
         run: |
+          make build
+        env:
+          CARGO_TERM_VERBOSE: true
+      - name: Build (release)
+        run: |
           make release-build
         env:
           CARGO_TERM_VERBOSE: true
       - name: Run tests
         run: |
-          make release-test
+          make test
         env:
           CARGO_TERM_VERBOSE: true
