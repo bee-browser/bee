@@ -13,25 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      - name: Cache for deno
-        uses: actions/cache@v3
-        with:
-          path: |
-            $DENO_DIR
-          key: |
-            ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
-          restore-keys: |
-            ${{ runner.os }}-deno-
+      # TODO: Caching dependencies
       - name: Install nextest
         uses: taiki-e/install-action@nextest
       - name: Install grcov
         uses: taiki-e/install-action@grcov
-      - name: Clean
-        run: |
-          make clean
       - name: Generate coverage data
         run: |
           make coverage-lcov

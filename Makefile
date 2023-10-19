@@ -73,7 +73,7 @@ check: format
 
 .PHONY: build
 build: format $(BUILD_TARGETS)
-	cargo build --release
+	cargo build
 
 .PHONY: test
 test: format
@@ -87,9 +87,13 @@ bench:
 clean: $(CLEAN_TARGETS)
 	cargo clean
 
-.PHONY: debug-build
-debug-build: format $(BUILD_TARGETS)
-	cargo build
+.PHONY: release-build
+release-build: $(BUILD_TARGETS)
+	cargo build --release
+
+.PHONY: release-test
+release-test:
+	cargo nextest run --release --all-features
 
 .PHONY: coverage-test
 coverage-test: format
