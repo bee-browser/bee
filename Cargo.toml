@@ -4,8 +4,8 @@ resolver = "2"
 
 [profile.release]
 lto = true
-strip = true
 panic = "abort"
+strip = true
 
 [profile.profiling]
 inherits = "release"
