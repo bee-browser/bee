@@ -5,13 +5,18 @@ edition = "2021"
 authors = ["BEE project contributors"]
 publish = false
 
+[features]
+location = []
+
 [dependencies]
+bitflags = "2.4.1"
 unicode-id-start = "1.1.2"
 phf = { version = "0.11.2", features = ["macros"] }
 tracing = "0.1.40"
 
 [dev-dependencies]
 anyhow = "1.0.75"
+assert_matches = "1.5.0"
 clap = { version = "4.4.11", features = ["env", "derive", "wrap_help"] }
 test-log = { version = "0.2.14", default-features = false, features = ["trace"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }

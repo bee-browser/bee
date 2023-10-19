@@ -74,20 +74,20 @@ fn main() -> Result<()> {
     grammar.validate();
 
     // We must create the augmented grammar before preprocessing.
-    let grammar = grammar.create_augmented_grammar(&opt.goal_symbols);
-    grammar.validate();
+    let augmented_grammar = grammar.create_augmented_grammar(&opt.goal_symbols);
+    augmented_grammar.validate();
 
     // Preprocess the syntactic grammar for making subsequent translations easier.
     // The ECMA-262 specification uses non-tail lookahead notations.
     tracing::info!("Preprocessing the grammar...");
-    let grammar = bee_lalrgen::preprocess(grammar);
-    grammar.validate();
+    let preprocessed_grammar = bee_lalrgen::preprocess(&augmented_grammar);
+    preprocessed_grammar.validate();
     if let Some(ref dir) = opt.report_dir {
-        report_preprocessed_grammar(dir, &grammar)?;
+        report_preprocessed_grammar(dir, &preprocessed_grammar)?;
     }
 
     // Check the maximum number of lookahead tokens in the grammar.
-    let max_lookahead_tokens = grammar.max_lookahead_tokens();
+    let max_lookahead_tokens = preprocessed_grammar.max_lookahead_tokens();
     if max_lookahead_tokens > 1 {
         tracing::error!(max_lookahead_tokens, "The grammar is not LALR(1)");
         std::process::exit(1);
@@ -95,20 +95,21 @@ fn main() -> Result<()> {
 
     tracing::info!("Collecting the first set of each non-terminal symbol...");
     // The collected sets will be used in computation of closure of an LR item set.
-    let first_set = bee_lalrgen::collect_first_set(&grammar, 1);
+    let first_set = bee_lalrgen::collect_first_set(&preprocessed_grammar, 1);
     if let Some(ref dir) = opt.report_dir {
         report_first_set(dir, &first_set)?;
     }
 
     tracing::info!("Building LR(0) automaton...");
-    let automaton = bee_lalrgen::build_lr0_automaton(&grammar, &first_set);
+    let automaton = bee_lalrgen::build_lr0_automaton(&preprocessed_grammar, &first_set);
     tracing::info!("The size of the LR(0) automaton: {}", automaton.size());
     if let Some(ref dir) = opt.report_dir {
         report_lr0_automaton(dir, &automaton)?;
     }
 
     tracing::info!("Building a lookahead table for each LR(0) state...");
-    let lookahead_tables = bee_lalrgen::build_lookahead_tables(&grammar, &first_set, &automaton);
+    let lookahead_tables =
+        bee_lalrgen::build_lookahead_tables(&preprocessed_grammar, &first_set, &automaton);
     if let Some(ref dir) = opt.report_dir {
         report_lalr_lookahead_tables(dir, &lookahead_tables)?;
     }
@@ -129,13 +130,19 @@ fn main() -> Result<()> {
         std::io::stdout(),
         &bee_lalrgen::LalrSpec {
             goal_symbols: opt.goal_symbols,
-            non_terminals: grammar
+            non_terminals: augmented_grammar
                 .non_terminals()
                 .filter(|non_terminal| !non_terminal.is_goal_of_augmented_grammar())
                 .map(|non_terminal| non_terminal.symbol())
                 .unique()
                 .map(|symbol| symbol.to_owned())
                 .sorted()
+                .collect(),
+            production_rules: augmented_grammar
+                .rules()
+                .iter()
+                .filter(|rule| !rule.is_goal_of_augmented_grammar())
+                .map(|rule| format!("{rule}"))
                 .collect(),
             starts: automaton
                 .start_states()

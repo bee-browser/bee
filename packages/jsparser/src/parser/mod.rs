@@ -1,9 +1,11 @@
 mod lalr;
 
 pub use lalr::GoalSymbol;
+pub use lalr::ProductionRule;
 
 use crate::lexer::Goal;
 use crate::lexer::Lexer;
+use crate::lexer::Location;
 use crate::lexer::Token;
 use crate::lexer::TokenKind;
 
@@ -13,9 +15,13 @@ use lalr::State;
 const INITIAL_STATE_STACK_SIZE: usize = 512;
 const INITIAL_BLOCK_STACK_SIZE: usize = 32;
 
-pub struct Parser<'a> {
+pub struct Parser<'s, H>
+where
+    H: SyntaxHandler,
+{
+    handler: H,
     goal_symbol: GoalSymbol,
-    lexer: Lexer<'a>,
+    lexer: Lexer<'s>,
     state_stack: Vec<State>,
     block_stack: Vec<BlockContext>,
     new_line: bool,
@@ -24,9 +30,23 @@ pub struct Parser<'a> {
     max_template_literal_depth: usize,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(src: &'a str, goal_symbol: GoalSymbol) -> Self {
+impl<'s, H> Parser<'s, H>
+where
+    H: SyntaxHandler,
+{
+    /// Creates a parser recognizing a `Script`.
+    pub fn for_script(src: &'s str, handler: H) -> Self {
+        Self::new(src, handler, GoalSymbol::Script)
+    }
+
+    /// Creates a parser recognizing a `Module`.
+    pub fn for_module(src: &'s str, handler: H) -> Self {
+        Self::new(src, handler, GoalSymbol::Module)
+    }
+
+    fn new(src: &'s str, handler: H, goal_symbol: GoalSymbol) -> Self {
         Self {
+            handler,
             goal_symbol,
             lexer: Lexer::new(src),
             state_stack: Vec::with_capacity(INITIAL_STATE_STACK_SIZE),
@@ -37,13 +57,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> bool {
+    pub fn parse(&mut self) -> Result<H::Artifact, ()> {
+        self.handler.start();
         self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
         let mut token = self.next_token();
         loop {
             match self.handle_token(&token) {
-                ParserResult::Accept => break,
+                ParserResult::Accept(artifact) => return Ok(artifact),
                 ParserResult::Reconsume => (),
                 ParserResult::NextToken => {
                     self.consume_token(token);
@@ -53,23 +74,24 @@ impl<'a> Parser<'a> {
                     if self.is_auto_semicolon_allowed(&token) {
                         loop {
                             match self.auto_semicolon() {
-                                ParserResult::Accept => return true,
+                                ParserResult::Accept(artifact) => return Ok(artifact),
                                 ParserResult::Reconsume => (),
                                 ParserResult::NextToken => break,
                                 ParserResult::Error => {
+                                    self.handler.error();
                                     self.report_error(&token);
-                                    return false;
+                                    return Err(());
                                 }
                             }
                         }
                     } else {
+                        self.handler.error();
                         self.report_error(&token);
-                        return false;
+                        return Err(());
                     }
                 }
             }
         }
-        true
     }
 
     pub fn max_stack_depth(&self) -> usize {
@@ -81,7 +103,7 @@ impl<'a> Parser<'a> {
     }
 
     #[inline(always)]
-    fn next_token(&mut self) -> Token<'a> {
+    fn next_token(&mut self) -> Token<'s> {
         self.lexer.set_goal(self.lexical_goal());
         let token = self.lexer.next_token();
         tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
@@ -89,7 +111,7 @@ impl<'a> Parser<'a> {
     }
 
     #[inline(always)]
-    fn consume_token(&mut self, token: Token<'a>) {
+    fn consume_token(&mut self, token: Token<'s>) {
         self.new_line = match token.kind {
             TokenKind::LineTerminatorSequence => true,
             TokenKind::WhiteSpaceSequence | TokenKind::Comment => self.new_line,
@@ -130,6 +152,15 @@ impl<'a> Parser<'a> {
         self.state_stack.truncate(self.state_stack.len() - n);
     }
 
+    fn replace_state(&mut self, state: State) {
+        tracing::trace!(
+            opcode = "replace-state",
+            state.id = state.id(),
+            state.label = state.label()
+        );
+        *self.state_stack.last_mut().unwrap() = state;
+    }
+
     fn push_block_context(&mut self) {
         tracing::trace!(opcode = "push-block-context");
         self.block_stack.push(Default::default());
@@ -156,14 +187,17 @@ impl<'a> Parser<'a> {
         self.block_stack.last_mut().unwrap().depth -= 1;
     }
 
-    fn handle_token(&mut self, token: &Token<'_>) -> ParserResult {
+    fn handle_token(&mut self, token: &Token<'_>) -> ParserResult<H::Artifact> {
         let result = match self.state().action(token) {
             Action::Accept => {
                 tracing::trace!(opcode = "accept", ?token.kind);
-                ParserResult::Accept
+                self.handler.location(self.lexer.location());
+                ParserResult::Accept(self.handler.accept())
             }
             Action::Shift(next) => {
                 tracing::trace!(opcode = "shift", ?token.kind);
+                self.handler.location(self.lexer.location());
+                self.handler.shift(token);
                 match token.kind {
                     TokenKind::TemplateHead => self.push_block_context(),
                     TokenKind::TemplateTail => self.pop_block_context(),
@@ -175,7 +209,9 @@ impl<'a> Parser<'a> {
                 ParserResult::NextToken
             }
             Action::Reduce(non_terminal, n, rule) => {
-                tracing::trace!(opcode = "reduce", ?rule, ?token.kind);
+                tracing::trace!(opcode = "reduce", %rule, ?token.kind);
+                self.handler.location(self.lexer.location());
+                self.handler.reduce(rule);
                 self.pop_states(n as usize);
                 let mut next = self.state().goto(non_terminal);
                 if self.new_line {
@@ -188,8 +224,7 @@ impl<'a> Parser<'a> {
             }
             Action::Replace(next) => {
                 tracing::trace!(opcode = "replace", ?token.kind);
-                self.pop_states(1);
-                self.push_state(next);
+                self.replace_state(next);
                 ParserResult::Reconsume
             }
             Action::Ignore => {
@@ -215,27 +250,27 @@ impl<'a> Parser<'a> {
         false
     }
 
-    fn auto_semicolon(&mut self) -> ParserResult {
-        const SEMICOLON: Token<'static> = Token {
-            kind: TokenKind::SemiColon,
-            lexeme: ";",
-        };
-        match self.state().action(&SEMICOLON) {
+    fn auto_semicolon(&mut self) -> ParserResult<H::Artifact> {
+        match self.state().action(&Token::AUTO_SEMICOLON) {
             Action::Accept => {
                 tracing::trace!(opcode = "accept", auto_semicolon = true);
-                ParserResult::Accept
+                ParserResult::Accept(self.handler.accept())
             }
             Action::Shift(next) => {
                 tracing::trace!(opcode = "shift", auto_semicolon = true);
                 if next.is_auto_semicolon_disallowed() {
                     ParserResult::Error
                 } else {
+                    self.handler.location(self.lexer.location());
+                    self.handler.shift(&Token::AUTO_SEMICOLON);
                     self.push_state(next);
                     ParserResult::NextToken
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
                 tracing::trace!(opcode = "reduce", ?rule, auto_semicolon = true);
+                self.handler.location(self.lexer.location());
+                self.handler.reduce(rule);
                 self.pop_states(n as usize);
                 let state = self.state();
                 let next = state.goto(non_terminal);
@@ -249,7 +284,7 @@ impl<'a> Parser<'a> {
     }
 
     fn report_error(&self, token: &Token<'_>) {
-        let pos = self.lexer.location();
+        let pos = self.lexer.pos();
         let src = self.lexer.src();
         let state = self.state();
         tracing::error!(
@@ -292,96 +327,140 @@ struct BlockContext {
     depth: usize,
 }
 
-enum ParserResult {
-    Accept,
+enum ParserResult<T> {
+    Accept(T),
     Reconsume,
     NextToken,
     Error,
 }
 
+pub trait SyntaxHandler {
+    type Artifact;
+
+    /// Called before parsing.
+    fn start(&mut self);
+
+    /// Called when the accept state has been reached.
+    fn accept(&mut self) -> Self::Artifact;
+
+    /// Called when a shift action has been performed.
+    fn shift<'a>(&mut self, token: &Token<'a>);
+
+    /// Called when a reduce action has been performed.
+    fn reduce(&mut self, rule: ProductionRule);
+
+    /// Called when a parsing error has occurred.
+    fn error(&mut self);
+
+    /// Called before calling other methods in order to inform the location in the source text
+    /// where the event occurs.
+    #[allow(unused_variables)]
+    #[inline(always)]
+    fn location(&mut self, location: &Location) {}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use assert_matches::assert_matches;
     use test_log::test;
+
+    // TODO: use a mock.
+    struct NullHandler;
+
+    impl SyntaxHandler for NullHandler {
+        type Artifact = ();
+        fn start(&mut self) {}
+        fn accept(&mut self) {}
+        fn shift<'a>(&mut self, _token: &Token<'a>) {}
+        fn reduce(&mut self, _rule: ProductionRule) {}
+        fn error(&mut self) {}
+    }
 
     macro_rules! parse {
         ($src:literal) => {
-            Parser::new($src, GoalSymbol::Script).parse()
+            assert_matches!(Parser::for_script($src, NullHandler).parse(), Ok(_));
+        };
+    }
+
+    macro_rules! parse_fail {
+        ($src:literal) => {
+            assert_matches!(Parser::for_script($src, NullHandler).parse(), Err(_));
         };
     }
 
     #[test]
     fn test_parse_empty_script() {
-        assert!(parse!(""));
+        parse!("");
     }
 
     #[test]
     fn test_parse_auto_semicolon1() {
-        assert!(parse!("{ 1\n2 } 3"));
+        parse!("{ 1\n2 } 3");
     }
 
     #[test]
     fn test_parse_auto_semicolon2() {
-        assert!(parse!("function x() { return\na + b }"));
+        parse!("function x() { return\na + b }");
     }
 
     #[test]
     fn test_parse_auto_semicolon_variable_statement() {
-        assert!(parse!("var x = 1"));
+        parse!("var x = 1");
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement1() {
-        assert!(!parse!("for () {}"));
+        parse_fail!("for () {}");
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement2() {
-        assert!(!parse!("for (true) {}"));
+        parse_fail!("for (true) {}");
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement3() {
-        assert!(!parse!("for (;) {}"));
+        parse_fail!("for (;) {}");
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement4() {
-        assert!(!parse!("for (true;) {}"));
+        parse_fail!("for (true;) {}");
     }
 
     #[test]
     fn test_parser_auto_semicolon_for_statement5() {
-        assert!(!parse!("for (;true) {}"));
+        parse_fail!("for (;true) {}");
     }
 
     #[test]
     fn test_parser_auto_semicolon_do_while1() {
-        assert!(parse!("do {} while (0)"));
+        parse!("do {} while (0)");
     }
 
     #[test]
     fn test_parser_auto_semicolon_do_while2() {
-        assert!(parse!("do {} while (0) 0;"));
+        parse!("do {} while (0) 0;");
     }
 
     #[test]
     fn test_parser_auto_semicolon_template_literal() {
-        assert!(parse!("`${x.x(x=>{return()})}`"));
+        parse!("`${x.x(x=>{return()})}`");
     }
 
     #[test]
     fn test_parser_template_literal() {
-        assert!(parse!("`${`${a}`}`"));
+        parse!("`${`${a}`}`");
     }
 
     #[test]
     fn test_parser_arrow_function() {
-        assert!(parse!("()=>{}"));
+        parse!("()=>{}");
     }
 
     #[test]
     fn test_parser_async_arrow_function() {
-        assert!(parse!("async()=>{}"));
+        parse!("async()=>{}");
     }
 }
