@@ -21,38 +21,20 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
-      - name: Cache for cargo
-        uses: actions/cache@v3
-        with:
-          path: |
-            $CARGO_HOME/registry
-            $CARGO_HOME/git
-            target
-          key: |
-            ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ matrix.rust }}-
+      - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      - name: Cache for deno
-        uses: actions/cache@v3
-        with:
-          path: |
-            $DENO_DIR
-          key: |
-            ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
-          restore-keys: |
-            ${{ runner.os }}-deno-
+      # TODO: Caching dependencies
       - name: Install nextest
         uses: taiki-e/install-action@nextest
       - name: Build
         run: |
-          make
+          make release-build
         env:
           CARGO_TERM_VERBOSE: true
       - name: Run tests
         run: |
-          make test
+          make release-test
         env:
           CARGO_TERM_VERBOSE: true
