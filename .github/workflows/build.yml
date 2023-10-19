@@ -44,9 +44,8 @@ jobs:
             ${{ runner.os }}-deno-${{ hashFiles('tools/deps.js') }}
           restore-keys: |
             ${{ runner.os }}-deno-
-      - name: Prepare GitHub CI
-        run: |
-          make github-ci
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
       - name: Build
         run: |
           make

@@ -93,7 +93,7 @@ debug-build: format $(BUILD_TARGETS)
 
 .PHONY: coverage-test
 coverage-test: format
-	env $(COVERAGE_TEST_ENV_VARS) cargo test --all-features
+	env $(COVERAGE_TEST_ENV_VARS) cargo nextest run --all-features
 
 .PHONY: coverage-lcov
 coverage-lcov: coverage-test | $(PROJDIR)/target/coverage
@@ -125,18 +125,6 @@ doc: format
 .PHONY: format
 format:
 	cargo fmt --all
-
-.PHONY: install-nextest
-install-nextest:
-	cargo install cargo-nextest
-
-.PHONY: install-grcov
-install-grcov:
-	cargo install grcov
-
-.PHONY: github-ci
-github-ci: install-nextest install-grcov
-	@echo "$GITHUB_WORKSPACE/tools/bin" >>$GITHUB_PATH
 
 .PHONY: github-workflows
 github-workflows:
