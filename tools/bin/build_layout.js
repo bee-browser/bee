@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.203.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.204.0/path/mod.ts';
 import { default as docopt } from 'https://deno.land/x/docopt@v1.0.7/mod.ts';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { LayoutBuilder } from '../lib/layout_builder.js';
