@@ -1,0 +1,7 @@
+coverage:
+  status:
+    project:
+      default:
+        # The threshold must be larger than 0.01% in order to ignore a "false" drop which occurs
+        # even when there is no change in test targets.
+        threshold: 5%
