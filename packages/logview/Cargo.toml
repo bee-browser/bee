@@ -17,7 +17,7 @@ open = "5.0.0"
 serde = { version = "1.0.190", features = ["derive", "rc"] }
 serde_yaml = "0.9.27"
 shell-words = "1.1.0"
-tempfile = "3.8.0"
+tempfile = "3.8.1"
 tokio = { version = "1.33.0", features = ["io-util", "macros", "process", "rt-multi-thread"] }
 tokio-stream = "0.1.14"
 tower-http = { version = "0.4.4", features = ["fs", "set-header", "trace"] }
