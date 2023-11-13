@@ -231,7 +231,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "bee-macros",
- "clap 4.4.7",
+ "clap 4.4.8",
  "indexmap",
  "maplit",
  "serde",
@@ -250,7 +250,7 @@ dependencies = [
  "anyhow",
  "bee-htmlparser",
  "bee-toydom",
- "clap 4.4.7",
+ "clap 4.4.8",
 ]
 
 [[package]]
@@ -297,7 +297,7 @@ name = "bee-jsparser"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.4.7",
+ "clap 4.4.8",
  "phf",
  "test-log",
  "tracing",
@@ -312,7 +312,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "bee-macros",
- "clap 4.4.7",
+ "clap 4.4.8",
  "dashmap",
  "humantime",
  "im",
@@ -362,7 +362,7 @@ dependencies = [
  "async-stream",
  "axum",
  "bytes",
- "clap 4.4.7",
+ "clap 4.4.8",
  "mime",
  "mustache",
  "open",
@@ -487,9 +487,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.7"
+version = "4.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac495e00dcec98c83465d5ad66c5c4fabd652fd6686e7c6269b117e729a6f17b"
+checksum = "2275f18819641850fa26c89acc84d465c1bf91ce57bc2748b28c420473352f64"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -497,9 +497,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.7"
+version = "4.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c77ed9a32a62e6ca27175d00d29d05ca32e396ea1eb5fb01d8256b669cec7663"
+checksum = "07cdf1b148b25c1e1f7a42225e30a0d99a615cd4637eae7365548dd4529b95bc"
 dependencies = [
  "anstream",
  "anstyle",
@@ -541,7 +541,7 @@ dependencies = [
  "anes",
  "cast",
  "ciborium",
- "clap 4.4.7",
+ "clap 4.4.8",
  "criterion-plot",
  "is-terminal",
  "itertools 0.10.5",
