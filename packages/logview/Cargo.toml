@@ -22,4 +22,4 @@ tokio = { version = "1.34.0", features = ["io-util", "macros", "process", "rt-mu
 tokio-stream = "0.1.14"
 tower-http = { version = "0.4.4", features = ["fs", "set-header", "trace"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
