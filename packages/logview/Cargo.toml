@@ -10,7 +10,7 @@ anyhow = "1.0.75"
 async-stream = "0.3.5"
 axum = "0.6.20"
 bytes = "1.5.0"
-clap = { version = "4.4.9", features = ["derive"] }
+clap = { version = "4.4.10", features = ["derive"] }
 mime = "0.3.17"
 mustache = "0.9.0"
 open = "5.0.1"
