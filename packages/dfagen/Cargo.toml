@@ -19,4 +19,4 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 
 [dev-dependencies]
-test-log = { version = "0.2.13", default-features = false, features = ["trace"] }
+test-log = { version = "0.2.14", default-features = false, features = ["trace"] }
