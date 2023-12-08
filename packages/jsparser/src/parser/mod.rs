@@ -192,35 +192,46 @@ where
             Action::Accept => {
                 tracing::trace!(opcode = "accept", ?token.kind);
                 self.handler.location(self.lexer.location());
-                ParserResult::Accept(self.handler.accept())
+                match self.handler.accept() {
+                    Ok(artifact) => ParserResult::Accept(artifact),
+                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                }
             }
             Action::Shift(next) => {
                 tracing::trace!(opcode = "shift", ?token.kind);
                 self.handler.location(self.lexer.location());
-                self.handler.shift(token);
-                match token.kind {
-                    TokenKind::TemplateHead => self.push_block_context(),
-                    TokenKind::TemplateTail => self.pop_block_context(),
-                    TokenKind::Lbrace => self.push_block(),
-                    TokenKind::Rbrace => self.pop_block(),
-                    _ => (),
+                match self.handler.shift(token) {
+                    Ok(_) => {
+                        match token.kind {
+                            TokenKind::TemplateHead => self.push_block_context(),
+                            TokenKind::TemplateTail => self.pop_block_context(),
+                            TokenKind::Lbrace => self.push_block(),
+                            TokenKind::Rbrace => self.pop_block(),
+                            _ => (),
+                        }
+                        self.push_state(next);
+                        ParserResult::NextToken
+                    }
+                    Err(_err) => ParserResult::Error,  // TODO: error reporting
                 }
-                self.push_state(next);
-                ParserResult::NextToken
             }
             Action::Reduce(non_terminal, n, rule) => {
                 tracing::trace!(opcode = "reduce", %rule, ?token.kind);
                 self.handler.location(self.lexer.location());
-                self.handler.reduce(rule);
-                self.pop_states(n as usize);
-                let mut next = self.state().goto(non_terminal);
-                if self.new_line {
-                    if let Some(state) = next.can_replace() {
-                        next = state;
+                match self.handler.reduce(rule) {
+                    Ok(_) => {
+                        self.pop_states(n as usize);
+                        let mut next = self.state().goto(non_terminal);
+                        if self.new_line {
+                            if let Some(state) = next.can_replace() {
+                                next = state;
+                            }
+                        }
+                        self.push_state(next);
+                        ParserResult::Reconsume
                     }
+                    Err(_err) => ParserResult::Error,  // TODO: error reporting
                 }
-                self.push_state(next);
-                ParserResult::Reconsume
             }
             Action::Replace(next) => {
                 tracing::trace!(opcode = "replace", ?token.kind);
@@ -254,7 +265,10 @@ where
         match self.state().action(&Token::AUTO_SEMICOLON) {
             Action::Accept => {
                 tracing::trace!(opcode = "accept", auto_semicolon = true);
-                ParserResult::Accept(self.handler.accept())
+                match self.handler.accept() {
+                    Ok(artifact) => ParserResult::Accept(artifact),
+                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                }
             }
             Action::Shift(next) => {
                 tracing::trace!(opcode = "shift", auto_semicolon = true);
@@ -262,20 +276,28 @@ where
                     ParserResult::Error
                 } else {
                     self.handler.location(self.lexer.location());
-                    self.handler.shift(&Token::AUTO_SEMICOLON);
-                    self.push_state(next);
-                    ParserResult::NextToken
+                    match self.handler.shift(&Token::AUTO_SEMICOLON) {
+                        Ok(_) => {
+                            self.push_state(next);
+                            ParserResult::NextToken
+                        }
+                        Err(_err) => ParserResult::Error,  // TODO: error reporting
+                    }
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
                 tracing::trace!(opcode = "reduce", ?rule, auto_semicolon = true);
                 self.handler.location(self.lexer.location());
-                self.handler.reduce(rule);
-                self.pop_states(n as usize);
-                let state = self.state();
-                let next = state.goto(non_terminal);
-                self.push_state(next);
-                ParserResult::Reconsume
+                match self.handler.reduce(rule) {
+                    Ok(_) => {
+                        self.pop_states(n as usize);
+                        let state = self.state();
+                        let next = state.goto(non_terminal);
+                        self.push_state(next);
+                        ParserResult::Reconsume
+                    }
+                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                }
             }
             Action::Replace(_) => unreachable!(),
             Action::Ignore => unreachable!(),
@@ -336,18 +358,19 @@ enum ParserResult<T> {
 
 pub trait SyntaxHandler {
     type Artifact;
+    type Error: std::fmt::Debug + std::fmt::Display;
 
     /// Called before parsing.
     fn start(&mut self);
 
     /// Called when the accept state has been reached.
-    fn accept(&mut self) -> Self::Artifact;
+    fn accept(&mut self) -> Result<Self::Artifact, Self::Error>;
 
     /// Called when a shift action has been performed.
-    fn shift<'a>(&mut self, token: &Token<'a>);
+    fn shift<'a>(&mut self, token: &Token<'a>) -> Result<(), Self::Error>;
 
     /// Called when a reduce action has been performed.
-    fn reduce(&mut self, rule: ProductionRule);
+    fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error>;
 
     /// Called when a parsing error has occurred.
     fn error(&mut self);
@@ -370,10 +393,11 @@ mod tests {
 
     impl SyntaxHandler for NullHandler {
         type Artifact = ();
+        type Error = bool;
         fn start(&mut self) {}
-        fn accept(&mut self) {}
-        fn shift<'a>(&mut self, _token: &Token<'a>) {}
-        fn reduce(&mut self, _rule: ProductionRule) {}
+        fn accept(&mut self) { OK(()) }
+        fn shift<'a>(&mut self, _token: &Token<'a>) { Ok(()) }
+        fn reduce(&mut self, _rule: ProductionRule) { Ok(()) }
         fn error(&mut self) {}
     }
 

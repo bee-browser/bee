@@ -26,25 +26,34 @@ pub fn string_literal_to_string(literal: &str) -> String {
 /// Converts a literal content into a string.
 pub fn literal_content_to_string(content: &str) -> String {
     // TODO: improve performance
-    // TODO: a surrogate pair like "\uD87E\uDC04"
 
     let mut result = String::with_capacity(content.len());
     let mut chars = content.chars().peekable();
+    let mut high_surrogate = None;
+
+    #[inline(always)]
+    fn put(c: char, result: &mut String, high_surrogate: &mut Option<u32>) {
+        if let Some(_) = high_surrogate.take() {
+            result.push('\u{FFFD}');
+        }
+        result.push(c);
+    }
+
     while let Some(c) = chars.next() {
         if c != '\\' {
-            result.push(c);
+            put(c, &mut result, &mut high_surrogate);
             continue;
         }
 
         // escape sequence
         match chars.next().unwrap() {
-            '0' => result.push('\u{0000}'),
-            'b' => result.push('\u{0008}'),
-            't' => result.push('\u{0009}'),
-            'n' => result.push('\u{000A}'),
-            'v' => result.push('\u{000B}'),
-            'f' => result.push('\u{000C}'),
-            'r' => result.push('\u{000D}'),
+            '0' => put('\u{0000}', &mut result, &mut high_surrogate),
+            'b' => put('\u{0008}', &mut result, &mut high_surrogate),
+            't' => put('\u{0009}', &mut result, &mut high_surrogate),
+            'n' => put('\u{000A}', &mut result, &mut high_surrogate),
+            'v' => put('\u{000B}', &mut result, &mut high_surrogate),
+            'f' => put('\u{000C}', &mut result, &mut high_surrogate),
+            'r' => put('\u{000D}', &mut result, &mut high_surrogate),
             '\u{000A}' | '\u{2028}' | '\u{2029}' => (),
             '\u{000D}' => {
                 if let Some('\u{000A}') = chars.peek() {
@@ -55,7 +64,7 @@ pub fn literal_content_to_string(content: &str) -> String {
                 let hi = chars.next().unwrap().to_digit(16).unwrap();
                 let lo = chars.next().unwrap().to_digit(16).unwrap();
                 let c = char::from_u32((hi << 4) + lo).unwrap();
-                result.push(c);
+                put(c, &mut result, &mut high_surrogate);
             }
             'u' if chars.peek().is_some() => {
                 if let Some('{') = chars.peek() {
@@ -70,17 +79,30 @@ pub fn literal_content_to_string(content: &str) -> String {
                         n = n.shl(4) + c.to_digit(16).unwrap();
                     }
                     let c = char::from_u32(n).unwrap();
-                    result.push(c);
+                    put(c, &mut result, &mut high_surrogate);
                 } else {
                     let d0 = chars.next().unwrap().to_digit(16).unwrap();
                     let d1 = chars.next().unwrap().to_digit(16).unwrap();
                     let d2 = chars.next().unwrap().to_digit(16).unwrap();
                     let d3 = chars.next().unwrap().to_digit(16).unwrap();
-                    let c = char::from_u32((d0 << 12) + (d1 << 8) + (d2 << 4) + d3).unwrap();
-                    result.push(c);
+                    let cp = (d0 << 12) + (d1 << 8) + (d2 << 4) + d3;
+                    match char::from_u32(cp) {
+                        Some(c) => put(c, &mut result, &mut high_surrogate),
+                        None => if let Some(high_surrogate) = high_surrogate.take() {
+                            let high = high_surrogate - 0xD800;
+                            let low = cp - 0xDC00;
+                            if high > 0x03FF || low > 0x03FF {
+                                result.push('\u{FFFD}');
+                            } else {
+                                result.push(char::from_u32(high << 10 | low).unwrap());
+                            }
+                        } else {
+                            high_surrogate = Some(cp)
+                        }
+                    }
                 }
             }
-            c => result.push(c),
+            c => put(c, &mut result, &mut high_surrogate),
         }
     }
     result

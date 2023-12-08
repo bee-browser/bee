@@ -5,7 +5,7 @@
 
 use super::Builder;
 
-pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
+pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str)>; 2080] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -1197,7 +1197,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // OptionalChain_Await -> OPTIONAL_CHAINING TemplateLiteral_Await_Tagged
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain_Await -> OPTIONAL_CHAINING PrivateIdentifier
-    Some((Builder::optional_member, "optional_member")),
+    Some((
+        Builder::optional_private_identifier,
+        "optional_private_identifier",
+    )),
     // OptionalChain_Await -> OptionalChain_Await Arguments_Await
     Some((
         Builder::optional_chain_append_call,
@@ -1220,8 +1223,8 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     )),
     // OptionalChain_Await -> OptionalChain_Await DOT PrivateIdentifier
     Some((
-        Builder::optional_chain_append_property,
-        "optional_chain_append_property",
+        Builder::optional_chain_append_private_identifier,
+        "optional_chain_append_private_identifier",
     )),
     // StatementList_Await -> StatementListItem_Await
     Some((Builder::into_list, "into_list")),
@@ -1619,7 +1622,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // PrimaryExpression_Await -> TemplateLiteral_Await
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
-    Some((Builder::unwrap_nullable, "unwrap_nullable")),
+    Some((
+        Builder::primary_expression_group,
+        "primary_expression_group",
+    )),
     // SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
     // SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
@@ -1780,7 +1786,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // OptionalChain -> OPTIONAL_CHAINING TemplateLiteral_Tagged
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain -> OPTIONAL_CHAINING PrivateIdentifier
-    Some((Builder::optional_member, "optional_member")),
+    Some((
+        Builder::optional_private_identifier,
+        "optional_private_identifier",
+    )),
     // OptionalChain -> OptionalChain Arguments
     Some((
         Builder::optional_chain_append_call,
@@ -1803,8 +1812,8 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     )),
     // OptionalChain -> OptionalChain DOT PrivateIdentifier
     Some((
-        Builder::optional_chain_append_property,
-        "optional_chain_append_property",
+        Builder::optional_chain_append_private_identifier,
+        "optional_chain_append_private_identifier",
     )),
     // ConditionalExpression -> ShortCircuitExpression
     Some((Builder::nop, "nop")),
@@ -2124,7 +2133,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // PrimaryExpression -> TemplateLiteral
     Some((Builder::nop, "nop")),
     // PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
-    Some((Builder::unwrap_nullable, "unwrap_nullable")),
+    Some((
+        Builder::primary_expression_group,
+        "primary_expression_group",
+    )),
     // SuperProperty -> SUPER LBRACK Expression_In RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
     // SuperProperty -> SUPER DOT KeywordOrIdentifierName
@@ -3618,7 +3630,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // OptionalChain_Yield -> OPTIONAL_CHAINING TemplateLiteral_Yield_Tagged
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain_Yield -> OPTIONAL_CHAINING PrivateIdentifier
-    Some((Builder::optional_member, "optional_member")),
+    Some((
+        Builder::optional_private_identifier,
+        "optional_private_identifier",
+    )),
     // OptionalChain_Yield -> OptionalChain_Yield Arguments_Yield
     Some((
         Builder::optional_chain_append_call,
@@ -3641,8 +3656,8 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     )),
     // OptionalChain_Yield -> OptionalChain_Yield DOT PrivateIdentifier
     Some((
-        Builder::optional_chain_append_property,
-        "optional_chain_append_property",
+        Builder::optional_chain_append_private_identifier,
+        "optional_chain_append_private_identifier",
     )),
     // VariableDeclaration_In_Yield -> BindingIdentifier_Yield
     Some((Builder::variable_declarator, "variable_declarator")),
@@ -3983,7 +3998,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // OptionalChain_Yield_Await -> OPTIONAL_CHAINING TemplateLiteral_Yield_Await_Tagged
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain_Yield_Await -> OPTIONAL_CHAINING PrivateIdentifier
-    Some((Builder::optional_member, "optional_member")),
+    Some((
+        Builder::optional_private_identifier,
+        "optional_private_identifier",
+    )),
     // OptionalChain_Yield_Await -> OptionalChain_Yield_Await Arguments_Yield_Await
     Some((
         Builder::optional_chain_append_call,
@@ -4006,8 +4024,8 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     )),
     // OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT PrivateIdentifier
     Some((
-        Builder::optional_chain_append_property,
-        "optional_chain_append_property",
+        Builder::optional_chain_append_private_identifier,
+        "optional_chain_append_private_identifier",
     )),
     // VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await
     Some((Builder::variable_declarator, "variable_declarator")),
@@ -4221,7 +4239,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // PrimaryExpression_Yield -> TemplateLiteral_Yield
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
-    Some((Builder::unwrap_nullable, "unwrap_nullable")),
+    Some((
+        Builder::primary_expression_group,
+        "primary_expression_group",
+    )),
     // SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
     // SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
@@ -4321,7 +4342,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder), &'static str)>; 2080] = [
     // PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
-    Some((Builder::unwrap_nullable, "unwrap_nullable")),
+    Some((
+        Builder::primary_expression_group,
+        "primary_expression_group",
+    )),
     // SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
     // SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName

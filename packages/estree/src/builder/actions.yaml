@@ -1095,7 +1095,7 @@
 - rule: OptionalChain_Await -> OPTIONAL_CHAINING TemplateLiteral_Await_Tagged
   action: optional_member
 - rule: OptionalChain_Await -> OPTIONAL_CHAINING PrivateIdentifier
-  action: optional_member
+  action: optional_private_identifier
 - rule: OptionalChain_Await -> OptionalChain_Await Arguments_Await
   action: optional_chain_append_call
 - rule: OptionalChain_Await -> OptionalChain_Await LBRACK Expression_In_Await RBRACK
@@ -1105,7 +1105,7 @@
 - rule: OptionalChain_Await -> OptionalChain_Await TemplateLiteral_Await_Tagged
   action: optional_chain_append_tagged_template
 - rule: OptionalChain_Await -> OptionalChain_Await DOT PrivateIdentifier
-  action: optional_chain_append_property
+  action: optional_chain_append_private_identifier
 - rule: StatementList_Await -> StatementListItem_Await
   action: into_list
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
@@ -1457,7 +1457,7 @@
 - rule: PrimaryExpression_Await -> TemplateLiteral_Await
   action: nop
 - rule: PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
-  action: unwrap_nullable
+  action: primary_expression_group
 - rule: SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
   action: super_property_computed
 - rule: SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
@@ -1579,7 +1579,7 @@
 - rule: OptionalChain -> OPTIONAL_CHAINING TemplateLiteral_Tagged
   action: optional_member
 - rule: OptionalChain -> OPTIONAL_CHAINING PrivateIdentifier
-  action: optional_member
+  action: optional_private_identifier
 - rule: OptionalChain -> OptionalChain Arguments
   action: optional_chain_append_call
 - rule: OptionalChain -> OptionalChain LBRACK Expression_In RBRACK
@@ -1589,7 +1589,7 @@
 - rule: OptionalChain -> OptionalChain TemplateLiteral_Tagged
   action: optional_chain_append_tagged_template
 - rule: OptionalChain -> OptionalChain DOT PrivateIdentifier
-  action: optional_chain_append_property
+  action: optional_chain_append_private_identifier
 - rule: ConditionalExpression -> ShortCircuitExpression
   action: nop
 - rule: >-
@@ -1890,7 +1890,7 @@
 - rule: PrimaryExpression -> TemplateLiteral
   action: nop
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
-  action: unwrap_nullable
+  action: primary_expression_group
 - rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
   action: super_property_computed
 - rule: SuperProperty -> SUPER DOT KeywordOrIdentifierName
@@ -3301,7 +3301,7 @@
 - rule: OptionalChain_Yield -> OPTIONAL_CHAINING TemplateLiteral_Yield_Tagged
   action: optional_member
 - rule: OptionalChain_Yield -> OPTIONAL_CHAINING PrivateIdentifier
-  action: optional_member
+  action: optional_private_identifier
 - rule: OptionalChain_Yield -> OptionalChain_Yield Arguments_Yield
   action: optional_chain_append_call
 - rule: OptionalChain_Yield -> OptionalChain_Yield LBRACK Expression_In_Yield RBRACK
@@ -3311,7 +3311,7 @@
 - rule: OptionalChain_Yield -> OptionalChain_Yield TemplateLiteral_Yield_Tagged
   action: optional_chain_append_tagged_template
 - rule: OptionalChain_Yield -> OptionalChain_Yield DOT PrivateIdentifier
-  action: optional_chain_append_property
+  action: optional_chain_append_private_identifier
 - rule: VariableDeclaration_In_Yield -> BindingIdentifier_Yield
   action: variable_declarator
 - rule: VariableDeclaration_In_Yield -> BindingIdentifier_Yield Initializer_In_Yield
@@ -3639,7 +3639,7 @@
 - rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING TemplateLiteral_Yield_Await_Tagged
   action: optional_member
 - rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING PrivateIdentifier
-  action: optional_member
+  action: optional_private_identifier
 - rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await Arguments_Yield_Await
   action: optional_chain_append_call
 - rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await LBRACK Expression_In_Yield_Await RBRACK
@@ -3649,7 +3649,7 @@
 - rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await TemplateLiteral_Yield_Await_Tagged
   action: optional_chain_append_tagged_template
 - rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT PrivateIdentifier
-  action: optional_chain_append_property
+  action: optional_chain_append_private_identifier
 - rule: VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await
   action: variable_declarator
 - rule: VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
@@ -3874,7 +3874,7 @@
 - rule: PrimaryExpression_Yield -> TemplateLiteral_Yield
   action: nop
 - rule: PrimaryExpression_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
-  action: unwrap_nullable
+  action: primary_expression_group
 - rule: SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
   action: super_property_computed
 - rule: SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
@@ -3968,7 +3968,7 @@
 - rule: PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
   action: nop
 - rule: PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
-  action: unwrap_nullable
+  action: primary_expression_group
 - rule: SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
   action: super_property_computed
 - rule: SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName
