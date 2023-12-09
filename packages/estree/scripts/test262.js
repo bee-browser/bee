@@ -1,13 +1,34 @@
 'use strict';
 
 import * as log from 'https://deno.land/std@0.204.0/log/mod.ts';
-import { assert } from "https://deno.land/std@0.204.0/assert/mod.ts";
-import { TextLineStream } from "https://deno.land/std@0.204.0/streams/mod.ts";
-import { toTransformStream } from "https://deno.land/std@0.204.0/streams/to_transform_stream.ts";
+import * as path from 'https://deno.land/std@0.204.0/path/mod.ts';
+import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.204.0/streams/mod.ts';
 
 import * as acorn from 'npm:acorn@8.11.2';
 import TestStream from 'npm:test262-stream@1.4.0';
-import microdiff from "https://deno.land/x/microdiff@v1.3.2/index.ts";
+import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
+
+import { parseCommand } from '../../../tools/lib/cli.js';
+import { setup } from '../../../tools/lib/log.js';
+
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
+
+const DOC = `
+Usage:
+  ${PROGNAME} [options]
+  ${PROGNAME} -h | --help
+
+Options:
+  --logging
+    Enable logging.
+
+  --details
+    Show the details of failed tests.
+`.trim();
+
+const { cmds, options, args } = await parseCommand({
+  doc: DOC,
+});
 
 // TODO: Remove
 const IGNORE_FILES = [
@@ -67,6 +88,58 @@ const UNSUPPORTED_FEATURES = [
   'hashbang',
 ];
 
+if (options.logging) {
+  setup(PROGNAME, 'DEBUG');
+} else {
+  setup(PROGNAME, 'ERROR');
+}
+
+function parse(test) {
+  try {
+    return acorn.parse(test.contents, {
+      sourceType: test.attrs.flags.module ? 'module' : 'script',
+      ecmaVersion: 2022,
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
+class EstreeServer {
+  constructor() {
+    const cmd = new Deno.Command('cargo', {
+      args: ['run', '-r', '-q', '-p', 'bee-estree', '--', "serve"],
+      stdin: 'piped',
+      stdout: 'piped',
+      stderr: 'null',
+    });
+    this.child_ = cmd.spawn();
+    this.lines_ = this.child_.stdout
+      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(new TextLineStream());
+    this.encoder_ = new TextEncoder();
+  }
+
+  async parse(test) {
+    const req = this.encoder_.encode(JSON.stringify({
+      sourceType: test.attrs.flags.module ? 'module' : 'script',
+      source: test.contents,
+    }) + '\n');
+
+    const writer = this.child_.stdin.getWriter();
+    await writer.write(req);
+    writer.releaseLock();
+
+    const reader = this.lines_.getReader();
+    const res = JSON.parse((await reader.read()).value);
+    reader.releaseLock();
+
+    return res.program;
+  }
+}
+
+const server = new EstreeServer();
+
 const stream = new TestStream('/home/masnagam/workspace/bee-browser/bee/vendor/tc39/test262', {
   // Directory from which to load "includes" files (defaults to the
   // appropriate subdirectory of the provided `test262Dir`
@@ -96,26 +169,6 @@ stream.on('error', (err) => console.error('Something went wrong:', err));
 
 let count = 0;
 const fails = [];
-
-const cmd = new Deno.Command('cargo', {
-  args: [
-    'run',
-    '-r',
-    '-q',
-    '-p',
-    'bee-estree',
-    '--',
-    "server",
-  ],
-  stdin: 'piped',
-  stdout: 'piped',
-  stderr: 'null',
-});
-const server = cmd.spawn();
-const lines = server.stdout
-  .pipeThrough(new TextDecoderStream())
-  .pipeThrough(new TextLineStream())
-const encoder = new TextEncoder();
 
 function testToString(test) {
   let s = test.file;
@@ -169,29 +222,21 @@ for await (const test of stream) {
     continue;
   }
 
-  log.info(`${testToString(test)}`);
+  test.toString = function() {
+    let s = this.file;
+    s += this.attrs.flags.module ? ': module' : ': script';
+    if (this.scenario === 'strict mode') {
+      s += '/strict';
+    }
+    if (this.attrs.features) {
+      s += ': ' + this.attrs.features.join(' ');
+    }
+    return s;
+  };
 
-  let expected = null;
-  try {
-    expected = acorn.parse(test.contents, {
-      sourceType: test.attrs.flags.module ? 'module' : 'script',
-      ecmaVersion: 2022,
-    });
-  } catch (err) {}
-
-  const query = encoder.encode(JSON.stringify({
-    sourceType: test.attrs.flags.module ? 'module' : 'script',
-    source: test.contents,
-  }) + '\n')
-
-  const writer = server.stdin.getWriter();
-  await writer.write(query);
-  writer.releaseLock();
-
-  const reader = lines.getReader();
-  const reply = JSON.parse((await reader.read()).value);
-  reader.releaseLock();
-  const actual = reply.program;
+  log.info(`${test}`);
+  const expected = parse(test);
+  const actual = await server.parse(test);
 
   if (expected === null) {
     if (expected !== actual) {
@@ -215,10 +260,11 @@ for await (const test of stream) {
 if (fails.length === 0) {
   Deno.exit(0);
 } else {
-  console.log(`FAILED TESTS:`);
-  for (const fail of fails) {
-    console.error(`  ${testToString(fail.test)}`);
-  }
   console.log(`FAILED: ${fails.length}/${count}`);
+  if (options.details) {
+    for (const fail of fails) {
+      console.error(`  ${testToString(fail.test)}`);
+    }
+  }
   Deno.exit(1);
 }

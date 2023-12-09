@@ -88,16 +88,18 @@ pub fn literal_content_to_string(content: &str) -> String {
                     let cp = (d0 << 12) + (d1 << 8) + (d2 << 4) + d3;
                     match char::from_u32(cp) {
                         Some(c) => put(c, &mut result, &mut high_surrogate),
-                        None => if let Some(high_surrogate) = high_surrogate.take() {
-                            let high = high_surrogate - 0xD800;
-                            let low = cp - 0xDC00;
-                            if high > 0x03FF || low > 0x03FF {
-                                result.push('\u{FFFD}');
+                        None => {
+                            if let Some(high_surrogate) = high_surrogate.take() {
+                                let high = high_surrogate - 0xD800;
+                                let low = cp - 0xDC00;
+                                if high > 0x03FF || low > 0x03FF {
+                                    result.push('\u{FFFD}');
+                                } else {
+                                    result.push(char::from_u32(high << 10 | low).unwrap());
+                                }
                             } else {
-                                result.push(char::from_u32(high << 10 | low).unwrap());
+                                high_surrogate = Some(cp)
                             }
-                        } else {
-                            high_surrogate = Some(cp)
                         }
                     }
                 }

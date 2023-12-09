@@ -194,7 +194,7 @@ where
                 self.handler.location(self.lexer.location());
                 match self.handler.accept() {
                     Ok(artifact) => ParserResult::Accept(artifact),
-                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                    Err(_err) => ParserResult::Error, // TODO: error reporting
                 }
             }
             Action::Shift(next) => {
@@ -212,7 +212,7 @@ where
                         self.push_state(next);
                         ParserResult::NextToken
                     }
-                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                    Err(_err) => ParserResult::Error, // TODO: error reporting
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
@@ -230,7 +230,7 @@ where
                         self.push_state(next);
                         ParserResult::Reconsume
                     }
-                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                    Err(_err) => ParserResult::Error, // TODO: error reporting
                 }
             }
             Action::Replace(next) => {
@@ -267,7 +267,7 @@ where
                 tracing::trace!(opcode = "accept", auto_semicolon = true);
                 match self.handler.accept() {
                     Ok(artifact) => ParserResult::Accept(artifact),
-                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                    Err(_err) => ParserResult::Error, // TODO: error reporting
                 }
             }
             Action::Shift(next) => {
@@ -281,7 +281,7 @@ where
                             self.push_state(next);
                             ParserResult::NextToken
                         }
-                        Err(_err) => ParserResult::Error,  // TODO: error reporting
+                        Err(_err) => ParserResult::Error, // TODO: error reporting
                     }
                 }
             }
@@ -296,7 +296,7 @@ where
                         self.push_state(next);
                         ParserResult::Reconsume
                     }
-                    Err(_err) => ParserResult::Error,  // TODO: error reporting
+                    Err(_err) => ParserResult::Error, // TODO: error reporting
                 }
             }
             Action::Replace(_) => unreachable!(),
@@ -393,11 +393,17 @@ mod tests {
 
     impl SyntaxHandler for NullHandler {
         type Artifact = ();
-        type Error = bool;
+        type Error = std::convert::Infallible;
         fn start(&mut self) {}
-        fn accept(&mut self) { OK(()) }
-        fn shift<'a>(&mut self, _token: &Token<'a>) { Ok(()) }
-        fn reduce(&mut self, _rule: ProductionRule) { Ok(()) }
+        fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+            Ok(())
+        }
+        fn shift<'a>(&mut self, _token: &Token<'a>) -> Result<(), Self::Error> {
+            Ok(())
+        }
+        fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
+            Ok(())
+        }
         fn error(&mut self) {}
     }
 

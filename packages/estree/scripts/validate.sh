@@ -47,9 +47,9 @@ deno run npm:acorn --compact --ecma2022 --module </dev/null >/dev/null
 ACORN_END=$(date +%s%N)
 ACORN_BASELINE=$(expr $ACORN_END - $ACORN_START)
 
-$BEE_ESTREE --module </dev/null >/dev/null
+$BEE_ESTREE parse module </dev/null >/dev/null
 BEE_ESTREE_START=$(date +%s%N)
-$BEE_ESTREE --module </dev/null >/dev/null
+$BEE_ESTREE parse module </dev/null >/dev/null
 BEE_ESTREE_END=$(date +%s%N)
 BEE_ESTREE_BASELINE=$(expr $BEE_ESTREE_END - $BEE_ESTREE_START)
 
@@ -71,7 +71,7 @@ ACORN_DELTA=$(expr $ACORN_ELAPSED - $ACORN_BASELINE)
 
 ACTUAL=$(mktemp -t bee-estree.validate.actual.XXXXXX)
 BEE_ESTREE_START=$(date +%s%N)
-$BEE_ESTREE --module <$SRC >$ACTUAL
+$BEE_ESTREE parse module <$SRC >$ACTUAL
 BEE_ESTREE_END=$(date +%s%N)
 BEE_ESTREE_ELAPSED=$(expr $BEE_ESTREE_END - $BEE_ESTREE_START)
 BEE_ESTREE_DELTA=$(expr $BEE_ESTREE_ELAPSED - $BEE_ESTREE_BASELINE)

@@ -94,10 +94,16 @@ struct NullHandler;
 
 impl SyntaxHandler for NullHandler {
     type Artifact = ();
-    type Error = bool;
+    type Error = std::convert::Infallible;
     fn start(&mut self) {}
-    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> { Ok(()) }
-    fn shift<'a>(&mut self, _token: &Token<'a>) -> Result<(), Self::Error> { Ok(()) }
-    fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> { Ok(()) }
+    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+        Ok(())
+    }
+    fn shift<'a>(&mut self, _token: &Token<'a>) -> Result<(), Self::Error> {
+        Ok(())
+    }
+    fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
+        Ok(())
+    }
     fn error(&mut self) {}
 }

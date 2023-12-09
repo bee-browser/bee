@@ -41,11 +41,11 @@
 
 mod actions;
 
+use bee_jsparser::literal_content_to_string;
 use bee_jsparser::Location;
 use bee_jsparser::ProductionRule;
 use bee_jsparser::SyntaxHandler;
 use bee_jsparser::Token;
-use bee_jsparser::literal_content_to_string;
 
 use crate::nodes::node;
 use crate::nodes::Node;

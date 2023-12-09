@@ -49,7 +49,8 @@ enum SourceType {
 
 #[derive(Subcommand)]
 enum Command {
-    Parser {
+    /// Parse a JavaScript program.
+    Parse {
         /// Parse the JavaScript program as an ES module.
         #[arg()]
         source_type: SourceType,
@@ -58,7 +59,8 @@ enum Command {
         #[arg()]
         source_file: Option<PathBuf>,
     },
-    Server,
+    /// Start a server that responds to requests to parse JavaScript programs.
+    Serve,
 }
 
 fn main() -> Result<()> {
@@ -81,8 +83,8 @@ fn main() -> Result<()> {
     }
 
     match cl.command {
-        Command::Parser { source_type, source_file } => parse(source_type, source_file),
-        Command::Server => serve(),
+        Command::Parse { source_type, source_file } => parse(source_type, source_file),
+        Command::Serve => serve(),
     }
 }
 
@@ -126,17 +128,19 @@ fn serve() -> Result<()> {
     for line in reader.lines() {
         match line {
             Ok(line) => {
-                let query: Query = match serde_json::from_str(&line) {
-                    Ok(queru) => queru,
+                let req: Request = match serde_json::from_str(&line) {
+                    Ok(req) => req,
                     Err(err) => {
-                        tracing::error!(%err);
+                        tracing::error!(%err, "Failed to parse JSON");
                         continue;
                     }
                 };
-                let program = parse_program(query.source_type, &query.source).ok();
-                let reply = Reply { program };
+                let now = std::time::Instant::now();
+                let program = parse_program(req.source_type, &req.source).ok();
+                let elapsed = now.elapsed().as_nanos();
+                let res = Response { program, elapsed };
                 let mut writer = BufWriter::new(std::io::stdout());
-                let _ = serde_json::to_writer(&mut writer, &reply);
+                let _ = serde_json::to_writer(&mut writer, &res);
                 let _ = writer.write_all(b"\n");
             }
             Err(_) => break,
@@ -146,13 +150,14 @@ fn serve() -> Result<()> {
 }
 
 #[derive(Debug, Deserialize)]
-struct Query {
+struct Request {
     #[serde(rename = "sourceType")]
     source_type: SourceType,
     source: String,
 }
 
 #[derive(Debug, Serialize)]
-struct Reply {
+struct Response {
     program: Option<NodeRef>,
+    elapsed: u128,
 }
