@@ -4,13 +4,13 @@ import * as log from 'https://deno.land/std@0.208.0/log/mod.ts';
 import * as path from 'https://deno.land/std@0.208.0/path/mod.ts';
 import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.208.0/streams/mod.ts';
 
+import ora from 'npm:ora@7.0.1';
 import * as acorn from 'npm:acorn@8.11.2';
 import TestStream from 'npm:test262-stream@1.4.0';
 import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { VENDOR_DIR } from '../../../tools/lib/consts.js';
-import { setup } from '../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DEFAULT_TEST262_DIR = path.join(VENDOR_DIR, 'tc39', 'test262');
@@ -21,8 +21,8 @@ Usage:
   ${PROGNAME} -h | --help
 
 Options:
-  --logging
-    Enable logging.
+  --progress
+    Show progress.
 
   --details
     Show the details of failed tests.
@@ -96,12 +96,6 @@ const UNSUPPORTED_FEATURES = [
   'hashbang',
 ];
 
-if (options.logging) {
-  setup(PROGNAME, 'DEBUG');
-} else {
-  setup(PROGNAME, 'ERROR');
-}
-
 function parse(test) {
   try {
     return acorn.parse(test.contents, {
@@ -112,6 +106,14 @@ function parse(test) {
     return null;
   }
 }
+
+const spinner = ora({ spinner: 'line' });
+
+// The signal handler must be registered before starting the bee-estree server.
+Deno.addSignalListener("SIGINT", () => {
+  spinner.stop();
+  Deno.exit(0);
+});
 
 class EstreeServer {
   constructor() {
@@ -146,6 +148,7 @@ class EstreeServer {
   }
 }
 
+// Spawn bee-estree in the server mode in order to reduce overhead of process creations.
 const server = new EstreeServer();
 
 const stream = new TestStream(args.test262Dir, {
@@ -177,17 +180,10 @@ stream.on('error', (err) => console.error('Something went wrong:', err));
 
 let count = 0;
 const fails = [];
+const skipped = [];
 
-function testToString(test) {
-  let s = test.file;
-  s += test.attrs.flags.module ? ': module' : ': script';
-  if (test.scenario === 'strict mode') {
-    s += '/strict';
-  }
-  if (test.attrs.features) {
-    s += ': ' + test.attrs.features.join(' ');
-  }
-  return s;
+if (options.progress) {
+  spinner.start();
 }
 
 for await (const test of stream) {
@@ -223,10 +219,10 @@ for await (const test of stream) {
     continue;
   }
 
-  const skip = UNSUPPORTED_FEATURES.some((feature) => {
+  const ignore = UNSUPPORTED_FEATURES.some((feature) => {
     return test.attrs.features?.includes(feature);
   });
-  if (skip) {
+  if (ignore) {
     continue;
   }
 
@@ -242,8 +238,22 @@ for await (const test of stream) {
     return s;
   };
 
-  log.info(`${test}`);
-  const expected = parse(test);
+  count++;
+  spinner.text = test.file;
+
+  let expected;
+  if (test.attrs.negative?.phase === "parse" || test.attrs.negative?.phase === "early") {
+    // Error cases.  We don't need to run acorn.parse().
+    expected = null;
+  } else {
+    expected = parse(test);
+    if (expected === null) {
+      // Acorn cannot parse test.contents.
+      skipped.push(test);
+      continue;
+    }
+  }
+
   const actual = await server.parse(test);
 
   if (expected === null) {
@@ -261,19 +271,23 @@ for await (const test of stream) {
       fails.push({ test,  diff });
     }
   }
-
-  count++;
 }
 
-if (fails.length === 0) {
-  Deno.exit(0);
-} else {
-  if (options.details) {
-    console.error('FAILED TESTS:');
-    for (const fail of fails) {
-      console.error(`  ${testToString(fail.test)}`);
-    }
+spinner.stop();
+
+if (options.details) {
+  console.log('FAILED TESTS:');
+  for (const fail of fails) {
+    console.log(`  ${fail.test}`);
   }
-  console.error(`FAILED: ${fails.length}/${count}`);
-  Deno.exit(1);
+  console.log('SKIPPED TESTS:');
+  for (const skip of skipped) {
+    console.log(`  ${skip}`);
+  }
 }
+
+const passed = count - fails.length - skipped.length;
+console.log(
+  `${count} tests: ${passed} passed, ${fails.length} failed, ${skipped.length} skipped`);
+
+Deno.exit(fails.length > 0 ? 1 : 0);
