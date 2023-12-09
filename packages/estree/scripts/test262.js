@@ -9,13 +9,15 @@ import TestStream from 'npm:test262-stream@1.4.0';
 import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
+import { VENDOR_DIR } from '../../../tools/lib/consts.js';
 import { setup } from '../../../tools/lib/log.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
+const DEFAULT_TEST262_DIR = path.join(VENDOR_DIR, 'tc39', 'test262');
 
 const DOC = `
 Usage:
-  ${PROGNAME} [options]
+  ${PROGNAME} [options] [<test262-dir>]
   ${PROGNAME} -h | --help
 
 Options:
@@ -24,11 +26,17 @@ Options:
 
   --details
     Show the details of failed tests.
+
+Arguments:
+  <test262-dir> [default: ${DEFAULT_TEST262_DIR}]
+    Path to tc39/test262.
 `.trim();
 
 const { cmds, options, args } = await parseCommand({
   doc: DOC,
 });
+
+args.test262Dir = args.test262Dir || DEFAULT_TEST262_DIR;
 
 // TODO: Remove
 const IGNORE_FILES = [
@@ -140,7 +148,7 @@ class EstreeServer {
 
 const server = new EstreeServer();
 
-const stream = new TestStream('/home/masnagam/workspace/bee-browser/bee/vendor/tc39/test262', {
+const stream = new TestStream(args.test262Dir, {
   // Directory from which to load "includes" files (defaults to the
   // appropriate subdirectory of the provided `test262Dir`
   // Optional. Defaults to './harness'
