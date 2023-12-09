@@ -17,22 +17,22 @@ use crate::phrase::MatchStatus;
 ///
 /// Generally, the resultant grammar size is larger then the original grammar size.  As a result,
 /// the number of states in the corresponding LR(0) automaton increases.
-pub fn preprocess(grammar: Grammar) -> Grammar {
-    preprocess_lookaheads(grammar)
+pub fn preprocess(grammar: &Grammar) -> Grammar {
+    preprocess_lookaheads(&grammar)
 }
 
 #[tracing::instrument(level = "debug", skip_all)]
-fn preprocess_lookaheads(grammar: Grammar) -> Grammar {
+fn preprocess_lookaheads(grammar: &Grammar) -> Grammar {
     let mut variant_table = VariantNameTable::new();
     match preprocess_non_tail_lookaheads(grammar, &mut variant_table) {
         PreprocessResult::Changed(grammar) => grammar,
-        PreprocessResult::NotChanged(grammar) => grammar,
+        PreprocessResult::NotChanged => grammar.clone(),
     }
 }
 
 #[tracing::instrument(level = "trace", skip_all)]
 fn preprocess_non_tail_lookaheads(
-    grammar: Grammar,
+    grammar: &Grammar,
     variant_table: &mut VariantNameTable,
 ) -> PreprocessResult {
     let mut original_rules: HashMap<Arc<Rule>, Arc<Rule>> = Default::default();
@@ -91,7 +91,7 @@ fn preprocess_non_tail_lookaheads(
         rules = remove_invalidated_rules(rules);
         PreprocessResult::Changed(Grammar::with_original_rules(rules, original_rules))
     } else {
-        PreprocessResult::NotChanged(grammar)
+        PreprocessResult::NotChanged
     }
 }
 
@@ -249,5 +249,5 @@ impl VariantNameTable {
 
 enum PreprocessResult {
     Changed(Grammar),
-    NotChanged(Grammar),
+    NotChanged,
 }

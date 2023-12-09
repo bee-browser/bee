@@ -96,7 +96,7 @@ for (const state of spec.states) {
         const nonTerminal = action[1].data.non_terminal;
         const numPops = action[1].data.num_pops;
         const rule = action[1].data.rule;
-        action[1] = `Action::Reduce(NonTerminal::${nonTerminal}, ${numPops}, "${rule}")`;
+        action[1] = `Action::Reduce(NonTerminal::${nonTerminal}, ${numPops}, ProductionRule(${spec.production_rules.indexOf(rule)}))`;
       }
       break;
     case 'Replace':

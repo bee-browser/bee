@@ -9,7 +9,7 @@ macro_rules! impl_test {
     ($test:ident, $grammar:literal, $expected:literal) => {
         #[test]
         fn $test() {
-            let actual = preprocess(load_grammar($grammar));
+            let actual = preprocess(&load_grammar($grammar));
             let expected = load_grammar($expected);
             assert_eq!(
                 actual.non_terminals().count(),

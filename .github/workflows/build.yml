@@ -18,6 +18,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
@@ -43,3 +45,6 @@ jobs:
           make test
         env:
           CARGO_TERM_VERBOSE: true
+      - name: Run tc39/test262
+        run: |
+          make test262

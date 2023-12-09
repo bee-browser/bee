@@ -11,7 +11,7 @@ use crate::phrase::MatchStatus;
 use crate::phrase::PhraseSet;
 
 /// Represents a syntactic grammar.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Grammar {
     /// A list of production rules in the grammar.
     rules: Vec<Arc<Rule>>,
