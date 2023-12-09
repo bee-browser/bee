@@ -2,7 +2,7 @@
 
 'use strict';
 
-import * as path from 'https://deno.land/std@0.204.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.208.0/path/mod.ts';
 import * as base64 from 'https://deno.land/x/base64@v0.2.1/mod.ts';
 import { parseCommand } from '../lib/cli.js';
 import * as top_sites from '../lib/top_sites.js';
