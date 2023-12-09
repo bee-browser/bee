@@ -119,10 +119,8 @@ async fn serve(workdir: PathBuf, config: Config, data: Vec<(String, String)>) {
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(router.into_make_service())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, router).await.unwrap();
 }
 
 async fn logs(State(state): State<Arc<AppState>>) -> impl IntoResponse {
