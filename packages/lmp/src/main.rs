@@ -1,34 +1,35 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufRead;
+use std::io::BufReader;
 
 use anyhow::Result;
-use structopt::StructOpt;
+use clap::Parser;
 
-use bee_layout::service::{JsonSink, MessageInterpreter};
+use bee_layout::service::JsonSink;
+use bee_layout::service::MessageInterpreter;
 
 /// Layout message processor.
-#[derive(Debug, StructOpt)]
-#[structopt(name = "bee-lmp")]
-struct Opt {
+#[derive(Debug, Parser)]
+struct CommandLine {
     /// Enable the debug mode.
-    #[structopt(short, long)]
+    #[arg(short, long)]
     debug: bool,
 
-    /// Input file
-    #[structopt(name = "FILE")]
+    /// Input file.
+    #[arg()]
     input: Option<String>,
 }
 
 fn main() -> Result<()> {
-    let opt = Opt::from_args();
+    let cl = CommandLine::parse();
 
-    match opt.input {
-        Some(ref input) => interpret(&opt, BufReader::new(File::open(input)?)),
-        None => interpret(&opt, std::io::stdin().lock()),
+    match cl.input {
+        Some(ref input) => interpret(&cl, BufReader::new(File::open(input)?)),
+        None => interpret(&cl, std::io::stdin().lock()),
     }
 }
 
-fn interpret<T: BufRead>(opt: &Opt, read: T) -> Result<()> {
+fn interpret<T: BufRead>(cl: &CommandLine, read: T) -> Result<()> {
     let mut interp = MessageInterpreter::new(JsonPrinter);
 
     for line in read.lines() {
@@ -38,7 +39,7 @@ fn interpret<T: BufRead>(opt: &Opt, read: T) -> Result<()> {
         }
     }
 
-    if opt.debug {
+    if cl.debug {
         interp.inspect(&mut std::io::stderr())?;
     }
 
