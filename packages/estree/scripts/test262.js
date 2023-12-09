@@ -260,11 +260,12 @@ for await (const test of stream) {
 if (fails.length === 0) {
   Deno.exit(0);
 } else {
-  console.log(`FAILED: ${fails.length}/${count}`);
   if (options.details) {
+    console.error('FAILED TESTS:');
     for (const fail of fails) {
       console.error(`  ${testToString(fail.test)}`);
     }
   }
+  console.error(`FAILED: ${fails.length}/${count}`);
   Deno.exit(1);
 }

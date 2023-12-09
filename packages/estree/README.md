@@ -47,6 +47,16 @@ Debug-level logs are shown by specifying the `RUST_LOG` environment variable:
 curl https://host/script.js -sG | RUST_LOG=debug cargo run >/dev/null
 ```
 
+## tc39/test262
+
+We have a test runner to test ECMAScript conformance using [tc39/test262]:
+
+```shell
+sh ./script/test262.sh
+```
+
+Many tests fails at the moment.  The `--details` option lists failed tests.
+
 ## Acknowledgments
 
 [ESTree] is a famous specification for AST representation.
@@ -56,6 +66,9 @@ curl https://host/script.js -sG | RUST_LOG=debug cargo run >/dev/null
 [AST Explorer] is one of useful web applications for learning AST representations of existing
 JavaScript parsers.
 
+[tc39/test262] is official ECMAScript conformance test suite.
+
 [ESTree]: https://github.com/estree/estree
 [acorn]: https://www.npmjs.com/package/acorn
 [AST Explorer]: https://astexplorer.net/
+[tc39/test262]: https://github.com/tc39/test262

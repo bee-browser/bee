@@ -79,6 +79,11 @@ build: format $(BUILD_TARGETS)
 test: format
 	cargo nextest run --all-features
 
+# TODO: remove '-' once we've fixed all failures.
+.PHONY: test262
+test262:
+	-sh packages/estree/scripts/test262.sh --details
+
 .PHONY: bench
 bench:
 	cargo bench
@@ -95,9 +100,11 @@ release-build: $(BUILD_TARGETS)
 release-test:
 	cargo nextest run --release --all-features
 
+# TODO: remove '-' once we've fixed all failures.
 .PHONY: coverage-test
 coverage-test: format
 	env $(COVERAGE_TEST_ENV_VARS) cargo nextest run --all-features
+	-env $(COVERAGE_TEST_ENV_VARS) sh packages/estree/scripts/test262.sh --details
 
 .PHONY: coverage-lcov
 coverage-lcov: coverage-test | $(PROJDIR)/target/coverage
@@ -129,10 +136,6 @@ doc: format
 .PHONY: format
 format:
 	cargo fmt --all
-
-.PHONY: github-workflows
-github-workflows:
-	@sh .github/workflows/update.sh
 
 .PHONY: $(BUILD_TARGETS)
 $(BUILD_TARGETS):

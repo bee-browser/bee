@@ -83,7 +83,10 @@ fn main() -> Result<()> {
     }
 
     match cl.command {
-        Command::Parse { source_type, source_file } => parse(source_type, source_file),
+        Command::Parse {
+            source_type,
+            source_file,
+        } => parse(source_type, source_file),
         Command::Serve => serve(),
     }
 }
