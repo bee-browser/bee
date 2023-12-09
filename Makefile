@@ -127,7 +127,9 @@ update-deps-crates:
 
 .PHONY: update-deps-deno
 update-deps-deno:
-	@find -name '*.js' | xargs deno run --allow-net --allow-read --allow-write https://raw.githubusercontent.com/masnagam/deno-udd/fix-issue-86/main.ts
+	@find -name '*.js' -not -path './vendor/*' | \
+	  xargs deno run --allow-net --allow-read --allow-write \
+	    https://raw.githubusercontent.com/masnagam/deno-udd/fix-issue-86/main.ts
 
 .PHONY: doc
 doc: format
