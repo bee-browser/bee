@@ -51,11 +51,13 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Token<'a> {
         }
         state = next;
         if !state.lookahead() {
-            lexeme_end = pos + unicode_set.1.map(|ch| ch.len_utf8()).unwrap_or(0);
+            if let Some(ch) = unicode_set.1 {
+                lexeme_end = pos + ch.len_utf8();
+            }
         }
         if let Some(kind) = state.accept() {
-            token.kind = kind;
             token.lexeme = cursor.lexeme(lexeme_end);
+            token.kind = kind;
             tracing::trace!(opcode = "accept", ?token.kind, ?token.lexeme);
         }
     }

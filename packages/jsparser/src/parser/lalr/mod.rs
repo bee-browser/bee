@@ -13,6 +13,27 @@ use crate::lexer::TokenKind;
 pub use goal_symbols::GoalSymbol;
 pub use non_terminals::NonTerminal;
 
+#[derive(Clone, Copy, Debug)]
+pub struct ProductionRule(u16);
+
+impl ProductionRule {
+    #[inline(always)]
+    pub fn id(&self) -> u16 {
+        self.0
+    }
+
+    #[inline(always)]
+    fn label(&self) -> &'static str {
+        debug::PRODUCTION_RULE_LABELS[self.0 as usize]
+    }
+}
+
+impl std::fmt::Display for ProductionRule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.label())
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 pub struct State(u16);
 
@@ -66,7 +87,7 @@ impl State {
 
     #[inline(always)]
     pub fn label(&self) -> &'static str {
-        debug::LABELS[self.0 as usize]
+        debug::STATE_LABELS[self.0 as usize]
     }
 }
 
@@ -74,7 +95,7 @@ impl State {
 pub enum Action {
     Accept,
     Shift(State),
-    Reduce(NonTerminal, u8, &'static str),
+    Reduce(NonTerminal, u8, ProductionRule),
     Replace(State),
     Ignore,
     Error,

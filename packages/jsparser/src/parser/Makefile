@@ -33,7 +33,7 @@ lalr/%.rs: lalr/%.rs.hbs lalr.js $(CODEGEN_DIR)/lalr.json
 .PRECIOUS: $(CODEGEN_DIR)/lalr.json
 $(CODEGEN_DIR)/lalr.json: grammar.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp bee-lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq -c '.' >$@
+	@cargo run -rqp bee-lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq '.' >$@
 
 $(CODEGEN_DIR):
 	@mkdir -p $@

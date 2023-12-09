@@ -421,6 +421,7 @@ pub fn build_lalr_states(
 pub struct LalrSpec {
     pub goal_symbols: Vec<String>,
     pub non_terminals: Vec<String>,
+    pub production_rules: Vec<String>,
     pub starts: Vec<(String, usize)>,
     pub states: Vec<LalrState>,
 }

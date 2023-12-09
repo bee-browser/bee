@@ -3,3 +3,6 @@
 .env
 .envrc
 cobertura.xml
+flamegraph.svg
+perf.data
+perf.data.old

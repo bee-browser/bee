@@ -45,6 +45,11 @@ make list
 
 Worked only on Linux and macOS at this point.  Windows will be supported in the future.
 
+In addition, it's recommended to install the following software:
+
+* [flamegraph]
+* [perf]
+
 ## License
 
 Licensed under either of
@@ -67,5 +72,7 @@ shall be dual licensed as above, without any additional terms or conditions.
 [grcov]: https://github.com/mozilla/grcov
 [jq]: https://jqlang.github.io/jq/
 [yq]: https://mikefarah.gitbook.io/yq/
+[framegraph]: https://github.com/flamegraph-rs/flamegraph
+[perf]: https://en.wikipedia.org/wiki/Perf_(Linux)
 [LICENSE-APACHE]: ./LICENSE-APACHE
 [LICENSE-MIT]: ./LICENSE-MIT

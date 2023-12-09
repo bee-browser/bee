@@ -10,8 +10,8 @@ mod input_element_template_tail;
 
 use super::cursor::SourceCursor;
 use super::goals::Goal;
-use super::tokens::Token;
 use super::tokens::TokenKind;
+use super::Token;
 
 #[inline(always)]
 pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Token<'a> {

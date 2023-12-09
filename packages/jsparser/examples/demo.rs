@@ -3,15 +3,17 @@ use std::path::PathBuf;
 
 use anyhow::anyhow;
 use anyhow::Result;
-use clap::Parser;
+use clap::Parser as _;
 use clap::ValueEnum;
 use tracing_subscriber::filter::EnvFilter;
 
-use bee_jsparser::JsGoalSymbol;
-use bee_jsparser::JsParser;
+use bee_jsparser::Parser;
+use bee_jsparser::ProductionRule;
+use bee_jsparser::SyntaxHandler;
+use bee_jsparser::Token;
 
 /// Parse a JavaScript script.
-#[derive(Parser)]
+#[derive(clap::Parser)]
 #[command(author, version, about)]
 struct CommandLine {
     /// Parse as an ES module.
@@ -68,21 +70,40 @@ fn main() -> Result<()> {
 
     let now = std::time::Instant::now();
     let mut parser = if cl.module {
-        JsParser::new(&script, JsGoalSymbol::Module)
+        Parser::for_module(&script, NullHandler)
     } else {
-        JsParser::new(&script, JsGoalSymbol::Script)
+        Parser::for_script(&script, NullHandler)
     };
-    if parser.parse() {
-        let elapsed = now.elapsed().as_micros();
-        let bytes = script.len();
-        let stack_depth = parser.max_stack_depth();
-        let template_literal_depth = parser.max_template_literal_depth();
-        println!(
-            "time={} size={} max-stack-depth={} max-template-literal-depth={}",
-            elapsed, bytes, stack_depth, template_literal_depth
-        );
-        Ok(())
-    } else {
-        Err(anyhow!("Parse error"))
+    match parser.parse() {
+        Ok(_) => {
+            let elapsed = now.elapsed().as_micros();
+            let bytes = script.len();
+            let stack_depth = parser.max_stack_depth();
+            let template_literal_depth = parser.max_template_literal_depth();
+            println!(
+                "time={} size={} max-stack-depth={} max-template-literal-depth={}",
+                elapsed, bytes, stack_depth, template_literal_depth
+            );
+            Ok(())
+        }
+        Err(_) => Err(anyhow!("Parse error")),
     }
+}
+
+struct NullHandler;
+
+impl SyntaxHandler for NullHandler {
+    type Artifact = ();
+    type Error = std::convert::Infallible;
+    fn start(&mut self) {}
+    fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
+        Ok(())
+    }
+    fn shift<'a>(&mut self, _token: &Token<'a>) -> Result<(), Self::Error> {
+        Ok(())
+    }
+    fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
+        Ok(())
+    }
+    fn error(&mut self) {}
 }
