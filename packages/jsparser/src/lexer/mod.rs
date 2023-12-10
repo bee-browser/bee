@@ -5,10 +5,13 @@ mod tokens;
 
 use bitflags::bitflags;
 
+use super::Error;
 use cursor::SourceCursor;
 use dfa::recognize;
 pub use goals::Goal;
 pub use tokens::TokenKind;
+
+type LexerResult<'a> = Result<Token<'a>, Error>;
 
 pub struct Lexer<'a> {
     cursor: SourceCursor<'a>,
@@ -40,7 +43,7 @@ impl<'a> Lexer<'a> {
 
     /// Gets a next token in the source text.
     #[inline(always)]
-    pub fn next_token(&self) -> Token<'a> {
+    pub fn next_token(&self) -> LexerResult<'a> {
         recognize(self.goal, &self.cursor)
     }
 
@@ -264,7 +267,7 @@ mod tests {
 
     macro_rules! assert_token {
         ($lexer:ident, $kind:ident, $lexeme:literal, $start:expr, $end:expr) => {
-            let token = $lexer.next_token();
+            let token = $lexer.next_token().unwrap();
             assert_eq!(token, token!($kind, $lexeme));
             let start = $lexer.location();
             assert_eq!(*start, $start);

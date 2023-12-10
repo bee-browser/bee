@@ -8,13 +8,13 @@ mod input_element_reg_exp;
 mod input_element_reg_exp_or_template_tail;
 mod input_element_template_tail;
 
-use super::cursor::SourceCursor;
-use super::goals::Goal;
-use super::tokens::TokenKind;
+use super::Error;
+use super::Goal;
+use super::SourceCursor;
 use super::Token;
 
 #[inline(always)]
-pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Token<'a> {
+pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     match goal {
         Goal::InputElementDiv => input_element_div::recognize(cursor),
         Goal::InputElementRegExp => input_element_reg_exp::recognize(cursor),

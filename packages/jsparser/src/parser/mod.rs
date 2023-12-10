@@ -3,6 +3,7 @@ mod lalr;
 pub use lalr::GoalSymbol;
 pub use lalr::ProductionRule;
 
+use crate::Error;
 use crate::lexer::Goal;
 use crate::lexer::Lexer;
 use crate::lexer::Location;
@@ -57,18 +58,20 @@ where
         }
     }
 
-    pub fn parse(&mut self) -> Result<H::Artifact, ()> {
+    pub fn parse(&mut self) -> Result<H::Artifact, Error> {
         self.handler.start();
         self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
-        let mut token = self.next_token();
+        let mut token = self.next_token()?;
+        tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
         loop {
             match self.handle_token(&token) {
                 ParserResult::Accept(artifact) => return Ok(artifact),
                 ParserResult::Reconsume => (),
                 ParserResult::NextToken => {
                     self.consume_token(token);
-                    token = self.next_token();
+                    token = self.next_token()?;
+                    tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
                 }
                 ParserResult::Error => {
                     if self.is_auto_semicolon_allowed(&token) {
@@ -80,14 +83,14 @@ where
                                 ParserResult::Error => {
                                     self.handler.error();
                                     self.report_error(&token);
-                                    return Err(());
+                                    return Err(Error::SyntaxError);
                                 }
                             }
                         }
                     } else {
                         self.handler.error();
                         self.report_error(&token);
-                        return Err(());
+                        return Err(Error::SyntaxError);
                     }
                 }
             }
@@ -103,11 +106,9 @@ where
     }
 
     #[inline(always)]
-    fn next_token(&mut self) -> Token<'s> {
+    fn next_token(&mut self) -> Result<Token<'s>, Error> {
         self.lexer.set_goal(self.lexical_goal());
-        let token = self.lexer.next_token();
-        tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
-        token
+        self.lexer.next_token()
     }
 
     #[inline(always)]
