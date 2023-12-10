@@ -245,18 +245,18 @@ for await (const test of stream) {
 spinner.stop();
 
 if (options.details) {
-  console.log('FAILED TESTS:');
-  for (const fail of fails) {
-    console.log(`  ${fail.test}`);
-  }
   console.log('SKIPPED TESTS:');
   for (const skip of skipped) {
     console.log(`  ${skip}`);
+  }
+  console.log('FAILED TESTS:');
+  for (const fail of fails) {
+    console.log(`  ${fail.test}`);
   }
 }
 
 const passed = count - fails.length - skipped.length;
 console.log(
-  `${count} tests: ${passed} passed, ${fails.length} failed, ${skipped.length} skipped`);
+  `${count} tests: ${passed} passed, ${skipped.length} skipped, ${fails.length} failed`);
 
 Deno.exit(fails.length > 0 ? 1 : 0);
