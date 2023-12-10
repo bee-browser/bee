@@ -2625,10 +2625,6 @@ impl SyntaxHandler for Builder {
         }
     }
 
-    fn error(&mut self) {
-        tracing::error!("error");
-    }
-
     fn location(&mut self, location: &Location) {
         tracing::debug!(op = "location", %location);
         self.location = location.clone();

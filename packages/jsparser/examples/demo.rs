@@ -105,5 +105,4 @@ impl SyntaxHandler for NullHandler {
     fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
         Ok(())
     }
-    fn error(&mut self) {}
 }

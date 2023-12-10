@@ -3,12 +3,12 @@ mod lalr;
 pub use lalr::GoalSymbol;
 pub use lalr::ProductionRule;
 
-use crate::Error;
 use crate::lexer::Goal;
 use crate::lexer::Lexer;
 use crate::lexer::Location;
 use crate::lexer::Token;
 use crate::lexer::TokenKind;
+use crate::Error;
 
 use lalr::Action;
 use lalr::State;
@@ -81,14 +81,12 @@ where
                                 ParserResult::Reconsume => (),
                                 ParserResult::NextToken => break,
                                 ParserResult::Error => {
-                                    self.handler.error();
                                     self.report_error(&token);
                                     return Err(Error::SyntaxError);
                                 }
                             }
                         }
                     } else {
-                        self.handler.error();
                         self.report_error(&token);
                         return Err(Error::SyntaxError);
                     }
@@ -373,9 +371,6 @@ pub trait SyntaxHandler {
     /// Called when a reduce action has been performed.
     fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error>;
 
-    /// Called when a parsing error has occurred.
-    fn error(&mut self);
-
     /// Called before calling other methods in order to inform the location in the source text
     /// where the event occurs.
     #[allow(unused_variables)]
@@ -405,7 +400,6 @@ mod tests {
         fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
             Ok(())
         }
-        fn error(&mut self) {}
     }
 
     macro_rules! parse {
