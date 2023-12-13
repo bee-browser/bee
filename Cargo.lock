@@ -269,9 +269,9 @@ dependencies = [
  "bee-htmltokenizer",
  "bee-toydom",
  "criterion",
- "ctor",
  "flagset",
  "phf",
+ "test-log",
  "thiserror",
  "tracing",
  "tracing-subscriber",
@@ -596,16 +596,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a22b2d63d4d1dc0b7f1b6b2747dd0088008a9be28b6ddf0b1e7d335e3037294"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "ctor"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37e366bff8cd32dd8754b0991fb66b279dc48f598c3a18914852a6673deef583"
-dependencies = [
- "quote",
- "syn",
 ]
 
 [[package]]
