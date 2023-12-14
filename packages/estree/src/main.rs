@@ -17,6 +17,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use tracing_subscriber::filter::EnvFilter;
 
+use bee_jsparser::Error;
 use bee_jsparser::Parser;
 
 use crate::builder::Builder;
@@ -119,7 +120,7 @@ fn parse<P: AsRef<Path>>(source_type: SourceType, source_file: Option<P>) -> Res
     Ok(())
 }
 
-fn parse_program(source_type: SourceType, source: &str) -> std::result::Result<NodeRef, ()> {
+fn parse_program(source_type: SourceType, source: &str) -> std::result::Result<NodeRef, Error> {
     match source_type {
         SourceType::Script => Parser::for_script(source, Builder::new()).parse(),
         SourceType::Module => Parser::for_module(source, Builder::new()).parse(),

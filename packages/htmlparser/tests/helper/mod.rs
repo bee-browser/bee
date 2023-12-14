@@ -4,11 +4,6 @@ use bee_toydom::delegate;
 use bee_toydom::ToyBuilder;
 use bee_toydom::ToyNode;
 
-#[ctor::ctor]
-fn init() {
-    tracing_subscriber::fmt::init();
-}
-
 pub fn parse(test: Test) {
     match test.scripting {
         Scripting::Off => do_parse(&test, false),

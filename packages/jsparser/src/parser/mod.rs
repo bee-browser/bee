@@ -8,6 +8,7 @@ use crate::lexer::Lexer;
 use crate::lexer::Location;
 use crate::lexer::Token;
 use crate::lexer::TokenKind;
+use crate::Error;
 
 use lalr::Action;
 use lalr::State;
@@ -57,18 +58,20 @@ where
         }
     }
 
-    pub fn parse(&mut self) -> Result<H::Artifact, ()> {
+    pub fn parse(&mut self) -> Result<H::Artifact, Error> {
         self.handler.start();
         self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
-        let mut token = self.next_token();
+        let mut token = self.next_token()?;
+        tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
         loop {
             match self.handle_token(&token) {
                 ParserResult::Accept(artifact) => return Ok(artifact),
                 ParserResult::Reconsume => (),
                 ParserResult::NextToken => {
                     self.consume_token(token);
-                    token = self.next_token();
+                    token = self.next_token()?;
+                    tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
                 }
                 ParserResult::Error => {
                     if self.is_auto_semicolon_allowed(&token) {
@@ -78,16 +81,14 @@ where
                                 ParserResult::Reconsume => (),
                                 ParserResult::NextToken => break,
                                 ParserResult::Error => {
-                                    self.handler.error();
                                     self.report_error(&token);
-                                    return Err(());
+                                    return Err(Error::SyntaxError);
                                 }
                             }
                         }
                     } else {
-                        self.handler.error();
                         self.report_error(&token);
-                        return Err(());
+                        return Err(Error::SyntaxError);
                     }
                 }
             }
@@ -103,11 +104,9 @@ where
     }
 
     #[inline(always)]
-    fn next_token(&mut self) -> Token<'s> {
+    fn next_token(&mut self) -> Result<Token<'s>, Error> {
         self.lexer.set_goal(self.lexical_goal());
-        let token = self.lexer.next_token();
-        tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
-        token
+        self.lexer.next_token()
     }
 
     #[inline(always)]
@@ -372,9 +371,6 @@ pub trait SyntaxHandler {
     /// Called when a reduce action has been performed.
     fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error>;
 
-    /// Called when a parsing error has occurred.
-    fn error(&mut self);
-
     /// Called before calling other methods in order to inform the location in the source text
     /// where the event occurs.
     #[allow(unused_variables)]
@@ -404,7 +400,6 @@ mod tests {
         fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
             Ok(())
         }
-        fn error(&mut self) {}
     }
 
     macro_rules! parse {

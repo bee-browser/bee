@@ -18,6 +18,13 @@ pub use lexer::Location;
 /// A production rule in the ECMA-262 syntactic grammar.
 pub use parser::ProductionRule;
 
+/// Errors.
+#[derive(Debug)]
+pub enum Error {
+    UnexpectedCharacter,
+    SyntaxError,
+}
+
 /// Converts a string literal into a string.
 pub fn string_literal_to_string(literal: &str) -> String {
     literal_content_to_string(&literal[1..(literal.len() - 1)])

@@ -1,6 +1,8 @@
 //<coverage:exclude>
 mod helper;
 
+use test_log::test;
+
 use helper::parse;
 use helper::Scripting;
 use helper::Test;
