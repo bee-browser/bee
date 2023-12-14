@@ -1,3 +1,5 @@
+TEST262_ARGS ?= --progress
+
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 
@@ -48,8 +50,9 @@ COVERAGE_TEST_ENV_VARS = \
   RUSTDOCFLAGS="-Cpanic=abort"
 
 GRCOV_COMMON_ARGS = \
-  $(PROJDIR)/target/debug \
-  --branch --llvm --ignore-not-existing -s $(PROJDIR) \
+  $(PROJDIR) -s $(PROJDIR) \
+  --binary-path $(PROJDIR)/target/debug \
+  --branch --llvm --ignore-not-existing \
   --ignore '*/src/main.rs' \
   --excl-line '<coverage:exclude/>|unimplemented!|unreachable!' \
   --excl-start '<coverage:exclude>' \
@@ -82,7 +85,7 @@ test: format
 # TODO: remove '-' once we've fixed all failures.
 .PHONY: test262
 test262:
-	-sh packages/estree/scripts/test262.sh --details
+	-sh packages/estree/scripts/test262.sh $(TEST262_ARGS)
 
 .PHONY: bench
 bench:
@@ -100,18 +103,20 @@ release-build: $(BUILD_TARGETS)
 release-test:
 	cargo nextest run --release --all-features
 
-# TODO: remove '-' once we've fixed all failures.
 .PHONY: coverage-test
-coverage-test: format
-	env $(COVERAGE_TEST_ENV_VARS) cargo nextest run --all-features
-	-env $(COVERAGE_TEST_ENV_VARS) sh packages/estree/scripts/test262.sh --details
+coverage-test:
+	env $(COVERAGE_TEST_ENV_VARS) $(MAKE) -s test
+
+.PHONY: coverage-test262
+coverage-test262:
+	env $(COVERAGE_TEST_ENV_VARS) $(MAKE) -s test262 TEST262_ARGS=$(TEST262_ARGS)
 
 .PHONY: coverage-lcov
-coverage-lcov: coverage-test | $(PROJDIR)/target/coverage
+coverage-lcov: | $(PROJDIR)/target/coverage
 	grcov $(GRCOV_COMMON_ARGS) -t lcov -o $(PROJDIR)/target/coverage/lcov.info
 
 .PHONY: coverage-html
-coverage-html: coverage-test | $(PROJDIR)/target/coverage
+coverage-html: | $(PROJDIR)/target/coverage
 	grcov $(GRCOV_COMMON_ARGS) -t html -o $(PROJDIR)/target/coverage
 
 .PHONE: codegen

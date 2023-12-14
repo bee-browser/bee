@@ -47,4 +47,4 @@ jobs:
           CARGO_TERM_VERBOSE: true
       - name: Run tc39/test262
         run: |
-          make test262
+          make test262 TEST262_ARGS=
