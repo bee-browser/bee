@@ -76,13 +76,14 @@ function parse(test) {
   }
 }
 
-const spinner = ora({ spinner: 'line' });
-
 // The signal handler must be registered before starting the bee-estree server.
 Deno.addSignalListener("SIGINT", () => {
-  spinner.stop();
+  spinner?.stop();
+  // We cannot call server?.stop() here because it's async method...
   Deno.exit(0);
 });
+
+const spinner = ora({ spinner: 'line' });
 
 class EstreeServer {
   constructor() {
@@ -114,6 +115,11 @@ class EstreeServer {
     reader.releaseLock();
 
     return res.program;
+  }
+
+  async stop() {
+    await this.child_.stdin.close();
+    await this.child_.status;
   }
 }
 
@@ -243,6 +249,7 @@ for await (const test of stream) {
 }
 
 spinner.stop();
+await server.stop();
 
 if (options.details) {
   console.log('SKIPPED TESTS:');
