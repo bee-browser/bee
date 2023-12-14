@@ -24,20 +24,14 @@ Install the following software:
 Then:
 
 ```shell
-# Release build
-make build
+# Run tests
 make test
-
-# Debug build
-make debug-build
-make debug-test
-
-# Make a test coverage report
-make coverage
-make coverage-html
 
 # Make docs
 make doc
+
+# release build
+make release-build
 
 # List targets defined in the top-level Makefile
 make list

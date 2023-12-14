@@ -17,7 +17,7 @@ unicase = "2.7.0"
 anyhow = "1.0.75"
 bee-toydom = { path = "../toydom" }
 criterion = "0.5.1"
-ctor = "0.2.5"
+test-log = { version = "0.2.14", default-features = false, features = ["trace"] }
 tracing-subscriber = "0.3.18"
 
 [lib]

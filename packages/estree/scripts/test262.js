@@ -58,37 +58,6 @@ const IGNORE_FILES = [
   // panicked at /home/masnagam/workspace/bee-browser/bee/packages/jsparser/src/parser/mod.rs:315:30
   'test/language/module-code/import-assertions/import-assertion-newlines.js',
   'test/language/module-code/import-attributes/import-attribute-newlines.js',
-  // automatically inserted semicolon causes infinite loop.
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-error.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js',
-  'test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js',
-  'test/language/statements/class/decorator/syntax/valid/class-element-decorator-call-expr-identifier-reference.js',
-  'test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-decorator-member-expr.js',
-  'test/language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-identifier-reference.js',
-  'test/language/statements/class/decorator/syntax/valid/class-element-decorator-parenthesized-expr-identifier-reference.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-error.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js',
-  'test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js',
 ];
 
 const UNSUPPORTED_FEATURES = [
@@ -107,13 +76,14 @@ function parse(test) {
   }
 }
 
-const spinner = ora({ spinner: 'line' });
-
 // The signal handler must be registered before starting the bee-estree server.
 Deno.addSignalListener("SIGINT", () => {
-  spinner.stop();
+  spinner?.stop();
+  // We cannot call server?.stop() here because it's async method...
   Deno.exit(0);
 });
+
+const spinner = ora({ spinner: 'line' });
 
 class EstreeServer {
   constructor() {
@@ -145,6 +115,11 @@ class EstreeServer {
     reader.releaseLock();
 
     return res.program;
+  }
+
+  async stop() {
+    await this.child_.stdin.close();
+    await this.child_.status;
   }
 }
 
@@ -274,20 +249,21 @@ for await (const test of stream) {
 }
 
 spinner.stop();
+await server.stop();
 
 if (options.details) {
-  console.log('FAILED TESTS:');
-  for (const fail of fails) {
-    console.log(`  ${fail.test}`);
-  }
   console.log('SKIPPED TESTS:');
   for (const skip of skipped) {
     console.log(`  ${skip}`);
+  }
+  console.log('FAILED TESTS:');
+  for (const fail of fails) {
+    console.log(`  ${fail.test}`);
   }
 }
 
 const passed = count - fails.length - skipped.length;
 console.log(
-  `${count} tests: ${passed} passed, ${fails.length} failed, ${skipped.length} skipped`);
+  `${count} tests: ${passed} passed, ${skipped.length} skipped, ${fails.length} failed`);
 
 Deno.exit(fails.length > 0 ? 1 : 0);

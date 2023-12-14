@@ -7,13 +7,13 @@
 mod {{.}};
 {{/each}}
 
-use super::cursor::SourceCursor;
-use super::goals::Goal;
+use super::Error;
+use super::Goal;
+use super::SourceCursor;
 use super::Token;
-use super::tokens::TokenKind;
 
 #[inline(always)]
-pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Token<'a> {
+pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     match goal {
         {{#each .}}
         Goal::{{pascalCase .}} => {{.}}::recognize(cursor),
