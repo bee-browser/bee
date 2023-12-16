@@ -38,9 +38,9 @@ pub const TABLE: [Goal; 4108] = [
     //   [UnaryExpression -> BIT_NOT . UnaryExpression]*
     Goal::InputElementRegExp,
     // State(7)
-    //   [BreakStatement -> BREAK . SEMI_COLON]*
-    //   [BreakStatement -> BREAK . (!LineTerminatorSequence) LabelIdentifier SEMI_COLON]*
-    //   [BreakStatement -> BREAK (!LineTerminatorSequence) . LabelIdentifier SEMI_COLON]*
+    //   [BreakStatement -> BREAK . SEMICOLON]*
+    //   [BreakStatement -> BREAK . (!LineTerminatorSequence) LabelIdentifier SEMICOLON]*
+    //   [BreakStatement -> BREAK (!LineTerminatorSequence) . LabelIdentifier SEMICOLON]*
     Goal::InputElementDiv,
     // State(8)
     //   [ClassDeclaration -> CLASS . BindingIdentifier ClassTail]*
@@ -49,12 +49,12 @@ pub const TABLE: [Goal; 4108] = [
     //   [LetOrConst -> CONST .]*
     Goal::InputElementDiv,
     // State(10)
-    //   [ContinueStatement -> CONTINUE . SEMI_COLON]*
-    //   [ContinueStatement -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier SEMI_COLON]*
-    //   [ContinueStatement -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier SEMI_COLON]*
+    //   [ContinueStatement -> CONTINUE . SEMICOLON]*
+    //   [ContinueStatement -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier SEMICOLON]*
+    //   [ContinueStatement -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier SEMICOLON]*
     Goal::InputElementDiv,
     // State(11)
-    //   [DebuggerStatement -> DEBUGGER . SEMI_COLON]*
+    //   [DebuggerStatement -> DEBUGGER . SEMICOLON]*
     Goal::InputElementDiv,
     // State(12)
     //   [UpdateExpression -> DEC . UnaryExpression]*
@@ -63,7 +63,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [UnaryExpression -> DELETE . UnaryExpression]*
     Goal::InputElementRegExp,
     // State(14)
-    //   [DoWhileStatement -> DO . Statement WHILE LPAREN Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement -> DO . Statement WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(15)
     //   [BooleanLiteral -> FALSE .]*
@@ -75,22 +75,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement -> FOR . LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR . LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN LexicalDeclaration SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementDiv,
     // State(17)
     //   [IdentifierNameButNotReservedWord -> FROM .]*
@@ -188,7 +188,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [PrimaryExpression -> RegularExpressionLiteral .]*
     Goal::InputElementTemplateTail,
     // State(43)
-    //   [EmptyStatement -> SEMI_COLON .]*
+    //   [EmptyStatement -> SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(44)
     //   [IdentifierNameButNotReservedWord -> SET .]*
@@ -217,8 +217,8 @@ pub const TABLE: [Goal; 4108] = [
     //   [PrimaryExpression -> THIS .]*
     Goal::InputElementTemplateTail,
     // State(52)
-    //   [ThrowStatement -> THROW . (!LineTerminatorSequence) Expression_In SEMI_COLON]*
-    //   [ThrowStatement -> THROW (!LineTerminatorSequence) . Expression_In SEMI_COLON]*
+    //   [ThrowStatement -> THROW . (!LineTerminatorSequence) Expression_In SEMICOLON]*
+    //   [ThrowStatement -> THROW (!LineTerminatorSequence) . Expression_In SEMICOLON]*
     Goal::InputElementRegExp,
     // State(53)
     //   [BooleanLiteral -> TRUE .]*
@@ -235,7 +235,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [SubstitutionTemplate -> TemplateHead . Expression_In TemplateSpans]*
     Goal::InputElementRegExp,
     // State(57)
-    //   [VariableStatement -> VAR . VariableDeclarationList_In SEMI_COLON]*
+    //   [VariableStatement -> VAR . VariableDeclarationList_In SEMICOLON]*
     Goal::InputElementDiv,
     // State(58)
     //   [UnaryExpression -> VOID . UnaryExpression]*
@@ -369,7 +369,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Statement -> ExpressionStatement .]*
     Goal::InputElementRegExp,
     // State(94)
-    //   [ExpressionStatement -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In . SEMI_COLON]*
+    //   [ExpressionStatement -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In . SEMICOLON]*
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::InputElementDiv,
     // State(95)
@@ -429,7 +429,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [UpdateExpression -> LeftHandSideExpression (!LineTerminatorSequence) . INC]*
     Goal::InputElementTemplateTail,
     // State(110)
-    //   [LexicalDeclaration_In -> LetOrConst . BindingList_In SEMI_COLON]*
+    //   [LexicalDeclaration_In -> LetOrConst . BindingList_In SEMICOLON]*
     Goal::InputElementDiv,
     // State(111)
     //   [Declaration -> LexicalDeclaration_In .]*
@@ -569,17 +569,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [UnaryExpression_Await -> BIT_NOT . UnaryExpression_Await]*
     Goal::InputElementRegExp,
     // State(147)
-    //   [BreakStatement_Await -> BREAK . SEMI_COLON]*
-    //   [BreakStatement_Await -> BREAK . (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON]*
-    //   [BreakStatement_Await -> BREAK (!LineTerminatorSequence) . LabelIdentifier_Await SEMI_COLON]*
+    //   [BreakStatement_Await -> BREAK . SEMICOLON]*
+    //   [BreakStatement_Await -> BREAK . (!LineTerminatorSequence) LabelIdentifier_Await SEMICOLON]*
+    //   [BreakStatement_Await -> BREAK (!LineTerminatorSequence) . LabelIdentifier_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(148)
     //   [ClassDeclaration_Await -> CLASS . BindingIdentifier_Await ClassTail_Await]*
     Goal::InputElementDiv,
     // State(149)
-    //   [ContinueStatement_Await -> CONTINUE . SEMI_COLON]*
-    //   [ContinueStatement_Await -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON]*
-    //   [ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier_Await SEMI_COLON]*
+    //   [ContinueStatement_Await -> CONTINUE . SEMICOLON]*
+    //   [ContinueStatement_Await -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier_Await SEMICOLON]*
+    //   [ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(150)
     //   [UpdateExpression_Await -> DEC . UnaryExpression_Await]*
@@ -588,15 +588,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [UnaryExpression_Await -> DELETE . UnaryExpression_Await]*
     Goal::InputElementRegExp,
     // State(152)
-    //   [DoWhileStatement_Await -> DO . Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await -> DO . Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(153)
     //   [ExportDeclaration -> EXPORT . DEFAULT ClassDeclaration_Await_Default]*
     //   [ExportDeclaration -> EXPORT . DEFAULT HoistableDeclaration_Await_Default]*
-    //   [ExportDeclaration -> EXPORT . DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMI_COLON]*
+    //   [ExportDeclaration -> EXPORT . DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMICOLON]*
     //   [ExportDeclaration -> EXPORT . Declaration_Await]*
-    //   [ExportDeclaration -> EXPORT . ExportFromClause FromClause SEMI_COLON]*
-    //   [ExportDeclaration -> EXPORT . NamedExports SEMI_COLON]*
+    //   [ExportDeclaration -> EXPORT . ExportFromClause FromClause SEMICOLON]*
+    //   [ExportDeclaration -> EXPORT . NamedExports SEMICOLON]*
     //   [ExportDeclaration -> EXPORT . VariableStatement_Await]*
     Goal::InputElementDiv,
     // State(154)
@@ -609,22 +609,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR . LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(155)
     //   [FunctionDeclaration_Await -> FUNCTION . BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE]*
@@ -636,8 +636,8 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(157)
     //   [ImportCall_Await -> IMPORT . LPAREN AssignmentExpression_In_Await RPAREN]*
-    //   [ImportDeclaration -> IMPORT . ImportClause FromClause SEMI_COLON]*
-    //   [ImportDeclaration -> IMPORT . ModuleSpecifier SEMI_COLON]*
+    //   [ImportDeclaration -> IMPORT . ImportClause FromClause SEMICOLON]*
+    //   [ImportDeclaration -> IMPORT . ModuleSpecifier SEMICOLON]*
     //   [ImportMeta -> IMPORT . DOT META]*
     Goal::InputElementDiv,
     // State(158)
@@ -695,8 +695,8 @@ pub const TABLE: [Goal; 4108] = [
     //   [PrimaryExpression_Await -> THIS .]*
     Goal::InputElementTemplateTail,
     // State(171)
-    //   [ThrowStatement_Await -> THROW . (!LineTerminatorSequence) Expression_In_Await SEMI_COLON]*
-    //   [ThrowStatement_Await -> THROW (!LineTerminatorSequence) . Expression_In_Await SEMI_COLON]*
+    //   [ThrowStatement_Await -> THROW . (!LineTerminatorSequence) Expression_In_Await SEMICOLON]*
+    //   [ThrowStatement_Await -> THROW (!LineTerminatorSequence) . Expression_In_Await SEMICOLON]*
     Goal::InputElementRegExp,
     // State(172)
     //   [TryStatement_Await -> TRY . Block_Await Catch_Await]*
@@ -710,7 +710,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [SubstitutionTemplate_Await -> TemplateHead . Expression_In_Await TemplateSpans_Await]*
     Goal::InputElementRegExp,
     // State(175)
-    //   [VariableStatement_Await -> VAR . VariableDeclarationList_In_Await SEMI_COLON]*
+    //   [VariableStatement_Await -> VAR . VariableDeclarationList_In_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(176)
     //   [UnaryExpression_Await -> VOID . UnaryExpression_Await]*
@@ -847,7 +847,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Statement_Await -> ExpressionStatement_Await .]*
     Goal::InputElementRegExp,
     // State(213)
-    //   [ExpressionStatement_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await . SEMI_COLON]*
+    //   [ExpressionStatement_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await . SEMICOLON]*
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::InputElementDiv,
     // State(214)
@@ -904,7 +904,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LineTerminatorSequence) . INC]*
     Goal::InputElementTemplateTail,
     // State(228)
-    //   [LexicalDeclaration_In_Await -> LetOrConst . BindingList_In_Await SEMI_COLON]*
+    //   [LexicalDeclaration_In_Await -> LetOrConst . BindingList_In_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(229)
     //   [Declaration_Await -> LexicalDeclaration_In_Await .]*
@@ -1126,7 +1126,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [LabelIdentifier -> AWAIT .]*
     Goal::InputElementDiv,
     // State(288)
-    //   [BreakStatement -> BREAK SEMI_COLON .]*
+    //   [BreakStatement -> BREAK SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(289)
     //   [LabelIdentifier -> YIELD .]*
@@ -1135,10 +1135,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [LabelIdentifier -> Identifier .]*
     Goal::InputElementDiv,
     // State(291)
-    //   [BreakStatement -> BREAK (!LineTerminatorSequence) LabelIdentifier . SEMI_COLON]*
+    //   [BreakStatement -> BREAK (!LineTerminatorSequence) LabelIdentifier . SEMICOLON]*
     Goal::InputElementDiv,
     // State(292)
-    //   [BreakStatement -> BREAK . SEMI_COLON]*
+    //   [BreakStatement -> BREAK . SEMICOLON]*
     Goal::InputElementDiv,
     // State(293)
     //   [BindingIdentifier -> AWAIT .]*
@@ -1153,16 +1153,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingIdentifier -> Identifier .]*
     Goal::InputElementDiv,
     // State(297)
-    //   [ContinueStatement -> CONTINUE SEMI_COLON .]*
+    //   [ContinueStatement -> CONTINUE SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(298)
-    //   [ContinueStatement -> CONTINUE (!LineTerminatorSequence) LabelIdentifier . SEMI_COLON]*
+    //   [ContinueStatement -> CONTINUE (!LineTerminatorSequence) LabelIdentifier . SEMICOLON]*
     Goal::InputElementDiv,
     // State(299)
-    //   [ContinueStatement -> CONTINUE . SEMI_COLON]*
+    //   [ContinueStatement -> CONTINUE . SEMICOLON]*
     Goal::InputElementDiv,
     // State(300)
-    //   [DebuggerStatement -> DEBUGGER SEMI_COLON .]*
+    //   [DebuggerStatement -> DEBUGGER SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(301)
     //   [UpdateExpression -> DEC UnaryExpression .]*
@@ -1176,7 +1176,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(304)
-    //   [DoWhileStatement -> DO Statement . WHILE LPAREN Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement -> DO Statement . WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(305)
     //   [ForInOfStatement -> FOR LPAREN . VAR ForBinding IN Expression_In RPAREN Statement]*
@@ -1185,22 +1185,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement -> FOR LPAREN . ForDeclaration OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR LPAREN . (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . LexicalDeclaration SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . LexicalDeclaration SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . LexicalDeclaration SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . LexicalDeclaration Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(306)
     //   [GeneratorDeclaration -> FUNCTION MUL . BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -1346,7 +1346,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementRegExp,
     // State(341)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ThrowStatement -> THROW (!LineTerminatorSequence) Expression_In . SEMI_COLON]*
+    //   [ThrowStatement -> THROW (!LineTerminatorSequence) Expression_In . SEMICOLON]*
     Goal::InputElementDiv,
     // State(342)
     //   [TryStatement -> TRY Block . Catch]*
@@ -1393,7 +1393,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(351)
     //   [VariableDeclarationList_In -> VariableDeclarationList_In . COMMA VariableDeclaration_In]*
-    //   [VariableStatement -> VAR VariableDeclarationList_In . SEMI_COLON]*
+    //   [VariableStatement -> VAR VariableDeclarationList_In . SEMICOLON]*
     Goal::InputElementDiv,
     // State(352)
     //   [VariableDeclarationList_In -> VariableDeclaration_In .]*
@@ -1484,7 +1484,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_In -> Expression_In COMMA . AssignmentExpression_In]*
     Goal::InputElementRegExp,
     // State(378)
-    //   [ExpressionStatement -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMI_COLON .]*
+    //   [ExpressionStatement -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(379)
     //   [LabelledStatement -> LabelIdentifier COLON . LabelledItem]*
@@ -1560,7 +1560,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(401)
     //   [BindingList_In -> BindingList_In . COMMA LexicalBinding_In]*
-    //   [LexicalDeclaration_In -> LetOrConst BindingList_In . SEMI_COLON]*
+    //   [LexicalDeclaration_In -> LetOrConst BindingList_In . SEMICOLON]*
     Goal::InputElementDiv,
     // State(402)
     //   [LexicalBinding_In -> BindingPattern . Initializer_In]*
@@ -1725,7 +1725,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [UnaryExpression_Await -> BIT_NOT UnaryExpression_Await .]*
     Goal::InputElementTemplateTail,
     // State(449)
-    //   [BreakStatement_Await -> BREAK SEMI_COLON .]*
+    //   [BreakStatement_Await -> BREAK SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(450)
     //   [LabelIdentifier_Await -> YIELD .]*
@@ -1734,22 +1734,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [LabelIdentifier_Await -> Identifier .]*
     Goal::InputElementDiv,
     // State(452)
-    //   [BreakStatement_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Await . SEMI_COLON]*
+    //   [BreakStatement_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(453)
-    //   [BreakStatement_Await -> BREAK . SEMI_COLON]*
+    //   [BreakStatement_Await -> BREAK . SEMICOLON]*
     Goal::InputElementDiv,
     // State(454)
     //   [ClassDeclaration_Await -> CLASS BindingIdentifier_Await . ClassTail_Await]*
     Goal::InputElementDiv,
     // State(455)
-    //   [ContinueStatement_Await -> CONTINUE SEMI_COLON .]*
+    //   [ContinueStatement_Await -> CONTINUE SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(456)
-    //   [ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Await . SEMI_COLON]*
+    //   [ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(457)
-    //   [ContinueStatement_Await -> CONTINUE . SEMI_COLON]*
+    //   [ContinueStatement_Await -> CONTINUE . SEMICOLON]*
     Goal::InputElementDiv,
     // State(458)
     //   [UpdateExpression_Await -> DEC UnaryExpression_Await .]*
@@ -1763,7 +1763,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(461)
-    //   [DoWhileStatement_Await -> DO Statement_Await . WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await -> DO Statement_Await . WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(462)
     //   [AsyncFunctionDeclaration_Await -> ASYNC . (!LineTerminatorSequence) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -1774,7 +1774,7 @@ pub const TABLE: [Goal; 4108] = [
     // State(463)
     //   [ExportDeclaration -> EXPORT DEFAULT . ClassDeclaration_Await_Default]*
     //   [ExportDeclaration -> EXPORT DEFAULT . HoistableDeclaration_Await_Default]*
-    //   [ExportDeclaration -> EXPORT DEFAULT . (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMI_COLON]*
+    //   [ExportDeclaration -> EXPORT DEFAULT . (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMICOLON]*
     Goal::InputElementRegExp,
     // State(464)
     //   [NamedExports -> LBRACE . RBRACE]*
@@ -1792,10 +1792,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [ExportDeclaration -> EXPORT Declaration_Await .]*
     Goal::InputElementRegExp,
     // State(468)
-    //   [ExportDeclaration -> EXPORT ExportFromClause . FromClause SEMI_COLON]*
+    //   [ExportDeclaration -> EXPORT ExportFromClause . FromClause SEMICOLON]*
     Goal::InputElementDiv,
     // State(469)
-    //   [ExportDeclaration -> EXPORT NamedExports . SEMI_COLON]*
+    //   [ExportDeclaration -> EXPORT NamedExports . SEMICOLON]*
     //   [ExportFromClause -> NamedExports .]*
     Goal::InputElementDiv,
     // State(470)
@@ -1813,22 +1813,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR LPAREN . ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(473)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL . BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -1858,7 +1858,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ImportedBinding -> BindingIdentifier_Await .]*
     Goal::InputElementDiv,
     // State(481)
-    //   [ImportDeclaration -> IMPORT ImportClause . FromClause SEMI_COLON]*
+    //   [ImportDeclaration -> IMPORT ImportClause . FromClause SEMICOLON]*
     Goal::InputElementDiv,
     // State(482)
     //   [ImportedDefaultBinding -> ImportedBinding .]*
@@ -1869,7 +1869,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ImportClause -> ImportedDefaultBinding . COMMA NamedImports]*
     Goal::InputElementDiv,
     // State(484)
-    //   [ImportDeclaration -> IMPORT ModuleSpecifier . SEMI_COLON]*
+    //   [ImportDeclaration -> IMPORT ModuleSpecifier . SEMICOLON]*
     Goal::InputElementDiv,
     // State(485)
     //   [ImportClause -> NameSpaceImport .]*
@@ -1995,7 +1995,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementRegExp,
     // State(514)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ThrowStatement_Await -> THROW (!LineTerminatorSequence) Expression_In_Await . SEMI_COLON]*
+    //   [ThrowStatement_Await -> THROW (!LineTerminatorSequence) Expression_In_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(515)
     //   [TryStatement_Await -> TRY Block_Await . Catch_Await]*
@@ -2042,7 +2042,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(524)
     //   [VariableDeclarationList_In_Await -> VariableDeclarationList_In_Await . COMMA VariableDeclaration_In_Await]*
-    //   [VariableStatement_Await -> VAR VariableDeclarationList_In_Await . SEMI_COLON]*
+    //   [VariableStatement_Await -> VAR VariableDeclarationList_In_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(525)
     //   [VariableDeclarationList_In_Await -> VariableDeclaration_In_Await .]*
@@ -2133,7 +2133,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_In_Await -> Expression_In_Await COMMA . AssignmentExpression_In_Await]*
     Goal::InputElementRegExp,
     // State(551)
-    //   [ExpressionStatement_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMI_COLON .]*
+    //   [ExpressionStatement_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(552)
     //   [LabelledStatement_Await -> LabelIdentifier_Await COLON . LabelledItem_Await]*
@@ -2173,7 +2173,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(562)
     //   [BindingList_In_Await -> BindingList_In_Await . COMMA LexicalBinding_In_Await]*
-    //   [LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await . SEMI_COLON]*
+    //   [LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(563)
     //   [LexicalBinding_In_Await -> BindingPattern_Await . Initializer_In_Await]*
@@ -2556,16 +2556,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_In -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW . AsyncConciseBody_In]*
     Goal::InputElementRegExp,
     // State(674)
-    //   [BreakStatement -> BREAK (!LineTerminatorSequence) LabelIdentifier SEMI_COLON .]*
+    //   [BreakStatement -> BREAK (!LineTerminatorSequence) LabelIdentifier SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(675)
     //   [ClassDeclaration -> CLASS BindingIdentifier ClassTail .]*
     Goal::InputElementRegExp,
     // State(676)
-    //   [ContinueStatement -> CONTINUE (!LineTerminatorSequence) LabelIdentifier SEMI_COLON .]*
+    //   [ContinueStatement -> CONTINUE (!LineTerminatorSequence) LabelIdentifier SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(677)
-    //   [DoWhileStatement -> DO Statement WHILE . LPAREN Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement -> DO Statement WHILE . LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(678)
     //   [AsyncArrowFunction -> ASYNC . (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody]*
@@ -2581,18 +2581,18 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(679)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(680)
     //   [ForInOfStatement -> FOR LPAREN VAR . ForBinding IN Expression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR LPAREN VAR . ForBinding OF AssignmentExpression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementDiv,
     // State(681)
     //   [AssignmentExpression -> ArrowFunction .]*
@@ -2644,10 +2644,10 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(693)
     //   [Expression -> Expression . COMMA AssignmentExpression]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementDiv,
     // State(694)
     //   [ForInOfStatement -> FOR LPAREN ForDeclaration . IN Expression_In RPAREN Statement]*
@@ -2669,13 +2669,13 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(696)
     //   [ForDeclaration -> LetOrConst . ForBinding]*
-    //   [LexicalDeclaration -> LetOrConst . BindingList SEMI_COLON]*
+    //   [LexicalDeclaration -> LetOrConst . BindingList SEMICOLON]*
     Goal::InputElementDiv,
     // State(697)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration . SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration . Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration . Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration . SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration . Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration . Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(698)
     //   [LogicalANDExpression -> LogicalANDExpression . AND BitwiseORExpression]*
@@ -2861,7 +2861,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [SwitchStatement -> SWITCH LPAREN Expression_In . RPAREN CaseBlock]*
     Goal::InputElementDiv,
     // State(749)
-    //   [ThrowStatement -> THROW (!LineTerminatorSequence) Expression_In SEMI_COLON .]*
+    //   [ThrowStatement -> THROW (!LineTerminatorSequence) Expression_In SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(750)
     //   [Catch -> CATCH . LPAREN CatchParameter RPAREN Block]*
@@ -2988,7 +2988,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_In -> VariableDeclarationList_In COMMA . VariableDeclaration_In]*
     Goal::InputElementDiv,
     // State(784)
-    //   [VariableStatement -> VAR VariableDeclarationList_In SEMI_COLON .]*
+    //   [VariableStatement -> VAR VariableDeclarationList_In SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(785)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -3166,7 +3166,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_In -> BindingList_In COMMA . LexicalBinding_In]*
     Goal::InputElementDiv,
     // State(830)
-    //   [LexicalDeclaration_In -> LetOrConst BindingList_In SEMI_COLON .]*
+    //   [LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(831)
     //   [LexicalBinding_In -> BindingPattern Initializer_In .]*
@@ -3360,16 +3360,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_In_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW . AsyncConciseBody_In]*
     Goal::InputElementRegExp,
     // State(880)
-    //   [BreakStatement_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON .]*
+    //   [BreakStatement_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(881)
     //   [ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await .]*
     Goal::InputElementRegExp,
     // State(882)
-    //   [ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON .]*
+    //   [ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(883)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE . LPAREN Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await -> DO Statement_Await WHILE . LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(884)
     //   [AsyncArrowFunction_In_Await -> ASYNC . (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody_In]*
@@ -3395,7 +3395,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [GeneratorDeclaration_Await_Default -> FUNCTION . MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::InputElementDiv,
     // State(887)
-    //   [ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await . SEMI_COLON]*
+    //   [ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(888)
     //   [HoistableDeclaration_Await_Default -> AsyncFunctionDeclaration_Await_Default .]*
@@ -3443,10 +3443,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [FromClause -> FROM . ModuleSpecifier]*
     Goal::InputElementDiv,
     // State(902)
-    //   [ExportDeclaration -> EXPORT ExportFromClause FromClause . SEMI_COLON]*
+    //   [ExportDeclaration -> EXPORT ExportFromClause FromClause . SEMICOLON]*
     Goal::InputElementDiv,
     // State(903)
-    //   [ExportDeclaration -> EXPORT NamedExports SEMI_COLON .]*
+    //   [ExportDeclaration -> EXPORT NamedExports SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(904)
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN . VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
@@ -3467,18 +3467,18 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(906)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(907)
     //   [ForInOfStatement_Await -> FOR LPAREN VAR . ForBinding_Await IN Expression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(908)
     //   [AssignmentExpression_Await -> ArrowFunction_Await .]*
@@ -3530,10 +3530,10 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(920)
     //   [Expression_Await -> Expression_Await . COMMA AssignmentExpression_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(921)
     //   [ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await . IN Expression_In_Await RPAREN Statement_Await]*
@@ -3555,13 +3555,13 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(923)
     //   [ForDeclaration_Await -> LetOrConst . ForBinding_Await]*
-    //   [LexicalDeclaration_Await -> LetOrConst . BindingList_Await SEMI_COLON]*
+    //   [LexicalDeclaration_Await -> LetOrConst . BindingList_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(924)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(925)
     //   [LogicalANDExpression_Await -> LogicalANDExpression_Await . AND BitwiseORExpression_Await]*
@@ -3633,14 +3633,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [NameSpaceImport -> MUL AS . ImportedBinding]*
     Goal::InputElementDiv,
     // State(942)
-    //   [ImportDeclaration -> IMPORT ImportClause FromClause . SEMI_COLON]*
+    //   [ImportDeclaration -> IMPORT ImportClause FromClause . SEMICOLON]*
     Goal::InputElementDiv,
     // State(943)
     //   [ImportClause -> ImportedDefaultBinding COMMA . NameSpaceImport]*
     //   [ImportClause -> ImportedDefaultBinding COMMA . NamedImports]*
     Goal::InputElementDiv,
     // State(944)
-    //   [ImportDeclaration -> IMPORT ModuleSpecifier SEMI_COLON .]*
+    //   [ImportDeclaration -> IMPORT ModuleSpecifier SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(945)
     //   [Block_Await -> LBRACE StatementList_Await RBRACE .]*
@@ -3722,7 +3722,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await . RPAREN CaseBlock_Await]*
     Goal::InputElementDiv,
     // State(966)
-    //   [ThrowStatement_Await -> THROW (!LineTerminatorSequence) Expression_In_Await SEMI_COLON .]*
+    //   [ThrowStatement_Await -> THROW (!LineTerminatorSequence) Expression_In_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(967)
     //   [Catch_Await -> CATCH . LPAREN CatchParameter_Await RPAREN Block_Await]*
@@ -3829,7 +3829,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_In_Await -> VariableDeclarationList_In_Await COMMA . VariableDeclaration_In_Await]*
     Goal::InputElementDiv,
     // State(996)
-    //   [VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMI_COLON .]*
+    //   [VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(997)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -3987,7 +3987,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_In_Await -> BindingList_In_Await COMMA . LexicalBinding_In_Await]*
     Goal::InputElementDiv,
     // State(1036)
-    //   [LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMI_COLON .]*
+    //   [LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1037)
     //   [LexicalBinding_In_Await -> BindingPattern_Await Initializer_In_Await .]*
@@ -4103,14 +4103,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassTail -> LBRACE RBRACE .]*
     Goal::InputElementRegExpOrTemplateTail,
     // State(1063)
-    //   [ClassElement -> SEMI_COLON .]*
+    //   [ClassElement -> SEMICOLON .]*
     Goal::InputElementDiv,
     // State(1064)
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition -> SET . ClassElementName LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(1065)
-    //   [ClassElement -> STATIC . FieldDefinition SEMI_COLON]*
+    //   [ClassElement -> STATIC . FieldDefinition SEMICOLON]*
     //   [ClassElement -> STATIC . MethodDefinition]*
     //   [ClassStaticBlock -> STATIC . LBRACE ClassStaticBlockBody RBRACE]*
     //   [KeywordOrIdentifierName -> STATIC .]*
@@ -4134,7 +4134,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassElement -> ClassStaticBlock .]*
     Goal::InputElementDiv,
     // State(1071)
-    //   [ClassElement -> FieldDefinition . SEMI_COLON]*
+    //   [ClassElement -> FieldDefinition . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1072)
     //   [ClassElement -> MethodDefinition .]*
@@ -4239,20 +4239,20 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_In -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody_In .]*
     Goal::InputElementTemplateTail,
     // State(1103)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN . Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement -> DO Statement WHILE LPAREN . Expression_In RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(1104)
     //   [AsyncArrowFunction -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier . (!LineTerminatorSequence) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) . ARROW AsyncConciseBody]*
     Goal::InputElementDiv,
     // State(1105)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1106)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In . SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1107)
     //   [ForBinding -> BindingIdentifier .]*
@@ -4271,10 +4271,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList -> VariableDeclaration .]*
     Goal::InputElementDiv,
     // State(1111)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     //   [VariableDeclarationList -> VariableDeclarationList . COMMA VariableDeclaration]*
     Goal::InputElementDiv,
     // State(1112)
@@ -4311,10 +4311,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression -> Expression COMMA . AssignmentExpression]*
     Goal::InputElementRegExp,
     // State(1123)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1124)
     //   [ForInOfStatement -> FOR LPAREN ForDeclaration IN . Expression_In RPAREN Statement]*
@@ -4360,7 +4360,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(1135)
     //   [BindingList -> BindingList . COMMA LexicalBinding]*
-    //   [LexicalDeclaration -> LetOrConst BindingList . SEMI_COLON]*
+    //   [LexicalDeclaration -> LetOrConst BindingList . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1136)
     //   [ForBinding -> BindingPattern .]*
@@ -4373,13 +4373,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList -> LexicalBinding .]*
     Goal::InputElementDiv,
     // State(1139)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1140)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In . SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In . SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1141)
     //   [LogicalANDExpression -> LogicalANDExpression AND . BitwiseORExpression]*
@@ -4550,7 +4550,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [WithStatement -> WITH LPAREN Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1192)
-    //   [DoWhileStatement_Return -> DO . Statement_Return WHILE LPAREN Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Return -> DO . Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(1193)
     //   [ForInOfStatement_Return -> FOR . LPAREN VAR ForBinding IN Expression_In RPAREN Statement_Return]*
@@ -4559,22 +4559,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR . LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR . LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR . LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(1194)
     //   [IfStatement_Return -> IF . LPAREN Expression_In RPAREN Statement_Return ELSE Statement_Return]*
@@ -4585,9 +4585,9 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Return -> LBRACE . StatementList_Return RBRACE]*
     Goal::InputElementRegExp,
     // State(1196)
-    //   [ReturnStatement -> RETURN . SEMI_COLON]*
-    //   [ReturnStatement -> RETURN . (!LineTerminatorSequence) Expression_In SEMI_COLON]*
-    //   [ReturnStatement -> RETURN (!LineTerminatorSequence) . Expression_In SEMI_COLON]*
+    //   [ReturnStatement -> RETURN . SEMICOLON]*
+    //   [ReturnStatement -> RETURN . (!LineTerminatorSequence) Expression_In SEMICOLON]*
+    //   [ReturnStatement -> RETURN (!LineTerminatorSequence) . Expression_In SEMICOLON]*
     Goal::InputElementRegExp,
     // State(1197)
     //   [SwitchStatement_Return -> SWITCH . LPAREN Expression_In RPAREN CaseBlock_Return]*
@@ -4719,7 +4719,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [OptionalChain -> OptionalChain LBRACK Expression_In . RBRACK]*
     Goal::InputElementDiv,
     // State(1238)
-    //   [DoWhileStatement_Await_Return -> DO . Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await_Return -> DO . Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(1239)
     //   [ForInOfStatement_Await_Return -> FOR . AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -4731,22 +4731,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR . LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(1240)
     //   [IfStatement_Await_Return -> IF . LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE Statement_Await_Return]*
@@ -4757,9 +4757,9 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Await_Return -> LBRACE . StatementList_Await_Return RBRACE]*
     Goal::InputElementRegExp,
     // State(1242)
-    //   [ReturnStatement_Await -> RETURN . SEMI_COLON]*
-    //   [ReturnStatement_Await -> RETURN . (!LineTerminatorSequence) Expression_In_Await SEMI_COLON]*
-    //   [ReturnStatement_Await -> RETURN (!LineTerminatorSequence) . Expression_In_Await SEMI_COLON]*
+    //   [ReturnStatement_Await -> RETURN . SEMICOLON]*
+    //   [ReturnStatement_Await -> RETURN . (!LineTerminatorSequence) Expression_In_Await SEMICOLON]*
+    //   [ReturnStatement_Await -> RETURN (!LineTerminatorSequence) . Expression_In_Await SEMICOLON]*
     Goal::InputElementRegExp,
     // State(1243)
     //   [SwitchStatement_Await_Return -> SWITCH . LPAREN Expression_In_Await RPAREN CaseBlock_Await_Return]*
@@ -4890,14 +4890,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassTail_Await -> LBRACE RBRACE .]*
     Goal::InputElementRegExpOrTemplateTail,
     // State(1283)
-    //   [ClassElement_Await -> SEMI_COLON .]*
+    //   [ClassElement_Await -> SEMICOLON .]*
     Goal::InputElementDiv,
     // State(1284)
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition_Await -> SET . ClassElementName_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(1285)
-    //   [ClassElement_Await -> STATIC . FieldDefinition_Await SEMI_COLON]*
+    //   [ClassElement_Await -> STATIC . FieldDefinition_Await SEMICOLON]*
     //   [ClassElement_Await -> STATIC . MethodDefinition_Await]*
     //   [ClassStaticBlock -> STATIC . LBRACE ClassStaticBlockBody RBRACE]*
     //   [KeywordOrIdentifierName -> STATIC .]*
@@ -4921,7 +4921,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassElement_Await -> ClassStaticBlock .]*
     Goal::InputElementDiv,
     // State(1291)
-    //   [ClassElement_Await -> FieldDefinition_Await . SEMI_COLON]*
+    //   [ClassElement_Await -> FieldDefinition_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1292)
     //   [ClassElement_Await -> MethodDefinition_Await .]*
@@ -4985,7 +4985,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_In_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody_In .]*
     Goal::InputElementTemplateTail,
     // State(1311)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN . Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN . Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(1312)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -5011,7 +5011,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await . LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(1318)
-    //   [ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMI_COLON .]*
+    //   [ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1319)
     //   [ExportsList -> ExportsList COMMA . ExportSpecifier]*
@@ -5030,7 +5030,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FromClause -> FROM ModuleSpecifier .]*
     Goal::InputElementDiv,
     // State(1324)
-    //   [ExportDeclaration -> EXPORT ExportFromClause FromClause SEMI_COLON .]*
+    //   [ExportDeclaration -> EXPORT ExportFromClause FromClause SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1325)
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
@@ -5049,13 +5049,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) . ARROW AsyncConciseBody]*
     Goal::InputElementDiv,
     // State(1330)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1331)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1332)
     //   [ForBinding_Await -> BindingIdentifier_Await .]*
@@ -5071,10 +5071,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await . OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1335)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await . COMMA VariableDeclaration_Await]*
     Goal::InputElementDiv,
     // State(1336)
@@ -5114,10 +5114,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_Await -> Expression_Await COMMA . AssignmentExpression_Await]*
     Goal::InputElementRegExp,
     // State(1348)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1349)
     //   [ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await IN . Expression_In_Await RPAREN Statement_Await]*
@@ -5163,7 +5163,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(1360)
     //   [BindingList_Await -> BindingList_Await . COMMA LexicalBinding_Await]*
-    //   [LexicalDeclaration_Await -> LetOrConst BindingList_Await . SEMI_COLON]*
+    //   [LexicalDeclaration_Await -> LetOrConst BindingList_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1361)
     //   [ForBinding_Await -> BindingPattern_Await .]*
@@ -5176,13 +5176,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Await -> LexicalBinding_Await .]*
     Goal::InputElementDiv,
     // State(1364)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1365)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1366)
     //   [LogicalANDExpression_Await -> LogicalANDExpression_Await AND . BitwiseORExpression_Await]*
@@ -5236,7 +5236,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [NameSpaceImport -> MUL AS ImportedBinding .]*
     Goal::InputElementDiv,
     // State(1382)
-    //   [ImportDeclaration -> IMPORT ImportClause FromClause SEMI_COLON .]*
+    //   [ImportDeclaration -> IMPORT ImportClause FromClause SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1383)
     //   [ImportClause -> ImportedDefaultBinding COMMA NameSpaceImport .]*
@@ -5459,7 +5459,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassStaticBlockStatementList -> (empty) .]*
     Goal::InputElementRegExp,
     // State(1449)
-    //   [ClassElement -> STATIC FieldDefinition . SEMI_COLON]*
+    //   [ClassElement -> STATIC FieldDefinition . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1450)
     //   [ClassElement -> STATIC MethodDefinition .]*
@@ -5474,7 +5474,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FieldDefinition -> ClassElementName Initializer_In .]*
     Goal::InputElementDiv,
     // State(1454)
-    //   [ClassElement -> FieldDefinition SEMI_COLON .]*
+    //   [ClassElement -> FieldDefinition SEMICOLON .]*
     Goal::InputElementDiv,
     // State(1455)
     //   [ClassTail -> ClassHeritage LBRACE RBRACE .]*
@@ -5600,22 +5600,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(1488)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In . RPAREN SEMI_COLON]*
+    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In . RPAREN SEMICOLON]*
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::InputElementDiv,
     // State(1489)
     //   [AsyncArrowFunction -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW . AsyncConciseBody]*
     Goal::InputElementRegExp,
     // State(1490)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1491)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1492)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1493)
     //   [Initializer -> ASSIGN . AssignmentExpression]*
@@ -5636,10 +5636,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList -> VariableDeclarationList COMMA . VariableDeclaration]*
     Goal::InputElementDiv,
     // State(1499)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1500)
     //   [ConciseBody -> LBRACE . FunctionBody RBRACE]*
@@ -5746,13 +5746,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression -> Expression COMMA AssignmentExpression .]*
     Goal::InputElementDiv,
     // State(1519)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1520)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In . SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1521)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -5790,21 +5790,21 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList -> BindingList COMMA . LexicalBinding]*
     Goal::InputElementDiv,
     // State(1532)
-    //   [LexicalDeclaration -> LetOrConst BindingList SEMI_COLON .]*
+    //   [LexicalDeclaration -> LetOrConst BindingList SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1533)
     //   [LexicalBinding -> BindingPattern Initializer .]*
     Goal::InputElementDiv,
     // State(1534)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1535)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1536)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1537)
     //   [BitwiseORExpression -> BitwiseORExpression . BIT_OR BitwiseXORExpression]*
@@ -5947,7 +5947,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [WithStatement -> WITH LPAREN Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(1574)
-    //   [DoWhileStatement_Return -> DO Statement_Return . WHILE LPAREN Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Return -> DO Statement_Return . WHILE LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(1575)
     //   [ForInOfStatement_Return -> FOR LPAREN . VAR ForBinding IN Expression_In RPAREN Statement_Return]*
@@ -5956,22 +5956,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN . ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR LPAREN . (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(1576)
     //   [IfStatement_Return -> IF LPAREN . Expression_In RPAREN Statement_Return ELSE Statement_Return]*
@@ -5985,14 +5985,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [StatementList_Return -> StatementList_Return . StatementListItem_Return]*
     Goal::InputElementRegExp,
     // State(1579)
-    //   [ReturnStatement -> RETURN SEMI_COLON .]*
+    //   [ReturnStatement -> RETURN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1580)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ReturnStatement -> RETURN (!LineTerminatorSequence) Expression_In . SEMI_COLON]*
+    //   [ReturnStatement -> RETURN (!LineTerminatorSequence) Expression_In . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1581)
-    //   [ReturnStatement -> RETURN . SEMI_COLON]*
+    //   [ReturnStatement -> RETURN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1582)
     //   [SwitchStatement_Return -> SWITCH LPAREN . Expression_In RPAREN CaseBlock_Return]*
@@ -6034,7 +6034,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [OptionalChain -> OptionalChain LBRACK Expression_In RBRACK .]*
     Goal::InputElementTemplateTail,
     // State(1594)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return . WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return . WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(1595)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT . LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -6048,22 +6048,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN . ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(1597)
     //   [IfStatement_Await_Return -> IF LPAREN . Expression_In_Await RPAREN Statement_Await_Return ELSE Statement_Await_Return]*
@@ -6077,14 +6077,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [StatementList_Await_Return -> StatementList_Await_Return . StatementListItem_Await_Return]*
     Goal::InputElementRegExp,
     // State(1600)
-    //   [ReturnStatement_Await -> RETURN SEMI_COLON .]*
+    //   [ReturnStatement_Await -> RETURN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1601)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ReturnStatement_Await -> RETURN (!LineTerminatorSequence) Expression_In_Await . SEMI_COLON]*
+    //   [ReturnStatement_Await -> RETURN (!LineTerminatorSequence) Expression_In_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1602)
-    //   [ReturnStatement_Await -> RETURN . SEMI_COLON]*
+    //   [ReturnStatement_Await -> RETURN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1603)
     //   [SwitchStatement_Await_Return -> SWITCH LPAREN . Expression_In_Await RPAREN CaseBlock_Await_Return]*
@@ -6113,7 +6113,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON AssignmentExpression_In .]*
     Goal::InputElementTemplateTail,
     // State(1611)
-    //   [ClassElement_Await -> STATIC FieldDefinition_Await . SEMI_COLON]*
+    //   [ClassElement_Await -> STATIC FieldDefinition_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1612)
     //   [ClassElement_Await -> STATIC MethodDefinition_Await .]*
@@ -6128,7 +6128,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await .]*
     Goal::InputElementDiv,
     // State(1616)
-    //   [ClassElement_Await -> FieldDefinition_Await SEMI_COLON .]*
+    //   [ClassElement_Await -> FieldDefinition_Await SEMICOLON .]*
     Goal::InputElementDiv,
     // State(1617)
     //   [ClassTail_Await -> ClassHeritage_Await LBRACE RBRACE .]*
@@ -6176,7 +6176,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(1631)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await . RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await . RPAREN SEMICOLON]*
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::InputElementDiv,
     // State(1632)
@@ -6235,15 +6235,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW . AsyncConciseBody]*
     Goal::InputElementRegExp,
     // State(1649)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(1650)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1651)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1652)
     //   [Initializer_Await -> ASSIGN . AssignmentExpression_Await]*
@@ -6264,10 +6264,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA . VariableDeclaration_Await]*
     Goal::InputElementDiv,
     // State(1658)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1659)
     //   [ArrowFunction_Await -> ArrowParameters_Await (!LineTerminatorSequence) ARROW ConciseBody .]*
@@ -6330,13 +6330,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_Await -> Expression_Await COMMA AssignmentExpression_Await .]*
     Goal::InputElementDiv,
     // State(1670)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1671)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1672)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -6374,21 +6374,21 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Await -> BindingList_Await COMMA . LexicalBinding_Await]*
     Goal::InputElementDiv,
     // State(1683)
-    //   [LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMI_COLON .]*
+    //   [LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1684)
     //   [LexicalBinding_Await -> BindingPattern_Await Initializer_Await .]*
     Goal::InputElementDiv,
     // State(1685)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(1686)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1687)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1688)
     //   [BitwiseORExpression_Await -> BitwiseORExpression_Await . BIT_OR BitwiseXORExpression_Await]*
@@ -6644,7 +6644,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [StatementList_Await -> StatementList_Await . StatementListItem_Await]*
     Goal::InputElementRegExp,
     // State(1755)
-    //   [ClassElement -> STATIC FieldDefinition SEMI_COLON .]*
+    //   [ClassElement -> STATIC FieldDefinition SEMICOLON .]*
     Goal::InputElementDiv,
     // State(1756)
     //   [ClassTail -> ClassHeritage LBRACE ClassBody RBRACE .]*
@@ -6790,23 +6790,23 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(1798)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN . SEMI_COLON]*
+    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1799)
     //   [AsyncArrowFunction -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody .]*
     Goal::InputElementDiv,
     // State(1800)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(1801)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1802)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1803)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1804)
     //   [Initializer -> ASSIGN AssignmentExpression .]*
@@ -6829,13 +6829,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration .]*
     Goal::InputElementDiv,
     // State(1810)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1811)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In . SEMI_COLON RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In . SEMI_COLON Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In . SEMICOLON RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1812)
     //   [ConciseBody -> LBRACE FunctionBody . RBRACE]*
@@ -6860,15 +6860,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     Goal::InputElementDiv,
     // State(1816)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1817)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1818)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(1819)
     //   [ForInOfStatement -> FOR LPAREN ForDeclaration IN Expression_In RPAREN . Statement]*
@@ -6893,17 +6893,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList -> BindingList COMMA LexicalBinding .]*
     Goal::InputElementDiv,
     // State(1826)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(1827)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1828)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(1829)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(1830)
     //   [ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON . AssignmentExpression]*
@@ -6967,28 +6967,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement . RBRACK]*
     Goal::InputElementDiv,
     // State(1848)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE . LPAREN Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Return -> DO Statement_Return WHILE . LPAREN Expression_In RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(1849)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(1850)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR . ForBinding IN Expression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR LPAREN VAR . ForBinding OF AssignmentExpression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(1851)
     //   [Expression -> Expression . COMMA AssignmentExpression]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(1852)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration . IN Expression_In RPAREN Statement_Return]*
@@ -7009,10 +7009,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [UpdateExpression -> LeftHandSideExpression (!LineTerminatorSequence) . INC]*
     Goal::InputElementDiv,
     // State(1854)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(1855)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -7023,7 +7023,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Return -> LBRACE StatementList_Return RBRACE .]*
     Goal::InputElementRegExp,
     // State(1857)
-    //   [ReturnStatement -> RETURN (!LineTerminatorSequence) Expression_In SEMI_COLON .]*
+    //   [ReturnStatement -> RETURN (!LineTerminatorSequence) Expression_In SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1858)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -7065,7 +7065,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TemplateMiddle Expression_In .]*
     Goal::InputElementTemplateTail,
     // State(1869)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE . LPAREN Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE . LPAREN Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(1870)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN . VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -7073,25 +7073,25 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN . (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(1871)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(1872)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR . ForBinding_Await IN Expression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(1873)
     //   [Expression_Await -> Expression_Await . COMMA AssignmentExpression_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await . SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(1874)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await . IN Expression_In_Await RPAREN Statement_Await_Return]*
@@ -7112,10 +7112,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LineTerminatorSequence) . INC]*
     Goal::InputElementDiv,
     // State(1876)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(1877)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -7126,7 +7126,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE .]*
     Goal::InputElementRegExp,
     // State(1879)
-    //   [ReturnStatement_Await -> RETURN (!LineTerminatorSequence) Expression_In_Await SEMI_COLON .]*
+    //   [ReturnStatement_Await -> RETURN (!LineTerminatorSequence) Expression_In_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(1880)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -7164,7 +7164,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [LabelledItem_Await_Return -> Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(1890)
-    //   [ClassElement_Await -> STATIC FieldDefinition_Await SEMI_COLON .]*
+    //   [ClassElement_Await -> STATIC FieldDefinition_Await SEMICOLON .]*
     Goal::InputElementDiv,
     // State(1891)
     //   [ClassTail_Await -> ClassHeritage_Await LBRACE ClassBody_Await RBRACE .]*
@@ -7195,7 +7195,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(1900)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN . SEMI_COLON]*
+    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(1901)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -7237,17 +7237,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody .]*
     Goal::InputElementDiv,
     // State(1913)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(1914)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(1915)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(1916)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1917)
     //   [Initializer_Await -> ASSIGN AssignmentExpression_Await .]*
@@ -7270,24 +7270,24 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await .]*
     Goal::InputElementDiv,
     // State(1923)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1924)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await . SEMI_COLON RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1925)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(1926)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1927)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(1928)
     //   [ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN . Statement_Await]*
@@ -7312,17 +7312,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await .]*
     Goal::InputElementDiv,
     // State(1935)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(1936)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(1937)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(1938)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(1939)
     //   [ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL AssignmentExpression_In_Await COLON . AssignmentExpression_Await]*
@@ -7890,16 +7890,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::InputElementRegExp,
     // State(2087)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMI_COLON .]*
+    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(2088)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2089)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2090)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2091)
     //   [ForInOfStatement -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN . Statement]*
@@ -7908,15 +7908,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2093)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2094)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(2095)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement]*
     Goal::InputElementRegExp,
     // State(2096)
     //   [ConciseBody -> LBRACE FunctionBody RBRACE .]*
@@ -7925,17 +7925,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE .]*
     Goal::InputElementDiv,
     // State(2098)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2099)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2100)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2101)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(2102)
     //   [ForInOfStatement -> FOR LPAREN ForDeclaration IN Expression_In RPAREN Statement .]*
@@ -7950,13 +7950,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2106)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2107)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2108)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2109)
     //   [ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON AssignmentExpression .]*
@@ -8004,33 +8004,33 @@ pub const TABLE: [Goal; 4108] = [
     //   [ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK .]*
     Goal::InputElementDiv,
     // State(2122)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN . Expression_In RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN . Expression_In RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2123)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2124)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In . SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2125)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding . IN Expression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding . OF AssignmentExpression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2126)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList . SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     //   [VariableDeclarationList -> VariableDeclarationList . COMMA VariableDeclaration]*
     Goal::InputElementDiv,
     // State(2127)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2128)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN . Expression_In RPAREN Statement_Return]*
@@ -8055,13 +8055,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [UpdateExpression -> LeftHandSideExpression .]*
     Goal::InputElementDiv,
     // State(2133)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2134)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In . SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In . SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2135)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN . Statement_Return ELSE Statement_Return]*
@@ -8089,7 +8089,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [WithStatement_Return -> WITH LPAREN Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2143)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN . Expression_In_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN . Expression_In_Await RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2144)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -8101,30 +8101,30 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await . OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2147)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2148)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2149)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await . IN Expression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await . OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2150)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await . SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     //   [VariableDeclarationList_Await -> VariableDeclarationList_Await . COMMA VariableDeclaration_Await]*
     Goal::InputElementDiv,
     // State(2151)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2152)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN . Expression_In_Await RPAREN Statement_Await_Return]*
@@ -8149,13 +8149,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     Goal::InputElementDiv,
     // State(2157)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2158)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2159)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN . Statement_Await_Return ELSE Statement_Await_Return]*
@@ -8210,7 +8210,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::InputElementRegExp,
     // State(2175)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON .]*
+    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(2176)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
@@ -8248,13 +8248,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2187)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2188)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2189)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2190)
     //   [ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN . Statement_Await]*
@@ -8263,28 +8263,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2192)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2193)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(2194)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await]*
     Goal::InputElementRegExp,
     // State(2195)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2196)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2197)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2198)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(2199)
     //   [ForInOfStatement_Await -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await .]*
@@ -8299,13 +8299,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2203)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2204)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2205)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2206)
     //   [ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_Await .]*
@@ -9174,20 +9174,20 @@ pub const TABLE: [Goal; 4108] = [
     //   [LabelIdentifier_Yield -> AWAIT .]*
     Goal::InputElementDiv,
     // State(2434)
-    //   [BreakStatement_Yield -> BREAK . SEMI_COLON]*
-    //   [BreakStatement_Yield -> BREAK . (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON]*
-    //   [BreakStatement_Yield -> BREAK (!LineTerminatorSequence) . LabelIdentifier_Yield SEMI_COLON]*
+    //   [BreakStatement_Yield -> BREAK . SEMICOLON]*
+    //   [BreakStatement_Yield -> BREAK . (!LineTerminatorSequence) LabelIdentifier_Yield SEMICOLON]*
+    //   [BreakStatement_Yield -> BREAK (!LineTerminatorSequence) . LabelIdentifier_Yield SEMICOLON]*
     Goal::InputElementDiv,
     // State(2435)
     //   [ClassDeclaration_Yield -> CLASS . BindingIdentifier_Yield ClassTail_Yield]*
     Goal::InputElementDiv,
     // State(2436)
-    //   [ContinueStatement_Yield -> CONTINUE . SEMI_COLON]*
-    //   [ContinueStatement_Yield -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON]*
-    //   [ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier_Yield SEMI_COLON]*
+    //   [ContinueStatement_Yield -> CONTINUE . SEMICOLON]*
+    //   [ContinueStatement_Yield -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier_Yield SEMICOLON]*
+    //   [ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier_Yield SEMICOLON]*
     Goal::InputElementDiv,
     // State(2437)
-    //   [DoWhileStatement_Yield_Return -> DO . Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Return -> DO . Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2438)
     //   [ForInOfStatement_Yield_Return -> FOR . LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -9196,22 +9196,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Return -> FOR . LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(2439)
     //   [FunctionDeclaration_Yield -> FUNCTION . BindingIdentifier_Yield LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE]*
@@ -9226,16 +9226,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Yield_Return -> LBRACE . StatementList_Yield_Return RBRACE]*
     Goal::InputElementRegExp,
     // State(2442)
-    //   [ReturnStatement_Yield -> RETURN . SEMI_COLON]*
-    //   [ReturnStatement_Yield -> RETURN . (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON]*
-    //   [ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) . Expression_In_Yield SEMI_COLON]*
+    //   [ReturnStatement_Yield -> RETURN . SEMICOLON]*
+    //   [ReturnStatement_Yield -> RETURN . (!LineTerminatorSequence) Expression_In_Yield SEMICOLON]*
+    //   [ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) . Expression_In_Yield SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2443)
     //   [SwitchStatement_Yield_Return -> SWITCH . LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return]*
     Goal::InputElementDiv,
     // State(2444)
-    //   [ThrowStatement_Yield -> THROW . (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON]*
-    //   [ThrowStatement_Yield -> THROW (!LineTerminatorSequence) . Expression_In_Yield SEMI_COLON]*
+    //   [ThrowStatement_Yield -> THROW . (!LineTerminatorSequence) Expression_In_Yield SEMICOLON]*
+    //   [ThrowStatement_Yield -> THROW (!LineTerminatorSequence) . Expression_In_Yield SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2445)
     //   [TryStatement_Yield_Return -> TRY . Block_Yield_Return Catch_Yield_Return]*
@@ -9243,7 +9243,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [TryStatement_Yield_Return -> TRY . Block_Yield_Return Finally_Yield_Return]*
     Goal::InputElementDiv,
     // State(2446)
-    //   [VariableStatement_Yield -> VAR . VariableDeclarationList_In_Yield SEMI_COLON]*
+    //   [VariableStatement_Yield -> VAR . VariableDeclarationList_In_Yield SEMICOLON]*
     Goal::InputElementDiv,
     // State(2447)
     //   [WhileStatement_Yield_Return -> WHILE . LPAREN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -9291,7 +9291,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Statement_Yield_Return -> ExpressionStatement_Yield .]*
     Goal::InputElementRegExp,
     // State(2462)
-    //   [ExpressionStatement_Yield -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield . SEMI_COLON]*
+    //   [ExpressionStatement_Yield -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield . SEMICOLON]*
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     Goal::InputElementDiv,
     // State(2463)
@@ -9336,7 +9336,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Statement_Yield_Return -> LabelledStatement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(2476)
-    //   [LexicalDeclaration_In_Yield -> LetOrConst . BindingList_In_Yield SEMI_COLON]*
+    //   [LexicalDeclaration_In_Yield -> LetOrConst . BindingList_In_Yield SEMICOLON]*
     Goal::InputElementDiv,
     // State(2477)
     //   [Declaration_Yield -> LexicalDeclaration_In_Yield .]*
@@ -9408,7 +9408,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::InputElementDiv,
     // State(2498)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2499)
     //   [ForInOfStatement -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN Statement .]*
@@ -9417,29 +9417,29 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2501)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2502)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2503)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2504)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In . RPAREN Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement]*
     Goal::InputElementDiv,
     // State(2505)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2506)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2507)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2508)
-    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2509)
     //   [GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
@@ -9466,19 +9466,19 @@ pub const TABLE: [Goal; 4108] = [
     //   [CaseBlock -> LBRACE DefaultClause CaseClauses RBRACE .]*
     Goal::InputElementRegExp,
     // State(2516)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In . RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In . RPAREN SEMICOLON]*
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::InputElementDiv,
     // State(2517)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2518)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2519)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2520)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN . Expression_In RPAREN Statement_Return]*
@@ -9487,19 +9487,19 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF . AssignmentExpression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2522)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . SEMI_COLON Expression_In RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON . Expression_In SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2523)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2524)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In . SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2525)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -9516,15 +9516,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2529)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2530)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2531)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2532)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return . ELSE Statement_Return]*
@@ -9552,7 +9552,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(2538)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await . RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await . RPAREN SEMICOLON]*
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::InputElementDiv,
     // State(2539)
@@ -9565,15 +9565,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2542)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2543)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2544)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2545)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN . Expression_In_Await RPAREN Statement_Await_Return]*
@@ -9582,19 +9582,19 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2547)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON . Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2548)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2549)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2550)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -9611,15 +9611,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2554)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2555)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2556)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2557)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return . ELSE Statement_Await_Return]*
@@ -9711,7 +9711,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2582)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2583)
     //   [ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await .]*
@@ -9720,29 +9720,29 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2585)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2586)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2587)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2588)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::InputElementDiv,
     // State(2589)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2590)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2591)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(2592)
-    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(2593)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
@@ -10217,20 +10217,20 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(2723)
-    //   [BreakStatement_Yield_Await -> BREAK . SEMI_COLON]*
-    //   [BreakStatement_Yield_Await -> BREAK . (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMI_COLON]*
-    //   [BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) . LabelIdentifier_Yield_Await SEMI_COLON]*
+    //   [BreakStatement_Yield_Await -> BREAK . SEMICOLON]*
+    //   [BreakStatement_Yield_Await -> BREAK . (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMICOLON]*
+    //   [BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) . LabelIdentifier_Yield_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(2724)
     //   [ClassDeclaration_Yield_Await -> CLASS . BindingIdentifier_Yield_Await ClassTail_Yield_Await]*
     Goal::InputElementDiv,
     // State(2725)
-    //   [ContinueStatement_Yield_Await -> CONTINUE . SEMI_COLON]*
-    //   [ContinueStatement_Yield_Await -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMI_COLON]*
-    //   [ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier_Yield_Await SEMI_COLON]*
+    //   [ContinueStatement_Yield_Await -> CONTINUE . SEMICOLON]*
+    //   [ContinueStatement_Yield_Await -> CONTINUE . (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMICOLON]*
+    //   [ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) . LabelIdentifier_Yield_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(2726)
-    //   [DoWhileStatement_Yield_Await_Return -> DO . Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO . Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2727)
     //   [ForInOfStatement_Yield_Await_Return -> FOR . AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -10242,22 +10242,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR . LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR . LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(2728)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION . BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE]*
@@ -10272,16 +10272,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Yield_Await_Return -> LBRACE . StatementList_Yield_Await_Return RBRACE]*
     Goal::InputElementRegExp,
     // State(2731)
-    //   [ReturnStatement_Yield_Await -> RETURN . SEMI_COLON]*
-    //   [ReturnStatement_Yield_Await -> RETURN . (!LineTerminatorSequence) Expression_In_Yield_Await SEMI_COLON]*
-    //   [ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) . Expression_In_Yield_Await SEMI_COLON]*
+    //   [ReturnStatement_Yield_Await -> RETURN . SEMICOLON]*
+    //   [ReturnStatement_Yield_Await -> RETURN . (!LineTerminatorSequence) Expression_In_Yield_Await SEMICOLON]*
+    //   [ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) . Expression_In_Yield_Await SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2732)
     //   [SwitchStatement_Yield_Await_Return -> SWITCH . LPAREN Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(2733)
-    //   [ThrowStatement_Yield_Await -> THROW . (!LineTerminatorSequence) Expression_In_Yield_Await SEMI_COLON]*
-    //   [ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) . Expression_In_Yield_Await SEMI_COLON]*
+    //   [ThrowStatement_Yield_Await -> THROW . (!LineTerminatorSequence) Expression_In_Yield_Await SEMICOLON]*
+    //   [ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) . Expression_In_Yield_Await SEMICOLON]*
     Goal::InputElementRegExp,
     // State(2734)
     //   [TryStatement_Yield_Await_Return -> TRY . Block_Yield_Await_Return Catch_Yield_Await_Return]*
@@ -10289,7 +10289,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [TryStatement_Yield_Await_Return -> TRY . Block_Yield_Await_Return Finally_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(2735)
-    //   [VariableStatement_Yield_Await -> VAR . VariableDeclarationList_In_Yield_Await SEMI_COLON]*
+    //   [VariableStatement_Yield_Await -> VAR . VariableDeclarationList_In_Yield_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(2736)
     //   [WhileStatement_Yield_Await_Return -> WHILE . LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -10340,7 +10340,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Statement_Yield_Await_Return -> ExpressionStatement_Yield_Await .]*
     Goal::InputElementRegExp,
     // State(2752)
-    //   [ExpressionStatement_Yield_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await . SEMI_COLON]*
+    //   [ExpressionStatement_Yield_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await . SEMICOLON]*
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::InputElementDiv,
     // State(2753)
@@ -10382,7 +10382,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(2765)
-    //   [LexicalDeclaration_In_Yield_Await -> LetOrConst . BindingList_In_Yield_Await SEMI_COLON]*
+    //   [LexicalDeclaration_In_Yield_Await -> LetOrConst . BindingList_In_Yield_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(2766)
     //   [Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await .]*
@@ -10449,14 +10449,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassTail_Yield -> LBRACE RBRACE .]*
     Goal::InputElementRegExpOrTemplateTail,
     // State(2785)
-    //   [ClassElement_Yield -> SEMI_COLON .]*
+    //   [ClassElement_Yield -> SEMICOLON .]*
     Goal::InputElementDiv,
     // State(2786)
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition_Yield -> SET . ClassElementName_Yield LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(2787)
-    //   [ClassElement_Yield -> STATIC . FieldDefinition_Yield SEMI_COLON]*
+    //   [ClassElement_Yield -> STATIC . FieldDefinition_Yield SEMICOLON]*
     //   [ClassElement_Yield -> STATIC . MethodDefinition_Yield]*
     //   [ClassStaticBlock -> STATIC . LBRACE ClassStaticBlockBody RBRACE]*
     //   [KeywordOrIdentifierName -> STATIC .]*
@@ -10480,7 +10480,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassElement_Yield -> ClassStaticBlock .]*
     Goal::InputElementDiv,
     // State(2793)
-    //   [ClassElement_Yield -> FieldDefinition_Yield . SEMI_COLON]*
+    //   [ClassElement_Yield -> FieldDefinition_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2794)
     //   [ClassElement_Yield -> MethodDefinition_Yield .]*
@@ -10849,28 +10849,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [LabelIdentifier_Yield -> AWAIT .]*
     Goal::InputElementDiv,
     // State(2888)
-    //   [BreakStatement_Yield -> BREAK SEMI_COLON .]*
+    //   [BreakStatement_Yield -> BREAK SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(2889)
     //   [LabelIdentifier_Yield -> Identifier .]*
     Goal::InputElementDiv,
     // State(2890)
-    //   [BreakStatement_Yield -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield . SEMI_COLON]*
+    //   [BreakStatement_Yield -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2891)
-    //   [BreakStatement_Yield -> BREAK . SEMI_COLON]*
+    //   [BreakStatement_Yield -> BREAK . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2892)
     //   [ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield . ClassTail_Yield]*
     Goal::InputElementDiv,
     // State(2893)
-    //   [ContinueStatement_Yield -> CONTINUE SEMI_COLON .]*
+    //   [ContinueStatement_Yield -> CONTINUE SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(2894)
-    //   [ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield . SEMI_COLON]*
+    //   [ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2895)
-    //   [ContinueStatement_Yield -> CONTINUE . SEMI_COLON]*
+    //   [ContinueStatement_Yield -> CONTINUE . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2896)
     //   [AsyncArrowFunction_In_Yield -> ASYNC . (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In]*
@@ -10878,7 +10878,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(2897)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return . WHILE LPAREN Expression_In_Yield RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return . WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(2898)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN . VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -10887,22 +10887,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN . ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(2899)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL . BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -10922,21 +10922,21 @@ pub const TABLE: [Goal; 4108] = [
     //   [StatementList_Yield_Return -> StatementList_Yield_Return . StatementListItem_Yield_Return]*
     Goal::InputElementRegExp,
     // State(2904)
-    //   [ReturnStatement_Yield -> RETURN SEMI_COLON .]*
+    //   [ReturnStatement_Yield -> RETURN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(2905)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) Expression_In_Yield . SEMI_COLON]*
+    //   [ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) Expression_In_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2906)
-    //   [ReturnStatement_Yield -> RETURN . SEMI_COLON]*
+    //   [ReturnStatement_Yield -> RETURN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2907)
     //   [SwitchStatement_Yield_Return -> SWITCH LPAREN . Expression_In_Yield RPAREN CaseBlock_Yield_Return]*
     Goal::InputElementRegExp,
     // State(2908)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ThrowStatement_Yield -> THROW (!LineTerminatorSequence) Expression_In_Yield . SEMI_COLON]*
+    //   [ThrowStatement_Yield -> THROW (!LineTerminatorSequence) Expression_In_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2909)
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return . Catch_Yield_Return]*
@@ -10952,7 +10952,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(2912)
     //   [VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield . COMMA VariableDeclaration_In_Yield]*
-    //   [VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield . SEMI_COLON]*
+    //   [VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2913)
     //   [VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield .]*
@@ -10964,7 +10964,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [WithStatement_Yield_Return -> WITH LPAREN . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(2916)
-    //   [ExpressionStatement_Yield -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMI_COLON .]*
+    //   [ExpressionStatement_Yield -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(2917)
     //   [GeneratorExpression -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
@@ -10978,7 +10978,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(2920)
     //   [BindingList_In_Yield -> BindingList_In_Yield . COMMA LexicalBinding_In_Yield]*
-    //   [LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield . SEMI_COLON]*
+    //   [LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2921)
     //   [LexicalBinding_In_Yield -> BindingPattern_Yield . Initializer_In_Yield]*
@@ -11021,16 +11021,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::InputElementRegExp,
     // State(2934)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2935)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2936)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement]*
     Goal::InputElementRegExp,
     // State(2937)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(2938)
     //   [GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
@@ -11043,20 +11043,20 @@ pub const TABLE: [Goal; 4108] = [
     //   [CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE .]*
     Goal::InputElementRegExp,
     // State(2941)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN . SEMI_COLON]*
+    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2942)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(2943)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2944)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2945)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2946)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
@@ -11066,24 +11066,24 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2948)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2949)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In . SEMI_COLON RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In . SEMI_COLON Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In . SEMICOLON RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2950)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2951)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2952)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(2953)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN Expression_In RPAREN . Statement_Return]*
@@ -11098,17 +11098,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2957)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(2958)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2959)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(2960)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(2961)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return ELSE . Statement_Return]*
@@ -11141,7 +11141,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Catch_Return -> CATCH LPAREN CatchParameter RPAREN . Block_Return]*
     Goal::InputElementDiv,
     // State(2969)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . SEMI_COLON]*
+    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(2970)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -11153,17 +11153,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2973)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(2974)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2975)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2976)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2977)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
@@ -11173,24 +11173,24 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2979)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2980)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await . SEMI_COLON RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await . SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2981)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2982)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2983)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2984)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN . Statement_Await_Return]*
@@ -11205,17 +11205,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2988)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(2989)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2990)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(2991)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(2992)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE . Statement_Await_Return]*
@@ -11303,16 +11303,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(3017)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(3018)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(3019)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::InputElementRegExp,
     // State(3020)
-    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(3021)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
@@ -11348,14 +11348,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassTail_Yield_Await -> LBRACE RBRACE .]*
     Goal::InputElementRegExpOrTemplateTail,
     // State(3030)
-    //   [ClassElement_Yield_Await -> SEMI_COLON .]*
+    //   [ClassElement_Yield_Await -> SEMICOLON .]*
     Goal::InputElementDiv,
     // State(3031)
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition_Yield_Await -> SET . ClassElementName_Yield_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(3032)
-    //   [ClassElement_Yield_Await -> STATIC . FieldDefinition_Yield_Await SEMI_COLON]*
+    //   [ClassElement_Yield_Await -> STATIC . FieldDefinition_Yield_Await SEMICOLON]*
     //   [ClassElement_Yield_Await -> STATIC . MethodDefinition_Yield_Await]*
     //   [ClassStaticBlock -> STATIC . LBRACE ClassStaticBlockBody RBRACE]*
     //   [KeywordOrIdentifierName -> STATIC .]*
@@ -11379,7 +11379,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ClassElement_Yield_Await -> ClassStaticBlock .]*
     Goal::InputElementDiv,
     // State(3038)
-    //   [ClassElement_Yield_Await -> FieldDefinition_Yield_Await . SEMI_COLON]*
+    //   [ClassElement_Yield_Await -> FieldDefinition_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3039)
     //   [ClassElement_Yield_Await -> MethodDefinition_Yield_Await .]*
@@ -11745,28 +11745,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION . MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::InputElementDiv,
     // State(3132)
-    //   [BreakStatement_Yield_Await -> BREAK SEMI_COLON .]*
+    //   [BreakStatement_Yield_Await -> BREAK SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3133)
     //   [LabelIdentifier_Yield_Await -> Identifier .]*
     Goal::InputElementDiv,
     // State(3134)
-    //   [BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield_Await . SEMI_COLON]*
+    //   [BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3135)
-    //   [BreakStatement_Yield_Await -> BREAK . SEMI_COLON]*
+    //   [BreakStatement_Yield_Await -> BREAK . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3136)
     //   [ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await . ClassTail_Yield_Await]*
     Goal::InputElementDiv,
     // State(3137)
-    //   [ContinueStatement_Yield_Await -> CONTINUE SEMI_COLON .]*
+    //   [ContinueStatement_Yield_Await -> CONTINUE SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3138)
-    //   [ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield_Await . SEMI_COLON]*
+    //   [ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3139)
-    //   [ContinueStatement_Yield_Await -> CONTINUE . SEMI_COLON]*
+    //   [ContinueStatement_Yield_Await -> CONTINUE . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3140)
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC . (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In]*
@@ -11774,7 +11774,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(3141)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return . WHILE LPAREN Expression_In_Yield_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return . WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(3142)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT . LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -11788,22 +11788,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN . ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN . (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3144)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL . BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
@@ -11823,21 +11823,21 @@ pub const TABLE: [Goal; 4108] = [
     //   [StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return . StatementListItem_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3149)
-    //   [ReturnStatement_Yield_Await -> RETURN SEMI_COLON .]*
+    //   [ReturnStatement_Yield_Await -> RETURN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3150)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) Expression_In_Yield_Await . SEMI_COLON]*
+    //   [ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) Expression_In_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3151)
-    //   [ReturnStatement_Yield_Await -> RETURN . SEMI_COLON]*
+    //   [ReturnStatement_Yield_Await -> RETURN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3152)
     //   [SwitchStatement_Yield_Await_Return -> SWITCH LPAREN . Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3153)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) Expression_In_Yield_Await . SEMI_COLON]*
+    //   [ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) Expression_In_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3154)
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return . Catch_Yield_Await_Return]*
@@ -11853,7 +11853,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3157)
     //   [VariableDeclarationList_In_Yield_Await -> VariableDeclarationList_In_Yield_Await . COMMA VariableDeclaration_In_Yield_Await]*
-    //   [VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await . SEMI_COLON]*
+    //   [VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3158)
     //   [VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await .]*
@@ -11868,7 +11868,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncGeneratorExpression -> ASYNC (!LineTerminatorSequence) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::InputElementTemplateTail,
     // State(3162)
-    //   [ExpressionStatement_Yield_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMI_COLON .]*
+    //   [ExpressionStatement_Yield_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3163)
     //   [LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON . LabelledItem_Yield_Await_Return]*
@@ -11879,7 +11879,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3165)
     //   [BindingList_In_Yield_Await -> BindingList_In_Yield_Await . COMMA LexicalBinding_In_Yield_Await]*
-    //   [LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await . SEMI_COLON]*
+    //   [LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3166)
     //   [LexicalBinding_In_Yield_Await -> BindingPattern_Yield_Await . Initializer_In_Yield_Await]*
@@ -11900,7 +11900,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_In_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In .]*
     Goal::InputElementTemplateTail,
     // State(3172)
-    //   [ClassElement_Yield -> STATIC FieldDefinition_Yield . SEMI_COLON]*
+    //   [ClassElement_Yield -> STATIC FieldDefinition_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3173)
     //   [ClassElement_Yield -> STATIC MethodDefinition_Yield .]*
@@ -11915,7 +11915,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FieldDefinition_Yield -> ClassElementName_Yield Initializer_In_Yield .]*
     Goal::InputElementDiv,
     // State(3177)
-    //   [ClassElement_Yield -> FieldDefinition_Yield SEMI_COLON .]*
+    //   [ClassElement_Yield -> FieldDefinition_Yield SEMICOLON .]*
     Goal::InputElementDiv,
     // State(3178)
     //   [ClassTail_Yield -> ClassHeritage_Yield LBRACE RBRACE .]*
@@ -12056,16 +12056,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(3220)
-    //   [BreakStatement_Yield -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON .]*
+    //   [BreakStatement_Yield -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3221)
     //   [ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield .]*
     Goal::InputElementRegExp,
     // State(3222)
-    //   [ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON .]*
+    //   [ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3223)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE . LPAREN Expression_In_Yield RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE . LPAREN Expression_In_Yield RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(3224)
     //   [AsyncArrowFunction_Yield -> ASYNC . (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody]*
@@ -12081,18 +12081,18 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(3225)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3226)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR . ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR . ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3227)
     //   [BindingIdentifier_Yield -> YIELD .]*
@@ -12152,10 +12152,10 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3240)
     //   [Expression_Yield -> Expression_Yield . COMMA AssignmentExpression_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3241)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield . IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -12177,13 +12177,13 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3243)
     //   [ForDeclaration_Yield -> LetOrConst . ForBinding_Yield]*
-    //   [LexicalDeclaration_Yield -> LetOrConst . BindingList_Yield SEMI_COLON]*
+    //   [LexicalDeclaration_Yield -> LetOrConst . BindingList_Yield SEMICOLON]*
     Goal::InputElementDiv,
     // State(3244)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3245)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield . AND BitwiseORExpression_Yield]*
@@ -12230,14 +12230,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE .]*
     Goal::InputElementRegExp,
     // State(3255)
-    //   [ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON .]*
+    //   [ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) Expression_In_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3256)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield . RPAREN CaseBlock_Yield_Return]*
     Goal::InputElementDiv,
     // State(3257)
-    //   [ThrowStatement_Yield -> THROW (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON .]*
+    //   [ThrowStatement_Yield -> THROW (!LineTerminatorSequence) Expression_In_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3258)
     //   [Catch_Yield_Return -> CATCH . LPAREN CatchParameter_Yield RPAREN Block_Yield_Return]*
@@ -12263,7 +12263,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield COMMA . VariableDeclaration_In_Yield]*
     Goal::InputElementDiv,
     // State(3265)
-    //   [VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMI_COLON .]*
+    //   [VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3266)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
@@ -12292,7 +12292,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_In_Yield -> BindingList_In_Yield COMMA . LexicalBinding_In_Yield]*
     Goal::InputElementDiv,
     // State(3274)
-    //   [LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMI_COLON .]*
+    //   [LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3275)
     //   [LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield .]*
@@ -12316,19 +12316,19 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncGeneratorDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::InputElementRegExp,
     // State(3282)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::InputElementRegExp,
     // State(3283)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMI_COLON .]*
+    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3284)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3285)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3286)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3287)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN . Statement_Return]*
@@ -12337,28 +12337,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3289)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3290)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(3291)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . RPAREN Statement_Return]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON . Expression_In RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::InputElementRegExp,
     // State(3292)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3293)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3294)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3295)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(3296)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN Expression_In RPAREN Statement_Return .]*
@@ -12373,13 +12373,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3300)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3301)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3302)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3303)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return ELSE Statement_Return .]*
@@ -12414,7 +12414,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [Catch_Return -> CATCH LPAREN CatchParameter RPAREN Block_Return .]*
     Goal::InputElementRegExp,
     // State(3312)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON .]*
+    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3313)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
@@ -12426,13 +12426,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3316)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3317)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3318)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3319)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN . Statement_Await_Return]*
@@ -12441,28 +12441,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3321)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3322)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(3323)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . RPAREN Statement_Await_Return]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON . Expression_In_Await RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3324)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3325)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3326)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3327)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(3328)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await_Return .]*
@@ -12477,13 +12477,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3332)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3333)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3334)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3335)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE Statement_Await_Return .]*
@@ -12555,13 +12555,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::InputElementRegExp,
     // State(3356)
-    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await .]*
+    //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::InputElementRegExp,
     // State(3357)
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In .]*
     Goal::InputElementTemplateTail,
     // State(3358)
-    //   [ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await . SEMI_COLON]*
+    //   [ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3359)
     //   [ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await .]*
@@ -12576,7 +12576,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FieldDefinition_Yield_Await -> ClassElementName_Yield_Await Initializer_In_Yield_Await .]*
     Goal::InputElementDiv,
     // State(3363)
-    //   [ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMI_COLON .]*
+    //   [ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMICOLON .]*
     Goal::InputElementDiv,
     // State(3364)
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE RBRACE .]*
@@ -12717,16 +12717,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield_Await . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(3406)
-    //   [BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMI_COLON .]*
+    //   [BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3407)
     //   [ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await .]*
     Goal::InputElementRegExp,
     // State(3408)
-    //   [ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMI_COLON .]*
+    //   [ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3409)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE . LPAREN Expression_In_Yield_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE . LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
     Goal::InputElementDiv,
     // State(3410)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN . VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -12747,18 +12747,18 @@ pub const TABLE: [Goal; 4108] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::InputElementDiv,
     // State(3412)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON . Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3413)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR . ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR . ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3414)
     //   [BindingIdentifier_Yield_Await -> YIELD .]*
@@ -12818,10 +12818,10 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3427)
     //   [Expression_Yield_Await -> Expression_Yield_Await . COMMA AssignmentExpression_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3428)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await . IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -12843,13 +12843,13 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3430)
     //   [ForDeclaration_Yield_Await -> LetOrConst . ForBinding_Yield_Await]*
-    //   [LexicalDeclaration_Yield_Await -> LetOrConst . BindingList_Yield_Await SEMI_COLON]*
+    //   [LexicalDeclaration_Yield_Await -> LetOrConst . BindingList_Yield_Await SEMICOLON]*
     Goal::InputElementDiv,
     // State(3431)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3432)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await . AND BitwiseORExpression_Yield_Await]*
@@ -12896,14 +12896,14 @@ pub const TABLE: [Goal; 4108] = [
     //   [Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE .]*
     Goal::InputElementRegExp,
     // State(3442)
-    //   [ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) Expression_In_Yield_Await SEMI_COLON .]*
+    //   [ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) Expression_In_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3443)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await . RPAREN CaseBlock_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3444)
-    //   [ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) Expression_In_Yield_Await SEMI_COLON .]*
+    //   [ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) Expression_In_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3445)
     //   [Catch_Yield_Await_Return -> CATCH . LPAREN CatchParameter_Yield_Await RPAREN Block_Yield_Await_Return]*
@@ -12929,7 +12929,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_In_Yield_Await -> VariableDeclarationList_In_Yield_Await COMMA . VariableDeclaration_In_Yield_Await]*
     Goal::InputElementDiv,
     // State(3452)
-    //   [VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMI_COLON .]*
+    //   [VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3453)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
@@ -12958,7 +12958,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_In_Yield_Await -> BindingList_In_Yield_Await COMMA . LexicalBinding_In_Yield_Await]*
     Goal::InputElementDiv,
     // State(3461)
-    //   [LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMI_COLON .]*
+    //   [LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3462)
     //   [LexicalBinding_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await .]*
@@ -12967,7 +12967,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncGeneratorExpression -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::InputElementTemplateTail,
     // State(3464)
-    //   [ClassElement_Yield -> STATIC FieldDefinition_Yield SEMI_COLON .]*
+    //   [ClassElement_Yield -> STATIC FieldDefinition_Yield SEMICOLON .]*
     Goal::InputElementDiv,
     // State(3465)
     //   [ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield RBRACE .]*
@@ -13046,20 +13046,20 @@ pub const TABLE: [Goal; 4108] = [
     //   [FormalParameters_Await -> (empty) .]*
     Goal::InputElementDiv,
     // State(3489)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN . Expression_In_Yield RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN . Expression_In_Yield RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(3490)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield . (!LineTerminatorSequence) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) . ARROW AsyncConciseBody]*
     Goal::InputElementDiv,
     // State(3491)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3492)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3493)
     //   [ForBinding_Yield -> BindingIdentifier_Yield .]*
@@ -13075,10 +13075,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield . OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3496)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield . COMMA VariableDeclaration_Yield]*
     Goal::InputElementDiv,
     // State(3497)
@@ -13140,10 +13140,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_Yield -> Expression_Yield COMMA . AssignmentExpression_Yield]*
     Goal::InputElementRegExp,
     // State(3513)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3514)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN . Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -13189,7 +13189,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3525)
     //   [BindingList_Yield -> BindingList_Yield . COMMA LexicalBinding_Yield]*
-    //   [LexicalDeclaration_Yield -> LetOrConst BindingList_Yield . SEMI_COLON]*
+    //   [LexicalDeclaration_Yield -> LetOrConst BindingList_Yield . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3526)
     //   [ForBinding_Yield -> BindingPattern_Yield .]*
@@ -13202,13 +13202,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Yield -> LexicalBinding_Yield .]*
     Goal::InputElementDiv,
     // State(3529)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3530)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3531)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND . BitwiseORExpression_Yield]*
@@ -13276,7 +13276,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncGeneratorMethod -> ASYNC (!LineTerminatorSequence) MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::InputElementDiv,
     // State(3552)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3553)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN Statement_Return .]*
@@ -13285,29 +13285,29 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3555)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3556)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3557)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3558)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In . RPAREN Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::InputElementDiv,
     // State(3559)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3560)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3561)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3562)
-    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3563)
     //   [CaseClause_Return -> CASE Expression_In COLON .]*
@@ -13337,7 +13337,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3571)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3572)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await_Return .]*
@@ -13346,29 +13346,29 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3574)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3575)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3576)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3577)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await . RPAREN Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::InputElementDiv,
     // State(3578)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3579)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3580)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3581)
-    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3582)
     //   [CaseClause_Await_Return -> CASE Expression_In_Await COLON .]*
@@ -13404,7 +13404,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::InputElementRegExp,
     // State(3592)
-    //   [ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMI_COLON .]*
+    //   [ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMICOLON .]*
     Goal::InputElementDiv,
     // State(3593)
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE ClassBody_Yield_Await RBRACE .]*
@@ -13483,7 +13483,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FormalParameters_Await -> (empty) .]*
     Goal::InputElementDiv,
     // State(3617)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN . Expression_In_Yield_Await RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN . Expression_In_Yield_Await RPAREN SEMICOLON]*
     Goal::InputElementRegExp,
     // State(3618)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR . ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -13502,13 +13502,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) . ARROW AsyncConciseBody]*
     Goal::InputElementDiv,
     // State(3623)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3624)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3625)
     //   [ForBinding_Yield_Await -> BindingIdentifier_Yield_Await .]*
@@ -13524,10 +13524,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await . OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3628)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await . COMMA VariableDeclaration_Yield_Await]*
     Goal::InputElementDiv,
     // State(3629)
@@ -13589,10 +13589,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_Yield_Await -> Expression_Yield_Await COMMA . AssignmentExpression_Yield_Await]*
     Goal::InputElementRegExp,
     // State(3645)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3646)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -13638,7 +13638,7 @@ pub const TABLE: [Goal; 4108] = [
     Goal::InputElementDiv,
     // State(3657)
     //   [BindingList_Yield_Await -> BindingList_Yield_Await . COMMA LexicalBinding_Yield_Await]*
-    //   [LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await . SEMI_COLON]*
+    //   [LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3658)
     //   [ForBinding_Yield_Await -> BindingPattern_Yield_Await .]*
@@ -13651,13 +13651,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Yield_Await -> LexicalBinding_Yield_Await .]*
     Goal::InputElementDiv,
     // State(3661)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3662)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3663)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND . BitwiseORExpression_Yield_Await]*
@@ -13762,22 +13762,22 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(3695)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield . RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield . RPAREN SEMICOLON]*
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     Goal::InputElementDiv,
     // State(3696)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW . AsyncConciseBody]*
     Goal::InputElementRegExp,
     // State(3697)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3698)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3699)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3700)
     //   [Initializer_Yield -> ASSIGN . AssignmentExpression_Yield]*
@@ -13798,10 +13798,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA . VariableDeclaration_Yield]*
     Goal::InputElementDiv,
     // State(3706)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON . Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3707)
     //   [YieldExpression -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_Yield .]*
@@ -13875,13 +13875,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_Yield -> Expression_Yield COMMA AssignmentExpression_Yield .]*
     Goal::InputElementDiv,
     // State(3720)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3721)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3722)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
@@ -13919,21 +13919,21 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Yield -> BindingList_Yield COMMA . LexicalBinding_Yield]*
     Goal::InputElementDiv,
     // State(3733)
-    //   [LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMI_COLON .]*
+    //   [LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3734)
     //   [LexicalBinding_Yield -> BindingPattern_Yield Initializer_Yield .]*
     Goal::InputElementDiv,
     // State(3735)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3736)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3737)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3738)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield . BIT_OR BitwiseXORExpression_Yield]*
@@ -14018,16 +14018,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3757)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3758)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3759)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN . Statement_Return]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::InputElementRegExp,
     // State(3760)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3761)
     //   [CaseClause_Return -> CASE Expression_In COLON StatementList_Return .]*
@@ -14040,16 +14040,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3764)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3765)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3766)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN . Statement_Await_Return]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::InputElementRegExp,
     // State(3767)
-    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3768)
     //   [CaseClause_Await_Return -> CASE Expression_In_Await COLON StatementList_Await_Return .]*
@@ -14102,7 +14102,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(3783)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await . RPAREN SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await . RPAREN SEMICOLON]*
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::InputElementDiv,
     // State(3784)
@@ -14124,15 +14124,15 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW . AsyncConciseBody]*
     Goal::InputElementRegExp,
     // State(3790)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3791)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3792)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3793)
     //   [Initializer_Yield_Await -> ASSIGN . AssignmentExpression_Yield_Await]*
@@ -14153,10 +14153,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA . VariableDeclaration_Yield_Await]*
     Goal::InputElementDiv,
     // State(3799)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON . Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3800)
     //   [YieldExpression_Await -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_Yield_Await .]*
@@ -14230,13 +14230,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [Expression_Yield_Await -> Expression_Yield_Await COMMA AssignmentExpression_Yield_Await .]*
     Goal::InputElementDiv,
     // State(3813)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3814)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3815)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
@@ -14274,21 +14274,21 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Yield_Await -> BindingList_Yield_Await COMMA . LexicalBinding_Yield_Await]*
     Goal::InputElementDiv,
     // State(3826)
-    //   [LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMI_COLON .]*
+    //   [LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3827)
     //   [LexicalBinding_Yield_Await -> BindingPattern_Yield_Await Initializer_Yield_Await .]*
     Goal::InputElementDiv,
     // State(3828)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3829)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3830)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3831)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await . BIT_OR BitwiseXORExpression_Yield_Await]*
@@ -14400,23 +14400,23 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(3858)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3859)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody .]*
     Goal::InputElementDiv,
     // State(3860)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3861)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3862)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3863)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3864)
     //   [Initializer_Yield -> ASSIGN AssignmentExpression_Yield .]*
@@ -14439,24 +14439,24 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield .]*
     Goal::InputElementDiv,
     // State(3870)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3871)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield . SEMI_COLON RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield . SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3872)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3873)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3874)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3875)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN Expression_In_Yield RPAREN . Statement_Yield_Return]*
@@ -14481,17 +14481,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield .]*
     Goal::InputElementDiv,
     // State(3882)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3883)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3884)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3885)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3886)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL AssignmentExpression_In_Yield COLON . AssignmentExpression_Yield]*
@@ -14534,10 +14534,10 @@ pub const TABLE: [Goal; 4108] = [
     //   [Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield RPAREN . Block_Yield_Return]*
     Goal::InputElementDiv,
     // State(3897)
-    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return .]*
+    //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::InputElementRegExp,
     // State(3898)
-    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return .]*
+    //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3899)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LineTerminatorSequence) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
@@ -14567,7 +14567,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::InputElementDiv,
     // State(3907)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . SEMI_COLON]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . SEMICOLON]*
     Goal::InputElementDiv,
     // State(3908)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -14582,17 +14582,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody .]*
     Goal::InputElementDiv,
     // State(3912)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3913)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3914)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3915)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3916)
     //   [Initializer_Yield_Await -> ASSIGN AssignmentExpression_Yield_Await .]*
@@ -14615,24 +14615,24 @@ pub const TABLE: [Goal; 4108] = [
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await .]*
     Goal::InputElementDiv,
     // State(3922)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3923)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await . SEMI_COLON RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await . SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3924)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3925)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3926)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3927)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
@@ -14657,17 +14657,17 @@ pub const TABLE: [Goal; 4108] = [
     //   [BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await .]*
     Goal::InputElementDiv,
     // State(3934)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(3935)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3936)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(3937)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(3938)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON . AssignmentExpression_Yield_Await]*
@@ -14736,16 +14736,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::InputElementRegExp,
     // State(3957)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMI_COLON .]*
+    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3958)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3959)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3960)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3961)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN . Statement_Yield_Return]*
@@ -14754,28 +14754,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3963)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3964)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3965)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . RPAREN Statement_Yield_Return]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3966)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3967)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3968)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3969)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(3970)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return .]*
@@ -14790,13 +14790,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3974)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3975)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(3976)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(3977)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL AssignmentExpression_In_Yield COLON AssignmentExpression_Yield .]*
@@ -14867,7 +14867,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::InputElementRegExp,
     // State(3997)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMI_COLON .]*
+    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON .]*
     Goal::InputElementRegExp,
     // State(3998)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
@@ -14879,13 +14879,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4001)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4002)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4003)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4004)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
@@ -14894,28 +14894,28 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4006)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4007)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(4008)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . RPAREN Statement_Yield_Await_Return]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4009)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4010)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4011)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4012)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(4013)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
@@ -14930,13 +14930,13 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4017)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4018)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4019)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4020)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON AssignmentExpression_Yield_Await .]*
@@ -15000,7 +15000,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::InputElementDiv,
     // State(4038)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4039)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return .]*
@@ -15009,29 +15009,29 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4041)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4042)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(4043)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(4044)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::InputElementDiv,
     // State(4045)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4046)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4047)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(4048)
-    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4049)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
@@ -15086,7 +15086,7 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4065)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4066)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
@@ -15095,29 +15095,29 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4068)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4069)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4070)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4071)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::InputElementDiv,
     // State(4072)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4073)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4074)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4075)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4076)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
@@ -15153,16 +15153,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::InputElementRegExp,
     // State(4086)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4087)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4088)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::InputElementRegExp,
     // State(4089)
-    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4090)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
@@ -15187,16 +15187,16 @@ pub const TABLE: [Goal; 4108] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4097)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4098)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4099)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::InputElementRegExp,
     // State(4100)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
     // State(4101)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
@@ -15212,12 +15212,12 @@ pub const TABLE: [Goal; 4108] = [
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::InputElementRegExp,
     // State(4105)
-    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
+    //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::InputElementRegExp,
     // State(4106)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::InputElementRegExp,
     // State(4107)
-    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
+    //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::InputElementRegExp,
 ];

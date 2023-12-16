@@ -317,7 +317,7 @@ const PUNCTUATORS = {
   ')': 'RPAREN',
   '.': 'DOT',
   '...': 'ELLIPSIS',
-  ';': 'SEMI_COLON',
+  ';': 'SEMICOLON',
   ',': 'COMMA',
   '<': 'LT',
   '>': 'GT',

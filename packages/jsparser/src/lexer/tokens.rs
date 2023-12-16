@@ -102,7 +102,7 @@ pub enum TokenKind {
     RegularExpressionLiteral,
     Sar,
     SarAssign,
-    SemiColon,
+    Semicolon,
     Set,
     Shl,
     ShlAssign,

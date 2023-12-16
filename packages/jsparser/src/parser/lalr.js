@@ -25,11 +25,11 @@ function isAutoSemicolonDisallowed(state) {
     //   is never inserted automatically if the semicolon would then be parsed as an empty
     //   statement or if that semicolon would become one of the two semicolons in the header of a
     //   for statement (see 14.7.4).
-    if (item === '[EmptyStatement -> SEMI_COLON .]*') {
+    if (item === '[EmptyStatement -> SEMICOLON .]*') {
       return true;
     }
     if (item.startsWith('[ForStatement')) {
-      if (item.includes(' SEMI_COLON . ')) {
+      if (item.includes(' SEMICOLON . ')) {
         return true;
       }
     }
@@ -41,7 +41,7 @@ function isAutoSemicolonDoWhile(state) {
   for (const item of state.kernel_items) {
     // ';' at the end of a do-white statement.
     if (item.startsWith('[DoWhileStatement')) {
-      if (item.endsWith(' RPAREN . SEMI_COLON]*')) {
+      if (item.endsWith(' RPAREN . SEMICOLON]*')) {
         return true;
       }
     }
@@ -84,7 +84,7 @@ for (const state of spec.states) {
     case 'Shift':
       {
         const nextId = action[1].data.next_id;
-        if (action[0].label === 'SEMI_COLON') {
+        if (action[0].label === 'SEMICOLON') {
           const nextState = spec.states[nextId];
           nextState.isAutoSemicolonDisallowed = isAutoSemicolonDisallowed(nextState);
         }

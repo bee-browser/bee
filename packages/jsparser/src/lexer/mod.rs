@@ -98,7 +98,7 @@ impl<'a> Token<'a> {
     /// A token used for automatic semicolon insertion.
     pub(crate) const AUTO_SEMICOLON: Token<'static> = Token {
         lexeme: ";",
-        kind: TokenKind::SemiColon,
+        kind: TokenKind::Semicolon,
         flags: TokenFlags::AUTO_INSERTION,
     };
 
