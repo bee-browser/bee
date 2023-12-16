@@ -1,6 +1,7 @@
 'use strict';
 
 import { assert } from 'https://deno.land/std@0.208.0/testing/asserts.ts';
+import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
 const spec = JSON.parse(await readAllText(Deno.stdin));
@@ -8,7 +9,7 @@ const tokens = JSON.parse(await Deno.readTextFile("../lexer/tokens.json"));
 
 const tokenIndexMap = {};
 for (let i = 0; i < tokens.length; ++i) {
-  tokenIndexMap[tokens[i]] = i;
+  tokenIndexMap[changeCase.constantCase(tokens[i])] = i;
 }
 tokenIndexMap['$'] = tokens.length;
 
@@ -59,16 +60,16 @@ for (const state of spec.states) {
 
   for (const action of state.actions) {
     switch (action[0]) {
-    case 'RegularExpressionLiteral':
+    case 'REGULAR_EXPRESSION_LITERAL':
       permitRegularExpressionLiteral = true;
       break;
-    case 'TemplateMiddle':
+    case 'TEMPLATE_MIDDLE':
       permitTemplateMiddle = true;
       break;
-    case 'TemplateTail':
+    case 'TEMPLATE_TAIL':
       permitTemplateTail = true;
       break;
-    case 'LineTerminatorSequence':
+    case 'LINE_TERMINATOR_SEQUENCE':
       ignoreLineTerminatorSequence = false;
       break;
     }
@@ -96,7 +97,8 @@ for (const state of spec.states) {
         const nonTerminal = action[1].data.non_terminal;
         const numPops = action[1].data.num_pops;
         const rule = action[1].data.rule;
-        action[1] = `Action::Reduce(NonTerminal::${nonTerminal}, ${numPops}, ProductionRule(${spec.production_rules.indexOf(rule)}))`;
+        action[1] = `Action::Reduce(NonTerminal::${nonTerminal}, ${numPops}, ` +
+          `ProductionRule(${spec.production_rules.indexOf(rule)}))`;
       }
       break;
     case 'Replace':
@@ -109,16 +111,16 @@ for (const state of spec.states) {
   }
 
   state.actions.push([
-    { index: tokenIndexMap['WhiteSpaceSequence'], label: 'WhiteSpaceSequence' },
+    { index: tokenIndexMap['WHITE_SPACE_SEQUENCE'], label: 'WHITE_SPACE_SEQUENCE' },
     'Action::Ignore',
   ]);
   state.actions.push([
-    { index: tokenIndexMap['Comment'], label: 'Comment' },
+    { index: tokenIndexMap['COMMENT'], label: 'COMMENT' },
     'Action::Ignore',
   ]);
   if (ignoreLineTerminatorSequence) {
     state.actions.push([
-      { index: tokenIndexMap['LineTerminatorSequence'], label: 'LineTerminatorSequence' },
+      { index: tokenIndexMap['LINE_TERMINATOR_SEQUENCE'], label: 'LINE_TERMINATOR_SEQUENCE' },
       'Action::Ignore',
     ]);
   }
