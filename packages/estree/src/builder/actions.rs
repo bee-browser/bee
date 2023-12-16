@@ -68,13 +68,13 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // Declaration -> LexicalDeclaration_In
     Some((Builder::nop, "nop")),
-    // ImportDeclaration -> IMPORT ImportClause FromClause SEMI_COLON
+    // ImportDeclaration -> IMPORT ImportClause FromClause SEMICOLON
     Some((Builder::import_from, "import_from")),
-    // ImportDeclaration -> IMPORT ModuleSpecifier SEMI_COLON
+    // ImportDeclaration -> IMPORT ModuleSpecifier SEMICOLON
     Some((Builder::side_effect_import, "side_effect_import")),
-    // ExportDeclaration -> EXPORT ExportFromClause FromClause SEMI_COLON
+    // ExportDeclaration -> EXPORT ExportFromClause FromClause SEMICOLON
     Some((Builder::export_from, "export_from")),
-    // ExportDeclaration -> EXPORT NamedExports SEMI_COLON
+    // ExportDeclaration -> EXPORT NamedExports SEMICOLON
     Some((Builder::export_list, "export_list")),
     // ExportDeclaration -> EXPORT VariableStatement_Await
     Some((Builder::export_vars, "export_vars")),
@@ -84,7 +84,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::default_export_decl, "default_export_decl")),
     // ExportDeclaration -> EXPORT DEFAULT ClassDeclaration_Await_Default
     Some((Builder::default_export_class, "default_export_class")),
-    // ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMI_COLON
+    // ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMICOLON
     Some((Builder::default_export_expr, "default_export_expr")),
     // StatementListItem_Await -> Statement_Await
     Some((Builder::nop, "nop")),
@@ -92,11 +92,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BlockStatement -> Block
     Some((Builder::nop, "nop")),
-    // VariableStatement -> VAR VariableDeclarationList_In SEMI_COLON
+    // VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
-    // EmptyStatement -> SEMI_COLON
+    // EmptyStatement -> SEMICOLON
     Some((Builder::empty_statement, "empty_statement")),
-    // ExpressionStatement -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMI_COLON
+    // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
     // IfStatement -> IF LPAREN Expression_In RPAREN Statement ELSE Statement
     Some((Builder::if_else_statement, "if_else_statement")),
@@ -106,22 +106,22 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BreakableStatement -> SwitchStatement
     Some((Builder::nop, "nop")),
-    // ContinueStatement -> CONTINUE SEMI_COLON
+    // ContinueStatement -> CONTINUE SEMICOLON
     Some((Builder::continue_statement, "continue_statement")),
-    // ContinueStatement -> CONTINUE (!LineTerminatorSequence) LabelIdentifier SEMI_COLON
+    // ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
     Some((
         Builder::labeled_continue_statement,
         "labeled_continue_statement",
     )),
-    // BreakStatement -> BREAK SEMI_COLON
+    // BreakStatement -> BREAK SEMICOLON
     Some((Builder::break_statement, "break_statement")),
-    // BreakStatement -> BREAK (!LineTerminatorSequence) LabelIdentifier SEMI_COLON
+    // BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
     Some((Builder::labeled_break_statement, "labeled_break_statement")),
     // WithStatement -> WITH LPAREN Expression_In RPAREN Statement
     Some((Builder::with_statement, "with_statement")),
     // LabelledStatement -> LabelIdentifier COLON LabelledItem
     Some((Builder::labeled_statement, "labeled_statement")),
-    // ThrowStatement -> THROW (!LineTerminatorSequence) Expression_In SEMI_COLON
+    // ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
     // TryStatement -> TRY Block Catch
     Some((Builder::try_catch_statement, "try_catch_statement")),
@@ -132,7 +132,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
     )),
-    // DebuggerStatement -> DEBUGGER SEMI_COLON
+    // DebuggerStatement -> DEBUGGER SEMICOLON
     Some((Builder::debugger_statement, "debugger_statement")),
     // HoistableDeclaration -> FunctionDeclaration
     Some((Builder::nop, "nop")),
@@ -144,7 +144,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ClassDeclaration -> CLASS BindingIdentifier ClassTail
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In -> LetOrConst BindingList_In SEMI_COLON
+    // LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ImportClause -> ImportedDefaultBinding
     Some((Builder::into_list, "into_list")),
@@ -158,7 +158,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::prepend_to_csv_list, "prepend_to_csv_list")),
     // FromClause -> FROM ModuleSpecifier
     Some((Builder::from_clause, "from_clause")),
-    // ModuleSpecifier -> StringLiteral
+    // ModuleSpecifier -> STRING_LITERAL
     Some((Builder::string_literal, "string_literal")),
     // ExportFromClause -> MUL
     Some((Builder::nop, "nop")),
@@ -175,7 +175,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::list_block_ended_with_comma,
         "list_block_ended_with_comma",
     )),
-    // VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMI_COLON
+    // VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // Declaration_Await -> HoistableDeclaration_Await
     Some((Builder::nop, "nop")),
@@ -282,12 +282,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
-    // AsyncFunctionDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::async_function_declaration,
         "async_function_declaration",
     )),
-    // AsyncGeneratorDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::async_generator_declaration,
         "async_generator_declaration",
@@ -338,7 +338,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     )),
     // ModuleExportName -> KeywordOrIdentifierName
     Some((Builder::nop, "nop")),
-    // ModuleExportName -> StringLiteral
+    // ModuleExportName -> STRING_LITERAL
     Some((Builder::string_literal, "string_literal")),
     // ExportsList -> ExportSpecifier
     Some((Builder::into_list, "into_list")),
@@ -358,7 +358,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMI_COLON
+    // LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
@@ -374,22 +374,22 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::anonymous_generator_declaration,
         "anonymous_generator_declaration",
     )),
-    // AsyncFunctionDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::async_function_declaration,
         "async_function_declaration",
     )),
-    // AsyncFunctionDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::anonymous_async_function_declaration,
         "anonymous_async_function_declaration",
     )),
-    // AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::async_generator_declaration,
         "async_generator_declaration",
     )),
-    // AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::anonymous_async_generator_declaration,
         "anonymous_async_generator_declaration",
@@ -415,17 +415,17 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_In_Await
     Some((Builder::conditional_expression, "conditional_expression")),
-    // ArrowFunction_In_Await -> ArrowParameters_Await (!LineTerminatorSequence) ARROW ConciseBody_In
+    // ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction_In_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction_In_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -462,7 +462,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BlockStatement_Await -> Block_Await
     Some((Builder::nop, "nop")),
-    // ExpressionStatement_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMI_COLON
+    // ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
     // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await ELSE Statement_Await
     Some((Builder::if_else_statement, "if_else_statement")),
@@ -472,22 +472,22 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BreakableStatement_Await -> SwitchStatement_Await
     Some((Builder::nop, "nop")),
-    // ContinueStatement_Await -> CONTINUE SEMI_COLON
+    // ContinueStatement_Await -> CONTINUE SEMICOLON
     Some((Builder::continue_statement, "continue_statement")),
-    // ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON
+    // ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
     Some((
         Builder::labeled_continue_statement,
         "labeled_continue_statement",
     )),
-    // BreakStatement_Await -> BREAK SEMI_COLON
+    // BreakStatement_Await -> BREAK SEMICOLON
     Some((Builder::break_statement, "break_statement")),
-    // BreakStatement_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON
+    // BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
     Some((Builder::labeled_break_statement, "labeled_break_statement")),
     // WithStatement_Await -> WITH LPAREN Expression_In_Await RPAREN Statement_Await
     Some((Builder::with_statement, "with_statement")),
     // LabelledStatement_Await -> LabelIdentifier_Await COLON LabelledItem_Await
     Some((Builder::labeled_statement, "labeled_statement")),
-    // ThrowStatement_Await -> THROW (!LineTerminatorSequence) Expression_In_Await SEMI_COLON
+    // ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
     // TryStatement_Await -> TRY Block_Await Catch_Await
     Some((Builder::try_catch_statement, "try_catch_statement")),
@@ -526,71 +526,71 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression_In
     Some((Builder::assignment_expression, "assignment_expression")),
-    // DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMI_COLON
+    // DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
     Some((Builder::while_statement, "while_statement")),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
     )),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement
+    // ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement
+    // ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -701,7 +701,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // ImportsList -> ImportsList COMMA ImportSpecifier
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // KeywordOrIdentifierName -> IdentifierName
+    // KeywordOrIdentifierName -> IDENTIFIER_NAME
     Some((Builder::identifier, "identifier")),
     // KeywordOrIdentifierName -> AWAIT
     Some((Builder::identifier, "identifier")),
@@ -831,12 +831,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
-    // AsyncFunctionDeclaration_Await -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::async_function_declaration,
         "async_function_declaration",
     )),
-    // AsyncGeneratorDeclaration_Await -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::async_generator_declaration,
         "async_generator_declaration",
@@ -890,7 +890,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::tagged_template_expression,
         "tagged_template_expression",
     )),
-    // CallExpression_Await -> CallExpression_Await DOT PrivateIdentifier
+    // CallExpression_Await -> CallExpression_Await DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -943,17 +943,17 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON AssignmentExpression_In
     Some((Builder::conditional_expression, "conditional_expression")),
-    // ArrowFunction_In -> ArrowParameters (!LineTerminatorSequence) ARROW ConciseBody_In
+    // ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction_In -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction_In -> CoverCallExpressionAndAsyncArrowHead (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -972,7 +972,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration -> LetOrConst BindingList SEMI_COLON
+    // LexicalDeclaration -> LetOrConst BindingList SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding -> BindingIdentifier
     Some((Builder::for_binding, "for_binding")),
@@ -991,7 +991,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     )),
     // DefaultClause -> DEFAULT COLON StatementList
     Some((Builder::switch_case_default, "switch_case_default")),
-    // IdentifierNameButNotReservedWord -> IdentifierName
+    // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
     Some((Builder::nop, "nop")),
     // IdentifierNameButNotReservedWord -> LET
     Some((Builder::nop, "nop")),
@@ -1163,7 +1163,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::new_expression_arguments,
         "new_expression_arguments",
     )),
-    // MemberExpression_Await -> MemberExpression_Await DOT PrivateIdentifier
+    // MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -1178,7 +1178,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::call_expression_super, "call_expression_super")),
     // ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
     Some((Builder::import_expression, "import_expression")),
-    // TemplateLiteral_Await_Tagged -> NoSubstitutionTemplate
+    // TemplateLiteral_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
@@ -1196,7 +1196,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain_Await -> OPTIONAL_CHAINING TemplateLiteral_Await_Tagged
     Some((Builder::optional_member, "optional_member")),
-    // OptionalChain_Await -> OPTIONAL_CHAINING PrivateIdentifier
+    // OptionalChain_Await -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
     Some((
         Builder::optional_private_identifier,
         "optional_private_identifier",
@@ -1221,7 +1221,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::optional_chain_append_tagged_template,
         "optional_chain_append_tagged_template",
     )),
-    // OptionalChain_Await -> OptionalChain_Await DOT PrivateIdentifier
+    // OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
     Some((
         Builder::optional_chain_append_private_identifier,
         "optional_chain_append_private_identifier",
@@ -1230,71 +1230,71 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // StatementList_Await -> StatementList_Await StatementListItem_Await
     Some((Builder::append_to_list, "append_to_list")),
-    // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON
+    // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
     Some((Builder::while_statement, "while_statement")),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
     )),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    // ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Await -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -1413,7 +1413,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::tagged_template_expression,
         "tagged_template_expression",
     )),
-    // CallExpression -> CallExpression DOT PrivateIdentifier
+    // CallExpression -> CallExpression DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -1510,19 +1510,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::class_element_static_method_definition,
         "class_element_static_method_definition",
     )),
-    // ClassElement -> FieldDefinition SEMI_COLON
+    // ClassElement -> FieldDefinition SEMICOLON
     Some((
         Builder::class_element_property_definition,
         "class_element_property_definition",
     )),
-    // ClassElement -> STATIC FieldDefinition SEMI_COLON
+    // ClassElement -> STATIC FieldDefinition SEMICOLON
     Some((
         Builder::class_element_static_property_definition,
         "class_element_static_property_definition",
     )),
     // ClassElement -> ClassStaticBlock
     Some((Builder::into_nullable, "into_nullable")),
-    // ClassElement -> SEMI_COLON
+    // ClassElement -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // ObjectBindingPattern_Await -> LBRACE RBRACE
     Some((Builder::object_pattern_empty, "object_pattern_empty")),
@@ -1571,19 +1571,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::class_element_static_method_definition,
         "class_element_static_method_definition",
     )),
-    // ClassElement_Await -> FieldDefinition_Await SEMI_COLON
+    // ClassElement_Await -> FieldDefinition_Await SEMICOLON
     Some((
         Builder::class_element_property_definition,
         "class_element_property_definition",
     )),
-    // ClassElement_Await -> STATIC FieldDefinition_Await SEMI_COLON
+    // ClassElement_Await -> STATIC FieldDefinition_Await SEMICOLON
     Some((
         Builder::class_element_static_property_definition,
         "class_element_static_property_definition",
     )),
     // ClassElement_Await -> ClassStaticBlock
     Some((Builder::into_nullable, "into_nullable")),
-    // ClassElement_Await -> SEMI_COLON
+    // ClassElement_Await -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
     Some((Builder::nop, "nop")),
@@ -1617,7 +1617,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Await -> AsyncGeneratorExpression
     Some((Builder::nop, "nop")),
-    // PrimaryExpression_Await -> RegularExpressionLiteral
+    // PrimaryExpression_Await -> REGULAR_EXPRESSION_LITERAL
     Some((Builder::regexp_literal, "regexp_literal")),
     // PrimaryExpression_Await -> TemplateLiteral_Await
     Some((Builder::nop, "nop")),
@@ -1645,7 +1645,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::argument_list_append_rest,
         "argument_list_append_rest",
     )),
-    // SubstitutionTemplate_Await_Tagged -> TemplateHead Expression_In_Await TemplateSpans_Await_Tagged
+    // SubstitutionTemplate_Await_Tagged -> TEMPLATE_HEAD Expression_In_Await TemplateSpans_Await_Tagged
     Some((Builder::template_literal, "template_literal")),
     // Expression_Await -> AssignmentExpression_Await
     Some((Builder::nop, "nop")),
@@ -1655,7 +1655,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMI_COLON
+    // LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Await -> BindingIdentifier_Await
     Some((Builder::for_binding, "for_binding")),
@@ -1752,7 +1752,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::new_expression_arguments,
         "new_expression_arguments",
     )),
-    // MemberExpression -> MemberExpression DOT PrivateIdentifier
+    // MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -1767,7 +1767,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::call_expression_super, "call_expression_super")),
     // ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
     Some((Builder::import_expression, "import_expression")),
-    // TemplateLiteral_Tagged -> NoSubstitutionTemplate
+    // TemplateLiteral_Tagged -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
@@ -1785,7 +1785,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain -> OPTIONAL_CHAINING TemplateLiteral_Tagged
     Some((Builder::optional_member, "optional_member")),
-    // OptionalChain -> OPTIONAL_CHAINING PrivateIdentifier
+    // OptionalChain -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
     Some((
         Builder::optional_private_identifier,
         "optional_private_identifier",
@@ -1810,7 +1810,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::optional_chain_append_tagged_template,
         "optional_chain_append_tagged_template",
     )),
-    // OptionalChain -> OptionalChain DOT PrivateIdentifier
+    // OptionalChain -> OptionalChain DOT PRIVATE_IDENTIFIER
     Some((
         Builder::optional_chain_append_private_identifier,
         "optional_chain_append_private_identifier",
@@ -1819,17 +1819,17 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON AssignmentExpression
     Some((Builder::conditional_expression, "conditional_expression")),
-    // ArrowFunction -> ArrowParameters (!LineTerminatorSequence) ARROW ConciseBody
+    // ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -1970,9 +1970,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // Literal -> BooleanLiteral
     Some((Builder::nop, "nop")),
-    // Literal -> NumericLiteral
+    // Literal -> NUMERIC_LITERAL
     Some((Builder::numeric_literal, "numeric_literal")),
-    // Literal -> StringLiteral
+    // Literal -> STRING_LITERAL
     Some((Builder::string_literal, "string_literal")),
     // ArrayLiteral_Await -> LBRACK RBRACK
     Some((Builder::array_expression_empty, "array_expression_empty")),
@@ -2014,27 +2014,27 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     )),
     // GeneratorExpression -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_expression, "generator_expression")),
-    // AsyncFunctionExpression -> ASYNC (!LineTerminatorSequence) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::anonymous_async_function_expression,
         "anonymous_async_function_expression",
     )),
-    // AsyncFunctionExpression -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::async_function_expression,
         "async_function_expression",
     )),
-    // AsyncGeneratorExpression -> ASYNC (!LineTerminatorSequence) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::anonymous_async_generator_expression,
         "anonymous_async_generator_expression",
     )),
-    // AsyncGeneratorExpression -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::async_generator_expression,
         "async_generator_expression",
     )),
-    // TemplateLiteral_Await -> NoSubstitutionTemplate
+    // TemplateLiteral_Await -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
@@ -2045,9 +2045,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::new_target, "new_target")),
     // ImportMeta -> IMPORT DOT META
     Some((Builder::import_meta, "import_meta")),
-    // TemplateSpans_Await_Tagged -> TemplateTail
+    // TemplateSpans_Await_Tagged -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans_Await_Tagged -> TemplateMiddleList_Await_Tagged TemplateTail
+    // TemplateSpans_Await_Tagged -> TemplateMiddleList_Await_Tagged TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // AssignmentExpression_Await -> ConditionalExpression_Await
     Some((Builder::nop, "nop")),
@@ -2128,7 +2128,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression -> AsyncGeneratorExpression
     Some((Builder::nop, "nop")),
-    // PrimaryExpression -> RegularExpressionLiteral
+    // PrimaryExpression -> REGULAR_EXPRESSION_LITERAL
     Some((Builder::regexp_literal, "regexp_literal")),
     // PrimaryExpression -> TemplateLiteral
     Some((Builder::nop, "nop")),
@@ -2152,7 +2152,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::argument_list_append_rest,
         "argument_list_append_rest",
     )),
-    // SubstitutionTemplate_Tagged -> TemplateHead Expression_In TemplateSpans_Tagged
+    // SubstitutionTemplate_Tagged -> TEMPLATE_HEAD Expression_In TemplateSpans_Tagged
     Some((Builder::template_literal, "template_literal")),
     // ShortCircuitExpression -> LogicalORExpression
     Some((Builder::nop, "nop")),
@@ -2332,7 +2332,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ClassElementName -> PropertyName
     Some((Builder::nop, "nop")),
-    // ClassElementName -> PrivateIdentifier
+    // ClassElementName -> PRIVATE_IDENTIFIER
     Some((
         Builder::class_element_name_private,
         "class_element_name_private",
@@ -2344,9 +2344,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::method_definition_generator,
         "method_definition_generator",
     )),
-    // AsyncMethod -> ASYNC (!LineTerminatorSequence) ClassElementName LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((Builder::method_definition_async, "method_definition_async")),
-    // AsyncGeneratorMethod -> ASYNC (!LineTerminatorSequence) MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::method_definition_async_generator,
         "method_definition_async_generator",
@@ -2365,7 +2365,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::append_to_array, "append_to_array")),
     // ClassElementName_Await -> PropertyName_Await
     Some((Builder::nop, "nop")),
-    // ClassElementName_Await -> PrivateIdentifier
+    // ClassElementName_Await -> PRIVATE_IDENTIFIER
     Some((
         Builder::class_element_name_private,
         "class_element_name_private",
@@ -2375,9 +2375,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::method_definition_generator,
         "method_definition_generator",
     )),
-    // AsyncMethod_Await -> ASYNC (!LineTerminatorSequence) ClassElementName_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((Builder::method_definition_async, "method_definition_async")),
-    // AsyncGeneratorMethod_Await -> ASYNC (!LineTerminatorSequence) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::method_definition_async_generator,
         "method_definition_async_generator",
@@ -2412,11 +2412,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // PropertyDefinitionList_Await -> PropertyDefinitionList_Await COMMA PropertyDefinition_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // SubstitutionTemplate_Await -> TemplateHead Expression_In_Await TemplateSpans_Await
+    // SubstitutionTemplate_Await -> TEMPLATE_HEAD Expression_In_Await TemplateSpans_Await
     Some((Builder::template_literal, "template_literal")),
-    // TemplateMiddleList_Await_Tagged -> TemplateMiddle Expression_In_Await
+    // TemplateMiddleList_Await_Tagged -> TEMPLATE_MIDDLE Expression_In_Await
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList_Await_Tagged -> TemplateMiddleList_Await_Tagged TemplateMiddle Expression_In_Await
+    // TemplateMiddleList_Await_Tagged -> TemplateMiddleList_Await_Tagged TEMPLATE_MIDDLE Expression_In_Await
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -2425,17 +2425,17 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_Await
     Some((Builder::conditional_expression, "conditional_expression")),
-    // ArrowFunction_Await -> ArrowParameters_Await (!LineTerminatorSequence) ARROW ConciseBody
+    // ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -2494,16 +2494,16 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     )),
     // ClassExpression -> CLASS BindingIdentifier ClassTail
     Some((Builder::class_expression, "class_expression")),
-    // TemplateLiteral -> NoSubstitutionTemplate
+    // TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
     )),
     // TemplateLiteral -> SubstitutionTemplate
     Some((Builder::nop, "nop")),
-    // TemplateSpans_Tagged -> TemplateTail
+    // TemplateSpans_Tagged -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans_Tagged -> TemplateMiddleList_Tagged TemplateTail
+    // TemplateSpans_Tagged -> TemplateMiddleList_Tagged TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // LogicalORExpression -> LogicalANDExpression
     Some((Builder::nop, "nop")),
@@ -2525,12 +2525,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BreakableStatement_Return -> SwitchStatement_Return
     Some((Builder::nop, "nop")),
-    // ReturnStatement -> RETURN SEMI_COLON
+    // ReturnStatement -> RETURN SEMICOLON
     Some((
         Builder::return_statement_no_argument,
         "return_statement_no_argument",
     )),
-    // ReturnStatement -> RETURN (!LineTerminatorSequence) Expression_In SEMI_COLON
+    // ReturnStatement -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
     Some((Builder::with_statement, "with_statement")),
@@ -2733,9 +2733,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::property_method, "property_method")),
     // PropertyDefinition_Await -> ELLIPSIS AssignmentExpression_In_Await
     Some((Builder::spread_element, "spread_element")),
-    // TemplateSpans_Await -> TemplateTail
+    // TemplateSpans_Await -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans_Await -> TemplateMiddleList_Await TemplateTail
+    // TemplateSpans_Await -> TemplateMiddleList_Await TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // ShortCircuitExpression_Await -> LogicalORExpression_Await
     Some((Builder::nop, "nop")),
@@ -2743,9 +2743,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // LiteralPropertyName -> KeywordOrIdentifierName
     Some((Builder::nop, "nop")),
-    // LiteralPropertyName -> StringLiteral
+    // LiteralPropertyName -> STRING_LITERAL
     Some((Builder::string_literal, "string_literal")),
-    // LiteralPropertyName -> NumericLiteral
+    // LiteralPropertyName -> NUMERIC_LITERAL
     Some((Builder::numeric_literal, "numeric_literal")),
     // ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
     Some((Builder::computed_property_name, "computed_property_name")),
@@ -2773,11 +2773,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // SubstitutionTemplate -> TemplateHead Expression_In TemplateSpans
+    // SubstitutionTemplate -> TEMPLATE_HEAD Expression_In TemplateSpans
     Some((Builder::template_literal, "template_literal")),
-    // TemplateMiddleList_Tagged -> TemplateMiddle Expression_In
+    // TemplateMiddleList_Tagged -> TEMPLATE_MIDDLE Expression_In
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TemplateMiddle Expression_In
+    // TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TEMPLATE_MIDDLE Expression_In
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -2835,24 +2835,24 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::yield_expression_no_argument,
         "yield_expression_no_argument",
     )),
-    // YieldExpression_In -> YIELD (!LineTerminatorSequence) AssignmentExpression_In_Yield
+    // YieldExpression_In -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_In_Yield
     Some((Builder::yield_expression, "yield_expression")),
-    // YieldExpression_In -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_In_Yield
+    // YieldExpression_In -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_In_Yield
     Some((
         Builder::yield_expression_delegate,
         "yield_expression_delegate",
     )),
-    // ArrowFunction_In_Yield -> ArrowParameters_Yield (!LineTerminatorSequence) ARROW ConciseBody_In
+    // ArrowFunction_In_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction_In_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction_In_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -2865,9 +2865,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BlockStatement_Yield_Return -> Block_Yield_Return
     Some((Builder::nop, "nop")),
-    // VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMI_COLON
+    // VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
-    // ExpressionStatement_Yield -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMI_COLON
+    // ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
     // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return ELSE Statement_Yield_Return
     Some((Builder::if_else_statement, "if_else_statement")),
@@ -2877,29 +2877,29 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
     Some((Builder::nop, "nop")),
-    // ContinueStatement_Yield -> CONTINUE SEMI_COLON
+    // ContinueStatement_Yield -> CONTINUE SEMICOLON
     Some((Builder::continue_statement, "continue_statement")),
-    // ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON
+    // ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
     Some((
         Builder::labeled_continue_statement,
         "labeled_continue_statement",
     )),
-    // BreakStatement_Yield -> BREAK SEMI_COLON
+    // BreakStatement_Yield -> BREAK SEMICOLON
     Some((Builder::break_statement, "break_statement")),
-    // BreakStatement_Yield -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON
+    // BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
     Some((Builder::labeled_break_statement, "labeled_break_statement")),
-    // ReturnStatement_Yield -> RETURN SEMI_COLON
+    // ReturnStatement_Yield -> RETURN SEMICOLON
     Some((
         Builder::return_statement_no_argument,
         "return_statement_no_argument",
     )),
-    // ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON
+    // ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::with_statement, "with_statement")),
     // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
     Some((Builder::labeled_statement, "labeled_statement")),
-    // ThrowStatement_Yield -> THROW (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON
+    // ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
     // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
     Some((Builder::try_catch_statement, "try_catch_statement")),
@@ -2920,7 +2920,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMI_COLON
+    // LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // BlockStatement_Await_Return -> Block_Await_Return
     Some((Builder::nop, "nop")),
@@ -2932,12 +2932,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BreakableStatement_Await_Return -> SwitchStatement_Await_Return
     Some((Builder::nop, "nop")),
-    // ReturnStatement_Await -> RETURN SEMI_COLON
+    // ReturnStatement_Await -> RETURN SEMICOLON
     Some((
         Builder::return_statement_no_argument,
         "return_statement_no_argument",
     )),
-    // ReturnStatement_Await -> RETURN (!LineTerminatorSequence) Expression_In_Await SEMI_COLON
+    // ReturnStatement_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::with_statement, "with_statement")),
@@ -2969,24 +2969,24 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::yield_expression_no_argument,
         "yield_expression_no_argument",
     )),
-    // YieldExpression_In_Await -> YIELD (!LineTerminatorSequence) AssignmentExpression_In_Yield_Await
+    // YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_In_Yield_Await
     Some((Builder::yield_expression, "yield_expression")),
-    // YieldExpression_In_Await -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_In_Yield_Await
+    // YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_In_Yield_Await
     Some((
         Builder::yield_expression_delegate,
         "yield_expression_delegate",
     )),
-    // ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await (!LineTerminatorSequence) ARROW ConciseBody_In
+    // ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction_In_Yield_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction_In_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    // AsyncArrowFunction_In_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -2999,9 +2999,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BlockStatement_Yield_Await_Return -> Block_Yield_Await_Return
     Some((Builder::nop, "nop")),
-    // VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMI_COLON
+    // VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
-    // ExpressionStatement_Yield_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMI_COLON
+    // ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
     // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return ELSE Statement_Yield_Await_Return
     Some((Builder::if_else_statement, "if_else_statement")),
@@ -3011,29 +3011,29 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
     Some((Builder::nop, "nop")),
-    // ContinueStatement_Yield_Await -> CONTINUE SEMI_COLON
+    // ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
     Some((Builder::continue_statement, "continue_statement")),
-    // ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMI_COLON
+    // ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
     Some((
         Builder::labeled_continue_statement,
         "labeled_continue_statement",
     )),
-    // BreakStatement_Yield_Await -> BREAK SEMI_COLON
+    // BreakStatement_Yield_Await -> BREAK SEMICOLON
     Some((Builder::break_statement, "break_statement")),
-    // BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield_Await SEMI_COLON
+    // BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
     Some((Builder::labeled_break_statement, "labeled_break_statement")),
-    // ReturnStatement_Yield_Await -> RETURN SEMI_COLON
+    // ReturnStatement_Yield_Await -> RETURN SEMICOLON
     Some((
         Builder::return_statement_no_argument,
         "return_statement_no_argument",
     )),
-    // ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) Expression_In_Yield_Await SEMI_COLON
+    // ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
     Some((Builder::return_statement, "return_statement")),
     // WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::with_statement, "with_statement")),
     // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON LabelledItem_Yield_Await_Return
     Some((Builder::labeled_statement, "labeled_statement")),
-    // ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) Expression_In_Yield_Await SEMI_COLON
+    // ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
     Some((Builder::throw_statement, "throw_statement")),
     // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return
     Some((Builder::try_catch_statement, "try_catch_statement")),
@@ -3054,7 +3054,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMI_COLON
+    // LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
     Some((Builder::computed_property_name, "computed_property_name")),
@@ -3072,16 +3072,16 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::binary_expression, "binary_expression")),
     // RelationalExpression_In_Await -> RelationalExpression_In_Await IN ShiftExpression_Await
     Some((Builder::binary_expression, "binary_expression")),
-    // RelationalExpression_In_Await -> PrivateIdentifier IN ShiftExpression_Await
+    // RelationalExpression_In_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Await
     Some((
         Builder::binary_expression_private,
         "binary_expression_private",
     )),
     // CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
     None,
-    // TemplateMiddleList_Await -> TemplateMiddle Expression_In_Await
+    // TemplateMiddleList_Await -> TEMPLATE_MIDDLE Expression_In_Await
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList_Await -> TemplateMiddleList_Await TemplateMiddle Expression_In_Await
+    // TemplateMiddleList_Await -> TemplateMiddleList_Await TEMPLATE_MIDDLE Expression_In_Await
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -3114,79 +3114,79 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::property_method, "property_method")),
     // PropertyDefinition -> ELLIPSIS AssignmentExpression_In
     Some((Builder::spread_element, "spread_element")),
-    // TemplateSpans -> TemplateTail
+    // TemplateSpans -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans -> TemplateMiddleList TemplateTail
+    // TemplateSpans -> TemplateMiddleList TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // BitwiseXORExpression -> BitwiseANDExpression
     Some((Builder::nop, "nop")),
     // BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
     Some((Builder::binary_expression, "binary_expression")),
-    // DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMI_COLON
+    // DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
     Some((Builder::while_statement, "while_statement")),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
     )),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN Statement_Return
+    // ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -3258,7 +3258,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::tagged_template_expression,
         "tagged_template_expression",
     )),
-    // CallExpression_Yield -> CallExpression_Yield DOT PrivateIdentifier
+    // CallExpression_Yield -> CallExpression_Yield DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -3309,12 +3309,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
-    // AsyncFunctionDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::async_function_declaration,
         "async_function_declaration",
     )),
-    // AsyncGeneratorDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::async_generator_declaration,
         "async_generator_declaration",
@@ -3393,7 +3393,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::tagged_template_expression,
         "tagged_template_expression",
     )),
-    // CallExpression_Yield_Await -> CallExpression_Yield_Await DOT PrivateIdentifier
+    // CallExpression_Yield_Await -> CallExpression_Yield_Await DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -3442,12 +3442,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
-    // AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((
         Builder::async_function_declaration,
         "async_function_declaration",
     )),
-    // AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::async_generator_declaration,
         "async_generator_declaration",
@@ -3501,16 +3501,16 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::binary_expression, "binary_expression")),
     // RelationalExpression_In -> RelationalExpression_In IN ShiftExpression
     Some((Builder::binary_expression, "binary_expression")),
-    // RelationalExpression_In -> PrivateIdentifier IN ShiftExpression
+    // RelationalExpression_In -> PRIVATE_IDENTIFIER IN ShiftExpression
     Some((
         Builder::binary_expression_private,
         "binary_expression_private",
     )),
     // CoverInitializedName -> IdentifierReference Initializer_In
     None,
-    // TemplateMiddleList -> TemplateMiddle Expression_In
+    // TemplateMiddleList -> TEMPLATE_MIDDLE Expression_In
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList -> TemplateMiddleList TemplateMiddle Expression_In
+    // TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -3596,7 +3596,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::new_expression_arguments,
         "new_expression_arguments",
     )),
-    // MemberExpression_Yield -> MemberExpression_Yield DOT PrivateIdentifier
+    // MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -3611,7 +3611,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::call_expression_super, "call_expression_super")),
     // ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
     Some((Builder::import_expression, "import_expression")),
-    // TemplateLiteral_Yield_Tagged -> NoSubstitutionTemplate
+    // TemplateLiteral_Yield_Tagged -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
@@ -3629,7 +3629,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain_Yield -> OPTIONAL_CHAINING TemplateLiteral_Yield_Tagged
     Some((Builder::optional_member, "optional_member")),
-    // OptionalChain_Yield -> OPTIONAL_CHAINING PrivateIdentifier
+    // OptionalChain_Yield -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
     Some((
         Builder::optional_private_identifier,
         "optional_private_identifier",
@@ -3654,7 +3654,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::optional_chain_append_tagged_template,
         "optional_chain_append_tagged_template",
     )),
-    // OptionalChain_Yield -> OptionalChain_Yield DOT PrivateIdentifier
+    // OptionalChain_Yield -> OptionalChain_Yield DOT PRIVATE_IDENTIFIER
     Some((
         Builder::optional_chain_append_private_identifier,
         "optional_chain_append_private_identifier",
@@ -3671,71 +3671,71 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMI_COLON
+    // DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Yield_Return -> WHILE LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::while_statement, "while_statement")),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    // ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -3790,71 +3790,71 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON
+    // DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Await_Return -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::while_statement, "while_statement")),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    // ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -3964,7 +3964,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::new_expression_arguments,
         "new_expression_arguments",
     )),
-    // MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PrivateIdentifier
+    // MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PRIVATE_IDENTIFIER
     Some((
         Builder::member_expression_private,
         "member_expression_private",
@@ -3979,7 +3979,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::call_expression_super, "call_expression_super")),
     // ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await RPAREN
     Some((Builder::import_expression, "import_expression")),
-    // TemplateLiteral_Yield_Await_Tagged -> NoSubstitutionTemplate
+    // TemplateLiteral_Yield_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
@@ -3997,7 +3997,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::optional_member, "optional_member")),
     // OptionalChain_Yield_Await -> OPTIONAL_CHAINING TemplateLiteral_Yield_Await_Tagged
     Some((Builder::optional_member, "optional_member")),
-    // OptionalChain_Yield_Await -> OPTIONAL_CHAINING PrivateIdentifier
+    // OptionalChain_Yield_Await -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
     Some((
         Builder::optional_private_identifier,
         "optional_private_identifier",
@@ -4022,7 +4022,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::optional_chain_append_tagged_template,
         "optional_chain_append_tagged_template",
     )),
-    // OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT PrivateIdentifier
+    // OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT PRIVATE_IDENTIFIER
     Some((
         Builder::optional_chain_append_private_identifier,
         "optional_chain_append_private_identifier",
@@ -4039,71 +4039,71 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMI_COLON
+    // DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Yield_Await_Return -> WHILE LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::while_statement, "while_statement")),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_no_init_test_update,
         "for_statement_no_init_test_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_no_test_update,
         "for_statement_no_test_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_no_init_update,
         "for_statement_no_init_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((Builder::for_statement_no_update, "for_statement_no_update")),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_no_init_test,
         "for_statement_no_init_test",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::for_statement_no_test, "for_statement_no_test")),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::for_statement_no_init, "for_statement_no_init")),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::for_statement, "for_statement")),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_vars_no_test_update,
         "for_statement_vars_no_test_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_vars_no_update,
         "for_statement_vars_no_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_vars_no_test,
         "for_statement_vars_no_test",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::for_statement_vars, "for_statement_vars")),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_decl_no_test_update,
         "for_statement_decl_no_test_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_decl_no_update,
         "for_statement_decl_no_update",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((
         Builder::for_statement_decl_no_test,
         "for_statement_decl_no_test",
     )),
-    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::for_statement_decl, "for_statement_decl")),
     // ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
     Some((Builder::for_in_statement, "for_in_statement")),
@@ -4234,7 +4234,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield -> AsyncGeneratorExpression
     Some((Builder::nop, "nop")),
-    // PrimaryExpression_Yield -> RegularExpressionLiteral
+    // PrimaryExpression_Yield -> REGULAR_EXPRESSION_LITERAL
     Some((Builder::regexp_literal, "regexp_literal")),
     // PrimaryExpression_Yield -> TemplateLiteral_Yield
     Some((Builder::nop, "nop")),
@@ -4258,7 +4258,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::argument_list_append_rest,
         "argument_list_append_rest",
     )),
-    // SubstitutionTemplate_Yield_Tagged -> TemplateHead Expression_In_Yield TemplateSpans_Yield_Tagged
+    // SubstitutionTemplate_Yield_Tagged -> TEMPLATE_HEAD Expression_In_Yield TemplateSpans_Yield_Tagged
     Some((Builder::template_literal, "template_literal")),
     // Expression_Yield -> AssignmentExpression_Yield
     Some((Builder::nop, "nop")),
@@ -4268,7 +4268,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMI_COLON
+    // LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Yield -> BindingIdentifier_Yield
     Some((Builder::for_binding, "for_binding")),
@@ -4337,7 +4337,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield_Await -> AsyncGeneratorExpression
     Some((Builder::nop, "nop")),
-    // PrimaryExpression_Yield_Await -> RegularExpressionLiteral
+    // PrimaryExpression_Yield_Await -> REGULAR_EXPRESSION_LITERAL
     Some((Builder::regexp_literal, "regexp_literal")),
     // PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
     Some((Builder::nop, "nop")),
@@ -4361,7 +4361,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::argument_list_append_rest,
         "argument_list_append_rest",
     )),
-    // SubstitutionTemplate_Yield_Await_Tagged -> TemplateHead Expression_In_Yield_Await TemplateSpans_Yield_Await_Tagged
+    // SubstitutionTemplate_Yield_Await_Tagged -> TEMPLATE_HEAD Expression_In_Yield_Await TemplateSpans_Yield_Await_Tagged
     Some((Builder::template_literal, "template_literal")),
     // Expression_Yield_Await -> AssignmentExpression_Yield_Await
     Some((Builder::nop, "nop")),
@@ -4371,7 +4371,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMI_COLON
+    // LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
     Some((Builder::for_binding, "for_binding")),
@@ -4457,16 +4457,16 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     )),
     // ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
     Some((Builder::class_expression, "class_expression")),
-    // TemplateLiteral_Yield -> NoSubstitutionTemplate
+    // TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
     )),
     // TemplateLiteral_Yield -> SubstitutionTemplate_Yield
     Some((Builder::nop, "nop")),
-    // TemplateSpans_Yield_Tagged -> TemplateTail
+    // TemplateSpans_Yield_Tagged -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TemplateTail
+    // TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // AssignmentExpression_Yield -> ConditionalExpression_Yield
     Some((Builder::nop, "nop")),
@@ -4516,19 +4516,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::class_element_static_method_definition,
         "class_element_static_method_definition",
     )),
-    // ClassElement_Yield -> FieldDefinition_Yield SEMI_COLON
+    // ClassElement_Yield -> FieldDefinition_Yield SEMICOLON
     Some((
         Builder::class_element_property_definition,
         "class_element_property_definition",
     )),
-    // ClassElement_Yield -> STATIC FieldDefinition_Yield SEMI_COLON
+    // ClassElement_Yield -> STATIC FieldDefinition_Yield SEMICOLON
     Some((
         Builder::class_element_static_property_definition,
         "class_element_static_property_definition",
     )),
     // ClassElement_Yield -> ClassStaticBlock
     Some((Builder::into_nullable, "into_nullable")),
-    // ClassElement_Yield -> SEMI_COLON
+    // ClassElement_Yield -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // CaseClause_Await_Return -> CASE Expression_In_Await COLON
     Some((
@@ -4569,16 +4569,16 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     )),
     // ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
     Some((Builder::class_expression, "class_expression")),
-    // TemplateLiteral_Yield_Await -> NoSubstitutionTemplate
+    // TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
     Some((
         Builder::template_literal_no_subst,
         "template_literal_no_subst",
     )),
     // TemplateLiteral_Yield_Await -> SubstitutionTemplate_Yield_Await
     Some((Builder::nop, "nop")),
-    // TemplateSpans_Yield_Await_Tagged -> TemplateTail
+    // TemplateSpans_Yield_Await_Tagged -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TemplateTail
+    // TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // AssignmentExpression_Yield_Await -> ConditionalExpression_Yield_Await
     Some((Builder::nop, "nop")),
@@ -4628,19 +4628,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::class_element_static_method_definition,
         "class_element_static_method_definition",
     )),
-    // ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMI_COLON
+    // ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMICOLON
     Some((
         Builder::class_element_property_definition,
         "class_element_property_definition",
     )),
-    // ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMI_COLON
+    // ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMICOLON
     Some((
         Builder::class_element_static_property_definition,
         "class_element_static_property_definition",
     )),
     // ClassElement_Yield_Await -> ClassStaticBlock
     Some((Builder::into_nullable, "into_nullable")),
-    // ClassElement_Yield_Await -> SEMI_COLON
+    // ClassElement_Yield_Await -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // ExponentiationExpression_Await -> UnaryExpression_Await
     Some((Builder::nop, "nop")),
@@ -4690,11 +4690,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // PropertyDefinitionList_Yield -> PropertyDefinitionList_Yield COMMA PropertyDefinition_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // SubstitutionTemplate_Yield -> TemplateHead Expression_In_Yield TemplateSpans_Yield
+    // SubstitutionTemplate_Yield -> TEMPLATE_HEAD Expression_In_Yield TemplateSpans_Yield
     Some((Builder::template_literal, "template_literal")),
-    // TemplateMiddleList_Yield_Tagged -> TemplateMiddle Expression_In_Yield
+    // TemplateMiddleList_Yield_Tagged -> TEMPLATE_MIDDLE Expression_In_Yield
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TemplateMiddle Expression_In_Yield
+    // TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_MIDDLE Expression_In_Yield
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -4708,24 +4708,24 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::yield_expression_no_argument,
         "yield_expression_no_argument",
     )),
-    // YieldExpression -> YIELD (!LineTerminatorSequence) AssignmentExpression_Yield
+    // YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield
     Some((Builder::yield_expression, "yield_expression")),
-    // YieldExpression -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_Yield
+    // YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield
     Some((
         Builder::yield_expression_delegate,
         "yield_expression_delegate",
     )),
-    // ArrowFunction_Yield -> ArrowParameters_Yield (!LineTerminatorSequence) ARROW ConciseBody
+    // ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -4787,11 +4787,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::into_list, "into_list")),
     // PropertyDefinitionList_Yield_Await -> PropertyDefinitionList_Yield_Await COMMA PropertyDefinition_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // SubstitutionTemplate_Yield_Await -> TemplateHead Expression_In_Yield_Await TemplateSpans_Yield_Await
+    // SubstitutionTemplate_Yield_Await -> TEMPLATE_HEAD Expression_In_Yield_Await TemplateSpans_Yield_Await
     Some((Builder::template_literal, "template_literal")),
-    // TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddle Expression_In_Yield_Await
+    // TemplateMiddleList_Yield_Await_Tagged -> TEMPLATE_MIDDLE Expression_In_Yield_Await
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TemplateMiddle Expression_In_Yield_Await
+    // TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_MIDDLE Expression_In_Yield_Await
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -4805,24 +4805,24 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::yield_expression_no_argument,
         "yield_expression_no_argument",
     )),
-    // YieldExpression_Await -> YIELD (!LineTerminatorSequence) AssignmentExpression_Yield_Await
+    // YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield_Await
     Some((Builder::yield_expression, "yield_expression")),
-    // YieldExpression_Await -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_Yield_Await
+    // YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield_Await
     Some((
         Builder::yield_expression_delegate,
         "yield_expression_delegate",
     )),
-    // ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LineTerminatorSequence) ARROW ConciseBody
+    // ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
         Builder::arrow_function_expression,
         "arrow_function_expression",
     )),
-    // AsyncArrowFunction_Yield_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression_single_param,
         "async_arrow_function_expression_single_param",
     )),
-    // AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LineTerminatorSequence) ARROW AsyncConciseBody
+    // AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
     Some((
         Builder::async_arrow_function_expression,
         "async_arrow_function_expression",
@@ -4880,12 +4880,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // UpdateExpression_Await -> LeftHandSideExpression_Await
     Some((Builder::nop, "nop")),
-    // UpdateExpression_Await -> LeftHandSideExpression_Await (!LineTerminatorSequence) INC
+    // UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) INC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
     )),
-    // UpdateExpression_Await -> LeftHandSideExpression_Await (!LineTerminatorSequence) DEC
+    // UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) DEC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
@@ -4938,9 +4938,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::property_method, "property_method")),
     // PropertyDefinition_Yield -> ELLIPSIS AssignmentExpression_In_Yield
     Some((Builder::spread_element, "spread_element")),
-    // TemplateSpans_Yield -> TemplateTail
+    // TemplateSpans_Yield -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans_Yield -> TemplateMiddleList_Yield TemplateTail
+    // TemplateSpans_Yield -> TemplateMiddleList_Yield TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // ShortCircuitExpression_Yield -> LogicalORExpression_Yield
     Some((Builder::nop, "nop")),
@@ -4948,7 +4948,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ClassElementName_Yield -> PropertyName_Yield
     Some((Builder::nop, "nop")),
-    // ClassElementName_Yield -> PrivateIdentifier
+    // ClassElementName_Yield -> PRIVATE_IDENTIFIER
     Some((
         Builder::class_element_name_private,
         "class_element_name_private",
@@ -4958,9 +4958,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::method_definition_generator,
         "method_definition_generator",
     )),
-    // AsyncMethod_Yield -> ASYNC (!LineTerminatorSequence) ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((Builder::method_definition_async, "method_definition_async")),
-    // AsyncGeneratorMethod_Yield -> ASYNC (!LineTerminatorSequence) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::method_definition_async_generator,
         "method_definition_async_generator",
@@ -4987,9 +4987,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::property_method, "property_method")),
     // PropertyDefinition_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
     Some((Builder::spread_element, "spread_element")),
-    // TemplateSpans_Yield_Await -> TemplateTail
+    // TemplateSpans_Yield_Await -> TEMPLATE_TAIL
     Some((Builder::template_spans_tail, "template_spans_tail")),
-    // TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await TemplateTail
+    // TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_TAIL
     Some((Builder::template_spans_append, "template_spans_append")),
     // ShortCircuitExpression_Yield_Await -> LogicalORExpression_Yield_Await
     Some((Builder::nop, "nop")),
@@ -4997,7 +4997,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // ClassElementName_Yield_Await -> PropertyName_Yield_Await
     Some((Builder::nop, "nop")),
-    // ClassElementName_Yield_Await -> PrivateIdentifier
+    // ClassElementName_Yield_Await -> PRIVATE_IDENTIFIER
     Some((
         Builder::class_element_name_private,
         "class_element_name_private",
@@ -5007,9 +5007,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         Builder::method_definition_generator,
         "method_definition_generator",
     )),
-    // AsyncMethod_Yield_Await -> ASYNC (!LineTerminatorSequence) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    // AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
     Some((Builder::method_definition_async, "method_definition_async")),
-    // AsyncGeneratorMethod_Yield_Await -> ASYNC (!LineTerminatorSequence) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    // AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
     Some((
         Builder::method_definition_async_generator,
         "method_definition_async_generator",
@@ -5034,12 +5034,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::unary_expression, "unary_expression")),
     // UpdateExpression -> LeftHandSideExpression
     Some((Builder::nop, "nop")),
-    // UpdateExpression -> LeftHandSideExpression (!LineTerminatorSequence) INC
+    // UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) INC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
     )),
-    // UpdateExpression -> LeftHandSideExpression (!LineTerminatorSequence) DEC
+    // UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) DEC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
@@ -5068,16 +5068,16 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::binary_expression, "binary_expression")),
     // RelationalExpression_In_Yield -> RelationalExpression_In_Yield IN ShiftExpression_Yield
     Some((Builder::binary_expression, "binary_expression")),
-    // RelationalExpression_In_Yield -> PrivateIdentifier IN ShiftExpression_Yield
+    // RelationalExpression_In_Yield -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield
     Some((
         Builder::binary_expression_private,
         "binary_expression_private",
     )),
     // CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
     None,
-    // TemplateMiddleList_Yield -> TemplateMiddle Expression_In_Yield
+    // TemplateMiddleList_Yield -> TEMPLATE_MIDDLE Expression_In_Yield
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList_Yield -> TemplateMiddleList_Yield TemplateMiddle Expression_In_Yield
+    // TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE Expression_In_Yield
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -5102,16 +5102,16 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::binary_expression, "binary_expression")),
     // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await IN ShiftExpression_Yield_Await
     Some((Builder::binary_expression, "binary_expression")),
-    // RelationalExpression_In_Yield_Await -> PrivateIdentifier IN ShiftExpression_Yield_Await
+    // RelationalExpression_In_Yield_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield_Await
     Some((
         Builder::binary_expression_private,
         "binary_expression_private",
     )),
     // CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await
     None,
-    // TemplateMiddleList_Yield_Await -> TemplateMiddle Expression_In_Yield_Await
+    // TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE Expression_In_Yield_Await
     Some((Builder::template_middle_list, "template_middle_list")),
-    // TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TemplateMiddle Expression_In_Yield_Await
+    // TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_MIDDLE Expression_In_Yield_Await
     Some((
         Builder::template_middle_list_append,
         "template_middle_list_append",
@@ -5244,12 +5244,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::unary_expression, "unary_expression")),
     // UpdateExpression_Yield -> LeftHandSideExpression_Yield
     Some((Builder::nop, "nop")),
-    // UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LineTerminatorSequence) INC
+    // UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) INC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
     )),
-    // UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LineTerminatorSequence) DEC
+    // UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) DEC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
@@ -5296,12 +5296,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await
     Some((Builder::nop, "nop")),
-    // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LineTerminatorSequence) INC
+    // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) INC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
     )),
-    // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LineTerminatorSequence) DEC
+    // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) DEC
     Some((
         Builder::update_expression_suffix,
         "update_expression_suffix",
