@@ -1,8 +1,8 @@
 'use strict';
 
-import * as log from 'https://deno.land/std@0.208.0/log/mod.ts';
-import * as path from 'https://deno.land/std@0.208.0/path/mod.ts';
-import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.208.0/streams/mod.ts';
+import * as log from 'https://deno.land/std@0.209.0/log/mod.ts';
+import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
+import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 
 import ora from 'npm:ora@7.0.1';
 import * as acorn from 'npm:acorn@8.11.2';

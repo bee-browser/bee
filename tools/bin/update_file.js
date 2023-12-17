@@ -2,7 +2,7 @@
 
 'use strict';
 
-import * as path from 'https://deno.land/std@0.208.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
 import { parseCommand } from '../lib/cli.js';
 
 const PROGNAME = path.basename(Deno.mainModule);
