@@ -97,12 +97,16 @@ pub fn literal_content_to_string(content: &str) -> String {
                         Some(c) => put(c, &mut result, &mut high_surrogate),
                         None => {
                             if let Some(high_surrogate) = high_surrogate.take() {
-                                let high = high_surrogate - 0xD800;
-                                let low = cp - 0xDC00;
-                                if high > 0x03FF || low > 0x03FF {
+                                if high_surrogate < 0xD800 || cp < 0xDC00 {
                                     result.push('\u{FFFD}');
                                 } else {
-                                    result.push(char::from_u32(high << 10 | low).unwrap());
+                                    let high = high_surrogate - 0xD800;
+                                    let low = cp - 0xDC00;
+                                    if high > 0x03FF || low > 0x03FF {
+                                        result.push('\u{FFFD}');
+                                    } else {
+                                        result.push(char::from_u32(high << 10 | low).unwrap());
+                                    }
                                 }
                             } else {
                                 high_surrogate = Some(cp)
