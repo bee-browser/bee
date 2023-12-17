@@ -5,24 +5,24 @@ on:
     inputs:
       runner:
         default: ubuntu-latest
-        required: true
+        required: false
         type: string
       rust:
         default: stable
-        required: true
+        required: false
         type: string
   workflow_dispatch:
     inputs:
       runner:
         default: ubuntu-latest
-        required: true
+        required: false
         type: choice
         options:
           - ubuntu-latest
           - macos-latest
       rust:
         default: stable
-        required: true
+        required: false
         type: choice
         options:
           - stable
@@ -38,7 +38,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@${{ inputs.rust }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ inputs.rust }}
       - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v1
         with:
