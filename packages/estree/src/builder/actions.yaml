@@ -60,13 +60,13 @@
   action: nop
 - rule: Declaration -> LexicalDeclaration_In
   action: nop
-- rule: ImportDeclaration -> IMPORT ImportClause FromClause SEMI_COLON
+- rule: ImportDeclaration -> IMPORT ImportClause FromClause SEMICOLON
   action: import_from
-- rule: ImportDeclaration -> IMPORT ModuleSpecifier SEMI_COLON
+- rule: ImportDeclaration -> IMPORT ModuleSpecifier SEMICOLON
   action: side_effect_import
-- rule: ExportDeclaration -> EXPORT ExportFromClause FromClause SEMI_COLON
+- rule: ExportDeclaration -> EXPORT ExportFromClause FromClause SEMICOLON
   action: export_from
-- rule: ExportDeclaration -> EXPORT NamedExports SEMI_COLON
+- rule: ExportDeclaration -> EXPORT NamedExports SEMICOLON
   action: export_list
 - rule: ExportDeclaration -> EXPORT VariableStatement_Await
   action: export_vars
@@ -77,8 +77,8 @@
 - rule: ExportDeclaration -> EXPORT DEFAULT ClassDeclaration_Await_Default
   action: default_export_class
 - rule: >-
-    ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS,
-    FUNCTION]) AssignmentExpression_In_Await SEMI_COLON
+    ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS,
+    FUNCTION]) AssignmentExpression_In_Await SEMICOLON
   action: default_export_expr
 - rule: StatementListItem_Await -> Statement_Await
   action: nop
@@ -86,13 +86,13 @@
   action: nop
 - rule: BlockStatement -> Block
   action: nop
-- rule: VariableStatement -> VAR VariableDeclarationList_In SEMI_COLON
+- rule: VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
   action: variable_declaration
-- rule: EmptyStatement -> SEMI_COLON
+- rule: EmptyStatement -> SEMICOLON
   action: empty_statement
 - rule: >-
-    ExpressionStatement -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION, LBRACE,
-    LET LBRACK]) Expression_In SEMI_COLON
+    ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE,
+    LET LBRACK]) Expression_In SEMICOLON
   action: expression_statement
 - rule: IfStatement -> IF LPAREN Expression_In RPAREN Statement ELSE Statement
   action: if_else_statement
@@ -102,19 +102,19 @@
   action: nop
 - rule: BreakableStatement -> SwitchStatement
   action: nop
-- rule: ContinueStatement -> CONTINUE SEMI_COLON
+- rule: ContinueStatement -> CONTINUE SEMICOLON
   action: continue_statement
-- rule: ContinueStatement -> CONTINUE (!LineTerminatorSequence) LabelIdentifier SEMI_COLON
+- rule: ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
   action: labeled_continue_statement
-- rule: BreakStatement -> BREAK SEMI_COLON
+- rule: BreakStatement -> BREAK SEMICOLON
   action: break_statement
-- rule: BreakStatement -> BREAK (!LineTerminatorSequence) LabelIdentifier SEMI_COLON
+- rule: BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON
   action: labeled_break_statement
 - rule: WithStatement -> WITH LPAREN Expression_In RPAREN Statement
   action: with_statement
 - rule: LabelledStatement -> LabelIdentifier COLON LabelledItem
   action: labeled_statement
-- rule: ThrowStatement -> THROW (!LineTerminatorSequence) Expression_In SEMI_COLON
+- rule: ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
   action: throw_statement
 - rule: TryStatement -> TRY Block Catch
   action: try_catch_statement
@@ -122,7 +122,7 @@
   action: try_finally_statement
 - rule: TryStatement -> TRY Block Catch Finally
   action: try_catch_finally_statement
-- rule: DebuggerStatement -> DEBUGGER SEMI_COLON
+- rule: DebuggerStatement -> DEBUGGER SEMICOLON
   action: debugger_statement
 - rule: HoistableDeclaration -> FunctionDeclaration
   action: nop
@@ -134,7 +134,7 @@
   action: nop
 - rule: ClassDeclaration -> CLASS BindingIdentifier ClassTail
   action: class_declaration
-- rule: LexicalDeclaration_In -> LetOrConst BindingList_In SEMI_COLON
+- rule: LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
   action: variable_declaration
 - rule: ImportClause -> ImportedDefaultBinding
   action: into_list
@@ -148,7 +148,7 @@
   action: prepend_to_csv_list
 - rule: FromClause -> FROM ModuleSpecifier
   action: from_clause
-- rule: ModuleSpecifier -> StringLiteral
+- rule: ModuleSpecifier -> STRING_LITERAL
   action: string_literal
 - rule: ExportFromClause -> MUL
   action: nop
@@ -162,7 +162,7 @@
   action: list_block
 - rule: NamedExports -> LBRACE ExportsList COMMA RBRACE
   action: list_block_ended_with_comma
-- rule: VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMI_COLON
+- rule: VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMICOLON
   action: variable_declaration
 - rule: Declaration_Await -> HoistableDeclaration_Await
   action: nop
@@ -281,11 +281,11 @@
     LBRACE GeneratorBody RBRACE
   action: generator_declaration
 - rule: >-
-    AsyncFunctionDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier LPAREN
+    AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN
     FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
-    AsyncGeneratorDeclaration -> ASYNC (!LineTerminatorSequence) FUNCTION MUL BindingIdentifier
+    AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier
     LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: async_generator_declaration
 - rule: BindingIdentifier -> Identifier
@@ -322,7 +322,7 @@
   action: list_block_ended_with_comma
 - rule: ModuleExportName -> KeywordOrIdentifierName
   action: nop
-- rule: ModuleExportName -> StringLiteral
+- rule: ModuleExportName -> STRING_LITERAL
   action: string_literal
 - rule: ExportsList -> ExportSpecifier
   action: into_list
@@ -344,7 +344,7 @@
   action: nop
 - rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
   action: class_declaration
-- rule: LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMI_COLON
+- rule: LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
   action: variable_declaration
 - rule: >-
     FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters
@@ -363,21 +363,21 @@
     GeneratorBody RBRACE
   action: anonymous_generator_declaration
 - rule: >-
-    AsyncFunctionDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION
+    AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
     BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
-    AsyncFunctionDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION LPAREN
+    AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN
     FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: anonymous_async_function_declaration
 - rule: >-
-    AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION MUL
+    AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
     BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody
     RBRACE
   action: async_generator_declaration
 - rule: >-
-    AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LineTerminatorSequence) FUNCTION MUL LPAREN
-    FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
+    LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: anonymous_async_generator_declaration
 - rule: BindingIdentifier_Await -> Identifier
   action: nop
@@ -399,15 +399,17 @@
     ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL
     AssignmentExpression_In_Await COLON AssignmentExpression_In_Await
   action: conditional_expression
-- rule: ArrowFunction_In_Await -> ArrowParameters_Await (!LineTerminatorSequence) ARROW ConciseBody_In
+- rule: >-
+    ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
+    ConciseBody_In
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction_In_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier
-    (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
     AsyncArrowFunction_In_Await -> CoverCallExpressionAndAsyncArrowHead_Await
-    (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression_Await -> NewExpression_Await
   action: nop
@@ -442,8 +444,8 @@
 - rule: BlockStatement_Await -> Block_Await
   action: nop
 - rule: >-
-    ExpressionStatement_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION,
-    LBRACE, LET LBRACK]) Expression_In_Await SEMI_COLON
+    ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION,
+    LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
   action: expression_statement
 - rule: IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await ELSE Statement_Await
   action: if_else_statement
@@ -453,19 +455,19 @@
   action: nop
 - rule: BreakableStatement_Await -> SwitchStatement_Await
   action: nop
-- rule: ContinueStatement_Await -> CONTINUE SEMI_COLON
+- rule: ContinueStatement_Await -> CONTINUE SEMICOLON
   action: continue_statement
-- rule: ContinueStatement_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON
+- rule: ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
   action: labeled_continue_statement
-- rule: BreakStatement_Await -> BREAK SEMI_COLON
+- rule: BreakStatement_Await -> BREAK SEMICOLON
   action: break_statement
-- rule: BreakStatement_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Await SEMI_COLON
+- rule: BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON
   action: labeled_break_statement
 - rule: WithStatement_Await -> WITH LPAREN Expression_In_Await RPAREN Statement_Await
   action: with_statement
 - rule: LabelledStatement_Await -> LabelIdentifier_Await COLON LabelledItem_Await
   action: labeled_statement
-- rule: ThrowStatement_Await -> THROW (!LineTerminatorSequence) Expression_In_Await SEMI_COLON
+- rule: ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
   action: throw_statement
 - rule: TryStatement_Await -> TRY Block_Await Catch_Await
   action: try_catch_statement
@@ -495,60 +497,56 @@
   action: assignment_expression
 - rule: AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression_In
   action: assignment_expression
-- rule: DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMI_COLON
+- rule: DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
   action: do_while_statement
 - rule: WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
   action: while_statement
-- rule: 'ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement'
+- rule: 'ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement'
   action: for_statement_no_init_test_update
-- rule: 'ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN Statement'
+- rule: 'ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement'
   action: for_statement_no_test_update
-- rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN
-    Statement
+- rule: 'ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement'
   action: for_statement_no_init_update
 - rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON
-    RPAREN Statement
-  action: for_statement_no_update
-- rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN
+    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN
     Statement
+  action: for_statement_no_update
+- rule: 'ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement'
   action: for_statement_no_init_test
 - rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON Expression_In
-    RPAREN Statement
+    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN
+    Statement
   action: for_statement_no_test
 - rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON Expression_In
+    ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In
     RPAREN Statement
   action: for_statement_no_init
 - rule: >-
-    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In SEMI_COLON
+    ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON
     Expression_In RPAREN Statement
   action: for_statement
-- rule: ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN Statement
+- rule: ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement
   action: for_statement_vars_no_test_update
 - rule: >-
-    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON
-    RPAREN Statement
+    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN
+    Statement
   action: for_statement_vars_no_update
 - rule: >-
-    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON Expression_In
-    RPAREN Statement
+    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN
+    Statement
   action: for_statement_vars_no_test
 - rule: >-
-    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In SEMI_COLON
+    ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON
     Expression_In RPAREN Statement
   action: for_statement_vars
-- rule: ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement
+- rule: ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement
   action: for_statement_decl_no_test_update
-- rule: ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN Statement
+- rule: ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement
   action: for_statement_decl_no_update
-- rule: ForStatement -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN Statement
+- rule: ForStatement -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement
   action: for_statement_decl_no_test
 - rule: >-
-    ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In RPAREN
+    ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN
     Statement
   action: for_statement_decl
 - rule: >-
@@ -651,7 +649,7 @@
   action: into_list
 - rule: ImportsList -> ImportsList COMMA ImportSpecifier
   action: append_to_csv_list
-- rule: KeywordOrIdentifierName -> IdentifierName
+- rule: KeywordOrIdentifierName -> IDENTIFIER_NAME
   action: identifier
 - rule: KeywordOrIdentifierName -> AWAIT
   action: identifier
@@ -780,11 +778,11 @@
     FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
   action: generator_declaration
 - rule: >-
-    AsyncFunctionDeclaration_Await -> ASYNC (!LineTerminatorSequence) FUNCTION
+    AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
     BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
-    AsyncGeneratorDeclaration_Await -> ASYNC (!LineTerminatorSequence) FUNCTION MUL
+    AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
     BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody
     RBRACE
   action: async_generator_declaration
@@ -834,7 +832,7 @@
   action: member_expression
 - rule: CallExpression_Await -> CallExpression_Await TemplateLiteral_Await_Tagged
   action: tagged_template_expression
-- rule: CallExpression_Await -> CallExpression_Await DOT PrivateIdentifier
+- rule: CallExpression_Await -> CallExpression_Await DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: OptionalExpression_Await -> MemberExpression_Await OptionalChain_Await
   action: optional_expression
@@ -886,14 +884,14 @@
     ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON
     AssignmentExpression_In
   action: conditional_expression
-- rule: ArrowFunction_In -> ArrowParameters (!LineTerminatorSequence) ARROW ConciseBody_In
+- rule: ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction_In -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier
-    (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction_In -> CoverCallExpressionAndAsyncArrowHead (!LineTerminatorSequence) ARROW
+    AsyncArrowFunction_In -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW
     AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression -> NewExpression
@@ -910,7 +908,7 @@
   action: into_list
 - rule: VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
   action: append_to_csv_list
-- rule: LexicalDeclaration -> LetOrConst BindingList SEMI_COLON
+- rule: LexicalDeclaration -> LetOrConst BindingList SEMICOLON
   action: variable_declaration
 - rule: ForBinding -> BindingIdentifier
   action: for_binding
@@ -926,7 +924,7 @@
   action: switch_case_default_no_consequent
 - rule: DefaultClause -> DEFAULT COLON StatementList
   action: switch_case_default
-- rule: IdentifierNameButNotReservedWord -> IdentifierName
+- rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
   action: nop
 - rule: IdentifierNameButNotReservedWord -> LET
   action: nop
@@ -1070,7 +1068,7 @@
   action: nop
 - rule: MemberExpression_Await -> NEW MemberExpression_Await Arguments_Await
   action: new_expression_arguments
-- rule: MemberExpression_Await -> MemberExpression_Await DOT PrivateIdentifier
+- rule: MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: Arguments_Await -> LPAREN RPAREN
   action: arguments_empty
@@ -1082,7 +1080,7 @@
   action: call_expression_super
 - rule: ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
   action: import_expression
-- rule: TemplateLiteral_Await_Tagged -> NoSubstitutionTemplate
+- rule: TemplateLiteral_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Await_Tagged -> SubstitutionTemplate_Await_Tagged
   action: nop
@@ -1094,7 +1092,7 @@
   action: optional_member
 - rule: OptionalChain_Await -> OPTIONAL_CHAINING TemplateLiteral_Await_Tagged
   action: optional_member
-- rule: OptionalChain_Await -> OPTIONAL_CHAINING PrivateIdentifier
+- rule: OptionalChain_Await -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
   action: optional_private_identifier
 - rule: OptionalChain_Await -> OptionalChain_Await Arguments_Await
   action: optional_chain_append_call
@@ -1104,74 +1102,74 @@
   action: optional_chain_append_property
 - rule: OptionalChain_Await -> OptionalChain_Await TemplateLiteral_Await_Tagged
   action: optional_chain_append_tagged_template
-- rule: OptionalChain_Await -> OptionalChain_Await DOT PrivateIdentifier
+- rule: OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
   action: optional_chain_append_private_identifier
 - rule: StatementList_Await -> StatementListItem_Await
   action: into_list
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
   action: append_to_list
-- rule: DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMI_COLON
+- rule: DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
   action: do_while_statement
 - rule: WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
   action: while_statement
-- rule: 'ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN Statement_Await'
+- rule: 'ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await'
   action: for_statement_no_init_test_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON RPAREN
+    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN
     Statement_Await
   action: for_statement_no_test_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON
+    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON
     RPAREN Statement_Await
   action: for_statement_no_init_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON RPAREN Statement_Await
+    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
+    Expression_In_Await SEMICOLON RPAREN Statement_Await
   action: for_statement_no_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In_Await
+    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await
     RPAREN Statement_Await
   action: for_statement_no_init_test
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON
+    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON
     Expression_In_Await RPAREN Statement_Await
   action: for_statement_no_test
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await SEMI_COLON
+    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON
     Expression_In_Await RPAREN Statement_Await
   action: for_statement_no_init
 - rule: >-
-    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
+    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
   action: for_statement
 - rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON RPAREN
+    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN
     Statement_Await
   action: for_statement_vars_no_test_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON RPAREN Statement_Await
+    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
+    Expression_In_Await SEMICOLON RPAREN Statement_Await
   action: for_statement_vars_no_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON
+    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON
     Expression_In_Await RPAREN Statement_Await
   action: for_statement_vars_no_test
 - rule: >-
-    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await
+    ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
+    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await
   action: for_statement_vars
-- rule: ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN Statement_Await
+- rule: ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await
   action: for_statement_decl_no_test_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON RPAREN
+    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN
     Statement_Await
   action: for_statement_decl_no_update
 - rule: >-
-    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await RPAREN
+    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN
     Statement_Await
   action: for_statement_decl_no_test
 - rule: >-
-    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON
+    ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON
     Expression_In_Await RPAREN Statement_Await
   action: for_statement_decl
 - rule: >-
@@ -1282,7 +1280,7 @@
   action: member_expression
 - rule: CallExpression -> CallExpression TemplateLiteral_Tagged
   action: tagged_template_expression
-- rule: CallExpression -> CallExpression DOT PrivateIdentifier
+- rule: CallExpression -> CallExpression DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: OptionalExpression -> MemberExpression OptionalChain
   action: optional_expression
@@ -1364,13 +1362,13 @@
   action: into_nullable
 - rule: ClassElement -> STATIC MethodDefinition
   action: class_element_static_method_definition
-- rule: ClassElement -> FieldDefinition SEMI_COLON
+- rule: ClassElement -> FieldDefinition SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement -> STATIC FieldDefinition SEMI_COLON
+- rule: ClassElement -> STATIC FieldDefinition SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement -> ClassStaticBlock
   action: into_nullable
-- rule: ClassElement -> SEMI_COLON
+- rule: ClassElement -> SEMICOLON
   action: class_element_semicolon
 - rule: ObjectBindingPattern_Await -> LBRACE RBRACE
   action: object_pattern_empty
@@ -1410,13 +1408,13 @@
   action: into_nullable
 - rule: ClassElement_Await -> STATIC MethodDefinition_Await
   action: class_element_static_method_definition
-- rule: ClassElement_Await -> FieldDefinition_Await SEMI_COLON
+- rule: ClassElement_Await -> FieldDefinition_Await SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Await -> STATIC FieldDefinition_Await SEMI_COLON
+- rule: ClassElement_Await -> STATIC FieldDefinition_Await SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement_Await -> ClassStaticBlock
   action: into_nullable
-- rule: ClassElement_Await -> SEMI_COLON
+- rule: ClassElement_Await -> SEMICOLON
   action: class_element_semicolon
 - rule: LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
   action: nop
@@ -1452,7 +1450,7 @@
   action: nop
 - rule: PrimaryExpression_Await -> AsyncGeneratorExpression
   action: nop
-- rule: PrimaryExpression_Await -> RegularExpressionLiteral
+- rule: PrimaryExpression_Await -> REGULAR_EXPRESSION_LITERAL
   action: regexp_literal
 - rule: PrimaryExpression_Await -> TemplateLiteral_Await
   action: nop
@@ -1475,7 +1473,7 @@
 - rule: ArgumentList_Await -> ArgumentList_Await COMMA ELLIPSIS AssignmentExpression_In_Await
   action: argument_list_append_rest
 - rule: >-
-    SubstitutionTemplate_Await_Tagged -> TemplateHead Expression_In_Await
+    SubstitutionTemplate_Await_Tagged -> TEMPLATE_HEAD Expression_In_Await
     TemplateSpans_Await_Tagged
   action: template_literal
 - rule: Expression_Await -> AssignmentExpression_Await
@@ -1486,7 +1484,7 @@
   action: into_list
 - rule: VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
   action: append_to_csv_list
-- rule: LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMI_COLON
+- rule: LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Await -> BindingIdentifier_Await
   action: for_binding
@@ -1554,7 +1552,7 @@
   action: nop
 - rule: MemberExpression -> NEW MemberExpression Arguments
   action: new_expression_arguments
-- rule: MemberExpression -> MemberExpression DOT PrivateIdentifier
+- rule: MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: Arguments -> LPAREN RPAREN
   action: arguments_empty
@@ -1566,7 +1564,7 @@
   action: call_expression_super
 - rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
   action: import_expression
-- rule: TemplateLiteral_Tagged -> NoSubstitutionTemplate
+- rule: TemplateLiteral_Tagged -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Tagged -> SubstitutionTemplate_Tagged
   action: nop
@@ -1578,7 +1576,7 @@
   action: optional_member
 - rule: OptionalChain -> OPTIONAL_CHAINING TemplateLiteral_Tagged
   action: optional_member
-- rule: OptionalChain -> OPTIONAL_CHAINING PrivateIdentifier
+- rule: OptionalChain -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
   action: optional_private_identifier
 - rule: OptionalChain -> OptionalChain Arguments
   action: optional_chain_append_call
@@ -1588,7 +1586,7 @@
   action: optional_chain_append_property
 - rule: OptionalChain -> OptionalChain TemplateLiteral_Tagged
   action: optional_chain_append_tagged_template
-- rule: OptionalChain -> OptionalChain DOT PrivateIdentifier
+- rule: OptionalChain -> OptionalChain DOT PRIVATE_IDENTIFIER
   action: optional_chain_append_private_identifier
 - rule: ConditionalExpression -> ShortCircuitExpression
   action: nop
@@ -1596,14 +1594,14 @@
     ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON
     AssignmentExpression
   action: conditional_expression
-- rule: ArrowFunction -> ArrowParameters (!LineTerminatorSequence) ARROW ConciseBody
+- rule: ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier
-    (!LineTerminatorSequence) ARROW AsyncConciseBody
+    AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
-    AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LineTerminatorSequence) ARROW
+    AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW
     AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer -> ASSIGN AssignmentExpression
@@ -1742,9 +1740,9 @@
   action: nop
 - rule: Literal -> BooleanLiteral
   action: nop
-- rule: Literal -> NumericLiteral
+- rule: Literal -> NUMERIC_LITERAL
   action: numeric_literal
-- rule: Literal -> StringLiteral
+- rule: Literal -> STRING_LITERAL
   action: string_literal
 - rule: ArrayLiteral_Await -> LBRACK RBRACK
   action: array_expression_empty
@@ -1781,23 +1779,23 @@
     RPAREN LBRACE GeneratorBody RBRACE
   action: generator_expression
 - rule: >-
-    AsyncFunctionExpression -> ASYNC (!LineTerminatorSequence) FUNCTION LPAREN
+    AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN
     FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: anonymous_async_function_expression
 - rule: >-
-    AsyncFunctionExpression -> ASYNC (!LineTerminatorSequence) FUNCTION BindingIdentifier_Await
+    AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await
     LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: async_function_expression
 - rule: >-
-    AsyncGeneratorExpression -> ASYNC (!LineTerminatorSequence) FUNCTION MUL LPAREN
+    AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN
     FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: anonymous_async_generator_expression
 - rule: >-
-    AsyncGeneratorExpression -> ASYNC (!LineTerminatorSequence) FUNCTION MUL
+    AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
     BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE
     AsyncGeneratorBody RBRACE
   action: async_generator_expression
-- rule: TemplateLiteral_Await -> NoSubstitutionTemplate
+- rule: TemplateLiteral_Await -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Await -> SubstitutionTemplate_Await
   action: nop
@@ -1805,9 +1803,9 @@
   action: new_target
 - rule: ImportMeta -> IMPORT DOT META
   action: import_meta
-- rule: TemplateSpans_Await_Tagged -> TemplateTail
+- rule: TemplateSpans_Await_Tagged -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans_Await_Tagged -> TemplateMiddleList_Await_Tagged TemplateTail
+- rule: TemplateSpans_Await_Tagged -> TemplateMiddleList_Await_Tagged TEMPLATE_TAIL
   action: template_spans_append
 - rule: AssignmentExpression_Await -> ConditionalExpression_Await
   action: nop
@@ -1885,7 +1883,7 @@
   action: nop
 - rule: PrimaryExpression -> AsyncGeneratorExpression
   action: nop
-- rule: PrimaryExpression -> RegularExpressionLiteral
+- rule: PrimaryExpression -> REGULAR_EXPRESSION_LITERAL
   action: regexp_literal
 - rule: PrimaryExpression -> TemplateLiteral
   action: nop
@@ -1903,7 +1901,7 @@
   action: append_to_csv_list
 - rule: ArgumentList -> ArgumentList COMMA ELLIPSIS AssignmentExpression_In
   action: argument_list_append_rest
-- rule: SubstitutionTemplate_Tagged -> TemplateHead Expression_In TemplateSpans_Tagged
+- rule: SubstitutionTemplate_Tagged -> TEMPLATE_HEAD Expression_In TemplateSpans_Tagged
   action: template_literal
 - rule: ShortCircuitExpression -> LogicalORExpression
   action: nop
@@ -2047,7 +2045,7 @@
   action: nop
 - rule: ClassElementName -> PropertyName
   action: nop
-- rule: ClassElementName -> PrivateIdentifier
+- rule: ClassElementName -> PRIVATE_IDENTIFIER
   action: class_element_name_private
 - rule: UniqueFormalParameters -> FormalParameters
   action: nop
@@ -2056,11 +2054,11 @@
     GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod -> ASYNC (!LineTerminatorSequence) ClassElementName LPAREN
+    AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN
     UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
-    AsyncGeneratorMethod -> ASYNC (!LineTerminatorSequence) MUL ClassElementName LPAREN
+    AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN
     UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
 - rule: PropertySetParameterList -> FormalParameter
@@ -2077,19 +2075,19 @@
   action: append_to_array
 - rule: ClassElementName_Await -> PropertyName_Await
   action: nop
-- rule: ClassElementName_Await -> PrivateIdentifier
+- rule: ClassElementName_Await -> PRIVATE_IDENTIFIER
   action: class_element_name_private
 - rule: >-
     GeneratorMethod_Await -> MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield RPAREN
     LBRACE GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod_Await -> ASYNC (!LineTerminatorSequence) ClassElementName_Await LPAREN
+    AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN
     UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
-    AsyncGeneratorMethod_Await -> ASYNC (!LineTerminatorSequence) MUL ClassElementName_Await LPAREN
-    UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await
+    LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
 - rule: BitwiseANDExpression_In_Await -> EqualityExpression_In_Await
   action: nop
@@ -2123,12 +2121,12 @@
   action: into_list
 - rule: PropertyDefinitionList_Await -> PropertyDefinitionList_Await COMMA PropertyDefinition_Await
   action: append_to_csv_list
-- rule: SubstitutionTemplate_Await -> TemplateHead Expression_In_Await TemplateSpans_Await
+- rule: SubstitutionTemplate_Await -> TEMPLATE_HEAD Expression_In_Await TemplateSpans_Await
   action: template_literal
-- rule: TemplateMiddleList_Await_Tagged -> TemplateMiddle Expression_In_Await
+- rule: TemplateMiddleList_Await_Tagged -> TEMPLATE_MIDDLE Expression_In_Await
   action: template_middle_list
 - rule: >-
-    TemplateMiddleList_Await_Tagged -> TemplateMiddleList_Await_Tagged TemplateMiddle
+    TemplateMiddleList_Await_Tagged -> TemplateMiddleList_Await_Tagged TEMPLATE_MIDDLE
     Expression_In_Await
   action: template_middle_list_append
 - rule: ConditionalExpression_Await -> ShortCircuitExpression_Await
@@ -2137,15 +2135,15 @@
     ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL
     AssignmentExpression_In_Await COLON AssignmentExpression_Await
   action: conditional_expression
-- rule: ArrowFunction_Await -> ArrowParameters_Await (!LineTerminatorSequence) ARROW ConciseBody
+- rule: ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction_Await -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier
-    (!LineTerminatorSequence) ARROW AsyncConciseBody
+    AsyncArrowFunction_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
     AsyncArrowFunction_Await -> CoverCallExpressionAndAsyncArrowHead_Await
-    (!LineTerminatorSequence) ARROW AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer_Await -> ASSIGN AssignmentExpression_Await
   action: initializer
@@ -2189,13 +2187,13 @@
   action: anonymous_class_expression
 - rule: ClassExpression -> CLASS BindingIdentifier ClassTail
   action: class_expression
-- rule: TemplateLiteral -> NoSubstitutionTemplate
+- rule: TemplateLiteral -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral -> SubstitutionTemplate
   action: nop
-- rule: TemplateSpans_Tagged -> TemplateTail
+- rule: TemplateSpans_Tagged -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans_Tagged -> TemplateMiddleList_Tagged TemplateTail
+- rule: TemplateSpans_Tagged -> TemplateMiddleList_Tagged TEMPLATE_TAIL
   action: template_spans_append
 - rule: LogicalORExpression -> LogicalANDExpression
   action: nop
@@ -2217,9 +2215,9 @@
   action: nop
 - rule: BreakableStatement_Return -> SwitchStatement_Return
   action: nop
-- rule: ReturnStatement -> RETURN SEMI_COLON
+- rule: ReturnStatement -> RETURN SEMICOLON
   action: return_statement_no_argument
-- rule: ReturnStatement -> RETURN (!LineTerminatorSequence) Expression_In SEMI_COLON
+- rule: ReturnStatement -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
   action: return_statement
 - rule: WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
   action: with_statement
@@ -2449,9 +2447,9 @@
   action: property_method
 - rule: PropertyDefinition_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: spread_element
-- rule: TemplateSpans_Await -> TemplateTail
+- rule: TemplateSpans_Await -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans_Await -> TemplateMiddleList_Await TemplateTail
+- rule: TemplateSpans_Await -> TemplateMiddleList_Await TEMPLATE_TAIL
   action: template_spans_append
 - rule: ShortCircuitExpression_Await -> LogicalORExpression_Await
   action: nop
@@ -2459,9 +2457,9 @@
   action: nop
 - rule: LiteralPropertyName -> KeywordOrIdentifierName
   action: nop
-- rule: LiteralPropertyName -> StringLiteral
+- rule: LiteralPropertyName -> STRING_LITERAL
   action: string_literal
-- rule: LiteralPropertyName -> NumericLiteral
+- rule: LiteralPropertyName -> NUMERIC_LITERAL
   action: numeric_literal
 - rule: ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
   action: computed_property_name
@@ -2489,11 +2487,11 @@
   action: into_list
 - rule: PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
   action: append_to_csv_list
-- rule: SubstitutionTemplate -> TemplateHead Expression_In TemplateSpans
+- rule: SubstitutionTemplate -> TEMPLATE_HEAD Expression_In TemplateSpans
   action: template_literal
-- rule: TemplateMiddleList_Tagged -> TemplateMiddle Expression_In
+- rule: TemplateMiddleList_Tagged -> TEMPLATE_MIDDLE Expression_In
   action: template_middle_list
-- rule: TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TemplateMiddle Expression_In
+- rule: TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TEMPLATE_MIDDLE Expression_In
   action: template_middle_list_append
 - rule: LogicalANDExpression -> BitwiseORExpression
   action: nop
@@ -2547,19 +2545,21 @@
   action: conditional_expression
 - rule: YieldExpression_In -> YIELD
   action: yield_expression_no_argument
-- rule: YieldExpression_In -> YIELD (!LineTerminatorSequence) AssignmentExpression_In_Yield
+- rule: YieldExpression_In -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_In_Yield
   action: yield_expression
-- rule: YieldExpression_In -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_In_Yield
+- rule: YieldExpression_In -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_In_Yield
   action: yield_expression_delegate
-- rule: ArrowFunction_In_Yield -> ArrowParameters_Yield (!LineTerminatorSequence) ARROW ConciseBody_In
+- rule: >-
+    ArrowFunction_In_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW
+    ConciseBody_In
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction_In_Yield -> ASYNC (!LineTerminatorSequence)
-    AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
+    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
     AsyncArrowFunction_In_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
-    (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression_Yield -> NewExpression_Yield
   action: nop
@@ -2569,11 +2569,11 @@
   action: nop
 - rule: BlockStatement_Yield_Return -> Block_Yield_Return
   action: nop
-- rule: VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMI_COLON
+- rule: VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMICOLON
   action: variable_declaration
 - rule: >-
-    ExpressionStatement_Yield -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS, FUNCTION,
-    LBRACE, LET LBRACK]) Expression_In_Yield SEMI_COLON
+    ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION,
+    LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
   action: expression_statement
 - rule: >-
     IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return ELSE
@@ -2587,23 +2587,23 @@
   action: nop
 - rule: BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
   action: nop
-- rule: ContinueStatement_Yield -> CONTINUE SEMI_COLON
+- rule: ContinueStatement_Yield -> CONTINUE SEMICOLON
   action: continue_statement
-- rule: ContinueStatement_Yield -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON
+- rule: ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
   action: labeled_continue_statement
-- rule: BreakStatement_Yield -> BREAK SEMI_COLON
+- rule: BreakStatement_Yield -> BREAK SEMICOLON
   action: break_statement
-- rule: BreakStatement_Yield -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield SEMI_COLON
+- rule: BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
   action: labeled_break_statement
-- rule: ReturnStatement_Yield -> RETURN SEMI_COLON
+- rule: ReturnStatement_Yield -> RETURN SEMICOLON
   action: return_statement_no_argument
-- rule: ReturnStatement_Yield -> RETURN (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON
+- rule: ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
   action: return_statement
 - rule: WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
   action: with_statement
 - rule: LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
   action: labeled_statement
-- rule: ThrowStatement_Yield -> THROW (!LineTerminatorSequence) Expression_In_Yield SEMI_COLON
+- rule: ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
   action: throw_statement
 - rule: TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return
   action: try_catch_statement
@@ -2621,7 +2621,7 @@
   action: nop
 - rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
   action: class_declaration
-- rule: LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMI_COLON
+- rule: LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
   action: variable_declaration
 - rule: BlockStatement_Await_Return -> Block_Await_Return
   action: nop
@@ -2637,9 +2637,9 @@
   action: nop
 - rule: BreakableStatement_Await_Return -> SwitchStatement_Await_Return
   action: nop
-- rule: ReturnStatement_Await -> RETURN SEMI_COLON
+- rule: ReturnStatement_Await -> RETURN SEMICOLON
   action: return_statement_no_argument
-- rule: ReturnStatement_Await -> RETURN (!LineTerminatorSequence) Expression_In_Await SEMI_COLON
+- rule: ReturnStatement_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
   action: return_statement
 - rule: WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return
   action: with_statement
@@ -2667,23 +2667,25 @@
   action: conditional_expression
 - rule: YieldExpression_In_Await -> YIELD
   action: yield_expression_no_argument
-- rule: YieldExpression_In_Await -> YIELD (!LineTerminatorSequence) AssignmentExpression_In_Yield_Await
+- rule: >-
+    YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE)
+    AssignmentExpression_In_Yield_Await
   action: yield_expression
 - rule: >-
-    YieldExpression_In_Await -> YIELD (!LineTerminatorSequence) MUL
+    YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL
     AssignmentExpression_In_Yield_Await
   action: yield_expression_delegate
 - rule: >-
-    ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await (!LineTerminatorSequence) ARROW
+    ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
     ConciseBody_In
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction_In_Yield_Await -> ASYNC (!LineTerminatorSequence)
-    AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
+    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
   action: async_arrow_function_expression_single_param
 - rule: >-
     AsyncArrowFunction_In_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await
-    (!LineTerminatorSequence) ARROW AsyncConciseBody_In
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
   action: async_arrow_function_expression
 - rule: LeftHandSideExpression_Yield_Await -> NewExpression_Yield_Await
   action: nop
@@ -2693,11 +2695,11 @@
   action: nop
 - rule: BlockStatement_Yield_Await_Return -> Block_Yield_Await_Return
   action: nop
-- rule: VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMI_COLON
+- rule: VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMICOLON
   action: variable_declaration
 - rule: >-
-    ExpressionStatement_Yield_Await -> (?![ASYNC (!LineTerminatorSequence) FUNCTION, CLASS,
-    FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMI_COLON
+    ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS,
+    FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
   action: expression_statement
 - rule: >-
     IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN
@@ -2711,23 +2713,23 @@
   action: nop
 - rule: BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
   action: nop
-- rule: ContinueStatement_Yield_Await -> CONTINUE SEMI_COLON
+- rule: ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
   action: continue_statement
 - rule: >-
-    ContinueStatement_Yield_Await -> CONTINUE (!LineTerminatorSequence) LabelIdentifier_Yield_Await
-    SEMI_COLON
+    ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE)
+    LabelIdentifier_Yield_Await SEMICOLON
   action: labeled_continue_statement
-- rule: BreakStatement_Yield_Await -> BREAK SEMI_COLON
+- rule: BreakStatement_Yield_Await -> BREAK SEMICOLON
   action: break_statement
 - rule: >-
-    BreakStatement_Yield_Await -> BREAK (!LineTerminatorSequence) LabelIdentifier_Yield_Await
-    SEMI_COLON
+    BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await
+    SEMICOLON
   action: labeled_break_statement
-- rule: ReturnStatement_Yield_Await -> RETURN SEMI_COLON
+- rule: ReturnStatement_Yield_Await -> RETURN SEMICOLON
   action: return_statement_no_argument
 - rule: >-
-    ReturnStatement_Yield_Await -> RETURN (!LineTerminatorSequence) Expression_In_Yield_Await
-    SEMI_COLON
+    ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await
+    SEMICOLON
   action: return_statement
 - rule: >-
     WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN
@@ -2738,8 +2740,8 @@
     LabelledItem_Yield_Await_Return
   action: labeled_statement
 - rule: >-
-    ThrowStatement_Yield_Await -> THROW (!LineTerminatorSequence) Expression_In_Yield_Await
-    SEMI_COLON
+    ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await
+    SEMICOLON
   action: throw_statement
 - rule: TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return
   action: try_catch_statement
@@ -2759,7 +2761,7 @@
   action: nop
 - rule: ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
   action: class_declaration
-- rule: LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMI_COLON
+- rule: LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON
   action: variable_declaration
 - rule: ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
   action: computed_property_name
@@ -2777,15 +2779,15 @@
   action: binary_expression
 - rule: RelationalExpression_In_Await -> RelationalExpression_In_Await IN ShiftExpression_Await
   action: binary_expression
-- rule: RelationalExpression_In_Await -> PrivateIdentifier IN ShiftExpression_Await
+- rule: RelationalExpression_In_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Await
   action: binary_expression_private
 - rule: CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
   action: null
   note: |
     See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
-- rule: TemplateMiddleList_Await -> TemplateMiddle Expression_In_Await
+- rule: TemplateMiddleList_Await -> TEMPLATE_MIDDLE Expression_In_Await
   action: template_middle_list
-- rule: TemplateMiddleList_Await -> TemplateMiddleList_Await TemplateMiddle Expression_In_Await
+- rule: TemplateMiddleList_Await -> TemplateMiddleList_Await TEMPLATE_MIDDLE Expression_In_Await
   action: template_middle_list_append
 - rule: LogicalORExpression_Await -> LogicalANDExpression_Await
   action: nop
@@ -2817,78 +2819,76 @@
   action: property_method
 - rule: PropertyDefinition -> ELLIPSIS AssignmentExpression_In
   action: spread_element
-- rule: TemplateSpans -> TemplateTail
+- rule: TemplateSpans -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans -> TemplateMiddleList TemplateTail
+- rule: TemplateSpans -> TemplateMiddleList TEMPLATE_TAIL
   action: template_spans_append
 - rule: BitwiseXORExpression -> BitwiseANDExpression
   action: nop
 - rule: BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
   action: binary_expression
-- rule: DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMI_COLON
+- rule: DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON
   action: do_while_statement
 - rule: WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
   action: while_statement
-- rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN
-    Statement_Return
+- rule: 'ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return'
   action: for_statement_no_init_test_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON RPAREN
+    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN
     Statement_Return
   action: for_statement_no_test_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON RPAREN
+    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN
     Statement_Return
   action: for_statement_no_init_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In
-    SEMI_COLON RPAREN Statement_Return
+    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON
+    RPAREN Statement_Return
   action: for_statement_no_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON Expression_In RPAREN
+    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN
     Statement_Return
   action: for_statement_no_init_test
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON SEMI_COLON
-    Expression_In RPAREN Statement_Return
+    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In
+    RPAREN Statement_Return
   action: for_statement_no_test
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In SEMI_COLON
+    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON
     Expression_In RPAREN Statement_Return
   action: for_statement_no_init
 - rule: >-
-    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMI_COLON Expression_In
-    SEMI_COLON Expression_In RPAREN Statement_Return
+    ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON
+    Expression_In RPAREN Statement_Return
   action: for_statement
 - rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON RPAREN
+    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN
     Statement_Return
   action: for_statement_vars_no_test_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In
-    SEMI_COLON RPAREN Statement_Return
+    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON
+    RPAREN Statement_Return
   action: for_statement_vars_no_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON SEMI_COLON
-    Expression_In RPAREN Statement_Return
+    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In
+    RPAREN Statement_Return
   action: for_statement_vars_no_test
 - rule: >-
-    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMI_COLON Expression_In
-    SEMI_COLON Expression_In RPAREN Statement_Return
+    ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON
+    Expression_In RPAREN Statement_Return
   action: for_statement_vars
-- rule: ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON RPAREN Statement_Return
+- rule: ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement_Return
   action: for_statement_decl_no_test_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON RPAREN
+    ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN
     Statement_Return
   action: for_statement_decl_no_update
 - rule: >-
-    ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMI_COLON Expression_In RPAREN
+    ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN
     Statement_Return
   action: for_statement_decl_no_test
 - rule: >-
-    ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMI_COLON Expression_In
+    ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In
     RPAREN Statement_Return
   action: for_statement_decl
 - rule: >-
@@ -2957,7 +2957,7 @@
   action: member_expression
 - rule: CallExpression_Yield -> CallExpression_Yield TemplateLiteral_Yield_Tagged
   action: tagged_template_expression
-- rule: CallExpression_Yield -> CallExpression_Yield DOT PrivateIdentifier
+- rule: CallExpression_Yield -> CallExpression_Yield DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: OptionalExpression_Yield -> MemberExpression_Yield OptionalChain_Yield
   action: optional_expression
@@ -3012,11 +3012,11 @@
     FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
   action: generator_declaration
 - rule: >-
-    AsyncFunctionDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION
+    AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
     BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: async_function_declaration
 - rule: >-
-    AsyncGeneratorDeclaration_Yield -> ASYNC (!LineTerminatorSequence) FUNCTION MUL
+    AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
     BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody
     RBRACE
   action: async_generator_declaration
@@ -3092,7 +3092,7 @@
   action: member_expression
 - rule: CallExpression_Yield_Await -> CallExpression_Yield_Await TemplateLiteral_Yield_Await_Tagged
   action: tagged_template_expression
-- rule: CallExpression_Yield_Await -> CallExpression_Yield_Await DOT PrivateIdentifier
+- rule: CallExpression_Yield_Await -> CallExpression_Yield_Await DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: OptionalExpression_Yield_Await -> MemberExpression_Yield_Await OptionalChain_Yield_Await
   action: optional_expression
@@ -3151,12 +3151,12 @@
     FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
   action: generator_declaration
 - rule: >-
-    AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION
+    AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION
     BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody
     RBRACE
   action: async_function_declaration
 - rule: >-
-    AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LineTerminatorSequence) FUNCTION MUL
+    AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL
     BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE
     AsyncGeneratorBody RBRACE
   action: async_generator_declaration
@@ -3206,15 +3206,15 @@
   action: binary_expression
 - rule: RelationalExpression_In -> RelationalExpression_In IN ShiftExpression
   action: binary_expression
-- rule: RelationalExpression_In -> PrivateIdentifier IN ShiftExpression
+- rule: RelationalExpression_In -> PRIVATE_IDENTIFIER IN ShiftExpression
   action: binary_expression_private
 - rule: CoverInitializedName -> IdentifierReference Initializer_In
   action: null
   note: |
     See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
-- rule: TemplateMiddleList -> TemplateMiddle Expression_In
+- rule: TemplateMiddleList -> TEMPLATE_MIDDLE Expression_In
   action: template_middle_list
-- rule: TemplateMiddleList -> TemplateMiddleList TemplateMiddle Expression_In
+- rule: TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
   action: template_middle_list_append
 - rule: BitwiseANDExpression -> EqualityExpression
   action: nop
@@ -3276,7 +3276,7 @@
   action: nop
 - rule: MemberExpression_Yield -> NEW MemberExpression_Yield Arguments_Yield
   action: new_expression_arguments
-- rule: MemberExpression_Yield -> MemberExpression_Yield DOT PrivateIdentifier
+- rule: MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: Arguments_Yield -> LPAREN RPAREN
   action: arguments_empty
@@ -3288,7 +3288,7 @@
   action: call_expression_super
 - rule: ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
   action: import_expression
-- rule: TemplateLiteral_Yield_Tagged -> NoSubstitutionTemplate
+- rule: TemplateLiteral_Yield_Tagged -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Yield_Tagged -> SubstitutionTemplate_Yield_Tagged
   action: nop
@@ -3300,7 +3300,7 @@
   action: optional_member
 - rule: OptionalChain_Yield -> OPTIONAL_CHAINING TemplateLiteral_Yield_Tagged
   action: optional_member
-- rule: OptionalChain_Yield -> OPTIONAL_CHAINING PrivateIdentifier
+- rule: OptionalChain_Yield -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
   action: optional_private_identifier
 - rule: OptionalChain_Yield -> OptionalChain_Yield Arguments_Yield
   action: optional_chain_append_call
@@ -3310,7 +3310,7 @@
   action: optional_chain_append_property
 - rule: OptionalChain_Yield -> OptionalChain_Yield TemplateLiteral_Yield_Tagged
   action: optional_chain_append_tagged_template
-- rule: OptionalChain_Yield -> OptionalChain_Yield DOT PrivateIdentifier
+- rule: OptionalChain_Yield -> OptionalChain_Yield DOT PRIVATE_IDENTIFIER
   action: optional_chain_append_private_identifier
 - rule: VariableDeclaration_In_Yield -> BindingIdentifier_Yield
   action: variable_declarator
@@ -3320,72 +3320,72 @@
   action: variable_declarator_init
 - rule: >-
     DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield
-    RPAREN SEMI_COLON
+    RPAREN SEMICOLON
   action: do_while_statement
 - rule: WhileStatement_Yield_Return -> WHILE LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
   action: while_statement
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
     Statement_Yield_Return
   action: for_statement_no_init_test_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON
     RPAREN Statement_Yield_Return
   action: for_statement_no_test_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield
-    SEMI_COLON RPAREN Statement_Yield_Return
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield
+    SEMICOLON RPAREN Statement_Yield_Return
   action: for_statement_no_init_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON
-    Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON
+    Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
   action: for_statement_no_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
     Expression_In_Yield RPAREN Statement_Yield_Return
   action: for_statement_no_init_test
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON SEMI_COLON
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON
     Expression_In_Yield RPAREN Statement_Yield_Return
   action: for_statement_no_test
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Yield
-    SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield
+    SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
   action: for_statement_no_init
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMI_COLON
-    Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON
+    Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
   action: for_statement
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON
+    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON
     RPAREN Statement_Yield_Return
   action: for_statement_vars_no_test_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON
-    Expression_In_Yield SEMI_COLON RPAREN Statement_Yield_Return
+    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON
+    Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return
   action: for_statement_vars_no_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON SEMI_COLON
+    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON
     Expression_In_Yield RPAREN Statement_Yield_Return
   action: for_statement_vars_no_test
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMI_COLON
-    Expression_In_Yield SEMI_COLON Expression_In_Yield RPAREN Statement_Yield_Return
+    ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON
+    Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return
   action: for_statement_vars
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON RPAREN
+    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN
     Statement_Yield_Return
   action: for_statement_decl_no_test_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON
+    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON
     RPAREN Statement_Yield_Return
   action: for_statement_decl_no_update
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMI_COLON Expression_In_Yield
+    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield
     RPAREN Statement_Yield_Return
   action: for_statement_decl_no_test
 - rule: >-
-    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMI_COLON
+    ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON
     Expression_In_Yield RPAREN Statement_Yield_Return
   action: for_statement_decl
 - rule: >-
@@ -3442,72 +3442,72 @@
   action: variable_declarator_init
 - rule: >-
     DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await
-    RPAREN SEMI_COLON
+    RPAREN SEMICOLON
   action: do_while_statement
 - rule: WhileStatement_Await_Return -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await_Return
   action: while_statement
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
     Statement_Await_Return
   action: for_statement_no_init_test_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON
     RPAREN Statement_Await_Return
   action: for_statement_no_test_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await
-    SEMI_COLON RPAREN Statement_Await_Return
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await
+    SEMICOLON RPAREN Statement_Await_Return
   action: for_statement_no_init_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
+    Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
   action: for_statement_no_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
     Expression_In_Await RPAREN Statement_Await_Return
   action: for_statement_no_init_test
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON SEMI_COLON
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON
     Expression_In_Await RPAREN Statement_Await_Return
   action: for_statement_no_test
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON Expression_In_Await
-    SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await
+    SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
   action: for_statement_no_init
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON
+    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
   action: for_statement
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON
+    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON
     RPAREN Statement_Await_Return
   action: for_statement_vars_no_test_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON RPAREN Statement_Await_Return
+    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
+    Expression_In_Await SEMICOLON RPAREN Statement_Await_Return
   action: for_statement_vars_no_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON SEMI_COLON
+    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON
     Expression_In_Await RPAREN Statement_Await_Return
   action: for_statement_vars_no_test
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMI_COLON
-    Expression_In_Await SEMI_COLON Expression_In_Await RPAREN Statement_Await_Return
+    ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON
+    Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return
   action: for_statement_vars
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON RPAREN
+    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN
     Statement_Await_Return
   action: for_statement_decl_no_test_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON
+    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON
     RPAREN Statement_Await_Return
   action: for_statement_decl_no_update
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMI_COLON Expression_In_Await
+    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await
     RPAREN Statement_Await_Return
   action: for_statement_decl_no_test
 - rule: >-
-    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMI_COLON
+    ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON
     Expression_In_Await RPAREN Statement_Await_Return
   action: for_statement_decl
 - rule: >-
@@ -3614,7 +3614,7 @@
   action: nop
 - rule: MemberExpression_Yield_Await -> NEW MemberExpression_Yield_Await Arguments_Yield_Await
   action: new_expression_arguments
-- rule: MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PrivateIdentifier
+- rule: MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PRIVATE_IDENTIFIER
   action: member_expression_private
 - rule: Arguments_Yield_Await -> LPAREN RPAREN
   action: arguments_empty
@@ -3626,7 +3626,7 @@
   action: call_expression_super
 - rule: ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await RPAREN
   action: import_expression
-- rule: TemplateLiteral_Yield_Await_Tagged -> NoSubstitutionTemplate
+- rule: TemplateLiteral_Yield_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Yield_Await_Tagged -> SubstitutionTemplate_Yield_Await_Tagged
   action: nop
@@ -3638,7 +3638,7 @@
   action: optional_member
 - rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING TemplateLiteral_Yield_Await_Tagged
   action: optional_member
-- rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING PrivateIdentifier
+- rule: OptionalChain_Yield_Await -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER
   action: optional_private_identifier
 - rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await Arguments_Yield_Await
   action: optional_chain_append_call
@@ -3648,7 +3648,7 @@
   action: optional_chain_append_property
 - rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await TemplateLiteral_Yield_Await_Tagged
   action: optional_chain_append_tagged_template
-- rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT PrivateIdentifier
+- rule: OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT PRIVATE_IDENTIFIER
   action: optional_chain_append_private_identifier
 - rule: VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await
   action: variable_declarator
@@ -3658,78 +3658,78 @@
   action: variable_declarator_init
 - rule: >-
     DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN
-    Expression_In_Yield_Await RPAREN SEMI_COLON
+    Expression_In_Yield_Await RPAREN SEMICOLON
   action: do_while_statement
 - rule: >-
     WhileStatement_Yield_Await_Return -> WHILE LPAREN Expression_In_Yield_Await RPAREN
     Statement_Yield_Await_Return
   action: while_statement
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON RPAREN
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
     Statement_Yield_Await_Return
   action: for_statement_no_init_test_update
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await
-    SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON
+    SEMICOLON RPAREN Statement_Yield_Await_Return
   action: for_statement_no_test_update
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON
-    Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
   action: for_statement_no_init_update
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await
-    SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON
+    Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
   action: for_statement_no_update
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON SEMI_COLON
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
     Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
   action: for_statement_no_init_test
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await
-    SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON
+    SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
   action: for_statement_no_test
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMI_COLON
-    Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
+    Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN
     Statement_Yield_Await_Return
   action: for_statement_no_init
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await
-    SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN
+    ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON
+    Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN
     Statement_Yield_Await_Return
   action: for_statement
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await
-    SEMI_COLON SEMI_COLON RPAREN Statement_Yield_Await_Return
+    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON
+    SEMICOLON RPAREN Statement_Yield_Await_Return
   action: for_statement_vars_no_test_update
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await
-    SEMI_COLON Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON
+    Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
   action: for_statement_vars_no_update
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await
-    SEMI_COLON SEMI_COLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON
+    SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
   action: for_statement_vars_no_test
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await
-    SEMI_COLON Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN
+    ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON
+    Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN
     Statement_Yield_Await_Return
   action: for_statement_vars
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON RPAREN
+    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN
     Statement_Yield_Await_Return
   action: for_statement_decl_no_test_update
 - rule: >-
     ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await
-    Expression_In_Yield_Await SEMI_COLON RPAREN Statement_Yield_Await_Return
+    Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return
   action: for_statement_decl_no_update
 - rule: >-
-    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMI_COLON
+    ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON
     Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
   action: for_statement_decl_no_test
 - rule: >-
     ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await
-    Expression_In_Yield_Await SEMI_COLON Expression_In_Yield_Await RPAREN
+    Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN
     Statement_Yield_Await_Return
   action: for_statement_decl
 - rule: >-
@@ -3869,7 +3869,7 @@
   action: nop
 - rule: PrimaryExpression_Yield -> AsyncGeneratorExpression
   action: nop
-- rule: PrimaryExpression_Yield -> RegularExpressionLiteral
+- rule: PrimaryExpression_Yield -> REGULAR_EXPRESSION_LITERAL
   action: regexp_literal
 - rule: PrimaryExpression_Yield -> TemplateLiteral_Yield
   action: nop
@@ -3888,7 +3888,7 @@
 - rule: ArgumentList_Yield -> ArgumentList_Yield COMMA ELLIPSIS AssignmentExpression_In_Yield
   action: argument_list_append_rest
 - rule: >-
-    SubstitutionTemplate_Yield_Tagged -> TemplateHead Expression_In_Yield
+    SubstitutionTemplate_Yield_Tagged -> TEMPLATE_HEAD Expression_In_Yield
     TemplateSpans_Yield_Tagged
   action: template_literal
 - rule: Expression_Yield -> AssignmentExpression_Yield
@@ -3899,7 +3899,7 @@
   action: into_list
 - rule: VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
   action: append_to_csv_list
-- rule: LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMI_COLON
+- rule: LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Yield -> BindingIdentifier_Yield
   action: for_binding
@@ -3963,7 +3963,7 @@
   action: nop
 - rule: PrimaryExpression_Yield_Await -> AsyncGeneratorExpression
   action: nop
-- rule: PrimaryExpression_Yield_Await -> RegularExpressionLiteral
+- rule: PrimaryExpression_Yield_Await -> REGULAR_EXPRESSION_LITERAL
   action: regexp_literal
 - rule: PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
   action: nop
@@ -3984,7 +3984,7 @@
     AssignmentExpression_In_Yield_Await
   action: argument_list_append_rest
 - rule: >-
-    SubstitutionTemplate_Yield_Await_Tagged -> TemplateHead Expression_In_Yield_Await
+    SubstitutionTemplate_Yield_Await_Tagged -> TEMPLATE_HEAD Expression_In_Yield_Await
     TemplateSpans_Yield_Await_Tagged
   action: template_literal
 - rule: Expression_Yield_Await -> AssignmentExpression_Yield_Await
@@ -3997,7 +3997,7 @@
     VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA
     VariableDeclaration_Yield_Await
   action: append_to_csv_list
-- rule: LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMI_COLON
+- rule: LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
   action: for_binding
@@ -4075,13 +4075,13 @@
   action: anonymous_class_expression
 - rule: ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
   action: class_expression
-- rule: TemplateLiteral_Yield -> NoSubstitutionTemplate
+- rule: TemplateLiteral_Yield -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Yield -> SubstitutionTemplate_Yield
   action: nop
-- rule: TemplateSpans_Yield_Tagged -> TemplateTail
+- rule: TemplateSpans_Yield_Tagged -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TemplateTail
+- rule: TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_TAIL
   action: template_spans_append
 - rule: AssignmentExpression_Yield -> ConditionalExpression_Yield
   action: nop
@@ -4125,13 +4125,13 @@
   action: into_nullable
 - rule: ClassElement_Yield -> STATIC MethodDefinition_Yield
   action: class_element_static_method_definition
-- rule: ClassElement_Yield -> FieldDefinition_Yield SEMI_COLON
+- rule: ClassElement_Yield -> FieldDefinition_Yield SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Yield -> STATIC FieldDefinition_Yield SEMI_COLON
+- rule: ClassElement_Yield -> STATIC FieldDefinition_Yield SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement_Yield -> ClassStaticBlock
   action: into_nullable
-- rule: ClassElement_Yield -> SEMI_COLON
+- rule: ClassElement_Yield -> SEMICOLON
   action: class_element_semicolon
 - rule: CaseClause_Await_Return -> CASE Expression_In_Await COLON
   action: switch_case_no_consequent
@@ -4165,13 +4165,13 @@
   action: anonymous_class_expression
 - rule: ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
   action: class_expression
-- rule: TemplateLiteral_Yield_Await -> NoSubstitutionTemplate
+- rule: TemplateLiteral_Yield_Await -> NO_SUBSTITUTION_TEMPLATE
   action: template_literal_no_subst
 - rule: TemplateLiteral_Yield_Await -> SubstitutionTemplate_Yield_Await
   action: nop
-- rule: TemplateSpans_Yield_Await_Tagged -> TemplateTail
+- rule: TemplateSpans_Yield_Await_Tagged -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TemplateTail
+- rule: TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_TAIL
   action: template_spans_append
 - rule: AssignmentExpression_Yield_Await -> ConditionalExpression_Yield_Await
   action: nop
@@ -4221,13 +4221,13 @@
   action: into_nullable
 - rule: ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await
   action: class_element_static_method_definition
-- rule: ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMI_COLON
+- rule: ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMICOLON
   action: class_element_property_definition
-- rule: ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMI_COLON
+- rule: ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMICOLON
   action: class_element_static_property_definition
 - rule: ClassElement_Yield_Await -> ClassStaticBlock
   action: into_nullable
-- rule: ClassElement_Yield_Await -> SEMI_COLON
+- rule: ClassElement_Yield_Await -> SEMICOLON
   action: class_element_semicolon
 - rule: ExponentiationExpression_Await -> UnaryExpression_Await
   action: nop
@@ -4281,12 +4281,12 @@
   action: into_list
 - rule: PropertyDefinitionList_Yield -> PropertyDefinitionList_Yield COMMA PropertyDefinition_Yield
   action: append_to_csv_list
-- rule: SubstitutionTemplate_Yield -> TemplateHead Expression_In_Yield TemplateSpans_Yield
+- rule: SubstitutionTemplate_Yield -> TEMPLATE_HEAD Expression_In_Yield TemplateSpans_Yield
   action: template_literal
-- rule: TemplateMiddleList_Yield_Tagged -> TemplateMiddle Expression_In_Yield
+- rule: TemplateMiddleList_Yield_Tagged -> TEMPLATE_MIDDLE Expression_In_Yield
   action: template_middle_list
 - rule: >-
-    TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TemplateMiddle
+    TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_MIDDLE
     Expression_In_Yield
   action: template_middle_list_append
 - rule: ConditionalExpression_Yield -> ShortCircuitExpression_Yield
@@ -4297,19 +4297,19 @@
   action: conditional_expression
 - rule: YieldExpression -> YIELD
   action: yield_expression_no_argument
-- rule: YieldExpression -> YIELD (!LineTerminatorSequence) AssignmentExpression_Yield
+- rule: YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield
   action: yield_expression
-- rule: YieldExpression -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_Yield
+- rule: YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield
   action: yield_expression_delegate
-- rule: ArrowFunction_Yield -> ArrowParameters_Yield (!LineTerminatorSequence) ARROW ConciseBody
+- rule: ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction_Yield -> ASYNC (!LineTerminatorSequence) AsyncArrowBindingIdentifier_Yield
-    (!LineTerminatorSequence) ARROW AsyncConciseBody
+    AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
     AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
-    (!LineTerminatorSequence) ARROW AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer_Yield -> ASSIGN AssignmentExpression_Yield
   action: initializer
@@ -4370,13 +4370,13 @@
     PropertyDefinition_Yield_Await
   action: append_to_csv_list
 - rule: >-
-    SubstitutionTemplate_Yield_Await -> TemplateHead Expression_In_Yield_Await
+    SubstitutionTemplate_Yield_Await -> TEMPLATE_HEAD Expression_In_Yield_Await
     TemplateSpans_Yield_Await
   action: template_literal
-- rule: TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddle Expression_In_Yield_Await
+- rule: TemplateMiddleList_Yield_Await_Tagged -> TEMPLATE_MIDDLE Expression_In_Yield_Await
   action: template_middle_list
 - rule: >-
-    TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TemplateMiddle
+    TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_MIDDLE
     Expression_In_Yield_Await
   action: template_middle_list_append
 - rule: ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await
@@ -4387,21 +4387,21 @@
   action: conditional_expression
 - rule: YieldExpression_Await -> YIELD
   action: yield_expression_no_argument
-- rule: YieldExpression_Await -> YIELD (!LineTerminatorSequence) AssignmentExpression_Yield_Await
+- rule: YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield_Await
   action: yield_expression
-- rule: YieldExpression_Await -> YIELD (!LineTerminatorSequence) MUL AssignmentExpression_Yield_Await
+- rule: YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield_Await
   action: yield_expression_delegate
 - rule: >-
-    ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LineTerminatorSequence) ARROW
+    ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
     ConciseBody
   action: arrow_function_expression
 - rule: >-
-    AsyncArrowFunction_Yield_Await -> ASYNC (!LineTerminatorSequence)
-    AsyncArrowBindingIdentifier_Yield (!LineTerminatorSequence) ARROW AsyncConciseBody
+    AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE)
+    AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
   action: async_arrow_function_expression_single_param
 - rule: >-
     AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await
-    (!LineTerminatorSequence) ARROW AsyncConciseBody
+    (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
   action: async_arrow_function_expression
 - rule: Initializer_Yield_Await -> ASSIGN AssignmentExpression_Yield_Await
   action: initializer
@@ -4453,9 +4453,9 @@
   action: nop
 - rule: UpdateExpression_Await -> LeftHandSideExpression_Await
   action: nop
-- rule: UpdateExpression_Await -> LeftHandSideExpression_Await (!LineTerminatorSequence) INC
+- rule: UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) INC
   action: update_expression_suffix
-- rule: UpdateExpression_Await -> LeftHandSideExpression_Await (!LineTerminatorSequence) DEC
+- rule: UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) DEC
   action: update_expression_suffix
 - rule: UpdateExpression_Await -> INC UnaryExpression_Await
   action: update_expression_prefix
@@ -4505,9 +4505,9 @@
   action: property_method
 - rule: PropertyDefinition_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: spread_element
-- rule: TemplateSpans_Yield -> TemplateTail
+- rule: TemplateSpans_Yield -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans_Yield -> TemplateMiddleList_Yield TemplateTail
+- rule: TemplateSpans_Yield -> TemplateMiddleList_Yield TEMPLATE_TAIL
   action: template_spans_append
 - rule: ShortCircuitExpression_Yield -> LogicalORExpression_Yield
   action: nop
@@ -4515,19 +4515,19 @@
   action: nop
 - rule: ClassElementName_Yield -> PropertyName_Yield
   action: nop
-- rule: ClassElementName_Yield -> PrivateIdentifier
+- rule: ClassElementName_Yield -> PRIVATE_IDENTIFIER
   action: class_element_name_private
 - rule: >-
     GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield RPAREN
     LBRACE GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod_Yield -> ASYNC (!LineTerminatorSequence) ClassElementName_Yield LPAREN
+    AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN
     UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
-    AsyncGeneratorMethod_Yield -> ASYNC (!LineTerminatorSequence) MUL ClassElementName_Yield LPAREN
-    UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
+    AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield
+    LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
 - rule: EqualityExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
   action: nop
@@ -4563,9 +4563,9 @@
   action: property_method
 - rule: PropertyDefinition_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
   action: spread_element
-- rule: TemplateSpans_Yield_Await -> TemplateTail
+- rule: TemplateSpans_Yield_Await -> TEMPLATE_TAIL
   action: template_spans_tail
-- rule: TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await TemplateTail
+- rule: TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_TAIL
   action: template_spans_append
 - rule: ShortCircuitExpression_Yield_Await -> LogicalORExpression_Yield_Await
   action: nop
@@ -4573,18 +4573,18 @@
   action: nop
 - rule: ClassElementName_Yield_Await -> PropertyName_Yield_Await
   action: nop
-- rule: ClassElementName_Yield_Await -> PrivateIdentifier
+- rule: ClassElementName_Yield_Await -> PRIVATE_IDENTIFIER
   action: class_element_name_private
 - rule: >-
     GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN
     UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
   action: method_definition_generator
 - rule: >-
-    AsyncMethod_Yield_Await -> ASYNC (!LineTerminatorSequence) ClassElementName_Yield_Await LPAREN
-    UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
+    AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await
+    LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
   action: method_definition_async
 - rule: >-
-    AsyncGeneratorMethod_Yield_Await -> ASYNC (!LineTerminatorSequence) MUL
+    AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL
     ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE
     AsyncGeneratorBody RBRACE
   action: method_definition_async_generator
@@ -4608,9 +4608,9 @@
   action: unary_expression
 - rule: UpdateExpression -> LeftHandSideExpression
   action: nop
-- rule: UpdateExpression -> LeftHandSideExpression (!LineTerminatorSequence) INC
+- rule: UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) INC
   action: update_expression_suffix
-- rule: UpdateExpression -> LeftHandSideExpression (!LineTerminatorSequence) DEC
+- rule: UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) DEC
   action: update_expression_suffix
 - rule: UpdateExpression -> INC UnaryExpression
   action: update_expression_prefix
@@ -4630,15 +4630,15 @@
   action: binary_expression
 - rule: RelationalExpression_In_Yield -> RelationalExpression_In_Yield IN ShiftExpression_Yield
   action: binary_expression
-- rule: RelationalExpression_In_Yield -> PrivateIdentifier IN ShiftExpression_Yield
+- rule: RelationalExpression_In_Yield -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield
   action: binary_expression_private
 - rule: CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
   action: null
   note: |
     See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
-- rule: TemplateMiddleList_Yield -> TemplateMiddle Expression_In_Yield
+- rule: TemplateMiddleList_Yield -> TEMPLATE_MIDDLE Expression_In_Yield
   action: template_middle_list
-- rule: TemplateMiddleList_Yield -> TemplateMiddleList_Yield TemplateMiddle Expression_In_Yield
+- rule: TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE Expression_In_Yield
   action: template_middle_list_append
 - rule: LogicalORExpression_Yield -> LogicalANDExpression_Yield
   action: nop
@@ -4672,16 +4672,16 @@
     RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await IN
     ShiftExpression_Yield_Await
   action: binary_expression
-- rule: RelationalExpression_In_Yield_Await -> PrivateIdentifier IN ShiftExpression_Yield_Await
+- rule: RelationalExpression_In_Yield_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield_Await
   action: binary_expression_private
 - rule: CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await
   action: null
   note: |
     See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
-- rule: TemplateMiddleList_Yield_Await -> TemplateMiddle Expression_In_Yield_Await
+- rule: TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE Expression_In_Yield_Await
   action: template_middle_list
 - rule: >-
-    TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TemplateMiddle
+    TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_MIDDLE
     Expression_In_Yield_Await
   action: template_middle_list_append
 - rule: LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await
@@ -4842,9 +4842,9 @@
   action: unary_expression
 - rule: UpdateExpression_Yield -> LeftHandSideExpression_Yield
   action: nop
-- rule: UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LineTerminatorSequence) INC
+- rule: UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) INC
   action: update_expression_suffix
-- rule: UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LineTerminatorSequence) DEC
+- rule: UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) DEC
   action: update_expression_suffix
 - rule: UpdateExpression_Yield -> INC UnaryExpression_Yield
   action: update_expression_prefix
@@ -4883,11 +4883,11 @@
 - rule: UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await
   action: nop
 - rule: >-
-    UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LineTerminatorSequence)
+    UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE)
     INC
   action: update_expression_suffix
 - rule: >-
-    UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LineTerminatorSequence)
+    UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE)
     DEC
   action: update_expression_suffix
 - rule: UpdateExpression_Yield_Await -> INC UnaryExpression_Yield_Await

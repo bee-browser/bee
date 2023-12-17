@@ -10,6 +10,7 @@ import {
 } from 'https://deno.land/std@0.208.0/testing/asserts.ts';
 import * as log from 'https://deno.land/std@0.208.0/log/mod.ts';
 import * as yaml from 'https://deno.land/std@0.208.0/yaml/mod.ts';
+import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';
 
@@ -31,6 +32,10 @@ Options:
 
   -t, --tokens=<tokens-json>
     Path to a tokens.json.
+
+Note:
+  Terminal symbols in the syntactic grammar are converted into the constant case
+  so that we can easily distinguish terminal symbols from non-terminal symbols.
 `.trim();
 
 const HEADER = `
@@ -58,6 +63,32 @@ function transform(rules) {
     }
   }
   return result;
+}
+
+function convertTokenNames(rules) {
+  log.debug('Convert token names in the constant case...');
+  for (const rule of rules) {
+    for (const term of rule.production) {
+      switch (term.type) {
+      case 'token':
+      case 'disallow':
+        term.data = changeCase.constantCase(term.data);
+        break;
+      case 'lookahead':
+        term.data.data = term.data.data.map((patterns) => {
+          return patterns.map((pattern) => {
+            if (pattern.startsWith('(!')) {
+              let token = pattern.substring(2, pattern.length - 1);
+              return `(!${changeCase.constantCase(token)})`;
+            }
+            return changeCase.constantCase(pattern);
+          });
+        });
+        break;
+      }
+    }
+  }
+  return rules;
 }
 
 function rewriteIdentifierName(rules) {
@@ -137,6 +168,7 @@ class Transpiler {
         addLiterals,
         transform,
         rewriteIdentifierName,
+        convertTokenNames,
       ];
       break;
     default:
@@ -317,7 +349,7 @@ const PUNCTUATORS = {
   ')': 'RPAREN',
   '.': 'DOT',
   '...': 'ELLIPSIS',
-  ';': 'SEMI_COLON',
+  ';': 'SEMICOLON',
   ',': 'COMMA',
   '<': 'LT',
   '>': 'GT',
