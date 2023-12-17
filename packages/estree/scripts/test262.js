@@ -27,6 +27,13 @@ Options:
   --details
     Show the details of failed tests.
 
+  --with-debug-build
+    Test with the debug build binary.
+    Testing with this option is better but 8x slower.
+
+    Some kind of runtime errors such as arithmetic underflow cannot be
+    detected in the release build.
+
 Arguments:
   <test262-dir> [default: ${DEFAULT_TEST262_DIR}]
     Path to tc39/test262.
@@ -87,8 +94,12 @@ const spinner = ora({ spinner: 'line' });
 
 class EstreeServer {
   constructor() {
+    const args = ['run', '-r', '-q', '-p', 'bee-estree', '--', "serve"];
+    if (options.withDebugBuild) {
+      args.splice(1, 1);  // remove '-r'
+    }
     const cmd = new Deno.Command('cargo', {
-      args: ['run', '-r', '-q', '-p', 'bee-estree', '--', "serve"],
+      args,
       stdin: 'piped',
       stdout: 'piped',
       stderr: 'null',
@@ -229,7 +240,13 @@ for await (const test of stream) {
     }
   }
 
-  const actual = await server.parse(test);
+  let actual;
+  try {
+    actual = await server.parse(test);
+  } catch (err) {
+    spinner.warn(`${test.file}: server.parse() aborted`);
+    break;
+  }
 
   if (expected === null) {
     if (expected !== actual) {
