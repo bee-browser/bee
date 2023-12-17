@@ -1,7 +1,7 @@
 'use strict';
 
-import * as csv from 'https://deno.land/std@0.208.0/csv/mod.ts';
-import * as io from 'https://deno.land/std@0.208.0/io/mod.ts';
+import * as csv from 'https://deno.land/std@0.209.0/csv/mod.ts';
+import * as io from 'https://deno.land/std@0.209.0/io/mod.ts';
 import * as zip from 'https://deno.land/x/zipjs@v2.7.32/index.js';
 
 zip.configure({
