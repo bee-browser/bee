@@ -127,8 +127,6 @@ or a DFA having multiple start states.
 ## TODO
 
 * [ ] Support Unicode properties including `ID_Start` and `ID_Continue` in `UnicodeSet`
-* [ ] Single DFA + multiple start states
-  * Currently, we need to create a dedicated DFA for each token set
 
 ## References
 

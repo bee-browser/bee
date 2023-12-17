@@ -79,7 +79,7 @@ Punctuator: &Punctuator
   - RBRACK
   - DOT
   - ELLIPSIS
-  - SEMI_COLON
+  - SEMICOLON
   - COMMA
   - LT
   - GT

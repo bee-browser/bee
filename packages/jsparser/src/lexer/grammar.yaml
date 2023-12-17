@@ -718,7 +718,7 @@
 - name: OtherPunctuator
   production:
     - type: non-terminal
-      data: SEMI_COLON
+      data: SEMICOLON
 - name: OtherPunctuator
   production:
     - type: non-terminal
@@ -3882,7 +3882,7 @@
       data:
         - type: char
           data: .
-- name: SEMI_COLON
+- name: SEMICOLON
   production:
     - type: unicode-set
       data:

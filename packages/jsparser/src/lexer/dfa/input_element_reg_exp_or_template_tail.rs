@@ -290,7 +290,7 @@ const TRANSITION_TABLE: [[u16; 72]; 467] = [
     //   [[] => State(400):LBRACK
     //   []] => State(401):RBRACK
     //   [.] => State(402):DOT
-    //   [;] => State(404):SEMI_COLON
+    //   [;] => State(404):SEMICOLON
     //   [,] => State(405):COMMA
     //   [<] => State(406):LT
     //   [>] => State(407):GT
@@ -10338,7 +10338,7 @@ const TRANSITION_TABLE: [[u16; 72]; 467] = [
         467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467,
     ],
     // State(404)
-    //   SEMI_COLON -> [;] .
+    //   SEMICOLON -> [;] .
     [
         467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467,
         467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467, 467,
@@ -11573,7 +11573,7 @@ const ACCEPT_TABLE: [Option<TokenKind>; 467] = [
     Some(TokenKind::Rbrack),                   // State(401)
     Some(TokenKind::Dot),                      // State(402)
     Some(TokenKind::Ellipsis),                 // State(403)
-    Some(TokenKind::SemiColon),                // State(404)
+    Some(TokenKind::Semicolon),                // State(404)
     Some(TokenKind::Comma),                    // State(405)
     Some(TokenKind::Lt),                       // State(406)
     Some(TokenKind::Gt),                       // State(407)

@@ -90,8 +90,11 @@ async function update(args, options) {
     for (const entry of current) {
       if (indexMap.has(entry.rule)) {
         actions[indexMap.get(entry.rule)].action = entry.action;
+        if (entry.note) {
+          actions[indexMap.get(entry.rule)].note = entry.note;
+        }
       } else {
-        log.warn(`${entry.rule} was removed`);
+        log.warning(`${entry.rule} was removed`);
         removed.push(entry);
       }
     }

@@ -110,7 +110,7 @@ production:
   - type: token
     data: THROW
   - type: disallow
-    data: LineTerminatorSequence
+    data: LINE_TERMINATOR_SEQUENCE
   - type: non-terminal
     data: Expression
   - type: token
