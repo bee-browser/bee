@@ -2,27 +2,43 @@ name: build
 
 on:
   workflow_call:
+    inputs:
+      runner:
+        default: ubuntu-latest
+        required: true
+        type: string
+      rust:
+        default: stable
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      runner:
+        default: ubuntu-latest
+        required: true
+        type: choice
+        options:
+          - ubuntu-latest
+          - macos-latest
+      rust:
+        default: stable
+        required: true
+        type: choice
+        options:
+          - stable
+          - nightly
 
 env:
   DENO_DIR: /tmp/deno
 
 jobs:
   build:
-    strategy:
-      matrix:
-        runner:
-          - macos-latest
-          - ubuntu-latest
-        rust:
-          - stable
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ matrix.rust }}
+      - uses: dtolnay/rust-toolchain@${{ inputs.rust }}
       - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v1
         with:
