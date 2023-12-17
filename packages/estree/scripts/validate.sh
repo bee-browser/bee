@@ -39,7 +39,7 @@ cleanup() {
 
 # Build if needed.
 cargo build -rqp bee-estree
-BEE_ESTREE=$(realpath $(dirname $0)/../../../target/release/bee-estree)
+BEE_ESTREE=$(cd $(dirname $0)/../../../target/release/bee-estree; pwd)
 
 deno run npm:acorn --compact --ecma2022 --module </dev/null >/dev/null
 ACORN_START=$(date +%s%N)
