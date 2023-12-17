@@ -7,6 +7,8 @@ on:
       - pull-request
     types:
       - completed
+    branches:
+      - dependabot/**
 
 env:
   ALLOWED_USER: 'dependabot[bot]'
