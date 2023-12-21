@@ -9,7 +9,7 @@ publish = false
 service = ["bee-geometry/serde", "serde", "serde_json"]
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.76"
 bee-geometry = { path = "../geometry" }
 num-traits = "0.2.17"
 serde = { version = "1.0.193", features = ["derive", "rc"], optional = true }
