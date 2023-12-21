@@ -199,19 +199,26 @@ pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Automaton
                 .filter(|item| !item.is_disallowed(&token))
                 .cloned()
                 .collect_vec();
-            if kernel_items.is_empty() {
-                continue;
-            }
-            // Then, re-compute its closure.
-            let item_set = context.compute_closure(&kernel_items, &cache);
             let symbol = Symbol::Token(token);
+            let (item_set, valid_state) = if kernel_items.is_empty() {
+                // All items in the state are restricted.  In this case, the state must move to a
+                // *dead* state when the disallowed token is received.  The default action of some
+                // tokens such as line terminators is simple ignoring the token.  So, it's
+                // necessary to add the transition to the dead state in order to avoid the default
+                // action.
+                (Default::default(), false)
+            } else {
+                // Then, re-compute its closure.
+                (context.compute_closure(&kernel_items, &cache), true)
+            };
+            // A dead state will be created if the item set has no item.
             let next_id = builder.create_state(item_set);
             tracing::trace!(transition = %symbol, from = %state_id, to = %next_id);
             builder
                 .state_mut(state_id)
                 .transitions
                 .insert(symbol, next_id);
-            if !processed.contains(&next_id) {
+            if valid_state && !processed.contains(&next_id) {
                 remaining.push_back(next_id);
             }
         }

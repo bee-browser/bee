@@ -102,9 +102,20 @@ impl<'a> Token<'a> {
         flags: TokenFlags::AUTO_INSERTION,
     };
 
+    pub(crate) const SINGLE_LINE_TERMINATOR: Token<'static> = Token {
+        lexeme: "\n",
+        kind: TokenKind::LineTerminatorSequence,
+        flags: TokenFlags::HAS_LINE_TERMINATORS,
+    };
+
     /// Returns `true` if the token was inserted automatically.
     pub fn inserted_automatically(&self) -> bool {
         self.flags.contains(TokenFlags::AUTO_INSERTION)
+    }
+
+    /// Returns `true` if the lexeme contains line terminators.
+    pub fn has_line_terminators(&self) -> bool {
+        self.flags.contains(TokenFlags::HAS_LINE_TERMINATORS)
     }
 
     /// Returns the number of UTF-16 code units in the lexeme.
@@ -159,7 +170,8 @@ impl<'a> Default for Token<'a> {
 bitflags! {
     #[derive(Clone, Debug, PartialEq)]
     struct TokenFlags: u8 {
-        const AUTO_INSERTION = 1;
+        const AUTO_INSERTION       = 0b00000001;
+        const HAS_LINE_TERMINATORS = 0b00000010;
     }
 }
 
@@ -260,7 +272,11 @@ mod tests {
             Token {
                 lexeme: $lexeme,
                 kind: TokenKind::$kind,
-                flags: TokenFlags::empty(),
+                flags: if $lexeme.contains(&['\u{000A}', '\u{000D}', '\u{2028}', '\u{2029}']) {
+                    TokenFlags::HAS_LINE_TERMINATORS
+                } else {
+                    TokenFlags::empty()
+                },
             }
         };
     }
