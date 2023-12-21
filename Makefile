@@ -1,5 +1,3 @@
-TEST262_ARGS ?= --progress
-
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 
@@ -84,8 +82,10 @@ test: format
 
 # TODO: remove '-' once we've fixed all failures.
 .PHONY: test262
+test262: ARGS ?= --progress
 test262:
-	-sh packages/estree/scripts/test262.sh $(TEST262_ARGS)
+	-sh packages/estree/scripts/test262-parser-tests.sh $(ARGS)
+	-sh packages/estree/scripts/test262.sh $(ARGS)
 
 .PHONY: bench
 bench:
@@ -108,8 +108,9 @@ coverage-test:
 	env $(COVERAGE_TEST_ENV_VARS) $(MAKE) -s test
 
 .PHONY: coverage-test262
+coverage-test262: ARGS ?=
 coverage-test262:
-	env $(COVERAGE_TEST_ENV_VARS) $(MAKE) -s test262 TEST262_ARGS=$(TEST262_ARGS)
+	env $(COVERAGE_TEST_ENV_VARS) $(MAKE) -s test262 ARGS=$(ARGS)
 
 .PHONY: coverage-lcov
 coverage-lcov: | $(PROJDIR)/target/coverage
