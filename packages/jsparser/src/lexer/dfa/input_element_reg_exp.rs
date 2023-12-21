@@ -7,6 +7,7 @@ use super::Error;
 use super::SourceCursor;
 use super::Token;
 use crate::lexer::tokens::TokenKind;
+use crate::lexer::TokenFlags;
 
 pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     let mut token = Token::default();
@@ -14,11 +15,23 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     let mut state = State::default();
     tracing::trace!(opcode = "init", ?state);
 
+    let mut has_line_terminators = false;
     let mut lexeme_end = 0;
     let mut chars = cursor.chars();
     loop {
         let (pos, mut unicode_set) = match chars.next() {
-            Some((i, ch)) => (cursor.pos() + i, UnicodeSet::from(ch)),
+            Some((i, ch)) => {
+                // TODO: The current implementation is not slow, but using a table may be faster.
+                // We can use UnicodeSet::0 as an index of the table.
+                // We assume that line terminators and others must not be contained in the same charclass.
+                match ch {
+                    '\u{000A}' | '\u{000D}' | '\u{2028}' | '\u{2029}' => {
+                        has_line_terminators = true
+                    }
+                    _ => (),
+                }
+                (cursor.pos() + i, UnicodeSet::from(ch))
+            }
             None => (cursor.len(), UnicodeSet::EOF),
         };
 
@@ -65,6 +78,9 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
         if let Some(kind) = state.accept() {
             token.lexeme = cursor.lexeme(lexeme_end);
             token.kind = kind;
+            if has_line_terminators {
+                token.flags |= TokenFlags::HAS_LINE_TERMINATORS;
+            }
             tracing::trace!(opcode = "accept", ?token.kind, ?token.lexeme);
         }
     }
