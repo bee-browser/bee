@@ -525,7 +525,7 @@ mod tests {
 
     #[test]
     fn test_continue_no_line_terminator_multi_line_comment_lf() {
-        // This case can be parsed as "x: for(;;){continue; x;}"
+        // This case can be parsed as "x: for(;;){continue; x;}".
         parse!("x: for(;;){continue/*\n*/x}");
     }
 
@@ -536,19 +536,19 @@ mod tests {
 
     #[test]
     fn test_break_no_line_terminator_multi_line_comment_lf() {
-        // This case can be parsed as "x: for(;;){break; x;}"
+        // This case can be parsed as "x: for(;;){break; x;}".
         parse!("x: for(;;){break/*\n*/x}");
     }
 
     #[test]
     fn test_return_no_line_terminator_multi_line_comment() {
-        parse!("function x() { return/**/0; }");
+        parse!("function x(){return/**/0}");
     }
 
     #[test]
     fn test_return_no_line_terminator_multi_line_comment_lf() {
-        // This case can be parsed as "function x() { return; 0; }"
-        parse!("function x() { return/*\n*/0; }");
+        // This case can be parsed as "function x() { return; 0; }".
+        parse!("function x(){return/*\n*/0}");
     }
 
     #[test]
@@ -559,5 +559,111 @@ mod tests {
     #[test]
     fn test_throw_no_line_terminator_multi_line_comment_lf() {
         parse_fail!("throw/*\n*/0");
+    }
+
+    #[test]
+    fn test_arrow_function_no_line_terminator_multi_line_comment() {
+        parse!("()/**/=>{}");
+    }
+
+    #[test]
+    fn test_arrow_function_no_line_terminator_multi_line_comment_lf() {
+        parse_fail!("()/*\n*/=>{}");
+    }
+
+    #[test]
+    fn test_yield_no_line_terminator_multi_line_comment() {
+        parse!("function* x(){yield/**/0}");
+    }
+
+    #[test]
+    fn test_yield_no_line_terminator_multi_line_comment_lf() {
+        // This case can be parsed as "function* x() { yield; 0; }".
+        parse!("function* x(){yield/*\n*/0}");
+    }
+
+    #[test]
+    fn test_async_generator_declaration_no_line_terminator_multi_line_comment() {
+        parse!("async/**/function* x(){}");
+    }
+
+    #[test]
+    fn test_async_generator_declaration_no_line_terminator_multi_line_comment_lf() {
+        // This case can be parsed as "async; function* x() {}".
+        parse!("async/*\n*/function* x(){}");
+    }
+
+    #[test]
+    fn test_async_generator_expression_no_line_terminator_multi_line_comment() {
+        parse!("x=async/**/function*(){}");
+    }
+
+    #[test]
+    fn test_async_generator_expression_no_line_terminator_multi_line_comment_lf() {
+        parse_fail!("x=async/*\n*/function*(){}");
+    }
+
+    #[test]
+    fn test_async_generator_method_no_line_terminator_multi_line_comment() {
+        parse!("class X{async/**/*x(){}}");
+    }
+
+    #[test]
+    fn test_async_generator_method_no_line_terminator_multi_line_comment_lf() {
+        // This case can be parsed as "class X { async; *x() {} }".
+        parse!("class X{async/*\n*/*x(){}}");
+    }
+
+    #[test]
+    fn test_async_function_declaration_no_line_terminator_multi_line_comment() {
+        parse!("async/**/function x(){}");
+    }
+
+    #[test]
+    fn test_async_function_declaration_no_line_terminator_multi_line_comment_lf() {
+        // This case can be parsed as "async; function x() {}"
+        parse!("async/*\n*/function x(){}");
+    }
+
+    #[test]
+    fn test_async_function_expression_no_line_terminator_multi_line_comment() {
+        parse!("x=async/**/function(){}");
+    }
+
+    #[test]
+    fn test_async_function_expression_no_line_terminator_multi_line_comment_lf() {
+        parse_fail!("x=async/*\n*/function(){}");
+    }
+
+    #[test]
+    fn test_async_method_no_line_terminator_multi_line_comment() {
+        parse!("class X{async/**/x(){}}");
+    }
+
+    #[test]
+    fn test_async_method_no_line_terminator_multi_line_comment_lf() {
+        // This case can be parsed as "class X { async; x() {} }".
+        parse!("class X{async/*\n*/x(){}}");
+    }
+
+    #[test]
+    fn test_async_arrow_function_no_line_terminator_multi_line_comment() {
+        parse!("async/**/()=>{}");
+    }
+
+    #[test]
+    fn test_async_arrow_function_no_line_terminator_multi_line_comment_lf() {
+        // This case can be parsed as "async; ()=>{}".
+        // Because the second production rule is met.
+        //
+        //   AsyncArrowFunction[In, Yield, Await] :
+        //     `async` [no LineTerminator here] AsyncArrowBindingIdentifier[?Yield] [no LineTerminator here] `=>` AsyncConciseBody[?In]
+        //     CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await] [no LineTerminator here] `=>` AsyncConciseBody[?In] #callcover
+        //
+        // However, Acorn reports an unexpected token error.  Probably, Acorn is right and our
+        // implementation is wrong...
+        //
+        // TODO: Use the supplemental syntax defined in 15.9 Async Arrow Function Definitions.
+        parse!("async/*\n*/()=>{}");
     }
 }

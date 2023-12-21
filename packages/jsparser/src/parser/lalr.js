@@ -1,11 +1,15 @@
 'use strict';
 
 import { assert } from 'https://deno.land/std@0.209.0/testing/asserts.ts';
+import * as path from "https://deno.land/std@0.209.0/path/mod.ts";
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
+const baseDir = new URL('.', import.meta.url).pathname;
+
 const spec = JSON.parse(await readAllText(Deno.stdin));
-const tokens = JSON.parse(await Deno.readTextFile("../lexer/tokens.json"));
+const tokens = JSON.parse(
+  await Deno.readTextFile(path.join(baseDir, '..', 'lexer', 'tokens.json')));
 
 const tokenIndexMap = {};
 for (let i = 0; i < tokens.length; ++i) {
@@ -50,7 +54,9 @@ function isAutoSemicolonDoWhile(state) {
   return false;
 }
 
-for (const state of spec.states) {
+for (let i = 0; i < spec.states.length; ++i) {
+  const state = spec.states[i];
+
   let permitRegularExpressionLiteral = false;
   let permitTemplateMiddle = false;
   let permitTemplateTail = false;
