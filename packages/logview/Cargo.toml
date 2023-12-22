@@ -15,7 +15,7 @@ mime = "0.3.17"
 mustache = "0.9.0"
 open = "5.0.1"
 serde = { version = "1.0.193", features = ["derive", "rc"] }
-serde_yaml = "0.9.28"
+serde_yaml = "0.9.29"
 shell-words = "1.1.0"
 tempfile = "3.8.1"
 tokio = { version = "1.35.1", features = ["io-util", "macros", "process", "rt-multi-thread"] }
