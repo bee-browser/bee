@@ -1437,9 +1437,9 @@
 - rule: PrimaryExpression_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Await -> ArrayLiteral_Await
-  action: nop
+  action: primary_expression_array_literal
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
-  action: nop
+  action: primary_expression_object_literal
 - rule: PrimaryExpression_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Await -> ClassExpression_Await
@@ -1870,9 +1870,9 @@
 - rule: PrimaryExpression -> Literal
   action: nop
 - rule: PrimaryExpression -> ArrayLiteral
-  action: nop
+  action: primary_expression_array_literal
 - rule: PrimaryExpression -> ObjectLiteral
-  action: nop
+  action: primary_expression_object_literal
 - rule: PrimaryExpression -> FunctionExpression
   action: nop
 - rule: PrimaryExpression -> ClassExpression
@@ -2438,9 +2438,7 @@
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
   action: property
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: PropertyDefinition_Await -> PropertyName_Await COLON AssignmentExpression_In_Await
   action: property_value
 - rule: PropertyDefinition_Await -> MethodDefinition_Await
@@ -2782,9 +2780,7 @@
 - rule: RelationalExpression_In_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Await
   action: binary_expression_private
 - rule: CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList_Await -> TEMPLATE_MIDDLE Expression_In_Await
   action: template_middle_list
 - rule: TemplateMiddleList_Await -> TemplateMiddleList_Await TEMPLATE_MIDDLE Expression_In_Await
@@ -2810,9 +2806,7 @@
 - rule: PropertyDefinition -> IdentifierReference
   action: property
 - rule: PropertyDefinition -> CoverInitializedName
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: PropertyDefinition -> PropertyName COLON AssignmentExpression_In
   action: property_value
 - rule: PropertyDefinition -> MethodDefinition
@@ -3209,9 +3203,7 @@
 - rule: RelationalExpression_In -> PRIVATE_IDENTIFIER IN ShiftExpression
   action: binary_expression_private
 - rule: CoverInitializedName -> IdentifierReference Initializer_In
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList -> TEMPLATE_MIDDLE Expression_In
   action: template_middle_list
 - rule: TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
@@ -3856,9 +3848,9 @@
 - rule: PrimaryExpression_Yield -> Literal
   action: nop
 - rule: PrimaryExpression_Yield -> ArrayLiteral_Yield
-  action: nop
+  action: primary_expression_array_literal
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
-  action: nop
+  action: primary_expression_object_literal
 - rule: PrimaryExpression_Yield -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield -> ClassExpression_Yield
@@ -3950,9 +3942,9 @@
 - rule: PrimaryExpression_Yield_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
-  action: nop
+  action: primary_expression_array_literal
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
-  action: nop
+  action: primary_expression_object_literal
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await
@@ -4496,9 +4488,7 @@
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
   action: property
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: PropertyDefinition_Yield -> PropertyName_Yield COLON AssignmentExpression_In_Yield
   action: property_value
 - rule: PropertyDefinition_Yield -> MethodDefinition_Yield
@@ -4552,9 +4542,7 @@
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
   action: property
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: >-
     PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON
     AssignmentExpression_In_Yield_Await
@@ -4633,9 +4621,7 @@
 - rule: RelationalExpression_In_Yield -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield
   action: binary_expression_private
 - rule: CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList_Yield -> TEMPLATE_MIDDLE Expression_In_Yield
   action: template_middle_list
 - rule: TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE Expression_In_Yield
@@ -4675,9 +4661,7 @@
 - rule: RelationalExpression_In_Yield_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield_Await
   action: binary_expression_private
 - rule: CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE Expression_In_Yield_Await
   action: template_middle_list
 - rule: >-

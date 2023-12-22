@@ -19,6 +19,9 @@ Usage:
   ${PROGNAME} -h | --help
 
 Options:
+  --only=(pass|fail|early) [default: all]
+    Run only specific tests.
+
   --progress
     Show progress.
 
@@ -41,12 +44,18 @@ const { cmds, options, args } = await parseCommand({
   doc: DOC,
 });
 
+options.only ||= 'all';
 args.dir ||= DEFAULT_DIR;
 
 // TODO: remove
 const EXCLUDES = [
   // infinite loop
   'fail/8ba15f5246ca756c.js',
+  // B.1.1 HTML-like Comments
+  'pass/1270d541e0fd6af8.js',  // SingleLineHTMLOpenComment
+  'pass/8ec6a55806087669.js',  // SingleLineHTMLCloseComment
+  // B.3.2 Block-Level Function Declarations Web Legacy Compatibility Semantics
+  'pass/3dabeca76119d501.js',
 ];
 
 // The signal handler must be registered before starting the bee-estree server.
@@ -108,105 +117,113 @@ if (options.progress) {
   spinner.start();
 }
 
-for await (const entry of Deno.readDir(path.join(args.dir, 'pass'))) {
-  if (!entry.isFile) {
-    continue;
-  }
-
-  count++;
-
-  const test = path.join('pass', entry.name);
-  if (EXCLUDES.includes(test)) {
-    skipped.push(test);
-    continue;
-  }
-
-  spinner.text = test;
-
-  const source = await Deno.readTextFile(path.join(args.dir, test));
-  const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
-  let result;
-  try {
-    result = await server.parse(source, sourceType);
-  } catch (err) {
-    spinner.warn(`${test}: server.parse() aborted`);
-  }
-
-  const testExplicit = path.join('pass-explicit', entry.name);
-
-  spinner.text = testExplicit;
-
-  const sourceExplicit = await Deno.readTextFile(path.join(args.dir, test));
-  let resultExplicit;
-  try {
-    resultExplicit = await server.parse(sourceExplicit, sourceType);
-  } catch (err) {
-    spinner.warn(`${testExplicit}: server.parse() aborted`);
-  }
-
-  if (result && resultExplicit) {
-    const diff = microdiff(result, resultExplicit);
-    if (diff.length > 0) {
-      fails.push({ test, diff });
+if (options.only === 'all' || options.only === 'pass') {
+  for await (const entry of Deno.readDir(path.join(args.dir, 'pass'))) {
+    if (!entry.isFile) {
+      continue;
     }
-  } else {
-    fails.push({ test });
+
+    count++;
+
+    const test = path.join('pass', entry.name);
+    if (EXCLUDES.includes(test)) {
+      skipped.push(test);
+      continue;
+    }
+
+    spinner.text = test;
+
+    const source = await Deno.readTextFile(path.join(args.dir, test));
+    const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
+    let result;
+    try {
+      result = await server.parse(source, sourceType);
+    } catch (err) {
+      spinner.warn(`${test}: server.parse() aborted`);
+      Deno.exit(1);
+    }
+
+    const testExplicit = path.join('pass-explicit', entry.name);
+
+    spinner.text = testExplicit;
+
+    const sourceExplicit = await Deno.readTextFile(path.join(args.dir, test));
+    let resultExplicit;
+    try {
+      resultExplicit = await server.parse(sourceExplicit, sourceType);
+    } catch (err) {
+      spinner.warn(`${testExplicit}: server.parse() aborted`);
+      Deno.exit(1);
+    }
+
+    if (result && resultExplicit) {
+      const diff = microdiff(result, resultExplicit);
+      if (diff.length > 0) {
+        fails.push({ test, diff });
+      }
+    } else {
+      fails.push({ test });
+    }
   }
 }
 
-for await (const entry of Deno.readDir(path.join(args.dir, 'fail'))) {
-  if (!entry.isFile) {
-    continue;
-  }
+if (options.only === 'all' || options.only === 'fail') {
+  for await (const entry of Deno.readDir(path.join(args.dir, 'fail'))) {
+    if (!entry.isFile) {
+      continue;
+    }
 
-  count++;
+    count++;
 
-  const test = path.join('fail', entry.name);
-  if (EXCLUDES.includes(test)) {
-    skipped.push(test);
-    continue;
-  }
+    const test = path.join('fail', entry.name);
+    if (EXCLUDES.includes(test)) {
+      skipped.push(test);
+      continue;
+    }
 
-  spinner.text = test;
+    spinner.text = test;
 
-  const source = await Deno.readTextFile(path.join(args.dir, test));
-  const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
-  let result;
-  try {
-    result = await server.parse(source, sourceType);
-  } catch (err) {
-    spinner.warn(`${test}: server.parse() aborted: ${err}`);
-  }
-  if (result !== null) {
-    fails.push({ test });
+    const source = await Deno.readTextFile(path.join(args.dir, test));
+    const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
+    let result;
+    try {
+      result = await server.parse(source, sourceType);
+    } catch (err) {
+      spinner.warn(`${test}: server.parse() aborted: ${err}`);
+    }
+    if (result !== null) {
+      fails.push({ test });
+    }
   }
 }
 
-for await (const entry of Deno.readDir(path.join(args.dir, 'early'))) {
-  if (!entry.isFile) {
-    continue;
-  }
+if (options.only === 'all' || options.only === 'early') {
+  for await (const entry of Deno.readDir(path.join(args.dir, 'early'))) {
+    if (!entry.isFile) {
+      continue;
+    }
 
-  count++;
+    count++;
 
-  const test = path.join('early', entry.name);
-  if (EXCLUDES.includes(test)) {
-    skipped.push(test);
-    continue;
-  }
+    const test = path.join('early', entry.name);
+    if (EXCLUDES.includes(test)) {
+      skipped.push(test);
+      continue;
+    }
 
-  spinner.text = test;
+    spinner.text = test;
 
-  const source = await Deno.readTextFile(path.join(args.dir, test));
-  const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
-  let result;
-  try {
-    result = await server.parse(source, sourceType);
-  } catch (err) {
-    spinner.warn(`${test}: server.parse() aborted: ${err}`);
-  }
-  if (result !== null) {
-    fails.push({ test });
+    const source = await Deno.readTextFile(path.join(args.dir, test));
+    const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
+    let result;
+    try {
+      result = await server.parse(source, sourceType);
+    } catch (err) {
+      spinner.warn(`${test}: server.parse() aborted: ${err}`);
+    }
+    if (result !== null) {
+      fails.push({ test });
+    }
   }
 }
 

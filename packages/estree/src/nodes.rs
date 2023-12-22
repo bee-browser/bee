@@ -114,6 +114,8 @@ pub enum Node {
     OptionalCall((Vec<NodeRef>, Location)),
     #[serde(skip)]
     OptionalMember((NodeRef, bool, Location)),
+    #[serde(skip)]
+    CoverInitializedName(CoverInitializedName),
 }
 
 impl Node {
@@ -936,6 +938,10 @@ impl Node {
         NodeRef::new(Self::OptionalMember((expr, computed, end)))
     }
 
+    pub fn cover_initialized_name(start: &Location, end: &Location, name: NodeRef, value: NodeRef) -> NodeRef {
+        NodeRef::new(Self::CoverInitializedName(CoverInitializedName::new(start, end, name, value)))
+    }
+
     pub fn for_init_update(init: NodeRef) -> NodeRef {
         match *init {
             Node::VariableDeclaration(ref decl) => {
@@ -977,6 +983,11 @@ impl Node {
             Node::AssignmentExpression(ref expr) => Self::to_assignment_pattern(expr),
             Node::SpreadElement(ref expr) => Self::to_rest_element(expr),
             Node::Property(ref property) => Self::to_assignment_property(property),
+            Node::CoverInitializedName(ref cover) => {
+                let start = cover.location.start_location();
+                let end = cover.location.end_location();
+                Self::assignment_pattern(&start, &end, cover.name.clone(), cover.value.clone())
+            }
             _ => node,
         }
     }
@@ -1055,6 +1066,45 @@ impl Node {
             Some(value),
             property.kind,
         )
+    }
+
+    // validation
+
+    pub fn validate_object_expression(&self) -> Result<(), String> {
+        match *self {
+            Node::ObjectExpression(ref expr) => expr.validate(),
+            _ => panic!(),
+        }
+    }
+
+    pub fn validate_array_expression(&self) -> Result<(), String> {
+        match *self {
+            Node::ArrayExpression(ref expr) => expr.validate(),
+            _ => panic!(),
+        }
+    }
+
+    fn validate_property(&self) -> Result<(), String> {
+        match *self {
+            Node::Property(ref prop) => prop.validate(),
+            _ => Ok(()),
+        }
+    }
+
+    fn validate_property_value(&self) -> Result<(), String> {
+        match *self {
+            // 13.2.5.1 Static Semantics: Early Errors
+            // CoverInitializedName is not allowed in ObjectLiteral
+            Node::CoverInitializedName(_) => Err("Early error: CoverInitializedName".to_string()),
+            _ => Ok(()),
+        }
+    }
+
+    fn validate_array_element(&self) -> Result<(), String> {
+        match *self {
+            Node::ObjectExpression(ref expr) => expr.validate(),
+            _ => Ok(()),
+        }
     }
 }
 
@@ -1942,6 +1992,13 @@ impl ArrayExpression {
             elements,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        for element in self.elements.iter().filter_map(Option::as_ref) {
+            element.validate_array_element()?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -1957,6 +2014,13 @@ impl ObjectExpression {
             location: LocationData::new(start, end),
             properties,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        for property in self.properties.iter() {
+            property.validate_property()?;
+        }
+        Ok(())
     }
 }
 
@@ -2001,6 +2065,11 @@ impl Property {
             shorthand,
             computed,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.value.validate_property_value()?;
+        Ok(())
     }
 }
 
@@ -2939,6 +3008,24 @@ impl ExportSpecifier {
 }
 
 #[derive(Debug, Serialize)]
+pub struct CoverInitializedName {
+    #[serde(flatten)]
+    pub location: LocationData,
+    pub name: NodeRef,  // Identifier
+    pub value: NodeRef, // Expression
+}
+
+impl CoverInitializedName {
+    fn new(start: &Location, end: &Location, name: NodeRef, value: NodeRef) -> Self {
+        Self {
+            location: LocationData::new(start, end),
+            name,
+            value,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum Scalar {
     Null,
@@ -3529,6 +3616,9 @@ macro_rules! node {
     };
     (optional_member@$end:ident; $expr:expr, $computed:expr) => {
         crate::nodes::Node::optional_member($expr, $computed, $end.clone())
+    };
+    (cover_initialized_name@$start:ident..$end:ident; $name:expr, $value:expr) => {
+        crate::nodes::Node::cover_initialized_name(&$start, &$end, $name, $value)
     };
     (for_init_update; $init:expr) => {
         crate::nodes::Node::for_init_update($init)

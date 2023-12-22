@@ -1706,6 +1706,20 @@ impl Builder {
         Ok(())
     }
 
+    fn primary_expression_object_literal(&mut self) -> Result<(), String> {
+        let (node, start, end) = self.pop_node();
+        let result = node.validate_object_expression();
+        self.push_node(node, start, end);
+        result
+    }
+
+    fn primary_expression_array_literal(&mut self) -> Result<(), String> {
+        let (node, start, end) = self.pop_node();
+        let result = node.validate_array_expression();
+        self.push_node(node, start, end);
+        result
+    }
+
     fn object_expression_empty(&mut self) -> Result<(), String> {
         let (_, end) = self.check("}");
         let (start, _) = self.check("{");
@@ -1726,6 +1740,27 @@ impl Builder {
     fn property(&mut self) -> Result<(), String> {
         let (key, start, end) = self.pop_node();
         let node = node!(property@start..end; key);
+        self.push_node(node, start, end);
+        Ok(())
+    }
+
+    fn cover_initialized_name(&mut self) -> Result<(), String> {
+        let (value, _, end) = self.pop_node();
+        let (name, start, _) = self.pop_node();
+        let node = node!(cover_initialized_name@start..end; name, value);
+        self.push_node(node, start, end);
+        Ok(())
+    }
+
+    fn property_cover_initialized_name(&mut self) -> Result<(), String> {
+        let (cover, start, end) = self.pop_node();
+        // 13.2.5.1 Static Semantics: Early Errors
+        // CoverInitializedName has to be handled a syntax error in ObjectLiteral.
+        let key = match *cover {
+            Node::CoverInitializedName(ref cover) => cover.name.clone(),
+            _ => panic!(),
+        };
+        let node = node!(property@start..end; key => cover);
         self.push_node(node, start, end);
         Ok(())
     }

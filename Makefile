@@ -35,6 +35,7 @@ CLEAN_TARGETS = $(addprefix clean-,\
 )
 
 CODEGEN_TARGETS = $(addprefix codegen-,\
+  packages/estree \
   packages/htmltokenizer \
   packages/htmlparser \
   packages/jsparser \

@@ -294,7 +294,7 @@ where
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
-                tracing::trace!(opcode = "reduce", ?rule, auto_semicolon = true);
+                tracing::trace!(opcode = "reduce", %rule, auto_semicolon = true);
                 self.handler.location(self.lexer.location());
                 match self.handler.reduce(rule) {
                     Ok(_) => {
