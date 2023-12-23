@@ -3,7 +3,7 @@
 // This code was bundled using `deno bundle` and it's not recommended to edit it manually
 
 'use strict';
-function h(tagName, attrs = [], ...children) {
+function h(tagName, attrs = {}, ...children) {
     const elem = document.createElement(tagName);
     for (const attr of Object.entries(attrs)){
         elem.setAttribute(attr[0], attr[1]);
@@ -230,6 +230,44 @@ class Widget extends EventEmitter {
         return this.elem_ !== null;
     }
 }
+'use strict';
+class Toolbar extends Widget {
+    constructor(){
+        super();
+        this.running_ = false;
+        this.actionButton_ = h('button', {
+            id: 'action'
+        }, t('Start'));
+        this.actionButton_.userdata_ = {
+            started: false
+        };
+        this.actionButton_.addEventListener('click', ()=>{
+            if (this.running_) {
+                this.emit('pause');
+                this.actionButton_.replaceChildren('Start');
+            } else {
+                this.emit('start');
+                this.actionButton_.replaceChildren('Pause');
+            }
+            this.running_ = !this.running_;
+            this.nextButton_.disabled = this.running_;
+        });
+        this.nextButton_ = h('button', {
+            id: 'next'
+        }, t('Next'));
+        this.nextButton_.addEventListener('click', ()=>this.emit('next'));
+        this.resetButton_ = h('button', {
+            id: 'reset'
+        }, t('Reset'));
+        this.resetButton_.addEventListener('click', ()=>this.emit('reset'));
+    }
+    render() {
+        this.elem_ = h('div', {
+            id: 'toolbar'
+        }, this.actionButton_, this.nextButton_, this.resetButton_);
+        return this.elem_;
+    }
+}
 class ParserView extends Widget {
     constructor(){
         super();
@@ -241,10 +279,14 @@ class ParserView extends Widget {
         }, this.stackView_.render());
         return this.elem_;
     }
+    clear() {
+        this.stackView_.clear();
+        this.elem_.replaceChildren(this.stackView_.render());
+    }
     feed(data) {
         switch(data.opcode){
             case 'push-state':
-                this.stackView_.pushState(data['state.label']);
+                this.stackView_.pushState(data['state.id'], data['state.label']);
                 break;
             case 'pop-state':
                 this.stackView_.popStates(data.num_states);
@@ -280,9 +322,13 @@ class StackView extends Widget {
         }
         return this.elem_;
     }
-    pushState(state) {
-        const items = state.split(', ');
-        const view = new StateView(items);
+    clear() {
+        this.views_ = [];
+        super.clear();
+    }
+    pushState(id, label) {
+        const items = label.split(', ');
+        const view = new StateView(id, items);
         this.elem_.appendChild(view.render());
         this.views_.push(view);
     }
@@ -295,19 +341,25 @@ class StackView extends Widget {
     }
 }
 class StateView extends Widget {
-    constructor(items){
+    constructor(id, items){
         super();
+        this.id_ = id;
         this.items_ = items;
     }
     render() {
-        this.elem_ = h('div', {
-            class: 'parser-state'
+        const items = h('div', {
+            class: 'parser-state-items'
         });
         for (const item of this.items_){
-            this.elem_.appendChild(h('div', {
+            items.appendChild(h('div', {
                 class: 'parser-state-item'
             }, t(item)));
         }
+        this.elem_ = h('div', {
+            class: 'parser-state'
+        }, h('div', {
+            class: 'parser-state-id'
+        }, t(this.id_)), items);
         return this.elem_;
     }
 }
@@ -331,6 +383,19 @@ class LexerView extends Widget {
             id: 'candidate-lexeme'
         }));
         return this.elem_;
+    }
+    clear() {
+        this.elem_.replaceChildren(h('div', {
+            id: 'lexer-cursor'
+        }, t('0, 0')), h('div', {
+            id: 'lexer-state'
+        }), h('div', {
+            id: 'lexical-goal'
+        }), h('div', {
+            id: 'candidate-token'
+        }), h('div', {
+            id: 'candidate-lexeme'
+        }));
     }
     feed(data) {
         switch(data.opcode){
@@ -382,11 +447,17 @@ class LexerView extends Widget {
         }
     }
 }
+'use strict';
 class MainView extends Widget {
     constructor(){
         super();
         this.pc_ = 0;
         this.logs_ = [];
+        this.toolbar_ = new Toolbar();
+        this.toolbar_.on('start', ()=>this.startReplay_());
+        this.toolbar_.on('pause', ()=>this.pauseReplay_());
+        this.toolbar_.on('reset', ()=>this.resetReplay_());
+        this.toolbar_.on('next', ()=>this.dispatch_());
         this.parserView_ = new ParserView();
         this.lexerView_ = new LexerView();
         this.on('log', this.handleLog_.bind(this));
@@ -394,7 +465,9 @@ class MainView extends Widget {
     render() {
         this.elem_ = h('div', {
             id: 'main-view'
-        }, this.parserView_.render(), this.lexerView_.render());
+        }, this.toolbar_.render(), h('div', {
+            id: 'views'
+        }, this.parserView_.render(), this.lexerView_.render()));
         return this.elem_;
     }
     start() {
@@ -415,9 +488,21 @@ class MainView extends Widget {
             event.target.close();
         });
     }
+    startReplay_() {
+        this.timer_ = setInterval(()=>this.dispatch_(), 100);
+    }
+    pauseReplay_() {
+        clearInterval(this.timer_);
+    }
+    resetReplay_() {
+        this.pc_ = 0;
+        this.parserView_.clear();
+        this.lexerView_.clear();
+    }
     dispatch_() {
         const log = this.logs_[this.pc_];
         if (log === undefined) {
+            this.pauseReplay_();
             return;
         }
         this.pc_++;
@@ -453,7 +538,6 @@ class MainView extends Widget {
                     break;
             }
         }
-        this.dispatch_();
     }
 }
 'use strict';

@@ -3,6 +3,5 @@
 ## Usage
 
 ```shell
-cargo run -r -p bee-logview -- -c config.yaml \
-  -d url=https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js
+echo 'x=1' | cargo run -r -p bee-logview -- -c config.yaml
 ```

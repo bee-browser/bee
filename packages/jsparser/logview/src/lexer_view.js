@@ -18,6 +18,15 @@ export default class LexerView extends Widget {
     return this.elem_;
   }
 
+  clear() {
+    this.elem_.replaceChildren(
+      h('div', { id: 'lexer-cursor' }, t('0, 0')),
+      h('div', { id: 'lexer-state' }),
+      h('div', { id: 'lexical-goal' }),
+      h('div', { id: 'candidate-token' }),
+      h('div', { id: 'candidate-lexeme' }));
+  }
+
   feed(data) {
     switch (data.opcode) {
     case 'set_goal':

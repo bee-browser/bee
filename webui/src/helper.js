@@ -1,6 +1,6 @@
 'use strict';
 
-export function h(tagName, attrs = [], ...children) {
+export function h(tagName, attrs = {}, ...children) {
   const elem = document.createElement(tagName);
   for (const attr of Object.entries(attrs)) {
     elem.setAttribute(attr[0], attr[1]);
