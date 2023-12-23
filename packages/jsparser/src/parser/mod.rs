@@ -120,7 +120,7 @@ where
             TokenKind::WhiteSpaceSequence => self.new_line,
             // A comment having line terminators affects the new_line state as described in
             // "5.1.2 The Lexical and RegExp Grammars".
-            TokenKind::Comment => token.has_line_terminators(),
+            TokenKind::Comment => token.has_line_terminators() || self.new_line,
             _ => false,
         };
         tracing::trace!(opcode = "consume", new_line = self.new_line, ?token.kind);
