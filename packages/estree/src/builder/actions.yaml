@@ -1437,9 +1437,9 @@
 - rule: PrimaryExpression_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Await -> ArrayLiteral_Await
-  action: primary_expression_array_literal
+  action: nop
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
-  action: primary_expression_object_literal
+  action: nop
 - rule: PrimaryExpression_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Await -> ClassExpression_Await
@@ -1870,9 +1870,9 @@
 - rule: PrimaryExpression -> Literal
   action: nop
 - rule: PrimaryExpression -> ArrayLiteral
-  action: primary_expression_array_literal
+  action: nop
 - rule: PrimaryExpression -> ObjectLiteral
-  action: primary_expression_object_literal
+  action: nop
 - rule: PrimaryExpression -> FunctionExpression
   action: nop
 - rule: PrimaryExpression -> ClassExpression
@@ -3848,9 +3848,9 @@
 - rule: PrimaryExpression_Yield -> Literal
   action: nop
 - rule: PrimaryExpression_Yield -> ArrayLiteral_Yield
-  action: primary_expression_array_literal
+  action: nop
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
-  action: primary_expression_object_literal
+  action: nop
 - rule: PrimaryExpression_Yield -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield -> ClassExpression_Yield
@@ -3942,9 +3942,9 @@
 - rule: PrimaryExpression_Yield_Await -> Literal
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
-  action: primary_expression_array_literal
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
-  action: primary_expression_object_literal
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
   action: nop
 - rule: PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await

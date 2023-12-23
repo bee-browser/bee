@@ -189,7 +189,8 @@ if (options.only === 'all' || options.only === 'fail') {
     try {
       result = await server.parse(source, sourceType);
     } catch (err) {
-      spinner.warn(`${test}: server.parse() aborted: ${err}`);
+      spinner.warn(`${test}: server.parse() aborted`);
+      Deno.exit(1);
     }
     if (result !== null) {
       fails.push({ test });
@@ -219,7 +220,8 @@ if (options.only === 'all' || options.only === 'early') {
     try {
       result = await server.parse(source, sourceType);
     } catch (err) {
-      spinner.warn(`${test}: server.parse() aborted: ${err}`);
+      spinner.warn(`${test}: server.parse() aborted`);
+      Deno.exit(1);
     }
     if (result !== null) {
       fails.push({ test });

@@ -1604,15 +1604,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PrimaryExpression_Await -> Literal
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Await -> ArrayLiteral_Await
-    Some((
-        Builder::primary_expression_array_literal,
-        "primary_expression_array_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression_Await -> ObjectLiteral_Await
-    Some((
-        Builder::primary_expression_object_literal,
-        "primary_expression_object_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression_Await -> FunctionExpression
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Await -> ClassExpression_Await
@@ -2121,15 +2115,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PrimaryExpression -> Literal
     Some((Builder::nop, "nop")),
     // PrimaryExpression -> ArrayLiteral
-    Some((
-        Builder::primary_expression_array_literal,
-        "primary_expression_array_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression -> ObjectLiteral
-    Some((
-        Builder::primary_expression_object_literal,
-        "primary_expression_object_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression -> FunctionExpression
     Some((Builder::nop, "nop")),
     // PrimaryExpression -> ClassExpression
@@ -4239,15 +4227,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PrimaryExpression_Yield -> Literal
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield -> ArrayLiteral_Yield
-    Some((
-        Builder::primary_expression_array_literal,
-        "primary_expression_array_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield -> ObjectLiteral_Yield
-    Some((
-        Builder::primary_expression_object_literal,
-        "primary_expression_object_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield -> FunctionExpression
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield -> ClassExpression_Yield
@@ -4348,15 +4330,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PrimaryExpression_Yield_Await -> Literal
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
-    Some((
-        Builder::primary_expression_array_literal,
-        "primary_expression_array_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
-    Some((
-        Builder::primary_expression_object_literal,
-        "primary_expression_object_literal",
-    )),
+    Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield_Await -> FunctionExpression
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await

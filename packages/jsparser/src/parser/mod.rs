@@ -63,7 +63,7 @@ where
         self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
         let mut token = self.next_token()?;
-        tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
+        tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
         loop {
             match self.handle_token(&token) {
                 ParserResult::Accept(artifact) => return Ok(artifact),
@@ -71,8 +71,9 @@ where
                 ParserResult::NextToken => {
                     self.consume_token(token);
                     token = self.next_token()?;
-                    tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
+                    tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
                 }
+                ParserResult::SyntaxError => return Err(Error::SyntaxError),
                 ParserResult::Error => {
                     if self.is_auto_semicolon_allowed(&token) {
                         loop {
@@ -80,6 +81,9 @@ where
                                 ParserResult::Accept(artifact) => return Ok(artifact),
                                 ParserResult::Reconsume => (),
                                 ParserResult::NextToken => break,
+                                ParserResult::SyntaxError => {
+                                    return Err(Error::SyntaxError);
+                                }
                                 ParserResult::Error => {
                                     self.report_error(&token);
                                     return Err(Error::SyntaxError);
@@ -119,7 +123,7 @@ where
             TokenKind::Comment => token.has_line_terminators(),
             _ => false,
         };
-        tracing::trace!(new_line = self.new_line, ?token.kind);
+        tracing::trace!(opcode = "consume", new_line = self.new_line, ?token.kind);
         self.lexer.consume_token(token);
     }
 
@@ -220,7 +224,7 @@ where
                         self.push_state(next);
                         ParserResult::NextToken
                     }
-                    Err(_err) => ParserResult::Error, // TODO: error reporting
+                    Err(_err) => ParserResult::SyntaxError, // TODO: error reporting
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
@@ -238,7 +242,7 @@ where
                         self.push_state(next);
                         ParserResult::Reconsume
                     }
-                    Err(_err) => ParserResult::Error, // TODO: error reporting
+                    Err(_err) => ParserResult::SyntaxError, // TODO: error reporting
                 }
             }
             Action::Replace(next) => {
@@ -362,6 +366,7 @@ enum ParserResult<T> {
     Reconsume,
     NextToken,
     Error,
+    SyntaxError,
 }
 
 pub trait SyntaxHandler {

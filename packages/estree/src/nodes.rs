@@ -938,8 +938,15 @@ impl Node {
         NodeRef::new(Self::OptionalMember((expr, computed, end)))
     }
 
-    pub fn cover_initialized_name(start: &Location, end: &Location, name: NodeRef, value: NodeRef) -> NodeRef {
-        NodeRef::new(Self::CoverInitializedName(CoverInitializedName::new(start, end, name, value)))
+    pub fn cover_initialized_name(
+        start: &Location,
+        end: &Location,
+        name: NodeRef,
+        value: NodeRef,
+    ) -> NodeRef {
+        NodeRef::new(Self::CoverInitializedName(CoverInitializedName::new(
+            start, end, name, value,
+        )))
     }
 
     pub fn for_init_update(init: NodeRef) -> NodeRef {
@@ -1052,7 +1059,8 @@ impl Node {
     fn to_rest_element(expr: &SpreadElement) -> NodeRef {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        Self::rest_element(&start, &end, expr.argument.clone())
+        let argument = Self::into_pattern(expr.argument.clone());
+        Self::rest_element(&start, &end, argument)
     }
 
     fn to_assignment_property(property: &Property) -> NodeRef {
@@ -1070,29 +1078,30 @@ impl Node {
 
     // validation
 
-    pub fn validate_object_expression(&self) -> Result<(), String> {
-        match *self {
-            Node::ObjectExpression(ref expr) => expr.validate(),
-            _ => panic!(),
-        }
-    }
-
-    pub fn validate_array_expression(&self) -> Result<(), String> {
+    pub fn validate_expression(&self) -> Result<(), String> {
         match *self {
             Node::ArrayExpression(ref expr) => expr.validate(),
-            _ => panic!(),
-        }
-    }
-
-    fn validate_property(&self) -> Result<(), String> {
-        match *self {
+            Node::ObjectExpression(ref expr) => expr.validate(),
             Node::Property(ref prop) => prop.validate(),
-            _ => Ok(()),
-        }
-    }
-
-    fn validate_property_value(&self) -> Result<(), String> {
-        match *self {
+            Node::FunctionExpression(ref expr) => expr.validate(),
+            Node::UnaryExpression(ref expr) => expr.validate(),
+            Node::UpdateExpression(ref expr) => expr.validate(),
+            Node::BinaryExpression(ref expr) => expr.validate(),
+            Node::AssignmentExpression(ref expr) => expr.validate(),
+            Node::LogicalExpression(ref expr) => expr.validate(),
+            Node::MemberExpression(ref expr) => expr.validate(),
+            Node::ConditionalExpression(ref expr) => expr.validate(),
+            Node::CallExpression(ref expr) => expr.validate(),
+            Node::NewExpression(ref expr) => expr.validate(),
+            Node::SequenceExpression(ref expr) => expr.validate(),
+            Node::ArrowFunctionExpression(ref expr) => expr.validate(),
+            Node::YieldExpression(ref expr) => expr.validate(),
+            Node::TemplateLiteral(ref expr) => expr.validate(),
+            Node::TaggedTemplateExpression(ref expr) => expr.validate(),
+            Node::AwaitExpression(ref expr) => expr.validate(),
+            Node::ImportExpression(ref expr) => expr.validate(),
+            Node::ChainExpression(ref expr) => expr.validate(),
+            Node::SpreadElement(ref elem) => elem.validate(),
             // 13.2.5.1 Static Semantics: Early Errors
             // CoverInitializedName is not allowed in ObjectLiteral
             Node::CoverInitializedName(_) => Err("Early error: CoverInitializedName".to_string()),
@@ -1100,9 +1109,20 @@ impl Node {
         }
     }
 
-    fn validate_array_element(&self) -> Result<(), String> {
+    pub fn validate_primary_expression(&self) -> Result<(), String> {
         match *self {
             Node::ObjectExpression(ref expr) => expr.validate(),
+            Node::ArrayExpression(ref expr) => expr.validate(),
+            _ => Ok(()),
+        }
+    }
+
+    // TODO: implement properly
+    pub fn validate_pattern(&self) -> Result<(), String> {
+        match *self {
+            Node::SequenceExpression(_) => {
+                Err("LeftHandSideExpression must cover an AssignmentPattern".to_string())
+            }
             _ => Ok(()),
         }
     }
@@ -1316,6 +1336,10 @@ impl Function {
             r#async,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.body.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -1457,8 +1481,8 @@ impl DebuggerStatement {
 pub struct WithStatement {
     #[serde(flatten)]
     pub location: LocationData,
-    pub object: NodeRef,
-    pub body: NodeRef,
+    pub object: NodeRef, // Expression
+    pub body: NodeRef,   // Statement
 }
 
 impl WithStatement {
@@ -1995,7 +2019,7 @@ impl ArrayExpression {
 
     fn validate(&self) -> Result<(), String> {
         for element in self.elements.iter().filter_map(Option::as_ref) {
-            element.validate_array_element()?;
+            element.validate_expression()?;
         }
         Ok(())
     }
@@ -2018,7 +2042,7 @@ impl ObjectExpression {
 
     fn validate(&self) -> Result<(), String> {
         for property in self.properties.iter() {
-            property.validate_property()?;
+            property.validate_expression()?;
         }
         Ok(())
     }
@@ -2068,8 +2092,7 @@ impl Property {
     }
 
     fn validate(&self) -> Result<(), String> {
-        self.value.validate_property_value()?;
-        Ok(())
+        self.value.validate_expression()
     }
 }
 
@@ -2106,6 +2129,10 @@ impl FunctionExpression {
             function: Function::new(id, params, body, generator, r#async),
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.function.validate()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2125,6 +2152,10 @@ impl UnaryExpression {
             argument,
             prefix: true,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
     }
 }
 
@@ -2187,6 +2218,10 @@ impl UpdateExpression {
             prefix,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -2232,6 +2267,10 @@ impl BinaryExpression {
             left,
             right,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.right.validate_expression()
     }
 }
 
@@ -2339,6 +2378,10 @@ impl AssignmentExpression {
             right,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.right.validate_expression()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -2427,6 +2470,11 @@ impl LogicalExpression {
             right,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.left.validate_expression()?;
+        self.right.validate_expression()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -2479,6 +2527,11 @@ impl MemberExpression {
             optional,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.object.validate_expression()?;
+        self.property.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2504,6 +2557,12 @@ impl ConditionalExpression {
             consequent,
             alternate,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.test.validate_expression()?;
+        self.consequent.validate_expression()?;
+        self.alternate.validate_expression()
     }
 }
 
@@ -2531,6 +2590,14 @@ impl CallExpression {
             optional,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.callee.validate_expression()?;
+        for argument in self.arguments.iter() {
+            argument.validate_expression()?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2549,6 +2616,14 @@ impl NewExpression {
             arguments,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.callee.validate_expression()?;
+        for argument in self.arguments.iter() {
+            argument.validate_expression()?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2564,6 +2639,13 @@ impl SequenceExpression {
             location: LocationData::new(start, end),
             expressions,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        for expr in self.expressions.iter() {
+            expr.validate_expression()?;
+        }
+        Ok(())
     }
 }
 
@@ -2589,6 +2671,10 @@ impl ArrowFunctionExpression {
             function: Function::new(id, params, body, false, r#async),
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.function.validate()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2605,6 +2691,13 @@ impl YieldExpression {
             location: LocationData::new(start, end),
             argument,
             delegate,
+        }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        match self.argument {
+            Some(ref argument) => argument.validate_expression(),
+            None => Ok(()),
         }
     }
 }
@@ -2630,6 +2723,13 @@ impl TemplateLiteral {
             expressions,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        for expr in self.expressions.iter() {
+            expr.validate_expression()?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2647,6 +2747,11 @@ impl TaggedTemplateExpression {
             tag,
             quasi,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.tag.validate_expression()?;
+        self.quasi.validate_expression()
     }
 }
 
@@ -2699,6 +2804,10 @@ impl AwaitExpression {
             argument,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2715,6 +2824,10 @@ impl ImportExpression {
             source,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.source.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2730,6 +2843,10 @@ impl ChainExpression {
             location: LocationData::new(start, end),
             expression,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.expression.validate_expression()
     }
 }
 
@@ -2826,6 +2943,10 @@ impl SpreadElement {
             location: LocationData::new(start, end),
             argument,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
     }
 }
 
