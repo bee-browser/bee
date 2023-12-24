@@ -840,12 +840,16 @@ impl Node {
             Self::MethodDefinition(ref method) => method,
             _ => panic!(),
         };
+        let kind = match method.kind {
+            MethodKind::Constructor => MethodKind::Method,
+            kind => kind,
+        };
         NodeRef::new(Self::MethodDefinition(MethodDefinition::new(
             start,
             end,
             method.key.clone(),
             method.value.clone(),
-            method.kind,
+            kind,
             method.computed,
             true,
         )))
