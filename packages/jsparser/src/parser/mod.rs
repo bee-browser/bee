@@ -65,37 +65,39 @@ where
         self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
         let mut token = self.next_token()?;
+        let mut auto_semicolon_inserted = false;
         tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
         loop {
             match self.handle_token(&token) {
                 ParserResult::Accept(artifact) => return Ok(artifact),
                 ParserResult::Reconsume => (),
                 ParserResult::NextToken => {
+                    auto_semicolon_inserted = false;
                     self.consume_token(token);
                     token = self.next_token()?;
                     tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
                 }
                 ParserResult::SyntaxError => return Err(Error::SyntaxError),
-                ParserResult::Error => {
-                    if self.is_auto_semicolon_allowed(&token) {
-                        loop {
-                            match self.auto_semicolon() {
-                                ParserResult::Accept(artifact) => return Ok(artifact),
-                                ParserResult::Reconsume => (),
-                                ParserResult::NextToken => break,
-                                ParserResult::SyntaxError => {
-                                    return Err(Error::SyntaxError);
-                                }
-                                ParserResult::Error => {
-                                    self.report_error(&token);
-                                    return Err(Error::SyntaxError);
-                                }
+                ParserResult::Error if !auto_semicolon_inserted && self.is_auto_semicolon_allowed(&token) => {
+                    loop {
+                        match self.auto_semicolon() {
+                            ParserResult::Accept(artifact) => return Ok(artifact),
+                            ParserResult::Reconsume => (),
+                            ParserResult::NextToken => break,
+                            ParserResult::SyntaxError => {
+                                return Err(Error::SyntaxError);
+                            }
+                            ParserResult::Error => {
+                                self.report_error(&token);
+                                return Err(Error::SyntaxError);
                             }
                         }
-                    } else {
-                        self.report_error(&token);
-                        return Err(Error::SyntaxError);
                     }
+                    auto_semicolon_inserted = true;
+                }
+                _ => {
+                    self.report_error(&token);
+                    return Err(Error::SyntaxError);
                 }
             }
         }

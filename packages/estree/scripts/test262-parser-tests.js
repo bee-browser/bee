@@ -50,8 +50,6 @@ args.dir ||= DEFAULT_DIR;
 
 // TODO: remove
 const EXCLUDES = [
-  // infinite loop
-  'fail/8ba15f5246ca756c.js',
   // B.1.1 HTML-like Comments - SingleLineHTMLOpenComment
   'pass/1270d541e0fd6af8.js',
   'pass/b15ab152f8531a9f.js',
