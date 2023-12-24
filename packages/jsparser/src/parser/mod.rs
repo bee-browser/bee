@@ -131,7 +131,10 @@ where
                 }
                 false
             }
-            _ => true,
+            _ => {
+                self.new_line = false;
+                true
+            }
         };
         tracing::trace!(opcode = "consume", new_line = self.new_line, ?token.kind);
         self.lexer.consume_token(token);
