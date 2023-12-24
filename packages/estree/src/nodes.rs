@@ -1422,10 +1422,7 @@ pub struct ExpressionStatement {
 impl ExpressionStatement {
     fn new(start: &Location, end: &Location, expression: NodeRef) -> Self {
         let directive = match *expression {
-            Node::Literal(Literal {
-                value: Scalar::String(ref value),
-                ..
-            }) => Some(value.to_owned()),
+            Node::Literal(Literal { value: Scalar::String(_), ref raw, .. }) => Some(raw[1..(raw.len() - 1)].to_owned()),
             _ => None,
         };
         Self {
@@ -3162,6 +3159,26 @@ pub enum Scalar {
 pub enum RawString {
     Static(&'static str),
     Dynamic(String),
+}
+
+impl std::ops::Deref for RawString {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Static(s) => s,
+            Self::Dynamic(s) => s.as_str(),
+        }
+    }
+}
+
+impl std::string::ToString for RawString {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Static(s) => s.to_string(),
+            Self::Dynamic(ref s) => s.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
