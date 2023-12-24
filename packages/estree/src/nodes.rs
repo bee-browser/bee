@@ -119,15 +119,6 @@ pub enum Node {
 }
 
 impl Node {
-    pub fn is_directive(&self) -> bool {
-        match self {
-            Node::ExpressionStatement(ref stmt) => stmt.directive.is_some(),
-            _ => false,
-        }
-    }
-}
-
-impl Node {
     pub fn identifier(start: &Location, end: &Location, name: String) -> NodeRef {
         NodeRef::new(Self::Identifier(Identifier::new(start, end, name)))
     }
@@ -160,6 +151,7 @@ impl Node {
         body: Vec<NodeRef>,
         source_type: SourceType,
     ) -> NodeRef {
+        let body = Self::into_statement_list_with_directive_prologue(body);
         NodeRef::new(Self::Program(Program::new(start, end, body, source_type)))
     }
 
@@ -169,6 +161,11 @@ impl Node {
         NodeRef::new(Self::ExpressionStatement(ExpressionStatement::new(
             start, end, expression,
         )))
+    }
+
+    pub fn function_body(start: &Location, end: &Location, body: Vec<NodeRef>) -> NodeRef {
+        let body = Self::into_statement_list_with_directive_prologue(body);
+        NodeRef::new(Self::BlockStatement(BlockStatement::new(start, end, body)))
     }
 
     pub fn block_statement(start: &Location, end: &Location, body: Vec<NodeRef>) -> NodeRef {
@@ -1042,13 +1039,6 @@ impl Node {
         }
     }
 
-    pub fn into_directive(node: NodeRef) -> NodeRef {
-        match *node {
-            Node::ExpressionStatement(ref stmt) => NodeRef::new(Node::ExpressionStatement(stmt.to_directive_if_possible())),
-            _ => node,
-        }
-    }
-
     fn to_object_pattern(expr: &ObjectExpression) -> NodeRef {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
@@ -1103,6 +1093,18 @@ impl Node {
             property.kind,
             shorthand,
         )
+    }
+
+    fn into_statement_list_with_directive_prologue(mut list: Vec<NodeRef>) -> Vec<NodeRef> {
+        for node in list.iter_mut() {
+            match node.0.as_ref() {
+                Node::ExpressionStatement(ref stmt) if stmt.is_likely_directive() => {
+                    *node = NodeRef::new(Node::ExpressionStatement(stmt.to_directive()));
+                }
+                _ => break,
+            }
+        }
+        list
     }
 
     // validation
@@ -1454,17 +1456,26 @@ impl ExpressionStatement {
         }
     }
 
-    fn to_directive_if_possible(&self) -> Self {
+    fn is_likely_directive(&self) -> bool {
+        match *self.expression {
+            Node::Literal(Literal {
+                location: LocationData { start, .. },
+                value: Scalar::String(_),
+                ..
+            }) if self.location.start == start => true,
+            _ => false,
+        }
+    }
+
+    fn to_directive(&self) -> Self {
         let directive = match *self.expression {
             Node::Literal(Literal {
                 location: LocationData { start, .. },
                 value: Scalar::String(_),
                 ref raw,
                 ..
-            }) if self.location.start == start => {
-                Some(raw[1..(raw.len() - 1)].to_owned())
-            }
-            _ => None
+            }) if self.location.start == start => Some(raw[1..(raw.len() - 1)].to_owned()),
+            _ => panic!(),
         };
         Self {
             location: self.location.clone(),
@@ -3299,10 +3310,10 @@ macro_rules! node {
         crate::nodes::Node::block_statement(&$start, &$end, $body)
     };
     (function_body@$start:ident..$end:ident) => {
-        crate::nodes::Node::block_statement(&$start, &$end, vec![])
+        crate::nodes::Node::function_body(&$start, &$end, vec![])
     };
     (function_body@$start:ident..$end:ident; $body:expr) => {
-        crate::nodes::Node::block_statement(&$start, &$end, $body)
+        crate::nodes::Node::function_body(&$start, &$end, $body)
     };
     (empty_statement @ $start:ident .. $end:ident) => {
         crate::nodes::Node::empty_statement(&$start, &$end)
@@ -3828,9 +3839,6 @@ macro_rules! node {
     };
     (into_property; $method:expr) => {
         crate::nodes::Node::into_property($method)
-    };
-    (into_directive; $node:expr) => {
-        crate::nodes::Node::into_directive($node)
     };
 }
 

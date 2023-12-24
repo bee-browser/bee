@@ -11,9 +11,9 @@
 - rule: ModuleBody -> ModuleItemList
   action: nop
 - rule: StatementList -> StatementListItem
-  action: into_statement_list
+  action: into_list
 - rule: StatementList -> StatementList StatementListItem
-  action: append_to_statement_list
+  action: append_to_list
 - rule: ModuleItemList -> ModuleItem
   action: into_list
 - rule: ModuleItemList -> ModuleItemList ModuleItem
@@ -1105,9 +1105,9 @@
 - rule: OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
   action: optional_chain_append_private_identifier
 - rule: StatementList_Await -> StatementListItem_Await
-  action: into_statement_list
+  action: into_list
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
-  action: append_to_statement_list
+  action: append_to_list
 - rule: DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
   action: do_while_statement
 - rule: WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
@@ -1325,9 +1325,9 @@
 - rule: FormalParameter -> BindingElement
   action: nop
 - rule: StatementList_Return -> StatementListItem_Return
-  action: into_statement_list
+  action: into_list
 - rule: StatementList_Return -> StatementList_Return StatementListItem_Return
-  action: append_to_statement_list
+  action: append_to_list
 - rule: BindingRestElement_Yield -> ELLIPSIS BindingIdentifier_Yield
   action: rest_element
 - rule: BindingRestElement_Yield -> ELLIPSIS BindingPattern_Yield
@@ -1639,9 +1639,9 @@
 - rule: BindingElement_Yield -> BindingPattern_Yield Initializer_In_Yield
   action: assignment_pattern
 - rule: StatementList_Yield_Return -> StatementListItem_Yield_Return
-  action: into_statement_list
+  action: into_list
 - rule: StatementList_Yield_Return -> StatementList_Yield_Return StatementListItem_Yield_Return
-  action: append_to_statement_list
+  action: append_to_list
 - rule: BindingElement_Await -> SingleNameBinding_Await
   action: either_left
 - rule: BindingElement_Await -> BindingPattern_Await
@@ -1649,9 +1649,9 @@
 - rule: BindingElement_Await -> BindingPattern_Await Initializer_In_Await
   action: assignment_pattern
 - rule: StatementList_Await_Return -> StatementListItem_Await_Return
-  action: into_statement_list
+  action: into_list
 - rule: StatementList_Await_Return -> StatementList_Await_Return StatementListItem_Await_Return
-  action: append_to_statement_list
+  action: append_to_list
 - rule: BindingIdentifier_Yield_Await -> Identifier
   action: nop
 - rule: BindingIdentifier_Yield_Await -> YIELD
@@ -1669,11 +1669,11 @@
 - rule: BindingElement_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
   action: assignment_pattern
 - rule: StatementList_Yield_Await_Return -> StatementListItem_Yield_Await_Return
-  action: into_statement_list
+  action: into_list
 - rule: >-
     StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return
     StatementListItem_Yield_Await_Return
-  action: append_to_statement_list
+  action: append_to_list
 - rule: >-
     MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody
     RBRACE

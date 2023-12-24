@@ -259,26 +259,6 @@ impl Builder {
         Ok(())
     }
 
-    fn into_statement_list(&mut self) -> Result<(), String> {
-        let (node, start, end) = self.pop_node();
-        let node = node!(into_directive; node);
-        self.push_list(vec![node], start, end);
-        Ok(())
-    }
-
-    fn append_to_statement_list(&mut self) -> Result<(), String> {
-        let (node, _, end) = self.pop_node();
-        let (mut list, start, _) = self.pop_list();
-        let last = list.last().unwrap();
-        list.push(if last.is_directive() {
-            node!(into_directive; node)
-        } else {
-            node
-        });
-        self.push_list(list, start, end);
-        Ok(())
-    }
-
     fn empty_statement(&mut self) -> Result<(), String> {
         let (start, end) = self.check(";");
         let node = node!(empty_statement@start..end);
@@ -1432,7 +1412,7 @@ impl Builder {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (start, _) = self.check("{");
-        let node = node!(block_statement@start..end; body);
+        let node = node!(function_body@start..end; body);
         self.push_node(node, start, end);
         Ok(())
     }
