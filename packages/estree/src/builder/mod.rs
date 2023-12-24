@@ -810,7 +810,7 @@ impl Builder {
         let (start, _) = self.check("for");
         // If LeftHandSideExpression is either an ObjectLiteral or an ArrayLiteral, it must cover
         // an AssignmentPattern.  See "14.7.5.1 Static Semantics: Early Errors" in ECMA-262.
-        let left = node!(into_pattern; left);
+        let left = node!(into_pattern; left)?;
         left.validate_expression()?;
         right.validate_expression()?;
         let node = node!(for_in_statement@start..end; left, right, body);
@@ -845,7 +845,7 @@ impl Builder {
         let (start, _) = self.check("for");
         // If LeftHandSideExpression is either an ObjectLiteral or an ArrayLiteral, it must cover
         // an AssignmentPattern.  See "14.7.5.1 Static Semantics: Early Errors" in ECMA-262.
-        let left = node!(into_pattern; left);
+        let left = node!(into_pattern; left)?;
         left.validate_expression()?;
         right.validate_expression()?;
         let node = node!(for_of_statement@start..end; left, right, body);
@@ -879,7 +879,7 @@ impl Builder {
         self.check("(");
         self.check("await");
         let (start, _) = self.check("for");
-        let left = node!(into_pattern; left);
+        let left = node!(into_pattern; left)?;
         left.validate_expression()?;
         right.validate_expression()?;
         let node = node!(for_await_of_statement@start..end; left, right, body);
@@ -1533,7 +1533,7 @@ impl Builder {
         let (left, start, _) = self.pop_node();
         // If LeftHandSideExpression is an ObjectLiteral or an ArrayLiteral, it must cover an
         // AssignmentPattern.  See "13.15.1 Static Semantics: Early Errors" in ECMA-262.
-        let left = node!(into_pattern; left);
+        let left = node!(into_pattern; left)?;
         left.validate_pattern()?;
         let node = node!(assignment_expression@start..end; operator, left, right);
         self.push_node(node, start, end);
@@ -1698,7 +1698,7 @@ impl Builder {
 
     fn arrow_parameters(&mut self) -> Result<(), String> {
         let (nullable, start, end) = self.pop_nullable();
-        let list = node!(into_patterns; nullable);
+        let list = node!(into_patterns; nullable)?;
         self.push_list(list, start, end);
         Ok(())
     }
@@ -1852,7 +1852,7 @@ impl Builder {
         self.check(",");
         let (elements, ..) = self.pop_array();
         let (start, _) = self.check("[");
-        let node = node!(array_expression@start..end; elements);
+        let node = node!(array_expression@start..end; elements; trailing_comma);
         self.push_node(node, start, end);
         Ok(())
     }

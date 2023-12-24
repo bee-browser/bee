@@ -456,9 +456,10 @@ impl Node {
         start: &Location,
         end: &Location,
         elements: Vec<Option<NodeRef>>,
+        trailing_comma: bool,
     ) -> NodeRef {
         NodeRef::new(Self::ArrayExpression(ArrayExpression::new(
-            start, end, elements,
+            start, end, elements, trailing_comma,
         )))
     }
 
@@ -981,7 +982,7 @@ impl Node {
         }
     }
 
-    pub fn into_patterns(nullable: Option<NodeRef>) -> Vec<NodeRef> {
+    pub fn into_patterns(nullable: Option<NodeRef>) -> Result<Vec<NodeRef>, String> {
         match nullable {
             Some(node) => match *node {
                 Node::SequenceExpression(ref seq) => seq
@@ -989,14 +990,14 @@ impl Node {
                     .iter()
                     .cloned()
                     .map(Self::into_pattern)
-                    .collect(),
-                _ => vec![Self::into_pattern(node)],
+                    .collect::<Result<Vec<_>, _>>(),
+                _ => Ok(vec![Self::into_pattern(node)?]),
             },
-            None => vec![],
+            None => Ok(vec![]),
         }
     }
 
-    pub fn into_pattern(node: NodeRef) -> NodeRef {
+    pub fn into_pattern(node: NodeRef) -> Result<NodeRef, String> {
         match *node {
             Node::ObjectExpression(ref expr) => Self::to_object_pattern(expr),
             Node::ArrayExpression(ref expr) => Self::to_array_pattern(expr),
@@ -1006,9 +1007,9 @@ impl Node {
             Node::CoverInitializedName(ref cover) => {
                 let start = cover.location.start_location();
                 let end = cover.location.end_location();
-                Self::assignment_pattern(&start, &end, cover.name.clone(), cover.value.clone())
+                Ok(Self::assignment_pattern(&start, &end, cover.name.clone(), cover.value.clone()))
             }
-            _ => node,
+            _ => Ok(node),
         }
     }
 
@@ -1039,7 +1040,7 @@ impl Node {
         }
     }
 
-    fn to_object_pattern(expr: &ObjectExpression) -> NodeRef {
+    fn to_object_pattern(expr: &ObjectExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let properties = expr
@@ -1047,52 +1048,71 @@ impl Node {
             .iter()
             .cloned()
             .map(Self::into_pattern)
-            .collect();
-        Self::object_pattern(&start, &end, properties)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::object_pattern(&start, &end, properties))
     }
 
-    fn to_array_pattern(expr: &ArrayExpression) -> NodeRef {
+    fn to_array_pattern(expr: &ArrayExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        let elements = expr
-            .elements
-            .iter()
-            .cloned()
-            .map(|nullable| nullable.map(Self::into_pattern))
-            .collect();
-        Self::array_pattern(&start, &end, elements)
+        let mut elements = vec![];
+        let mut rest_found = false;
+        for element in expr.elements.iter() {
+            match element {
+                Some(node) => {
+                    let node = Self::into_pattern(node.clone())?;
+                    if let Node::RestElement(_) = *node {
+                        if rest_found {
+                            return Err("Multiple RestElements are not allowed in ArrayAssignmentPattern".to_string());
+                        }
+                        if expr.trailing_comma {
+                            return Err("Trailing comma is not allowed in ArrayAssignmentPattern".to_string());
+                        }
+                        rest_found = true;
+                    }
+                    elements.push(Some(node));
+                }
+                None => {
+                    if rest_found {
+                        return Err("Trailing comma is not allowed in ArrayAssignmentPattern".to_string());
+                    }
+                    elements.push(None)
+                }
+            }
+        }
+        Ok(Self::array_pattern(&start, &end, elements))
     }
 
-    fn to_assignment_pattern(expr: &AssignmentExpression) -> NodeRef {
+    fn to_assignment_pattern(expr: &AssignmentExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        Self::assignment_pattern(&start, &end, expr.left.clone(), expr.right.clone())
+        Ok(Self::assignment_pattern(&start, &end, expr.left.clone(), expr.right.clone()))
     }
 
-    fn to_rest_element(expr: &SpreadElement) -> NodeRef {
+    fn to_rest_element(expr: &SpreadElement) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        let argument = Self::into_pattern(expr.argument.clone());
-        Self::rest_element(&start, &end, argument)
+        let argument = Self::into_pattern(expr.argument.clone())?;
+        Ok(Self::rest_element(&start, &end, argument))
     }
 
-    fn to_assignment_property(property: &Property) -> NodeRef {
+    fn to_assignment_property(property: &Property) -> Result<NodeRef, String> {
         let start = property.location.start_location();
         let end = property.location.end_location();
-        let value = Self::into_pattern(property.value.clone());
+        let value = Self::into_pattern(property.value.clone())?;
         let shorthand = property.shorthand
             || match *value {
                 Node::AssignmentPattern(_) => true,
                 _ => false,
             };
-        Self::property(
+        Ok(Self::property(
             &start,
             &end,
             property.key.clone(),
             value,
             property.kind,
             shorthand,
-        )
+        ))
     }
 
     fn into_statement_list_with_directive_prologue(mut list: Vec<NodeRef>) -> Vec<NodeRef> {
@@ -2059,13 +2079,16 @@ pub struct ArrayExpression {
     #[serde(flatten)]
     pub location: LocationData,
     pub elements: Vec<Option<NodeRef>>, // [ Expression | SpreadElement | null ]
+    #[serde(skip)]
+    trailing_comma: bool,
 }
 
 impl ArrayExpression {
-    fn new(start: &Location, end: &Location, elements: Vec<Option<NodeRef>>) -> Self {
+    fn new(start: &Location, end: &Location, elements: Vec<Option<NodeRef>>, trailing_comma: bool) -> Self {
         Self {
             location: LocationData::new(start, end),
             elements,
+            trailing_comma,
         }
     }
 
@@ -3547,10 +3570,13 @@ macro_rules! node {
         crate::nodes::Node::this_expression(&$start, &$end)
     };
     (array_expression@$start:ident..$end:ident) => {
-        crate::nodes::Node::array_expression(&$start, &$end, vec![])
+        crate::nodes::Node::array_expression(&$start, &$end, vec![], false)
     };
     (array_expression@$start:ident..$end:ident; $elements:expr) => {
-        crate::nodes::Node::array_expression(&$start, &$end, $elements)
+        crate::nodes::Node::array_expression(&$start, &$end, $elements, false)
+    };
+    (array_expression@$start:ident..$end:ident; $elements:expr; trailing_comma) => {
+        crate::nodes::Node::array_expression(&$start, &$end, $elements, true)
     };
     (object_expression@$start:ident..$end:ident) => {
         crate::nodes::Node::object_expression(&$start, &$end, vec![])
