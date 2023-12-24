@@ -19,9 +19,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ModuleBody -> ModuleItemList
     Some((Builder::nop, "nop")),
     // StatementList -> StatementListItem
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::into_statement_list, "into_statement_list")),
     // StatementList -> StatementList StatementListItem
-    Some((Builder::append_to_list, "append_to_list")),
+    Some((
+        Builder::append_to_statement_list,
+        "append_to_statement_list",
+    )),
     // ModuleItemList -> ModuleItem
     Some((Builder::into_list, "into_list")),
     // ModuleItemList -> ModuleItemList ModuleItem
@@ -1227,9 +1230,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "optional_chain_append_private_identifier",
     )),
     // StatementList_Await -> StatementListItem_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::into_statement_list, "into_statement_list")),
     // StatementList_Await -> StatementList_Await StatementListItem_Await
-    Some((Builder::append_to_list, "append_to_list")),
+    Some((
+        Builder::append_to_statement_list,
+        "append_to_statement_list",
+    )),
     // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
     // WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
@@ -1470,9 +1476,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FormalParameter -> BindingElement
     Some((Builder::nop, "nop")),
     // StatementList_Return -> StatementListItem_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::into_statement_list, "into_statement_list")),
     // StatementList_Return -> StatementList_Return StatementListItem_Return
-    Some((Builder::append_to_list, "append_to_list")),
+    Some((
+        Builder::append_to_statement_list,
+        "append_to_statement_list",
+    )),
     // BindingRestElement_Yield -> ELLIPSIS BindingIdentifier_Yield
     Some((Builder::rest_element, "rest_element")),
     // BindingRestElement_Yield -> ELLIPSIS BindingPattern_Yield
@@ -1875,9 +1884,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingElement_Yield -> BindingPattern_Yield Initializer_In_Yield
     Some((Builder::assignment_pattern, "assignment_pattern")),
     // StatementList_Yield_Return -> StatementListItem_Yield_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::into_statement_list, "into_statement_list")),
     // StatementList_Yield_Return -> StatementList_Yield_Return StatementListItem_Yield_Return
-    Some((Builder::append_to_list, "append_to_list")),
+    Some((
+        Builder::append_to_statement_list,
+        "append_to_statement_list",
+    )),
     // BindingElement_Await -> SingleNameBinding_Await
     Some((Builder::either_left, "either_left")),
     // BindingElement_Await -> BindingPattern_Await
@@ -1885,9 +1897,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingElement_Await -> BindingPattern_Await Initializer_In_Await
     Some((Builder::assignment_pattern, "assignment_pattern")),
     // StatementList_Await_Return -> StatementListItem_Await_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::into_statement_list, "into_statement_list")),
     // StatementList_Await_Return -> StatementList_Await_Return StatementListItem_Await_Return
-    Some((Builder::append_to_list, "append_to_list")),
+    Some((
+        Builder::append_to_statement_list,
+        "append_to_statement_list",
+    )),
     // BindingIdentifier_Yield_Await -> Identifier
     Some((Builder::nop, "nop")),
     // BindingIdentifier_Yield_Await -> YIELD
@@ -1905,9 +1920,12 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingElement_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
     Some((Builder::assignment_pattern, "assignment_pattern")),
     // StatementList_Yield_Await_Return -> StatementListItem_Yield_Await_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::into_statement_list, "into_statement_list")),
     // StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return StatementListItem_Yield_Await_Return
-    Some((Builder::append_to_list, "append_to_list")),
+    Some((
+        Builder::append_to_statement_list,
+        "append_to_statement_list",
+    )),
     // MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
     Some((Builder::method_definition, "method_definition")),
     // MethodDefinition -> GeneratorMethod

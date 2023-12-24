@@ -119,6 +119,15 @@ pub enum Node {
 }
 
 impl Node {
+    pub fn is_directive(&self) -> bool {
+        match self {
+            Node::ExpressionStatement(ref stmt) => stmt.directive.is_some(),
+            _ => false,
+        }
+    }
+}
+
+impl Node {
     pub fn identifier(start: &Location, end: &Location, name: String) -> NodeRef {
         NodeRef::new(Self::Identifier(Identifier::new(start, end, name)))
     }
@@ -1033,6 +1042,13 @@ impl Node {
         }
     }
 
+    pub fn into_directive(node: NodeRef) -> NodeRef {
+        match *node {
+            Node::ExpressionStatement(ref stmt) => NodeRef::new(Node::ExpressionStatement(stmt.to_directive_if_possible())),
+            _ => node,
+        }
+    }
+
     fn to_object_pattern(expr: &ObjectExpression) -> NodeRef {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
@@ -1141,7 +1157,7 @@ impl Node {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct LocationData {
     // Node
     pub start: usize,
@@ -1185,13 +1201,13 @@ impl LocationData {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct SourceLocation {
     pub start: Position,
     pub end: Position,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Position {
     pub line: usize,
     pub column: usize,
@@ -1431,17 +1447,28 @@ pub struct ExpressionStatement {
 
 impl ExpressionStatement {
     fn new(start: &Location, end: &Location, expression: NodeRef) -> Self {
-        let directive = match *expression {
-            Node::Literal(Literal {
-                value: Scalar::String(_),
-                ref raw,
-                ..
-            }) => Some(raw[1..(raw.len() - 1)].to_owned()),
-            _ => None,
-        };
         Self {
             location: LocationData::new(start, end),
             expression,
+            directive: None,
+        }
+    }
+
+    fn to_directive_if_possible(&self) -> Self {
+        let directive = match *self.expression {
+            Node::Literal(Literal {
+                location: LocationData { start, .. },
+                value: Scalar::String(_),
+                ref raw,
+                ..
+            }) if self.location.start == start => {
+                Some(raw[1..(raw.len() - 1)].to_owned())
+            }
+            _ => None
+        };
+        Self {
+            location: self.location.clone(),
+            expression: self.expression.clone(),
             directive,
         }
     }
@@ -3801,6 +3828,9 @@ macro_rules! node {
     };
     (into_property; $method:expr) => {
         crate::nodes::Node::into_property($method)
+    };
+    (into_directive; $node:expr) => {
+        crate::nodes::Node::into_directive($node)
     };
 }
 
