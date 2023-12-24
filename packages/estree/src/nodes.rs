@@ -3147,7 +3147,6 @@ impl CoverInitializedName {
 pub enum Scalar {
     Null,
     Boolean(bool),
-    I64(i64),
     U64(u64),
     F64(f64),
     String(String),
@@ -3169,19 +3168,28 @@ pub struct RegExp {
 
 fn numeric_literal_to_scalar(literal: &str) -> Scalar {
     // TODO
-    if let Ok(n) = literal.parse::<i64>() {
-        Scalar::I64(n)
-    } else if let Ok(n) = literal.parse::<u64>() {
-        Scalar::U64(n)
-    } else if let Ok(n) = literal.parse::<f64>() {
-        if n.fract() == 0.0 && n <= (i64::MAX as f64) {
-            Scalar::I64(n as i64)
-        } else {
-            Scalar::F64(n)
+    if literal.starts_with("0b") || literal.starts_with("0B") {
+        if let Ok(n) = u64::from_str_radix(&literal[2..], 2) {
+            return Scalar::U64(n);
         }
-    } else {
-        Scalar::Null
     }
+    if literal.starts_with("0o") || literal.starts_with("0O") {
+        if let Ok(n) = u64::from_str_radix(&literal[2..], 8) {
+            return Scalar::U64(n);
+        }
+    }
+    if literal.starts_with("0x") || literal.starts_with("0X") {
+        if let Ok(n) = u64::from_str_radix(&literal[2..], 16) {
+            return Scalar::U64(n);
+        }
+    }
+    if let Ok(n) = literal.parse::<f64>() {
+        if n.fract() == 0.0 && n <= (i64::MAX as f64) {
+            return Scalar::U64(n as u64);
+        }
+        return Scalar::F64(n);
+    }
+    Scalar::Null
 }
 
 macro_rules! node {
