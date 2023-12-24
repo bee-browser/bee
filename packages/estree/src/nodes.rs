@@ -1066,12 +1066,16 @@ impl Node {
     fn to_assignment_property(property: &Property) -> NodeRef {
         let start = property.location.start_location();
         let end = property.location.end_location();
-        let value = Self::into_pattern(property.value.clone());
+        let value = if property.shorthand {
+            None
+        } else {
+            Some(Self::into_pattern(property.value.clone()))
+        };
         Self::property(
             &start,
             &end,
             property.key.clone(),
-            Some(value),
+            value,
             property.kind,
         )
     }
