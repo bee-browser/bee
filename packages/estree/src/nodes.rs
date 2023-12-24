@@ -474,7 +474,9 @@ impl Node {
         kind: PropertyKind,
         shorthand: bool,
     ) -> NodeRef {
-        NodeRef::new(Self::Property(Property::new(start, end, key, value, kind, shorthand)))
+        NodeRef::new(Self::Property(Property::new(
+            start, end, key, value, kind, shorthand,
+        )))
     }
 
     pub fn function_expression(
@@ -1072,11 +1074,19 @@ impl Node {
         let start = property.location.start_location();
         let end = property.location.end_location();
         let value = Self::into_pattern(property.value.clone());
-        let shorthand = property.shorthand || match *value {
-            Node::AssignmentPattern(_) => true,
-            _ => false,
-        };
-        Self::property(&start, &end, property.key.clone(), value, property.kind, shorthand)
+        let shorthand = property.shorthand
+            || match *value {
+                Node::AssignmentPattern(_) => true,
+                _ => false,
+            };
+        Self::property(
+            &start,
+            &end,
+            property.key.clone(),
+            value,
+            property.kind,
+            shorthand,
+        )
     }
 
     // validation
@@ -1422,7 +1432,11 @@ pub struct ExpressionStatement {
 impl ExpressionStatement {
     fn new(start: &Location, end: &Location, expression: NodeRef) -> Self {
         let directive = match *expression {
-            Node::Literal(Literal { value: Scalar::String(_), ref raw, .. }) => Some(raw[1..(raw.len() - 1)].to_owned()),
+            Node::Literal(Literal {
+                value: Scalar::String(_),
+                ref raw,
+                ..
+            }) => Some(raw[1..(raw.len() - 1)].to_owned()),
             _ => None,
         };
         Self {
@@ -3507,16 +3521,44 @@ macro_rules! node {
         crate::nodes::Node::object_expression(&$start, &$end, $properties)
     };
     (property@$start:ident..$end:ident; $key:expr) => {
-        crate::nodes::Node::property(&$start, &$end, $key.clone(), $key, crate::nodes::PropertyKind::Init, true)
+        crate::nodes::Node::property(
+            &$start,
+            &$end,
+            $key.clone(),
+            $key,
+            crate::nodes::PropertyKind::Init,
+            true,
+        )
     };
     (property@$start:ident..$end:ident; $key:expr => $value:expr) => {
-        crate::nodes::Node::property(&$start, &$end, $key, $value, crate::nodes::PropertyKind::Init, false)
+        crate::nodes::Node::property(
+            &$start,
+            &$end,
+            $key,
+            $value,
+            crate::nodes::PropertyKind::Init,
+            false,
+        )
     };
     (property@$start:ident..$end:ident; get $key:expr => $value:expr) => {
-        crate::nodes::Node::property(&$start, &$end, $key, $value, crate::nodes::PropertyKind::Get, false)
+        crate::nodes::Node::property(
+            &$start,
+            &$end,
+            $key,
+            $value,
+            crate::nodes::PropertyKind::Get,
+            false,
+        )
     };
     (property@$start:ident..$end:ident; set $key:expr => $value:expr) => {
-        crate::nodes::Node::property(&$start, &$end, $key, $value, crate::nodes::PropertyKind::Set, false)
+        crate::nodes::Node::property(
+            &$start,
+            &$end,
+            $key,
+            $value,
+            crate::nodes::PropertyKind::Set,
+            false,
+        )
     };
     (function_expression@$start:ident..$end:ident; $body:expr) => {
         crate::nodes::Node::function_expression(&$start, &$end, None, vec![], $body, false, false)
