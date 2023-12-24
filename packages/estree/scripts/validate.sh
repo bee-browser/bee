@@ -37,22 +37,6 @@ cleanup() {
   fi
 }
 
-# Build if needed.
-cargo build -rqp bee-estree
-BEE_ESTREE=$(cd $(dirname $0)/../../../target/release/bee-estree; pwd)
-
-deno run npm:acorn --compact --ecma2022 --module </dev/null >/dev/null
-ACORN_START=$(date +%s%N)
-deno run npm:acorn --compact --ecma2022 --module </dev/null >/dev/null
-ACORN_END=$(date +%s%N)
-ACORN_BASELINE=$(expr $ACORN_END - $ACORN_START)
-
-$BEE_ESTREE parse module </dev/null >/dev/null
-BEE_ESTREE_START=$(date +%s%N)
-$BEE_ESTREE parse module </dev/null >/dev/null
-BEE_ESTREE_END=$(date +%s%N)
-BEE_ESTREE_BASELINE=$(expr $BEE_ESTREE_END - $BEE_ESTREE_START)
-
 SRC=
 EXPECTED=
 ACTUAL=
@@ -63,23 +47,9 @@ cat >$SRC
 echo "SIZE: $(du -b $SRC | cut -f 1)" >&2
 
 EXPECTED=$(mktemp -t bee-estree.validate.expected.XXXXXX)
-ACORN_START=$(date +%s%N)
 deno run npm:acorn --compact --ecma2022 --module <$SRC >$EXPECTED
-ACORN_END=$(date +%s%N)
-ACORN_ELAPSED=$(expr $ACORN_END - $ACORN_START)
-ACORN_DELTA=$(expr $ACORN_ELAPSED - $ACORN_BASELINE)
 
 ACTUAL=$(mktemp -t bee-estree.validate.actual.XXXXXX)
-BEE_ESTREE_START=$(date +%s%N)
-$BEE_ESTREE parse module <$SRC >$ACTUAL
-BEE_ESTREE_END=$(date +%s%N)
-BEE_ESTREE_ELAPSED=$(expr $BEE_ESTREE_END - $BEE_ESTREE_START)
-BEE_ESTREE_DELTA=$(expr $BEE_ESTREE_ELAPSED - $BEE_ESTREE_BASELINE)
-
-cat <<EOF | column -t -s, >&2
-PARSER,ELAPSED (ns),BASELINE (ns),DELTA (ns)
-acorn,$ACORN_ELAPSED,$ACORN_BASELINE,$ACORN_DELTA
-bee-estree,$BEE_ESTREE_ELAPSED,$BEE_ESTREE_BASELINE,$BEE_ESTREE_DELTA
-EOF
+cargo run -qp bee-estree -- parse module <$SRC >$ACTUAL
 
 cargo run -rqp bee-jsoncmp -- $ACTUAL $EXPECTED

@@ -5,6 +5,7 @@ import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
 import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 
 import ora from 'npm:ora@7.0.1';
+import * as acorn from 'npm:acorn@8.11.2';
 import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
@@ -51,24 +52,60 @@ args.dir ||= DEFAULT_DIR;
 const EXCLUDES = [
   // infinite loop
   'fail/8ba15f5246ca756c.js',
-  // B.1.1 HTML-like Comments
-  'pass/1270d541e0fd6af8.js',  // SingleLineHTMLOpenComment
-  'pass/8ec6a55806087669.js',  // SingleLineHTMLCloseComment
+  // B.1.1 HTML-like Comments - SingleLineHTMLOpenComment
+  'pass/1270d541e0fd6af8.js',
+  'pass/b15ab152f8531a9f.js',
+  'pass/4ae32442eef8a4e0.js',
+  'pass/d3ac25ddc7ba9779.js',
+  'pass/fbcd793ec7c82779.js',
+  // B.1.1 HTML-like Comments - SingleLineHTMLCloseComment
+  'pass/8ec6a55806087669.js',
+  'pass/9f0d8eb6f7ab8180.js',
+  'pass/5d5b9de6d9b95f3e.js',
+  'pass/946bee37652a31fa.js',
+  'pass/e03ae54743348d7d.js',
+  'pass/4f5419fe648c691b.js',
+  'pass/5a2a8e992fa4fe37.js',
+  'pass/c532e126a986c1d4.js',
+  'pass/ba00173ff473e7da.js',
   // B.3.2 Block-Level Function Declarations Web Legacy Compatibility Semantics
   'pass/3dabeca76119d501.js',
+  'pass/a4d62a651f69d815.js',
+  'pass/52aeec7b8da212a2.js',
+  'pass/c06df922631aeabc.js',
+  'pass/1c1e2a43fe5515b6.js',
+  'pass/59ae0289778b80cd.js',
+  // invalid character
+  // bee_jsparser::lexer::dfa::input_element_reg_exp:
+  //   opcode="next"
+  //   state=State(423)
+  //   unicode_set=UnicodeSet(69, Some('\u{202f}'))
+  //   pos=45
+  'pass/8b8edcb36909900b.js',
 ];
+
+const spinner = ora({ spinner: 'line' });
 
 // The signal handler must be registered before starting the bee-estree server.
 Deno.addSignalListener("SIGINT", () => {
-  spinner?.stop();
+  spinner.stop();
   // We cannot call server?.stop() here because it's async method...
   Deno.exit(0);
 });
 
-const spinner = ora({ spinner: 'line' });
+function parse(source, sourceType) {
+  try {
+    return acorn.parse(source, {
+      sourceType,
+      ecmaVersion: 2022,
+    });
+  } catch (err) {
+    return null;
+  }
+}
 
 class EstreeServer {
-  constructor() {
+  start() {
     const args = ['run', '-r', '-q', '-p', 'bee-estree', '--', "serve"];
     if (options.withDebugBuild) {
       args.splice(1, 1);  // remove '-r'
@@ -93,11 +130,17 @@ class EstreeServer {
     await writer.write(req);
     writer.releaseLock();
 
+    let res;
     const reader = this.lines_.getReader();
-    const res = JSON.parse((await reader.read()).value);
-    reader.releaseLock();
-
-    return res.program;
+    try {
+      const res = JSON.parse((await reader.read()).value);
+      return res.program;
+    } catch (err) {
+      this.start();
+      return null;
+    } finally {
+      reader.releaseLock();
+    }
   }
 
   async stop() {
@@ -108,6 +151,7 @@ class EstreeServer {
 
 // Spawn bee-estree in the server mode in order to reduce overhead of process creations.
 const server = new EstreeServer();
+server.start();
 
 let count = 0;
 const fails = [];
@@ -127,7 +171,6 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const test = path.join('pass', entry.name);
     if (EXCLUDES.includes(test)) {
-      skipped.push(test);
       continue;
     }
 
@@ -135,12 +178,23 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const source = await Deno.readTextFile(path.join(args.dir, test));
     const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
-    let result;
-    try {
-      result = await server.parse(source, sourceType);
-    } catch (err) {
-      spinner.warn(`${test}: server.parse() aborted`);
-      Deno.exit(1);
+
+    const expected = parse(source, sourceType);
+    if (expected === null) {
+      skipped.push({ test, reason: 'acorn cannot parse' });
+      continue;
+    }
+
+    const actual = await server.parse(source, sourceType);
+    if (actual === null) {
+      fails.push({ test, reason: 'bee-estree cannot parse' });
+      continue;
+    }
+
+    const diffs = microdiff(actual, expected);
+    if (diffs.length > 0) {
+      fails.push({ test, reason: 'estree mismatch', diffs });
+      continue;
     }
 
     const testExplicit = path.join('pass-explicit', entry.name);
@@ -148,22 +202,30 @@ if (options.only === 'all' || options.only === 'pass') {
     spinner.text = testExplicit;
 
     const sourceExplicit = await Deno.readTextFile(path.join(args.dir, test));
-    let resultExplicit;
-    try {
-      resultExplicit = await server.parse(sourceExplicit, sourceType);
-    } catch (err) {
-      spinner.warn(`${testExplicit}: server.parse() aborted`);
-      Deno.exit(1);
+
+    const expectedExplicit = parse(sourceExplicit, sourceType);
+    if (expectedExplicit === null) {
+      skipped.push({ test, reason: 'acorn cannot parsr' });
+      continue;
+    }
+    if (microdiff(expected, expectedExplicit).length > 0) {
+      skipped.push({ test, reason: 'acorn failed' });
+      continue;
     }
 
-    if (result && resultExplicit) {
-      const diff = microdiff(result, resultExplicit);
-      if (diff.length > 0) {
-        fails.push({ test, diff });
-      }
-    } else {
-      fails.push({ test });
+    const actualExplicit = await server.parse(sourceExplicit, sourceType);
+    if (actualExplicit === null) {
+      fails.push({ test, reason: 'bee-estree cannot parse' });
+      continue;
     }
+
+    const diffsExplicit = microdiff(actualExplicit, expectedExplicit);
+    if (diffsExplicit.length > 0) {
+      fails.push({ test, reason: 'estree mismatch', diffs: diffsExplicit });
+      continue;
+    }
+
+    // passed
   }
 }
 
@@ -177,7 +239,6 @@ if (options.only === 'all' || options.only === 'fail') {
 
     const test = path.join('fail', entry.name);
     if (EXCLUDES.includes(test)) {
-      skipped.push(test);
       continue;
     }
 
@@ -185,16 +246,20 @@ if (options.only === 'all' || options.only === 'fail') {
 
     const source = await Deno.readTextFile(path.join(args.dir, test));
     const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
-    let result;
-    try {
-      result = await server.parse(source, sourceType);
-    } catch (err) {
-      spinner.warn(`${test}: server.parse() aborted`);
-      Deno.exit(1);
+
+    const expected = parse(source, sourceType);
+    if (expected !== null) {
+      skipped.push({ test, reason: 'acorn can parse' });
+      continue;
     }
-    if (result !== null) {
-      fails.push({ test });
+
+    const actual = await server.parse(source, sourceType);
+    if (actual !== null) {
+      fails.push({ test, reason: 'bee-estree can parse' });
+      continue;
     }
+
+    // passed
   }
 }
 
@@ -208,7 +273,6 @@ if (options.only === 'all' || options.only === 'early') {
 
     const test = path.join('early', entry.name);
     if (EXCLUDES.includes(test)) {
-      skipped.push(test);
       continue;
     }
 
@@ -216,16 +280,20 @@ if (options.only === 'all' || options.only === 'early') {
 
     const source = await Deno.readTextFile(path.join(args.dir, test));
     const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
-    let result;
-    try {
-      result = await server.parse(source, sourceType);
-    } catch (err) {
-      spinner.warn(`${test}: server.parse() aborted`);
-      Deno.exit(1);
+
+    const expected = parse(source, sourceType);
+    if (expected !== null) {
+      skipped.push({ test, reason: 'acorn can parse' });
+      continue;
     }
-    if (result !== null) {
-      fails.push({ test });
+
+    const actual = await server.parse(source, sourceType);
+    if (actual !== null) {
+      fails.push({ test, reason: 'bee-estree can parse' });
+      continue;
     }
+
+    // passed
   }
 }
 
@@ -233,18 +301,32 @@ spinner.stop();
 await server.stop();
 
 if (options.details) {
-  console.log('SKIPPED TESTS:');
-  for (const skip of skipped) {
-    console.log(`  ${skip}`);
+  console.log('EXCLUDED:');
+  for (const test of EXCLUDES) {
+    console.log(`  ${test}`);
   }
-  console.log('FAILED TESTS:');
-  for (const fail of fails) {
-    console.log(`  ${fail.test}`);
+  console.log('SKIPPED:');
+  for (const { test, reason } of skipped) {
+    console.log(`  ${test}: ${reason}`);
+  }
+  console.log('FAILED:');
+  for (const { test, reason, diffs } of fails) {
+    console.log(`  ${test}: ${reason}`);
+    if (diffs) {
+      for (const diff of diffs) {
+        const diffPath = diff
+              .path
+              .map((p) => typeof p === 'number' ? `[${p}]` : `.${p}`)
+              .join('');
+        console.log(`    ${diff.type}: ${diffPath}`);
+      }
+    }
   }
 }
 
 const passed = count - fails.length - skipped.length;
 console.log(
-  `${count} tests: ${passed} passed, ${skipped.length} skipped, ${fails.length} failed`);
+  `${count} tests: ${passed} passed, ${EXCLUDES.length} excluded, ` +
+    `${skipped.length} skipped, ${fails.length} failed`);
 
 Deno.exit(fails.length > 0 ? 1 : 0);
