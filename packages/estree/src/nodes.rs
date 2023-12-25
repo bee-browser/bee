@@ -3,8 +3,8 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
-use bee_jsparser::literal_content_to_string;
 use bee_jsparser::string_literal_to_string;
+use bee_jsparser::template_literal_to_string;
 use bee_jsparser::Location;
 
 #[derive(Clone, Debug, Serialize)]
@@ -3049,8 +3049,8 @@ pub struct TemplateValue {
 impl TemplateValue {
     fn new(raw: &str) -> Self {
         Self {
-            cooked: literal_content_to_string(raw),
-            raw: raw.to_owned(),
+            cooked: template_literal_to_string(raw, false),
+            raw: template_literal_to_string(raw, true),
         }
     }
 }
