@@ -1,6 +1,5 @@
 'use strict';
 
-import * as log from 'https://deno.land/std@0.209.0/log/mod.ts';
 import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
 import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 

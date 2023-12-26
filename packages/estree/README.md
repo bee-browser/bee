@@ -14,8 +14,11 @@ The following command parses a JavaScript program:
 
 ```shell
 curl https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js -sG |
-  bee-estree parse script | jj -p
+  bee-estree parse script | deno run npm:json5 -s 2
 ```
+
+> bee-estree outputs ESTree in [JSON5], not JSON.
+> Because the ESTree may contain values such as `Infinity` that cannot be used in JSON.
 
 This shows the ESTree representation of the JavaScript program.  The representation is compatible
 with [Acorn].
@@ -23,7 +26,7 @@ with [Acorn].
 The following command starts a server that responds to requests to parse JavaScript programs:
 
 ```shell
-cat | bee-estree serve | jj -p
+cat | bee-estree serve | deno run npm:json5 -s 2
 ```
 
 The server can accept requests like below:
@@ -81,27 +84,25 @@ curl https://host/script.js -sG | sh ./scripts/validate.sh
 Differences like below will be shown if the validation fails:
 
 ```text
-json atoms at path ".body[0].end" are not equal:
-    lhs:
-        null
-    rhs:
-        9387
+.body.0.end
+  acorn : 9387
+  estree: null
 ...
 ```
 
-The paths shown in the above messages can be used as `jq` filters:
+The paths shown in the above messages can be used as [`jj`] filters:
 
 ```shell
-curl https://host/script.js -sG | cargo run | jq '.body[0].end'
+curl https://host/script.js -sG | bee-estree parse script | jj body.0.end
 
 # Show the parent node.
-curl https://host/script.js -sG | cargo run | jq '.body[0]'
+curl https://host/script.js -sG | bee-estree parse script | jj body.0
 ```
 
 Debug-level logs are shown by specifying the `RUST_LOG` environment variable:
 
 ```shell
-curl https://host/script.js -sG | RUST_LOG=debug cargo run >/dev/null
+curl https://host/script.js -sG | RUST_LOG=debug bee-estree parse script >/dev/null
 ```
 
 ## tc39/test262
@@ -109,35 +110,10 @@ curl https://host/script.js -sG | RUST_LOG=debug cargo run >/dev/null
 We have a test runner to test ECMAScript conformance using [tc39/test262]:
 
 ```shell
-sh ./script/test262.sh
+sh ./script/test262.sh --progress
 ```
 
 Many tests fails at the moment.  The `--details` option lists failed tests.
-
-## Tips
-
-### jq: parse error: Exceeds depth limit for parsing
-
-`jq` may not be able to parse an ESTree JSON due to a limitation on the depth.  For example:
-
-```shell
-curl https://cdnjs.cloudflare.com/ajax/libs/typescript/5.3.3/typescript.min.js -sG | \
-  bee-estree parse script | jq
-```
-
-This command causes the following error:
-
-```
-jq: parse error: Exceeds depth limit for parsing at line 1, column 10759553
-Error: Broken pipe (os error 32)
-```
-
-In this case, use other JSON parser commands such as [`jj`]:
-
-```
-curl https://cdnjs.cloudflare.com/ajax/libs/typescript/5.3.3/typescript.min.js -sG | \
-  bee-estree parse script | jj -p
-```
 
 ## TODO
 
