@@ -9,7 +9,7 @@ publish = false
 bee-htmltokenizer = { path = "../htmltokenizer" }
 flagset = "0.4.4"
 phf = { version = "0.11.2", features = ["macros"] }
-thiserror = "1.0.51"
+thiserror = "1.0.52"
 tracing = "0.1.40"
 unicase = "2.7.0"
 
