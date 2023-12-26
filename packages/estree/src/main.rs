@@ -2,9 +2,7 @@ mod builder;
 mod nodes;
 
 use std::io::BufRead;
-use std::io::BufWriter;
 use std::io::Read;
-use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -23,7 +21,10 @@ use bee_jsparser::Parser;
 use crate::builder::Builder;
 use crate::nodes::NodeRef;
 
-/// Show the ESTree of a JavaScript program.
+// An ESTree cannot represent in JSON.  Because an ESTree may contain values such as `Infinity`
+// that cannot be used in JSON.  At this point, JSON5 can handle those values.
+
+/// Show the ESTree of a JavaScript program in JSON5.
 #[derive(clap::Parser)]
 pub struct CommandLine {
     /// Logging format.
@@ -114,8 +115,7 @@ fn parse<P: AsRef<Path>>(source_type: SourceType, source_file: Option<P>) -> Res
         }
     };
 
-    let writer = BufWriter::new(std::io::stdout());
-    serde_json::to_writer(writer, &node)?;
+    println!("{}", json5::to_string(&node)?);
 
     Ok(())
 }
@@ -141,11 +141,9 @@ fn serve() -> Result<()> {
                 };
                 let now = std::time::Instant::now();
                 let program = parse_program(req.source_type, &req.source).ok();
-                let elapsed = now.elapsed().as_nanos();
+                let elapsed = now.elapsed().as_nanos() as u64;
                 let res = Response { program, elapsed };
-                let mut writer = BufWriter::new(std::io::stdout());
-                let _ = serde_json::to_writer(&mut writer, &res);
-                let _ = writer.write_all(b"\n");
+                println!("{}", json5::to_string(&res)?);
             }
             Err(_) => break,
         }
@@ -163,5 +161,5 @@ struct Request {
 #[derive(Debug, Serialize)]
 struct Response {
     program: Option<NodeRef>,
-    elapsed: u128,
+    elapsed: u64,
 }

@@ -6,6 +6,7 @@ import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0
 
 import ora from 'npm:ora@7.0.1';
 import * as acorn from 'npm:acorn@8.11.2';
+import JSON5 from 'npm:json5@2.2.3';
 import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
@@ -80,6 +81,8 @@ const EXCLUDES = [
   //   unicode_set=UnicodeSet(69, Some('\u{202f}'))
   //   pos=45
   'pass/8b8edcb36909900b.js',
+  // LegacyOctalEscapeSequence
+  'pass/d38771967621cb8e.js',
 ];
 
 const spinner = ora({ spinner: 'line' });
@@ -131,7 +134,7 @@ class EstreeServer {
     let res;
     const reader = this.lines_.getReader();
     try {
-      const res = JSON.parse((await reader.read()).value);
+      const res = JSON5.parse((await reader.read()).value);
       return res.program;
     } catch (err) {
       this.start();
@@ -219,7 +222,7 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const diffsExplicit = microdiff(actualExplicit, expectedExplicit);
     if (diffsExplicit.length > 0) {
-      fails.push({ test, reason: 'estree mismatch', diffs: diffsExplicit });
+      fails.push({ test, reason: 'estree mismatch (explicit)', diffs: diffsExplicit });
       continue;
     }
 
@@ -316,7 +319,18 @@ if (options.details) {
               .path
               .map((p) => typeof p === 'number' ? `[${p}]` : `.${p}`)
               .join('');
-        console.log(`    ${diff.type}: ${diffPath}`);
+        switch (diff.type) {
+        case 'CREATE':
+          console.log(`    ${diff.type}: ${diffPath}: ${JSON5.stringify(diff.value)}`);
+          break;
+        case 'REMOVE':
+          console.log(`    ${diff.type}: ${diffPath}: ${JSON5.stringify(diff.oldValue)}`);
+          break;
+        case 'CHANGE':
+          console.log(`    ${diff.type}: ${diffPath}: ` +
+                      `${JSON5.stringify(diff.oldValue)} -> ${JSON5.stringify(diff.value)}`);
+          break;
+        }
       }
     }
   }

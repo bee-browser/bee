@@ -1,6 +1,6 @@
 # bee-estree
 
-> A simple Javascript parser to output ESTree in JSON
+> A simple Javascript parser to output ESTree in JSON5
 
 This package provides a binary crate `bee-estree` to output the [ESTree] of the input JavaScript
 program.
@@ -14,7 +14,7 @@ The following command parses a JavaScript program:
 
 ```shell
 curl https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js -sG |
-  bee-estree parse script | jq
+  bee-estree parse script | jj -p
 ```
 
 This shows the ESTree representation of the JavaScript program.  The representation is compatible
@@ -23,7 +23,7 @@ with [Acorn].
 The following command starts a server that responds to requests to parse JavaScript programs:
 
 ```shell
-cat | bee-estree serve | jq
+cat | bee-estree serve | jj -p
 ```
 
 The server can accept requests like below:

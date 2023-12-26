@@ -1799,7 +1799,7 @@ impl Builder {
             Node::CoverInitializedName(ref cover) => cover.name.clone(),
             _ => panic!(),
         };
-        let node = node!(property@start..end; key => cover);
+        let node = node!(property@start..end; key => cover; shorthand);
         self.push_node(node, start, end);
         Ok(())
     }
@@ -2136,18 +2136,21 @@ impl Builder {
         Ok(())
     }
 
-    fn binding_identifier_or_property(&mut self) -> Result<(), String> {
-        let (left, start, end) = self.pop_node();
-        let right = node!(property@start..end; left.clone());
+    fn single_name_binding(&mut self) -> Result<(), String> {
+        let (key, start, end) = self.pop_node();
+        // left for BindingElement, right for BindingProperty
+        let left = key.clone();
+        let right = node!(property@start..end; key);
         self.push_either(left, right, start, end);
         Ok(())
     }
 
-    fn assignment_pattern_or_property(&mut self) -> Result<(), String> {
+    fn single_name_binding_init(&mut self) -> Result<(), String> {
         let (value, _, end) = self.pop_node();
         let (key, start, _) = self.pop_node();
+        // left for BindingElement, right for BindingProperty
         let left = node!(assignment_pattern@start..end; key.clone(), value.clone());
-        let right = node!(property@start..end; key => value);
+        let right = node!(property@start..end; key => left.clone(); shorthand);
         self.push_either(left, right, start, end);
         Ok(())
     }

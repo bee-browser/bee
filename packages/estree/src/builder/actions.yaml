@@ -1916,9 +1916,9 @@
 - rule: AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
   action: function_body_block
 - rule: SingleNameBinding -> BindingIdentifier
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding -> BindingIdentifier Initializer_In
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: Statement_Return -> BlockStatement_Return
   action: nop
 - rule: Statement_Return -> VariableStatement
@@ -1982,9 +1982,9 @@
     BindingRestElement_Yield RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding_Yield -> BindingIdentifier_Yield
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding_Yield -> BindingIdentifier_Yield Initializer_In_Yield
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: Initializer_In_Yield -> ASSIGN AssignmentExpression_In_Yield
   action: initializer
 - rule: StatementListItem_Yield_Return -> Statement_Yield_Return
@@ -1992,9 +1992,9 @@
 - rule: StatementListItem_Yield_Return -> Declaration_Yield
   action: nop
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await Initializer_In_Await
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: StatementListItem_Await_Return -> Statement_Await_Return
   action: nop
 - rule: StatementListItem_Await_Return -> Declaration_Await
@@ -2034,9 +2034,9 @@
     BindingRestElement_Yield_Await RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: Initializer_In_Yield_Await -> ASSIGN AssignmentExpression_In_Yield_Await
   action: initializer
 - rule: StatementListItem_Yield_Await_Return -> Statement_Yield_Await_Return

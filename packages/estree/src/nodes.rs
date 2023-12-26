@@ -1100,18 +1100,13 @@ impl Node {
         let start = property.location.start_location();
         let end = property.location.end_location();
         let value = Self::into_pattern(property.value.clone())?;
-        let shorthand = property.shorthand
-            || match *value {
-                Node::AssignmentPattern(_) => true,
-                _ => false,
-            };
         Ok(Self::property(
             &start,
             &end,
             property.key.clone(),
             value,
             property.kind,
-            shorthand,
+            property.shorthand,
         ))
     }
 
@@ -3602,6 +3597,16 @@ macro_rules! node {
             $value,
             crate::nodes::PropertyKind::Init,
             false,
+        )
+    };
+    (property@$start:ident..$end:ident; $key:expr => $value:expr; shorthand) => {
+        crate::nodes::Node::property(
+            &$start,
+            &$end,
+            $key,
+            $value,
+            crate::nodes::PropertyKind::Init,
+            true,
         )
     };
     (property@$start:ident..$end:ident; get $key:expr => $value:expr) => {
