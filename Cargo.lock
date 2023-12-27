@@ -991,8 +991,7 @@ dependencies = [
 [[package]]
 name = "json5"
 version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96b0db21af676c1ce64250b5f40f3ce2cf27e4e47cb91ed91eb6fe9350b430c1"
+source = "git+https://github.com/bee-browser/json5-rs.git#14cb962cd9e9825aa5cf63c659c1f7b9da372019"
 dependencies = [
  "pest",
  "pest_derive",
