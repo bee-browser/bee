@@ -614,11 +614,13 @@ impl Node {
         start: &Location,
         end: &Location,
         expressions: Vec<NodeRef>,
+        open: bool,
     ) -> NodeRef {
         NodeRef::new(Self::SequenceExpression(SequenceExpression::new(
             start,
             end,
             expressions,
+            open,
         )))
     }
 
@@ -1189,6 +1191,18 @@ impl Node {
                 Err("LeftHandSideExpression must cover an AssignmentPattern".to_string())
             }
             _ => Ok(()),
+        }
+    }
+
+    pub fn close_sequence_expression(node: NodeRef) -> NodeRef {
+        match *node {
+            Node::SequenceExpression(ref seq) if seq.open => {
+                let start = seq.location.start_location();
+                let end = seq.location.end_location();
+                let expressions = seq.expressions.clone();
+                NodeRef::new(Self::SequenceExpression(SequenceExpression::new(&start, &end, expressions, false)))
+            }
+            _ => node,
         }
     }
 }
@@ -2722,13 +2736,16 @@ pub struct SequenceExpression {
     #[serde(flatten)]
     pub location: LocationData,
     pub expressions: Vec<NodeRef>, // [ Expression ]
+    #[serde(skip)]
+    pub open: bool,
 }
 
 impl SequenceExpression {
-    fn new(start: &Location, end: &Location, expressions: Vec<NodeRef>) -> Self {
+    fn new(start: &Location, end: &Location, expressions: Vec<NodeRef>, open: bool) -> Self {
         Self {
             location: LocationData::new(start, end),
             expressions,
+            open,
         }
     }
 
@@ -3743,7 +3760,10 @@ macro_rules! node {
         crate::nodes::Node::new_expression(&$start, &$end, $callee, $arguments)
     };
     (sequence_expression@$start:ident..$end:ident; $expressions:expr) => {
-        crate::nodes::Node::sequence_expression(&$start, &$end, $expressions)
+        crate::nodes::Node::sequence_expression(&$start, &$end, $expressions, true)
+    };
+    (sequence_expression@$start:ident..$end:ident; $expressions:expr; closed) => {
+        crate::nodes::Node::sequence_expression(&$start, &$end, $expressions, false)
     };
     (arrow_function_expression@$start:ident..$end:ident; $params:expr, $body:expr) => {
         crate::nodes::Node::arrow_function_expression(&$start, &$end, None, $params, $body, false)
@@ -3894,6 +3914,9 @@ macro_rules! node {
     };
     (into_property; $method:expr) => {
         crate::nodes::Node::into_property($method)
+    };
+    (close_sequence_expression; $node:expr) => {
+        crate::nodes::Node::close_sequence_expression($node)
     };
 }
 

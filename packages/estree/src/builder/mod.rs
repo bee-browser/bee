@@ -1708,7 +1708,7 @@ impl Builder {
         self.check(",");
         let (expr1, start, _) = self.pop_node();
         let node = node!(sequence_expression@start..end; match *expr1 {
-            Node::SequenceExpression(ref seq) => {
+            Node::SequenceExpression(ref seq) if seq.open => {
                 // TODO: consider to use an immutable collection
                 let mut expressions = seq.expressions.clone();
                 expressions.push(expr2);
@@ -1932,6 +1932,7 @@ impl Builder {
         let (_, end) = self.check(")");
         let (node, ..) = self.pop_node();
         let (start, _) = self.check("(");
+        let node = node!(close_sequence_expression; node);
         self.push_nullable(Some(node), start, end);
         Ok(())
     }
@@ -1941,6 +1942,7 @@ impl Builder {
         self.check(",");
         let (node, ..) = self.pop_node();
         let (start, _) = self.check("(");
+        let node = node!(close_sequence_expression; node);
         self.push_nullable(Some(node), start, end);
         Ok(())
     }
@@ -1971,14 +1973,14 @@ impl Builder {
         let (start, _) = self.check("(");
         let rest = node!(rest_element@rest_start..rest_end; argument);
         let expressions = match *expr {
-            Node::SequenceExpression(ref seq) => {
+            Node::SequenceExpression(ref seq) if seq.open => {
                 let mut expressions = seq.expressions.clone();
                 expressions.push(rest);
                 expressions
             }
             _ => vec![expr, rest],
         };
-        let node = node!(sequence_expression@expr_start..rest_end; expressions);
+        let node = node!(sequence_expression@expr_start..rest_end; expressions; closed);
         self.push_nullable(Some(node), start, end);
         Ok(())
     }
