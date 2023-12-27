@@ -459,7 +459,10 @@ impl Node {
         trailing_comma: bool,
     ) -> NodeRef {
         NodeRef::new(Self::ArrayExpression(ArrayExpression::new(
-            start, end, elements, trailing_comma,
+            start,
+            end,
+            elements,
+            trailing_comma,
         )))
     }
 
@@ -1007,7 +1010,12 @@ impl Node {
             Node::CoverInitializedName(ref cover) => {
                 let start = cover.location.start_location();
                 let end = cover.location.end_location();
-                Ok(Self::assignment_pattern(&start, &end, cover.name.clone(), cover.value.clone()))
+                Ok(Self::assignment_pattern(
+                    &start,
+                    &end,
+                    cover.name.clone(),
+                    cover.value.clone(),
+                ))
             }
             _ => Ok(node),
         }
@@ -1063,10 +1071,14 @@ impl Node {
                     let node = Self::into_pattern(node.clone())?;
                     if let Node::RestElement(_) = *node {
                         if rest_found {
-                            return Err("Multiple RestElements are not allowed in ArrayAssignmentPattern".to_string());
+                            return Err(
+                                "Multiple RestElements are not allowed in ArrayAssignmentPattern"
+                                    .to_string(),
+                            );
                         }
                         if expr.trailing_comma {
-                            return Err("Trailing comma is not allowed in ArrayAssignmentPattern".to_string());
+                            return Err("Trailing comma is not allowed in ArrayAssignmentPattern"
+                                .to_string());
                         }
                         rest_found = true;
                     }
@@ -1074,7 +1086,9 @@ impl Node {
                 }
                 None => {
                     if rest_found {
-                        return Err("Trailing comma is not allowed in ArrayAssignmentPattern".to_string());
+                        return Err(
+                            "Trailing comma is not allowed in ArrayAssignmentPattern".to_string()
+                        );
                     }
                     elements.push(None)
                 }
@@ -1086,7 +1100,12 @@ impl Node {
     fn to_assignment_pattern(expr: &AssignmentExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        Ok(Self::assignment_pattern(&start, &end, expr.left.clone(), expr.right.clone()))
+        Ok(Self::assignment_pattern(
+            &start,
+            &end,
+            expr.left.clone(),
+            expr.right.clone(),
+        ))
     }
 
     fn to_rest_element(expr: &SpreadElement) -> Result<NodeRef, String> {
@@ -2079,7 +2098,12 @@ pub struct ArrayExpression {
 }
 
 impl ArrayExpression {
-    fn new(start: &Location, end: &Location, elements: Vec<Option<NodeRef>>, trailing_comma: bool) -> Self {
+    fn new(
+        start: &Location,
+        end: &Location,
+        elements: Vec<Option<NodeRef>>,
+        trailing_comma: bool,
+    ) -> Self {
         Self {
             location: LocationData::new(start, end),
             elements,

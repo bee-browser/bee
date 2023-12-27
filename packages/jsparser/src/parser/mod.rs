@@ -78,7 +78,9 @@ where
                     tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
                 }
                 ParserResult::SyntaxError => return Err(Error::SyntaxError),
-                ParserResult::Error if !auto_semicolon_inserted && self.is_auto_semicolon_allowed(&token) => {
+                ParserResult::Error
+                    if !auto_semicolon_inserted && self.is_auto_semicolon_allowed(&token) =>
+                {
                     loop {
                         match self.auto_semicolon() {
                             ParserResult::Accept(artifact) => return Ok(artifact),
