@@ -1,16 +1,14 @@
 'use strict';
 
-import * as log from 'https://deno.land/std@0.209.0/log/mod.ts';
 import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
-import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 
 import ora from 'npm:ora@7.0.1';
-import * as acorn from 'npm:acorn@8.11.2';
 import TestStream from 'npm:test262-stream@1.4.0';
 import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { VENDOR_DIR } from '../../../tools/lib/consts.js';
+import { Acorn, ESTree, showDiffs } from './test262_helper.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DEFAULT_TEST262_DIR = path.join(VENDOR_DIR, 'tc39', 'test262');
@@ -43,7 +41,7 @@ const { cmds, options, args } = await parseCommand({
   doc: DOC,
 });
 
-args.test262Dir = args.test262Dir || DEFAULT_TEST262_DIR;
+args.test262Dir ||= DEFAULT_TEST262_DIR;
 
 // TODO: Remove
 const IGNORE_FILES = [
@@ -72,17 +70,6 @@ const UNSUPPORTED_FEATURES = [
   'hashbang',
 ];
 
-function parse(test) {
-  try {
-    return acorn.parse(test.contents, {
-      sourceType: test.attrs.flags.module ? 'module' : 'script',
-      ecmaVersion: 2022,
-    });
-  } catch (err) {
-    return null;
-  }
-}
-
 // The signal handler must be registered before starting the bee-estree server.
 Deno.addSignalListener("SIGINT", () => {
   spinner?.stop();
@@ -92,50 +79,9 @@ Deno.addSignalListener("SIGINT", () => {
 
 const spinner = ora({ spinner: 'line' });
 
-class EstreeServer {
-  constructor() {
-    const args = ['run', '-r', '-q', '-p', 'bee-estree', '--', "serve"];
-    if (options.withDebugBuild) {
-      args.splice(1, 1);  // remove '-r'
-    }
-    const cmd = new Deno.Command('cargo', {
-      args,
-      stdin: 'piped',
-      stdout: 'piped',
-      stderr: 'null',
-    });
-    this.child_ = cmd.spawn();
-    this.lines_ = this.child_.stdout
-      .pipeThrough(new TextDecoderStream())
-      .pipeThrough(new TextLineStream());
-    this.encoder_ = new TextEncoder();
-  }
-
-  async parse(test) {
-    const req = this.encoder_.encode(JSON.stringify({
-      sourceType: test.attrs.flags.module ? 'module' : 'script',
-      source: test.contents,
-    }) + '\n');
-
-    const writer = this.child_.stdin.getWriter();
-    await writer.write(req);
-    writer.releaseLock();
-
-    const reader = this.lines_.getReader();
-    const res = JSON.parse((await reader.read()).value);
-    reader.releaseLock();
-
-    return res.program;
-  }
-
-  async stop() {
-    await this.child_.stdin.close();
-    await this.child_.status;
-  }
-}
-
 // Spawn bee-estree in the server mode in order to reduce overhead of process creations.
-const server = new EstreeServer();
+const server = new ESTree(options);
+server.start();
 
 const stream = new TestStream(args.test262Dir, {
   // Directory from which to load "includes" files (defaults to the
@@ -214,53 +160,53 @@ for await (const test of stream) {
 
   test.toString = function() {
     let s = this.file;
-    s += this.attrs.flags.module ? ': module' : ': script';
+    s += this.attrs.flags.module ? '#module' : '#script';
     if (this.scenario === 'strict mode') {
-      s += '/strict';
+      s += '#strict';
     }
     if (this.attrs.features) {
-      s += ': ' + this.attrs.features.join(' ');
+      s += `#${this.attrs.features.join('#')}`;
     }
     return s;
   };
 
   count++;
+
   spinner.text = test.file;
+
+  const source = test.contents;
+  const sourceType = test.attrs.flags.module ? 'module' : 'script';
 
   let expected;
   if (test.attrs.negative?.phase === "parse" || test.attrs.negative?.phase === "early") {
-    // Error cases.  We don't need to run acorn.parse().
+    // Error cases.
     expected = null;
   } else {
-    expected = parse(test);
+    expected = Acorn.parse(source, sourceType);
     if (expected === null) {
       // Acorn cannot parse test.contents.
-      skipped.push(test);
+      skipped.push({ test, reason: 'acorn cannot parse' });
       continue;
     }
   }
 
-  let actual;
-  try {
-    actual = await server.parse(test);
-  } catch (err) {
-    spinner.warn(`${test.file}: server.parse() aborted`);
-    break;
-  }
-
+  const actual = await server.parse(source, sourceType);
   if (expected === null) {
-    if (expected !== actual) {
-      fails.push({ test });
+    if (actual === null) {
+      // passed
+    } else {
+      fails.push({ test, reason: 'bee-estree should fail' });
     }
   } else {
-    let diff;
     if (actual === null) {
-      diff = microdiff({}, expected)
+      fails.push({ test, reason: 'bee-estree cannot parse' });
     } else {
-      diff = microdiff(actual, expected);
-    }
-    if (diff.length > 0) {
-      fails.push({ test,  diff });
+      const diffs = microdiff(actual, expected);
+      if (diffs.length === 0) {
+        // passed
+      } else {
+        fails.push({ test, reason: 'estree mismatch', diffs });
+      }
     }
   }
 }
@@ -269,18 +215,22 @@ spinner.stop();
 await server.stop();
 
 if (options.details) {
-  console.log('SKIPPED TESTS:');
-  for (const skip of skipped) {
-    console.log(`  ${skip}`);
+  console.log('SKIPPED:');
+  for (const { test, reason } of skipped) {
+    console.log(`  ${test}: ${reason}`);
   }
-  console.log('FAILED TESTS:');
-  for (const fail of fails) {
-    console.log(`  ${fail.test}`);
+  console.log('FAILED:');
+  for (const { test, reason, diffs } of fails) {
+    console.log(`  ${test}: ${reason}`);
+    if (diffs) {
+      showDiffs(diffs, '    ');
+    }
   }
 }
 
 const passed = count - fails.length - skipped.length;
 console.log(
-  `${count} tests: ${passed} passed, ${skipped.length} skipped, ${fails.length} failed`);
+  `${count} tests: ${passed} passed, ` +
+    `${skipped.length} skipped, ${fails.length} failed`);
 
 Deno.exit(fails.length > 0 ? 1 : 0);

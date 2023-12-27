@@ -85,7 +85,7 @@ test: format
 .PHONY: test262
 test262: ARGS ?= --progress
 test262:
-	-sh packages/estree/scripts/test262-parser-tests.sh $(ARGS)
+	-sh packages/estree/scripts/test262_parser_tests.sh $(ARGS)
 	-sh packages/estree/scripts/test262.sh $(ARGS)
 
 .PHONY: bench

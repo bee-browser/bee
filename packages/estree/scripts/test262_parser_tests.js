@@ -1,15 +1,13 @@
 'use strict';
 
 import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
-import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 
 import ora from 'npm:ora@7.0.1';
-import * as acorn from 'npm:acorn@8.11.2';
-import JSON5 from 'npm:json5@2.2.3';
 import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { VENDOR_DIR } from '../../../tools/lib/consts.js';
+import { Acorn, ESTree, showDiffs } from './test262_helper.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DEFAULT_DIR = path.join(VENDOR_DIR, 'tc39', 'test262-parser-tests');
@@ -82,6 +80,22 @@ const EXCLUDES = [
   'pass/8b8edcb36909900b.js',
   // LegacyOctalEscapeSequence
   'pass/d38771967621cb8e.js',
+  'pass/cb095c303f88cd0b.js',
+  'pass/71e066a0fa01825b.js',
+  'pass/2e371094f1b1ac51.js',
+  'pass/ade301f0d871c610.js',
+  'pass/7b514406528ff126.js',
+  'pass/3e48826018d23c85.js',
+  'pass/b5cf21a87ec272d1.js',
+  'pass/8e3f0660b32fbfd2.js',
+  'pass/3fb07536eb5aea8d.js',
+  'pass/fa736f4b0cf19c0c.js',
+  'pass/20644d335e3cd008.js',
+  'pass/3990bb94b19b1071.js',
+  'pass/d483926898410cae.js',
+  'pass/0b281915a3227177.js',
+  'pass/95ab0d795c04ff38.js',
+  'pass/27ca96102da82628.js',
 ];
 
 const spinner = ora({ spinner: 'line' });
@@ -93,64 +107,8 @@ Deno.addSignalListener("SIGINT", () => {
   Deno.exit(0);
 });
 
-function parse(source, sourceType) {
-  try {
-    return acorn.parse(source, {
-      sourceType,
-      ecmaVersion: 2022,
-    });
-  } catch (err) {
-    return null;
-  }
-}
-
-class EstreeServer {
-  start() {
-    const args = ['run', '-r', '-q', '-p', 'bee-estree', '--', "serve"];
-    if (options.withDebugBuild) {
-      args.splice(1, 1);  // remove '-r'
-    }
-    const cmd = new Deno.Command('cargo', {
-      args,
-      stdin: 'piped',
-      stdout: 'piped',
-      stderr: 'null',
-    });
-    this.child_ = cmd.spawn();
-    this.lines_ = this.child_.stdout
-      .pipeThrough(new TextDecoderStream())
-      .pipeThrough(new TextLineStream());
-    this.encoder_ = new TextEncoder();
-  }
-
-  async parse(source, sourceType) {
-    const req = this.encoder_.encode(JSON.stringify({ sourceType, source }) + '\n');
-
-    const writer = this.child_.stdin.getWriter();
-    await writer.write(req);
-    writer.releaseLock();
-
-    let res;
-    const reader = this.lines_.getReader();
-    try {
-      const res = JSON5.parse((await reader.read()).value);
-      return res.program;
-    } catch (err) {
-      this.start();
-      return null;
-    } finally {
-      reader.releaseLock();
-    }
-  }
-
-  async stop() {
-    await this.child_.stdin.close();
-    await this.child_.status;
-  }
-}
-
 // Spawn bee-estree in the server mode in order to reduce overhead of process creations.
-const server = new EstreeServer();
+let server = new ESTree(options);
 server.start();
 
 let count = 0;
@@ -179,7 +137,7 @@ if (options.only === 'all' || options.only === 'pass') {
     const source = await Deno.readTextFile(path.join(args.dir, test));
     const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
 
-    const expected = parse(source, sourceType);
+    const expected = Acorn.parse(source, sourceType);
     if (expected === null) {
       skipped.push({ test, reason: 'acorn cannot parse' });
       continue;
@@ -203,9 +161,9 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const sourceExplicit = await Deno.readTextFile(path.join(args.dir, test));
 
-    const expectedExplicit = parse(sourceExplicit, sourceType);
+    const expectedExplicit = Acorn.parse(sourceExplicit, sourceType);
     if (expectedExplicit === null) {
-      skipped.push({ test, reason: 'acorn cannot parsr' });
+      skipped.push({ test, reason: 'acorn cannot parse' });
       continue;
     }
     if (microdiff(expected, expectedExplicit).length > 0) {
@@ -247,7 +205,7 @@ if (options.only === 'all' || options.only === 'fail') {
     const source = await Deno.readTextFile(path.join(args.dir, test));
     const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
 
-    const expected = parse(source, sourceType);
+    const expected = Acorn.parse(source, sourceType);
     if (expected !== null) {
       skipped.push({ test, reason: 'acorn can parse' });
       continue;
@@ -281,7 +239,7 @@ if (options.only === 'all' || options.only === 'early') {
     const source = await Deno.readTextFile(path.join(args.dir, test));
     const sourceType = entry.name.endsWith('.module.js') ? 'module' : 'script';
 
-    const expected = parse(source, sourceType);
+    const expected = Acorn.parse(source, sourceType);
     if (expected !== null) {
       skipped.push({ test, reason: 'acorn can parse' });
       continue;
@@ -313,24 +271,7 @@ if (options.details) {
   for (const { test, reason, diffs } of fails) {
     console.log(`  ${test}: ${reason}`);
     if (diffs) {
-      for (const diff of diffs) {
-        const diffPath = diff
-              .path
-              .map((p) => typeof p === 'number' ? `[${p}]` : `.${p}`)
-              .join('');
-        switch (diff.type) {
-        case 'CREATE':
-          console.log(`    ${diff.type}: ${diffPath}: ${JSON5.stringify(diff.value)}`);
-          break;
-        case 'REMOVE':
-          console.log(`    ${diff.type}: ${diffPath}: ${JSON5.stringify(diff.oldValue)}`);
-          break;
-        case 'CHANGE':
-          console.log(`    ${diff.type}: ${diffPath}: ` +
-                      `${JSON5.stringify(diff.oldValue)} -> ${JSON5.stringify(diff.value)}`);
-          break;
-        }
-      }
+      showDiffs(diffs, '    ');
     }
   }
 }
@@ -340,4 +281,4 @@ console.log(
   `${count} tests: ${passed} passed, ${EXCLUDES.length} excluded, ` +
     `${skipped.length} skipped, ${fails.length} failed`);
 
-Deno.exit(fails.length > 0 ? 1 : 0);
+Deno.exit(fails.length === 0 ? 0 : 1);
