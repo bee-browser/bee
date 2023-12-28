@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.77"
 bee-macros = { path = "../macros" }
-clap = { version = "4.4.11", features = ["derive", "env"] }
+clap = { version = "4.4.12", features = ["derive", "env"] }
 dashmap = "5.5.3"
 humantime = "2.1.0"
 im = "15.1.0"
