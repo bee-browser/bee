@@ -26,6 +26,18 @@ html, body {
 }
 
 #main-view {
+  width: 100%;
+}
+
+#toolbar {
+  width: 100%;
+}
+
+#toolbar > * {
+  margin: 4px;
+}
+
+#views {
   display: flex;
   width: 100%;
 }

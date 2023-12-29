@@ -2167,14 +2167,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
     Some((Builder::function_body_block, "function_body_block")),
     // SingleNameBinding -> BindingIdentifier
-    Some((
-        Builder::binding_identifier_or_property,
-        "binding_identifier_or_property",
-    )),
+    Some((Builder::single_name_binding, "single_name_binding")),
     // SingleNameBinding -> BindingIdentifier Initializer_In
     Some((
-        Builder::assignment_pattern_or_property,
-        "assignment_pattern_or_property",
+        Builder::single_name_binding_init,
+        "single_name_binding_init",
     )),
     // Statement_Return -> BlockStatement_Return
     Some((Builder::nop, "nop")),
@@ -2245,14 +2242,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "array_pattern_concat_rest",
     )),
     // SingleNameBinding_Yield -> BindingIdentifier_Yield
-    Some((
-        Builder::binding_identifier_or_property,
-        "binding_identifier_or_property",
-    )),
+    Some((Builder::single_name_binding, "single_name_binding")),
     // SingleNameBinding_Yield -> BindingIdentifier_Yield Initializer_In_Yield
     Some((
-        Builder::assignment_pattern_or_property,
-        "assignment_pattern_or_property",
+        Builder::single_name_binding_init,
+        "single_name_binding_init",
     )),
     // Initializer_In_Yield -> ASSIGN AssignmentExpression_In_Yield
     Some((Builder::initializer, "initializer")),
@@ -2261,14 +2255,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // StatementListItem_Yield_Return -> Declaration_Yield
     Some((Builder::nop, "nop")),
     // SingleNameBinding_Await -> BindingIdentifier_Await
-    Some((
-        Builder::binding_identifier_or_property,
-        "binding_identifier_or_property",
-    )),
+    Some((Builder::single_name_binding, "single_name_binding")),
     // SingleNameBinding_Await -> BindingIdentifier_Await Initializer_In_Await
     Some((
-        Builder::assignment_pattern_or_property,
-        "assignment_pattern_or_property",
+        Builder::single_name_binding_init,
+        "single_name_binding_init",
     )),
     // StatementListItem_Await_Return -> Statement_Await_Return
     Some((Builder::nop, "nop")),
@@ -2315,14 +2306,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "array_pattern_concat_rest",
     )),
     // SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await
-    Some((
-        Builder::binding_identifier_or_property,
-        "binding_identifier_or_property",
-    )),
+    Some((Builder::single_name_binding, "single_name_binding")),
     // SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
     Some((
-        Builder::assignment_pattern_or_property,
-        "assignment_pattern_or_property",
+        Builder::single_name_binding_init,
+        "single_name_binding_init",
     )),
     // Initializer_In_Yield_Await -> ASSIGN AssignmentExpression_In_Yield_Await
     Some((Builder::initializer, "initializer")),
@@ -2726,7 +2714,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PropertyDefinition_Await -> IdentifierReference_Await
     Some((Builder::property, "property")),
     // PropertyDefinition_Await -> CoverInitializedName_Await
-    None,
+    Some((
+        Builder::property_cover_initialized_name,
+        "property_cover_initialized_name",
+    )),
     // PropertyDefinition_Await -> PropertyName_Await COLON AssignmentExpression_In_Await
     Some((Builder::property_value, "property_value")),
     // PropertyDefinition_Await -> MethodDefinition_Await
@@ -3078,7 +3069,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "binary_expression_private",
     )),
     // CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
-    None,
+    Some((Builder::cover_initialized_name, "cover_initialized_name")),
     // TemplateMiddleList_Await -> TEMPLATE_MIDDLE Expression_In_Await
     Some((Builder::template_middle_list, "template_middle_list")),
     // TemplateMiddleList_Await -> TemplateMiddleList_Await TEMPLATE_MIDDLE Expression_In_Await
@@ -3107,7 +3098,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PropertyDefinition -> IdentifierReference
     Some((Builder::property, "property")),
     // PropertyDefinition -> CoverInitializedName
-    None,
+    Some((
+        Builder::property_cover_initialized_name,
+        "property_cover_initialized_name",
+    )),
     // PropertyDefinition -> PropertyName COLON AssignmentExpression_In
     Some((Builder::property_value, "property_value")),
     // PropertyDefinition -> MethodDefinition
@@ -3507,7 +3501,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "binary_expression_private",
     )),
     // CoverInitializedName -> IdentifierReference Initializer_In
-    None,
+    Some((Builder::cover_initialized_name, "cover_initialized_name")),
     // TemplateMiddleList -> TEMPLATE_MIDDLE Expression_In
     Some((Builder::template_middle_list, "template_middle_list")),
     // TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
@@ -4931,7 +4925,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PropertyDefinition_Yield -> IdentifierReference_Yield
     Some((Builder::property, "property")),
     // PropertyDefinition_Yield -> CoverInitializedName_Yield
-    None,
+    Some((
+        Builder::property_cover_initialized_name,
+        "property_cover_initialized_name",
+    )),
     // PropertyDefinition_Yield -> PropertyName_Yield COLON AssignmentExpression_In_Yield
     Some((Builder::property_value, "property_value")),
     // PropertyDefinition_Yield -> MethodDefinition_Yield
@@ -4980,7 +4977,10 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
     Some((Builder::property, "property")),
     // PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await
-    None,
+    Some((
+        Builder::property_cover_initialized_name,
+        "property_cover_initialized_name",
+    )),
     // PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON AssignmentExpression_In_Yield_Await
     Some((Builder::property_value, "property_value")),
     // PropertyDefinition_Yield_Await -> MethodDefinition_Yield_Await
@@ -5074,7 +5074,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "binary_expression_private",
     )),
     // CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
-    None,
+    Some((Builder::cover_initialized_name, "cover_initialized_name")),
     // TemplateMiddleList_Yield -> TEMPLATE_MIDDLE Expression_In_Yield
     Some((Builder::template_middle_list, "template_middle_list")),
     // TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE Expression_In_Yield
@@ -5108,7 +5108,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "binary_expression_private",
     )),
     // CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await
-    None,
+    Some((Builder::cover_initialized_name, "cover_initialized_name")),
     // TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE Expression_In_Yield_Await
     Some((Builder::template_middle_list, "template_middle_list")),
     // TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_MIDDLE Expression_In_Yield_Await

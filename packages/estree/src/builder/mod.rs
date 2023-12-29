@@ -269,6 +269,7 @@ impl Builder {
     fn expression_statement(&mut self) -> Result<(), String> {
         let (_, end) = self.check(";");
         let (expression, start, _) = self.pop_node();
+        expression.validate_expression()?;
         let node = node!(expression_statement@start..end; expression);
         self.push_node(node, start, end);
         Ok(())
@@ -282,6 +283,7 @@ impl Builder {
         let (test, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("if");
+        test.validate_expression()?;
         let node = node!(if_statement@start..end; test, consequent, alternate);
         self.push_node(node, start, end);
         Ok(())
@@ -293,6 +295,7 @@ impl Builder {
         let (test, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("if");
+        test.validate_expression()?;
         let node = node!(if_statement@start..end; test, consequent);
         self.push_node(node, start, end);
         Ok(())
@@ -338,6 +341,7 @@ impl Builder {
         let (object, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("with");
+        object.validate_expression()?;
         let node = node!(with_statement@start..end; object, body);
         self.push_node(node, start, end);
         Ok(())
@@ -356,6 +360,7 @@ impl Builder {
         let (_, end) = self.check(";");
         let (argument, ..) = self.pop_node();
         let (start, _) = self.check("throw");
+        argument.validate_expression()?;
         let node = node!(throw_statement@start..end; argument);
         self.push_node(node, start, end);
         Ok(())
@@ -429,6 +434,7 @@ impl Builder {
         let (discriminant, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("switch");
+        discriminant.validate_expression()?;
         let node = node!(switch_statement@start..end; discriminant, cases);
         self.push_node(node, start, end);
         Ok(())
@@ -478,6 +484,7 @@ impl Builder {
         let (_, end) = self.check(":");
         let (test, ..) = self.pop_node();
         let (start, _) = self.check("case");
+        test.validate_expression()?;
         let node = node!(switch_case@start..end; test);
         self.push_node(node, start, end);
         Ok(())
@@ -488,6 +495,7 @@ impl Builder {
         self.check(":");
         let (test, ..) = self.pop_node();
         let (start, _) = self.check("case");
+        test.validate_expression()?;
         let node = node!(switch_case@start..end; test, consequent);
         self.push_node(node, start, end);
         Ok(())
@@ -518,6 +526,7 @@ impl Builder {
         self.check("while");
         let (body, ..) = self.pop_node();
         let (start, _) = self.check("do");
+        test.validate_expression()?;
         let node = node!(do_while_statement@start..end; test, body);
         self.push_node(node, start, end);
         Ok(())
@@ -529,6 +538,7 @@ impl Builder {
         let (test, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("while");
+        test.validate_expression()?;
         let node = node!(while_statement@start..end; test, body);
         self.push_node(node, start, end);
         Ok(())
@@ -554,6 +564,7 @@ impl Builder {
         let (init, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("for");
+        init.validate_expression()?;
         let node = node!(for_statement@start..end; init; ; ; body);
         self.push_node(node, start, end);
         Ok(())
@@ -567,6 +578,7 @@ impl Builder {
         self.check(";");
         self.check("(");
         let (start, _) = self.check("for");
+        test.validate_expression()?;
         let node = node!(for_statement@start..end; ; test; ; body);
         self.push_node(node, start, end);
         Ok(())
@@ -581,6 +593,8 @@ impl Builder {
         let (init, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("for");
+        init.validate_expression()?;
+        test.validate_expression()?;
         let node = node!(for_statement@start..end; init; test; ; body);
         self.push_node(node, start, end);
         Ok(())
@@ -594,6 +608,7 @@ impl Builder {
         self.check(";");
         self.check("(");
         let (start, _) = self.check("for");
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; ; ; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -608,6 +623,8 @@ impl Builder {
         let (init, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("for");
+        init.validate_expression()?;
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; init; ; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -622,6 +639,8 @@ impl Builder {
         self.check(";");
         self.check("(");
         let (start, _) = self.check("for");
+        test.validate_expression()?;
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; ; test; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -637,6 +656,9 @@ impl Builder {
         let (init, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("for");
+        init.validate_expression()?;
+        test.validate_expression()?;
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; init; test; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -652,6 +674,7 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(variable_declaration@var_start..var_end; var, declarations);
+        init.validate_expression()?;
         let node = node!(for_statement@start..end; init; ; ; body);
         self.push_node(node, start, end);
         Ok(())
@@ -668,6 +691,8 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(variable_declaration@var_start..var_end; var, declarations);
+        init.validate_expression()?;
+        test.validate_expression()?;
         let node = node!(for_statement@start..end; init; test; ; body);
         self.push_node(node, start, end);
         Ok(())
@@ -684,6 +709,8 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(variable_declaration@var_start..var_end; var, declarations);
+        init.validate_expression()?;
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; init; ; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -701,6 +728,9 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(variable_declaration@var_start..var_end; var, declarations);
+        init.validate_expression()?;
+        test.validate_expression()?;
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; init; test; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -714,6 +744,7 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(for_init_update; init);
+        init.validate_expression()?;
         let node = node!(for_statement@start..end; init; ; ; body);
         self.push_node(node, start, end);
         Ok(())
@@ -728,6 +759,8 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(for_init_update; init);
+        init.validate_expression()?;
+        test.validate_expression()?;
         let node = node!(for_statement@start..end; init; test; ; body);
         self.push_node(node, start, end);
         Ok(())
@@ -742,6 +775,8 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(for_init_update; init);
+        init.validate_expression()?;
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; init; ; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -757,6 +792,9 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let init = node!(for_init_update; init);
+        init.validate_expression()?;
+        test.validate_expression()?;
+        update.validate_expression()?;
         let node = node!(for_statement@start..end; init; test; update; body);
         self.push_node(node, start, end);
         Ok(())
@@ -772,7 +810,9 @@ impl Builder {
         let (start, _) = self.check("for");
         // If LeftHandSideExpression is either an ObjectLiteral or an ArrayLiteral, it must cover
         // an AssignmentPattern.  See "14.7.5.1 Static Semantics: Early Errors" in ECMA-262.
-        let left = node!(into_pattern; left);
+        let left = node!(into_pattern; left)?;
+        left.validate_expression()?;
+        right.validate_expression()?;
         let node = node!(for_in_statement@start..end; left, right, body);
         self.push_node(node, start, end);
         Ok(())
@@ -788,6 +828,8 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let left = node!(variable_declaration@var_start..var_end; var, vec![binding]);
+        left.validate_expression()?;
+        right.validate_expression()?;
         let node = node!(for_in_statement@start..end; left, right, body);
         self.push_node(node, start, end);
         Ok(())
@@ -803,7 +845,9 @@ impl Builder {
         let (start, _) = self.check("for");
         // If LeftHandSideExpression is either an ObjectLiteral or an ArrayLiteral, it must cover
         // an AssignmentPattern.  See "14.7.5.1 Static Semantics: Early Errors" in ECMA-262.
-        let left = node!(into_pattern; left);
+        let left = node!(into_pattern; left)?;
+        left.validate_expression()?;
+        right.validate_expression()?;
         let node = node!(for_of_statement@start..end; left, right, body);
         self.push_node(node, start, end);
         Ok(())
@@ -819,6 +863,8 @@ impl Builder {
         self.check("(");
         let (start, _) = self.check("for");
         let left = node!(variable_declaration@var_start..var_end; var, vec![binding]);
+        left.validate_expression()?;
+        right.validate_expression()?;
         let node = node!(for_of_statement@start..end; left, right, body);
         self.push_node(node, start, end);
         Ok(())
@@ -833,6 +879,9 @@ impl Builder {
         self.check("(");
         self.check("await");
         let (start, _) = self.check("for");
+        let left = node!(into_pattern; left)?;
+        left.validate_expression()?;
+        right.validate_expression()?;
         let node = node!(for_await_of_statement@start..end; left, right, body);
         self.push_node(node, start, end);
         Ok(())
@@ -849,6 +898,8 @@ impl Builder {
         self.check("await");
         let (start, _) = self.check("for");
         let left = node!(variable_declaration@var_start..var_end; var, vec![binding]);
+        left.validate_expression()?;
+        right.validate_expression()?;
         let node = node!(for_await_of_statement@start..end; left, right, body);
         self.push_node(node, start, end);
         Ok(())
@@ -881,6 +932,7 @@ impl Builder {
         let (_, end) = self.check(";");
         let (argument, ..) = self.pop_node();
         let (start, _) = self.check("return");
+        argument.validate_expression()?;
         let node = node!(return_statement@start..end; argument);
         self.push_node(node, start, end);
         Ok(())
@@ -1360,7 +1412,7 @@ impl Builder {
         let (_, end) = self.check("}");
         let (body, ..) = self.pop_list();
         let (start, _) = self.check("{");
-        let node = node!(block_statement@start..end; body);
+        let node = node!(function_body@start..end; body);
         self.push_node(node, start, end);
         Ok(())
     }
@@ -1481,7 +1533,8 @@ impl Builder {
         let (left, start, _) = self.pop_node();
         // If LeftHandSideExpression is an ObjectLiteral or an ArrayLiteral, it must cover an
         // AssignmentPattern.  See "13.15.1 Static Semantics: Early Errors" in ECMA-262.
-        let left = node!(into_pattern; left);
+        let left = node!(into_pattern; left)?;
+        left.validate_pattern()?;
         let node = node!(assignment_expression@start..end; operator, left, right);
         self.push_node(node, start, end);
         Ok(())
@@ -1645,7 +1698,7 @@ impl Builder {
 
     fn arrow_parameters(&mut self) -> Result<(), String> {
         let (nullable, start, end) = self.pop_nullable();
-        let list = node!(into_patterns; nullable);
+        let list = node!(into_patterns; nullable)?;
         self.push_list(list, start, end);
         Ok(())
     }
@@ -1655,7 +1708,7 @@ impl Builder {
         self.check(",");
         let (expr1, start, _) = self.pop_node();
         let node = node!(sequence_expression@start..end; match *expr1 {
-            Node::SequenceExpression(ref seq) => {
+            Node::SequenceExpression(ref seq) if seq.open => {
                 // TODO: consider to use an immutable collection
                 let mut expressions = seq.expressions.clone();
                 expressions.push(expr2);
@@ -1730,6 +1783,27 @@ impl Builder {
         Ok(())
     }
 
+    fn cover_initialized_name(&mut self) -> Result<(), String> {
+        let (value, _, end) = self.pop_node();
+        let (name, start, _) = self.pop_node();
+        let node = node!(cover_initialized_name@start..end; name, value);
+        self.push_node(node, start, end);
+        Ok(())
+    }
+
+    fn property_cover_initialized_name(&mut self) -> Result<(), String> {
+        let (cover, start, end) = self.pop_node();
+        // 13.2.5.1 Static Semantics: Early Errors
+        // CoverInitializedName has to be handled a syntax error in ObjectLiteral.
+        let key = match *cover {
+            Node::CoverInitializedName(ref cover) => cover.name.clone(),
+            _ => panic!(),
+        };
+        let node = node!(property@start..end; key => cover; shorthand);
+        self.push_node(node, start, end);
+        Ok(())
+    }
+
     fn property_value(&mut self) -> Result<(), String> {
         let (value, _, end) = self.pop_node();
         self.check(":");
@@ -1778,7 +1852,7 @@ impl Builder {
         self.check(",");
         let (elements, ..) = self.pop_array();
         let (start, _) = self.check("[");
-        let node = node!(array_expression@start..end; elements);
+        let node = node!(array_expression@start..end; elements; trailing_comma);
         self.push_node(node, start, end);
         Ok(())
     }
@@ -1805,6 +1879,7 @@ impl Builder {
     fn variable_declarator_init(&mut self) -> Result<(), String> {
         let (init, _, end) = self.pop_node();
         let (id, start, _) = self.pop_node();
+        init.validate_expression()?;
         let node = node!(variable_declarator@start..end; id, init);
         self.push_node(node, start, end);
         Ok(())
@@ -1857,6 +1932,7 @@ impl Builder {
         let (_, end) = self.check(")");
         let (node, ..) = self.pop_node();
         let (start, _) = self.check("(");
+        let node = node!(close_sequence_expression; node);
         self.push_nullable(Some(node), start, end);
         Ok(())
     }
@@ -1866,6 +1942,7 @@ impl Builder {
         self.check(",");
         let (node, ..) = self.pop_node();
         let (start, _) = self.check("(");
+        let node = node!(close_sequence_expression; node);
         self.push_nullable(Some(node), start, end);
         Ok(())
     }
@@ -1896,14 +1973,14 @@ impl Builder {
         let (start, _) = self.check("(");
         let rest = node!(rest_element@rest_start..rest_end; argument);
         let expressions = match *expr {
-            Node::SequenceExpression(ref seq) => {
+            Node::SequenceExpression(ref seq) if seq.open => {
                 let mut expressions = seq.expressions.clone();
                 expressions.push(rest);
                 expressions
             }
             _ => vec![expr, rest],
         };
-        let node = node!(sequence_expression@expr_start..rest_end; expressions);
+        let node = node!(sequence_expression@expr_start..rest_end; expressions; closed);
         self.push_nullable(Some(node), start, end);
         Ok(())
     }
@@ -2061,18 +2138,21 @@ impl Builder {
         Ok(())
     }
 
-    fn binding_identifier_or_property(&mut self) -> Result<(), String> {
-        let (left, start, end) = self.pop_node();
-        let right = node!(property@start..end; left.clone());
+    fn single_name_binding(&mut self) -> Result<(), String> {
+        let (key, start, end) = self.pop_node();
+        // left for BindingElement, right for BindingProperty
+        let left = key.clone();
+        let right = node!(property@start..end; key);
         self.push_either(left, right, start, end);
         Ok(())
     }
 
-    fn assignment_pattern_or_property(&mut self) -> Result<(), String> {
+    fn single_name_binding_init(&mut self) -> Result<(), String> {
         let (value, _, end) = self.pop_node();
         let (key, start, _) = self.pop_node();
+        // left for BindingElement, right for BindingProperty
         let left = node!(assignment_pattern@start..end; key.clone(), value.clone());
-        let right = node!(property@start..end; key => value);
+        let right = node!(property@start..end; key => left.clone(); shorthand);
         self.push_either(left, right, start, end);
         Ok(())
     }
@@ -2416,6 +2496,7 @@ impl Builder {
         let (nullable, start, end) = self.pop_nullable();
         match nullable {
             Some(node) => {
+                node.validate_primary_expression()?; // #parencover
                 self.push_node(node, start, end);
                 Ok(())
             }

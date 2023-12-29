@@ -3,8 +3,8 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
-use bee_jsparser::literal_content_to_string;
 use bee_jsparser::string_literal_to_string;
+use bee_jsparser::template_literal_to_string;
 use bee_jsparser::Location;
 
 #[derive(Clone, Debug, Serialize)]
@@ -114,6 +114,8 @@ pub enum Node {
     OptionalCall((Vec<NodeRef>, Location)),
     #[serde(skip)]
     OptionalMember((NodeRef, bool, Location)),
+    #[serde(skip)]
+    CoverInitializedName(CoverInitializedName),
 }
 
 impl Node {
@@ -149,6 +151,7 @@ impl Node {
         body: Vec<NodeRef>,
         source_type: SourceType,
     ) -> NodeRef {
+        let body = Self::into_statement_list_with_directive_prologue(body);
         NodeRef::new(Self::Program(Program::new(start, end, body, source_type)))
     }
 
@@ -158,6 +161,11 @@ impl Node {
         NodeRef::new(Self::ExpressionStatement(ExpressionStatement::new(
             start, end, expression,
         )))
+    }
+
+    pub fn function_body(start: &Location, end: &Location, body: Vec<NodeRef>) -> NodeRef {
+        let body = Self::into_statement_list_with_directive_prologue(body);
+        NodeRef::new(Self::BlockStatement(BlockStatement::new(start, end, body)))
     }
 
     pub fn block_statement(start: &Location, end: &Location, body: Vec<NodeRef>) -> NodeRef {
@@ -448,9 +456,13 @@ impl Node {
         start: &Location,
         end: &Location,
         elements: Vec<Option<NodeRef>>,
+        trailing_comma: bool,
     ) -> NodeRef {
         NodeRef::new(Self::ArrayExpression(ArrayExpression::new(
-            start, end, elements,
+            start,
+            end,
+            elements,
+            trailing_comma,
         )))
     }
 
@@ -468,10 +480,17 @@ impl Node {
         start: &Location,
         end: &Location,
         key: NodeRef,
-        value: Option<NodeRef>,
+        value: NodeRef,
         kind: PropertyKind,
+        shorthand: bool,
     ) -> NodeRef {
-        NodeRef::new(Self::Property(Property::new(start, end, key, value, kind)))
+        let (key, computed) = match *key {
+            Node::ComputedPropertyName(ref expr) => (expr.clone(), true),
+            _ => (key.clone(), false),
+        };
+        NodeRef::new(Self::Property(Property::new(
+            start, end, key, value, kind, shorthand, computed,
+        )))
     }
 
     pub fn function_expression(
@@ -599,11 +618,13 @@ impl Node {
         start: &Location,
         end: &Location,
         expressions: Vec<NodeRef>,
+        open: bool,
     ) -> NodeRef {
         NodeRef::new(Self::SequenceExpression(SequenceExpression::new(
             start,
             end,
             expressions,
+            open,
         )))
     }
 
@@ -825,6 +846,10 @@ impl Node {
             Self::Identifier(ref id) if id.name == "constructor" => {
                 (key, MethodKind::Constructor, false)
             }
+            Self::Literal(Literal {
+                value: Scalar::String(ref value),
+                ..
+            }) if value == "constructor" => (key, MethodKind::Constructor, false),
             _ => (key, MethodKind::Method, false),
         };
         NodeRef::new(Self::MethodDefinition(MethodDefinition::new(
@@ -837,12 +862,16 @@ impl Node {
             Self::MethodDefinition(ref method) => method,
             _ => panic!(),
         };
+        let kind = match method.kind {
+            MethodKind::Constructor => MethodKind::Method,
+            kind => kind,
+        };
         NodeRef::new(Self::MethodDefinition(MethodDefinition::new(
             start,
             end,
             method.key.clone(),
             method.value.clone(),
-            method.kind,
+            kind,
             method.computed,
             true,
         )))
@@ -936,6 +965,17 @@ impl Node {
         NodeRef::new(Self::OptionalMember((expr, computed, end)))
     }
 
+    pub fn cover_initialized_name(
+        start: &Location,
+        end: &Location,
+        name: NodeRef,
+        value: NodeRef,
+    ) -> NodeRef {
+        NodeRef::new(Self::CoverInitializedName(CoverInitializedName::new(
+            start, end, name, value,
+        )))
+    }
+
     pub fn for_init_update(init: NodeRef) -> NodeRef {
         match *init {
             Node::VariableDeclaration(ref decl) => {
@@ -955,7 +995,7 @@ impl Node {
         }
     }
 
-    pub fn into_patterns(nullable: Option<NodeRef>) -> Vec<NodeRef> {
+    pub fn into_patterns(nullable: Option<NodeRef>) -> Result<Vec<NodeRef>, String> {
         match nullable {
             Some(node) => match *node {
                 Node::SequenceExpression(ref seq) => seq
@@ -963,21 +1003,31 @@ impl Node {
                     .iter()
                     .cloned()
                     .map(Self::into_pattern)
-                    .collect(),
-                _ => vec![Self::into_pattern(node)],
+                    .collect::<Result<Vec<_>, _>>(),
+                _ => Ok(vec![Self::into_pattern(node)?]),
             },
-            None => vec![],
+            None => Ok(vec![]),
         }
     }
 
-    pub fn into_pattern(node: NodeRef) -> NodeRef {
+    pub fn into_pattern(node: NodeRef) -> Result<NodeRef, String> {
         match *node {
             Node::ObjectExpression(ref expr) => Self::to_object_pattern(expr),
             Node::ArrayExpression(ref expr) => Self::to_array_pattern(expr),
             Node::AssignmentExpression(ref expr) => Self::to_assignment_pattern(expr),
             Node::SpreadElement(ref expr) => Self::to_rest_element(expr),
             Node::Property(ref property) => Self::to_assignment_property(property),
-            _ => node,
+            Node::CoverInitializedName(ref cover) => {
+                let start = cover.location.start_location();
+                let end = cover.location.end_location();
+                Ok(Self::assignment_pattern(
+                    &start,
+                    &end,
+                    cover.name.clone(),
+                    cover.value.clone(),
+                ))
+            }
+            _ => Ok(node),
         }
     }
 
@@ -1008,7 +1058,7 @@ impl Node {
         }
     }
 
-    fn to_object_pattern(expr: &ObjectExpression) -> NodeRef {
+    fn to_object_pattern(expr: &ObjectExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
         let properties = expr
@@ -1016,49 +1066,162 @@ impl Node {
             .iter()
             .cloned()
             .map(Self::into_pattern)
-            .collect();
-        Self::object_pattern(&start, &end, properties)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::object_pattern(&start, &end, properties))
     }
 
-    fn to_array_pattern(expr: &ArrayExpression) -> NodeRef {
+    fn to_array_pattern(expr: &ArrayExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        let elements = expr
-            .elements
-            .iter()
-            .cloned()
-            .map(|nullable| nullable.map(Self::into_pattern))
-            .collect();
-        Self::array_pattern(&start, &end, elements)
+        let mut elements = vec![];
+        let mut rest_found = false;
+        for element in expr.elements.iter() {
+            match element {
+                Some(node) => {
+                    let node = Self::into_pattern(node.clone())?;
+                    if let Node::RestElement(_) = *node {
+                        if rest_found {
+                            return Err(
+                                "Multiple RestElements are not allowed in ArrayAssignmentPattern"
+                                    .to_string(),
+                            );
+                        }
+                        if expr.trailing_comma {
+                            return Err("Trailing comma is not allowed in ArrayAssignmentPattern"
+                                .to_string());
+                        }
+                        rest_found = true;
+                    }
+                    elements.push(Some(node));
+                }
+                None => {
+                    if rest_found {
+                        return Err(
+                            "Trailing comma is not allowed in ArrayAssignmentPattern".to_string()
+                        );
+                    }
+                    elements.push(None)
+                }
+            }
+        }
+        Ok(Self::array_pattern(&start, &end, elements))
     }
 
-    fn to_assignment_pattern(expr: &AssignmentExpression) -> NodeRef {
+    fn to_assignment_pattern(expr: &AssignmentExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        Self::assignment_pattern(&start, &end, expr.left.clone(), expr.right.clone())
+        Ok(Self::assignment_pattern(
+            &start,
+            &end,
+            expr.left.clone(),
+            expr.right.clone(),
+        ))
     }
 
-    fn to_rest_element(expr: &SpreadElement) -> NodeRef {
+    fn to_rest_element(expr: &SpreadElement) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        Self::rest_element(&start, &end, expr.argument.clone())
+        let argument = Self::into_pattern(expr.argument.clone())?;
+        Ok(Self::rest_element(&start, &end, argument))
     }
 
-    fn to_assignment_property(property: &Property) -> NodeRef {
+    fn to_assignment_property(property: &Property) -> Result<NodeRef, String> {
         let start = property.location.start_location();
         let end = property.location.end_location();
-        let value = Self::into_pattern(property.value.clone());
-        Self::property(
+        let value = Self::into_pattern(property.value.clone())?;
+        Ok(NodeRef::new(Self::Property(Property::new(
             &start,
             &end,
             property.key.clone(),
-            Some(value),
+            value,
             property.kind,
-        )
+            property.shorthand,
+            property.computed,
+        ))))
+    }
+
+    fn into_statement_list_with_directive_prologue(mut list: Vec<NodeRef>) -> Vec<NodeRef> {
+        for node in list.iter_mut() {
+            match node.0.as_ref() {
+                Node::ExpressionStatement(ref stmt) if stmt.is_likely_directive() => {
+                    *node = NodeRef::new(Node::ExpressionStatement(stmt.to_directive()));
+                }
+                _ => break,
+            }
+        }
+        list
+    }
+
+    // validation
+
+    pub fn validate_expression(&self) -> Result<(), String> {
+        match *self {
+            Node::ArrayExpression(ref expr) => expr.validate(),
+            Node::ObjectExpression(ref expr) => expr.validate(),
+            Node::Property(ref prop) => prop.validate(),
+            Node::FunctionExpression(ref expr) => expr.validate(),
+            Node::UnaryExpression(ref expr) => expr.validate(),
+            Node::UpdateExpression(ref expr) => expr.validate(),
+            Node::BinaryExpression(ref expr) => expr.validate(),
+            Node::AssignmentExpression(ref expr) => expr.validate(),
+            Node::LogicalExpression(ref expr) => expr.validate(),
+            Node::MemberExpression(ref expr) => expr.validate(),
+            Node::ConditionalExpression(ref expr) => expr.validate(),
+            Node::CallExpression(ref expr) => expr.validate(),
+            Node::NewExpression(ref expr) => expr.validate(),
+            Node::SequenceExpression(ref expr) => expr.validate(),
+            Node::ArrowFunctionExpression(ref expr) => expr.validate(),
+            Node::YieldExpression(ref expr) => expr.validate(),
+            Node::TemplateLiteral(ref expr) => expr.validate(),
+            Node::TaggedTemplateExpression(ref expr) => expr.validate(),
+            Node::AwaitExpression(ref expr) => expr.validate(),
+            Node::ImportExpression(ref expr) => expr.validate(),
+            Node::ChainExpression(ref expr) => expr.validate(),
+            Node::SpreadElement(ref elem) => elem.validate(),
+            // 13.2.5.1 Static Semantics: Early Errors
+            // CoverInitializedName is not allowed in ObjectLiteral
+            Node::CoverInitializedName(_) => Err("Early error: CoverInitializedName".to_string()),
+            _ => Ok(()),
+        }
+    }
+
+    pub fn validate_primary_expression(&self) -> Result<(), String> {
+        match *self {
+            Node::ObjectExpression(ref expr) => expr.validate(),
+            Node::ArrayExpression(ref expr) => expr.validate(),
+            _ => Ok(()),
+        }
+    }
+
+    // TODO: implement properly
+    pub fn validate_pattern(&self) -> Result<(), String> {
+        match *self {
+            Node::SequenceExpression(_) => {
+                Err("LeftHandSideExpression must cover an AssignmentPattern".to_string())
+            }
+            _ => Ok(()),
+        }
+    }
+
+    pub fn close_sequence_expression(node: NodeRef) -> NodeRef {
+        match *node {
+            Node::SequenceExpression(ref seq) if seq.open => {
+                let start = seq.location.start_location();
+                let end = seq.location.end_location();
+                let expressions = seq.expressions.clone();
+                NodeRef::new(Self::SequenceExpression(SequenceExpression::new(
+                    &start,
+                    &end,
+                    expressions,
+                    false,
+                )))
+            }
+            _ => node,
+        }
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct LocationData {
     // Node
     pub start: usize,
@@ -1102,13 +1265,13 @@ impl LocationData {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct SourceLocation {
     pub start: Position,
     pub end: Position,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Position {
     pub line: usize,
     pub column: usize,
@@ -1266,6 +1429,10 @@ impl Function {
             r#async,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.body.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -1344,16 +1511,37 @@ pub struct ExpressionStatement {
 
 impl ExpressionStatement {
     fn new(start: &Location, end: &Location, expression: NodeRef) -> Self {
-        let directive = match *expression {
-            Node::Literal(Literal {
-                value: Scalar::String(ref value),
-                ..
-            }) => Some(value.to_owned()),
-            _ => None,
-        };
         Self {
             location: LocationData::new(start, end),
             expression,
+            directive: None,
+        }
+    }
+
+    fn is_likely_directive(&self) -> bool {
+        match *self.expression {
+            Node::Literal(Literal {
+                location: LocationData { start, .. },
+                value: Scalar::String(_),
+                ..
+            }) if self.location.start == start => true,
+            _ => false,
+        }
+    }
+
+    fn to_directive(&self) -> Self {
+        let directive = match *self.expression {
+            Node::Literal(Literal {
+                location: LocationData { start, .. },
+                value: Scalar::String(_),
+                ref raw,
+                ..
+            }) if self.location.start == start => Some(raw[1..(raw.len() - 1)].to_owned()),
+            _ => panic!(),
+        };
+        Self {
+            location: self.location.clone(),
+            expression: self.expression.clone(),
             directive,
         }
     }
@@ -1407,8 +1595,8 @@ impl DebuggerStatement {
 pub struct WithStatement {
     #[serde(flatten)]
     pub location: LocationData,
-    pub object: NodeRef,
-    pub body: NodeRef,
+    pub object: NodeRef, // Expression
+    pub body: NodeRef,   // Statement
 }
 
 impl WithStatement {
@@ -1933,14 +2121,29 @@ pub struct ArrayExpression {
     #[serde(flatten)]
     pub location: LocationData,
     pub elements: Vec<Option<NodeRef>>, // [ Expression | SpreadElement | null ]
+    #[serde(skip)]
+    trailing_comma: bool,
 }
 
 impl ArrayExpression {
-    fn new(start: &Location, end: &Location, elements: Vec<Option<NodeRef>>) -> Self {
+    fn new(
+        start: &Location,
+        end: &Location,
+        elements: Vec<Option<NodeRef>>,
+        trailing_comma: bool,
+    ) -> Self {
         Self {
             location: LocationData::new(start, end),
             elements,
+            trailing_comma,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        for element in self.elements.iter().filter_map(Option::as_ref) {
+            element.validate_expression()?;
+        }
+        Ok(())
     }
 }
 
@@ -1957,6 +2160,13 @@ impl ObjectExpression {
             location: LocationData::new(start, end),
             properties,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        for property in self.properties.iter() {
+            property.validate_expression()?;
+        }
+        Ok(())
     }
 }
 
@@ -1977,16 +2187,14 @@ impl Property {
         start: &Location,
         end: &Location,
         key: NodeRef,
-        value: Option<NodeRef>,
+        value: NodeRef,
         kind: PropertyKind,
+        shorthand: bool,
+        computed: bool,
     ) -> Self {
-        let (key, computed) = match *key {
-            Node::ComputedPropertyName(ref expr) => (expr.clone(), true),
-            _ => (key.clone(), false),
-        };
-        let (value, shorthand) = match value {
-            Some(value) => (value, false),
-            _ => (key.clone(), true),
+        let key = match *key {
+            Node::ComputedPropertyName(ref expr) => expr.clone(),
+            _ => key.clone(),
         };
         let method = match kind {
             PropertyKind::Init => false,
@@ -2001,6 +2209,10 @@ impl Property {
             shorthand,
             computed,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.value.validate_expression()
     }
 }
 
@@ -2037,6 +2249,10 @@ impl FunctionExpression {
             function: Function::new(id, params, body, generator, r#async),
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.function.validate()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2056,6 +2272,10 @@ impl UnaryExpression {
             argument,
             prefix: true,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
     }
 }
 
@@ -2118,6 +2338,10 @@ impl UpdateExpression {
             prefix,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -2163,6 +2387,10 @@ impl BinaryExpression {
             left,
             right,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.right.validate_expression()
     }
 }
 
@@ -2270,6 +2498,10 @@ impl AssignmentExpression {
             right,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.right.validate_expression()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -2358,6 +2590,11 @@ impl LogicalExpression {
             right,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.left.validate_expression()?;
+        self.right.validate_expression()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -2410,6 +2647,11 @@ impl MemberExpression {
             optional,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.object.validate_expression()?;
+        self.property.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2435,6 +2677,12 @@ impl ConditionalExpression {
             consequent,
             alternate,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.test.validate_expression()?;
+        self.consequent.validate_expression()?;
+        self.alternate.validate_expression()
     }
 }
 
@@ -2462,6 +2710,14 @@ impl CallExpression {
             optional,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.callee.validate_expression()?;
+        for argument in self.arguments.iter() {
+            argument.validate_expression()?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2480,6 +2736,14 @@ impl NewExpression {
             arguments,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.callee.validate_expression()?;
+        for argument in self.arguments.iter() {
+            argument.validate_expression()?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2487,14 +2751,24 @@ pub struct SequenceExpression {
     #[serde(flatten)]
     pub location: LocationData,
     pub expressions: Vec<NodeRef>, // [ Expression ]
+    #[serde(skip)]
+    pub open: bool,
 }
 
 impl SequenceExpression {
-    fn new(start: &Location, end: &Location, expressions: Vec<NodeRef>) -> Self {
+    fn new(start: &Location, end: &Location, expressions: Vec<NodeRef>, open: bool) -> Self {
         Self {
             location: LocationData::new(start, end),
             expressions,
+            open,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        for expr in self.expressions.iter() {
+            expr.validate_expression()?;
+        }
+        Ok(())
     }
 }
 
@@ -2520,6 +2794,10 @@ impl ArrowFunctionExpression {
             function: Function::new(id, params, body, false, r#async),
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.function.validate()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2536,6 +2814,13 @@ impl YieldExpression {
             location: LocationData::new(start, end),
             argument,
             delegate,
+        }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        match self.argument {
+            Some(ref argument) => argument.validate_expression(),
+            None => Ok(()),
         }
     }
 }
@@ -2561,6 +2846,13 @@ impl TemplateLiteral {
             expressions,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        for expr in self.expressions.iter() {
+            expr.validate_expression()?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2578,6 +2870,11 @@ impl TaggedTemplateExpression {
             tag,
             quasi,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.tag.validate_expression()?;
+        self.quasi.validate_expression()
     }
 }
 
@@ -2630,6 +2927,10 @@ impl AwaitExpression {
             argument,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2646,6 +2947,10 @@ impl ImportExpression {
             source,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.source.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2661,6 +2966,10 @@ impl ChainExpression {
             location: LocationData::new(start, end),
             expression,
         }
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        self.expression.validate_expression()
     }
 }
 
@@ -2758,6 +3067,10 @@ impl SpreadElement {
             argument,
         }
     }
+
+    fn validate(&self) -> Result<(), String> {
+        self.argument.validate_expression()
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2787,8 +3100,8 @@ pub struct TemplateValue {
 impl TemplateValue {
     fn new(raw: &str) -> Self {
         Self {
-            cooked: literal_content_to_string(raw),
-            raw: raw.to_owned(),
+            cooked: template_literal_to_string(raw, false),
+            raw: template_literal_to_string(raw, true),
         }
     }
 }
@@ -2939,11 +3252,28 @@ impl ExportSpecifier {
 }
 
 #[derive(Debug, Serialize)]
+pub struct CoverInitializedName {
+    #[serde(flatten)]
+    pub location: LocationData,
+    pub name: NodeRef,  // Identifier
+    pub value: NodeRef, // Expression
+}
+
+impl CoverInitializedName {
+    fn new(start: &Location, end: &Location, name: NodeRef, value: NodeRef) -> Self {
+        Self {
+            location: LocationData::new(start, end),
+            name,
+            value,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum Scalar {
     Null,
     Boolean(bool),
-    I64(i64),
     U64(u64),
     F64(f64),
     String(String),
@@ -2957,6 +3287,26 @@ pub enum RawString {
     Dynamic(String),
 }
 
+impl std::ops::Deref for RawString {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Static(s) => s,
+            Self::Dynamic(s) => s.as_str(),
+        }
+    }
+}
+
+impl std::string::ToString for RawString {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Static(s) => s.to_string(),
+            Self::Dynamic(ref s) => s.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct RegExp {
     pub pattern: String,
@@ -2965,19 +3315,28 @@ pub struct RegExp {
 
 fn numeric_literal_to_scalar(literal: &str) -> Scalar {
     // TODO
-    if let Ok(n) = literal.parse::<i64>() {
-        Scalar::I64(n)
-    } else if let Ok(n) = literal.parse::<u64>() {
-        Scalar::U64(n)
-    } else if let Ok(n) = literal.parse::<f64>() {
-        if n.fract() == 0.0 && n <= (i64::MAX as f64) {
-            Scalar::I64(n as i64)
-        } else {
-            Scalar::F64(n)
+    if literal.starts_with("0b") || literal.starts_with("0B") {
+        if let Ok(n) = u64::from_str_radix(&literal[2..], 2) {
+            return Scalar::U64(n);
         }
-    } else {
-        Scalar::Null
     }
+    if literal.starts_with("0o") || literal.starts_with("0O") {
+        if let Ok(n) = u64::from_str_radix(&literal[2..], 8) {
+            return Scalar::U64(n);
+        }
+    }
+    if literal.starts_with("0x") || literal.starts_with("0X") {
+        if let Ok(n) = u64::from_str_radix(&literal[2..], 16) {
+            return Scalar::U64(n);
+        }
+    }
+    if let Ok(n) = literal.parse::<f64>() {
+        if n.fract() == 0.0 && n <= (i64::MAX as f64) {
+            return Scalar::U64(n as u64);
+        }
+        return Scalar::F64(n);
+    }
+    Scalar::Null
 }
 
 macro_rules! node {
@@ -3025,10 +3384,10 @@ macro_rules! node {
         crate::nodes::Node::block_statement(&$start, &$end, $body)
     };
     (function_body@$start:ident..$end:ident) => {
-        crate::nodes::Node::block_statement(&$start, &$end, vec![])
+        crate::nodes::Node::function_body(&$start, &$end, vec![])
     };
     (function_body@$start:ident..$end:ident; $body:expr) => {
-        crate::nodes::Node::block_statement(&$start, &$end, $body)
+        crate::nodes::Node::function_body(&$start, &$end, $body)
     };
     (empty_statement @ $start:ident .. $end:ident) => {
         crate::nodes::Node::empty_statement(&$start, &$end)
@@ -3262,10 +3621,13 @@ macro_rules! node {
         crate::nodes::Node::this_expression(&$start, &$end)
     };
     (array_expression@$start:ident..$end:ident) => {
-        crate::nodes::Node::array_expression(&$start, &$end, vec![])
+        crate::nodes::Node::array_expression(&$start, &$end, vec![], false)
     };
     (array_expression@$start:ident..$end:ident; $elements:expr) => {
-        crate::nodes::Node::array_expression(&$start, &$end, $elements)
+        crate::nodes::Node::array_expression(&$start, &$end, $elements, false)
+    };
+    (array_expression@$start:ident..$end:ident; $elements:expr; trailing_comma) => {
+        crate::nodes::Node::array_expression(&$start, &$end, $elements, true)
     };
     (object_expression@$start:ident..$end:ident) => {
         crate::nodes::Node::object_expression(&$start, &$end, vec![])
@@ -3274,15 +3636,33 @@ macro_rules! node {
         crate::nodes::Node::object_expression(&$start, &$end, $properties)
     };
     (property@$start:ident..$end:ident; $key:expr) => {
-        crate::nodes::Node::property(&$start, &$end, $key, None, crate::nodes::PropertyKind::Init)
+        crate::nodes::Node::property(
+            &$start,
+            &$end,
+            $key.clone(),
+            $key,
+            crate::nodes::PropertyKind::Init,
+            true,
+        )
     };
     (property@$start:ident..$end:ident; $key:expr => $value:expr) => {
         crate::nodes::Node::property(
             &$start,
             &$end,
             $key,
-            Some($value),
+            $value,
             crate::nodes::PropertyKind::Init,
+            false,
+        )
+    };
+    (property@$start:ident..$end:ident; $key:expr => $value:expr; shorthand) => {
+        crate::nodes::Node::property(
+            &$start,
+            &$end,
+            $key,
+            $value,
+            crate::nodes::PropertyKind::Init,
+            true,
         )
     };
     (property@$start:ident..$end:ident; get $key:expr => $value:expr) => {
@@ -3290,8 +3670,9 @@ macro_rules! node {
             &$start,
             &$end,
             $key,
-            Some($value),
+            $value,
             crate::nodes::PropertyKind::Get,
+            false,
         )
     };
     (property@$start:ident..$end:ident; set $key:expr => $value:expr) => {
@@ -3299,8 +3680,9 @@ macro_rules! node {
             &$start,
             &$end,
             $key,
-            Some($value),
+            $value,
             crate::nodes::PropertyKind::Set,
+            false,
         )
     };
     (function_expression@$start:ident..$end:ident; $body:expr) => {
@@ -3393,7 +3775,10 @@ macro_rules! node {
         crate::nodes::Node::new_expression(&$start, &$end, $callee, $arguments)
     };
     (sequence_expression@$start:ident..$end:ident; $expressions:expr) => {
-        crate::nodes::Node::sequence_expression(&$start, &$end, $expressions)
+        crate::nodes::Node::sequence_expression(&$start, &$end, $expressions, true)
+    };
+    (sequence_expression@$start:ident..$end:ident; $expressions:expr; closed) => {
+        crate::nodes::Node::sequence_expression(&$start, &$end, $expressions, false)
     };
     (arrow_function_expression@$start:ident..$end:ident; $params:expr, $body:expr) => {
         crate::nodes::Node::arrow_function_expression(&$start, &$end, None, $params, $body, false)
@@ -3530,6 +3915,9 @@ macro_rules! node {
     (optional_member@$end:ident; $expr:expr, $computed:expr) => {
         crate::nodes::Node::optional_member($expr, $computed, $end.clone())
     };
+    (cover_initialized_name@$start:ident..$end:ident; $name:expr, $value:expr) => {
+        crate::nodes::Node::cover_initialized_name(&$start, &$end, $name, $value)
+    };
     (for_init_update; $init:expr) => {
         crate::nodes::Node::for_init_update($init)
     };
@@ -3541,6 +3929,9 @@ macro_rules! node {
     };
     (into_property; $method:expr) => {
         crate::nodes::Node::into_property($method)
+    };
+    (close_sequence_expression; $node:expr) => {
+        crate::nodes::Node::close_sequence_expression($node)
     };
 }
 

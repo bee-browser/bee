@@ -25,6 +25,17 @@ pub enum Error {
     SyntaxError,
 }
 
+/// Converts a template literal content into a string.
+pub fn template_literal_to_string(literal: &str, raw: bool) -> String {
+    // TODO: 13.2.8.3 Static Semantics: TemplateString ( templateToken, raw )
+    let s = literal.replace("\r\n", "\n").replace("\r", "\n");
+    if raw {
+        s
+    } else {
+        literal_content_to_string(&s)
+    }
+}
+
 /// Converts a string literal into a string.
 pub fn string_literal_to_string(literal: &str) -> String {
     literal_content_to_string(&literal[1..(literal.len() - 1)])
