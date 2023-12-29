@@ -1,5 +1,5 @@
 [package]
-name = "bee-lalrgen"
+name = "bee-dfagen"
 version = "0.0.0"
 edition = "2021"
 authors = ["BEE project contributors"]
@@ -7,22 +7,16 @@ publish = false
 
 [dependencies]
 anyhow = "1.0.77"
-bee-macros = { path = "../macros" }
+bee-macros = { path = "../../libs/macros" }
 clap = { version = "4.4.12", features = ["derive", "env"] }
-dashmap = "5.5.3"
-humantime = "2.1.0"
-im = "15.1.0"
-indexmap = "2.1.0"
-itertools = "0.12.0"
+indexmap = { version = "2.1.0", features = ["serde"] }
 maplit = "1.0.2"
-rayon = "1.8.0"
 serde = { version = "1.0.193", features = ["derive", "rc"] }
 serde_json = "1.0.108"
 serde_yaml = "0.9.29"
+smallvec = "1.11.2"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 
 [dev-dependencies]
-assert_matches = "1.5.0"
-pretty_assertions = "1.4.0"
 test-log = { version = "0.2.14", default-features = false, features = ["trace"] }
