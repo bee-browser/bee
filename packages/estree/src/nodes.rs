@@ -489,7 +489,7 @@ impl Node {
             _ => (key.clone(), false),
         };
         NodeRef::new(Self::Property(Property::new(
-            start, end, key, value, kind, shorthand, computed
+            start, end, key, value, kind, shorthand, computed,
         )))
     }
 
@@ -846,9 +846,10 @@ impl Node {
             Self::Identifier(ref id) if id.name == "constructor" => {
                 (key, MethodKind::Constructor, false)
             }
-            Self::Literal(Literal { value: Scalar::String(ref value), ..}) if value == "constructor" => {
-                (key, MethodKind::Constructor, false)
-            }
+            Self::Literal(Literal {
+                value: Scalar::String(ref value),
+                ..
+            }) if value == "constructor" => (key, MethodKind::Constructor, false),
             _ => (key, MethodKind::Method, false),
         };
         NodeRef::new(Self::MethodDefinition(MethodDefinition::new(
@@ -1208,7 +1209,12 @@ impl Node {
                 let start = seq.location.start_location();
                 let end = seq.location.end_location();
                 let expressions = seq.expressions.clone();
-                NodeRef::new(Self::SequenceExpression(SequenceExpression::new(&start, &end, expressions, false)))
+                NodeRef::new(Self::SequenceExpression(SequenceExpression::new(
+                    &start,
+                    &end,
+                    expressions,
+                    false,
+                )))
             }
             _ => node,
         }

@@ -28,10 +28,11 @@ pub enum Error {
 /// Converts a template literal content into a string.
 pub fn template_literal_to_string(literal: &str, raw: bool) -> String {
     // TODO: 13.2.8.3 Static Semantics: TemplateString ( templateToken, raw )
+    let s = literal.replace("\r\n", "\n").replace("\r", "\n");
     if raw {
-        literal.replace("\r\n", "\n")
+        s
     } else {
-        literal_content_to_string(literal).replace("\r\n", "\n")
+        literal_content_to_string(&s)
     }
 }
 
