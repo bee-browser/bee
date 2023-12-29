@@ -4,3 +4,6 @@
 [submodule "vendor/tc39/ecma262"]
 	path = vendor/tc39/ecma262
 	url = https://github.com/tc39/ecma262.git
+[submodule "vendor/tc39/test262-parser-tests"]
+	path = vendor/tc39/test262-parser-tests
+	url = https://github.com/tc39/test262-parser-tests.git

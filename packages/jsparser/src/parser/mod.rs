@@ -25,6 +25,7 @@ where
     lexer: Lexer<'s>,
     state_stack: Vec<State>,
     block_stack: Vec<BlockContext>,
+    auto_semicolon_insertion_point: Location,
     new_line: bool,
     // TODO: used only for measurement
     max_stack_depth: usize,
@@ -52,6 +53,7 @@ where
             lexer: Lexer::new(src),
             state_stack: Vec::with_capacity(INITIAL_STATE_STACK_SIZE),
             block_stack: Vec::with_capacity(INITIAL_BLOCK_STACK_SIZE),
+            auto_semicolon_insertion_point: Default::default(),
             new_line: false,
             max_stack_depth: 0,
             max_template_literal_depth: 0,
@@ -63,33 +65,41 @@ where
         self.push_state(self.goal_symbol.start_state_id());
         self.push_block_context();
         let mut token = self.next_token()?;
-        tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
+        let mut auto_semicolon_inserted = false;
+        tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
         loop {
             match self.handle_token(&token) {
                 ParserResult::Accept(artifact) => return Ok(artifact),
                 ParserResult::Reconsume => (),
                 ParserResult::NextToken => {
+                    auto_semicolon_inserted = false;
                     self.consume_token(token);
                     token = self.next_token()?;
-                    tracing::trace!(opcode = "token", ?token.kind, ?token.lexeme);
+                    tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
                 }
-                ParserResult::Error => {
-                    if self.is_auto_semicolon_allowed(&token) {
-                        loop {
-                            match self.auto_semicolon() {
-                                ParserResult::Accept(artifact) => return Ok(artifact),
-                                ParserResult::Reconsume => (),
-                                ParserResult::NextToken => break,
-                                ParserResult::Error => {
-                                    self.report_error(&token);
-                                    return Err(Error::SyntaxError);
-                                }
+                ParserResult::SyntaxError => return Err(Error::SyntaxError),
+                ParserResult::Error
+                    if !auto_semicolon_inserted && self.is_auto_semicolon_allowed(&token) =>
+                {
+                    loop {
+                        match self.auto_semicolon() {
+                            ParserResult::Accept(artifact) => return Ok(artifact),
+                            ParserResult::Reconsume => (),
+                            ParserResult::NextToken => break,
+                            ParserResult::SyntaxError => {
+                                return Err(Error::SyntaxError);
+                            }
+                            ParserResult::Error => {
+                                self.report_error(&token);
+                                return Err(Error::SyntaxError);
                             }
                         }
-                    } else {
-                        self.report_error(&token);
-                        return Err(Error::SyntaxError);
                     }
+                    auto_semicolon_inserted = true;
+                }
+                _ => {
+                    self.report_error(&token);
+                    return Err(Error::SyntaxError);
                 }
             }
         }
@@ -111,16 +121,30 @@ where
 
     #[inline(always)]
     fn consume_token(&mut self, token: Token<'s>) {
-        self.new_line = match token.kind {
-            TokenKind::LineTerminatorSequence => true,
-            TokenKind::WhiteSpaceSequence => self.new_line,
+        let update_auto_semicolon_insertion_point = match token.kind {
+            TokenKind::LineTerminatorSequence => {
+                self.new_line = true;
+                false
+            }
+            TokenKind::WhiteSpaceSequence => false,
             // A comment having line terminators affects the new_line state as described in
             // "5.1.2 The Lexical and RegExp Grammars".
-            TokenKind::Comment => token.has_line_terminators(),
-            _ => false,
+            TokenKind::Comment => {
+                if token.has_line_terminators() {
+                    self.new_line = true;
+                }
+                false
+            }
+            _ => {
+                self.new_line = false;
+                true
+            }
         };
-        tracing::trace!(new_line = self.new_line, ?token.kind);
+        tracing::trace!(opcode = "consume", new_line = self.new_line, ?token.kind);
         self.lexer.consume_token(token);
+        if update_auto_semicolon_insertion_point {
+            self.auto_semicolon_insertion_point = self.lexer.location().clone();
+        }
     }
 
     fn lexical_goal(&self) -> Goal {
@@ -220,7 +244,7 @@ where
                         self.push_state(next);
                         ParserResult::NextToken
                     }
-                    Err(_err) => ParserResult::Error, // TODO: error reporting
+                    Err(_err) => ParserResult::SyntaxError, // TODO: error reporting
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
@@ -238,7 +262,7 @@ where
                         self.push_state(next);
                         ParserResult::Reconsume
                     }
-                    Err(_err) => ParserResult::Error, // TODO: error reporting
+                    Err(_err) => ParserResult::SyntaxError, // TODO: error reporting
                 }
             }
             Action::Replace(next) => {
@@ -273,6 +297,7 @@ where
         match self.state().action(&Token::AUTO_SEMICOLON) {
             Action::Accept => {
                 tracing::trace!(opcode = "accept", auto_semicolon = true);
+                self.handler.location(self.lexer.location());
                 match self.handler.accept() {
                     Ok(artifact) => ParserResult::Accept(artifact),
                     Err(_err) => ParserResult::Error, // TODO: error reporting
@@ -283,7 +308,7 @@ where
                 if next.is_auto_semicolon_disallowed() {
                     ParserResult::Error
                 } else {
-                    self.handler.location(self.lexer.location());
+                    self.handler.location(&self.auto_semicolon_insertion_point);
                     match self.handler.shift(&Token::AUTO_SEMICOLON) {
                         Ok(_) => {
                             self.push_state(next);
@@ -294,8 +319,8 @@ where
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
-                tracing::trace!(opcode = "reduce", ?rule, auto_semicolon = true);
-                self.handler.location(self.lexer.location());
+                tracing::trace!(opcode = "reduce", %rule, auto_semicolon = true);
+                self.handler.location(&self.auto_semicolon_insertion_point);
                 match self.handler.reduce(rule) {
                     Ok(_) => {
                         self.pop_states(n as usize);
@@ -362,6 +387,7 @@ enum ParserResult<T> {
     Reconsume,
     NextToken,
     Error,
+    SyntaxError,
 }
 
 pub trait SyntaxHandler {

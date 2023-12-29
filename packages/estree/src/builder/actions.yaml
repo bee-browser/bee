@@ -1916,9 +1916,9 @@
 - rule: AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
   action: function_body_block
 - rule: SingleNameBinding -> BindingIdentifier
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding -> BindingIdentifier Initializer_In
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: Statement_Return -> BlockStatement_Return
   action: nop
 - rule: Statement_Return -> VariableStatement
@@ -1982,9 +1982,9 @@
     BindingRestElement_Yield RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding_Yield -> BindingIdentifier_Yield
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding_Yield -> BindingIdentifier_Yield Initializer_In_Yield
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: Initializer_In_Yield -> ASSIGN AssignmentExpression_In_Yield
   action: initializer
 - rule: StatementListItem_Yield_Return -> Statement_Yield_Return
@@ -1992,9 +1992,9 @@
 - rule: StatementListItem_Yield_Return -> Declaration_Yield
   action: nop
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await Initializer_In_Await
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: StatementListItem_Await_Return -> Statement_Await_Return
   action: nop
 - rule: StatementListItem_Await_Return -> Declaration_Await
@@ -2034,9 +2034,9 @@
     BindingRestElement_Yield_Await RBRACK
   action: array_pattern_concat_rest
 - rule: SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await
-  action: binding_identifier_or_property
+  action: single_name_binding
 - rule: SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
-  action: assignment_pattern_or_property
+  action: single_name_binding_init
 - rule: Initializer_In_Yield_Await -> ASSIGN AssignmentExpression_In_Yield_Await
   action: initializer
 - rule: StatementListItem_Yield_Await_Return -> Statement_Yield_Await_Return
@@ -2438,9 +2438,7 @@
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
   action: property
 - rule: PropertyDefinition_Await -> CoverInitializedName_Await
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: PropertyDefinition_Await -> PropertyName_Await COLON AssignmentExpression_In_Await
   action: property_value
 - rule: PropertyDefinition_Await -> MethodDefinition_Await
@@ -2782,9 +2780,7 @@
 - rule: RelationalExpression_In_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Await
   action: binary_expression_private
 - rule: CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList_Await -> TEMPLATE_MIDDLE Expression_In_Await
   action: template_middle_list
 - rule: TemplateMiddleList_Await -> TemplateMiddleList_Await TEMPLATE_MIDDLE Expression_In_Await
@@ -2810,9 +2806,7 @@
 - rule: PropertyDefinition -> IdentifierReference
   action: property
 - rule: PropertyDefinition -> CoverInitializedName
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: PropertyDefinition -> PropertyName COLON AssignmentExpression_In
   action: property_value
 - rule: PropertyDefinition -> MethodDefinition
@@ -3209,9 +3203,7 @@
 - rule: RelationalExpression_In -> PRIVATE_IDENTIFIER IN ShiftExpression
   action: binary_expression_private
 - rule: CoverInitializedName -> IdentifierReference Initializer_In
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList -> TEMPLATE_MIDDLE Expression_In
   action: template_middle_list
 - rule: TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
@@ -4496,9 +4488,7 @@
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
   action: property
 - rule: PropertyDefinition_Yield -> CoverInitializedName_Yield
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: PropertyDefinition_Yield -> PropertyName_Yield COLON AssignmentExpression_In_Yield
   action: property_value
 - rule: PropertyDefinition_Yield -> MethodDefinition_Yield
@@ -4552,9 +4542,7 @@
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
   action: property
 - rule: PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await
-  action: null
-  note: |
-    See "13.2.5.1 Static Semantics: Early Errors" in ECMA-262.
+  action: property_cover_initialized_name
 - rule: >-
     PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON
     AssignmentExpression_In_Yield_Await
@@ -4633,9 +4621,7 @@
 - rule: RelationalExpression_In_Yield -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield
   action: binary_expression_private
 - rule: CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList_Yield -> TEMPLATE_MIDDLE Expression_In_Yield
   action: template_middle_list
 - rule: TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE Expression_In_Yield
@@ -4675,9 +4661,7 @@
 - rule: RelationalExpression_In_Yield_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield_Await
   action: binary_expression_private
 - rule: CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await
-  action: null
-  note: |
-    See NOTE3 in "13.2.5 Object Initializer" in ECMA-262
+  action: cover_initialized_name
 - rule: TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE Expression_In_Yield_Await
   action: template_middle_list
 - rule: >-

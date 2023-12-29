@@ -1,5 +1,8 @@
+'use strict';
+
 import { h } from '../../../../webui/src/helper.js';
 import Widget from '../../../../webui/src/widget.js';
+import Toolbar from './toolbar.js';
 import ParserView from './parser_view.js';
 import LexerView from './lexer_view.js';
 
@@ -10,6 +13,11 @@ export default class MainView extends Widget {
     this.pc_ = 0;
     this.logs_ = [];
 
+    this.toolbar_ = new Toolbar();
+    this.toolbar_.on('start', () => this.startReplay_());
+    this.toolbar_.on('pause', () => this.pauseReplay_());
+    this.toolbar_.on('reset', () => this.resetReplay_());
+    this.toolbar_.on('next', () => this.dispatch_());
     this.parserView_ = new ParserView();
     this.lexerView_ = new LexerView();
 
@@ -19,8 +27,10 @@ export default class MainView extends Widget {
   render() {
     this.elem_ =
       h('div', { id: 'main-view' },
-        this.parserView_.render(),
-        this.lexerView_.render());
+        this.toolbar_.render(),
+        h('div', { id: 'views' },
+          this.parserView_.render(),
+          this.lexerView_.render()));
     return this.elem_;
   }
 
@@ -31,7 +41,6 @@ export default class MainView extends Widget {
     });
     es.addEventListener('log', (event) => {
       const log = JSON.parse(event.data);
-      //console.debug('log', log);
       this.emit('log', log);
     });
     es.addEventListener('terminated', (event) => {
@@ -44,9 +53,24 @@ export default class MainView extends Widget {
     });
   }
 
+  startReplay_() {
+    this.timer_ = setInterval(() => this.dispatch_(), 100);
+  }
+
+  pauseReplay_() {
+    clearInterval(this.timer_);
+  }
+
+  resetReplay_() {
+    this.pc_ = 0;
+    this.parserView_.clear();
+    this.lexerView_.clear();
+  }
+
   dispatch_() {
     const log = this.logs_[this.pc_];
     if (log === undefined) {
+      this.pauseReplay_();
       return;
     }
     this.pc_++;
@@ -83,6 +107,5 @@ export default class MainView extends Widget {
         break;
       }
     }
-    this.dispatch_();
   }
 }
