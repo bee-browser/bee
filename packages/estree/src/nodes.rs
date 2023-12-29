@@ -846,6 +846,9 @@ impl Node {
             Self::Identifier(ref id) if id.name == "constructor" => {
                 (key, MethodKind::Constructor, false)
             }
+            Self::Literal(Literal { value: Scalar::String(ref value), ..}) if value == "constructor" => {
+                (key, MethodKind::Constructor, false)
+            }
             _ => (key, MethodKind::Method, false),
         };
         NodeRef::new(Self::MethodDefinition(MethodDefinition::new(
