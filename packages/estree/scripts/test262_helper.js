@@ -95,12 +95,12 @@ export class ESTree {
 export function showDiffs(diffs, indent = '') {
   for (const diff of diffs) {
     console.log(`${indent}${diff.path.join('.')}`);
-    if (diff.value) {
+    if ('value' in diff) {
       console.log(`${indent}  acorn : ${JSON5.stringify(diff.value)}`);
     } else {
       console.log(`${indent}  acorn : -`);
     }
-    if (diff.oldValue) {
+    if ('oldValue' in diff) {
       console.log(`${indent}  estree: ${JSON5.stringify(diff.oldValue)}`);
     } else {
       console.log(`${indent}  estree: -`);

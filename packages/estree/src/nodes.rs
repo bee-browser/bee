@@ -484,8 +484,12 @@ impl Node {
         kind: PropertyKind,
         shorthand: bool,
     ) -> NodeRef {
+        let (key, computed) = match *key {
+            Node::ComputedPropertyName(ref expr) => (expr.clone(), true),
+            _ => (key.clone(), false),
+        };
         NodeRef::new(Self::Property(Property::new(
-            start, end, key, value, kind, shorthand,
+            start, end, key, value, kind, shorthand, computed
         )))
     }
 
@@ -1121,14 +1125,15 @@ impl Node {
         let start = property.location.start_location();
         let end = property.location.end_location();
         let value = Self::into_pattern(property.value.clone())?;
-        Ok(Self::property(
+        Ok(NodeRef::new(Self::Property(Property::new(
             &start,
             &end,
             property.key.clone(),
             value,
             property.kind,
             property.shorthand,
-        ))
+            property.computed,
+        ))))
     }
 
     fn into_statement_list_with_directive_prologue(mut list: Vec<NodeRef>) -> Vec<NodeRef> {
@@ -2176,10 +2181,11 @@ impl Property {
         value: NodeRef,
         kind: PropertyKind,
         shorthand: bool,
+        computed: bool,
     ) -> Self {
-        let (key, computed) = match *key {
-            Node::ComputedPropertyName(ref expr) => (expr.clone(), true),
-            _ => (key.clone(), false),
+        let key = match *key {
+            Node::ComputedPropertyName(ref expr) => expr.clone(),
+            _ => key.clone(),
         };
         let method = match kind {
             PropertyKind::Init => false,

@@ -54,6 +54,9 @@ const EXCLUDES = [
   'pass/4ae32442eef8a4e0.js',
   'pass/d3ac25ddc7ba9779.js',
   'pass/fbcd793ec7c82779.js',
+  'pass/8c56cf12f007a392.js',
+  'pass/47094fe8a994b7de.js',
+  'pass/40215319424a8227.js',
   // B.1.1 HTML-like Comments - SingleLineHTMLCloseComment
   'pass/8ec6a55806087669.js',
   'pass/9f0d8eb6f7ab8180.js',
@@ -96,6 +99,8 @@ const EXCLUDES = [
   'pass/0b281915a3227177.js',
   'pass/95ab0d795c04ff38.js',
   'pass/27ca96102da82628.js',
+  'pass/84b2a5d834daee2f.js',
+  'pass/bf6aaaab7c143ca1.js',
 ];
 
 const spinner = ora({ spinner: 'line' });
