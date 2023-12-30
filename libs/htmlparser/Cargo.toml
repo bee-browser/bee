@@ -1,0 +1,33 @@
+[package]
+name = "htmlparser"
+version = "0.0.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+flagset = "0.4.4"
+htmltokenizer = { path = "../htmltokenizer" }
+phf = { version = "0.11.2", features = ["macros"] }
+thiserror = "1.0.52"
+tracing = "0.1.40"
+unicase = "2.7.0"
+
+[dev-dependencies]
+anyhow = "1.0.77"
+criterion = "0.5.1"
+test-log = { version = "0.2.14", default-features = false, features = ["trace"] }
+toydom = { path = "../toydom" }
+tracing-subscriber = "0.3.18"
+
+[lib]
+bench = false
+
+[[bench]]
+name = "htmlparser-bench"
+path = "benches/htmlparser_bench.rs"
+harness = false
+
+[[example]]
+name = "htmlparser"
+path = "examples/print_html_tag.rs"

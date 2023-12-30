@@ -1,0 +1,15 @@
+[package]
+name = "jsoncmp"
+version = "0.0.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+anyhow = "1.0.77"
+assert-json-diff = "2.0.2"
+clap = { version = "4.4.12", features = ["env", "derive", "wrap_help"] }
+serde = { version = "1.0.193", features = ["derive"] }
+# "unbounded_depth" is needed for parsing a large JSON.
+# See https://github.com/serde-rs/json/issues/334.
+serde_json = { version = "1.0.108", features = ["preserve_order", "unbounded_depth"] }

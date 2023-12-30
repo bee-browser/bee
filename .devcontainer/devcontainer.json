@@ -1,13 +1,8 @@
 {
   "name": "bee-devcontainer",
-  "dockerComposeFile": "docker-compose.yml",
+  "dockerComposeFile": "compose.yaml",
   "service": "devenv",
-  "workspaceFolder": "/workspaces",
-
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash",
-    "lldb.executable": "/usr/bin/lldb"
-  },
+  "workspaceFolder": "/workspace",
 
   "remoteEnv": {
     "PATH": "/workspaces/tools/bin:${containerEnv:PATH}",
@@ -15,9 +10,18 @@
     "BEE_DEV_RUST_TOOLCHAIN_PATH": "${localEnv:BEE_DEV_CONTAINER_RUST_TOOLCHAIN_PATH}"
   },
 
-  "extensions": [
-    "rust-lang.rust",
-    "bungcip.better-toml",
-    "vadimcn.vscode-lldb"
-  ]
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "swellaby.vscode-rust-test-adapter",
+        "bungcip.better-toml",
+        "vadimcn.vscode-lldb",
+        "mutantdino.resourcemonitor"
+      ]
+    }
+  }
 }
