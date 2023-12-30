@@ -1,6 +1,6 @@
 [package]
-name = "bee-geometry"
-version = "0.1.0"
+name = "geometry"
+version = "0.0.0"
 authors = ["BEE project contributors"]
 edition = "2021"
 publish = false

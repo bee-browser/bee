@@ -1,6 +1,6 @@
 PROJ_DIR := $(realpath ../../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
-CODEGEN_DIR := $(PROJ_DIR)/target/codegen/packages/jsparser/lalrgen
+CODEGEN_DIR := $(PROJ_DIR)/target/codegen/libs/jsparser/lalrgen
 
 CODEGEN_FILES := \
   action.rs \

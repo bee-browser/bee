@@ -1,6 +1,6 @@
 PROJ_DIR := $(realpath ../../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
-LALR_JSON := $(PROJ_DIR)/target/codegen/packages/jsparser/lalrgen/lalr.json
+LALR_JSON := $(PROJ_DIR)/target/codegen/libs/jsparser/lalrgen/lalr.json
 
 CODEGEN_TARGETS := actions.rs
 
@@ -19,4 +19,4 @@ actions.yaml: actions.js $(LALR_JSON)
 	@mv -f $@.new $@
 
 $(LALR_JSON):
-	@$(MAKE) -s -C $(PROJ_DIR)/packages/jsparser/src $@
+	@$(MAKE) -s -C $(PROJ_DIR)/libs/jsparser/src codegen

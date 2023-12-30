@@ -1,18 +1,23 @@
+#![doc = include_str!("../README.md")]
+
+pub mod automaton;
+pub mod grammar;
+pub mod unicode;
+
 use std::path::PathBuf;
 
 use anyhow::Result;
-use bee_dfagen::grammar;
 use clap::Parser;
 use clap::ValueEnum;
 use serde::Deserialize;
 use serde::Serialize;
 use tracing_subscriber::filter::EnvFilter;
 
-use bee_dfagen::automaton::Dfa;
-use bee_dfagen::grammar::Grammar;
-use bee_dfagen::grammar::Rule;
-use bee_dfagen::unicode::CodePoint;
-use bee_dfagen::unicode::UnicodeSet;
+use automaton::Dfa;
+use grammar::Grammar;
+use grammar::Rule;
+use unicode::CodePoint;
+use unicode::UnicodeSet;
 
 #[derive(Parser)]
 #[command(author, version, about)]

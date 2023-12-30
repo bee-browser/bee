@@ -5,7 +5,7 @@ use std::sync::Arc;
 use serde::Deserialize;
 use serde::Serialize;
 
-use bee_macros::delegate_all;
+use base::macros::delegate_all;
 
 /// An immutable object representing a sequence of tokens.
 ///

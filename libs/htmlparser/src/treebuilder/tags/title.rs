@@ -56,7 +56,7 @@ where
                     let ctrl = {
                         self.push_html_title_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "title")
+                        Control::SwitchTo(InitialState::Rcdata, "title")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -86,7 +86,7 @@ where
                         let ctrl = {
                             self.push_html_title_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "title")
+                            Control::SwitchTo(InitialState::Rcdata, "title")
                         };
                         self.close_head_element();
                         ctrl
@@ -104,7 +104,7 @@ where
                         let ctrl = {
                             self.push_html_title_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "title")
+                            Control::SwitchTo(InitialState::Rcdata, "title")
                         };
                         self.disable_foster_parenting();
                         ctrl

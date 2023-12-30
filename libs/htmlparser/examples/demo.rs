@@ -2,10 +2,10 @@ use std::io::Read;
 
 use anyhow::Result;
 
-use bee_htmlparser::*;
-use bee_toydom::delegate;
-use bee_toydom::ToyBuilder;
-use bee_toydom::ToyNode;
+use htmlparser::*;
+use toydom::delegate;
+use toydom::ToyBuilder;
+use toydom::ToyNode;
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt::init();

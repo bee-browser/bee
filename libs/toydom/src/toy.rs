@@ -2,7 +2,7 @@
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 
-use bee_htmlparser::*;
+use htmlparser::*;
 
 pub struct Builder {
     nodes: Vec<Node>,

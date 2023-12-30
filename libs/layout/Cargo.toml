@@ -1,16 +1,16 @@
 [package]
-name = "bee-layout"
-version = "0.1.0"
+name = "layout"
+version = "0.0.0"
 authors = ["BEE project contributors"]
 edition = "2021"
 publish = false
 
 [features]
-service = ["bee-geometry/serde", "serde", "serde_json"]
+service = ["geometry/serde", "serde", "serde_json"]
 
 [dependencies]
 anyhow = "1.0.77"
-bee-geometry = { path = "../geometry" }
+geometry = { path = "../geometry" }
 num-traits = "0.2.17"
 serde = { version = "1.0.193", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1.0.108", optional = true }

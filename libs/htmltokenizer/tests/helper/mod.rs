@@ -3,10 +3,10 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use bee_htmltokenizer::token::*;
-use bee_htmltokenizer::Error;
-use bee_htmltokenizer::InitialState;
-use bee_htmltokenizer::Tokenizer;
+use htmltokenizer::token::*;
+use htmltokenizer::Error;
+use htmltokenizer::InitialState;
+use htmltokenizer::Tokenizer;
 
 pub fn tokenize(json: &'static str) {
     let test: TestCase = serde_json::from_str(json).unwrap();

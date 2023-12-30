@@ -8,7 +8,7 @@ use indexmap::IndexSet;
 use serde::Deserialize;
 use serde::Serialize;
 
-use bee_macros::delegate_all;
+use base::macros::delegate_all;
 
 use crate::unicode::UnicodeSet;
 use crate::unicode::UnicodeSetsBuilder;

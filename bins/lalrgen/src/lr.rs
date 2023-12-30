@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use bee_macros::delegate_all;
+use base::macros::delegate_all;
 
 use crate::grammar::Grammar;
 use crate::grammar::Rule;

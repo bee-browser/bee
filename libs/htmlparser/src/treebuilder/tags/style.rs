@@ -66,7 +66,7 @@ where
                     let ctrl = {
                         self.push_html_style_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "style")
+                        Control::SwitchTo(InitialState::Rawtext, "style")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -81,7 +81,7 @@ where
                         let ctrl = {
                             self.push_html_style_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "style")
+                            Control::SwitchTo(InitialState::Rawtext, "style")
                         };
                         self.close_head_element();
                         ctrl

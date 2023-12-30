@@ -212,11 +212,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "base"
+version = "0.0.0"
+
+[[package]]
 name = "bee-dfagen"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "bee-macros",
+ "base",
  "clap",
  "indexmap",
  "maplit",
@@ -234,9 +238,9 @@ name = "bee-esgrammar"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "bee-htmlparser",
- "bee-toydom",
  "clap",
+ "htmlparser",
+ "toydom",
 ]
 
 [[package]]
@@ -245,53 +249,14 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert-json-diff",
- "bee-jsparser",
  "clap",
  "json5",
+ "jsparser",
  "serde",
  "serde_json",
  "test-log",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "bee-geometry"
-version = "0.1.0"
-dependencies = [
- "num-traits",
- "serde",
- "serde_test",
-]
-
-[[package]]
-name = "bee-htmlparser"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bee-htmltokenizer",
- "bee-toydom",
- "criterion",
- "flagset",
- "phf",
- "test-log",
- "thiserror",
- "tracing",
- "tracing-subscriber",
- "unicase",
-]
-
-[[package]]
-name = "bee-htmltokenizer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_matches",
- "bytes",
- "serde",
- "serde_json",
- "thiserror",
- "tracing",
 ]
 
 [[package]]
@@ -306,27 +271,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-jsparser"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_matches",
- "bitflags 2.4.1",
- "clap",
- "phf",
- "test-log",
- "tracing",
- "tracing-subscriber",
- "unicode-id-start",
-]
-
-[[package]]
 name = "bee-lalrgen"
 version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert_matches",
- "bee-macros",
+ "base",
  "clap",
  "dashmap",
  "humantime",
@@ -345,27 +295,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-layout"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert-json-diff",
- "assert_matches",
- "bee-geometry",
- "num-traits",
- "serde",
- "serde_json",
- "serde_yaml",
- "tracing",
-]
-
-[[package]]
 name = "bee-lmp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bee-layout",
  "clap",
+ "layout",
  "serde_json",
 ]
 
@@ -390,18 +325,6 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "bee-macros"
-version = "0.1.0"
-
-[[package]]
-name = "bee-toydom"
-version = "0.0.0"
-dependencies = [
- "bee-htmlparser",
- "tracing",
 ]
 
 [[package]]
@@ -757,6 +680,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "geometry"
+version = "0.0.0"
+dependencies = [
+ "num-traits",
+ "serde",
+ "serde_test",
+]
+
+[[package]]
 name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -804,6 +736,36 @@ name = "hermit-abi"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
+
+[[package]]
+name = "htmlparser"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "criterion",
+ "flagset",
+ "htmltokenizer",
+ "phf",
+ "test-log",
+ "thiserror",
+ "toydom",
+ "tracing",
+ "tracing-subscriber",
+ "unicase",
+]
+
+[[package]]
+name = "htmltokenizer"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "bytes",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
 
 [[package]]
 name = "http"
@@ -996,6 +958,36 @@ dependencies = [
  "pest",
  "pest_derive",
  "serde",
+]
+
+[[package]]
+name = "jsparser"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "bitflags 2.4.1",
+ "clap",
+ "phf",
+ "test-log",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-id-start",
+]
+
+[[package]]
+name = "layout"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert-json-diff",
+ "assert_matches",
+ "geometry",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tracing",
 ]
 
 [[package]]
@@ -1898,6 +1890,14 @@ name = "tower-service"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
+
+[[package]]
+name = "toydom"
+version = "0.0.0"
+dependencies = [
+ "htmlparser",
+ "tracing",
+]
 
 [[package]]
 name = "tracing"

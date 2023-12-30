@@ -1,5 +1,5 @@
-use bee_htmltokenizer::InitialState;
-use bee_htmltokenizer::Tokenizer;
+use htmltokenizer::InitialState;
+use htmltokenizer::Tokenizer;
 
 use crate::localnames::LocalName;
 use crate::treebuilder::Control;

@@ -45,7 +45,7 @@ args.test262Dir ||= DEFAULT_TEST262_DIR;
 
 // TODO: Remove
 const IGNORE_FILES = [
-  // panicked in bee_jsparser::literal_content_to_string().
+  // panicked in jsparser::literal_content_to_string().
   // implement conversion from a string literal into a string value in lexer.
   'test/language/expressions/tagged-template/invalid-escape-sequences.js',
   'test/language/expressions/template-literal/invalid-hexidecimal-character-escape-sequence-truncated-1.js',
@@ -60,7 +60,7 @@ const IGNORE_FILES = [
   'test/language/expressions/template-literal/invalid-unicode-escape-sequence-7.js',
   'test/language/expressions/template-literal/invalid-unicode-escape-sequence-8.js',
   'test/language/expressions/template-literal/unicode-escape-nls-err.js',
-  // panicked at /home/masnagam/workspace/bee-browser/bee/packages/jsparser/src/parser/mod.rs:315:30
+  // panicked at //libs/jsparser/src/parser/mod.rs:315:30
   'test/language/module-code/import-assertions/import-assertion-newlines.js',
   'test/language/module-code/import-attributes/import-attribute-newlines.js',
 ];

@@ -66,7 +66,7 @@ where
                     let ctrl = {
                         self.push_html_noframes_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noframes")
+                        Control::SwitchTo(InitialState::Rawtext, "noframes")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -81,7 +81,7 @@ where
                         let ctrl = {
                             self.push_html_noframes_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noframes")
+                            Control::SwitchTo(InitialState::Rawtext, "noframes")
                         };
                         self.close_head_element();
                         ctrl
@@ -99,7 +99,7 @@ where
                         let ctrl = {
                             self.push_html_noframes_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noframes")
+                            Control::SwitchTo(InitialState::Rawtext, "noframes")
                         };
                         self.disable_foster_parenting();
                         ctrl

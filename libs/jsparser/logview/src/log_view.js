@@ -9,9 +9,9 @@ export default class LogView extends Widget {
 
   render() {
     let target;
-    if (this.log_.target.startsWidth('bee_jsparser::parser')) {
+    if (this.log_.target.startsWidth('jsparser::parser')) {
       type = 'parser';
-    } else if (this.log_.target.startsWidth('bee_jsparser::lexer')) {
+    } else if (this.log_.target.startsWidth('jsparser::lexer')) {
       type = 'lexer';
     }
 

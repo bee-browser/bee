@@ -1,5 +1,5 @@
 //<exclude:coverage>
-use bee_htmlparser::*;
+use htmlparser::*;
 
 pub struct NullBuilder {
     next_id: usize,

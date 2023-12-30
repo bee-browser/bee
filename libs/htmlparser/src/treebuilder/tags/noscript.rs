@@ -57,7 +57,7 @@ where
                         if self.scripting {
                             self.push_html_noscript_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noscript")
+                            Control::SwitchTo(InitialState::Rawtext, "noscript")
                         } else {
                             self.push_html_noscript_element(tag);
                             self.switch_to(mode!(InHeadNoscript));
@@ -105,7 +105,7 @@ where
                         if self.scripting {
                             self.push_html_noscript_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noscript")
+                            Control::SwitchTo(InitialState::Rawtext, "noscript")
                         } else {
                             self.reconstruct_active_formatting_elements();
                             self.push_html_noscript_element(tag);
@@ -126,10 +126,7 @@ where
                             if self.scripting {
                                 self.push_html_noscript_element(tag);
                                 self.save_and_switch_to(mode!(Text));
-                                Control::SwitchTo(
-                                    bee_htmltokenizer::InitialState::Rawtext,
-                                    "noscript",
-                                )
+                                Control::SwitchTo(InitialState::Rawtext, "noscript")
                             } else {
                                 self.reconstruct_active_formatting_elements();
                                 self.push_html_noscript_element(tag);

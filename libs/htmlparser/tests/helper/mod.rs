@@ -1,8 +1,8 @@
 //<coverage:exclude>
-use bee_htmlparser::*;
-use bee_toydom::delegate;
-use bee_toydom::ToyBuilder;
-use bee_toydom::ToyNode;
+use htmlparser::*;
+use toydom::delegate;
+use toydom::ToyBuilder;
+use toydom::ToyNode;
 
 pub fn parse(test: Test) {
     match test.scripting {

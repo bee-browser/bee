@@ -14,9 +14,9 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use bee_htmltokenizer::token::*;
-use bee_htmltokenizer::Error;
-use bee_htmltokenizer::InitialState;
+use htmltokenizer::token::*;
+use htmltokenizer::Error;
+use htmltokenizer::InitialState;
 
 use crate::localnames;
 use crate::localnames::LocalName;
@@ -104,7 +104,7 @@ where
 pub enum Control {
     Reprocess,
     Continue,
-    SwitchTo(bee_htmltokenizer::InitialState, &'static str),
+    SwitchTo(InitialState, &'static str),
     ExecuteScript,
     Done,
 }

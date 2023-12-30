@@ -15,8 +15,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use tracing_subscriber::filter::EnvFilter;
 
-use bee_jsparser::Error;
-use bee_jsparser::Parser;
+use jsparser::Error;
+use jsparser::Parser;
 
 use crate::builder::Builder;
 use crate::nodes::NodeRef;

@@ -615,7 +615,7 @@ where
                 mode!(InBody) => {
                     // TODO: If the stack of open elements has a p element in button scope, then close a p element.
                     self.push_html_element(tag);
-                    return Control::SwitchTo(bee_htmltokenizer::InitialState::Plaintext);
+                    return Control::SwitchTo(InitialState::Plaintext);
                 }
                 _ => match self.handle_any_other_start_tag(tag, Namespace::Html) {
                     Control::Reprocess => (),
@@ -763,12 +763,12 @@ where
     fn apply_generic_rcdata_element_rule(&mut self, tag: &Tag<'_>) -> Control {
         self.push_html_element(tag);
         self.save_and_switch_to(mode!(Text));
-        Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata)
+        Control::SwitchTo(InitialState::Rcdata)
     }
 
     fn apply_generic_raw_text_element_rule(&mut self, tag: &Tag<'_>) -> Control {
         self.push_html_element(tag);
         self.save_and_switch_to(mode!(Text));
-        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext)
+        Control::SwitchTo(InitialState::Rawtext)
     }
 }

@@ -7,8 +7,8 @@ use std::path::Path;
 use assert_json_diff::assert_json_eq;
 use serde_json;
 
-use bee_layout::service::JsonSink;
-use bee_layout::service::MessageInterpreter;
+use layout::service::JsonSink;
+use layout::service::MessageInterpreter;
 
 pub fn layout_test(scenario_path: &Path, expected_path: &Path) {
     let validator = JsonValidator::new(expected_path);

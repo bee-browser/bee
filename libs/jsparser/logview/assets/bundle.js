@@ -516,7 +516,7 @@ class MainView extends Widget {
         }
     }
     handleLog_(log) {
-        if (log.target.startsWith('bee_jsparser::parser')) {
+        if (log.target.startsWith('jsparser::parser')) {
             switch(log.level){
                 case 'TRACE':
                     this.logs_.push({
@@ -527,7 +527,7 @@ class MainView extends Widget {
                     break;
             }
         }
-        if (log.target.startsWith('bee_jsparser::lexer')) {
+        if (log.target.startsWith('jsparser::lexer')) {
             switch(log.level){
                 case 'TRACE':
                     this.logs_.push({

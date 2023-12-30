@@ -34,12 +34,13 @@ CLEAN_TARGETS = $(addprefix clean-,\
   webui \
 )
 
+# The order must be determined by dependencies between packages.
 CODEGEN_TARGETS = $(addprefix codegen-,\
-  packages/estree \
-  packages/htmltokenizer \
-  packages/htmlparser \
-  packages/jsparser \
-  packages/layout \
+  libs/htmltokenizer \
+  libs/htmlparser \
+  libs/jsparser \
+  libs/layout \
+  bins/estree \
 )
 
 COVERAGE_TEST_ENV_VARS = \
@@ -85,8 +86,8 @@ test: format
 .PHONY: test262
 test262: ARGS ?= --progress
 test262:
-	-sh packages/estree/scripts/test262_parser_tests.sh $(ARGS)
-	-sh packages/estree/scripts/test262.sh $(ARGS)
+	-sh bins/estree/scripts/test262_parser_tests.sh $(ARGS)
+	-sh bins/estree/scripts/test262.sh $(ARGS)
 
 .PHONY: bench
 bench:

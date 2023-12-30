@@ -2,8 +2,8 @@
 use pretty_assertions::assert_eq;
 use test_log::test;
 
-use bee_lalrgen::preprocess;
-use bee_lalrgen::Grammar;
+use crate::grammar::Grammar;
+use crate::preprocess::preprocess;
 
 macro_rules! impl_test {
     ($test:ident, $grammar:literal, $expected:literal) => {
@@ -32,7 +32,7 @@ impl_test! {test_0000, "preprocess_0000.yaml", "preprocess_0000.expected.yaml"}
 
 fn load_grammar(grammar: &str) -> Grammar {
     let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("tests").join(grammar);
+    let path = manifest_dir.join("src").join("tests").join(grammar);
     let file = std::fs::File::open(path).unwrap();
     let rules = serde_yaml::from_reader(file).unwrap();
     Grammar::new(rules)

@@ -7,10 +7,10 @@ use clap::Parser as _;
 use clap::ValueEnum;
 use tracing_subscriber::filter::EnvFilter;
 
-use bee_jsparser::Parser;
-use bee_jsparser::ProductionRule;
-use bee_jsparser::SyntaxHandler;
-use bee_jsparser::Token;
+use jsparser::Parser;
+use jsparser::ProductionRule;
+use jsparser::SyntaxHandler;
+use jsparser::Token;
 
 /// Parse a JavaScript script.
 #[derive(clap::Parser)]

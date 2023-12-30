@@ -1,6 +1,6 @@
 [package]
-name = "bee-macros"
-version = "0.1.0"
+name = "base"
+version = "0.0.0"
 edition = "2021"
 authors = ["BEE project contributors"]
 publish = false

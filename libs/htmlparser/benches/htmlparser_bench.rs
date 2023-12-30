@@ -1,9 +1,10 @@
 //<exclude:coverage>
 use std::path::PathBuf;
 
-use bee_htmlparser::*;
-use bee_toydom::NullBuilder;
 use criterion::Criterion;
+
+use htmlparser::*;
+use toydom::NullBuilder;
 
 fn htmlparser_benchmark(c: &mut Criterion) {
     run_bench(c, "lipsum.html");

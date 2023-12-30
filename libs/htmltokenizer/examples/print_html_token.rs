@@ -1,9 +1,11 @@
-use anyhow::Result;
-use bee_htmltokenizer::token::*;
-use bee_htmltokenizer::Tokenizer;
 use std::fmt::Write;
 use std::io;
 use std::io::Read;
+
+use anyhow::Result;
+
+use htmltokenizer::token::*;
+use htmltokenizer::Tokenizer;
 
 fn main() -> Result<()> {
     let mut html = String::new();

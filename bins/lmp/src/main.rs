@@ -5,8 +5,8 @@ use std::io::BufReader;
 use anyhow::Result;
 use clap::Parser;
 
-use bee_layout::service::JsonSink;
-use bee_layout::service::MessageInterpreter;
+use layout::service::JsonSink;
+use layout::service::MessageInterpreter;
 
 /// Layout message processor.
 #[derive(Debug, Parser)]

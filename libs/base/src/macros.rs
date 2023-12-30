@@ -31,3 +31,5 @@ macro_rules! delegate_all {
         }
     };
 }
+
+pub use delegate_all;

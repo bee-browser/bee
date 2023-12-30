@@ -1771,9 +1771,9 @@ snippets:
     code: |
       self.push_html_{{tag_name}}_element(tag);
       self.save_and_switch_to(mode!(Text));
-      Control::SwitchTo(bee_htmltokenizer::InitialState::Rcdata, "{{tag_name}}")
+      Control::SwitchTo(InitialState::Rcdata, "{{tag_name}}")
   generic-raw-text-element-parsing-algorithm:
     code: |
       self.push_html_{{tag_name}}_element(tag);
       self.save_and_switch_to(mode!(Text));
-      Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "{{tag_name}}")
+      Control::SwitchTo(InitialState::Rawtext, "{{tag_name}}")

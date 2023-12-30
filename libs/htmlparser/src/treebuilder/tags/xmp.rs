@@ -99,7 +99,7 @@ where
                         self.frameset_ok = false;
                         self.push_html_xmp_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "xmp")
+                        Control::SwitchTo(InitialState::Rawtext, "xmp")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -119,7 +119,7 @@ where
                             self.frameset_ok = false;
                             self.push_html_xmp_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "xmp")
+                            Control::SwitchTo(InitialState::Rawtext, "xmp")
                         };
                         self.disable_foster_parenting();
                         ctrl

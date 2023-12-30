@@ -3,9 +3,9 @@ use std::rc::Rc;
 
 use serde::Serialize;
 
-use bee_jsparser::string_literal_to_string;
-use bee_jsparser::template_literal_to_string;
-use bee_jsparser::Location;
+use jsparser::string_literal_to_string;
+use jsparser::template_literal_to_string;
+use jsparser::Location;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct NodeRef(Rc<Node>);

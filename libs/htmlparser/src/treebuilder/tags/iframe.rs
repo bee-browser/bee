@@ -95,7 +95,7 @@ where
                         self.frameset_ok = false;
                         self.push_html_iframe_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "iframe")
+                        Control::SwitchTo(InitialState::Rawtext, "iframe")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -111,7 +111,7 @@ where
                             self.frameset_ok = false;
                             self.push_html_iframe_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "iframe")
+                            Control::SwitchTo(InitialState::Rawtext, "iframe")
                         };
                         self.disable_foster_parenting();
                         ctrl

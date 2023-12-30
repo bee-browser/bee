@@ -94,7 +94,7 @@ where
                     let ctrl = {
                         self.push_html_noembed_element(tag);
                         self.save_and_switch_to(mode!(Text));
-                        Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noembed")
+                        Control::SwitchTo(InitialState::Rawtext, "noembed")
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -109,7 +109,7 @@ where
                         let ctrl = {
                             self.push_html_noembed_element(tag);
                             self.save_and_switch_to(mode!(Text));
-                            Control::SwitchTo(bee_htmltokenizer::InitialState::Rawtext, "noembed")
+                            Control::SwitchTo(InitialState::Rawtext, "noembed")
                         };
                         self.disable_foster_parenting();
                         ctrl

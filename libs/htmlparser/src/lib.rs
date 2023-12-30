@@ -10,7 +10,7 @@ pub use crate::treebuilder::DomTreeBuilder;
 pub use crate::treebuilder::Namespace;
 pub use crate::treebuilder::QuirksMode;
 
-pub use bee_htmltokenizer::token::Comment;
-pub use bee_htmltokenizer::token::Doctype;
-pub use bee_htmltokenizer::token::Tag;
-pub use bee_htmltokenizer::token::Text;
+pub use htmltokenizer::token::Comment;
+pub use htmltokenizer::token::Doctype;
+pub use htmltokenizer::token::Tag;
+pub use htmltokenizer::token::Text;
