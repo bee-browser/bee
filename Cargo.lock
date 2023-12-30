@@ -212,197 +212,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "bee-dfagen"
+name = "base"
 version = "0.0.0"
-dependencies = [
- "anyhow",
- "bee-macros",
- "clap",
- "indexmap",
- "maplit",
- "serde",
- "serde_json",
- "serde_yaml",
- "smallvec",
- "test-log",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "bee-esgrammar"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "bee-htmlparser",
- "bee-toydom",
- "clap",
-]
-
-[[package]]
-name = "bee-estree"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "assert-json-diff",
- "bee-jsparser",
- "clap",
- "json5",
- "serde",
- "serde_json",
- "test-log",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "bee-geometry"
-version = "0.1.0"
-dependencies = [
- "num-traits",
- "serde",
- "serde_test",
-]
-
-[[package]]
-name = "bee-htmlparser"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bee-htmltokenizer",
- "bee-toydom",
- "criterion",
- "flagset",
- "phf",
- "test-log",
- "thiserror",
- "tracing",
- "tracing-subscriber",
- "unicase",
-]
-
-[[package]]
-name = "bee-htmltokenizer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_matches",
- "bytes",
- "serde",
- "serde_json",
- "thiserror",
- "tracing",
-]
-
-[[package]]
-name = "bee-jsoncmp"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "assert-json-diff",
- "clap",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "bee-jsparser"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_matches",
- "bitflags 2.4.1",
- "clap",
- "phf",
- "test-log",
- "tracing",
- "tracing-subscriber",
- "unicode-id-start",
-]
-
-[[package]]
-name = "bee-lalrgen"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "assert_matches",
- "bee-macros",
- "clap",
- "dashmap",
- "humantime",
- "im",
- "indexmap",
- "itertools 0.12.0",
- "maplit",
- "pretty_assertions",
- "rayon",
- "serde",
- "serde_json",
- "serde_yaml",
- "test-log",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "bee-layout"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert-json-diff",
- "assert_matches",
- "bee-geometry",
- "num-traits",
- "serde",
- "serde_json",
- "serde_yaml",
- "tracing",
-]
-
-[[package]]
-name = "bee-lmp"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bee-layout",
- "clap",
- "serde_json",
-]
-
-[[package]]
-name = "bee-logview"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "async-stream",
- "axum",
- "bytes",
- "clap",
- "mime",
- "mustache",
- "open",
- "serde",
- "serde_yaml",
- "shell-words",
- "tempfile",
- "tokio",
- "tokio-stream",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "bee-macros"
-version = "0.1.0"
-
-[[package]]
-name = "bee-toydom"
-version = "0.0.0"
-dependencies = [
- "bee-htmlparser",
- "tracing",
-]
 
 [[package]]
 name = "bitflags"
@@ -643,6 +454,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "dfagen"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base",
+ "clap",
+ "indexmap",
+ "maplit",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "smallvec",
+ "test-log",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "diff"
 version = "0.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -678,6 +507,32 @@ checksum = "a258e46cdc063eb8519c00b9fc845fc47bcfca4130e2f08e88665ceda8474245"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "esgrammar"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "htmlparser",
+ "toydom",
+]
+
+[[package]]
+name = "estree"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert-json-diff",
+ "clap",
+ "json5",
+ "jsparser",
+ "serde",
+ "serde_json",
+ "test-log",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -757,6 +612,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "geometry"
+version = "0.0.0"
+dependencies = [
+ "num-traits",
+ "serde",
+ "serde_test",
+]
+
+[[package]]
 name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -804,6 +668,36 @@ name = "hermit-abi"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
+
+[[package]]
+name = "htmlparser"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "criterion",
+ "flagset",
+ "htmltokenizer",
+ "phf",
+ "test-log",
+ "thiserror",
+ "toydom",
+ "tracing",
+ "tracing-subscriber",
+ "unicase",
+]
+
+[[package]]
+name = "htmltokenizer"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "bytes",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
 
 [[package]]
 name = "http"
@@ -999,6 +893,71 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsoncmp"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert-json-diff",
+ "clap",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "jsparser"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "bitflags 2.4.1",
+ "clap",
+ "phf",
+ "test-log",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-id-start",
+]
+
+[[package]]
+name = "lalrgen"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert_matches",
+ "base",
+ "clap",
+ "dashmap",
+ "humantime",
+ "im",
+ "indexmap",
+ "itertools 0.12.0",
+ "maplit",
+ "pretty_assertions",
+ "rayon",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "test-log",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "layout"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "assert-json-diff",
+ "assert_matches",
+ "geometry",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tracing",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1015,6 +974,16 @@ name = "linux-raw-sys"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4cd1a83af159aa67994778be9070f0ae1bd732942279cabb14f86f986a21456"
+
+[[package]]
+name = "lmp"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "layout",
+ "serde_json",
+]
 
 [[package]]
 name = "lock_api"
@@ -1040,6 +1009,29 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+
+[[package]]
+name = "logview"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-stream",
+ "axum",
+ "bytes",
+ "clap",
+ "mime",
+ "mustache",
+ "open",
+ "serde",
+ "serde_yaml",
+ "shell-words",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "maplit"
@@ -1898,6 +1890,14 @@ name = "tower-service"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
+
+[[package]]
+name = "toydom"
+version = "0.0.0"
+dependencies = [
+ "htmlparser",
+ "tracing",
+]
 
 [[package]]
 name = "tracing"

@@ -83,7 +83,7 @@ async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBu
     remotes = {};
   }
 
-  let layouter = path.join(PROJ_DIR, 'target', debugBuild ? 'debug' : 'release', 'bee-lmp');
+  let layouter = path.join(PROJ_DIR, 'target', debugBuild ? 'debug' : 'release', 'lmp');
 
   // TODO
   // ----

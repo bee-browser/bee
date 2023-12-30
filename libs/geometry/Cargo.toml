@@ -1,0 +1,16 @@
+[package]
+name = "geometry"
+version = "0.0.0"
+authors = ["BEE project contributors"]
+edition = "2021"
+publish = false
+
+[dependencies]
+num-traits = "0.2.17"
+serde = { version = "1.0.193", features = ["derive"], optional = true }
+
+[dev-dependencies]
+serde_test = "1.0.176"
+
+[lib]
+bench = false
