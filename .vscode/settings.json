@@ -1,7 +1,7 @@
 {
   "git.ignoreLimitWarning": true,
   "lldb.launch.sourceMap": {
-    "/rustc/${env:BEE_DEV_RUSTC_COMMIT_HASH}": "${env:BEE_DEV_RUST_TOOLCHAIN_PATH}/lib/rustlib/src/rust"
+    "/rustc/${env:RUSTC_COMMIT_HASH}": "${env:RUST_TOOLCHAIN_PATH}/lib/rustlib/src/rust"
   },
   "lldb.verboseLogging": true,
   "search.exclude": {

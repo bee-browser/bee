@@ -1,0 +1,14 @@
+services:
+  devenv:
+    image: bee-browser/devenv
+    build:
+      context: .
+    command: |-
+      /bin/sh -c "while sleep 1000; do :; done"
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - 'seccomp:unconfined'
+    volumes:
+      - ..:/workspaces:cached
+      #- target:/workspaces/target
