@@ -79,6 +79,7 @@ impl State {
     }
 
     /// Returns an iterator over *original* non-kernel items in `item_set`.
+    #[allow(dead_code)]
     pub fn non_kernel_items(&self) -> impl Iterator<Item = &LrItem> {
         self.item_set.non_kernel_items()
     }

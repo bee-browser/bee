@@ -65,6 +65,7 @@ impl LrItem {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         if self.rule.production.is_empty() {
             return true;
@@ -170,6 +171,7 @@ impl LrItemSet {
     }
 
     /// Returns the kernel item set.
+    #[allow(dead_code)]
     pub fn kernel_set(&self) -> Self {
         let mut set: BTreeSet<LrItem> = Default::default();
         for item in self.kernel_items().cloned() {
@@ -179,6 +181,7 @@ impl LrItemSet {
     }
 
     /// Returns the non-kernel item set.
+    #[allow(dead_code)]
     pub fn non_kernel_set(&self) -> Self {
         let mut set: BTreeSet<LrItem> = Default::default();
         for item in self.non_kernel_items().cloned() {

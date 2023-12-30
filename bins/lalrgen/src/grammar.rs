@@ -213,6 +213,7 @@ impl Rule {
     }
 
     /// Returns `true` if this has tail-lookahead restrictions.
+    #[allow(dead_code)]
     pub fn has_tail_lookahead(&self) -> bool {
         match self.production.last() {
             Some(Term::Lookahead(_)) => true,
@@ -276,6 +277,7 @@ impl NonTerminal {
     }
 
     /// Returns `true` if this is a variant.
+    #[allow(dead_code)]
     pub fn is_variant(&self) -> bool {
         match self {
             Self::Variant(..) => true,
@@ -347,6 +349,7 @@ impl Term {
     }
 
     /// Returns `true` if this is a token.
+    #[allow(dead_code)]
     pub fn is_token(&self) -> bool {
         match self {
             Self::Token(_) => true,

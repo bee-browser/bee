@@ -126,6 +126,7 @@ impl PhraseSet {
         Self::new(set)
     }
 
+    #[allow(dead_code)]
     pub fn shorten(&self, n: usize) -> Self {
         let mut set = BTreeSet::default();
         for phrase in self.iter() {
