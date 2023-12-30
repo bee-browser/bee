@@ -29,8 +29,8 @@ codegen: $(CODEGEN_TARGETS)
 
 # 1. Extract the lexical and syntactic grammars from the specification
 #
-# The `bee-esgrammar` crate will be built and executed.  Texts contained in special tags will be
-# output to STDOUT.
+# The `esgrammar` crate will be built and executed.  Texts contained in special tags will be output
+# to STDOUT.
 #
 # We learned this approach from mozilla-spidermonkey/jsparagus.
 # See js_parser/extract_es_grammar.py.
@@ -38,12 +38,12 @@ codegen: $(CODEGEN_TARGETS)
 .PRECIOUS: lexer/grammar.txt
 lexer/grammar.txt: $(ECMA262_DIR)/spec.html
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -q --package bee-esgrammar extract lexical-grammar >$@
+	@cat $< | cargo run -rqp esgrammar -- extract lexical-grammar >$@
 
 .PRECIOUS: parser/grammar.txt
 parser/grammar.txt: $(ECMA262_DIR)/spec.html
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -q --package bee-esgrammar extract syntactic-grammar >$@
+	@cat $< | cargo run -rqp esgrammar -- extract syntactic-grammar >$@
 
 # 2. Transpile the extracted grammars into an equivalent but more computer-friendly data
 #

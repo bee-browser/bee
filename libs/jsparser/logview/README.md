@@ -1,7 +1,7 @@
-# logview for bee-jsparser-demo
+# logview for jsparser
 
 ## Usage
 
 ```shell
-echo 'x=1' | cargo run -r -p bee-logview -- -c config.yaml
+echo 'x=1' | cargo run -rqp logview -- -c config.yaml
 ```

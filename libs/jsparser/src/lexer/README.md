@@ -3,7 +3,7 @@
 The `lexer` module implements a JavaScript lexer.
 
 The ECMA-262 specification defines multiple goal symbols.  Each goal symbol is used in a particular
-syntactic context.  `bee-dfagen` is used for generating a DFA for each goal symbol.
+syntactic context.  `dfagen` is used for generating a DFA for each goal symbol.
 
 `dfa.js` converts the generated DFA into more convenient data for Rust source file generation.  The
 generated Rust source files are placed in the `dfa` module inside the `lexer` module.  The current

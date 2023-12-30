@@ -1,4 +1,4 @@
-# bee-dfagen
+# dfagen
 
 > A deterministic finite automaton generator for lexer generators
 
@@ -17,11 +17,11 @@ Eventually, we decided to build a new DFA generator for the following reasons:
     for the next reason
 * We can easily build a [NFA] (non-deterministic finite automaton) from a production rule in a CFG
 
-`bee-dfagen` generates a DFA recognizing tokens defined in a CFG.  The CFG is written in an YAML
-format so that we don't need to build another parser for the input lexical grammar.
+`dfagen` generates a DFA recognizing tokens defined in a CFG.  The CFG is written in an YAML format
+so that we don't need to build another parser for the input lexical grammar.
 
-`bee-dfagen` doesn't generate a lexer code directly.  Instead, it generates a definition of a DFA
-in a JSON format.  Using the generated JSON data, you can easily generate a desired lexer code by
+`dfagen` doesn't generate a lexer code directly.  Instead, it generates a definition of a DFA in a
+JSON format.  Using the generated JSON data, you can easily generate a desired lexer code by
 writing a small script or template files processed by a template engine such as `Jinja`.
 
 You don't need to use it in most cases, but this package supplementarily provides a library crate.
@@ -34,7 +34,7 @@ Generally, there are two approaches:
    single character as an index of the state transition table of a DFA
 2. Take lookahead restrictions into account when generating a DFA
 
-`bee-dfagen` generates a DFA in the fist approach.
+`dfagen` generates a DFA in the fist approach.
 
 The first approach is intuitive, but it normally generates a larger state transition table than the
 second one.  Because the number of states in a DFA is normally larger than the number of possible

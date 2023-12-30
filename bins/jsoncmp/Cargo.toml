@@ -1,5 +1,5 @@
 [package]
-name = "bee-jsoncmp"
+name = "jsoncmp"
 version = "0.0.0"
 edition = "2021"
 authors = ["BEE project contributors"]

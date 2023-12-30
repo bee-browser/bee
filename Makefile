@@ -7,7 +7,7 @@ export BEE_DEV_RUST_TOOLCHAIN_PATH := $(shell rustup toolchain list -v | grep '(
 
 # NOTES
 # -----
-# In this project, commands in //tools/bin are used in build scripts.  For example, bee-codegen is
+# In this project, commands in //tools/bin are used in build scripts.  For example, codegen is
 # used for generating source files.  So, we need to add the path to the PATH enviroment before
 # building.
 #

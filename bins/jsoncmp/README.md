@@ -1,13 +1,13 @@
-# bee-jsoncmp
+# jsoncmp
 
 > A tool to compare two JSON files
 
 ## Usages
 
 ```shell
-cargo run -rqp bee-jsoncmp -- lhs.json rhs.json
-cat lhs.json | cargo run -rqp bee-jsoncmp -- - rhs.json
-cat rhs.json | cargo run -rqp bee-jsoncmp -- lhs.json -
+cargo run -rqp jsoncmp -- lhs.json rhs.json
+cat lhs.json | cargo run -rqp jsoncmp -- - rhs.json
+cat rhs.json | cargo run -rqp jsoncmp -- lhs.json -
 ```
 
 ## Why not use existing tools?

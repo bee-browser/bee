@@ -1,12 +1,11 @@
-# bee-estree
+# estree
 
 > A simple Javascript parser to output ESTree in JSON5
 
-This package provides a binary crate `bee-estree` to output the [ESTree] of the input JavaScript
+This package provides a binary crate `estree` to output the [ESTree] of the input JavaScript
 program.
 
-The main goal of this package is providing a tool for validating the implementation of
-`bee-jsparser`.
+The main goal of this package is providing a tool for validating the implementation of `jsparser`.
 
 ## How to use
 
@@ -14,10 +13,10 @@ The following command parses a JavaScript program:
 
 ```shell
 curl https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js -sG |
-  bee-estree parse script | deno run npm:json5 -s 2
+  cargo run -p estree -- parse script | deno run npm:json5 -s 2
 ```
 
-> bee-estree outputs ESTree in [JSON5], not JSON.
+> estree outputs ESTree in [JSON5], not JSON.
 > Because the ESTree may contain values such as `Infinity` that cannot be used in JSON.
 
 This shows the ESTree representation of the JavaScript program.  The representation is compatible
@@ -26,7 +25,7 @@ with [Acorn].
 The following command starts a server that responds to requests to parse JavaScript programs:
 
 ```shell
-cat | bee-estree serve | deno run npm:json5 -s 2
+cat | cargo run -p estree -- serve | deno run npm:json5 -s 2
 ```
 
 The server can accept requests like below:
@@ -93,33 +92,34 @@ Differences like below will be shown if the validation fails:
 The paths shown in the above messages can be used as [`jj`] filters:
 
 ```shell
-curl https://host/script.js -sG | bee-estree parse script | jj body.0.end
+curl https://host/script.js -sG | cargo run -p estree -- parse script | jj body.0.end
 
 # Show the parent node.
-curl https://host/script.js -sG | bee-estree parse script | jj body.0
+curl https://host/script.js -sG | cargo run -p estree -- parse script | jj body.0
 ```
 
 Debug-level logs are shown by specifying the `RUST_LOG` environment variable:
 
 ```shell
-curl https://host/script.js -sG | RUST_LOG=debug bee-estree parse script >/dev/null
+curl https://host/script.js -sG | RUST_LOG=debug cargo run -p estree -- parse script >/dev/null
 ```
 
 ## tc39/test262
 
-We have a test runner to test ECMAScript conformance using [tc39/test262]:
+We have a test runner to test ECMAScript conformance using [tc39/test262] and
+[tc39/test262-parser-tests]:
 
 ```shell
-sh ./script/test262.sh --progress
+sh ./scripts/test262.sh --progress
+sh ./scripts/test262_parser_tests.sh --progress
 ```
 
 Many tests fails at the moment.  The `--details` option lists failed tests.
 
 ## TODO
 
-* JSON doesn't support BigInt
+* Support BigInt
   * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
-  * Switch to [JSON5]?
 * Generate the `Builder` implementation from a definition of semantic actions
   * Currently, it's manually implemented
 
@@ -138,5 +138,6 @@ JavaScript parsers.
 [Acorn]: https://www.npmjs.com/package/acorn
 [AST Explorer]: https://astexplorer.net/
 [tc39/test262]: https://github.com/tc39/test262
+[tc39/test262-parser-tests]: https://github.com/tc39/test262-parser-tests
 [JSON5]: https://github.com/json5/json5
 [`jj`]: https://github.com/tidwall/jj

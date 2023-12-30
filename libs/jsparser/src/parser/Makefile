@@ -28,12 +28,12 @@ lalr/%.rs: lalr/%.rs.hbs lalr.js $(CODEGEN_DIR)/lalr.json
 	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $< | \
 	  rustfmt --emit=stdout >$@
 
-# Generate an intermediate JSON data in order to avoid re-running bee-lalrgen when lalr.js or
+# Generate an intermediate JSON data in order to avoid re-running lalrgen when lalr.js or
 # lalr.rs.hbs changes.
 .PRECIOUS: $(CODEGEN_DIR)/lalr.json
 $(CODEGEN_DIR)/lalr.json: grammar.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp bee-lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq '.' >$@
+	@cargo run -rqp lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq '.' >$@
 
 $(CODEGEN_DIR):
 	@mkdir -p $@

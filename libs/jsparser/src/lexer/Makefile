@@ -53,14 +53,14 @@ codegen: $(CODEGEN_TARGETS)
 # means that we can build a NFA directly from CFG without converting production rules to regular
 # expressions.
 #
-# `bee-dfagen` reads the lexical grammar and builds an intermediate large NFA which recognizes
-# specified tokens.  Then, `bee-dfagen` converts the NFA to an equivalent minimized DFA by using
-# well-known algorithms.  Finally, `bee-dfagen` outputs the DFA in a JSON format which contains
-# enough information for code generation.
+# `dfagen` reads the lexical grammar and builds an intermediate large NFA which recognizes
+# specified tokens.  Then, `dfagen` converts the NFA to an equivalent minimized DFA by using
+# well-known algorithms.  Finally, `dfagen` outputs the DFA in a JSON format which contains enough
+# information for code generation.
 .PRECIOUS: $(CODEGEN_DIR)/%.json
 $(CODEGEN_DIR)/%.json: grammar.yaml tokens.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp bee-dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' >$@
+	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' >$@
 
 # 2. Generate code for each DFA
 dfa/%.rs: $(CODEGEN_DIR)/%.json dfa.js dfa/dfa.rs.hbs

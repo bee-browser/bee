@@ -5,4 +5,4 @@ mounts:
 
 event-source:
   command: >-
-    sh run.sh {{url}}
+    sh run.sh

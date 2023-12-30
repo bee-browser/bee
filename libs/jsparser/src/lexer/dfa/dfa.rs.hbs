@@ -38,7 +38,7 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
             // A dirty hack for handling ID_Start and ID_Continue.
             //
             // TODO: Support Unicode properties including ID_Start and ID_Continue in
-            // `bee_dfagen::unicode::UnicodeSet`.
+            // `dfagen::unicode::UnicodeSet`.
             if let Some(ch) = unicode_set.1 {
                 match state.check_id_start_continue() {
                     CheckIdStartContinue::CheckIdStart => {

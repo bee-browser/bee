@@ -20,7 +20,7 @@ export class Acorn {
 
 export class ESTree {
   static async parse(source, sourceType, options) {
-    const args = ['run', '-r', '-q', '-p', 'bee-estree', '--', 'parse', sourceType];
+    const args = ['run', '-r', '-q', '-p', 'estree', '--', 'parse', sourceType];
     if (options.withDebugBuild) {
       args.splice(1, 1);  // remove '-r'
     }
@@ -49,7 +49,7 @@ export class ESTree {
   }
 
   start() {
-    const args = ['run', '-r', '-q', '-p', 'bee-estree', '--', "serve"];
+    const args = ['run', '-r', '-q', '-p', 'estree', '--', "serve"];
     if (this.withDebugBuild_) {
       args.splice(1, 1);  // remove '-r'
     }

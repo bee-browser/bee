@@ -75,7 +75,7 @@ const EXCLUDES = [
   'pass/1c1e2a43fe5515b6.js',
   'pass/59ae0289778b80cd.js',
   // invalid character
-  // bee_jsparser::lexer::dfa::input_element_reg_exp:
+  // jsparser::lexer::dfa::input_element_reg_exp:
   //   opcode="next"
   //   state=State(423)
   //   unicode_set=UnicodeSet(69, Some('\u{202f}'))
@@ -105,14 +105,14 @@ const EXCLUDES = [
 
 const spinner = ora({ spinner: 'line' });
 
-// The signal handler must be registered before starting the bee-estree server.
+// The signal handler must be registered before starting the estree server.
 Deno.addSignalListener("SIGINT", () => {
   spinner.stop();
   // We cannot call server?.stop() here because it's async method...
   Deno.exit(0);
 });
 
-// Spawn bee-estree in the server mode in order to reduce overhead of process creations.
+// Spawn estree in the server mode in order to reduce overhead of process creations.
 let server = new ESTree(options);
 server.start();
 
@@ -150,7 +150,7 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const actual = await server.parse(source, sourceType);
     if (actual === null) {
-      fails.push({ test, reason: 'bee-estree cannot parse' });
+      fails.push({ test, reason: 'estree cannot parse' });
       continue;
     }
 
@@ -178,7 +178,7 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const actualExplicit = await server.parse(sourceExplicit, sourceType);
     if (actualExplicit === null) {
-      fails.push({ test, reason: 'bee-estree cannot parse' });
+      fails.push({ test, reason: 'estree cannot parse' });
       continue;
     }
 
@@ -218,7 +218,7 @@ if (options.only === 'all' || options.only === 'fail') {
 
     const actual = await server.parse(source, sourceType);
     if (actual !== null) {
-      fails.push({ test, reason: 'bee-estree can parse' });
+      fails.push({ test, reason: 'estree can parse' });
       continue;
     }
 
@@ -252,7 +252,7 @@ if (options.only === 'all' || options.only === 'early') {
 
     const actual = await server.parse(source, sourceType);
     if (actual !== null) {
-      fails.push({ test, reason: 'bee-estree can parse' });
+      fails.push({ test, reason: 'estree can parse' });
       continue;
     }
 

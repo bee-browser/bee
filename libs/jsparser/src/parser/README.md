@@ -6,8 +6,8 @@ Unlike the `Lexer`, the `Parser` is implemented in a push-style.  An implementat
 `SyntaxHandler` trait receives *events* from the `Parser`.  In many cases, the `SyntaxHandler` is
 used for building an AST or directly generating code to be executed on a VM.
 
-`bee-lalrgen` is used to generate LALR(1) parsing tables.  It supports multiple goals and a single
-set of parsing tables are generated.
+`lalrgen` is used to generate LALR(1) parsing tables.  It supports multiple goals and a single set
+of parsing tables are generated.
 
 `lalr.js` tweaks it for later RUST code generation.  The most important task of `lalr.js` is adding
 properties to each state object, which are used for processing auto semicolon insertions in the

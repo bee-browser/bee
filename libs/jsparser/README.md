@@ -1,18 +1,18 @@
-# bee-jsparser
+# jsparser
 
 > A JavaScript parser compliant with ECMA-262
 
-`bee-jsparser` provides an implementation of a JavaScript parser compliant with ECMA-262.
+`jsparser` provides an implementation of a JavaScript parser compliant with ECMA-262.
 
 ## Current supported version
 
 * [ECMA-262 13th edition (ES2022)](https://262.ecma-international.org/13.0/)
 
-## How is bee-jsparser implemented?
+## How is jsparser implemented?
 
 There are many JavaScript parser implementations and many of them are hand-written.  We definitely
-agree that this is a reasonable decision, but we decided to implement bee-jsparser using our own
-parser generator tools, [bee-dfagen] and [bee-lalrgen].
+agree that this is a reasonable decision, but we decided to implement jsparser using our own parser
+generator tools, [dfagen] and [lalrgen].
 
 The ECMA-262 specification defines lexical and syntactic grammars for ECMAScript (JavaScript).  It
 uses [special notations](https://262.ecma-international.org/13.0/#sec-notational-conventions) in
@@ -24,15 +24,15 @@ express terms such as `lookahead`.  Therefore, it's not easy to convert the ECMA
 grammar into the corresponding `bison`'s grammar in an automatic way.  We think that this is one of
 main reasons that the most existing JavaScript parser implementations are hand-written.
 
-We should implement bee-jsparser by hand like as those, but we don't.  Instead, we attempt to
-develop our own parser generator tools which support the special notations used in the ECMA-262
+We should implement jsparser by hand like as those, but we don't.  Instead, we attempt to develop
+our own parser generator tools which support the special notations used in the ECMA-262
 specification.  This is an experimental attempt and for a fun.
 
 ## Generating code using the parser generator tools
 
 You don't you don't need to generate the code manually if you want to develop modules using
-bee-jsparser.  The code has already been generated and committed to the repository.  So, what you
-need to do is just fetching the source files from the repository.
+jsparser.  The code has already been generated and committed to the repository.  So, what you need
+to do is just fetching the source files from the repository.
 
 When you change files affecting the generated code, you need to perform one of the following
 command:
@@ -70,8 +70,8 @@ if (condition)
 ```
 
 Where the function `x` will be defined only if the `condition` is met.  This is not allowed in the
-ECMA-262 specification and bee-jsparser stops due to an syntax error.  Because
-`FunctionDeclaration` is not included in production rules for `Statement` in the ECMA-262 grammar.
+ECMA-262 specification and jsparser stops due to an syntax error.  Because `FunctionDeclaration` is
+not included in production rules for `Statement` in the ECMA-262 grammar.
 
 ## TODO
 
@@ -85,8 +85,8 @@ ECMA-262 specification and bee-jsparser stops due to an syntax error.  Because
 
 * [Understanding ECMAScript - V8](https://v8.dev/blog/tags/understanding-ecmascript)
 
-[bee-dfagen]: ../dfagen
-[bee-lalrgen]: ../lalrgen
+[dfagen]: ../../bins/dfagen
+[lalrgen]: ../../bins/lalrgen
 [unicode-id-start]: https://crates.io/crates/unicode-id-start
 [mozilla-spidermonkey/jsparagus]: https://github.com/mozilla-spidermonkey/jsparagus
 [cdn.js]: https://cdnjs.com/

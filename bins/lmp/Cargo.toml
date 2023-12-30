@@ -1,6 +1,6 @@
 [package]
-name = "bee-lmp"
-version = "0.1.0"
+name = "lmp"
+version = "0.0.0"
 authors = ["BEE project contributors"]
 edition = "2021"
 publish = false
@@ -10,7 +10,3 @@ anyhow = "1.0.77"
 clap = { version = "4.4.12", features = ["env", "derive", "wrap_help"] }
 layout = { path = "../../libs/layout", features = ["service"] }
 serde_json = "1.0.108"
-
-[[bin]]
-name = "bee-lmp"
-bench = false

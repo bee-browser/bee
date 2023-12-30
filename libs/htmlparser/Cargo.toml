@@ -24,10 +24,10 @@ tracing-subscriber = "0.3.18"
 bench = false
 
 [[bench]]
-name = "bee-htmlparser-bench"
+name = "htmlparser-bench"
 path = "benches/htmlparser_bench.rs"
 harness = false
 
 [[example]]
-name = "bee-htmlparser-demo"
-path = "examples/demo.rs"
+name = "htmlparser"
+path = "examples/print_html_tag.rs"

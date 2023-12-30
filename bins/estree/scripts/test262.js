@@ -70,7 +70,7 @@ const UNSUPPORTED_FEATURES = [
   'hashbang',
 ];
 
-// The signal handler must be registered before starting the bee-estree server.
+// The signal handler must be registered before starting the estree server.
 Deno.addSignalListener("SIGINT", () => {
   spinner?.stop();
   // We cannot call server?.stop() here because it's async method...
@@ -79,7 +79,7 @@ Deno.addSignalListener("SIGINT", () => {
 
 const spinner = ora({ spinner: 'line' });
 
-// Spawn bee-estree in the server mode in order to reduce overhead of process creations.
+// Spawn estree in the server mode in order to reduce overhead of process creations.
 const server = new ESTree(options);
 server.start();
 
@@ -195,11 +195,11 @@ for await (const test of stream) {
     if (actual === null) {
       // passed
     } else {
-      fails.push({ test, reason: 'bee-estree should fail' });
+      fails.push({ test, reason: 'estree should fail' });
     }
   } else {
     if (actual === null) {
-      fails.push({ test, reason: 'bee-estree cannot parse' });
+      fails.push({ test, reason: 'estree cannot parse' });
     } else {
       const diffs = microdiff(actual, expected);
       if (diffs.length === 0) {

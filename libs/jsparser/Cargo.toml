@@ -25,5 +25,5 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 bench = false
 
 [[example]]
-name = "bee-jsparser-demo"
-path = "examples/demo.rs"
+name = "jsparser"
+path = "examples/jsparser.rs"

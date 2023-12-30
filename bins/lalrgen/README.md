@@ -1,9 +1,9 @@
-# bee-lalrgen
+# lalrgen
 
 > A LALR parsing tables generator
 
-The main goal of this crate is generating a [LALR(1)] parsing tables for the `bee-jsparser` crate
-from a syntactic grammar defined in the [ECMA-262] specification.
+The main goal of this crate is generating a [LALR(1)] parsing tables for the `jsparser` crate from
+a syntactic grammar defined in the [ECMA-262] specification.
 
 ## Notable features
 
@@ -12,7 +12,7 @@ from a syntactic grammar defined in the [ECMA-262] specification.
 * Lookahead restrictions
   * The ECMA-262 specification uses special notations to restrict follower tokens
 
-## How does bee-lalrgen process lookahead restrictions in production rules?
+## How does lalrgen process lookahead restrictions in production rules?
 
 One of special notations in the ECMA-262 specification is **lookahead restrictions**.  For example:
 
@@ -86,7 +86,7 @@ symbols in a variant rule of an LR item are converted to corresponding *original
 adding the LR item to the closure item set.  So, non-terminal variants never appear in the list of
 non-terminal symbols in [`LalrSpec`].
 
-## How does bee-lalrgen process [no LineTerminator here] restrictions in production rules?
+## How does lalrgen process [no LineTerminator here] restrictions in production rules?
 
 `[no LineTerminator here]` is a special notation in the ECMA-262 specification.  It's used in a
 production rule in order to indicate that `LineTerminator` (and `LineTerminatorSequence`) tokens

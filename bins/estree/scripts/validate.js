@@ -29,7 +29,7 @@ const { cmds, options, args } = await parseCommand({
 
 const spinner = ora({ spinner: 'line' });
 
-// The signal handler must be registered before starting the bee-estree server.
+// The signal handler must be registered before starting the estree server.
 Deno.addSignalListener("SIGINT", () => {
   spinner.stop();
   Deno.exit(0);
