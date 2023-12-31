@@ -62,6 +62,7 @@ and output responses like below:
     ],
     "sourceType": "script"
   },
+  "error": null,
   // The elapsed time in nanoseconds.
   "elapsed": 71925
 }

@@ -127,6 +127,8 @@ fn parse_program(source_type: SourceType, source: &str) -> std::result::Result<N
     }
 }
 
+// In the server mode, a parsing error doesn't stop the loop and the error is reported in the
+// response.  Tests take long time to complete if the server restarts every time an error happens.
 fn serve() -> Result<()> {
     let reader = std::io::stdin().lock();
     for line in reader.lines() {
@@ -140,10 +142,28 @@ fn serve() -> Result<()> {
                     }
                 };
                 let now = std::time::Instant::now();
-                let program = parse_program(req.source_type, &req.source).ok();
+                let result = parse_program(req.source_type, &req.source);
                 let elapsed = now.elapsed().as_nanos() as u64;
-                let res = Response { program, elapsed };
-                println!("{}", json5::to_string(&res)?);
+                let mut res = result.map_or_else(
+                    |err| Response {
+                        program: None,
+                        elapsed,
+                        error: Some(format!("{err:?}")),
+                    },
+                    |program| Response {
+                        program: Some(program),
+                        elapsed,
+                        error: None,
+                    });
+                match json5::to_string(&res) {
+                    Ok(s) => println!("{s}"),
+                    Err(err) => {
+                        tracing::error!(%err, "Failed to stringify ESTree");
+                        res.program = None;
+                        res.error = Some(format!("{err:?}"));
+                        println!("{}", json5::to_string(&res).unwrap());
+                    }
+                }
             }
             Err(_) => break,
         }
@@ -161,5 +181,6 @@ struct Request {
 #[derive(Debug, Serialize)]
 struct Response {
     program: Option<NodeRef>,
+    error: Option<String>,
     elapsed: u64,
 }
