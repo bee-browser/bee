@@ -12,7 +12,7 @@ clap = { version = "4.4.12", features = ["env", "derive", "wrap_help"] }
 json5 = { git = "https://github.com/bee-browser/json5-rs.git" }
 jsparser = { path = "../../libs/jsparser", features = ["location"] }
 serde = { version = "1.0.193", features = ["derive", "rc"] }
-serde_json = { version = "1.0.108", features = ["preserve_order"] }
+serde_json = { version = "1.0.109", features = ["preserve_order"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 
