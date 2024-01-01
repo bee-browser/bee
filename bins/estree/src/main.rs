@@ -115,7 +115,10 @@ fn parse<P: AsRef<Path>>(source_type: SourceType, source_file: Option<P>) -> Res
         }
     };
 
-    println!("{}", json5::to_string(&node)?);
+    match json5::to_string(&node) {
+        Ok(s) => println!("{s}"),
+        Err(_) => unreachable!("{node:#?}"),
+    }
 
     Ok(())
 }
@@ -154,7 +157,8 @@ fn serve() -> Result<()> {
                         program: Some(program),
                         elapsed,
                         error: None,
-                    });
+                    },
+                );
                 match json5::to_string(&res) {
                     Ok(s) => println!("{s}"),
                     Err(err) => {
