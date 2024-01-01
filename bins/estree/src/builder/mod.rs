@@ -229,6 +229,7 @@ impl Builder {
         let (expression, ..) = self.pop_node();
         self.check("default");
         let (start, _) = self.check("export");
+        let expression = node!(into_expression; expression)?;
         let node = node!(export_default_declaration@start..end; expression);
         self.push_node(node, start, end);
         Ok(())
@@ -269,7 +270,7 @@ impl Builder {
     fn expression_statement(&mut self) -> Result<(), String> {
         let (_, end) = self.check(";");
         let (expression, start, _) = self.pop_node();
-        expression.validate_expression()?;
+        let expression = node!(into_expression; expression)?; // may be CPEAAPL
         let node = node!(expression_statement@start..end; expression);
         self.push_node(node, start, end);
         Ok(())
@@ -341,7 +342,7 @@ impl Builder {
         let (object, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("with");
-        object.validate_expression()?;
+        let object = node!(into_expression; object)?;
         let node = node!(with_statement@start..end; object, body);
         self.push_node(node, start, end);
         Ok(())
@@ -932,7 +933,7 @@ impl Builder {
         let (_, end) = self.check(";");
         let (argument, ..) = self.pop_node();
         let (start, _) = self.check("return");
-        argument.validate_expression()?;
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(return_statement@start..end; argument);
         self.push_node(node, start, end);
         Ok(())
@@ -998,6 +999,7 @@ impl Builder {
     fn class_heritage(&mut self) -> Result<(), String> {
         let (super_class, _, end) = self.pop_node();
         let (start, _) = self.check("extends");
+        let super_class = node!(into_expression; super_class)?;
         self.push_node(super_class, start, end);
         Ok(())
     }
@@ -1436,6 +1438,7 @@ impl Builder {
         let (property, _, end) = self.pop_node();
         self.check(".");
         let (object, start, _) = self.pop_node();
+        let object = node!(into_expression; object)?;
         let node = node!(member_expression@start..end; object, property, false);
         self.push_node(node, start, end);
         Ok(())
@@ -1446,6 +1449,7 @@ impl Builder {
         let (property, ..) = self.pop_node();
         self.check("[");
         let (object, start, _) = self.pop_node();
+        let object = node!(into_expression; object)?;
         let node = node!(member_expression@start..end; object, property, true);
         self.push_node(node, start, end);
         Ok(())
@@ -1455,6 +1459,7 @@ impl Builder {
         let (name, id_start, end) = self.pop_token();
         self.check(".");
         let (object, start, _) = self.pop_node();
+        let object = node!(into_expression; object)?;
         let property = node!(private_identifier@id_start..end; name);
         let node = node!(member_expression@start..end; object, property, false);
         self.push_node(node, start, end);
@@ -1466,6 +1471,7 @@ impl Builder {
         let (property, ..) = self.pop_node();
         self.check("[");
         let (object, start, _) = self.pop_node();
+        let object = node!(into_expression; object)?;
         let node = node!(member_expression@start..end; object, property, true);
         self.push_node(node, start, end);
         Ok(())
@@ -1503,6 +1509,7 @@ impl Builder {
     fn call_expression(&mut self) -> Result<(), String> {
         let (arguments, _, end) = self.pop_list();
         let (callee, start, _) = self.pop_node();
+        let callee = node!(into_expression; callee)?; // may be CPEAAPL
         let node = node!(call_expression@start..end; callee, arguments);
         self.push_node(node, start, end);
         Ok(())
@@ -1534,7 +1541,7 @@ impl Builder {
         // If LeftHandSideExpression is an ObjectLiteral or an ArrayLiteral, it must cover an
         // AssignmentPattern.  See "13.15.1 Static Semantics: Early Errors" in ECMA-262.
         let left = node!(into_pattern; left)?;
-        left.validate_pattern()?;
+        let right = node!(into_expression; right)?; // may be CPEAAPL
         let node = node!(assignment_expression@start..end; operator, left, right);
         self.push_node(node, start, end);
         Ok(())
@@ -1546,6 +1553,9 @@ impl Builder {
         let (consequent, ..) = self.pop_node();
         self.check("?");
         let (test, start, _) = self.pop_node();
+        let test = node!(into_expression; test)?; // may be CPEAAPL
+        let consequent = node!(into_expression; consequent)?; // may be CPEAAPL
+        let alternate = node!(into_expression; alternate)?; // may be CPEAAPL
         let node = node!(conditional_expression@start..end; test, consequent, alternate);
         self.push_node(node, start, end);
         Ok(())
@@ -1555,6 +1565,8 @@ impl Builder {
         let (right, _, end) = self.pop_node();
         let (operator, ..) = self.pop_token();
         let (left, start, _) = self.pop_node();
+        let left = node!(into_expression; left)?; // may be CPEAAPL
+        let right = node!(into_expression; right)?; // may be CPEAAPL
         let node = node!(binary_expression@start..end; operator, left, right);
         self.push_node(node, start, end);
         Ok(())
@@ -1565,6 +1577,7 @@ impl Builder {
         let (operator, ..) = self.pop_token();
         let (name, start, id_end) = self.pop_token();
         let left = node!(private_identifier@start..id_end; name);
+        let right = node!(into_expression; right)?; // may be CPEAAPL
         let node = node!(binary_expression@start..end; operator, left, right);
         self.push_node(node, start, end);
         Ok(())
@@ -1574,6 +1587,8 @@ impl Builder {
         let (right, _, end) = self.pop_node();
         let (operator, ..) = self.pop_token();
         let (left, start, _) = self.pop_node();
+        let left = node!(into_expression; left)?; // may be CPEAAPL
+        let right = node!(into_expression; right)?; // may be CPEAAPL
         let node = node!(logical_expression@start..end; operator, left, right);
         self.push_node(node, start, end);
         Ok(())
@@ -1589,6 +1604,7 @@ impl Builder {
     fn update_expression_prefix(&mut self) -> Result<(), String> {
         let (argument, _, end) = self.pop_node();
         let (operator, start, _) = self.pop_token();
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(update_expression@start..end; operator, argument, true);
         self.push_node(node, start, end);
         Ok(())
@@ -1597,6 +1613,7 @@ impl Builder {
     fn update_expression_suffix(&mut self) -> Result<(), String> {
         let (operator, _, end) = self.pop_token();
         let (argument, start, _) = self.pop_node();
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(update_expression@start..end; operator, argument, false);
         self.push_node(node, start, end);
         Ok(())
@@ -1605,6 +1622,7 @@ impl Builder {
     fn unary_expression(&mut self) -> Result<(), String> {
         let (argument, _, end) = self.pop_node();
         let (operator, start, _) = self.pop_token();
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(unary_expression@start..end; operator, argument);
         self.push_node(node, start, end);
         Ok(())
@@ -1613,6 +1631,7 @@ impl Builder {
     fn await_expression(&mut self) -> Result<(), String> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("await");
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(await_expression@start..end; argument);
         self.push_node(node, start, end);
         Ok(())
@@ -1628,6 +1647,7 @@ impl Builder {
     fn yield_expression(&mut self) -> Result<(), String> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("yield");
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(yield_expression@start..end; argument, false);
         self.push_node(node, start, end);
         Ok(())
@@ -1637,6 +1657,7 @@ impl Builder {
         let (argument, _, end) = self.pop_node();
         self.check("*");
         let (start, _) = self.check("yield");
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(yield_expression@start..end; argument, true);
         self.push_node(node, start, end);
         Ok(())
@@ -1645,6 +1666,7 @@ impl Builder {
     fn new_expression(&mut self) -> Result<(), String> {
         let (callee, _, end) = self.pop_node();
         let (start, _) = self.check("new");
+        let callee = node!(into_expression; callee)?; // may be CPEAAPL
         let node = node!(new_expression@start..end; callee);
         self.push_node(node, start, end);
         Ok(())
@@ -1654,6 +1676,7 @@ impl Builder {
         let (arguments, _, end) = self.pop_list();
         let (callee, ..) = self.pop_node();
         let (start, _) = self.check("new");
+        let callee = node!(into_expression; callee)?; // may be CPEAAPL
         let node = node!(new_expression@start..end; callee, arguments);
         self.push_node(node, start, end);
         Ok(())
@@ -1697,8 +1720,8 @@ impl Builder {
     }
 
     fn arrow_parameters(&mut self) -> Result<(), String> {
-        let (nullable, start, end) = self.pop_nullable();
-        let list = node!(into_patterns; nullable)?;
+        let (cpeaapl, start, end) = self.pop_node();
+        let list = node!(into_arrow_parameters; cpeaapl)?;
         self.push_list(list, start, end);
         Ok(())
     }
@@ -1879,7 +1902,7 @@ impl Builder {
     fn variable_declarator_init(&mut self) -> Result<(), String> {
         let (init, _, end) = self.pop_node();
         let (id, start, _) = self.pop_node();
-        init.validate_expression()?;
+        let init = node!(into_expression; init)?; // may be CPEAAPL
         let node = node!(variable_declarator@start..end; id, init);
         self.push_node(node, start, end);
         Ok(())
@@ -1909,11 +1932,28 @@ impl Builder {
         Ok(())
     }
 
+    fn argument_list(&mut self) -> Result<(), String> {
+        let (node, start, end) = self.pop_node();
+        let node = node!(into_expression; node)?;
+        self.push_list(vec![node], start, end);
+        Ok(())
+    }
+
     fn argument_list_rest(&mut self) -> Result<(), String> {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("...");
         let node = node!(spread_element@start..end; argument);
         self.push_list(vec![node], start, end);
+        Ok(())
+    }
+
+    fn argument_list_append(&mut self) -> Result<(), String> {
+        let (node, _, end) = self.pop_node();
+        self.check(",");
+        let (mut list, start, _) = self.pop_list();
+        let node = node!(into_expression; node)?;
+        list.push(node);
+        self.push_list(list, start, end);
         Ok(())
     }
 
@@ -1928,66 +1968,61 @@ impl Builder {
         Ok(())
     }
 
-    fn expression_or_arguments_expr(&mut self) -> Result<(), String> {
+    fn cpeaapl_expr(&mut self) -> Result<(), String> {
         let (_, end) = self.check(")");
-        let (node, ..) = self.pop_node();
+        let (expr, ..) = self.pop_node();
         let (start, _) = self.check("(");
-        let node = node!(close_sequence_expression; node);
-        self.push_nullable(Some(node), start, end);
+        let node = node!(cpeaapl; expr);
+        self.push_node(node, start, end);
         Ok(())
     }
 
-    fn expression_or_arguments_expr_comma(&mut self) -> Result<(), String> {
+    fn cpeaapl_expr_comma(&mut self) -> Result<(), String> {
         let (_, end) = self.check(")");
         self.check(",");
-        let (node, ..) = self.pop_node();
+        let (expr, ..) = self.pop_node();
         let (start, _) = self.check("(");
-        let node = node!(close_sequence_expression; node);
-        self.push_nullable(Some(node), start, end);
+        let node = node!(cpeaapl; expr,);
+        self.push_node(node, start, end);
         Ok(())
     }
 
-    fn expression_or_arguments_empty(&mut self) -> Result<(), String> {
+    fn cpeaapl_empty(&mut self) -> Result<(), String> {
         let (_, end) = self.check(")");
         let (start, _) = self.check("(");
-        self.push_nullable(None, start, end);
+        let node = node!(cpeaapl);
+        self.push_node(node, start, end);
         Ok(())
     }
 
-    fn expression_or_arguments_rest(&mut self) -> Result<(), String> {
+    fn cpeaapl_rest(&mut self) -> Result<(), String> {
         let (_, end) = self.check(")");
         let (argument, _, rest_end) = self.pop_node();
         let (rest_start, _) = self.check("...");
-        let (start, _) = self.check("(");
-        let node = node!(rest_element@rest_start..rest_end; argument);
-        self.push_nullable(Some(node), start, end);
-        Ok(())
-    }
-
-    fn expression_or_arguments_expr_rest(&mut self) -> Result<(), String> {
-        let (_, end) = self.check(")");
-        let (argument, _, rest_end) = self.pop_node();
-        let (rest_start, _) = self.check("...");
-        self.check(",");
-        let (expr, expr_start, _) = self.pop_node();
         let (start, _) = self.check("(");
         let rest = node!(rest_element@rest_start..rest_end; argument);
-        let expressions = match *expr {
-            Node::SequenceExpression(ref seq) if seq.open => {
-                let mut expressions = seq.expressions.clone();
-                expressions.push(rest);
-                expressions
-            }
-            _ => vec![expr, rest],
-        };
-        let node = node!(sequence_expression@expr_start..rest_end; expressions; closed);
-        self.push_nullable(Some(node), start, end);
+        let node = node!(cpeaapl; ...rest);
+        self.push_node(node, start, end);
+        Ok(())
+    }
+
+    fn cpeaapl_expr_rest(&mut self) -> Result<(), String> {
+        let (_, end) = self.check(")");
+        let (argument, _, rest_end) = self.pop_node();
+        let (rest_start, _) = self.check("...");
+        self.check(",");
+        let (expr, ..) = self.pop_node();
+        let (start, _) = self.check("(");
+        let rest = node!(rest_element@rest_start..rest_end; argument);
+        let node = node!(cpeaapl; expr, ...rest);
+        self.push_node(node, start, end);
         Ok(())
     }
 
     fn optional_expression(&mut self) -> Result<(), String> {
         let (chains, _, end) = self.pop_list();
         let (expr, start, _) = self.pop_node();
+        let expr = node!(into_expression; expr)?; // may be CPEAAPL
         let node = node!(chain_expression@start..end; expr, chains);
         self.push_node(node, start, end);
         Ok(())
@@ -2150,7 +2185,8 @@ impl Builder {
     fn single_name_binding_init(&mut self) -> Result<(), String> {
         let (value, _, end) = self.pop_node();
         let (key, start, _) = self.pop_node();
-        // left for BindingElement, right for BindingProperty
+        let value = node!(into_expression; value)?; // may be CPEAAPL
+                                                    // left for BindingElement, right for BindingProperty
         let left = node!(assignment_pattern@start..end; key.clone(), value.clone());
         let right = node!(property@start..end; key => left.clone(); shorthand);
         self.push_either(left, right, start, end);
@@ -2160,6 +2196,7 @@ impl Builder {
     fn assignment_pattern(&mut self) -> Result<(), String> {
         let (right, _, end) = self.pop_node();
         let (left, start, _) = self.pop_node();
+        let right = node!(into_expression; right)?; // may be CPEAAPL
         let node = node!(assignment_pattern@start..end; left, right);
         self.push_node(node, start, end);
         Ok(())
@@ -2254,6 +2291,13 @@ impl Builder {
         let (argument, _, end) = self.pop_node();
         let (start, _) = self.check("...");
         let node = node!(spread_element@start..end; argument);
+        self.push_node(node, start, end);
+        Ok(())
+    }
+
+    fn into_expression(&mut self) -> Result<(), String> {
+        let (node, start, end) = self.pop_node();
+        let node = node!(into_expression; node)?;
         self.push_node(node, start, end);
         Ok(())
     }
@@ -2492,19 +2536,12 @@ impl Builder {
         Ok(())
     }
 
-    fn primary_expression_group(&mut self) -> Result<(), String> {
-        let (nullable, start, end) = self.pop_nullable();
-        match nullable {
-            Some(node) => {
-                node.validate_primary_expression()?; // #parencover
-                self.push_node(node, start, end);
-                Ok(())
-            }
-            None => {
-                // See the supplemental syntax defined in "13.2 Primary Expression".
-                Err(format!("syntax error"))
-            }
-        }
+    fn primary_expression_cpeaapl(&mut self) -> Result<(), String> {
+        let (cpeaapl, start, end) = self.pop_node();
+        // See the supplemental syntax defined in "13.2 Primary Expression".
+        cpeaapl.validate_primary_expression()?;
+        self.push_node(cpeaapl, start, end);
+        Ok(())
     }
 
     fn empty_list(&mut self) -> Result<(), String> {

@@ -116,6 +116,17 @@ pub enum Node {
     OptionalMember((NodeRef, bool, Location)),
     #[serde(skip)]
     CoverInitializedName(CoverInitializedName),
+    // CoverParenthesizedExpressionAndArrowParameterList
+    #[serde(skip)]
+    CpeaaplExpr(NodeRef),
+    #[serde(skip)]
+    CpeaaplExprComma(NodeRef),
+    #[serde(skip)]
+    CpeaaplEmpty,
+    #[serde(skip)]
+    CpeaaplRest(NodeRef),
+    #[serde(skip)]
+    CpeaaplExprRest((NodeRef, NodeRef)),
 }
 
 impl Node {
@@ -976,6 +987,26 @@ impl Node {
         )))
     }
 
+    pub fn cpeaapl_expr(expr: NodeRef) -> NodeRef {
+        NodeRef::new(Self::CpeaaplExpr(expr))
+    }
+
+    pub fn cpeaapl_expr_comma(expr: NodeRef) -> NodeRef {
+        NodeRef::new(Self::CpeaaplExprComma(expr))
+    }
+
+    pub fn cpeaapl_empty() -> NodeRef {
+        NodeRef::new(Self::CpeaaplEmpty)
+    }
+
+    pub fn cpeaapl_rest(rest: NodeRef) -> NodeRef {
+        NodeRef::new(Self::CpeaaplRest(rest))
+    }
+
+    pub fn cpeaapl_expr_rest(expr: NodeRef, rest: NodeRef) -> NodeRef {
+        NodeRef::new(Self::CpeaaplExprRest((expr, rest)))
+    }
+
     pub fn for_init_update(init: NodeRef) -> NodeRef {
         match *init {
             Node::VariableDeclaration(ref decl) => {
@@ -995,23 +1026,45 @@ impl Node {
         }
     }
 
-    pub fn into_patterns(nullable: Option<NodeRef>) -> Result<Vec<NodeRef>, String> {
-        match nullable {
-            Some(node) => match *node {
-                Node::SequenceExpression(ref seq) => seq
-                    .expressions
-                    .iter()
-                    .cloned()
-                    .map(Self::into_pattern)
-                    .collect::<Result<Vec<_>, _>>(),
-                _ => Ok(vec![Self::into_pattern(node)?]),
+    pub fn into_expression(node: NodeRef) -> Result<NodeRef, String> {
+        match *node {
+            Self::CpeaaplExpr(ref expr) => match **expr {
+                Self::SequenceExpression(ref seq) => {
+                    let expressions = seq
+                        .expressions
+                        .iter()
+                        .cloned()
+                        .map(Self::into_expression)
+                        .collect::<Result<Vec<_>, _>>()?;
+                    let start = seq.location.start_location();
+                    let end = seq.location.end_location();
+                    Ok(Self::sequence_expression(&start, &end, expressions, false))
+                }
+                _ => Self::into_expression(expr.clone()),
             },
-            None => Ok(vec![]),
+            Self::CpeaaplExprComma(_) | Self::CpeaaplEmpty => {
+                Err(format!("Early errors: PrimaryExpression"))
+            }
+            Self::CpeaaplRest(ref rest) => Self::into_expression(rest.clone()),
+            Node::ObjectExpression(ref expr) => Self::to_object_expression(expr),
+            Node::ArrayExpression(ref expr) => Self::to_array_expression(expr),
+            Node::Property(ref property) => Self::to_property(property),
+            Node::SpreadElement(ref expr) => Self::to_spread_element(expr),
+            _ => Ok(node),
         }
     }
 
     pub fn into_pattern(node: NodeRef) -> Result<NodeRef, String> {
         match *node {
+            Self::CpeaaplExpr(ref expr) => {
+                // TODO: It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is
+                // not simple.
+                Self::into_pattern(expr.clone())
+            }
+            Self::CpeaaplExprComma(_)
+            | Self::CpeaaplEmpty
+            | Self::CpeaaplRest(_)
+            | Self::CpeaaplExprRest(_) => Err(format!("Early errors: PropertyDefinition")),
             Node::ObjectExpression(ref expr) => Self::to_object_pattern(expr),
             Node::ArrayExpression(ref expr) => Self::to_array_pattern(expr),
             Node::AssignmentExpression(ref expr) => Self::to_assignment_pattern(expr),
@@ -1058,6 +1111,18 @@ impl Node {
         }
     }
 
+    fn to_object_expression(expr: &ObjectExpression) -> Result<NodeRef, String> {
+        let start = expr.location.start_location();
+        let end = expr.location.end_location();
+        let properties = expr
+            .properties
+            .iter()
+            .cloned()
+            .map(Self::into_expression)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::object_expression(&start, &end, properties))
+    }
+
     fn to_object_pattern(expr: &ObjectExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
@@ -1068,6 +1133,27 @@ impl Node {
             .map(Self::into_pattern)
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self::object_pattern(&start, &end, properties))
+    }
+
+    fn to_array_expression(expr: &ArrayExpression) -> Result<NodeRef, String> {
+        let start = expr.location.start_location();
+        let end = expr.location.end_location();
+        let mut elements = vec![];
+        for element in expr.elements.iter() {
+            match element {
+                Some(node) => {
+                    let node = Self::into_expression(node.clone())?;
+                    elements.push(Some(node));
+                }
+                None => elements.push(None),
+            }
+        }
+        Ok(Self::array_expression(
+            &start,
+            &end,
+            elements,
+            expr.trailing_comma,
+        ))
     }
 
     fn to_array_pattern(expr: &ArrayExpression) -> Result<NodeRef, String> {
@@ -1110,12 +1196,20 @@ impl Node {
     fn to_assignment_pattern(expr: &AssignmentExpression) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
+        let right = Self::into_expression(expr.right.clone())?;
         Ok(Self::assignment_pattern(
             &start,
             &end,
             expr.left.clone(),
-            expr.right.clone(),
+            right,
         ))
+    }
+
+    fn to_spread_element(expr: &SpreadElement) -> Result<NodeRef, String> {
+        let start = expr.location.start_location();
+        let end = expr.location.end_location();
+        let argument = Self::into_expression(expr.argument.clone())?;
+        Ok(Self::spread_element(&start, &end, argument))
     }
 
     fn to_rest_element(expr: &SpreadElement) -> Result<NodeRef, String> {
@@ -1123,6 +1217,21 @@ impl Node {
         let end = expr.location.end_location();
         let argument = Self::into_pattern(expr.argument.clone())?;
         Ok(Self::rest_element(&start, &end, argument))
+    }
+
+    fn to_property(property: &Property) -> Result<NodeRef, String> {
+        let start = property.location.start_location();
+        let end = property.location.end_location();
+        let value = Self::into_expression(property.value.clone())?;
+        Ok(NodeRef::new(Self::Property(Property {
+            location: LocationData::new(&start, &end),
+            key: property.key.clone(),
+            value,
+            kind: property.kind,
+            method: property.method,
+            shorthand: property.shorthand,
+            computed: property.computed,
+        })))
     }
 
     fn to_assignment_property(property: &Property) -> Result<NodeRef, String> {
@@ -1150,6 +1259,38 @@ impl Node {
             }
         }
         list
+    }
+
+    pub fn into_arrow_parameters(cpeaapl: NodeRef) -> Result<Vec<NodeRef>, String> {
+        match *cpeaapl {
+            Self::CpeaaplExpr(ref expr) => Self::into_arrow_formal_parameters(expr.clone()),
+            Self::CpeaaplExprComma(ref expr) => Self::into_arrow_formal_parameters(expr.clone()),
+            Self::CpeaaplEmpty => Ok(vec![]),
+            Self::CpeaaplRest(ref rest) => Ok(vec![rest.clone()]),
+            Self::CpeaaplExprRest((ref expr, ref rest)) => {
+                let mut params = Self::into_arrow_formal_parameters(expr.clone())?;
+                params.push(rest.clone());
+                Ok(params)
+            }
+            _ => panic!(),
+        }
+    }
+
+    fn into_arrow_formal_parameters(expr: NodeRef) -> Result<Vec<NodeRef>, String> {
+        match *expr {
+            Self::CpeaaplExpr(_)
+            | Self::CpeaaplExprComma(_)
+            | Self::CpeaaplEmpty
+            | Self::CpeaaplRest(_)
+            | Self::CpeaaplExprRest(_) => Err(format!("Early errors: ArrowParameter")),
+            Self::SequenceExpression(ref seq) => seq
+                .expressions
+                .iter()
+                .cloned()
+                .map(Self::into_pattern)
+                .collect::<Result<Vec<_>, _>>(),
+            _ => Ok(vec![Self::into_pattern(expr)?]),
+        }
     }
 
     // validation
@@ -1189,34 +1330,11 @@ impl Node {
         match *self {
             Node::ObjectExpression(ref expr) => expr.validate(),
             Node::ArrayExpression(ref expr) => expr.validate(),
+            Node::CpeaaplExprComma(_)
+            | Node::CpeaaplEmpty
+            | Node::CpeaaplRest(_)
+            | Node::CpeaaplExprRest(_) => Err(format!("Early error: PrimaryExpression")),
             _ => Ok(()),
-        }
-    }
-
-    // TODO: implement properly
-    pub fn validate_pattern(&self) -> Result<(), String> {
-        match *self {
-            Node::SequenceExpression(_) => {
-                Err("LeftHandSideExpression must cover an AssignmentPattern".to_string())
-            }
-            _ => Ok(()),
-        }
-    }
-
-    pub fn close_sequence_expression(node: NodeRef) -> NodeRef {
-        match *node {
-            Node::SequenceExpression(ref seq) if seq.open => {
-                let start = seq.location.start_location();
-                let end = seq.location.end_location();
-                let expressions = seq.expressions.clone();
-                NodeRef::new(Self::SequenceExpression(SequenceExpression::new(
-                    &start,
-                    &end,
-                    expressions,
-                    false,
-                )))
-            }
-            _ => node,
         }
     }
 }
@@ -3918,17 +4036,35 @@ macro_rules! node {
     (cover_initialized_name@$start:ident..$end:ident; $name:expr, $value:expr) => {
         crate::nodes::Node::cover_initialized_name(&$start, &$end, $name, $value)
     };
+    (cpeaapl; $expr:ident) => {
+        crate::nodes::Node::cpeaapl_expr($expr)
+    };
+    (cpeaapl; $expr:ident,) => {
+        crate::nodes::Node::cpeaapl_expr_comma($expr)
+    };
+    (cpeaapl) => {
+        crate::nodes::Node::cpeaapl_empty()
+    };
+    (cpeaapl; ... $rest:ident) => {
+        crate::nodes::Node::cpeaapl_rest($rest)
+    };
+    (cpeaapl; $expr:ident, ... $rest:ident) => {
+        crate::nodes::Node::cpeaapl_expr_rest($expr, $rest)
+    };
     (for_init_update; $init:expr) => {
         crate::nodes::Node::for_init_update($init)
     };
-    (into_patterns; $nullable:expr) => {
-        crate::nodes::Node::into_patterns($nullable)
+    (into_expression; $cpeaapl:expr) => {
+        crate::nodes::Node::into_expression($cpeaapl)
     };
     (into_pattern; $expr:expr) => {
         crate::nodes::Node::into_pattern($expr)
     };
     (into_property; $method:expr) => {
         crate::nodes::Node::into_property($method)
+    };
+    (into_arrow_parameters; $cpeaapl:expr) => {
+        crate::nodes::Node::into_arrow_parameters($cpeaapl)
     };
     (close_sequence_expression; $node:expr) => {
         crate::nodes::Node::close_sequence_expression($node)
