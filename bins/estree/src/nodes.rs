@@ -1054,19 +1054,28 @@ impl Node {
         }
     }
 
-    pub fn into_pattern(node: NodeRef) -> Result<NodeRef, String> {
+    // TODO: AssignmentTargetType
+    pub fn into_pattern(node: NodeRef, in_paren: bool) -> Result<NodeRef, String> {
         match *node {
             Self::CpeaaplExpr(ref expr) => {
                 // TODO: It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is
                 // not simple.
-                Self::into_pattern(expr.clone())
+                Self::into_pattern(expr.clone(), true)
             }
             Self::CpeaaplExprComma(_)
             | Self::CpeaaplEmpty
             | Self::CpeaaplRest(_)
             | Self::CpeaaplExprRest(_) => Err(format!("Early errors: PropertyDefinition")),
-            Node::ObjectExpression(ref expr) => Self::to_object_pattern(expr),
-            Node::ArrayExpression(ref expr) => Self::to_array_pattern(expr),
+            Node::ObjectExpression(ref expr) => if in_paren {
+                Err(format!("AssignmentTargetType is invalid"))
+            } else {
+                Self::to_object_pattern(expr)
+            },
+            Node::ArrayExpression(ref expr) => if in_paren {
+                Err(format!("AssignmentTargetType is invalid"))
+            } else {
+                Self::to_array_pattern(expr)
+            }
             Node::AssignmentExpression(ref expr) => Self::to_assignment_pattern(expr),
             Node::SpreadElement(ref expr) => Self::to_rest_element(expr),
             Node::Property(ref property) => Self::to_assignment_property(property),
@@ -1130,7 +1139,7 @@ impl Node {
             .properties
             .iter()
             .cloned()
-            .map(Self::into_pattern)
+            .map(|prop| Self::into_pattern(prop, false))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self::object_pattern(&start, &end, properties))
     }
@@ -1164,7 +1173,7 @@ impl Node {
         for element in expr.elements.iter() {
             match element {
                 Some(node) => {
-                    let node = Self::into_pattern(node.clone())?;
+                    let node = Self::into_pattern(node.clone(), false)?;
                     if let Node::RestElement(_) = *node {
                         if rest_found {
                             return Err(
@@ -1215,7 +1224,7 @@ impl Node {
     fn to_rest_element(expr: &SpreadElement) -> Result<NodeRef, String> {
         let start = expr.location.start_location();
         let end = expr.location.end_location();
-        let argument = Self::into_pattern(expr.argument.clone())?;
+        let argument = Self::into_pattern(expr.argument.clone(), false)?;
         Ok(Self::rest_element(&start, &end, argument))
     }
 
@@ -1237,7 +1246,7 @@ impl Node {
     fn to_assignment_property(property: &Property) -> Result<NodeRef, String> {
         let start = property.location.start_location();
         let end = property.location.end_location();
-        let value = Self::into_pattern(property.value.clone())?;
+        let value = Self::into_pattern(property.value.clone(), false)?;
         Ok(NodeRef::new(Self::Property(Property::new(
             &start,
             &end,
@@ -1287,9 +1296,9 @@ impl Node {
                 .expressions
                 .iter()
                 .cloned()
-                .map(Self::into_pattern)
+                .map(|expr| Self::into_pattern(expr, false))
                 .collect::<Result<Vec<_>, _>>(),
-            _ => Ok(vec![Self::into_pattern(expr)?]),
+            _ => Ok(vec![Self::into_pattern(expr, false)?]),
         }
     }
 
@@ -4058,7 +4067,7 @@ macro_rules! node {
         crate::nodes::Node::into_expression($cpeaapl)
     };
     (into_pattern; $expr:expr) => {
-        crate::nodes::Node::into_pattern($expr)
+        crate::nodes::Node::into_pattern($expr, false)
     };
     (into_property; $method:expr) => {
         crate::nodes::Node::into_property($method)
