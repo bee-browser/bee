@@ -19,9 +19,11 @@ pub use lexer::Location;
 pub use parser::ProductionRule;
 
 /// Errors.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Unexpected character")]
     UnexpectedCharacter,
+    #[error("Syntax error")]
     SyntaxError,
 }
 

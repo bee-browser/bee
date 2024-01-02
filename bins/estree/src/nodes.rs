@@ -1066,15 +1066,19 @@ impl Node {
             | Self::CpeaaplEmpty
             | Self::CpeaaplRest(_)
             | Self::CpeaaplExprRest(_) => Err(format!("Early errors: PropertyDefinition")),
-            Node::ObjectExpression(ref expr) => if in_paren {
-                Err(format!("AssignmentTargetType is invalid"))
-            } else {
-                Self::to_object_pattern(expr)
-            },
-            Node::ArrayExpression(ref expr) => if in_paren {
-                Err(format!("AssignmentTargetType is invalid"))
-            } else {
-                Self::to_array_pattern(expr)
+            Node::ObjectExpression(ref expr) => {
+                if in_paren {
+                    Err(format!("AssignmentTargetType is invalid"))
+                } else {
+                    Self::to_object_pattern(expr)
+                }
+            }
+            Node::ArrayExpression(ref expr) => {
+                if in_paren {
+                    Err(format!("AssignmentTargetType is invalid"))
+                } else {
+                    Self::to_array_pattern(expr)
+                }
             }
             Node::AssignmentExpression(ref expr) => Self::to_assignment_pattern(expr),
             Node::SpreadElement(ref expr) => Self::to_rest_element(expr),

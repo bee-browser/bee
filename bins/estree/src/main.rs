@@ -6,7 +6,6 @@ use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
 
-use anyhow::anyhow;
 use anyhow::Result;
 use clap::Parser as _;
 use clap::Subcommand;
@@ -108,17 +107,10 @@ fn parse<P: AsRef<Path>>(source_type: SourceType, source_file: Option<P>) -> Res
     // And then convert it into a UTF-8 string loosely.
     let source = String::from_utf8_lossy(&raw);
 
-    let node = match parse_program(source_type, &source) {
-        Ok(node) => node,
-        Err(_) => {
-            return Err(anyhow!("Parse error"));
-        }
-    };
-
-    match json5::to_string(&node) {
-        Ok(s) => println!("{s}"),
-        Err(_) => unreachable!("{node:#?}"),
-    }
+    let node = parse_program(source_type, &source)?;
+    // It's better to dump the ESTree when json5::to_string() fails.
+    // However, "{node:$?}" takes a long time if the ESTree is large...
+    println!("{}", json5::to_string(&node)?);
 
     Ok(())
 }
@@ -150,13 +142,13 @@ fn serve() -> Result<()> {
                 let mut res = result.map_or_else(
                     |err| Response {
                         program: None,
-                        elapsed,
                         error: Some(format!("{err:?}")),
+                        elapsed,
                     },
                     |program| Response {
                         program: Some(program),
-                        elapsed,
                         error: None,
+                        elapsed,
                     },
                 );
                 match json5::to_string(&res) {
