@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.78"
+anyhow = "1.0.79"
 assert-json-diff = "2.0.2"
 clap = { version = "4.4.12", features = ["env", "derive", "wrap_help"] }
 json5 = { git = "https://github.com/bee-browser/json5-rs.git" }
@@ -17,6 +17,6 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 
 [dev-dependencies]
-anyhow = "1.0.78"
+anyhow = "1.0.79"
 test-log = { version = "0.2.14", default-features = false, features = ["trace"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
