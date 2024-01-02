@@ -105,28 +105,27 @@ pub enum Node {
     ImportDefaultSpecifier(ImportDefaultSpecifier),
     ImportNamespaceSpecifier(ImportNamespaceSpecifier),
     ExportSpecifier(ExportSpecifier),
-    // internals
-    #[serde(skip)]
-    ClassTail(ClassTail),
-    #[serde(skip)]
-    ComputedPropertyName(NodeRef),
-    #[serde(skip)]
-    OptionalCall((Vec<NodeRef>, Location)),
-    #[serde(skip)]
-    OptionalMember((NodeRef, bool, Location)),
-    #[serde(skip)]
-    CoverInitializedName(CoverInitializedName),
-    // CoverParenthesizedExpressionAndArrowParameterList
-    #[serde(skip)]
-    CpeaaplExpr(NodeRef),
-    #[serde(skip)]
-    CpeaaplExprComma(NodeRef),
-    #[serde(skip)]
+    // The following variants can be used internally and these are converted into valid ESTree
+    // nodes before serializing the ESTree to JSON5.
+    //
+    // Only tags are serialized so that we can easily know locations of remaining internal values
+    // in the ESTree.  For example, scripts/validate.sh shows messages like below:
+    //
+    // ```
+    // body.0.expression.argument.arguments.1.body.body.68.body.body.1.body.body.3.test.type
+    //   acorn : 'AssignmentExpression'
+    //   estree: 'CpeaaplExpr'
+    // ```
+    ClassTail(#[serde(skip)] ClassTail),
+    ComputedPropertyName(#[serde(skip)] NodeRef),
+    OptionalCall(#[serde(skip)] (Vec<NodeRef>, Location)),
+    OptionalMember(#[serde(skip)] (NodeRef, bool, Location)),
+    CoverInitializedName(#[serde(skip)] CoverInitializedName),
+    CpeaaplExpr(#[serde(skip)] NodeRef),
+    CpeaaplExprComma(#[serde(skip)] NodeRef),
     CpeaaplEmpty,
-    #[serde(skip)]
-    CpeaaplRest(NodeRef),
-    #[serde(skip)]
-    CpeaaplExprRest((NodeRef, NodeRef)),
+    CpeaaplRest(#[serde(skip)] NodeRef),
+    CpeaaplExprRest(#[serde(skip)] (NodeRef, NodeRef)),
 }
 
 impl Node {
@@ -1028,20 +1027,7 @@ impl Node {
 
     pub fn into_expression(node: NodeRef) -> Result<NodeRef, String> {
         match *node {
-            Self::CpeaaplExpr(ref expr) => match **expr {
-                Self::SequenceExpression(ref seq) => {
-                    let expressions = seq
-                        .expressions
-                        .iter()
-                        .cloned()
-                        .map(Self::into_expression)
-                        .collect::<Result<Vec<_>, _>>()?;
-                    let start = seq.location.start_location();
-                    let end = seq.location.end_location();
-                    Ok(Self::sequence_expression(&start, &end, expressions, false))
-                }
-                _ => Self::into_expression(expr.clone()),
-            },
+            Self::CpeaaplExpr(ref expr) => Self::into_expression(expr.clone()),
             Self::CpeaaplExprComma(_) | Self::CpeaaplEmpty => {
                 Err(format!("Early errors: PrimaryExpression"))
             }
@@ -1050,6 +1036,17 @@ impl Node {
             Node::ArrayExpression(ref expr) => Self::to_array_expression(expr),
             Node::Property(ref property) => Self::to_property(property),
             Node::SpreadElement(ref expr) => Self::to_spread_element(expr),
+            Self::SequenceExpression(ref seq) => {
+                let expressions = seq
+                    .expressions
+                    .iter()
+                    .cloned()
+                    .map(Self::into_expression)
+                    .collect::<Result<Vec<_>, _>>()?;
+                let start = seq.location.start_location();
+                let end = seq.location.end_location();
+                Ok(Self::sequence_expression(&start, &end, expressions, false))
+            }
             _ => Ok(node),
         }
     }
