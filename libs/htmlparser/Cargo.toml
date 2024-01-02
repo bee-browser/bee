@@ -9,7 +9,7 @@ publish = false
 flagset = "0.4.4"
 htmltokenizer = { path = "../htmltokenizer" }
 phf = { version = "0.11.2", features = ["macros"] }
-thiserror = "1.0.53"
+thiserror = "1.0.56"
 tracing = "0.1.40"
 unicase = "2.7.0"
 
