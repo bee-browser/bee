@@ -1,6 +1,6 @@
 'use strict';
 
-import { TextLineStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
+import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 
 import * as acorn from 'npm:acorn@8.11.2';
 import JSON5 from 'npm:json5@2.2.3';
@@ -12,16 +12,16 @@ export class Acorn {
         sourceType,
         ecmaVersion: 2022,
       });
-    } catch (err) {
+    } catch {
       return null;
     }
   }
 }
 
 export class ESTree {
-  static async parse(source, sourceType, options) {
+  static async parse(source, sourceType, options = {}) {
     const args = ['run', '-r', '-q', '-p', 'estree', '--', 'parse', sourceType];
-    if (options.withDebugBuild) {
+    if (!!options.withDebugBuild) {
       args.splice(1, 1);  // remove '-r'
     }
     const child = new Deno.Command('cargo', {
@@ -44,8 +44,8 @@ export class ESTree {
     }
   }
 
-  constructor(options) {
-    this.withDebugBuild_ = options.withDebugBuild;
+  constructor(options = {}) {
+    this.withDebugBuild_ = !!options.withDebugBuild;
   }
 
   start() {
@@ -62,7 +62,12 @@ export class ESTree {
     this.child_ = cmd.spawn();
     this.lines_ = this.child_.stdout
       .pipeThrough(new TextDecoderStream())
-      .pipeThrough(new TextLineStream());
+      .pipeThrough(new TextLineStream())
+      .pipeThrough(toTransformStream(async function* (lines) {
+        for await (const line of lines) {
+          yield JSON5.parse(line);
+        }
+      }));
     this.encoder_ = new TextEncoder();
   }
 
@@ -75,10 +80,8 @@ export class ESTree {
 
     const reader = this.lines_.getReader();
     try {
-      let line = await reader.read();
-      const res = JSON5.parse(line.value);
-      return res.program;
-    } catch (err) {
+      return (await reader.read()).value.program;
+    } catch {
       this.start();
       return null;
     } finally {
