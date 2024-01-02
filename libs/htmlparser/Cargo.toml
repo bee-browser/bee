@@ -14,7 +14,7 @@ tracing = "0.1.40"
 unicase = "2.7.0"
 
 [dev-dependencies]
-anyhow = "1.0.78"
+anyhow = "1.0.79"
 criterion = "0.5.1"
 test-log = { version = "0.2.14", default-features = false, features = ["trace"] }
 toydom = { path = "../toydom" }
