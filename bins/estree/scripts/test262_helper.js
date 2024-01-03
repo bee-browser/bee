@@ -1,20 +1,61 @@
 'use strict';
 
+import { assertNotEquals } from "https://deno.land/std@0.209.0/assert/mod.ts";
 import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 
 import * as acorn from 'npm:acorn@8.11.2';
-import JSON5 from 'npm:json5@2.2.3';
 
 export class Acorn {
   static parse(source, sourceType) {
     try {
-      return acorn.parse(source, {
+      return refine(acorn.parse(source, {
         sourceType,
         ecmaVersion: 2022,
-      });
+      }));
     } catch {
       return null;
     }
+  }
+}
+
+// ESTree contains values that are not allowed in JSON.  This function converts such a value into
+// some kind of a "tag".  This is enough because a string corresponding to the value is already
+// stored in Literal.raw.
+//
+// We assume that there is no objects representing primitive types.
+function refine(obj) {
+  switch (typeof obj) {
+  case 'boolean':
+    return obj;
+  case 'number':
+    if (isNaN(obj)) {
+      return { type: 'NaN' };
+    }
+    if (obj === Infinity) {
+      return { type: 'Infinity' };
+    }
+    // `-Infinity` is represented with UnaryExpression('-', Infinity) in ESTree.
+    assertNotEquals(obj, -Infinity);
+    return obj;
+  case 'bigint':
+    return { type: 'BigInt' };
+  case 'string':
+    return obj;
+  default:
+    if (obj === null) {
+      return null;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(refine);
+    }
+    if (obj instanceof RegExp) {
+      return { type: 'RegExp' };
+    }
+    let refined = {};
+    for (const [key, value] of Object.entries(obj)) {
+      refined[key] = refine(value);
+    }
+    return refined;
   }
 }
 
@@ -38,7 +79,7 @@ export class ESTree {
     try {
       const decoder = new TextDecoder();
       const output = await child.output();
-      return JSON5.parse(decoder.decode(output.stdout));
+      return JSON.parse(decoder.decode(output.stdout));
     } catch (err) {
       return null;
     }
@@ -65,7 +106,7 @@ export class ESTree {
       .pipeThrough(new TextLineStream())
       .pipeThrough(toTransformStream(async function* (lines) {
         for await (const line of lines) {
-          yield JSON5.parse(line);
+          yield JSON.parse(line);
         }
       }));
     this.encoder_ = new TextEncoder();
@@ -96,17 +137,30 @@ export class ESTree {
 }
 
 export function showDiffs(diffs, indent = '') {
-  for (const diff of diffs) {
-    console.log(`${indent}${diff.path.join('.')}`);
-    if ('value' in diff) {
-      console.log(`${indent}  acorn : ${JSON5.stringify(diff.value)}`);
+  function doShowDiff(path, actual, expected) {
+    console.log(`${indent}${path.join('.')}`);
+    if (expected) {
+      console.log(`${indent}  acorn :`, expected);
     } else {
       console.log(`${indent}  acorn : -`);
     }
-    if ('oldValue' in diff) {
-      console.log(`${indent}  estree: ${JSON5.stringify(diff.oldValue)}`);
+    if (actual) {
+      console.log(`${indent}  estree:`, actual);
     } else {
       console.log(`${indent}  estree: -`);
     }
+  }
+  function showDiff(path, diff) {
+    switch (diff.kind) {
+    case 'A':
+      showDiff([...path, diff.index], diff.item);
+      break;
+    default:
+      doShowDiff(path, diff.lhs, diff.rhs);
+      break;
+    }
+  }
+  for (const diff of diffs) {
+    showDiff(diff.path, diff);
   }
 }

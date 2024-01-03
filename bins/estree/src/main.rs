@@ -2,6 +2,7 @@ mod builder;
 mod nodes;
 
 use std::io::BufRead;
+use std::io::BufWriter;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
@@ -108,9 +109,11 @@ fn parse<P: AsRef<Path>>(source_type: SourceType, source_file: Option<P>) -> Res
     let source = String::from_utf8_lossy(&raw);
 
     let node = parse_program(source_type, &source)?;
+    let writer = BufWriter::new(std::io::stdout());
     // It's better to dump the ESTree when json5::to_string() fails.
     // However, "{node:$?}" takes a long time if the ESTree is large...
-    println!("{}", json5::to_string(&node)?);
+    serde_json::to_writer(writer, &node)?;
+    println!();
 
     Ok(())
 }
@@ -139,27 +142,23 @@ fn serve() -> Result<()> {
                 let now = std::time::Instant::now();
                 let result = parse_program(req.source_type, &req.source);
                 let elapsed = now.elapsed().as_nanos() as u64;
-                let mut res = result.map_or_else(
-                    |err| Response {
-                        program: None,
-                        error: Some(format!("{err:?}")),
-                        elapsed,
-                    },
-                    |program| Response {
-                        program: Some(program),
-                        error: None,
-                        elapsed,
-                    },
-                );
-                match json5::to_string(&res) {
-                    Ok(s) => println!("{s}"),
-                    Err(err) => {
-                        tracing::error!(%err, "Failed to stringify ESTree");
-                        res.program = None;
-                        res.error = Some(format!("{err:?}"));
-                        println!("{}", json5::to_string(&res).unwrap());
-                    }
-                }
+                let writer = BufWriter::new(std::io::stdout());
+                serde_json::to_writer(
+                    writer,
+                    &result.map_or_else(
+                        |err| Response {
+                            program: None,
+                            error: Some(format!("{err:?}")),
+                            elapsed,
+                        },
+                        |program| Response {
+                            program: Some(program),
+                            error: None,
+                            elapsed,
+                        },
+                    ),
+                )?;
+                println!();
             }
             Err(_) => break,
         }

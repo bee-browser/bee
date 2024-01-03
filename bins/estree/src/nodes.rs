@@ -857,7 +857,7 @@ impl Node {
                 (key, MethodKind::Constructor, false)
             }
             Self::Literal(Literal {
-                value: Scalar::String(ref value),
+                value: LiteralValue::String(ref value),
                 ..
             }) if value == "constructor" => (key, MethodKind::Constructor, false),
             _ => (key, MethodKind::Method, false),
@@ -1425,7 +1425,7 @@ impl Identifier {
 pub struct Literal {
     #[serde(flatten)]
     pub location: LocationData,
-    pub value: Scalar,
+    pub value: LiteralValue,
     pub raw: RawString,
     // RegExp
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1439,7 +1439,7 @@ impl Literal {
     fn null(start: &Location, end: &Location) -> Self {
         Self {
             location: LocationData::new(start, end),
-            value: Scalar::Null,
+            value: LiteralValue::Null,
             raw: RawString::Static("null"),
             regex: None,
             bigint: None,
@@ -1449,7 +1449,7 @@ impl Literal {
     fn boolean(start: &Location, end: &Location, value: bool) -> Self {
         Self {
             location: LocationData::new(start, end),
-            value: Scalar::Boolean(value),
+            value: LiteralValue::Boolean(value),
             raw: RawString::Static(if value { "true" } else { "false" }),
             regex: None,
             bigint: None,
@@ -1475,7 +1475,7 @@ impl Literal {
     fn string(start: &Location, end: &Location, raw: String) -> Self {
         Self {
             location: LocationData::new(start, end),
-            value: Scalar::String(string_literal_to_string(&raw)),
+            value: LiteralValue::String(string_literal_to_string(&raw)),
             raw: RawString::Dynamic(raw),
             regex: None,
             bigint: None,
@@ -1489,7 +1489,7 @@ impl Literal {
         };
         Self {
             location: LocationData::new(start, end),
-            value: Scalar::EmptyObject {},
+            value: LiteralValue::Tag(LiteralValueTag::RegExp),
             raw: RawString::Dynamic(raw),
             regex: Some(RegExp { pattern, flags }),
             bigint: None,
@@ -1650,7 +1650,7 @@ impl ExpressionStatement {
         match *self.expression {
             Node::Literal(Literal {
                 location: LocationData { start, .. },
-                value: Scalar::String(_),
+                value: LiteralValue::String(_),
                 ..
             }) if self.location.start == start => true,
             _ => false,
@@ -1661,7 +1661,7 @@ impl ExpressionStatement {
         let directive = match *self.expression {
             Node::Literal(Literal {
                 location: LocationData { start, .. },
-                value: Scalar::String(_),
+                value: LiteralValue::String(_),
                 ref raw,
                 ..
             }) if self.location.start == start => Some(raw[1..(raw.len() - 1)].to_owned()),
@@ -3399,13 +3399,22 @@ impl CoverInitializedName {
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
-pub enum Scalar {
+pub enum LiteralValue {
     Null,
     Boolean(bool),
     U64(u64),
     F64(f64),
     String(String),
-    EmptyObject {},
+    Tag(LiteralValueTag),
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
+pub enum LiteralValueTag {
+    NaN,
+    Infinity,
+    BigInt,
+    RegExp,
 }
 
 #[derive(Debug, Serialize)]
@@ -3441,30 +3450,40 @@ pub struct RegExp {
     pub flags: String,
 }
 
-fn numeric_literal_to_scalar(literal: &str) -> Scalar {
+fn numeric_literal_to_scalar(literal: &str) -> LiteralValue {
     // TODO
     if literal.starts_with("0b") || literal.starts_with("0B") {
         if let Ok(n) = u64::from_str_radix(&literal[2..], 2) {
-            return Scalar::U64(n);
+            return LiteralValue::U64(n);
         }
     }
     if literal.starts_with("0o") || literal.starts_with("0O") {
         if let Ok(n) = u64::from_str_radix(&literal[2..], 8) {
-            return Scalar::U64(n);
+            return LiteralValue::U64(n);
         }
     }
     if literal.starts_with("0x") || literal.starts_with("0X") {
         if let Ok(n) = u64::from_str_radix(&literal[2..], 16) {
-            return Scalar::U64(n);
+            return LiteralValue::U64(n);
         }
+    }
+    if literal.ends_with('n') {
+        return LiteralValue::Tag(LiteralValueTag::BigInt);
     }
     if let Ok(n) = literal.parse::<f64>() {
         if n.fract() == 0.0 && n <= (i64::MAX as f64) {
-            return Scalar::U64(n as u64);
+            return LiteralValue::U64(n as u64);
         }
-        return Scalar::F64(n);
+        if n.is_nan() {
+            return LiteralValue::Tag(LiteralValueTag::NaN);
+        }
+        if n.is_infinite() {
+            assert!(n.is_sign_positive());
+            return LiteralValue::Tag(LiteralValueTag::Infinity);
+        }
+        return LiteralValue::F64(n);
     }
-    Scalar::Null
+    LiteralValue::Null
 }
 
 macro_rules! node {

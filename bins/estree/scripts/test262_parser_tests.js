@@ -1,9 +1,10 @@
 'use strict';
 
 import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
+import { equal } from "https://deno.land/std@0.209.0/testing/asserts.ts";
 
+import deepDiff from 'npm:deep-diff@1.0.2';
 import ora from 'npm:ora@7.0.1';
-import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { VENDOR_DIR } from '../../../tools/lib/consts.js';
@@ -39,7 +40,7 @@ Arguments:
     Path to tc39/test262-parser-tests.
 `.trim();
 
-const { cmds, options, args } = await parseCommand({
+const { options, args } = await parseCommand({
   doc: DOC,
 });
 
@@ -154,10 +155,17 @@ if (options.only === 'all' || options.only === 'pass') {
       continue;
     }
 
-    const diffs = microdiff(actual, expected);
-    if (diffs.length > 0) {
-      fails.push({ test, reason: 'estree mismatch', diffs });
-      continue;
+    if (options.details) {
+      const diffs = deepDiff(actual, expected);
+      if (diffs) {
+        fails.push({ test, reason: 'estree mismatch', diffs });
+        continue;
+      }
+    } else {
+      if (!equal(actual, expected)) {
+        fails.push({ test, reason: 'estree mismatch' });
+        continue;
+      }
     }
 
     const testExplicit = path.join('pass-explicit', entry.name);
@@ -171,8 +179,9 @@ if (options.only === 'all' || options.only === 'pass') {
       skipped.push({ test, reason: 'acorn cannot parse' });
       continue;
     }
-    if (microdiff(expected, expectedExplicit).length > 0) {
-      skipped.push({ test, reason: 'acorn failed' });
+
+    if (!equal(expected, expectedExplicit)) {
+      skipped.push({ test, reason: 'acorn fails' });
       continue;
     }
 
@@ -182,10 +191,17 @@ if (options.only === 'all' || options.only === 'pass') {
       continue;
     }
 
-    const diffsExplicit = microdiff(actualExplicit, expectedExplicit);
-    if (diffsExplicit.length > 0) {
-      fails.push({ test, reason: 'estree mismatch (explicit)', diffs: diffsExplicit });
-      continue;
+    if (options.details) {
+      const diffs = deepDiff(actualExplicit, expectedExplicit);
+      if (diffs) {
+        fails.push({ test, reason: 'estree mismatch (explicit)', diffs });
+        continue;
+      }
+    } else {
+      if (!equal(actualExplicit, expectedExplicit)) {
+        fails.push({ test, reason: 'estree mismatch (explicit)' });
+        continue;
+      }
     }
 
     // passed
@@ -212,13 +228,13 @@ if (options.only === 'all' || options.only === 'fail') {
 
     const expected = Acorn.parse(source, sourceType);
     if (expected !== null) {
-      skipped.push({ test, reason: 'acorn can parse' });
+      skipped.push({ test, reason: 'acorn should fail pasring' });
       continue;
     }
 
     const actual = await server.parse(source, sourceType);
     if (actual !== null) {
-      fails.push({ test, reason: 'estree can parse' });
+      fails.push({ test, reason: 'estree should fail parsing' });
       continue;
     }
 
@@ -246,13 +262,13 @@ if (options.only === 'all' || options.only === 'early') {
 
     const expected = Acorn.parse(source, sourceType);
     if (expected !== null) {
-      skipped.push({ test, reason: 'acorn can parse' });
+      skipped.push({ test, reason: 'acorn should fail parsing' });
       continue;
     }
 
     const actual = await server.parse(source, sourceType);
     if (actual !== null) {
-      fails.push({ test, reason: 'estree can parse' });
+      fails.push({ test, reason: 'estree should fail parsing' });
       continue;
     }
 

@@ -1,12 +1,11 @@
 'use strict';
 
-import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
-import JSON5 from 'npm:json5@2.2.3';
+import { equal } from "https://deno.land/std@0.209.0/testing/asserts.ts";
 
 import { Acorn, ESTree } from './test262_helper.js';
 
 // Spawn estree in the server mode in order to reduce overhead of process creations.
-let server = new ESTree(); // TODO: options
+let server = new ESTree();  // TODO: options
 server.start();
 
 self.onmessage = async ({ data }) => {
@@ -30,21 +29,24 @@ self.onmessage = async ({ data }) => {
     }
   }
   if (expected === null) {
-    self.postMessage({ type: 'skip', reason: 'acorn cannot parse' });
-    return;
+    sourceType = 'script';
   }
 
   self.postMessage({ type: 'progress', message: 'estree...' });
   const actual = await server.parse(source, sourceType);
-  if (actual === null) {
-    self.postMessage({ type: 'fail', reason: `estree cannot parse (${sourceType})` });
+  if (actual === null && expected !== null) {
+    self.postMessage({ type: 'fail', reason: `estree cannot parse ${sourceType}` });
+    return;
+  }
+  if (actual !== null && expected === null) {
+    self.postMessage({ type: 'fail', reason: `estree should fail parsing ${sourceType}` });
     return;
   }
 
   self.postMessage({ type: 'progress', message: 'comparing...' });
-  const diffs = microdiff(actual, expected);
-  if (diffs.length > 0) {
-    self.postMessage({ type: 'fail', reason: `estree mismatch (${sourceType})` });
+  // TODO: compute diffs
+  if (!equal(actual, expected)) {
+    self.postMessage({ type: 'fail', reason: `estree of ${sourceType} mismatch` });
     return;
   }
 

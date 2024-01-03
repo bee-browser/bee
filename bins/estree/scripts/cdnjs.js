@@ -63,22 +63,18 @@ const libs =
 const skipped = [];
 const fails = [];
 
-for (const lib of libs) {
-  const url = lib.latest;
+for (let i = 0; i < libs.length; ++i) {
+  const url = libs[i].latest;
   const promise = new Promise((resolve, reject) => {
     worker.onmessage = ({ data }) => {
       switch (data.type) {
       case 'progress':
-        spinner.text = `${url}: ${data.message}`;
+        spinner.text = `${i}/${libs.length} ${url}: ${data.message}`;
         break;
       case 'pass':
         resolve();
         break;
       case 'skip':
-        spinner.warn(`${url}: ${data.reason}`);
-        if (options.progress) {
-          spinner.start();
-        }
         skipped.push({ url, reason: data.reason });
         resolve();
         break;
