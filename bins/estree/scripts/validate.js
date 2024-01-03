@@ -2,11 +2,11 @@
 
 import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
 
-import ora from 'npm:ora@7.0.1';
 import deepDiff from 'npm:deep-diff@1.0.2';
+import ora from 'npm:ora@7.0.1';
 
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
-import { Acorn, ESTree, showDiffs } from './test262_helper.js';
+import { Acorn, ESTree, showDiffs } from './helpers.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 

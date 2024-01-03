@@ -141,13 +141,9 @@ export function showDiffs(diffs, indent = '') {
     console.log(`${indent}${path.join('.')}`);
     if (expected) {
       console.log(`${indent}  acorn :`, expected);
-    } else {
-      console.log(`${indent}  acorn : -`);
     }
     if (actual) {
       console.log(`${indent}  estree:`, actual);
-    } else {
-      console.log(`${indent}  estree: -`);
     }
   }
   function showDiff(path, diff) {

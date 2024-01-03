@@ -2,7 +2,7 @@
 
 import { equal } from "https://deno.land/std@0.209.0/testing/asserts.ts";
 
-import { Acorn, ESTree } from './test262_helper.js';
+import { Acorn, ESTree } from './helpers.js';
 
 // Spawn estree in the server mode in order to reduce overhead of process creations.
 let server = new ESTree();  // TODO: options

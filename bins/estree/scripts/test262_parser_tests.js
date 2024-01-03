@@ -8,7 +8,7 @@ import ora from 'npm:ora@7.0.1';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { VENDOR_DIR } from '../../../tools/lib/consts.js';
-import { Acorn, ESTree, showDiffs } from './test262_helper.js';
+import { Acorn, ESTree, showDiffs } from './helpers.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DEFAULT_DIR = path.join(VENDOR_DIR, 'tc39', 'test262-parser-tests');

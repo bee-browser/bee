@@ -5,7 +5,7 @@ import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
 import ora from 'npm:ora@7.0.1';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
-import { showDiffs } from './test262_helper.js';
+import { showDiffs } from './helpers.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
