@@ -118,7 +118,9 @@ pub fn literal_content_to_string(content: &str) -> String {
                                     if high > 0x03FF || low > 0x03FF {
                                         result.push('\u{FFFD}');
                                     } else {
-                                        result.push(char::from_u32(high << 10 | low).unwrap());
+                                        result.push(
+                                            char::from_u32((high << 10 | low) + 0x10000).unwrap(),
+                                        );
                                     }
                                 }
                             } else {
@@ -132,4 +134,14 @@ pub fn literal_content_to_string(content: &str) -> String {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_literal_content_to_string() {
+        assert_eq!(literal_content_to_string("\\ud83d\\udcf7"), "\u{1F4F7}");
+    }
 }
