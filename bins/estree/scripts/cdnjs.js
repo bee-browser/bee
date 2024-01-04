@@ -33,6 +33,12 @@ const { options } = await parseCommand({
   doc: DOC,
 });
 
+const EXCLUDES = [
+  // Validating webkit.js consumes a lot of memory and takes a long time...
+  // In addition, "buffer exceeds maximum length" error occurs in validate.js.
+  'webkit.js',
+];
+
 // We use a worker because the spinner sometimes gets stuck due to a large EStree.
 // Computation of JSON5.parse() and microdiff() takes a long time.
 const worker = new Worker(
@@ -65,6 +71,10 @@ const fails = [];
 
 for (let i = 0; i < libs.length; ++i) {
   const url = libs[i].latest;
+  if (EXCLUDES.includes(libs[i].name)) {
+    skipped.push({ url, reason: 'excluded' });
+    continue;
+  }
   const promise = new Promise((resolve, reject) => {
     worker.onmessage = ({ data }) => {
       switch (data.type) {
