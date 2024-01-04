@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
 
 import deepDiff from 'npm:deep-diff@1.0.2';
 import ora from 'npm:ora@7.0.1';
