@@ -136,11 +136,11 @@ export class ESTree {
 export function showDiffs(diffs, indent = '') {
   function doShowDiff(path, actual, expected) {
     console.log(`${indent}${path.join('.')}`);
-    if (expected) {
-      console.log(`${indent}  acorn :`, expected);
+    if (expected !== undefined) {
+      console.log(`${indent}  acorn :`, JSON.stringify(expected));
     }
-    if (actual) {
-      console.log(`${indent}  estree:`, actual);
+    if (actual !== undefined) {
+      console.log(`${indent}  estree:`, JSON.stringify(actual));
     }
   }
   function showDiff(path, diff) {

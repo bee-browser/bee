@@ -34,9 +34,13 @@ const { options } = await parseCommand({
 });
 
 const EXCLUDES = [
-  // Validating webkit.js consumes a lot of memory and takes a long time...
+  // The following libraries consume a lot of memory and `deno` stops due to out of memory.
   // In addition, "buffer exceeds maximum length" error occurs in validate.js.
   'webkit.js',
+  'unicorn.js',
+  'mnist',
+  // TODO: B.3.2 Block-Level Function Declarations Web Legacy Compatibility Semantics
+  'merger',
 ];
 
 // We use a worker because the spinner sometimes gets stuck due to a large EStree.
@@ -70,8 +74,9 @@ const skipped = [];
 const fails = [];
 
 for (let i = 0; i < libs.length; ++i) {
+  const name = libs[i].name;
   const url = libs[i].latest;
-  if (EXCLUDES.includes(libs[i].name)) {
+  if (EXCLUDES.includes(name)) {
     skipped.push({ url, reason: 'excluded' });
     continue;
   }
@@ -101,7 +106,7 @@ for (let i = 0; i < libs.length; ++i) {
     worker.onerror = (event) => reject(event);
     worker.onmessageerror = (event) => reject(event);
   });
-  worker.postMessage(url);
+  worker.postMessage({ name, url, options });
   try {
     await promise;
   } catch {
