@@ -161,6 +161,9 @@ class Transpiler {
     case 'syntactic':
       this.passes_ = [
         rewriteIdentifierRule,
+        // CPEAAPL cannot be replaced with refined production rules.  You will see many
+        // conflicts in the LALR(1) parsing table generation when you actually try this.
+        //rewriteCPEAAPL,
         expandOptionals,
         expandParameterizedRules,
         translateRules,
@@ -451,6 +454,34 @@ function rewriteIdentifierRule(rules) {
   assert(rule.values[0] === 'IdentifierName but not ReservedWord');
   // A generated lexer recognizes the reserved words as separate tokens.
   rule.values = ['IdentifierNameButNotReservedWord'];
+  return rules;
+}
+
+function rewriteCPEAAPL(rules) {
+  log.debug('Rewriting CPEAAPL...');
+
+  let rule;
+
+  // Replace CPEAAPL in PrimaryExpression with ParenthesizedExpression.
+  rule = rules.find((rule) => rule.name === 'PrimaryExpression[Yield, Await]');
+  assert(rule !== undefined);
+  for (let i = 0; i < rule.values.length; ++i) {
+    if (rule.values[i].startsWith('CoverParenthesizedExpressionAndArrowParameterList')) {
+      rule.values[i] = 'ParenthesizedExpression[?Yield, ?Await]';
+      break;
+    }
+  }
+
+  // Replace CPEAAPL in ArrowParameters with ArrowFormalParameters.
+  rule = rules.find((rule) => rule.name === 'ArrowParameters[Yield, Await]');
+  assert(rule !== undefined);
+  for (let i = 0; i < rule.values.length; ++i) {
+    if (rule.values[i].startsWith('CoverParenthesizedExpressionAndArrowParameterList')) {
+      rule.values[i] = 'ArrowFormalParameters[?Yield, ?Await]';
+      break;
+    }
+  }
+
   return rules;
 }
 

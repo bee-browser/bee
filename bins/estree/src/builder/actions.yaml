@@ -803,13 +803,13 @@
 - rule: ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
   action: arrow_parameters
 - rule: 'ConciseBody_In -> (?![LBRACE]) ExpressionBody_In'
-  action: nop
+  action: into_expression
 - rule: ConciseBody_In -> LBRACE FunctionBody RBRACE
   action: function_body_block
 - rule: AsyncArrowBindingIdentifier -> BindingIdentifier_Await
   action: nop
 - rule: 'AsyncConciseBody_In -> (?![LBRACE]) ExpressionBody_In_Await'
-  action: nop
+  action: into_expression
 - rule: AsyncConciseBody_In -> LBRACE AsyncFunctionBody RBRACE
   action: function_body_block
 - rule: CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await
@@ -1027,29 +1027,29 @@
     BitwiseORExpression_In_Await
   action: logical_expression
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await RPAREN
-  action: expression_or_arguments_expr
+  action: cpeaapl_expr
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA
     RPAREN
-  action: expression_or_arguments_expr_comma
+  action: cpeaapl_expr_comma
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN RPAREN
-  action: expression_or_arguments_empty
+  action: cpeaapl_empty
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS
     BindingIdentifier_Await RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS BindingPattern_Await
     RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA
     ELLIPSIS BindingIdentifier_Await RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA
     ELLIPSIS BindingPattern_Await RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: ExpressionBody_In -> AssignmentExpression_In
   action: nop
 - rule: ExpressionBody_In_Await -> AssignmentExpression_In_Await
@@ -1455,7 +1455,7 @@
 - rule: PrimaryExpression_Await -> TemplateLiteral_Await
   action: nop
 - rule: PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
-  action: primary_expression_group
+  action: primary_expression_cpeaapl
 - rule: SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
   action: super_property_computed
 - rule: SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
@@ -1465,11 +1465,11 @@
 - rule: MetaProperty -> ImportMeta
   action: nop
 - rule: ArgumentList_Await -> AssignmentExpression_In_Await
-  action: into_list
+  action: argument_list
 - rule: ArgumentList_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: argument_list_rest
 - rule: ArgumentList_Await -> ArgumentList_Await COMMA AssignmentExpression_In_Await
-  action: append_to_csv_list
+  action: argument_list_append
 - rule: ArgumentList_Await -> ArgumentList_Await COMMA ELLIPSIS AssignmentExpression_In_Await
   action: argument_list_append_rest
 - rule: >-
@@ -1521,23 +1521,23 @@
 - rule: CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
   action: logical_expression
 - rule: CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN
-  action: expression_or_arguments_expr
+  action: cpeaapl_expr
 - rule: CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA RPAREN
-  action: expression_or_arguments_expr_comma
+  action: cpeaapl_expr_comma
 - rule: CoverParenthesizedExpressionAndArrowParameterList -> LPAREN RPAREN
-  action: expression_or_arguments_empty
+  action: cpeaapl_empty
 - rule: CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingIdentifier RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingPattern RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS
     BindingIdentifier RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS
     BindingPattern RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: MemberExpression -> PrimaryExpression
   action: nop
 - rule: MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
@@ -1888,17 +1888,17 @@
 - rule: PrimaryExpression -> TemplateLiteral
   action: nop
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
-  action: primary_expression_group
+  action: primary_expression_cpeaapl
 - rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
   action: super_property_computed
 - rule: SuperProperty -> SUPER DOT KeywordOrIdentifierName
   action: super_property
 - rule: ArgumentList -> AssignmentExpression_In
-  action: into_list
+  action: argument_list
 - rule: ArgumentList -> ELLIPSIS AssignmentExpression_In
   action: argument_list_rest
 - rule: ArgumentList -> ArgumentList COMMA AssignmentExpression_In
-  action: append_to_csv_list
+  action: argument_list_append
 - rule: ArgumentList -> ArgumentList COMMA ELLIPSIS AssignmentExpression_In
   action: argument_list_append_rest
 - rule: SubstitutionTemplate_Tagged -> TEMPLATE_HEAD Expression_In TemplateSpans_Tagged
@@ -3231,29 +3231,29 @@
     BitwiseORExpression_In_Yield
   action: logical_expression
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN
-  action: expression_or_arguments_expr
+  action: cpeaapl_expr
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA
     RPAREN
-  action: expression_or_arguments_expr_comma
+  action: cpeaapl_expr_comma
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN RPAREN
-  action: expression_or_arguments_empty
+  action: cpeaapl_empty
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS
     BindingIdentifier_Yield RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingPattern_Yield
     RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA
     ELLIPSIS BindingIdentifier_Yield RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA
     ELLIPSIS BindingPattern_Yield RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: MemberExpression_Yield -> PrimaryExpression_Yield
   action: nop
 - rule: MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield RBRACK
@@ -3567,29 +3567,29 @@
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await RPAREN
-  action: expression_or_arguments_expr
+  action: cpeaapl_expr
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await COMMA RPAREN
-  action: expression_or_arguments_expr_comma
+  action: cpeaapl_expr_comma
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN RPAREN
-  action: expression_or_arguments_empty
+  action: cpeaapl_empty
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS
     BindingIdentifier_Yield_Await RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS
     BindingPattern_Yield_Await RPAREN
-  action: expression_or_arguments_rest
+  action: cpeaapl_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await COMMA ELLIPSIS BindingIdentifier_Yield_Await RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN
-  action: expression_or_arguments_expr_rest
+  action: cpeaapl_expr_rest
 - rule: MemberExpression_Yield_Await -> PrimaryExpression_Yield_Await
   action: nop
 - rule: >-
@@ -3866,17 +3866,17 @@
 - rule: PrimaryExpression_Yield -> TemplateLiteral_Yield
   action: nop
 - rule: PrimaryExpression_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
-  action: primary_expression_group
+  action: primary_expression_cpeaapl
 - rule: SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
   action: super_property_computed
 - rule: SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
   action: super_property
 - rule: ArgumentList_Yield -> AssignmentExpression_In_Yield
-  action: into_list
+  action: argument_list
 - rule: ArgumentList_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: argument_list_rest
 - rule: ArgumentList_Yield -> ArgumentList_Yield COMMA AssignmentExpression_In_Yield
-  action: append_to_csv_list
+  action: argument_list_append
 - rule: ArgumentList_Yield -> ArgumentList_Yield COMMA ELLIPSIS AssignmentExpression_In_Yield
   action: argument_list_append_rest
 - rule: >-
@@ -3960,17 +3960,17 @@
 - rule: PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
   action: nop
 - rule: PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
-  action: primary_expression_group
+  action: primary_expression_cpeaapl
 - rule: SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
   action: super_property_computed
 - rule: SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName
   action: super_property
 - rule: ArgumentList_Yield_Await -> AssignmentExpression_In_Yield_Await
-  action: into_list
+  action: argument_list
 - rule: ArgumentList_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
   action: argument_list_rest
 - rule: ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA AssignmentExpression_In_Yield_Await
-  action: append_to_csv_list
+  action: argument_list_append
 - rule: >-
     ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA ELLIPSIS
     AssignmentExpression_In_Yield_Await

@@ -19,30 +19,34 @@ pub use lexer::Location;
 pub use parser::ProductionRule;
 
 /// Errors.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Unexpected character")]
     UnexpectedCharacter,
+    #[error("Syntax error")]
     SyntaxError,
 }
 
-/// Converts a template literal content into a string.
-pub fn template_literal_to_string(literal: &str, raw: bool) -> String {
+/// Converts a template literal content into a raw string.
+pub fn template_literal_to_raw_string(literal: &str) -> String {
+    // TODO: 13.2.8.3 Static Semantics: TemplateString ( templateToken, raw )
+    literal.replace("\r\n", "\n").replace("\r", "\n")
+}
+
+/// Converts a template literal content into a cooked string.
+pub fn template_literal_to_cooked_string(literal: &str) -> Option<String> {
     // TODO: 13.2.8.3 Static Semantics: TemplateString ( templateToken, raw )
     let s = literal.replace("\r\n", "\n").replace("\r", "\n");
-    if raw {
-        s
-    } else {
-        literal_content_to_string(&s)
-    }
+    literal_content_to_string(&s)
 }
 
 /// Converts a string literal into a string.
 pub fn string_literal_to_string(literal: &str) -> String {
-    literal_content_to_string(&literal[1..(literal.len() - 1)])
+    literal_content_to_string(&literal[1..(literal.len() - 1)]).unwrap()
 }
 
 /// Converts a literal content into a string.
-pub fn literal_content_to_string(content: &str) -> String {
+pub fn literal_content_to_string(content: &str) -> Option<String> {
     // TODO: improve performance
 
     let mut result = String::with_capacity(content.len());
@@ -79,8 +83,8 @@ pub fn literal_content_to_string(content: &str) -> String {
                 }
             }
             'x' if chars.peek().is_some() => {
-                let hi = chars.next().unwrap().to_digit(16).unwrap();
-                let lo = chars.next().unwrap().to_digit(16).unwrap();
+                let hi = chars.next()?.to_digit(16)?;
+                let lo = chars.next()?.to_digit(16)?;
                 let c = char::from_u32((hi << 4) + lo).unwrap();
                 put(c, &mut result, &mut high_surrogate);
             }
@@ -94,15 +98,15 @@ pub fn literal_content_to_string(content: &str) -> String {
                         }
                         // FIXME: `n << 4` causes wrong indentation in emacs...
                         use std::ops::Shl;
-                        n = n.shl(4) + c.to_digit(16).unwrap();
+                        n = n.shl(4) + c.to_digit(16)?;
                     }
-                    let c = char::from_u32(n).unwrap();
+                    let c = char::from_u32(n)?;
                     put(c, &mut result, &mut high_surrogate);
                 } else {
-                    let d0 = chars.next().unwrap().to_digit(16).unwrap();
-                    let d1 = chars.next().unwrap().to_digit(16).unwrap();
-                    let d2 = chars.next().unwrap().to_digit(16).unwrap();
-                    let d3 = chars.next().unwrap().to_digit(16).unwrap();
+                    let d0 = chars.next()?.to_digit(16)?;
+                    let d1 = chars.next()?.to_digit(16)?;
+                    let d2 = chars.next()?.to_digit(16)?;
+                    let d3 = chars.next()?.to_digit(16)?;
                     let cp = (d0 << 12) + (d1 << 8) + (d2 << 4) + d3;
                     match char::from_u32(cp) {
                         Some(c) => put(c, &mut result, &mut high_surrogate),
@@ -116,7 +120,7 @@ pub fn literal_content_to_string(content: &str) -> String {
                                     if high > 0x03FF || low > 0x03FF {
                                         result.push('\u{FFFD}');
                                     } else {
-                                        result.push(char::from_u32(high << 10 | low).unwrap());
+                                        result.push(char::from_u32((high << 10 | low) + 0x10000)?);
                                     }
                                 }
                             } else {
@@ -129,5 +133,22 @@ pub fn literal_content_to_string(content: &str) -> String {
             c => put(c, &mut result, &mut high_surrogate),
         }
     }
-    result
+    Some(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_matches::assert_matches;
+
+    #[test]
+    fn test_literal_content_to_string() {
+        // surrogate pair
+        assert_matches!(literal_content_to_string("\\ud83d\\udcf7"), Some(s) => {
+            assert_eq!(s, "\u{1F4F7}");
+        });
+
+        // invalid escape
+        assert_matches!(literal_content_to_string("\\uc1"), None);
+    }
 }

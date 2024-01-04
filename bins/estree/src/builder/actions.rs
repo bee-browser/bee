@@ -858,13 +858,13 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
     Some((Builder::arrow_parameters, "arrow_parameters")),
     // ConciseBody_In -> (?![LBRACE]) ExpressionBody_In
-    Some((Builder::nop, "nop")),
+    Some((Builder::into_expression, "into_expression")),
     // ConciseBody_In -> LBRACE FunctionBody RBRACE
     Some((Builder::function_body_block, "function_body_block")),
     // AsyncArrowBindingIdentifier -> BindingIdentifier_Await
     Some((Builder::nop, "nop")),
     // AsyncConciseBody_In -> (?![LBRACE]) ExpressionBody_In_Await
-    Some((Builder::nop, "nop")),
+    Some((Builder::into_expression, "into_expression")),
     // AsyncConciseBody_In -> LBRACE AsyncFunctionBody RBRACE
     Some((Builder::function_body_block, "function_body_block")),
     // CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await
@@ -1102,40 +1102,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH BitwiseORExpression_In_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_expr,
-        "expression_or_arguments_expr",
-    )),
+    Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_comma,
-        "expression_or_arguments_expr_comma",
-    )),
+    Some((Builder::cpeaapl_expr_comma, "cpeaapl_expr_comma")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN RPAREN
-    Some((
-        Builder::expression_or_arguments_empty,
-        "expression_or_arguments_empty",
-    )),
+    Some((Builder::cpeaapl_empty, "cpeaapl_empty")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS BindingIdentifier_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS BindingPattern_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA ELLIPSIS BindingIdentifier_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA ELLIPSIS BindingPattern_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // ExpressionBody_In -> AssignmentExpression_In
     Some((Builder::nop, "nop")),
     // ExpressionBody_In_Await -> AssignmentExpression_In_Await
@@ -1623,8 +1602,8 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
     Some((
-        Builder::primary_expression_group,
-        "primary_expression_group",
+        Builder::primary_expression_cpeaapl,
+        "primary_expression_cpeaapl",
     )),
     // SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
@@ -1635,11 +1614,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // MetaProperty -> ImportMeta
     Some((Builder::nop, "nop")),
     // ArgumentList_Await -> AssignmentExpression_In_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::argument_list, "argument_list")),
     // ArgumentList_Await -> ELLIPSIS AssignmentExpression_In_Await
     Some((Builder::argument_list_rest, "argument_list_rest")),
     // ArgumentList_Await -> ArgumentList_Await COMMA AssignmentExpression_In_Await
-    Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    Some((Builder::argument_list_append, "argument_list_append")),
     // ArgumentList_Await -> ArgumentList_Await COMMA ELLIPSIS AssignmentExpression_In_Await
     Some((
         Builder::argument_list_append_rest,
@@ -1695,40 +1674,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN
-    Some((
-        Builder::expression_or_arguments_expr,
-        "expression_or_arguments_expr",
-    )),
+    Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_comma,
-        "expression_or_arguments_expr_comma",
-    )),
+    Some((Builder::cpeaapl_expr_comma, "cpeaapl_expr_comma")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN RPAREN
-    Some((
-        Builder::expression_or_arguments_empty,
-        "expression_or_arguments_empty",
-    )),
+    Some((Builder::cpeaapl_empty, "cpeaapl_empty")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingIdentifier RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingPattern RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS BindingIdentifier RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS BindingPattern RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // MemberExpression -> PrimaryExpression
     Some((Builder::nop, "nop")),
     // MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
@@ -2134,19 +2092,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
     Some((
-        Builder::primary_expression_group,
-        "primary_expression_group",
+        Builder::primary_expression_cpeaapl,
+        "primary_expression_cpeaapl",
     )),
     // SuperProperty -> SUPER LBRACK Expression_In RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
     // SuperProperty -> SUPER DOT KeywordOrIdentifierName
     Some((Builder::super_property, "super_property")),
     // ArgumentList -> AssignmentExpression_In
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::argument_list, "argument_list")),
     // ArgumentList -> ELLIPSIS AssignmentExpression_In
     Some((Builder::argument_list_rest, "argument_list_rest")),
     // ArgumentList -> ArgumentList COMMA AssignmentExpression_In
-    Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    Some((Builder::argument_list_append, "argument_list_append")),
     // ArgumentList -> ArgumentList COMMA ELLIPSIS AssignmentExpression_In
     Some((
         Builder::argument_list_append_rest,
@@ -3533,40 +3491,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH BitwiseORExpression_In_Yield
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN
-    Some((
-        Builder::expression_or_arguments_expr,
-        "expression_or_arguments_expr",
-    )),
+    Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_comma,
-        "expression_or_arguments_expr_comma",
-    )),
+    Some((Builder::cpeaapl_expr_comma, "cpeaapl_expr_comma")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN RPAREN
-    Some((
-        Builder::expression_or_arguments_empty,
-        "expression_or_arguments_empty",
-    )),
+    Some((Builder::cpeaapl_empty, "cpeaapl_empty")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingIdentifier_Yield RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingPattern_Yield RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingIdentifier_Yield RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingPattern_Yield RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // MemberExpression_Yield -> PrimaryExpression_Yield
     Some((Builder::nop, "nop")),
     // MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield RBRACK
@@ -3901,40 +3838,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH BitwiseORExpression_In_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_expr,
-        "expression_or_arguments_expr",
-    )),
+    Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_comma,
-        "expression_or_arguments_expr_comma",
-    )),
+    Some((Builder::cpeaapl_expr_comma, "cpeaapl_expr_comma")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN RPAREN
-    Some((
-        Builder::expression_or_arguments_empty,
-        "expression_or_arguments_empty",
-    )),
+    Some((Builder::cpeaapl_empty, "cpeaapl_empty")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingIdentifier_Yield_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingPattern_Yield_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_rest,
-        "expression_or_arguments_rest",
-    )),
+    Some((Builder::cpeaapl_rest, "cpeaapl_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingIdentifier_Yield_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN
-    Some((
-        Builder::expression_or_arguments_expr_rest,
-        "expression_or_arguments_expr_rest",
-    )),
+    Some((Builder::cpeaapl_expr_rest, "cpeaapl_expr_rest")),
     // MemberExpression_Yield_Await -> PrimaryExpression_Yield_Await
     Some((Builder::nop, "nop")),
     // MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK Expression_In_Yield_Await RBRACK
@@ -4234,19 +4150,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
     Some((
-        Builder::primary_expression_group,
-        "primary_expression_group",
+        Builder::primary_expression_cpeaapl,
+        "primary_expression_cpeaapl",
     )),
     // SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
     // SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
     Some((Builder::super_property, "super_property")),
     // ArgumentList_Yield -> AssignmentExpression_In_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::argument_list, "argument_list")),
     // ArgumentList_Yield -> ELLIPSIS AssignmentExpression_In_Yield
     Some((Builder::argument_list_rest, "argument_list_rest")),
     // ArgumentList_Yield -> ArgumentList_Yield COMMA AssignmentExpression_In_Yield
-    Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    Some((Builder::argument_list_append, "argument_list_append")),
     // ArgumentList_Yield -> ArgumentList_Yield COMMA ELLIPSIS AssignmentExpression_In_Yield
     Some((
         Builder::argument_list_append_rest,
@@ -4337,19 +4253,19 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     Some((Builder::nop, "nop")),
     // PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
     Some((
-        Builder::primary_expression_group,
-        "primary_expression_group",
+        Builder::primary_expression_cpeaapl,
+        "primary_expression_cpeaapl",
     )),
     // SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
     Some((Builder::super_property_computed, "super_property_computed")),
     // SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName
     Some((Builder::super_property, "super_property")),
     // ArgumentList_Yield_Await -> AssignmentExpression_In_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::argument_list, "argument_list")),
     // ArgumentList_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
     Some((Builder::argument_list_rest, "argument_list_rest")),
     // ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA AssignmentExpression_In_Yield_Await
-    Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    Some((Builder::argument_list_append, "argument_list_append")),
     // ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA ELLIPSIS AssignmentExpression_In_Yield_Await
     Some((
         Builder::argument_list_append_rest,

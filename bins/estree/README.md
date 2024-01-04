@@ -1,8 +1,8 @@
 # estree
 
-> A simple Javascript parser to output ESTree in JSON5
+> A simple Javascript parser to output ESTree in JSON
 
-This package provides a binary crate `estree` to output the [ESTree] of the input JavaScript
+This package provides a binary crate `estree` that prints the [ESTree] of the input JavaScript
 program.
 
 The main goal of this package is providing a tool for validating the implementation of `jsparser`.
@@ -13,11 +13,10 @@ The following command parses a JavaScript program:
 
 ```shell
 curl https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js -sG |
-  cargo run -p estree -- parse script | deno run npm:json5 -s 2
+  cargo run -rqp estree -- parse script | jj -p
 ```
 
-> estree outputs ESTree in [JSON5], not JSON.
-> Because the ESTree may contain values such as `Infinity` that cannot be used in JSON.
+> We use [`jj`] here instead of `jq`.  See below for the reason.
 
 This shows the ESTree representation of the JavaScript program.  The representation is compatible
 with [Acorn].
@@ -25,12 +24,12 @@ with [Acorn].
 The following command starts a server that responds to requests to parse JavaScript programs:
 
 ```shell
-cat | cargo run -p estree -- serve | deno run npm:json5 -s 2
+cat | cargo run -rqp estree -- serve | jj -p
 ```
 
 The server can accept requests like below:
 
-```json5
+```json
 {
   "sourceType": "script",  // "script" or "module".
   "source": "1"            // A source text to be parsed.
@@ -39,7 +38,7 @@ The server can accept requests like below:
 
 and output responses like below:
 
-```json5
+```json
 {
   // The ESTree representation of the JavaScript program.
   "program": {
@@ -62,9 +61,45 @@ and output responses like below:
     ],
     "sourceType": "script"
   },
+  "error": null,
   // The elapsed time in nanoseconds.
   "elapsed": 71925
 }
+```
+
+### ESTree in JSON representation
+
+`Literal` nodes in ESTree contain values that are not allowed in JSON:
+
+  * `NaN`
+  * `Infinity`
+  * `RegExp`
+  * `BigInt`
+
+These are converted into some kind of *tags* before encoding to JSON.  See `LiteralValueTag` in
+[`nodes.rs`](./src/nodes.rs) and `refine()` in [`test262_helper.js`](./scripts/test262_helper.js).
+
+### jq: parse error: Exceeds depth limit for parsing
+
+`jq` may not be able to parse an ESTree JSON due to a limitation on the depth.  For example:
+
+```shell
+curl https://cdnjs.cloudflare.com/ajax/libs/typescript/5.3.3/typescript.min.js -sG | \
+  cargo run -rqp estree -- parse script | jq
+```
+
+This command causes the following error:
+
+```
+jq: parse error: Exceeds depth limit for parsing at line 1, column 10759553
+Error: Broken pipe (os error 32)
+```
+
+In this case, use other JSON parser commands such as [`jj`]:
+
+```shell
+curl https://cdnjs.cloudflare.com/ajax/libs/typescript/5.3.3/typescript.min.js -sG | \
+  cargo run -rqp estree -- parse script | jj -p
 ```
 
 ## Semantic action for each production rule
@@ -83,25 +118,25 @@ curl https://host/script.js -sG | sh ./scripts/validate.sh
 Differences like below will be shown if the validation fails:
 
 ```text
-.body.0.end
+body.0.end
   acorn : 9387
   estree: null
 ...
 ```
 
-The paths shown in the above messages can be used as [`jj`] filters:
+The paths shown in the above messages can be used as `jj` filters:
 
 ```shell
-curl https://host/script.js -sG | cargo run -p estree -- parse script | jj body.0.end
+curl https://host/script.js -sG | cargo run -rqp estree -- parse script | jj body.0.end
 
 # Show the parent node.
-curl https://host/script.js -sG | cargo run -p estree -- parse script | jj body.0
+curl https://host/script.js -sG | cargo run -rqp estree -- parse script | jj body.0
 ```
 
 Debug-level logs are shown by specifying the `RUST_LOG` environment variable:
 
 ```shell
-curl https://host/script.js -sG | RUST_LOG=debug cargo run -p estree -- parse script >/dev/null
+curl https://host/script.js -sG | RUST_LOG=debug cargo run -rqp estree -- parse script >/dev/null
 ```
 
 ## tc39/test262
@@ -118,9 +153,13 @@ Many tests fails at the moment.  The `--details` option lists failed tests.
 
 ## TODO
 
-* Support BigInt
+* [x] Support BigInt
   * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
-* Generate the `Builder` implementation from a definition of semantic actions
+* [ ] Handle early errors
+* [ ] tc39/test262
+* [ ] tc39/test262-parser-tests
+  * Test cases in `pass/` have been passed
+* [ ] Generate the `Builder` implementation from a definition of semantic actions
   * Currently, it's manually implemented
 
 ## Acknowledgments

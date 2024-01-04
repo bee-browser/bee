@@ -28,7 +28,7 @@ do
       SIZE=$(echo "$METRICS" | cut -d ' ' -f 2 | cut -d '=' -f 2)
       MAX_STACK_DEPTH=$(echo "$METRICS" | cut -d ' ' -f 3 | cut -d '=' -f 2)
       MAX_TEMPLATE_LITERAL_DEPTH=$(echo "$METRICS" | cut -d ' ' -f 4 | cut -d '=' -f 2)
-      cat <<EOF | tr -d '\n' >>$OUTPUT
+      RESULT=$(cat <<EOF | tr -d '\n'
 {
 "url":"$URL",
 "parsed":true,
@@ -38,6 +38,8 @@ do
 "maxTemplateLiteralDepth":$MAX_TEMPLATE_LITERAL_DEPTH
 }
 EOF
+)
+      echo "$RESULT" >>$OUTPUT
     else
       echo "$COUNT/$TOTAL: - $URL"
       FAILED=$(expr $FAILED + 1)
@@ -49,8 +51,8 @@ EOF
   COUNT=$(expr $COUNT + 1)
 done
 
-VALID_LINKS=$(expr $TOTAL - $BROKEN_LINKS)
+PASSED=$(expr $TOTAL - $FAILED - $BROKEN_LINKS)
 
 cat <<EOF
-FAILED: $FAILED/$VALID_LINKS ($(expr $FAILED \* 100 / $VALID_LINKS)%)
+$TOTAL urls: $PASSED parsed, $FAILED failed, $BROKEN_LINKS broken links
 EOF
