@@ -1,3 +1,5 @@
+SHELL := $(shell which bash) -eu -o pipefail -c
+
 export PATH := $(abspath tools/bin):$(PATH)
 export PROJDIR := $(abspath .)
 

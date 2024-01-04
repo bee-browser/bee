@@ -1,3 +1,5 @@
+SHELL := $(shell which bash) -eu -o pipefail -c
+
 PROJ_DIR := ../../../
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
