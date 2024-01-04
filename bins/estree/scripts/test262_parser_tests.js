@@ -145,13 +145,13 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const expected = Acorn.parse(source, sourceType);
     if (expected === null) {
-      skipped.push({ test, reason: 'acorn cannot parse' });
+      skipped.push({ test, reason: 'acorn fails parsing' });
       continue;
     }
 
     const actual = await server.parse(source, sourceType);
     if (actual === null) {
-      fails.push({ test, reason: 'estree cannot parse' });
+      fails.push({ test, reason: 'estree fails parsing' });
       continue;
     }
 
@@ -176,7 +176,7 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const expectedExplicit = Acorn.parse(sourceExplicit, sourceType);
     if (expectedExplicit === null) {
-      skipped.push({ test, reason: 'acorn cannot parse' });
+      skipped.push({ test, reason: 'acorn fails parsing' });
       continue;
     }
 
@@ -187,7 +187,7 @@ if (options.only === 'all' || options.only === 'pass') {
 
     const actualExplicit = await server.parse(sourceExplicit, sourceType);
     if (actualExplicit === null) {
-      fails.push({ test, reason: 'estree cannot parse' });
+      fails.push({ test, reason: 'estree fails parsing' });
       continue;
     }
 

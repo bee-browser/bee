@@ -54,7 +54,7 @@ if (expected === null) {
 spinner.text = 'estree...';
 const actual = await ESTree.parse(source, sourceType, options);
 if (actual === null && expected !== null) {
-  spinner.fail(`estree cannot parse ${sourceType}`);
+  spinner.fail(`estree fails parsing ${sourceType}`);
   Deno.exit(1);
 }
 if (actual !== null && expected === null) {

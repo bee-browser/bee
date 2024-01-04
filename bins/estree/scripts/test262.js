@@ -186,14 +186,14 @@ for await (const test of stream) {
     expected = Acorn.parse(source, sourceType);
     if (expected === null) {
       // Acorn cannot parse test.contents.
-      skipped.push({ test, reason: 'acorn cannot parse' });
+      skipped.push({ test, reason: 'acorn fails parsing' });
       continue;
     }
   }
 
   const actual = await server.parse(source, sourceType);
   if (actual === null && expected !== null) {
-    fails.push({ test, reason: 'estree cannot parse' });
+    fails.push({ test, reason: 'estree fails parsing' });
     continue;
   }
   if (actual !== null && expected === null) {
