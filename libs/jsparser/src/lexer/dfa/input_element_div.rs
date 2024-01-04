@@ -16,7 +16,7 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     tracing::trace!(opcode = "init", ?state);
 
     let mut has_line_terminators = false;
-    let mut lexeme_end = 0;
+    let mut lexeme_end = cursor.pos();
     let mut chars = cursor.chars();
     loop {
         let (pos, mut unicode_set) = match chars.next() {
@@ -63,6 +63,9 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
         if next.is_invalid() {
             if token.kind != TokenKind::Eof {
                 break;
+            }
+            if !cursor.lexeme(lexeme_end).is_empty() {
+                return Err(Error::UnexpectedCharacter);
             }
             if unicode_set == UnicodeSet::EOF {
                 break;
