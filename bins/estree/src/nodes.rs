@@ -3454,25 +3454,34 @@ pub struct RegExp {
 fn numeric_literal_to_scalar(literal: &str) -> LiteralValue {
     // TODO
     if literal.starts_with("0b") || literal.starts_with("0B") {
-        if let Ok(n) = u64::from_str_radix(&literal[2..], 2) {
-            return LiteralValue::U64(n);
+        if let Ok(n) = u128::from_str_radix(&literal[2..], 2) {
+            if n <= u64::MAX as u128 {
+                return LiteralValue::U64(n as u64);
+            }
+            return LiteralValue::F64(n as f64);
         }
     }
     if literal.starts_with("0o") || literal.starts_with("0O") {
-        if let Ok(n) = u64::from_str_radix(&literal[2..], 8) {
-            return LiteralValue::U64(n);
+        if let Ok(n) = u128::from_str_radix(&literal[2..], 8) {
+            if n <= u64::MAX as u128 {
+                return LiteralValue::U64(n as u64);
+            }
+            return LiteralValue::F64(n as f64);
         }
     }
     if literal.starts_with("0x") || literal.starts_with("0X") {
-        if let Ok(n) = u64::from_str_radix(&literal[2..], 16) {
-            return LiteralValue::U64(n);
+        if let Ok(n) = u128::from_str_radix(&literal[2..], 16) {
+            if n <= u64::MAX as u128 {
+                return LiteralValue::U64(n as u64);
+            }
+            return LiteralValue::F64(n as f64);
         }
     }
     if literal.ends_with('n') {
         return LiteralValue::Tag(LiteralValueTag::BigInt);
     }
     if let Ok(n) = literal.parse::<f64>() {
-        if n.fract() == 0.0 && n <= (i64::MAX as f64) {
+        if n.fract() == 0.0 && n < (0x1_00000000_00000000u128 as f64) {
             return LiteralValue::U64(n as u64);
         }
         if n.is_nan() {

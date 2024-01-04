@@ -361,7 +361,7 @@ impl Builder {
         let (_, end) = self.check(";");
         let (argument, ..) = self.pop_node();
         let (start, _) = self.check("throw");
-        argument.validate_expression()?;
+        let argument = node!(into_expression; argument)?; // may be CPEAAPL
         let node = node!(throw_statement@start..end; argument);
         self.push_node(node, start, end);
         Ok(())
@@ -435,7 +435,7 @@ impl Builder {
         let (discriminant, ..) = self.pop_node();
         self.check("(");
         let (start, _) = self.check("switch");
-        discriminant.validate_expression()?;
+        let discriminant = node!(into_expression; discriminant)?; // may be CPEAAPL
         let node = node!(switch_statement@start..end; discriminant, cases);
         self.push_node(node, start, end);
         Ok(())
@@ -1433,6 +1433,7 @@ impl Builder {
         self.check("[");
         let (object, start, _) = self.pop_node();
         let object = node!(into_expression; object)?;
+        let property = node!(into_expression; property)?; // may be CPEAAPL
         let node = node!(member_expression@start..end; object, property, true);
         self.push_node(node, start, end);
         Ok(())
@@ -1456,6 +1457,7 @@ impl Builder {
         self.check("[");
         let (object, start, _) = self.pop_node();
         let object = node!(into_expression; object)?;
+        let property = node!(into_expression; property)?; // may be CPEAAPL
         let node = node!(member_expression@start..end; object, property, true);
         self.push_node(node, start, end);
         Ok(())
@@ -1467,6 +1469,7 @@ impl Builder {
         self.check("[");
         let (start, super_end) = self.check("super");
         let object = node!(super_@start..super_end);
+        let property = node!(into_expression; property)?; // may be CPEAAPL
         let node = node!(member_expression@start..end; object, property, true);
         self.push_node(node, start, end);
         Ok(())
@@ -1485,6 +1488,7 @@ impl Builder {
     fn tagged_template_expression(&mut self) -> Result<(), String> {
         let (quasi, _, end) = self.pop_node();
         let (tag, start, _) = self.pop_node();
+        let tag = node!(into_expression; tag)?; // may be CPEAAPL
         let node = node!(tagged_template_expression@start..end; tag, quasi);
         self.push_node(node, start, end);
         Ok(())
@@ -1494,6 +1498,10 @@ impl Builder {
         let (arguments, _, end) = self.pop_list();
         let (callee, start, _) = self.pop_node();
         let callee = node!(into_expression; callee)?; // may be CPEAAPL
+        let arguments = arguments
+            .into_iter()
+            .map(|argument| node!(into_expression; argument)) // may be CPEAAPL
+            .collect::<Result<Vec<_>, _>>()?;
         let node = node!(call_expression@start..end; callee, arguments);
         self.push_node(node, start, end);
         Ok(())
@@ -1503,6 +1511,10 @@ impl Builder {
         let (arguments, _, end) = self.pop_list();
         let (start, super_end) = self.check("super");
         let callee = node!(super_@start..super_end);
+        let arguments = arguments
+            .into_iter()
+            .map(|argument| node!(into_expression; argument)) // may be CPEAAPL
+            .collect::<Result<Vec<_>, _>>()?;
         let node = node!(call_expression@start..end; callee, arguments);
         self.push_node(node, start, end);
         Ok(())
