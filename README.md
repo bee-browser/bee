@@ -14,6 +14,7 @@ BEE is a web browser engine intended to be embedded into other applications.
 Install the following software:
 
 * [Rust]
+* [GNU Bash]
 * [GNU Make]
 * [Deno]
 * [Nextest]
@@ -60,6 +61,7 @@ for inclusion in this project by you, as defined in the Apache-2.0 license,
 shall be dual licensed as above, without any additional terms or conditions.
 
 [Rust]: https://www.rust-lang.org/
+[GNU Bash]: https://www.gnu.org/software/bash/
 [GNU Make]: https://www.gnu.org/software/make/
 [Deno]: https://deno.com/
 [Nextest]: https://github.com/nextest-rs/nextest

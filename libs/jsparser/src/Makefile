@@ -1,6 +1,8 @@
 # Specify `-d` if you want to see debug logs.
 TRANSPILE_ARGS ?=
 
+SHELL := $(shell which bash) -eu -o pipefail -c
+
 PROJ_DIR := $(realpath ../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 ECMA262_DIR := $(PROJ_DIR)/vendor/tc39/ecma262
