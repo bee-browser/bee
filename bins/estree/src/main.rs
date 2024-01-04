@@ -2,11 +2,11 @@ mod builder;
 mod nodes;
 
 use std::io::BufRead;
+use std::io::BufWriter;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
 
-use anyhow::anyhow;
 use anyhow::Result;
 use clap::Parser as _;
 use clap::Subcommand;
@@ -108,14 +108,12 @@ fn parse<P: AsRef<Path>>(source_type: SourceType, source_file: Option<P>) -> Res
     // And then convert it into a UTF-8 string loosely.
     let source = String::from_utf8_lossy(&raw);
 
-    let node = match parse_program(source_type, &source) {
-        Ok(node) => node,
-        Err(_) => {
-            return Err(anyhow!("Parse error"));
-        }
-    };
-
-    println!("{}", json5::to_string(&node)?);
+    let node = parse_program(source_type, &source)?;
+    let writer = BufWriter::new(std::io::stdout());
+    // It's better to dump the ESTree when json5::to_string() fails.
+    // However, "{node:$?}" takes a long time if the ESTree is large...
+    serde_json::to_writer(writer, &node)?;
+    println!();
 
     Ok(())
 }
@@ -127,6 +125,8 @@ fn parse_program(source_type: SourceType, source: &str) -> std::result::Result<N
     }
 }
 
+// In the server mode, a parsing error doesn't stop the loop and the error is reported in the
+// response.  Tests take long time to complete if the server restarts every time an error happens.
 fn serve() -> Result<()> {
     let reader = std::io::stdin().lock();
     for line in reader.lines() {
@@ -140,10 +140,25 @@ fn serve() -> Result<()> {
                     }
                 };
                 let now = std::time::Instant::now();
-                let program = parse_program(req.source_type, &req.source).ok();
+                let result = parse_program(req.source_type, &req.source);
                 let elapsed = now.elapsed().as_nanos() as u64;
-                let res = Response { program, elapsed };
-                println!("{}", json5::to_string(&res)?);
+                let writer = BufWriter::new(std::io::stdout());
+                serde_json::to_writer(
+                    writer,
+                    &result.map_or_else(
+                        |err| Response {
+                            program: None,
+                            error: Some(format!("{err:?}")),
+                            elapsed,
+                        },
+                        |program| Response {
+                            program: Some(program),
+                            error: None,
+                            elapsed,
+                        },
+                    ),
+                )?;
+                println!();
             }
             Err(_) => break,
         }
@@ -161,5 +176,6 @@ struct Request {
 #[derive(Debug, Serialize)]
 struct Response {
     program: Option<NodeRef>,
+    error: Option<String>,
     elapsed: u64,
 }

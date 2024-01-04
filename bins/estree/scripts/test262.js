@@ -1,14 +1,15 @@
 'use strict';
 
 import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
+import { equal } from "https://deno.land/std@0.209.0/testing/asserts.ts";
 
+import deepDiff from 'npm:deep-diff@1.0.2';
 import ora from 'npm:ora@7.0.1';
 import TestStream from 'npm:test262-stream@1.4.0';
-import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { VENDOR_DIR } from '../../../tools/lib/consts.js';
-import { Acorn, ESTree, showDiffs } from './test262_helper.js';
+import { Acorn, ESTree, showDiffs } from './helpers.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DEFAULT_TEST262_DIR = path.join(VENDOR_DIR, 'tc39', 'test262');
@@ -185,30 +186,35 @@ for await (const test of stream) {
     expected = Acorn.parse(source, sourceType);
     if (expected === null) {
       // Acorn cannot parse test.contents.
-      skipped.push({ test, reason: 'acorn cannot parse' });
+      skipped.push({ test, reason: 'acorn fails parsing' });
       continue;
     }
   }
 
   const actual = await server.parse(source, sourceType);
-  if (expected === null) {
-    if (actual === null) {
-      // passed
-    } else {
-      fails.push({ test, reason: 'estree should fail' });
+  if (actual === null && expected !== null) {
+    fails.push({ test, reason: 'estree fails parsing' });
+    continue;
+  }
+  if (actual !== null && expected === null) {
+    fails.push({ test, reason: 'estree should fail parsing' });
+    continue;
+  }
+
+  if (options.details) {
+    const diffs = deepDiff(actual, expected);
+    if (diffs) {
+      fails.push({ test, reason: 'estree mismatch', diffs });
+      continue;
     }
   } else {
-    if (actual === null) {
-      fails.push({ test, reason: 'estree cannot parse' });
-    } else {
-      const diffs = microdiff(actual, expected);
-      if (diffs.length === 0) {
-        // passed
-      } else {
-        fails.push({ test, reason: 'estree mismatch', diffs });
-      }
+    if (!equal(actual, expected)) {
+      fails.push({ test, reason: 'estree mismatch' });
+      continue;
     }
   }
+
+  // passed
 }
 
 spinner.stop();
@@ -233,4 +239,4 @@ console.log(
   `${count} tests: ${passed} passed, ` +
     `${skipped.length} skipped, ${fails.length} failed`);
 
-Deno.exit(fails.length > 0 ? 1 : 0);
+Deno.exit(fails.length === 0 ? 0 : 1);

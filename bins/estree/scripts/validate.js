@@ -2,11 +2,11 @@
 
 import * as path from 'https://deno.land/std@0.209.0/path/mod.ts';
 
+import deepDiff from 'npm:deep-diff@1.0.2';
 import ora from 'npm:ora@7.0.1';
-import microdiff from 'https://deno.land/x/microdiff@v1.3.2/index.ts';
 
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
-import { Acorn, ESTree, showDiffs } from './test262_helper.js';
+import { Acorn, ESTree, showDiffs } from './helpers.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
@@ -18,12 +18,9 @@ Usage:
 Options:
   --progress
     Show progress.
-
-  --module
-    Parse as a module.
 `.trim();
 
-const { cmds, options, args } = await parseCommand({
+const { options, args } = await parseCommand({
   doc: DOC,
 });
 
@@ -39,21 +36,40 @@ if (options.progress) {
   spinner.start();
 }
 
-spinner.text = 'Reading source from STDIN...'
+spinner.text = 'loading source from STDIN...';
 const source = await readAllText(Deno.stdin);
-const sourceType = options.module ? 'module' : 'script';
 
-spinner.text = 'Parsing with acorn...'
-const expected = Acorn.parse(source, sourceType);
+let sourceType, expected;
+for (sourceType of ['script', 'module']) {
+  spinner.text = 'parsing as ${sourceType}...';
+  expected = Acorn.parse(source, sourceType);
+  if (expected !== null) {
+    break;
+  }
+}
+if (expected === null) {
+  sourceType = 'script';
+}
 
-spinner.text = 'Parsing with estree...'
+spinner.text = 'estree...';
 const actual = await ESTree.parse(source, sourceType, options);
+if (actual === null && expected !== null) {
+  spinner.fail(`estree fails parsing ${sourceType}`);
+  Deno.exit(1);
+}
+if (actual !== null && expected === null) {
+  spinner.fail(`estree should fail parsing ${sourceType}`);
+  Deno.exit(1);
+}
 
-spinner.text = 'Comparing ESTrees...'
-const diffs = microdiff(actual, expected);
+spinner.text = 'comparing...';
+const diffs = deepDiff(actual, expected);
 
 spinner.stop();
 
-showDiffs(diffs);
+if (diffs) {
+  showDiffs(diffs);
+  Deno.exit(1);
+}
 
-Deno.exit(diffs.length === 0 ? 0 : 1);
+Deno.exit(0);
