@@ -1032,10 +1032,10 @@ impl Node {
                 Err(format!("Early errors: PrimaryExpression"))
             }
             Self::CpeaaplRest(ref rest) => Self::into_expression(rest.clone()),
-            Node::ObjectExpression(ref expr) => Self::to_object_expression(expr),
-            Node::ArrayExpression(ref expr) => Self::to_array_expression(expr),
-            Node::Property(ref property) => Self::to_property(property),
-            Node::SpreadElement(ref expr) => Self::to_spread_element(expr),
+            Self::ObjectExpression(ref expr) => Self::to_object_expression(expr),
+            Self::ArrayExpression(ref expr) => Self::to_array_expression(expr),
+            Self::Property(ref property) => Self::to_property(property),
+            Self::SpreadElement(ref expr) => Self::to_spread_element(expr),
             Self::SequenceExpression(ref seq) => {
                 let expressions = seq
                     .expressions

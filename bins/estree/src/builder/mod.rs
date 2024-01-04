@@ -2292,6 +2292,7 @@ impl Builder {
         let (_, end) = self.check("]");
         let (expr, ..) = self.pop_node();
         let (start, _) = self.check("[");
+        let expr = node!(into_expression; expr)?;
         let node = node!(computed_property_name; expr);
         self.push_node(node, start, end);
         Ok(())
