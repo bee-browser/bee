@@ -1039,6 +1039,7 @@ impl Builder {
 
     fn class_element_name_private(&mut self) -> Result<(), String> {
         let (name, start, end) = self.pop_token();
+        let name = name[1..].to_owned(); // remove '#'
         let node = node!(private_identifier@start..end; name);
         self.push_node(node, start, end);
         Ok(())
@@ -1442,6 +1443,7 @@ impl Builder {
         self.check(".");
         let (object, start, _) = self.pop_node();
         let object = node!(into_expression; object)?;
+        let name = name[1..].to_owned(); // remove '#'
         let property = node!(private_identifier@id_start..end; name);
         let node = node!(member_expression@start..end; object, property, false);
         self.push_node(node, start, end);
@@ -1558,6 +1560,7 @@ impl Builder {
         let (right, _, end) = self.pop_node();
         let (operator, ..) = self.pop_token();
         let (name, start, id_end) = self.pop_token();
+        let name = name[1..].to_owned(); // remove '#'
         let left = node!(private_identifier@start..id_end; name);
         let right = node!(into_expression; right)?; // may be CPEAAPL
         let node = node!(binary_expression@start..end; operator, left, right);
@@ -2055,6 +2058,7 @@ impl Builder {
     fn optional_private_identifier(&mut self) -> Result<(), String> {
         let (name, name_start, end) = self.pop_token();
         let (start, _) = self.check("?.");
+        let name = name[1..].to_owned(); // remove '#'
         let id = node!(private_identifier@name_start..end; name);
         let node = node!(optional_member@end; id, false);
         self.push_list(vec![node], start, end);
@@ -2104,6 +2108,7 @@ impl Builder {
         let (name, name_start, end) = self.pop_token();
         self.check(".");
         let (mut list, start, ..) = self.pop_list();
+        let name = name[1..].to_owned(); // remove '#'
         let id = node!(private_identifier@name_start..end; name);
         let node = node!(optional_member@end; id, false);
         list.push(node);
