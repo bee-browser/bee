@@ -1,7 +1,8 @@
 'use strict';
 
 import { assertNotEquals } from "https://deno.land/std@0.209.0/assert/mod.ts";
-import { TextLineStream, toTransformStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
+import { JsonParseStream } from "https://deno.land/std@0.209.0/json/mod.ts";
+import { TextLineStream } from 'https://deno.land/std@0.209.0/streams/mod.ts';
 
 import * as acorn from 'npm:acorn@8.11.2';
 
@@ -104,11 +105,7 @@ export class ESTree {
     this.lines_ = this.child_.stdout
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(new TextLineStream())
-      .pipeThrough(toTransformStream(async function* (lines) {
-        for await (const line of lines) {
-          yield JSON.parse(line);
-        }
-      }));
+      .pipeThrough(new JsonParseStream());
     this.encoder_ = new TextEncoder();
   }
 
