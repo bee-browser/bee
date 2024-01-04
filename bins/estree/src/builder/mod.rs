@@ -1693,6 +1693,10 @@ impl Builder {
             _ => panic!(),
         };
         if name == "async" {
+            let params = params
+                .into_iter()
+                .map(|param| node!(into_pattern; param))
+                .collect::<Result<Vec<_>, _>>()?;
             let node = node!(async_arrow_function_expression@start..end; params, body);
             self.push_node(node, start, end);
             Ok(())
