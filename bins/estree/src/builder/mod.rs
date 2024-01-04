@@ -2306,7 +2306,7 @@ impl Builder {
     fn identifier(&mut self) -> Result<(), String> {
         let (name, start, end) = self.pop_token();
         // name may contain escaped character.
-        let name = literal_content_to_string(&name);
+        let name = literal_content_to_string(&name).unwrap();
         let node = node!(identifier@start..end; name);
         self.push_node(node, start, end);
         Ok(())

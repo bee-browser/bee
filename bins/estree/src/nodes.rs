@@ -4,7 +4,8 @@ use std::rc::Rc;
 use serde::Serialize;
 
 use jsparser::string_literal_to_string;
-use jsparser::template_literal_to_string;
+use jsparser::template_literal_to_cooked_string;
+use jsparser::template_literal_to_raw_string;
 use jsparser::Location;
 
 #[derive(Clone, Debug, Serialize)]
@@ -3221,15 +3222,15 @@ impl TemplateElement {
 
 #[derive(Debug, Serialize)]
 pub struct TemplateValue {
-    pub cooked: String,
+    pub cooked: Option<String>,
     pub raw: String,
 }
 
 impl TemplateValue {
     fn new(raw: &str) -> Self {
         Self {
-            cooked: template_literal_to_string(raw, false),
-            raw: template_literal_to_string(raw, true),
+            cooked: template_literal_to_cooked_string(raw),
+            raw: template_literal_to_raw_string(raw),
         }
     }
 }
