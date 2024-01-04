@@ -153,9 +153,13 @@ Many tests fails at the moment.  The `--details` option lists failed tests.
 
 ## TODO
 
-* Support BigInt
+* [x] Support BigInt
   * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt#use_within_json
-* Generate the `Builder` implementation from a definition of semantic actions
+* [ ] Handle early errors
+* [ ] tc39/test262
+* [ ] tc39/test262-parser-tests
+  * Test cases in `pass/` have been passed
+* [ ] Generate the `Builder` implementation from a definition of semantic actions
   * Currently, it's manually implemented
 
 ## Acknowledgments
