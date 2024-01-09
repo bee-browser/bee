@@ -69,7 +69,7 @@ static FILTERS: [Flags; targets::len()] = {
             Err(_) => panic!("invalid default filter: {flags}"),
         })
         .unwrap_or(Flags::empty());
-    build_filters(dbg!(default), &std::env::var("BEE_LOG").unwrap_or_default())
+    build_filters(default, &std::env::var("BEE_LOG").unwrap_or_default())
 };
 
 fn build_filters(default: Flags, filters: &str) -> [Flags; targets::len()] {
@@ -89,8 +89,6 @@ fn build_filters(default: Flags, filters: &str) -> [Flags; targets::len()] {
                 Op::Add => prev | flags,
                 Op::Remove => prev & !flags,
             });
-        dbg!(name);
-        dbg!(flags);
         data[i].write(flags);
     }
 
@@ -100,6 +98,8 @@ fn build_filters(default: Flags, filters: &str) -> [Flags; targets::len()] {
 fn load_filters<'a>(filters: &'a str) -> Vec<(&'a str, Op, Flags)> {
     filters
         .split(',')
+        .map(str::trim)
+        .filter(|filter| !filter.is_empty())
         .map(|filter| {
             let result = if let Some((target, flags)) = filter.split_once("+=") {
                 Flags::from_str(flags).map(|flags| (target, Op::Add, flags))
@@ -168,6 +168,125 @@ impl FromStr for Flags {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_load_filters_empty() {
+        assert_eq!(load_filters(""), vec![]);
+    }
+
+    #[test]
+    fn test_load_filters_no_target() {
+        assert_eq!(
+            load_filters("error|warn"),
+            vec![("", Op::Assign, Flags::ERROR | Flags::WARN)]
+        );
+    }
+
+    #[test]
+    fn test_load_filters_single_filter() {
+        assert_eq!(
+            load_filters("a=error|warn"),
+            vec![("a", Op::Assign, Flags::ERROR | Flags::WARN)]
+        );
+    }
+
+    #[test]
+    fn test_load_filters_multiple_filters() {
+        assert_eq!(
+            load_filters("a=error|warn,b=info|trace"),
+            vec![
+                ("a", Op::Assign, Flags::ERROR | Flags::WARN),
+                ("b", Op::Assign, Flags::INFO | Flags::TRACE)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_load_filters_last_comma() {
+        assert_eq!(
+            load_filters("a=error|warn,"),
+            vec![("a", Op::Assign, Flags::ERROR | Flags::WARN)]
+        );
+    }
+
+    #[test]
+    fn test_load_filters_add() {
+        assert_eq!(
+            load_filters("a+=error|warn"),
+            vec![("a", Op::Add, Flags::ERROR | Flags::WARN)]
+        );
+    }
+
+    #[test]
+    fn test_load_filters_remove() {
+        assert_eq!(
+            load_filters("a-=error|warn"),
+            vec![("a", Op::Remove, Flags::ERROR | Flags::WARN)]
+        );
+    }
+
+    #[test]
+    fn test_build_filters_default() {
+        let filters = build_filters(Flags::ERROR | Flags::WARN, "");
+        assert_eq!(filters[targets::TESTS.0], Flags::ERROR | Flags::WARN);
+    }
+
+    #[test]
+    fn test_build_filters_inherit() {
+        let filters = build_filters(Flags::empty(), "bee=error|warn");
+        assert_eq!(filters[targets::TESTS.0], Flags::ERROR | Flags::WARN);
+    }
+
+    #[test]
+    fn test_build_filters_assign() {
+        let filters = build_filters(Flags::ERROR | Flags::WARN, "bee::tests=info");
+        assert_eq!(filters[targets::TESTS.0], Flags::INFO);
+    }
+
+    #[test]
+    fn test_build_filters_add() {
+        let filters = build_filters(Flags::ERROR | Flags::WARN, "bee::tests+=info");
+        assert_eq!(
+            filters[targets::TESTS.0],
+            Flags::ERROR | Flags::WARN | Flags::INFO
+        );
+    }
+
+    #[test]
+    fn test_build_filters_remove() {
+        let filters = build_filters(Flags::ERROR | Flags::WARN, "bee::tests-=warn");
+        assert_eq!(filters[targets::TESTS.0], Flags::ERROR);
+    }
+
+    #[test]
+    fn test_build_filters_others() {
+        let filters = build_filters(Flags::ERROR | Flags::WARN, "bee::x=info");
+        assert_eq!(filters[targets::TESTS.0], Flags::ERROR | Flags::WARN);
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid filter: invalid")]
+    fn test_load_filters_invalid() {
+        load_filters("invalid");
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid filter: a+=invalid")]
+    fn test_load_filters_invalid_add() {
+        load_filters("a+=invalid");
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid filter: a-=invalid")]
+    fn test_load_filters_invalid_remove() {
+        load_filters("a-=invalid");
+    }
+
+    #[test]
+    #[should_panic(expected = "invalid filter: a=invalid")]
+    fn test_load_filters_invalid_assign() {
+        load_filters("a=invalid");
+    }
 
     #[test]
     fn test_flags_parse_empty() {

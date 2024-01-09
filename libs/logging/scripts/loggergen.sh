@@ -8,7 +8,11 @@ deno run -q --allow-read=$PROJ_DIR $BASE_DIR/targets.js | \
   jq -c '.targets[]' | \
   while read -r JSON
   do
-    LOGGER_RS=$(echo "$JSON" | jq -r '.loggerPath')
+    LOGGER_RS=$(echo "$JSON" | jq -r 'select(.loggerPath != null) | .loggerPath')
+    if [ -z "$LOGGER_RS" ]
+    then
+      continue
+    fi
     echo "$JSON" | \
       deno run -q \
         --allow-read=$BASE_DIR/logger.rs.hbs \

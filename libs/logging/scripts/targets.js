@@ -37,4 +37,10 @@ for await (const entry of fs.walk(PROJ_DIR, { match: patterns })) {
   }
 }
 
+targets.push({
+  name: 'bee::tests',
+  symbol: 'TESTS',
+  loggerPath: null,
+});
+
 console.log(JSON.stringify({ targets }));

@@ -14,19 +14,23 @@ pub const JSPARSER_LEXER: Target = Target(1);
 /// The target ID for `bee::jsparser::parser`.
 pub const JSPARSER_PARSER: Target = Target(2);
 
+/// The target ID for `bee::tests`.
+pub const TESTS: Target = Target(3);
+
 // Use `const fn len()` instead of `const LEN` in order to avoid conflicts between target symbols.
 // The `len` package might be created in the future.
 #[inline(always)]
 pub const fn len() -> usize {
-    3
+    4
 }
 
 #[inline(always)]
 pub const fn name(id: usize) -> &'static str {
-    const NAMES: [&'static str; 3] = [
+    const NAMES: [&'static str; 4] = [
         "bee::estree",
         "bee::jsparser::lexer",
         "bee::jsparser::parser",
+        "bee::tests",
     ];
     NAMES[id]
 }
@@ -51,5 +55,11 @@ mod tests {
     fn test_jsparser_parser() {
         const NAME: &'static str = JSPARSER_PARSER.name();
         assert_eq!(NAME, "bee::jsparser::parser");
+    }
+
+    #[test]
+    fn test_tests() {
+        const NAME: &'static str = TESTS.name();
+        assert_eq!(NAME, "bee::tests");
     }
 }
