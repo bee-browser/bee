@@ -1,0 +1,17 @@
+[package]
+name = "logging"
+version = "0.0.0"
+edition = "2021"
+authors = ["Bee project contributors"]
+publish = false
+
+[dependencies]
+bitflags = "2.4.1"
+chrono = { version = "0.4.31", default-features = false, features = ["clock"] }
+ctor = "0.2.6"
+is-terminal = "0.4.10"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
+
+[dev-dependencies]
+static_assertions = "1.1.0"

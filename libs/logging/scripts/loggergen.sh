@@ -1,0 +1,21 @@
+set -eu -o pipefail
+
+BASE_DIR=$(cd $(dirname $0); pwd)
+PROJ_DIR=$(cd $BASE_DIR/../../..; pwd)
+TOOLS_BIN=$PROJ_DIR/tools/bin
+
+deno run -q --allow-read=$PROJ_DIR $BASE_DIR/targets.js | \
+  jq -c '.targets[]' | \
+  while read -r JSON
+  do
+    LOGGER_RS=$(echo "$JSON" | jq -r '.loggerPath')
+    echo "$JSON" | \
+      deno run -q \
+        --allow-read=$BASE_DIR/logger.rs.hbs \
+        $TOOLS_BIN/codegen.js --input-stdin --no-escape $BASE_DIR/logger.rs.hbs | \
+      rustfmt --emit=stdout | \
+      deno run -q \
+        --allow-read=$LOGGER_RS \
+        --allow-write=$LOGGER_RS \
+        $TOOLS_BIN/update_file.js $LOGGER_RS
+  done

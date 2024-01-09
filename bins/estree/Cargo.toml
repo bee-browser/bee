@@ -11,9 +11,8 @@ assert-json-diff = "2.0.2"
 clap = { version = "4.4.14", features = ["env", "derive", "wrap_help"] }
 jsparser = { path = "../../libs/jsparser", features = ["location"] }
 serde = { version = "1.0.195", features = ["derive", "rc"] }
+logging = { path = "../../libs/logging" }
 serde_json = { version = "1.0.111", features = ["preserve_order"] }
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 
 [dev-dependencies]
 anyhow = "1.0.79"

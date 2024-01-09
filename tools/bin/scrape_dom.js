@@ -5,7 +5,7 @@ import * as base64 from 'https://deno.land/x/base64@v0.2.1/mod.ts';
 import { parseCommand } from '../lib/cli.js';
 import * as chrome_devtools from '../lib/chrome_devtools.js';
 
-const PROGNAME = path.basename(Deno.mainModule);
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
 const DOC = `
 Scrape a DOM tree and resources from a web page using Puppeteer.

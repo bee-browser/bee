@@ -1,4 +1,5 @@
 mod builder;
+mod logger;
 mod nodes;
 
 use std::io::BufRead;
@@ -13,7 +14,6 @@ use clap::Subcommand;
 use clap::ValueEnum;
 use serde::Deserialize;
 use serde::Serialize;
-use tracing_subscriber::filter::EnvFilter;
 
 use jsparser::Error;
 use jsparser::Parser;
@@ -68,21 +68,7 @@ enum Command {
 fn main() -> Result<()> {
     let cl = CommandLine::parse();
 
-    match cl.log_format {
-        LogFormat::Text => {
-            tracing_subscriber::fmt()
-                .with_writer(std::io::stderr)
-                .with_env_filter(EnvFilter::from_default_env())
-                .init();
-        }
-        LogFormat::Json => {
-            tracing_subscriber::fmt()
-                .json()
-                .with_writer(std::io::stderr)
-                .with_env_filter(EnvFilter::from_default_env())
-                .init();
-        }
-    }
+    logging::init();
 
     match cl.command {
         Command::Parse {
@@ -135,7 +121,7 @@ fn serve() -> Result<()> {
                 let req: Request = match serde_json::from_str(&line) {
                     Ok(req) => req,
                     Err(err) => {
-                        tracing::error!(%err, "Failed to parse JSON");
+                        logger::error!(%err, "Failed to parse JSON");
                         continue;
                     }
                 };

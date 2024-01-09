@@ -1,12 +1,10 @@
-#!/usr/bin/env -S deno run -q -A --unstable
-
 'use strict';
 
 import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
 import { parseCommand, runCommand } from '../lib/cli.js';
 import * as webui from '../lib/webui.js';
 
-const PROGNAME = path.basename(Deno.mainModule);
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));
 
 const DEFAULT_PORT = 3000;

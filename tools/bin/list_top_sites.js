@@ -1,5 +1,3 @@
-#!/usr/bin/env -S deno run -q -A --unstable
-
 'use strict';
 
 import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
@@ -7,7 +5,7 @@ import * as base64 from 'https://deno.land/x/base64@v0.2.1/mod.ts';
 import { parseCommand } from '../lib/cli.js';
 import * as top_sites from '../lib/top_sites.js';
 
-const PROGNAME = path.basename(Deno.mainModule);
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
 const DEFAULT_LIMIT = 100;
 
