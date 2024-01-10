@@ -1,3 +1,5 @@
+mod logger;
+
 use std::convert::Infallible;
 use std::error::Error;
 use std::net::SocketAddr;
@@ -19,7 +21,6 @@ use tower_http::services::ServeDir;
 use tower_http::services::ServeFile;
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::filter::EnvFilter;
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -35,10 +36,7 @@ struct CommandLine {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_writer(std::io::stderr)
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
+    logging::init();
 
     let cl = CommandLine::parse();
 
@@ -118,7 +116,7 @@ async fn serve(workdir: PathBuf, config: Config, data: Vec<(String, String)>) {
         ))
         .layer(TraceLayer::new_for_http());
 
-    tracing::info!("Listening on {}", addr);
+    logger::info!("Listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, router).await.unwrap();
 }
@@ -151,15 +149,15 @@ async fn logs(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let pid = child.id().unwrap();
     let stderr = child.stderr.take().unwrap();
     let stream = async_stream::stream! {
-        tracing::info!(pid, "spawned");
+        logger::info!(pid, "spawned");
         yield Result::<_, Infallible>::Ok(Event::default().event("spawned").json_data(&pid).unwrap());
         let mut lines = BufReader::new(stderr).lines();
         while let Some(log) = lines.next_line().await.unwrap() {
-            tracing::debug!(pid, log);
+            logger::debug!(pid, log);
             yield Result::<_, Infallible>::Ok(Event::default().event("log").data(log));
         }
         yield Result::<_, Infallible>::Ok(Event::default().event("terminated").json_data(&pid).unwrap());
-        tracing::info!(pid, "terminated");
+        logger::info!(pid, "terminated");
     };
     Sse::new(stream).keep_alive(Default::default())
 }

@@ -3,10 +3,11 @@
 import * as fs from 'https://deno.land/std@0.210.0/fs/mod.ts';
 import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
-import Handlebars from 'npm:handlebars@4.7.8'
+import Handlebars from 'npm:handlebars@4.7.8';
 import { parseCommand, readAllText } from '../lib/cli.js';
+import { PROJ_DIR } from '../lib/consts.js';
 
-const PROGNAME = path.basename(Deno.mainModule);
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
 const DOC = `
 Generate a source file using a Handlebars template file and an input object.
@@ -51,6 +52,9 @@ Custom @data:
     The command that generated the source file.  The JSON string of the input object is not
     included if it's read from STDIN.
 
+  @template
+    Relatie path to the template file from the project root.
+
 Helpers:
   * json as JSON.stringify
   * padStart, padEnd
@@ -70,9 +74,9 @@ async function run(args, options) {
   const input = await loadJson(args.input, options);
   registerHelpers();
   if (options.deps) {
-    return await depsgen(src, input, options);
+    return await depsgen(src, input, args, options);
   }
-  await codegen(src, input, options);
+  await codegen(src, input, args, options);
 }
 
 function registerHelpers() {
@@ -136,7 +140,7 @@ function registerHelpers() {
   });
 }
 
-async function codegen(src, input, options) {
+async function codegen(src, input, args, options) {
   if (options.partialsDir) {
     await loadPartials(options.partialsDir, (name, path) => {
       let partial = null;
@@ -155,11 +159,12 @@ async function codegen(src, input, options) {
   console.log(template(input, {
     data: {
       command: `${PROGNAME} ${Deno.args.join(' ')}`,
+      template: path.relative(PROJ_DIR, args.template),
     },
   }).trim());
 }
 
-async function depsgen(src, input, options) {
+async function depsgen(src, input, args, options) {
   const deps = new Set();
   if (options.partialsDir) {
     await loadPartials(options.partialsDir, (name, path) => {
@@ -176,6 +181,7 @@ async function depsgen(src, input, options) {
   template(input, {
     data: {
       command: `${PROGNAME} ${Deno.args.join(' ')}`,
+      template: path.relative(PROJ_DIR, args.template),
     },
   });
   console.log(`${options.deps}: ${Array.from(deps).join(' ')}`);

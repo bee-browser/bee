@@ -1,6 +1,7 @@
 mod cursor;
 mod dfa;
 mod goals;
+mod logger;
 mod tokens;
 
 use bitflags::bitflags;
@@ -37,7 +38,7 @@ impl<'a> Lexer<'a> {
     /// Sets a goal symbol that the JavaScript lexer will recognize.
     #[inline(always)]
     pub fn set_goal(&mut self, goal: Goal) {
-        tracing::trace!(opcode = "set_goal", ?goal);
+        logger::trace!(opcode = "set_goal", ?goal);
         self.goal = goal;
     }
 
@@ -53,7 +54,7 @@ impl<'a> Lexer<'a> {
         match token.kind {
             TokenKind::Eof => {
                 if !self.cursor.eof() {
-                    tracing::error!("Invalid source");
+                    logger::error!("Invalid source");
                 }
             }
             _ => {
@@ -251,7 +252,8 @@ impl std::fmt::Display for Location {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_log::test;
+
+    logging::init!();
 
     macro_rules! loc {
         ($offset:expr, $line:expr, $column:expr) => {

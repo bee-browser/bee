@@ -1,18 +1,16 @@
-#!/usr/bin/env -S deno run -q -A --unstable
-
 'use strict';
 
 import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
-import Handlebars from 'npm:handlebars@4.7.8'
+import Handlebars from 'npm:handlebars@4.7.8';
 import { RESOURCES_DIR } from '../lib/consts.js';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { DOT_MATRIX_FONT } from '../resources/dot_matrix/font.js';
 
-const PROGNAME = path.basename(Deno.mainModule);
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
 const DEFAULT_BOX_SIZE = '10x10';
 const DEFAULT_COLOR = 'black';
-const DEFAULT_LAYOUT = 'absolute'
+const DEFAULT_LAYOUT = 'absolute';
 
 const TEMPLATE_FILE = path.join(RESOURCES_DIR, 'dot_matrix', 'main.html.hbs');
 

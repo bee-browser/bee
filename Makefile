@@ -13,6 +13,7 @@ CLEAN_TARGETS = $(addprefix clean-,\
 
 # The order must be determined by dependencies between packages.
 CODEGEN_TARGETS = $(addprefix codegen-,\
+  libs/logging \
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
@@ -101,6 +102,10 @@ coverage-html: | $(PROJDIR)/target/coverage
 
 .PHONE: codegen
 codegen: $(CODEGEN_TARGETS)
+
+.PHONY: loggergen
+loggergen:
+	@sh libs/logging/scripts/loggergen.sh
 
 .PHONY: update-deps
 update-deps: update-deps-crates update-deps-deno

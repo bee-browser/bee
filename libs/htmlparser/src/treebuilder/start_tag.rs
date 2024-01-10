@@ -4,7 +4,6 @@ impl<W> TreeBuilder<W>
 where
     W: DocumentWriter,
 {
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_start_tag(&mut self, tag: Tag<'_>) -> Control {
         self.ignore_lf = false;
         match LocalName::lookup(tag.name) {
@@ -28,7 +27,7 @@ where
             local_name @ tag!(svg: Svg) => self.handle_start_svg(&tag, local_name),
             tag!(mathml: Math) => self.handle_start_math(&tag),
             _ => loop {
-                tracing::debug!(mode = ?self.mode, ?tag);
+                logger::debug!(mode = ?self.mode, ?tag);
                 match self.handle_any_other_start_tag(&tag, Namespace::Html) {
                     Control::Reprocess => (),
                     ctrl => return ctrl,
@@ -39,7 +38,7 @@ where
 
     fn handle_start_html(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(BeforeHtml) => {
                     // TODO: Create an element for the token in the HTML namespace, with the Document as the intended parent.
@@ -80,7 +79,7 @@ where
 
     fn handle_start_head(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(BeforeHead) => {
                     // TODO: Insert an HTML element for the token.
@@ -114,7 +113,7 @@ where
 
     fn handle_start_title(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InHead, InBody) => {
                     return self.apply_generic_rcdata_element_rule(tag);
@@ -136,7 +135,7 @@ where
 
     fn handle_start_style(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InHead, InHeadNoscript, InBody, InTable, InTemplate) => {
                     return self.apply_generic_raw_text_element_rule(tag);
@@ -157,7 +156,7 @@ where
 
     fn handle_start_script(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InHead) => {
                     // In the "in head" insertion mode, the "appropriate place for
@@ -198,7 +197,7 @@ where
 
     fn handle_start_body(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(AfterHead) => {
                     // TODO: Insert an HTML element for the token.
@@ -224,7 +223,7 @@ where
 
     fn handle_start_b(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     if self.context.has_p_element_in_button_scope {
@@ -244,7 +243,7 @@ where
 
     fn handle_start_p(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     if self.context.has_p_element_in_button_scope {
@@ -264,7 +263,7 @@ where
 
     fn handle_start_pre(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: If the stack of open elements has a p element in button scope, then close a p element.
@@ -284,7 +283,7 @@ where
 
     fn handle_start_input(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: Reconstruct the active formatting elements, if any.
@@ -359,7 +358,7 @@ where
 
     fn handle_start_textarea(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: Insert an HTML element for the token.
@@ -396,7 +395,7 @@ where
 
     fn handle_start_table(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     if self.quirks_mode != QuirksMode::Quirks {
@@ -421,7 +420,7 @@ where
 
     fn handle_start_colgroup(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TOOD: Parse error.
@@ -473,7 +472,7 @@ where
 
     fn handle_start_tr(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TOOD: Parse error.
@@ -543,7 +542,7 @@ where
 
     fn handle_start_td(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InRow) => {
                     self.clear_stack_back_to_table_row_context();
@@ -610,7 +609,7 @@ where
 
     fn handle_start_plaintext(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: If the stack of open elements has a p element in button scope, then close a p element.
@@ -627,7 +626,7 @@ where
 
     fn handle_start_frameset(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(AfterHead) => {
                     // TODO: Insert an HTML element for the token.
@@ -667,7 +666,7 @@ where
 
     fn handle_start_math(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: Reconstruct the active formatting elements, if any.
@@ -691,7 +690,7 @@ where
 
     fn handle_start_svg(&mut self, tag: &Tag<'_>, local_name: LocalName) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: Reconstruct the active formatting elements, if any.

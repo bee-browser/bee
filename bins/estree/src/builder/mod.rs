@@ -52,6 +52,8 @@ use crate::nodes::Node;
 use crate::nodes::NodeRef;
 use actions::ACTIONS;
 
+use crate::logger;
+
 #[derive(Debug)]
 enum StackValue {
     Token(String),
@@ -2708,11 +2710,11 @@ impl SyntaxHandler for Builder {
     type Error = String;
 
     fn start(&mut self) {
-        tracing::debug!(op = "start");
+        logger::debug!(op = "start");
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
-        tracing::debug!(op = "accept");
+        logger::debug!(op = "accept");
         assert_eq!(self.stack.len(), 1);
         let (node, ..) = self.pop_node();
         // The program may have trailing whitespaces.
@@ -2723,7 +2725,7 @@ impl SyntaxHandler for Builder {
     fn shift<'a>(&mut self, token: &Token<'a>) -> Result<(), Self::Error> {
         let start = self.location.clone();
         let end = token.compute_end(&start);
-        tracing::debug!(
+        logger::debug!(
             op = "shift",
             ?token.kind,
             auto=token.inserted_automatically(),
@@ -2737,18 +2739,18 @@ impl SyntaxHandler for Builder {
     fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error> {
         match ACTIONS[rule.id() as usize] {
             Some((action, name)) => {
-                tracing::debug!(op = "reduce", action = name, %rule);
+                logger::debug!(op = "reduce", action = name, %rule);
                 action(self)
             }
             None => {
-                tracing::error!("No action defined for: {rule}");
+                logger::error!("No action defined for: {rule}");
                 Err(format!("No action defined for: {rule}"))
             }
         }
     }
 
     fn location(&mut self, location: &Location) {
-        tracing::debug!(op = "location", %location);
+        logger::debug!(op = "location", %location);
         self.location = location.clone();
     }
 }

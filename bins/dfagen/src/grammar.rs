@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 use crate::automaton::Nfa;
 use crate::automaton::StateId;
+use crate::logger;
 use crate::unicode::unicode_set;
 use crate::unicode::unicode_span;
 use crate::unicode::CodePoint;
@@ -57,7 +58,7 @@ pub fn trim(rules: &[Rule], tokens: &[String]) -> Vec<Rule> {
         .filter(|rule| {
             let contains = non_terminals.contains(rule.name.as_str());
             if !contains {
-                tracing::debug!(unused = %rule);
+                logger::debug!(unused = %rule);
             }
             contains
         })
@@ -85,7 +86,7 @@ impl<'a> Grammar<'a> {
 
         let mut builder = NfaBuilder::new(&self.rule_map);
         for token in tokens.iter() {
-            tracing::debug!(compile = token);
+            logger::debug!(compile = token);
             builder.add_token(token);
         }
         builder.build()

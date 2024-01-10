@@ -6,6 +6,7 @@
 use super::Error;
 use super::SourceCursor;
 use super::Token;
+use crate::lexer::logger;
 use crate::lexer::tokens::TokenKind;
 use crate::lexer::TokenFlags;
 
@@ -13,7 +14,7 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     let mut token = Token::default();
 
     let mut state = State::default();
-    tracing::trace!(opcode = "init", ?state);
+    logger::trace!(opcode = "init", ?state);
 
     let mut has_line_terminators = false;
     let mut lexeme_end = cursor.pos();
@@ -59,7 +60,7 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
                 }
             }
         }
-        tracing::trace!(opcode = "next", state = ?next, ?unicode_set, pos);
+        logger::trace!(opcode = "next", state = ?next, ?unicode_set, pos);
         if next.is_invalid() {
             if token.kind != TokenKind::Eof {
                 break;
@@ -84,7 +85,7 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
             if has_line_terminators {
                 token.flags |= TokenFlags::HAS_LINE_TERMINATORS;
             }
-            tracing::trace!(opcode = "accept", ?token.kind, token.lexeme);
+            logger::trace!(opcode = "accept", ?token.kind, token.lexeme);
         }
     }
 

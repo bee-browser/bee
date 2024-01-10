@@ -1,0 +1,3 @@
+targets:
+  - bee::jsparser::lexer
+  - bee::jsparser::parser

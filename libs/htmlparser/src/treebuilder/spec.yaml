@@ -209,7 +209,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html template element
-              self.active_formatting_element_list.clear_up_to_last_marker();
+              self.pop_active_formatting_elements_up_to_marker();
               self.pop_template_mode();
               self.reset_insertion_mode_appropriately();
               Control::Continue
@@ -746,7 +746,7 @@ modes:
                   self.pop_element();
               }
               self.pop_element(); // pop an html {{tag_name}} element
-              self.active_formatting_element_list.clear_up_to_last_marker();
+              self.pop_active_formatting_elements_up_to_marker();
           }
           Control::Continue
       - match: <table>
@@ -1756,13 +1756,13 @@ snippets:
   ignore-token:
     code: |
       // Ignore the token.
-      tracing::debug!("Ignore the token");
+      logger::debug!("Ignore the token");
       Control::Continue
   parse-error:
     if: enable-parse-error
     code: |
       // TODO: Parse error.
-      tracing::debug!("Parse error");
+      logger::debug!("Parse error");
   acknowledge-self-closing:
     if: enable-parse-error
     code: |

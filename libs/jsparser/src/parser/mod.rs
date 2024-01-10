@@ -1,4 +1,5 @@
 mod lalr;
+mod logger;
 
 pub use lalr::GoalSymbol;
 pub use lalr::ProductionRule;
@@ -66,7 +67,7 @@ where
         self.push_block_context();
         let mut token = self.next_token()?;
         let mut auto_semicolon_inserted = false;
-        tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
+        logger::trace!(opcode = "token", ?token.kind, token.lexeme);
         loop {
             match self.handle_token(&token) {
                 ParserResult::Accept(artifact) => return Ok(artifact),
@@ -75,7 +76,7 @@ where
                     auto_semicolon_inserted = false;
                     self.consume_token(token);
                     token = self.next_token()?;
-                    tracing::trace!(opcode = "token", ?token.kind, token.lexeme);
+                    logger::trace!(opcode = "token", ?token.kind, token.lexeme);
                 }
                 ParserResult::SyntaxError => return Err(Error::SyntaxError),
                 ParserResult::Error
@@ -140,7 +141,7 @@ where
                 true
             }
         };
-        tracing::trace!(opcode = "consume", new_line = self.new_line, ?token.kind);
+        logger::trace!(opcode = "consume", new_line = self.new_line, ?token.kind);
         self.lexer.consume_token(token);
         if update_auto_semicolon_insertion_point {
             self.auto_semicolon_insertion_point = self.lexer.location().clone();
@@ -159,7 +160,7 @@ where
     }
 
     fn push_state(&mut self, state: State) {
-        tracing::trace!(
+        logger::trace!(
             opcode = "push-state",
             stack.pos = self.state_stack.len(),
             state.id = state.id(),
@@ -174,12 +175,12 @@ where
     fn pop_states(&mut self, n: usize) {
         // n may be zero.
         debug_assert!(n <= self.state_stack.len());
-        tracing::trace!(opcode = "pop-state", num_states = n);
+        logger::trace!(opcode = "pop-state", num_states = n);
         self.state_stack.truncate(self.state_stack.len() - n);
     }
 
     fn replace_state(&mut self, state: State) {
-        tracing::trace!(
+        logger::trace!(
             opcode = "replace-state",
             state.id = state.id(),
             state.label = state.label()
@@ -188,7 +189,7 @@ where
     }
 
     fn push_block_context(&mut self) {
-        tracing::trace!(opcode = "push-block-context");
+        logger::trace!(opcode = "push-block-context");
         self.block_stack.push(Default::default());
         let template_literal_depth = self.template_literal_depth();
         if self.max_template_literal_depth < template_literal_depth {
@@ -197,18 +198,18 @@ where
     }
 
     fn pop_block_context(&mut self) {
-        tracing::trace!(opcode = "pop-block-context");
+        logger::trace!(opcode = "pop-block-context");
         debug_assert_eq!(self.block_stack.last().unwrap().depth, 0);
         self.block_stack.pop();
     }
 
     fn push_block(&mut self) {
-        tracing::trace!(opcode = "push-block");
+        logger::trace!(opcode = "push-block");
         self.block_stack.last_mut().unwrap().depth += 1;
     }
 
     fn pop_block(&mut self) {
-        tracing::trace!(opcode = "pop-block");
+        logger::trace!(opcode = "pop-block");
         debug_assert!(self.block_stack.last().unwrap().depth > 0);
         self.block_stack.last_mut().unwrap().depth -= 1;
     }
@@ -222,7 +223,7 @@ where
         };
         let result = match self.state().action(token_for_grammar) {
             Action::Accept => {
-                tracing::trace!(opcode = "accept", ?token.kind);
+                logger::trace!(opcode = "accept", ?token.kind);
                 self.handler.location(self.lexer.location());
                 match self.handler.accept() {
                     Ok(artifact) => ParserResult::Accept(artifact),
@@ -230,7 +231,7 @@ where
                 }
             }
             Action::Shift(next) => {
-                tracing::trace!(opcode = "shift", ?token.kind);
+                logger::trace!(opcode = "shift", ?token.kind);
                 self.handler.location(self.lexer.location());
                 match self.handler.shift(token) {
                     Ok(_) => {
@@ -248,7 +249,7 @@ where
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
-                tracing::trace!(opcode = "reduce", %rule, ?token.kind);
+                logger::trace!(opcode = "reduce", %rule, ?token.kind);
                 self.handler.location(self.lexer.location());
                 match self.handler.reduce(rule) {
                     Ok(_) => {
@@ -266,12 +267,12 @@ where
                 }
             }
             Action::Replace(next) => {
-                tracing::trace!(opcode = "replace", ?token.kind);
+                logger::trace!(opcode = "replace", ?token.kind);
                 self.replace_state(next);
                 ParserResult::Reconsume
             }
             Action::Ignore => {
-                tracing::trace!(opcode = "ignore", ?token.kind);
+                logger::trace!(opcode = "ignore", ?token.kind);
                 ParserResult::NextToken
             }
             Action::Error => ParserResult::Error,
@@ -296,7 +297,7 @@ where
     fn auto_semicolon(&mut self) -> ParserResult<H::Artifact> {
         match self.state().action(&Token::AUTO_SEMICOLON) {
             Action::Accept => {
-                tracing::trace!(opcode = "accept", auto_semicolon = true);
+                logger::trace!(opcode = "accept", auto_semicolon = true);
                 self.handler.location(self.lexer.location());
                 match self.handler.accept() {
                     Ok(artifact) => ParserResult::Accept(artifact),
@@ -304,7 +305,7 @@ where
                 }
             }
             Action::Shift(next) => {
-                tracing::trace!(opcode = "shift", auto_semicolon = true);
+                logger::trace!(opcode = "shift", auto_semicolon = true);
                 if next.is_auto_semicolon_disallowed() {
                     ParserResult::Error
                 } else {
@@ -319,7 +320,7 @@ where
                 }
             }
             Action::Reduce(non_terminal, n, rule) => {
-                tracing::trace!(opcode = "reduce", %rule, auto_semicolon = true);
+                logger::trace!(opcode = "reduce", %rule, auto_semicolon = true);
                 self.handler.location(&self.auto_semicolon_insertion_point);
                 match self.handler.reduce(rule) {
                     Ok(_) => {
@@ -342,7 +343,7 @@ where
         let pos = self.lexer.pos();
         let src = self.lexer.src();
         let state = self.state();
-        tracing::error!(
+        logger::error!(
             pos,
             parsed = &src[pos.saturating_sub(10)..pos],
             remaianing = &src[pos..((pos + 10).min(src.len()))],
@@ -417,7 +418,6 @@ pub trait SyntaxHandler {
 mod tests {
     use super::*;
     use assert_matches::assert_matches;
-    use test_log::test;
 
     // TODO: use a mock.
     struct NullHandler;

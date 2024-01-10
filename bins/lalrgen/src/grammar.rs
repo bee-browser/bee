@@ -7,6 +7,7 @@ use itertools::Itertools;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::logger;
 use crate::phrase::MatchStatus;
 use crate::phrase::PhraseSet;
 
@@ -125,7 +126,7 @@ impl Grammar {
         // Report removed non-terminals.
         for non_terminal in self.non_terminals() {
             if !collected.contains(non_terminal) {
-                tracing::debug!(removed = %non_terminal);
+                logger::debug!(removed = %non_terminal);
             }
         }
 
@@ -146,7 +147,7 @@ impl Grammar {
                 })
                 .for_each(|non_terminal| {
                     if let None = self.non_terminals.get(non_terminal) {
-                        tracing::error!("{non_terminal} is not defined");
+                        logger::error!("{non_terminal} is not defined");
                         valid = false;
                     }
                 });
