@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 htmlparser = { path = "../htmlparser" }
-tracing = "0.1.40"
+logging = { path = "../logging" }
 
 [lib]
 bench = false

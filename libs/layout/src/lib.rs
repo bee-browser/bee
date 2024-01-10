@@ -1,6 +1,7 @@
 mod canvas;
 mod flex;
 mod flow;
+mod logger;
 mod spec;
 mod style;
 

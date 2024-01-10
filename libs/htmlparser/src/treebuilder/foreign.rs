@@ -43,9 +43,8 @@ where
         true
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_foreign(&mut self, token: Token<'_>) -> Control {
-        tracing::debug!(?token);
+        logger::debug!(?token);
         self.ignore_lf = false;
         match token {
             Token::Doctype(_) => {

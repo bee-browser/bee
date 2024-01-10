@@ -4,6 +4,8 @@ use std::fmt::Debug;
 
 use htmlparser::*;
 
+use crate::logger;
+
 pub struct Builder {
     nodes: Vec<Node>,
 }
@@ -74,12 +76,10 @@ impl Builder {
 impl DomTreeBuilder for Builder {
     type NodeId = usize;
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn get_document(&mut self) -> Self::NodeId {
         0
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn create_doctype(&mut self, doctype: &Doctype<'_>) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::DocumentType {
@@ -89,12 +89,11 @@ impl DomTreeBuilder for Builder {
             system_id: doctype.system_id.map(str::to_string),
             force_quirks: doctype.force_quirks,
         };
-        tracing::debug!(?node);
+        logger::debug!(?node);
         self.nodes.push(node);
         id
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn create_element(&mut self, name: &str, ns: Namespace) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::Element {
@@ -104,36 +103,33 @@ impl DomTreeBuilder for Builder {
             child_nodes: vec![],
             namespace: ns,
         };
-        tracing::debug!(?node);
+        logger::debug!(?node);
         self.nodes.push(node);
         id
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn create_text(&mut self, data: &str) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::Text {
             id,
             data: data.to_string(),
         };
-        tracing::debug!(?node);
+        logger::debug!(?node);
         self.nodes.push(node);
         id
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn create_comment(&mut self, data: &str) -> Self::NodeId {
         let id = self.nodes.len();
         let node = Node::Comment {
             id,
             data: data.to_string(),
         };
-        tracing::debug!(?node);
+        logger::debug!(?node);
         self.nodes.push(node);
         id
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn set_attributes<'b, I>(&mut self, node_id: Self::NodeId, attrs: I, overwrite: bool)
     where
         I: Iterator<Item = (&'b str, &'b str)>,
@@ -145,7 +141,7 @@ impl DomTreeBuilder for Builder {
         };
         if overwrite {
             for (name, value) in attrs {
-                tracing::debug!(node_id, attr.name = name, attr.value = value);
+                logger::debug!(node_id, attr.name = name, attr.value = value);
                 element_attrs.insert(name.to_string(), value.to_string());
             }
         } else {
@@ -153,13 +149,12 @@ impl DomTreeBuilder for Builder {
                 if element_attrs.contains_key(name) {
                     continue;
                 }
-                tracing::debug!(node_id, attr.name = name, attr.value = value);
+                logger::debug!(node_id, attr.name = name, attr.value = value);
                 element_attrs.insert(name.to_string(), value.to_string());
             }
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn clone_node(&mut self, node_id: Self::NodeId) -> Self::NodeId {
         debug_assert!(self.nodes.get(node_id).is_some());
         let id = self.nodes.len();
@@ -178,21 +173,19 @@ impl DomTreeBuilder for Builder {
             },
             _ => unreachable!(),
         };
-        tracing::debug!(node = ?self.nodes[node_id], clone = ?node);
+        logger::debug!(node = ?self.nodes[node_id], clone = ?node);
         self.nodes.push(node);
         id
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn append_child(&mut self, parent_id: Self::NodeId, node_id: Self::NodeId) {
         debug_assert!(self.nodes.get(parent_id).is_some());
         debug_assert!(self.nodes.get(node_id).is_some());
         let child_nodes = self.child_nodes_mut(parent_id);
         child_nodes.push(node_id);
-        tracing::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id]);
+        logger::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id]);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn insert_before(
         &mut self,
         parent_id: Self::NodeId,
@@ -209,27 +202,25 @@ impl DomTreeBuilder for Builder {
             .position(|&child_id| child_id == sibling_id)
             .unwrap();
         child_nodes.insert(pos, node_id);
-        tracing::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id], sibling = ?self.nodes[sibling_id]);
+        logger::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id], sibling = ?self.nodes[sibling_id]);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn remove_child(&mut self, parent_id: Self::NodeId, node_id: Self::NodeId) {
         debug_assert!(self.nodes.get(parent_id).is_some());
         debug_assert!(self.nodes.get(node_id).is_some());
         let child_nodes = self.child_nodes_mut(parent_id);
         debug_assert!(child_nodes.contains(&node_id));
         child_nodes.retain(|&child_id| child_id != node_id);
-        tracing::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id]);
+        logger::debug!(parent = ?self.nodes[parent_id], node = ?self.nodes[node_id]);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn move_child_nodes(&mut self, src_id: Self::NodeId, dst_id: Self::NodeId) {
         debug_assert!(self.nodes.get(src_id).is_some());
         debug_assert!(self.nodes.get(dst_id).is_some());
         let mut src_child_nodes = self.take_child_nodes(src_id);
         let dst_child_nodes = self.child_nodes_mut(dst_id);
         dst_child_nodes.append(&mut src_child_nodes);
-        tracing::debug!(src = ?self.nodes[src_id], dst = ?self.nodes[dst_id]);
+        logger::debug!(src = ?self.nodes[src_id], dst = ?self.nodes[dst_id]);
     }
 
     fn end(&mut self) {}

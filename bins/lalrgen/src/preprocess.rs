@@ -8,6 +8,7 @@ use crate::grammar::Lookahead;
 use crate::grammar::NonTerminal;
 use crate::grammar::Rule;
 use crate::grammar::Term;
+use crate::logger;
 use crate::phrase::MatchStatus;
 
 /// Preprocesses a grammar.
@@ -21,7 +22,6 @@ pub fn preprocess(grammar: &Grammar) -> Grammar {
     preprocess_lookaheads(&grammar)
 }
 
-#[tracing::instrument(level = "debug", skip_all)]
 fn preprocess_lookaheads(grammar: &Grammar) -> Grammar {
     let mut variant_table = VariantNameTable::new();
     match preprocess_non_tail_lookaheads(grammar, &mut variant_table) {
@@ -30,7 +30,6 @@ fn preprocess_lookaheads(grammar: &Grammar) -> Grammar {
     }
 }
 
-#[tracing::instrument(level = "trace", skip_all)]
 fn preprocess_non_tail_lookaheads(
     grammar: &Grammar,
     variant_table: &mut VariantNameTable,
@@ -70,7 +69,7 @@ fn preprocess_non_tail_lookaheads(
         }
         remaining.extend(preprocessor.variant_rules.iter().cloned());
         if preprocessor.is_invalid() {
-            tracing::trace!(invalidated = %rule);
+            logger::trace!(invalidated = %rule);
             continue;
         }
 
@@ -81,12 +80,12 @@ fn preprocess_non_tail_lookaheads(
             name: rule.name.clone(),
             production: preprocessor.take_production(),
         });
-        tracing::trace!(%modified, original = %rule);
+        logger::trace!(%modified, original = %rule);
         original_rules.insert(modified.clone(), rule.clone());
         rules.push(modified);
     }
 
-    tracing::debug!(changed);
+    logger::debug!(changed);
     if changed {
         rules = remove_invalidated_rules(rules);
         PreprocessResult::Changed(Grammar::with_original_rules(rules, original_rules))
@@ -115,7 +114,7 @@ fn remove_invalidated_rules(mut rules: Vec<Arc<Rule>>) -> Vec<Arc<Rule>> {
             if valid {
                 new_rules.push(rule.clone());
             } else {
-                tracing::trace!(invalidated = %rule);
+                logger::trace!(invalidated = %rule);
             }
         }
         if new_rules.len() == rules.len() {
@@ -155,28 +154,28 @@ impl<'g, 't, 'u> LookaheadPreprocessor<'g, 't, 'u> {
         }
     }
 
-    #[tracing::instrument(level = "trace", skip_all, fields(%non_terminal, %term))]
     fn preprocess(&mut self, non_terminal: &NonTerminal, term: &Term) -> bool {
         match (term, self.lookahead.take()) {
-            (Term::NonTerminal(non_terminal), Some(lookahead)) => {
-                tracing::trace!(%non_terminal, %lookahead);
+            (Term::NonTerminal(next_non_terminal), Some(lookahead)) => {
+                logger::trace!(%non_terminal, %term, %lookahead);
                 let variant_name = self
                     .table
                     .map
-                    .entry((non_terminal.clone(), lookahead.clone()))
+                    .entry((next_non_terminal.clone(), lookahead.clone()))
                     .or_insert_with(|| {
-                        let variant_name = non_terminal.with_variant(self.table.next_variant_id);
+                        let variant_name =
+                            next_non_terminal.with_variant(self.table.next_variant_id);
                         self.table.next_variant_id += 1;
 
                         // Add variant rules.
-                        for rule in self.grammar.non_terminal_rules(non_terminal) {
+                        for rule in self.grammar.non_terminal_rules(next_non_terminal) {
                             let mut variant_production = vec![Term::Lookahead(lookahead.clone())];
                             variant_production.extend(rule.production.iter().cloned());
                             let variant = Arc::new(Rule {
                                 name: variant_name.clone(),
                                 production: variant_production,
                             });
-                            tracing::trace!(%variant, original = %rule);
+                            logger::trace!(%variant, original = %rule);
                             self.original_rules.insert(variant.clone(), rule.clone());
                             self.variant_rules.push(variant);
                         }
@@ -189,17 +188,17 @@ impl<'g, 't, 'u> LookaheadPreprocessor<'g, 't, 'u> {
             }
             (term, Some(lookahead)) => match lookahead.process_token(&format!("{term}")) {
                 MatchStatus::Matched => {
-                    tracing::trace!("matched");
+                    logger::trace!(%non_terminal, %term, "matched");
                     self.production.push(term.clone());
                     true
                 }
                 MatchStatus::Unmatched => {
-                    tracing::trace!("unmatched");
+                    logger::trace!(%non_terminal, %term, "unmatched");
                     self.invalid_rule = true;
                     false
                 }
                 MatchStatus::Remaining(next_lookahead) => {
-                    tracing::trace!(%next_lookahead);
+                    logger::trace!(%non_terminal, %term, %next_lookahead);
                     self.production.push(term.clone());
                     self.lookahead = Some(next_lookahead);
                     true
@@ -208,7 +207,7 @@ impl<'g, 't, 'u> LookaheadPreprocessor<'g, 't, 'u> {
             (term, None) => {
                 match term {
                     Term::Lookahead(lookahead) => {
-                        tracing::trace!(%lookahead);
+                        logger::trace!(%non_terminal, %term, %lookahead);
                         self.lookahead = Some(lookahead.clone());
                     }
                     _ => {

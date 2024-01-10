@@ -27,18 +27,8 @@ use crate::nodes::NodeRef;
 /// Show the ESTree of a JavaScript program in JSON5.
 #[derive(clap::Parser)]
 pub struct CommandLine {
-    /// Logging format.
-    #[arg(long, value_enum, env = "BEE_LOG_FORMAT", default_value = "text")]
-    log_format: LogFormat,
-
     #[command(subcommand)]
     command: Command,
-}
-
-#[derive(Clone, Copy, ValueEnum)]
-enum LogFormat {
-    Text,
-    Json,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, ValueEnum)]
@@ -66,9 +56,9 @@ enum Command {
 }
 
 fn main() -> Result<()> {
-    let cl = CommandLine::parse();
-
     logging::init();
+
+    let cl = CommandLine::parse();
 
     match cl.command {
         Command::Parse {

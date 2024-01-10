@@ -6,7 +6,7 @@
 #[allow(unused_macros)]
 macro_rules! error {
     ($($tokens:tt)+) => {
-        logging::error!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::error!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 
@@ -14,49 +14,49 @@ macro_rules! error {
 #[allow(unused_macros)]
 macro_rules! warn_ {
     ($($tokens:tt)+) => {
-        logging::warn!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::warn!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! info {
     ($($tokens:tt)+) => {
-        logging::info!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::info!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug0 {
     ($($tokens:tt)+) => {
-        logging::debug0!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::debug0!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug1 {
     ($($tokens:tt)+) => {
-        logging::debug1!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::debug1!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug2 {
     ($($tokens:tt)+) => {
-        logging::debug2!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::debug2!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! trace {
     ($($tokens:tt)+) => {
-        logging::trace!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::trace!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! debug {
     ($($tokens:tt)+) => {
-        logging::debug!(target: logging::targets::JSPARSER_PARSER, $($tokens)+);
+        logging::debug!(logging::targets::JSPARSER_PARSER, $($tokens)+);
     };
 }
 

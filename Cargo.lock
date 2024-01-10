@@ -476,14 +476,12 @@ dependencies = [
  "base",
  "clap",
  "indexmap",
+ "logging",
  "maplit",
  "serde",
  "serde_json",
  "serde_yaml",
  "smallvec",
- "test-log",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -535,8 +533,6 @@ dependencies = [
  "logging",
  "serde",
  "serde_json",
- "test-log",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -671,12 +667,10 @@ dependencies = [
  "criterion",
  "flagset",
  "htmltokenizer",
+ "logging",
  "phf",
- "test-log",
  "thiserror",
  "toydom",
- "tracing",
- "tracing-subscriber",
  "unicase",
 ]
 
@@ -687,10 +681,10 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "bytes",
+ "logging",
  "serde",
  "serde_json",
  "thiserror",
- "tracing",
 ]
 
 [[package]]
@@ -920,9 +914,7 @@ dependencies = [
  "clap",
  "logging",
  "phf",
- "test-log",
  "thiserror",
- "tracing-subscriber",
  "unicode-id-start",
 ]
 
@@ -939,15 +931,13 @@ dependencies = [
  "im",
  "indexmap",
  "itertools 0.12.0",
+ "logging",
  "maplit",
  "pretty_assertions",
  "rayon",
  "serde",
  "serde_json",
  "serde_yaml",
- "test-log",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -958,11 +948,11 @@ dependencies = [
  "assert-json-diff",
  "assert_matches",
  "geometry",
+ "logging",
  "num-traits",
  "serde",
  "serde_json",
  "serde_yaml",
- "tracing",
 ]
 
 [[package]]
@@ -1026,6 +1016,7 @@ dependencies = [
  "chrono",
  "ctor",
  "is-terminal",
+ "paste",
  "static_assertions",
  "tracing",
  "tracing-subscriber",
@@ -1040,6 +1031,7 @@ dependencies = [
  "axum",
  "bytes",
  "clap",
+ "logging",
  "mime",
  "mustache",
  "open",
@@ -1050,8 +1042,6 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tower-http",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -1215,6 +1205,12 @@ dependencies = [
  "smallvec",
  "windows-targets 0.48.5",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
 name = "pathdiff"
@@ -1695,27 +1691,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-log"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6159ab4116165c99fc88cce31f99fa2c9dbe08d3691cb38da02fc3b45f357d2b"
-dependencies = [
- "test-log-macros",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "test-log-macros"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ba277e77219e9eea169e8508942db1bf5d8a41ff2db9b20aab5a5aadc9fa25d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "thiserror"
 version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1867,7 +1842,7 @@ name = "toydom"
 version = "0.0.0"
 dependencies = [
  "htmlparser",
- "tracing",
+ "logging",
 ]
 
 [[package]]

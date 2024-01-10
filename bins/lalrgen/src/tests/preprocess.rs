@@ -1,9 +1,10 @@
 //<coverage:exclude>
 use pretty_assertions::assert_eq;
-use test_log::test;
 
 use crate::grammar::Grammar;
 use crate::preprocess::preprocess;
+
+logging::init!();
 
 macro_rules! impl_test {
     ($test:ident, $grammar:literal, $expected:literal) => {

@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use num_traits::Zero;
-use tracing::warn;
 
 use crate::canvas::CanvasContainer;
 use crate::flex::FlexContainer;
+use crate::logger;
 use crate::spec::*;
 use crate::style::*;
 use crate::BoxBackground;
@@ -167,15 +167,15 @@ impl<'a> BlockFlowBuilder<'a> {
     }
 
     fn process_inline_element(&mut self, _element: &LayoutElement) {
-        warn!("TODO: not implemented");
+        logger::warn!("TODO: not implemented");
     }
 
     fn process_float_element(&mut self, _element: &LayoutElement) {
-        warn!("TODO: not implemented");
+        logger::warn!("TODO: not implemented");
     }
 
     fn process_text(&mut self, _text: &LayoutText) {
-        warn!("TODO: not implemented");
+        logger::warn!("TODO: not implemented");
     }
 
     fn build(self) -> Vec<BlockFlow> {

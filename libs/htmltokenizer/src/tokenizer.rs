@@ -3,6 +3,7 @@ use crate::error::Error;
 use crate::error::ErrorCode;
 use crate::inputstream::CodePoint;
 use crate::inputstream::InputStream;
+use crate::logger;
 use crate::token::AttrRange;
 use crate::token::TagRange;
 use crate::token::Token;
@@ -74,7 +75,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn clear_char_buffer(&mut self) {
-        tracing::trace!("Clear char_buffer");
+        logger::trace!("Clear char_buffer");
         self.char_buffer.clear();
     }
 
@@ -86,9 +87,8 @@ impl<'a> Tokenizer<'a> {
         self.input_stream.feed_end();
     }
 
-    #[tracing::instrument(level = "trace", skip_all)]
     pub fn set_initial_state(&mut self, state: InitialState) {
-        tracing::trace!(?state);
+        logger::trace!(?state);
         self.state = match state {
             InitialState::Data => State::Data,
             InitialState::Rcdata => State::Rcdata,
@@ -99,20 +99,18 @@ impl<'a> Tokenizer<'a> {
         };
     }
 
-    #[tracing::instrument(level = "trace", skip_all)]
     pub fn set_last_start_tag(&mut self, tag_name: &'a str) {
-        tracing::trace!(tag_name);
+        logger::trace!(tag_name);
         self.last_start_tag = Some(tag_name);
     }
 
-    #[tracing::instrument(level = "trace", skip_all)]
     pub fn set_in_html_namespace(&mut self, in_html_namespace: bool) {
-        tracing::trace!(in_html_namespace);
+        logger::trace!(in_html_namespace);
         self.in_html_namespace = in_html_namespace;
     }
 
     fn tokenize(&mut self) {
-        tracing::trace!(?self.state, "Tokenize");
+        logger::trace!(?self.state, "Tokenize");
         match self.state {
             State::Data => self.tokenize_data(),
             State::Rcdata => self.tokenize_rcdata(),
@@ -3570,7 +3568,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn emit(&mut self, token: TokenRange) {
-        tracing::trace!(?token, "Emit");
+        logger::trace!(?token, "Emit");
         self.tokens.push_back(token);
     }
 

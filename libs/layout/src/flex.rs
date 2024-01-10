@@ -1,7 +1,7 @@
 use num_traits::Zero;
-use tracing::warn;
 
 use crate::flow::FlowContainer;
+use crate::logger;
 use crate::style::*;
 use crate::BoxBackground;
 use crate::BoxConstraintSolver;
@@ -81,7 +81,7 @@ impl<'a> FlexLineBuilder<'a> {
     }
 
     fn process_text(&mut self, text: &LayoutText) {
-        warn!("TODO: not implemented: {}", text);
+        logger::warn!("TODO: not implemented: {}", text);
     }
 
     fn build(mut self) -> Vec<FlexLine> {
@@ -154,7 +154,7 @@ impl<'a> FlexLineBuilder<'a> {
     }
 
     fn reoder_items(items: &mut Vec<FlexItem>) {
-        warn!("TODO: reorder items: {}", items.len());
+        logger::warn!("TODO: reorder items: {}", items.len());
     }
 
     fn reverse_lines(&self, lines: &mut Vec<FlexLine>) {

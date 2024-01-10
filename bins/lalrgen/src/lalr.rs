@@ -13,6 +13,7 @@ use crate::firstset::FirstSet;
 use crate::grammar::Grammar;
 use crate::grammar::Symbol;
 use crate::grammar::Term;
+use crate::logger;
 use crate::lr::LrItem;
 use crate::phrase::macros::*;
 use crate::phrase::MatchStatus;
@@ -43,7 +44,7 @@ pub fn build_lookahead_tables(
 
     let mut iteration = 0;
     loop {
-        tracing::debug!(iteration, phase = "collect");
+        logger::debug!(iteration, phase = "collect");
         let mut operations = automaton
             .states
             .par_iter()
@@ -178,7 +179,7 @@ pub fn build_lookahead_tables(
             }
         }
 
-        tracing::debug!(iteration, phase = "collect", operations = operations.len());
+        logger::debug!(iteration, phase = "collect", operations = operations.len());
 
         // Collect operations for each state.
         let operations = operations.into_iter().fold(
@@ -190,7 +191,7 @@ pub fn build_lookahead_tables(
         );
 
         // Then edit the lookahead table for each state in parallel.
-        tracing::debug!(iteration, phase = "edit");
+        logger::debug!(iteration, phase = "edit");
         let changes = lookahead_tables
             .par_iter_mut()
             .enumerate()
@@ -203,7 +204,7 @@ pub fn build_lookahead_tables(
                 for op in ops.iter() {
                     let data = match op {
                         Operation::Propagate(data) => {
-                            tracing::trace!(
+                            logger::trace!(
                                 iteration,
                                 propagate = %data.lookahead_set,
                                 source.state = data.source_state.index(),
@@ -214,7 +215,7 @@ pub fn build_lookahead_tables(
                             data
                         }
                         Operation::Generate(data) => {
-                            tracing::trace!(
+                            logger::trace!(
                                 iteration,
                                 generate = %data.lookahead_set,
                                 source.state = data.source_state.index(),
@@ -271,7 +272,7 @@ pub fn build_lookahead_tables(
                 changes
             })
             .reduce(|| 0, |a, b| a + b);
-        tracing::debug!(iteration, phase = "edit", changes);
+        logger::debug!(iteration, phase = "edit", changes);
         if changes == 0 {
             break;
         }
@@ -319,12 +320,12 @@ pub fn build_lalr_states(
                             next_id: next_id.index(),
                         })
                     };
-                    tracing::trace!(state.id = i, token, %action);
+                    logger::trace!(state.id = i, token, %action);
                     actions.insert(token.clone(), action);
                 }
                 Symbol::NonTerminal(non_terminal) => {
                     assert!(!gotos.contains_key(non_terminal));
-                    tracing::trace!(state.id = i, %non_terminal, goto = next_id.index());
+                    logger::trace!(state.id = i, %non_terminal, goto = next_id.index());
                     gotos.insert(non_terminal.clone(), next_id.index());
                 }
             }
@@ -394,7 +395,7 @@ pub fn build_lalr_states(
                         rule: format!("{}", item.rule),
                     })
                 };
-                tracing::trace!(state.id = i, %token, %action);
+                logger::trace!(state.id = i, %token, %action);
                 actions.insert(token.clone(), action);
             }
         }

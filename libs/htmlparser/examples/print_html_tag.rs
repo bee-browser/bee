@@ -8,7 +8,7 @@ use toydom::ToyBuilder;
 use toydom::ToyNode;
 
 fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    logging::init();
 
     let mut html = String::new();
     std::io::stdin().read_to_string(&mut html)?;

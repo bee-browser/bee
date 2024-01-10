@@ -418,7 +418,6 @@ pub trait SyntaxHandler {
 mod tests {
     use super::*;
     use assert_matches::assert_matches;
-    use test_log::test;
 
     // TODO: use a mock.
     struct NullHandler;

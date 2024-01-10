@@ -252,7 +252,8 @@ impl std::fmt::Display for Location {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_log::test;
+
+    logging::init!();
 
     macro_rules! loc {
         ($offset:expr, $line:expr, $column:expr) => {

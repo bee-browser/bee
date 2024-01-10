@@ -20,6 +20,7 @@ use htmltokenizer::InitialState;
 
 use crate::localnames;
 use crate::localnames::LocalName;
+use crate::logger;
 
 /// A trait used for building a DOM tree.
 ///
@@ -147,13 +148,11 @@ where
         self.quirks_mode = quirks_mode;
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_scripting(&mut self, scripting: bool) {
         self.scripting = scripting;
-        tracing::debug!(scripting);
+        logger::debug!(scripting);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_context_element(
         &mut self,
         local_name: LocalName,
@@ -181,14 +180,14 @@ where
             tag!(Html) => mode!(BeforeHead),
             _ => mode!(InBody),
         };
-        tracing::debug!(?context_element);
+        logger::debug!(?context_element);
         self.push_html_html_element(&Tag::with_no_attrs("html"));
         self.context_mut().reset_mode = mode;
         if context_element.is_html_element(tag!(Template)) {
             self.push_template_mode(mode!(InTemplate));
         }
         self.switch_to(mode);
-        tracing::debug!(
+        logger::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
         );
@@ -232,7 +231,6 @@ where
         self.adjusted_context().is_html()
     }
 
-    #[tracing::instrument(level = "debug", skip(self))]
     pub fn handle_token(&mut self, token: Token<'_>) -> Control {
         if self.is_in_foreign_content(&token) {
             self.handle_foreign(token)
@@ -264,7 +262,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn handle_error(&mut self, _error: Error) -> Control {
         // Ignore the error.
         Control::Continue
@@ -272,43 +269,36 @@ where
 
     // helpers
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn switch_to(&mut self, mode: InsertionMode) {
-        tracing::debug!(old_mode = ?self.mode, new_mode = ?mode);
+        logger::debug!(old_mode = ?self.mode, new_mode = ?mode);
         self.mode = mode;
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn save_and_switch_to(&mut self, mode: InsertionMode) {
         self.original_mode = Some(self.mode);
         self.switch_to(mode);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn switch_to_original_mode(&mut self) {
         let mode = self.original_mode.take().unwrap();
         self.switch_to(mode);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn enable_foster_parenting(&mut self) {
         self.foster_parenting = true;
-        tracing::debug!(foster_parenting = true);
+        logger::debug!(foster_parenting = true);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn disable_foster_parenting(&mut self) {
         self.foster_parenting = false;
-        tracing::debug!(foster_parenting = false);
+        logger::debug!(foster_parenting = false);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn push_marker_to_active_formatting_contexts(&mut self) {
-        tracing::debug!(marker = ?self.context().open_element);
+        logger::debug!(marker = ?self.context().open_element);
         self.active_formatting_element_list.push_marker();
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn push_element_to_active_formatting_contexts(&mut self, tag: &Tag<'_>) {
         // The HTML5 specification requires comparing attributes, but we compare
         // hash values instead.  It works fine in the most cases.
@@ -320,7 +310,7 @@ where
         let attrs_hash = hasher.finish();
 
         let open_element = &self.context().open_element;
-        tracing::debug!(element = ?open_element);
+        logger::debug!(element = ?open_element);
         self.active_formatting_element_list.push_element(
             open_element.local_name,
             open_element.node,
@@ -328,7 +318,6 @@ where
         );
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn reconstruct_active_formatting_elements(&mut self) {
         if self.active_formatting_element_list.is_empty() {
             return;
@@ -380,28 +369,26 @@ where
         }
 
         self.inner.print_tree();
-        tracing::debug!(?self.active_formatting_element_list);
+        logger::debug!(?self.active_formatting_element_list);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn pop_active_formatting_elements_up_to_marker(&mut self) {
         self.active_formatting_element_list
             .clear_up_to_last_marker();
     }
 
     // A naive implementation of the adoption agency algorithm.
-    #[tracing::instrument(level = "debug", skip_all)]
     fn perform_adoption_agency_algorithm(&mut self, tag: &Tag<'_>) {
         self.append_text_if_exists();
 
         self.inner.print_tree();
-        tracing::debug!(?self.active_formatting_element_list);
+        logger::debug!(?self.active_formatting_element_list);
 
         const MAX_OUTER_ITERATIONS: usize = 8;
         const MAX_INNER_ITERATIONS: usize = 3;
 
         let subject = LocalName::lookup(tag.name);
-        tracing::debug!(?subject, "step#1");
+        logger::debug!(?subject, "step#1");
 
         // step#2
         let context = self.context();
@@ -411,7 +398,7 @@ where
                 .active_formatting_element_list
                 .find_element(context.open_element.node)
                 .is_none();
-        tracing::debug!(
+        logger::debug!(
             step2_cond,
             context.pos = self.context_stack.len() - 1,
             context.element = ?context.open_element,
@@ -438,7 +425,7 @@ where
             let element_hash = self
                 .active_formatting_element_list
                 .get_element_hash(list_pos);
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 element.list.pos = list_pos,
                 element.list.node = ?element,
@@ -451,19 +438,19 @@ where
                     // step#4.4
                     // TODO: Parse error.
                     self.active_formatting_element_list.remove(list_pos);
-                    tracing::debug!(outer_loop_counter, list_pos, "step#4.4");
+                    logger::debug!(outer_loop_counter, list_pos, "step#4.4");
                     break;
                 }
                 Err(true) => {
                     // not in scope
                     // step#4.5
                     // TODO: Parse error.
-                    tracing::debug!(outer_loop_counter, "step#4.5");
+                    logger::debug!(outer_loop_counter, "step#4.5");
                     break;
                 }
                 Ok(pos) => {
                     // step#4.6
-                    tracing::debug!(
+                    logger::debug!(
                         outer_loop_counter,
                         element.context.pos = pos,
                         element.context.element = ?self.context_stack[pos].open_element,
@@ -481,7 +468,7 @@ where
                 Some(pos) => pos,
                 None => {
                     //  step#4.8
-                    tracing::debug!(outer_loop_counter, stack_pos, "step#4.8");
+                    logger::debug!(outer_loop_counter, stack_pos, "step#4.8");
                     while self.context_stack.len() > stack_pos {
                         self.pop_element();
                     }
@@ -490,7 +477,7 @@ where
                 }
             };
             let furthest_block = self.context_stack[furthest_block_pos].open_element.node;
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 furthest_block.context.pos = furthest_block_pos,
                 furthest_block.context.element = ?self.context_stack[furthest_block_pos].open_element,
@@ -505,7 +492,7 @@ where
 
             // step#4.9
             let common_ancestor_stack_pos = stack_pos - 1;
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 common_ancestor.context.pos = common_ancestor_stack_pos,
                 common_ancestor.context.element = ?self.context_stack[common_ancestor_stack_pos].open_element,
@@ -514,12 +501,12 @@ where
 
             // step#4.10
             let mut bookmark = list_pos;
-            tracing::debug!(outer_loop_counter, bookmark, "step#4.10");
+            logger::debug!(outer_loop_counter, bookmark, "step#4.10");
 
             // step#4.11
             let mut node_stack_pos = furthest_block_pos;
             let mut last_node = furthest_block;
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 node.context.pos = node_stack_pos,
                 node.context.element = ?self.context_stack[node_stack_pos].open_element,
@@ -533,12 +520,12 @@ where
             loop {
                 // step#4.13.1
                 inner_loop_counter += 1;
-                tracing::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.1");
+                logger::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.1");
 
                 // step#4.13.2
                 node_stack_pos -= 1;
                 let node = self.context_stack[node_stack_pos].open_element.node;
-                tracing::debug!(
+                logger::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
                     node.context.pos = node_stack_pos,
@@ -548,13 +535,13 @@ where
 
                 // step#4.13.3
                 if node_stack_pos == stack_pos {
-                    tracing::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.3");
+                    logger::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.3");
                     break;
                 }
 
                 // step#4.13.4
                 let mut node_list_pos = self.active_formatting_element_list.find_element(node);
-                tracing::debug!(
+                logger::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
                     node.context.pos = node_stack_pos,
@@ -573,7 +560,7 @@ where
                 let node_list_pos = match node_list_pos {
                     Some(pos) => pos,
                     None => {
-                        tracing::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.5");
+                        logger::debug!(outer_loop_counter, inner_loop_counter, "step#4.13.5");
                         self.context_stack[node_stack_pos].flags |= flags!(Removed);
                         continue;
                     }
@@ -589,7 +576,7 @@ where
                     .set_element(node_list_pos, cloned);
                 self.context_stack[node_stack_pos].open_element.node = cloned;
                 let node = cloned;
-                tracing::debug!(
+                logger::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
                     node.context.pos = node_stack_pos,
@@ -601,7 +588,7 @@ where
                 // step#4.13.7
                 if last_node == furthest_block {
                     bookmark = node_list_pos + 1;
-                    tracing::debug!(
+                    logger::debug!(
                         outer_loop_counter,
                         inner_loop_counter,
                         bookmark,
@@ -610,7 +597,7 @@ where
                 }
 
                 // step#4.13.8
-                tracing::debug!(
+                logger::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
                     node.context.pos = node_stack_pos,
@@ -622,7 +609,7 @@ where
 
                 // step#4.13.9
                 last_node = node;
-                tracing::debug!(
+                logger::debug!(
                     outer_loop_counter,
                     inner_loop_counter,
                     ?last_node,
@@ -631,7 +618,7 @@ where
             }
 
             // step#4.14
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 ?last_node,
                 common_ancestor.context.pos = common_ancestor_stack_pos,
@@ -642,10 +629,10 @@ where
 
             // step#4.15
             let new_element = self.inner.clone_node(element);
-            tracing::debug!(outer_loop_counter, ?element, ?new_element, "step#4.15");
+            logger::debug!(outer_loop_counter, ?element, ?new_element, "step#4.15");
 
             // step#4.16
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 furthest_block.context.pos = furthest_block_pos,
                 furthest_block.context.element = ?self.context_stack[furthest_block_pos].open_element,
@@ -655,7 +642,7 @@ where
             self.inner.move_child_nodes(furthest_block, new_element);
 
             // step#4.17
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 furthest_block.context.pos = furthest_block_pos,
                 furthest_block.context.element = ?self.context_stack[furthest_block_pos].open_element,
@@ -665,7 +652,7 @@ where
             self.insert_node_with_context(new_element, furthest_block_pos);
 
             // step#4.18
-            tracing::debug!(
+            logger::debug!(
                 outer_loop_counter,
                 element.list.pos = list_pos,
                 bookmark,
@@ -680,7 +667,7 @@ where
             );
 
             // step#4.19
-            tracing::debug!(outer_loop_counter, stack_pos, "step#4.19");
+            logger::debug!(outer_loop_counter, stack_pos, "step#4.19");
             let mut context = self.context_stack[stack_pos].clone();
             context.open_element.node = new_element;
             context.reset_mode = self.context_stack[furthest_block_pos].reset_mode;
@@ -691,7 +678,7 @@ where
             self.context_stack.insert(furthest_block_pos + 1, context);
 
             self.inner.print_tree();
-            tracing::debug!(?self.active_formatting_element_list);
+            logger::debug!(?self.active_formatting_element_list);
         }
 
         self.context_stack
@@ -699,7 +686,7 @@ where
         self.active_formatting_element_list.clean();
 
         self.inner.print_tree();
-        tracing::debug!(?self.active_formatting_element_list);
+        logger::debug!(?self.active_formatting_element_list);
     }
 
     fn find_element_in_stack(&self, element: T::NodeId) -> Option<usize> {
@@ -763,10 +750,9 @@ where
             .map(|(i, _)| i)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn change_quirks_mode_if_changeable(&mut self, quirks_mode: QuirksMode) {
         if self.quirks_mode_changeable {
-            tracing::debug!(
+            logger::debug!(
                 old_quirks_mode = ?self.quirks_mode,
                 new_quirks_mode = ?quirks_mode
             );
@@ -774,7 +760,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn append_doctype(&mut self, doctype: &Doctype<'_>) {
         self.append_text_if_exists();
         let node = self.inner.create_doctype(doctype);
@@ -1597,9 +1582,8 @@ where
         context.element_in_select_scope.clear();
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn push_html_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
-        tracing::debug!(
+        logger::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
         );
@@ -1656,7 +1640,7 @@ where
         let mut context = self.context().clone();
         context.open_element = open_element;
         self.context_stack.push(context);
-        tracing::debug!(
+        logger::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
         );
@@ -1668,7 +1652,7 @@ where
 
     fn insert_node_with_context(&mut self, node: T::NodeId, stack_pos: usize) {
         let context = &self.context_stack[stack_pos];
-        tracing::debug!(
+        logger::debug!(
             context.pos = stack_pos,
             context.element = ?context.open_element,
         );
@@ -1705,7 +1689,6 @@ where
         localnames::svgattrs::adjust(name)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn push_mathml_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
         self.append_text_if_exists();
         let node = self.inner.create_element(tag.name, Namespace::MathMl);
@@ -1751,7 +1734,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn push_svg_element(&mut self, tag: &Tag<'_>, local_name: LocalName) {
         self.append_text_if_exists();
         let tag_name = match local_name {
@@ -1786,7 +1768,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn reopen_head_element(&mut self) {
         self.append_text_if_exists();
         debug_assert!(self.head_element.is_some());
@@ -1802,13 +1783,12 @@ where
             element_in_select_scope: Default::default(),
             flags: Default::default(),
         });
-        tracing::debug!(
+        logger::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
         );
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn close_head_element(&mut self) {
         debug_assert!(self.head_element.is_some());
         let node = self.head_element.expect("<head> must exists");
@@ -1816,7 +1796,6 @@ where
             .retain(|context| context.open_element.node != node);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn close_implied_tags(&mut self) {
         loop {
             match self.context().open_element.local_name {
@@ -1828,7 +1807,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn close_implied_tags_except_for(&mut self, local_name: LocalName) {
         loop {
             if self.context().open_element.local_name == local_name {
@@ -1843,7 +1821,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn close_all_implied_tags(&mut self) {
         loop {
             match self.context().open_element.local_name {
@@ -1858,7 +1835,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn close_p_element(&mut self) {
         const NAMES: &[LocalName] = &tags![Dd, Dt, Li, Optgroup, Option, Rb, Rp, Rt, Rtc];
         self.close_elements(NAMES);
@@ -1871,14 +1847,12 @@ where
         self.pop_element(); // pop a <p>
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn close_elements(&mut self, names: &[LocalName]) {
         while names.contains(&self.context().local_name()) {
             self.pop_element();
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn remove_element(&mut self) {
         self.append_text_if_exists();
         let node = self.context().open_element.node;
@@ -1887,42 +1861,36 @@ where
             .remove_child(self.context().open_element.node, node);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn pop_element(&mut self) {
         self.append_text_if_exists();
-        tracing::debug!(
+        logger::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
         );
         self.context_stack.pop();
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn append_text(&mut self, text: &str) {
         self.text.push_str(text);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn append_replacement_characters(&mut self, n: usize) {
         for _ in 0..n {
             self.text.push('\u{FFFD}');
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn insert_comment(&mut self, comment: &Comment<'_>) {
         self.append_text_if_exists();
         let node = self.inner.create_comment(comment.data);
         self.insert_node(node);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn end(&mut self) {
         self.append_text_if_exists();
         self.inner.end();
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn append_text_if_exists(&mut self) {
         if !self.text.is_empty() {
             let node = self.inner.create_text(self.text.as_str());
@@ -1931,21 +1899,18 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn push_template_mode(&mut self, mode: InsertionMode) {
         self.template_mode_stack.push(mode);
-        tracing::debug!(template_mode_stack.top = ?self.template_mode_stack.last());
+        logger::debug!(template_mode_stack.top = ?self.template_mode_stack.last());
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn pop_template_mode(&mut self) {
         self.template_mode_stack.pop();
-        tracing::debug!(template_mode_stack.top = ?self.template_mode_stack.last());
+        logger::debug!(template_mode_stack.top = ?self.template_mode_stack.last());
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn reset_insertion_mode_appropriately(&mut self) {
-        tracing::debug!(
+        logger::debug!(
             context.pos = self.context_stack.len() - 1,
             context.element = ?self.context().open_element,
         );
@@ -2589,9 +2554,8 @@ where
         self.0.len()
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn remove(&mut self, i: usize) {
-        tracing::debug!(index = i, item = ?self.0[i]);
+        logger::debug!(index = i, item = ?self.0[i]);
         self.0[i] = ActiveFormattingContext::Removed;
     }
 
@@ -2643,7 +2607,6 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn insert_element(&mut self, i: usize, local_name: LocalName, node: T, attrs_hash: u64) {
         self.0.insert(
             i,
@@ -2653,14 +2616,13 @@ where
                 node,
             },
         );
-        tracing::debug!(index = i, item = ?self.0[i]);
+        logger::debug!(index = i, item = ?self.0[i]);
     }
 
     fn push_marker(&mut self) {
         self.0.push(ActiveFormattingContext::Marker);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     fn push_element(&mut self, local_name: LocalName, node: T, attrs_hash: u64) {
         let mut count = 0;
         let mut first_pos = None;
@@ -2684,7 +2646,7 @@ where
             }
         }
         if let Some(pos) = first_pos {
-            tracing::debug!(removed = ?self.0[pos]);
+            logger::debug!(removed = ?self.0[pos]);
             self.0.remove(pos);
         }
         self.0.push(ActiveFormattingContext::Element {

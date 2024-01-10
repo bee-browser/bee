@@ -175,7 +175,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     fn print_tree(&self) {
         let mut v = vec![];
         self.flatten(0, 0, &mut v);
-        tracing::debug!("{:?}", v);
+        logging::debug!(logging::targets::TESTS, "{:?}", v);
     }
 }
 

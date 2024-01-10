@@ -4,8 +4,6 @@ use std::path::PathBuf;
 use anyhow::anyhow;
 use anyhow::Result;
 use clap::Parser as _;
-use clap::ValueEnum;
-use tracing_subscriber::filter::EnvFilter;
 
 use jsparser::Parser;
 use jsparser::ProductionRule;
@@ -20,39 +18,15 @@ struct CommandLine {
     #[arg(short, long)]
     module: bool,
 
-    /// Logging format.
-    #[arg(long, value_enum, env = "BEE_LOG_FORMAT", default_value = "text")]
-    log_format: LogFormat,
-
     /// A path to a JavaScript file.
     #[arg()]
     script_file: Option<PathBuf>,
 }
 
-#[derive(Clone, ValueEnum)]
-enum LogFormat {
-    Text,
-    Json,
-}
-
 fn main() -> Result<()> {
-    let cl = CommandLine::parse();
+    logging::init();
 
-    match cl.log_format {
-        LogFormat::Text => {
-            tracing_subscriber::fmt()
-                .with_writer(std::io::stderr)
-                .with_env_filter(EnvFilter::from_default_env())
-                .init();
-        }
-        LogFormat::Json => {
-            tracing_subscriber::fmt()
-                .json()
-                .with_writer(std::io::stderr)
-                .with_env_filter(EnvFilter::from_default_env())
-                .init();
-        }
-    }
+    let cl = CommandLine::parse();
 
     // The source text should be a UTF-8 character sequence, but invalid UTF-8 character may
     // appear.  So, we firstly read it as a byte sequence.
