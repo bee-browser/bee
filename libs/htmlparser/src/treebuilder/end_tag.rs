@@ -4,7 +4,6 @@ impl<W> TreeBuilder<W>
 where
     W: DocumentWriter,
 {
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn handle_end_tag(&mut self, tag: Tag<'_>) -> Control {
         self.ignore_lf = false;
         match LocalName::lookup(tag.name) {
@@ -16,7 +15,7 @@ where
             tag!(Colgroup) => self.handle_end_colgroup(&tag),
             tag!(Frameset) => self.handle_end_frameset(&tag),
             _ => loop {
-                tracing::debug!(mode = ?self.mode, ?tag);
+                logger::debug!(mode = ?self.mode, ?tag);
                 match self.handle_any_other_end_tag(&tag) {
                     Control::Reprocess => (),
                     ctrl => return ctrl,
@@ -27,7 +26,7 @@ where
 
     fn handle_end_html(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: If the stack of open elements does not have a body element in scope, this is a parse error; ignore the token.
@@ -45,7 +44,7 @@ where
 
     fn handle_end_head(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InHead) => {
                     // TODO: Pop the current node (which will be the head element) off the stack of open elements.
@@ -63,7 +62,7 @@ where
 
     fn handle_end_script(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(Text) => {
                     // TODO: If the active speculative HTML parser is null and the JavaScript execution context stack is empty, then perform a microtask checkpoint.
@@ -81,7 +80,7 @@ where
 
     fn handle_end_body(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     // TODO: If the stack of open elements does not have a body element in scope, this is a parse error; ignore the token.
@@ -100,7 +99,7 @@ where
 
     fn handle_end_p(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InBody) => {
                     if self.context.has_p_element_in_button_scope {
@@ -120,7 +119,7 @@ where
 
     fn handle_end_colgroup(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InTable, InCaption, InTableBody, InRow, InCell) => {
                     // TODO: Parse error.
@@ -150,7 +149,7 @@ where
 
     fn handle_end_frameset(&mut self, tag: &Tag<'_>) -> Control {
         loop {
-            tracing::debug!(mode = ?self.mode, ?tag);
+            logger::debug!(mode = ?self.mode, ?tag);
             match self.mode {
                 mode!(InFrameset) => {
                     // TODO: If the current node is the root html element, then this is a parse error; ignore the token. (fragment case)

@@ -2,6 +2,7 @@ use htmltokenizer::InitialState;
 use htmltokenizer::Tokenizer;
 
 use crate::localnames::LocalName;
+use crate::logger;
 use crate::treebuilder::Control;
 use crate::treebuilder::DomTreeBuilder;
 use crate::treebuilder::TreeBuilder;
@@ -27,30 +28,25 @@ where
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn feed_data(&mut self, data: &[u16]) {
-        tracing::debug!(data = String::from_utf16_lossy(data).escape_debug().to_string());
+        logger::debug!(data = String::from_utf16_lossy(data).escape_debug().to_string());
         self.tokenizer.feed_data(data);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn feed_end(&mut self) {
         self.tokenizer.feed_end();
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_quirks_mode(&mut self, quirks_mode: QuirksMode) {
         self.tree_builder.set_quirks_mode(quirks_mode);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_scripting(&mut self, scripting: bool) {
         self.tree_builder.set_scripting(scripting);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn set_context_element(&mut self, tag_name: &str, namespace: Namespace, node: T::NodeId) {
-        tracing::debug!(tag_name, ?namespace, ?node);
+        logger::debug!(tag_name, ?namespace, ?node);
         // TODO: The case-sensitivity of `tag_name` depends on the `namespace`.
         // TODO: `LocalName::lookup()` expects a lowercase tag name because the
         // HTML tokenizer converts all tag names to lowercase in the
@@ -73,7 +69,6 @@ where
             .set_context_element(local_name, namespace, node, tag_name);
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
     pub fn parse(&mut self) {
         loop {
             self.tokenizer

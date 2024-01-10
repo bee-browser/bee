@@ -2,6 +2,7 @@
 mod macros;
 
 mod localnames;
+mod logger;
 mod parser;
 mod treebuilder;
 

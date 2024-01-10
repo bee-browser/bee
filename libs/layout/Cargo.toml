@@ -11,10 +11,10 @@ service = ["geometry/serde", "serde", "serde_json"]
 [dependencies]
 anyhow = "1.0.79"
 geometry = { path = "../geometry" }
+logging = { path = "../logging" }
 num-traits = "0.2.17"
 serde = { version = "1.0.195", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1.0.111", optional = true }
-tracing = "0.1.40"
 
 [dev-dependencies]
 assert-json-diff = "2.0.2"

@@ -1,3 +1,5 @@
+use super::logger;
+
 #[derive(Clone)]
 pub struct SourceCursor<'a> {
     src: &'a str,
@@ -37,7 +39,7 @@ impl<'a> SourceCursor<'a> {
     #[inline(always)]
     pub fn advance(&mut self, n: usize) {
         self.pos += n;
-        tracing::trace!(opcode = "advance", cursor.pos = self.pos);
+        logger::trace!(opcode = "advance", cursor.pos = self.pos);
     }
 
     #[inline(always)]

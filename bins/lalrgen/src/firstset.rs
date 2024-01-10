@@ -4,6 +4,7 @@ use crate::grammar::Grammar;
 use crate::grammar::NonTerminal;
 use crate::grammar::Rule;
 use crate::grammar::Term;
+use crate::logger;
 use crate::phrase::macros::*;
 use crate::phrase::PhraseSet;
 
@@ -37,7 +38,7 @@ pub fn collect_first_set(grammar: &Grammar, max_tokens: usize) -> FirstSet {
             }
         }
 
-        tracing::debug!(iteration, num_changed);
+        logger::debug!(iteration, num_changed);
         if num_changed == 0 {
             break;
         }

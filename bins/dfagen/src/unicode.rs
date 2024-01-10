@@ -410,18 +410,22 @@ impl UnicodeSet {
         self.spans.is_empty() && !self.eof
     }
 
+    #[allow(dead_code)]
     pub fn spans(&self) -> &[UnicodeSpan] {
         self.spans.as_slice()
     }
 
+    #[allow(dead_code)]
     pub fn first_code_point(&self) -> Option<CodePoint> {
         self.spans.first().map(UnicodeSpan::first_code_point)
     }
 
+    #[allow(dead_code)]
     pub fn last_code_point(&self) -> Option<CodePoint> {
         self.spans.last().map(UnicodeSpan::last_code_point)
     }
 
+    #[allow(dead_code)]
     pub fn contains_eof(&self) -> bool {
         self.eof
     }
@@ -594,6 +598,7 @@ impl UnicodeSetsBuilder {
         Default::default()
     }
 
+    #[allow(dead_code)]
     pub fn contains(&self, unicode_set: &UnicodeSet) -> bool {
         self.sets.iter().any(|set| set == unicode_set)
     }
@@ -647,7 +652,8 @@ impl std::fmt::Display for UnicodeSetsBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_log::test;
+
+    logging::init!();
 
     #[test]
     fn test_code_point_get_char() {

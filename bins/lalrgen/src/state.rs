@@ -11,6 +11,7 @@ use crate::firstset::FirstSet;
 use crate::grammar::Grammar;
 use crate::grammar::Symbol;
 use crate::grammar::Term;
+use crate::logger;
 use crate::lr::LrItem;
 use crate::lr::LrItemSet;
 use crate::phrase::macros::*;
@@ -146,7 +147,7 @@ pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Automaton
         }
         processed.insert(state_id);
 
-        tracing::debug!(?state_id, remaining = remaining.len());
+        logger::debug!(?state_id, remaining = remaining.len());
 
         // Use BTreeMap instead of HashMap in order to reproduce the same order of states in the
         // resulting vector.  If HashMap is used, the order (i.e. state.id) will change randomly
@@ -177,7 +178,7 @@ pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Automaton
         for (symbol, items) in next_kernel_table.into_iter() {
             let item_set = context.compute_closure(&items, &cache);
             let next_id = builder.create_state(item_set);
-            tracing::trace!(transition = %symbol, from = %state_id, to = %next_id);
+            logger::trace!(transition = %symbol, from = %state_id, to = %next_id);
             builder
                 .state_mut(state_id)
                 .transitions
@@ -214,7 +215,7 @@ pub fn build_lr0_automaton(grammar: &Grammar, first_set: &FirstSet) -> Automaton
             };
             // A dead state will be created if the item set has no item.
             let next_id = builder.create_state(item_set);
-            tracing::trace!(transition = %symbol, from = %state_id, to = %next_id);
+            logger::trace!(transition = %symbol, from = %state_id, to = %next_id);
             builder
                 .state_mut(state_id)
                 .transitions
@@ -276,7 +277,7 @@ impl<'g> StateBuilder<'g> {
             None => {
                 let state_id = StateId(self.states.len());
                 self.item_set_map.insert(item_set.clone(), state_id);
-                tracing::trace!(created = %state_id, %internal_item_set);
+                logger::trace!(created = %state_id, %internal_item_set);
                 self.states
                     .push(State::new(state_id, item_set, internal_item_set));
                 state_id

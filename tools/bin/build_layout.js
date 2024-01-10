@@ -5,7 +5,7 @@ import { default as docopt } from 'https://deno.land/x/docopt@v1.0.7/mod.ts';
 import { parseCommand, readAllText } from '../lib/cli.js';
 import { LayoutBuilder } from '../lib/layout_builder.js';
 
-const PROGNAME = path.basename(Deno.mainModule);
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 const DIRNAME = path.dirname(path.fromFileUrl(import.meta.url));
 
 const DOC = `
