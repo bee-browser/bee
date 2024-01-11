@@ -7,3 +7,6 @@
 [submodule "vendor/tc39/test262-parser-tests"]
 	path = vendor/tc39/test262-parser-tests
 	url = https://github.com/tc39/test262-parser-tests.git
+[submodule "vendor/html5lib/html5lib-tests"]
+	path = vendor/html5lib/html5lib-tests
+	url = https://github.com/html5lib/html5lib-tests.git
