@@ -6,7 +6,7 @@ html5-spec:
   #
   url: https://html.spec.whatwg.org
   # Change the commit-hash if you update this file based on another version.
-  version: 1257236bd7b301d1510bafbc072519d6355cee3f
+  version: c598ff023f081dd3f03b2e43177a632fb7dc92ec
 
 # Manually converted definitions of tree construction rules.
 # Almost all rules are the same as ones defined in the HTML5 specification.
@@ -426,7 +426,7 @@ modes:
       - match: >-
           <address> <article> <aside> <blockquote> <center> <details> <dialog>
           <dir> <div> <dl> <fieldset> <figcaption> <figure> <footer> <header>
-          <hgroup> <main> <menu> <nav> <ol> <p> <section> <summary> <ul>
+          <hgroup> <main> <menu> <nav> <ol> <p> <search> <section> <summary> <ul>
         run: |
           if self.context().has_p_element_in_button_scope() {
               self.close_p_element();
@@ -565,7 +565,7 @@ modes:
           </address> </article> </aside> </blockquote> </button> </center>
           </details> </dialog> </dir> </div> </dl> </fieldset> </figcaption>
           </figure> </footer> </header> </hgroup> </listing> </main> </menu>
-          </nav> </ol> </pre> </section> </summary> </ul>
+          </nav> </ol> </pre> </search> </section> </summary> </ul>
         run: |
           if !self.context().has_{{tag_name}}_element_in_scope() {
               {{use '$parse-error'}}

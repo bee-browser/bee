@@ -1363,6 +1363,14 @@ where
     }
 
     #[inline(always)]
+    fn push_html_search_element(&mut self, tag: &Tag<'_>) {
+        self.push_html_element(tag, LocalName::Search);
+        let context = self.context_mut();
+        context.element_in_scope |= ElementInScope::Search;
+        context.element_in_select_scope.clear();
+    }
+
+    #[inline(always)]
     fn push_html_section_element(&mut self, tag: &Tag<'_>) {
         self.push_html_element(tag, LocalName::Section);
         let context = self.context_mut();
@@ -2246,6 +2254,12 @@ where
     }
 
     #[inline(always)]
+    fn has_search_element_in_scope(&self) -> bool {
+        debug_assert!(!self.is_removed());
+        self.element_in_scope.contains(ElementInScope::Search)
+    }
+
+    #[inline(always)]
     fn has_section_element_in_scope(&self) -> bool {
         debug_assert!(!self.is_removed());
         self.element_in_scope.contains(ElementInScope::Section)
@@ -2474,6 +2488,7 @@ flagset::flags! {
         Ol,
         Pre,
         Ruby,
+        Search,
         Section,
         Summary,
         Ul,
