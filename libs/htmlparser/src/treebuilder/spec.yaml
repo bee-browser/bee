@@ -6,7 +6,7 @@ html5-spec:
   #
   url: https://html.spec.whatwg.org
   # Change the commit-hash if you update this file based on another version.
-  version: c598ff023f081dd3f03b2e43177a632fb7dc92ec
+  version: b9c5dee3f015d7f9276e7e35d4b6022993c93e64
 
 # Manually converted definitions of tree construction rules.
 # Almost all rules are the same as ones defined in the HTML5 specification.
@@ -1419,6 +1419,20 @@ modes:
               self.pop_element();
           }
           self.push_html_optgroup_element(tag);
+          Control::Continue
+      - match: <hr>
+        run: |
+          if self.context().is_html_element(tag!(Option)) {
+              self.pop_element();
+          }
+          if self.context().is_html_element(tag!(Optgroup)) {
+              self.pop_element();
+          }
+          self.push_html_hr_element(tag);
+          self.pop_element();
+          if tag.self_closing {
+              {{use '$acknowledge-self-closing' }}
+          }
           Control::Continue
       - match: </optgroup>
         run: |
