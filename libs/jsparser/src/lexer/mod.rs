@@ -248,7 +248,6 @@ impl std::fmt::Display for Location {
     }
 }
 
-//<coverage:exclude>
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -743,4 +742,3 @@ mod tests {
         assert_eof!(lexer, loc!(2, 1, 2), loc!(2, 1, 2));
     }
 }
-//</coverage:exclude>

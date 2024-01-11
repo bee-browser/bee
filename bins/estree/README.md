@@ -77,7 +77,7 @@ and output responses like below:
   * `BigInt`
 
 These are converted into some kind of *tags* before encoding to JSON.  See `LiteralValueTag` in
-[`nodes.rs`](./src/nodes.rs) and `refine()` in [`test262_helper.js`](./scripts/test262_helper.js).
+[`nodes.rs`](./src/nodes.rs) and `refine()` in [`helpers.js`](./scripts/helpers.js).
 
 ### jq: parse error: Exceeds depth limit for parsing
 

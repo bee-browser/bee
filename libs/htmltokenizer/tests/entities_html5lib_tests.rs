@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -562,4 +561,3 @@ fn test_0079() {
         r##"{"description":"Decimal numeric entity followed by hex character A.","initialState":"Data","input":"&#97F","inputUtf16":[38,35,57,55,70],"output":[{"Character":{"data":"aF"}}],"errors":[{"code":"missing-semicolon-after-character-reference","location":{"line":1,"column":5}}]}"##,
     );
 }
-//</coverage:exclude>

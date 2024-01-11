@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -415,4 +414,3 @@ fn test_0058() {
         r##"{"description":"HTML tag in script data","initialState":"ScriptData","input":"<b>hello world</b>","inputUtf16":[60,98,62,104,101,108,108,111,32,119,111,114,108,100,60,47,98,62],"output":[{"Character":{"data":"<b>hello world</b>"}}],"errors":[]}"##,
     );
 }
-//</coverage:exclude>

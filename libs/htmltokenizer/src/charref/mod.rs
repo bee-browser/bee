@@ -107,7 +107,6 @@ impl TrieNode {
     }
 }
 
-//<coverage:exclude>
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -138,4 +137,3 @@ mod tests {
         assert!(!resolver.accept('x'));
     }
 }
-//</coverage:exclude>

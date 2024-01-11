@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -9,4 +8,3 @@ fn test_{{padStart @index 4 '0'}}() {
     tokenize(r##"{{json .}}"##);
 }
 {{/each}}
-//</coverage:exclude>

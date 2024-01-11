@@ -1,4 +1,3 @@
-//<coverage:exclude>
 use std::collections::HashMap;
 
 use serde::Deserialize;
@@ -178,4 +177,3 @@ struct Location {
     line: usize,
     column: usize,
 }
-//</coverage:exclude>

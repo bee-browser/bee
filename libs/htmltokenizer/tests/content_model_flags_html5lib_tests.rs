@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -170,4 +169,3 @@ fn test_0023() {
         r##"{"description":"RCDATA w/ an entity","initialState":"Rcdata","lastStartTag":"textarea","input":"&lt;","inputUtf16":[38,108,116,59],"output":[{"Character":{"data":"<"}}],"errors":[]}"##,
     );
 }
-//</coverage:exclude>

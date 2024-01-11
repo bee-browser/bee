@@ -1,4 +1,3 @@
-//<exclude:coverage>
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 
@@ -289,4 +288,3 @@ impl Debug for Node {
         }
     }
 }
-//</exclude:coverage>

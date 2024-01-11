@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -597,4 +596,3 @@ fn test_0084() {
         r##"{"description":"EOF in after attribute value state","initialState":"Data","input":"<a a ='a'","inputUtf16":[60,97,32,97,32,61,39,97,39],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":10}}]}"##,
     );
 }
-//</coverage:exclude>

@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -12504,4 +12503,3 @@ fn test_1785() {
         r##"{"description":"\\uDBC0\\uDC00","initialState":"CdataSection","input":"􀀀","inputUtf16":[56256,56320],"output":[{"Character":{"data":"􀀀"}}],"errors":[{"code":"eof-in-cdata","location":{"line":1,"column":2}}]}"##,
     );
 }
-//</coverage:exclude>
