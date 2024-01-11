@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -37,4 +36,3 @@ fn test_0004() {
         r##"{"description":"CR followed by U+0000","initialState":"Data","input":"\r\u0000","inputUtf16":[13,0],"output":[{"Character":{"data":"\n\u0000"}}],"errors":[{"code":"unexpected-null-character","location":{"line":2,"column":1}}]}"##,
     );
 }
-//</coverage:exclude>

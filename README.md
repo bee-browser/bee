@@ -18,7 +18,6 @@ Install the following software:
 * [GNU Make]
 * [Deno]
 * [Nextest]
-* [grcov]
 * [jq]
 * [yq]
 
@@ -42,6 +41,7 @@ Worked only on Linux and macOS at this point.  Windows will be supported in the 
 
 In addition, it's recommended to install the following software:
 
+* [cargo-llvm-cov]
 * [flamegraph]
 * [perf]
 
@@ -65,9 +65,9 @@ shall be dual licensed as above, without any additional terms or conditions.
 [GNU Make]: https://www.gnu.org/software/make/
 [Deno]: https://deno.com/
 [Nextest]: https://github.com/nextest-rs/nextest
-[grcov]: https://github.com/mozilla/grcov
 [jq]: https://jqlang.github.io/jq/
 [yq]: https://mikefarah.gitbook.io/yq/
+[cargo-llvm-cov]: https://github.com/taiki-e/cargo-llvm-cov
 [flamegraph]: https://github.com/flamegraph-rs/flamegraph
 [perf]: https://en.wikipedia.org/wiki/Perf_(Linux)
 [LICENSE-APACHE]: ./LICENSE-APACHE

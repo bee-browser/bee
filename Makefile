@@ -21,23 +21,6 @@ CODEGEN_TARGETS = $(addprefix codegen-,\
   bins/estree \
 )
 
-COVERAGE_TEST_ENV_VARS = \
-  RUSTC_BOOTSTRAP=1 \
-  CARGO_INCREMENTAL=0 \
-  RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort" \
-  RUSTDOCFLAGS="-Cpanic=abort"
-
-GRCOV_COMMON_ARGS = \
-  $(PROJDIR) -s $(PROJDIR) \
-  --binary-path $(PROJDIR)/target/debug \
-  --branch --llvm --ignore-not-existing \
-  --ignore '*/src/main.rs' \
-  --excl-line '<coverage:exclude/>|unimplemented!|unreachable!' \
-  --excl-start '<coverage:exclude>' \
-  --excl-stop '</coverage:exclude>' \
-  --excl-br-start '<coverage:exclude>' \
-  --excl-br-stop '</coverage:exclude>'
-
 .PHONY: all
 all: build
 
@@ -67,6 +50,17 @@ test262:
 	-sh bins/estree/scripts/test262_parser_tests.sh $(ARGS)
 	-sh bins/estree/scripts/test262.sh $(ARGS)
 
+# DO NOT REMOVE '-'.
+# Continue the execution in order to generate the report even if a command fails.
+.PHONY: coverage
+coverage: LLVM_COV_ARGS ?= --html
+coverage: TEST262_ARGS ?= --progress
+coverage:
+	cargo llvm-cov clean --workspace
+	-cargo llvm-cov nextest --no-report --all-features
+	-$(MAKE) test262 ARGS='--mode=coverage $(TEST262_ARGS)'
+	cargo llvm-cov report $(LLVM_COV_ARGS)
+
 .PHONY: bench
 bench:
 	cargo bench
@@ -82,23 +76,6 @@ release-build: $(BUILD_TARGETS)
 .PHONY: release-test
 release-test:
 	cargo nextest run --release --all-features
-
-.PHONY: coverage-test
-coverage-test:
-	env $(COVERAGE_TEST_ENV_VARS) $(MAKE) -s test
-
-.PHONY: coverage-test262
-coverage-test262: ARGS ?=
-coverage-test262:
-	env $(COVERAGE_TEST_ENV_VARS) $(MAKE) -s test262 ARGS=$(ARGS)
-
-.PHONY: coverage-lcov
-coverage-lcov: | $(PROJDIR)/target/coverage
-	grcov $(GRCOV_COMMON_ARGS) -t lcov -o $(PROJDIR)/target/coverage/lcov.info
-
-.PHONY: coverage-html
-coverage-html: | $(PROJDIR)/target/coverage
-	grcov $(GRCOV_COMMON_ARGS) -t html -o $(PROJDIR)/target/coverage
 
 .PHONE: codegen
 codegen: $(CODEGEN_TARGETS)
@@ -144,6 +121,3 @@ $(CODEGEN_TARGETS):
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):
 	@make -s -C $(subst clean-,,$@) clean
-
-$(PROJDIR)/target/coverage:
-	@mkdir -p $@

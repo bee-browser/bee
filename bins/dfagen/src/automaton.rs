@@ -549,7 +549,6 @@ impl Transition {
     }
 }
 
-// <coverage:exclude>
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -564,4 +563,3 @@ mod tests {
         assert_eq!(format!("{}", state), "State(0):token?");
     }
 }
-// </coverage:exclude>

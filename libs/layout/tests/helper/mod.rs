@@ -1,4 +1,3 @@
-//<coverage:exclude>
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -59,4 +58,3 @@ impl JsonSink for JsonValidator {
         }
     }
 }
-//</coverage:exclude>

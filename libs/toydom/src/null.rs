@@ -1,4 +1,3 @@
-//<exclude:coverage>
 use htmlparser::*;
 
 pub struct NullBuilder {
@@ -68,4 +67,3 @@ impl DomTreeBuilder for NullBuilder {
 
     fn print_tree(&self) {}
 }
-//</exclude:coverage>

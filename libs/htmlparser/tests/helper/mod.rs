@@ -1,4 +1,3 @@
-//<coverage:exclude>
 use htmlparser::*;
 use toydom::delegate;
 use toydom::ToyBuilder;
@@ -215,4 +214,3 @@ pub enum Scripting {
     On,
     Both,
 }
-//</coverage:exclude>

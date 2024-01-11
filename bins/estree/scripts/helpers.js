@@ -1,6 +1,6 @@
 'use strict';
 
-import { assertNotEquals } from "https://deno.land/std@0.210.0/assert/mod.ts";
+import { assertNotEquals, unreachable } from "https://deno.land/std@0.210.0/assert/mod.ts";
 import { JsonParseStream } from "https://deno.land/std@0.210.0/json/mod.ts";
 import { TextLineStream } from 'https://deno.land/std@0.210.0/streams/mod.ts';
 
@@ -61,13 +61,22 @@ function refine(obj) {
 }
 
 export class ESTree {
-  static async parse(source, sourceType, options = {}) {
-    const args = ['run', '-r', '-q', '-p', 'estree', '--', 'parse', sourceType];
-    if (!!options.withDebugBuild) {
-      args.splice(1, 1);  // remove '-r'
+  static buildArgs(options, estreeArgs) {
+    switch (options.mode) {
+    case 'release':
+      return ['run', '-r', '-q', '-p', 'estree', '--', ...estreeArgs];
+    case 'debug':
+      return ['run', '-q', '-p', 'estree', '--', ...estreeArgs];
+    case 'coverage':
+      return ['llvm-cov', 'run', '-q', '-p', 'estree', '--no-report', '--', ...estreeArgs];
+    default:
+      return unreachable();
     }
+  }
+
+  static async parse(source, sourceType, options) {
     const child = new Deno.Command('cargo', {
-      args,
+      args: ESTree.buildArgs(options, ['parse', sourceType]),
       stdin: 'piped',
       stdout: 'piped',
       stderr: 'null',
@@ -86,17 +95,13 @@ export class ESTree {
     }
   }
 
-  constructor(options = {}) {
-    this.withDebugBuild_ = !!options.withDebugBuild;
+  constructor(options) {
+    this.options_ = options;
   }
 
   start() {
-    const args = ['run', '-r', '-q', '-p', 'estree', '--', "serve"];
-    if (this.withDebugBuild_) {
-      args.splice(1, 1);  // remove '-r'
-    }
     const cmd = new Deno.Command('cargo', {
-      args,
+      args: ESTree.buildArgs(this.options_, ['serve']),
       stdin: 'piped',
       stdout: 'piped',
       stderr: 'null',

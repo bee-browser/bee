@@ -154,14 +154,12 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
 pub struct LayoutNodeHandle(LayoutNodeRef); // opaque
 
 impl LayoutNodeHandle {
-    //<coverage:exclude>
     pub fn inspect<T>(&self, write: &mut T) -> std::io::Result<()>
     where
         T: std::io::Write + ?Sized,
     {
         self.0.inspect(write, 0)
     }
-    //</coverage:exclude>
 }
 
 #[derive(Clone)]
@@ -178,7 +176,6 @@ impl LayoutNodeRef {
         }
     }
 
-    //<coverage:exclude>
     fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
     where
         T: std::io::Write + ?Sized,
@@ -188,7 +185,6 @@ impl LayoutNodeRef {
             LayoutNodeRef::Text(ref text) => text.inspect(write, depth),
         }
     }
-    //</coverage:exclude>
 }
 
 struct LayoutElement {
@@ -313,7 +309,6 @@ impl LayoutElement {
             })
     }
 
-    //<coverage:exclude>
     fn inspect<T>(&self, write: &mut T, depth: usize) -> std::io::Result<()>
     where
         T: std::io::Write + ?Sized,
@@ -324,7 +319,6 @@ impl LayoutElement {
         }
         Ok(())
     }
-    //</coverage:exclude>
 }
 
 impl std::fmt::Display for LayoutElement {

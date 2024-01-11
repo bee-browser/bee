@@ -20,16 +20,14 @@ jobs:
         with:
           deno-version: v1.x
       # TODO: Caching dependencies
-      - name: Install nextest
-        uses: taiki-e/install-action@nextest
-      - name: Install grcov
-        uses: taiki-e/install-action@grcov
-      - name: Generate coverage data
+      - uses: taiki-e/install-action@nextest
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
         run: |
-          make coverage-test
-          make coverage-lcov
-      - name: Upload to codecov.io
+          make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json' TEST262_ARGS=''
+      - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
           token: '${{ secrets.CODECOV_TOKEN }}'
-          files: target/coverage/lcov.info
+          files: codecov.json
+          fail_ci_if_error: true

@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -65,4 +64,3 @@ fn test_0008() {
         r##"{"description":"Incorrect comment ending sequences in RCDATA or RAWTEXT","initialState":"Rawtext","lastStartTag":"xmp","input":"foo<!-- x --x>x-- >x--!>x--<></xmp>","inputUtf16":[102,111,111,60,33,45,45,32,120,32,45,45,120,62,120,45,45,32,62,120,45,45,33,62,120,45,45,60,62,60,47,120,109,112,62],"output":[{"Character":{"data":"foo<!-- x --x>x-- >x--!>x--<>"}},{"EndTag":{"name":"xmp"}}],"errors":[]}"##,
     );
 }
-//</coverage:exclude>

@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -2354,4 +2353,3 @@ fn test_0335() {
         r##"{"description":"Valid numeric entity character U+10FFFD","initialState":"Data","input":"&#x10fffd;","inputUtf16":[38,35,120,49,48,102,102,102,100,59],"output":[{"Character":{"data":"􏿽"}}],"errors":[]}"##,
     );
 }
-//</coverage:exclude>

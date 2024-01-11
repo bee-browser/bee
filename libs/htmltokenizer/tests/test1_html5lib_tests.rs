@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -485,4 +484,3 @@ fn test_0068() {
         r##"{"description":"Open angled bracket in unquoted attribute value state","initialState":"Data","input":"<a a=f<>","inputUtf16":[60,97,32,97,61,102,60,62],"output":[{"StartTag":{"name":"a","attrs":{"a":"f<"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":7}}]}"##,
     );
 }
-//</coverage:exclude>

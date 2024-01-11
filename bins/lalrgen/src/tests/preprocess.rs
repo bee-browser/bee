@@ -1,4 +1,3 @@
-//<coverage:exclude>
 use pretty_assertions::assert_eq;
 
 use crate::grammar::Grammar;
@@ -38,4 +37,3 @@ fn load_grammar(grammar: &str) -> Grammar {
     let rules = serde_yaml::from_reader(file).unwrap();
     Grammar::new(rules)
 }
-//</coverage:exclude>

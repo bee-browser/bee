@@ -21,13 +21,12 @@ Options:
   --details
     Show the details of failed tests.
 
-  --with-debug-build
-    Test with the debug build binary.
-    Testing with this option is better but 8x slower.
-
-    Some kind of runtime errors such as arithmetic underflow cannot be
-    detected in the release build.
-`.trim();
+  --mode=(release | debug | coverage) [default: release]
+    Choice one of the following modes:
+      release: Use the release build
+      debug: Use the debug build
+      coverage: Use cargo-llvm-cov
+`;
 
 const { options } = await parseCommand({
   doc: DOC,

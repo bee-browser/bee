@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -317,4 +316,3 @@ fn test_0044() {
         r##"{"description":"Empty end tag with following end tag","initialState":"Data","input":"a</></b>c","inputUtf16":[97,60,47,62,60,47,98,62,99],"output":[{"Character":{"data":"a"}},{"EndTag":{"name":"b"}},{"Character":{"data":"c"}}],"errors":[{"code":"missing-end-tag-name","location":{"line":1,"column":4}}]}"##,
     );
 }
-//</coverage:exclude>

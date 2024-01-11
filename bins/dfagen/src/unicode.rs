@@ -648,7 +648,6 @@ impl std::fmt::Display for UnicodeSetsBuilder {
     }
 }
 
-// <coverage:exclude>
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -987,4 +986,3 @@ mod tests {
         assert_eq!(format!("{}", builder), "[[a]]");
     }
 }
-// </coverage:exclude>

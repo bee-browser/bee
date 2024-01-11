@@ -1,4 +1,3 @@
-//<exclude:coverage>
 use std::path::PathBuf;
 
 use criterion::Criterion;
@@ -31,4 +30,3 @@ fn run_bench(c: &mut Criterion, name: &str) {
 }
 criterion::criterion_group!(benches, htmlparser_benchmark);
 criterion::criterion_main!(benches);
-//</exclude:coverage>

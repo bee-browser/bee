@@ -1,4 +1,3 @@
-//<coverage:exclude>
 mod helper;
 
 use helper::tokenize;
@@ -29472,4 +29471,3 @@ fn test_4209() {
         r##"{"description":"Named entity: zwnj; with a semi-colon","initialState":"Data","input":"&zwnj;","inputUtf16":[38,122,119,110,106,59],"output":[{"Character":{"data":"‌"}}],"errors":[]}"##,
     );
 }
-//</coverage:exclude>
