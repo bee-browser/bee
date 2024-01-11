@@ -6,7 +6,7 @@ html5-spec:
   #
   url: https://html.spec.whatwg.org
   # Change the commit-hash if you update this file based on another version.
-  version: ab63afcb792f2558d0e4fd176999d5c520b49825
+  version: 4ca6ec020803cbdfd05f90475b6e3a3a0d5b2424
 
 # Manually converted definitions of tree construction rules.
 # Almost all rules are the same as ones defined in the HTML5 specification.
