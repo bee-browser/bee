@@ -237,6 +237,8 @@ where
                 }
                 mode!(InCell) => {
                     let ctrl = {
+                        // We keep the following check for safety even though it's changed to an assertion
+                        // in the specification.  See whatwg/html@ab63afcb792f2558d0e4fd176999d5c520b49825.
                         if !self.context().has_cell_element_in_table_scope() {
                             // TODO: Parse error.
                             logger::debug!("Parse error");
