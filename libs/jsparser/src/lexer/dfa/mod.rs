@@ -4,6 +4,7 @@
 // template: libs/jsparser/src/lexer/dfa/mod.rs.hbs
 
 mod input_element_div;
+mod input_element_hashbang_or_reg_exp;
 mod input_element_reg_exp;
 mod input_element_reg_exp_or_template_tail;
 mod input_element_template_tail;
@@ -22,5 +23,6 @@ pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Result<Token<'a>,
             input_element_reg_exp_or_template_tail::recognize(cursor)
         }
         Goal::InputElementTemplateTail => input_element_template_tail::recognize(cursor),
+        Goal::InputElementHashbangOrRegExp => input_element_hashbang_or_reg_exp::recognize(cursor),
     }
 }

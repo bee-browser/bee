@@ -6,7 +6,7 @@
 
 ## Current supported version
 
-* [ECMA-262 13th edition (ES2022)](https://262.ecma-international.org/13.0/)
+* [ECMA-262 14th edition (ES2023)](https://262.ecma-international.org/14.0/)
 
 ## How is jsparser implemented?
 
@@ -15,7 +15,7 @@ agree that this is a reasonable decision, but we decided to implement jsparser u
 generator tools, [dfagen] and [lalrgen].
 
 The ECMA-262 specification defines lexical and syntactic grammars for ECMAScript (JavaScript).  It
-uses [special notations](https://262.ecma-international.org/13.0/#sec-notational-conventions) in
+uses [special notations](https://262.ecma-international.org/14.0/#sec-notational-conventions) in
 the grammars.  For example, `lookahead` terms are used to restrict some of production rules for a
 non-terminal symbol following it.
 

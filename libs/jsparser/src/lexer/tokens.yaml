@@ -198,3 +198,11 @@ goals:
       - *DivPunctuator
       - TemplateMiddle
       - TemplateTail
+  - name: input_element_hashbang_or_reg_exp
+    tokens:
+      - WhiteSpaceSequence
+      - LineTerminatorSequence
+      - Comment
+      - *CommonToken
+      - HashbangComment
+      - RegularExpressionLiteral
