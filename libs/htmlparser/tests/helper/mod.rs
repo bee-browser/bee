@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use htmlparser::*;
 use toydom::delegate;
 use toydom::ToyBuilder;
@@ -65,11 +67,11 @@ impl<'a> TreeValidator<'a> {
             } => {
                 let name = name.as_deref().unwrap_or_default();
                 let repr = if public_id.is_none() && system_id.is_none() {
-                    format!("<!DOCTYPE {}>", name)
+                    format!("<!DOCTYPE {name}>")
                 } else {
                     let public_id = public_id.as_deref().unwrap_or_default();
                     let system_id = system_id.as_deref().unwrap_or_default();
-                    format!(r#"<!DOCTYPE {} "{}" "{}">"#, name, public_id, system_id)
+                    format!(r#"<!DOCTYPE {name} "{public_id}" "{system_id}">"#)
                 };
                 v.push(LinearNode { depth, repr });
             }
@@ -83,9 +85,9 @@ impl<'a> TreeValidator<'a> {
                 v.push(LinearNode {
                     depth,
                     repr: match namespace {
-                        Namespace::Html => format!("<{}>", name),
-                        Namespace::MathMl => format!("<math {}>", name),
-                        Namespace::Svg => format!("<svg {}>", name),
+                        Namespace::Html => format!("<{name}>"),
+                        Namespace::MathMl => format!("<math {name}>"),
+                        Namespace::Svg => format!("<svg {name}>"),
                     },
                 });
                 let depth = if *namespace == Namespace::Html && name == "template" {
@@ -97,27 +99,39 @@ impl<'a> TreeValidator<'a> {
                 } else {
                     depth
                 };
-                for (name, value) in attrs.iter() {
-                    let (prefix, name) = match namespace {
-                        Namespace::Html => (None, name.as_str()),
+                let mut attr_nodes = attrs
+                    .iter()
+                    .map(|(name, value)| match namespace {
+                        Namespace::Html => format!(r#"{name}="{value}""#),
                         _ => {
-                            let parts: Vec<_> = name.splitn(2, ':').collect();
-                            if parts.len() == 1 {
-                                (None, name.as_str())
+                            // Adjust foreign attributes.
+                            const XLINK_ATTRS: [&str; 7] = [
+                                "xlink:actuate",
+                                "xlink:arcrole",
+                                "xlink:href",
+                                "xlink:role",
+                                "xlink:show",
+                                "xlink:title",
+                                "xlink:type",
+                            ];
+                            const XML_ATTRS: [&'static str; 2] = ["xml:lang", "xml:space"];
+                            if name == "xmlns:xlink"
+                                || XLINK_ATTRS.contains(&name.as_str())
+                                || XML_ATTRS.contains(&name.as_str())
+                            {
+                                let (prefix, local_name) = name.split_once(':').unwrap();
+                                format!(r#"{prefix} {local_name}="{value}""#)
                             } else {
-                                (Some(parts[0]), parts[1])
+                                format!(r#"{name}="{value}""#)
                             }
                         }
-                    };
-                    v.push(LinearNode {
+                    })
+                    .sorted()
+                    .map(|repr| LinearNode {
                         depth: depth + 1,
-                        repr: if let Some(prefix) = prefix {
-                            format!(r#"{} {}="{}""#, prefix, name, value)
-                        } else {
-                            format!(r#"{}="{}""#, name, value)
-                        },
+                        repr,
                     });
-                }
+                v.extend(&mut attr_nodes);
                 for &child_index in child_nodes.iter() {
                     self.flatten(depth + 1, child_index, v);
                 }
@@ -134,13 +148,13 @@ impl<'a> TreeValidator<'a> {
                 }
                 v.push(LinearNode {
                     depth,
-                    repr: format!(r#""{}""#, data),
+                    repr: format!(r#""{data}""#),
                 });
             }
             ToyNode::Comment { data, .. } => {
                 v.push(LinearNode {
                     depth,
-                    repr: format!(r#"<!-- {} -->"#, data),
+                    repr: format!(r#"<!-- {data} -->"#),
                 });
             }
         }
@@ -174,7 +188,7 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     fn print_tree(&self) {
         let mut v = vec![];
         self.flatten(0, 0, &mut v);
-        logging::debug!(logging::targets::TESTS, "{:?}", v);
+        logging::debug!(logging::targets::TESTS, "{v:?}");
     }
 }
 

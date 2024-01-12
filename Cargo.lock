@@ -667,6 +667,7 @@ dependencies = [
  "criterion",
  "flagset",
  "htmltokenizer",
+ "itertools 0.12.0",
  "logging",
  "phf",
  "thiserror",

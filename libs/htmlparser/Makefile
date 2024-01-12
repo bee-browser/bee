@@ -3,7 +3,7 @@ all:
 
 .PHONY: test
 test:
-	@cargo nextest run
+	@cargo nextest run --all-features
 
 .PHONY: codegen
 codegen:
