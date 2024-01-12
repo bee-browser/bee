@@ -182,7 +182,12 @@ impl<'a> DomTreeBuilder for TreeValidator<'a> {
     fn end(&mut self) {
         let mut v = vec![];
         self.flatten(0, 0, &mut v);
-        assert_eq!(v, self.test.document, "{}", self.test.data.escape_debug());
+        assert_eq!(
+            v,
+            self.test.document,
+            "{escaped}",
+            escaped = self.test.data.escape_debug()
+        );
     }
 
     fn print_tree(&self) {
@@ -205,7 +210,12 @@ impl PartialEq<(usize, &'static str)> for LinearNode {
 
 impl std::fmt::Debug for LinearNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {:?})", self.depth, self.repr)
+        write!(
+            f,
+            r#"({depth}, "{repr}")"#,
+            depth = self.depth,
+            repr = self.repr
+        )
     }
 }
 
