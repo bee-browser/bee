@@ -7,9 +7,9 @@ import {
   assertEquals,
   assertExists,
   unreachable,
-} from 'https://deno.land/std@0.210.0/testing/asserts.ts';
-import * as log from 'https://deno.land/std@0.210.0/log/mod.ts';
-import * as yaml from 'https://deno.land/std@0.210.0/yaml/mod.ts';
+} from 'https://deno.land/std@0.211.0/testing/asserts.ts';
+import * as log from 'https://deno.land/std@0.211.0/log/mod.ts';
+import * as yaml from 'https://deno.land/std@0.211.0/yaml/mod.ts';
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { setup } from '../../../tools/lib/log.js';

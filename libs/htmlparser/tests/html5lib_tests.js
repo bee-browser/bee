@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.211.0/path/mod.ts';
 import { snakeCase } from "https://deno.land/x/case/mod.ts";
 
 const datFile = Deno.args[0];
