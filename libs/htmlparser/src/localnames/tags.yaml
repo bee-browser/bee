@@ -255,6 +255,9 @@ sarcasm:
 script:
   category: special
 
+search:
+  category: special
+
 section:
   category: special
 

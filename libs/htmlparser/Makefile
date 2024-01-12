@@ -1,6 +1,10 @@
 .PHONY: all
 all:
 
+.PHONY: test
+test:
+	@cargo nextest run --all-features
+
 .PHONY: codegen
 codegen:
 	@$(MAKE) -s -C src/localnames codegen
@@ -10,7 +14,3 @@ codegen:
 .PHONY: update-data
 update-data:
 	@sh scripts/update-benches-data.sh
-	@sh scripts/update-html5lib-tests.sh
-	@rm -f tests/*_html5lib_tests.json
-	@rm -f tests/*_html5lib_tests.rs
-	@$(MAKE) -s -C tests codegen

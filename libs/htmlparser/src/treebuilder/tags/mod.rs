@@ -87,6 +87,7 @@ mod ruby;
 mod s;
 mod sarcasm;
 mod script;
+mod search;
 mod section;
 mod select;
 mod small;
@@ -206,6 +207,7 @@ where
             tag!(S) => self.handle_start_s(&tag),
             tag!(Sarcasm) => self.handle_start_sarcasm(&tag),
             tag!(Script) => self.handle_start_script(&tag),
+            tag!(Search) => self.handle_start_search(&tag),
             tag!(Section) => self.handle_start_section(&tag),
             tag!(Select) => self.handle_start_select(&tag),
             tag!(Small) => self.handle_start_small(&tag),
@@ -322,6 +324,7 @@ where
             tag!(S) => self.handle_end_s(&tag),
             tag!(Sarcasm) => self.handle_end_sarcasm(&tag),
             tag!(Script) => self.handle_end_script(&tag),
+            tag!(Search) => self.handle_end_search(&tag),
             tag!(Section) => self.handle_end_section(&tag),
             tag!(Select) => self.handle_end_select(&tag),
             tag!(Small) => self.handle_end_small(&tag),

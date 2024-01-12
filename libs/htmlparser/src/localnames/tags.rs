@@ -93,6 +93,7 @@ pub enum LocalName {
     Samp,
     Sarcasm,
     Script,
+    Search,
     Section,
     Select,
     Slot,
@@ -341,6 +342,7 @@ static LOCAL_NAMES: Map<&'static str, LocalName> = phf_map! {
     "samp" => LocalName::Samp,
     "sarcasm" => LocalName::Sarcasm,
     "script" => LocalName::Script,
+    "search" => LocalName::Search,
     "section" => LocalName::Section,
     "select" => LocalName::Select,
     "slot" => LocalName::Slot,
@@ -467,7 +469,7 @@ macro_rules! data {
     };
 }
 
-const DATA: [LocalNameData; 192] = [
+const DATA: [LocalNameData; 193] = [
     data!["a", Formatting],
     data!["abbr", Ordinary],
     data!["address", Special],
@@ -551,6 +553,7 @@ const DATA: [LocalNameData; 192] = [
     data!["samp", Ordinary],
     data!["sarcasm", Ordinary],
     data!["script", Special],
+    data!["search", Special],
     data!["section", Special],
     data!["select", Special],
     data!["slot", Ordinary],

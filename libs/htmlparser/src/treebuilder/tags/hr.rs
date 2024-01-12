@@ -176,18 +176,19 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(
-                    InSelect,
-                    InSelectInTable,
-                    InFrameset,
-                    AfterFrameset,
-                    AfterAfterFrameset
-                ) => {
+                mode!(InSelect, InSelectInTable) => {
                     let ctrl = {
-                        // TODO: Parse error.
-                        logger::debug!("Parse error");
-                        // Ignore the token.
-                        logger::debug!("Ignore the token");
+                        if self.context().is_html_element(tag!(Option)) {
+                            self.pop_element();
+                        }
+                        if self.context().is_html_element(tag!(Optgroup)) {
+                            self.pop_element();
+                        }
+                        self.push_html_hr_element(tag);
+                        self.pop_element();
+                        if tag.self_closing {
+                            // TODO: non-void-html-element-start-tag-with-trailing-solidus parse error.
+                        }
                         Control::Continue
                     };
                     match ctrl {
@@ -213,6 +214,19 @@ where
                         logger::debug!("Parse error");
                         self.switch_to(mode!(InBody));
                         Control::Reprocess
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return ctrl,
+                    }
+                }
+                mode!(InFrameset, AfterFrameset, AfterAfterFrameset) => {
+                    let ctrl = {
+                        // TODO: Parse error.
+                        logger::debug!("Parse error");
+                        // Ignore the token.
+                        logger::debug!("Ignore the token");
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,

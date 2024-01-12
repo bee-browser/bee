@@ -9,7 +9,7 @@ impl<T> TreeBuilder<T>
 where
     T: DomTreeBuilder,
 {
-    pub fn handle_start_caption(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_start_search(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             match self.mode {
                 mode!(Initial) => {
@@ -88,18 +88,12 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(
-                    InBody,
-                    InSelect,
-                    InFrameset,
-                    AfterFrameset,
-                    AfterAfterFrameset
-                ) => {
+                mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        // TODO: Parse error.
-                        logger::debug!("Parse error");
-                        // Ignore the token.
-                        logger::debug!("Ignore the token");
+                        if self.context().has_p_element_in_button_scope() {
+                            self.close_p_element();
+                        }
+                        self.push_html_search_element(tag);
                         Control::Continue
                     };
                     match ctrl {
@@ -107,13 +101,20 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InTable) => {
+                mode!(InTable, InTableBody, InRow) => {
                     let ctrl = {
-                        self.clear_stack_back_to_table_context();
-                        self.push_html_caption_element(tag);
-                        self.push_marker_to_active_formatting_contexts();
-                        self.switch_to(mode!(InCaption));
-                        Control::Continue
+                        // TODO: Parse error.
+                        logger::debug!("Parse error");
+                        self.enable_foster_parenting();
+                        let ctrl = {
+                            if self.context().has_p_element_in_button_scope() {
+                                self.close_p_element();
+                            }
+                            self.push_html_search_element(tag);
+                            Control::Continue
+                        };
+                        self.disable_foster_parenting();
+                        ctrl
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -146,35 +147,6 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InCaption) => {
-                    let ctrl = {
-                        if !self.context().has_caption_element_in_table_scope() {
-                            // TODO: Parse error.
-                            logger::debug!("Parse error");
-                            // Ignore the token.
-                            logger::debug!("Ignore the token");
-                            Control::Continue
-                        } else {
-                            self.close_implied_tags();
-                            if !self.context().is_html_element(tag!(Caption)) {
-                                // TODO: Parse error.
-                                logger::debug!("Parse error");
-                            }
-                            while !self.context().is_html_element(tag!(Caption)) {
-                                self.pop_element();
-                            }
-                            self.pop_element(); // pop an html caption element
-                            self.active_formatting_element_list
-                                .clear_up_to_last_marker();
-                            self.switch_to(mode!(InTable));
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
                 mode!(InColumnGroup) => {
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
@@ -194,77 +166,19 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InTableBody) => {
-                    let ctrl = {
-                        if !self.context().has_rowgroup_element_in_table_scope() {
-                            // TODO: Parse error.
-                            logger::debug!("Parse error");
-                            // Ignore the token.
-                            logger::debug!("Ignore the token");
-                            Control::Continue
-                        } else {
-                            self.clear_stack_back_to_table_body_context();
-                            self.pop_element();
-                            self.switch_to(mode!(InTable));
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InRow) => {
-                    let ctrl = {
-                        if !self.context().has_tr_element_in_table_scope() {
-                            // TODO: Parse error.
-                            logger::debug!("Parse error");
-                            // Ignore the token.
-                            logger::debug!("Ignore the token");
-                            Control::Continue
-                        } else {
-                            self.clear_stack_back_to_table_row_context();
-                            debug_assert!(self.context().is_html_element(tag!(Tr)));
-                            self.pop_element();
-                            self.switch_to(mode!(InTableBody));
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InCell) => {
-                    let ctrl = {
-                        // We keep the following check for safety even though it's changed to an assertion
-                        // in the specification.  See whatwg/html@ab63afcb792f2558d0e4fd176999d5c520b49825.
-                        if !self.context().has_cell_element_in_table_scope() {
-                            // TODO: Parse error.
-                            logger::debug!("Parse error");
-                            // Ignore the token.
-                            logger::debug!("Ignore the token");
-                            Control::Continue
-                        } else {
-                            self.close_cell();
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InSelectInTable) => {
+                mode!(
+                    InSelect,
+                    InSelectInTable,
+                    InFrameset,
+                    AfterFrameset,
+                    AfterAfterFrameset
+                ) => {
                     let ctrl = {
                         // TODO: Parse error.
                         logger::debug!("Parse error");
-                        while !self.context().is_html_element(tag!(Select)) {
-                            self.pop_element();
-                        }
-                        self.pop_element(); // pop an html select element
-                        self.reset_insertion_mode_appropriately();
-                        Control::Reprocess
+                        // Ignore the token.
+                        logger::debug!("Ignore the token");
+                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -274,8 +188,8 @@ where
                 mode!(InTemplate) => {
                     let ctrl = {
                         self.pop_template_mode();
-                        self.push_template_mode(mode!(InTable));
-                        self.switch_to(mode!(InTable));
+                        self.push_template_mode(mode!(InBody));
+                        self.switch_to(mode!(InBody));
                         Control::Reprocess
                     };
                     match ctrl {
@@ -303,7 +217,7 @@ where
     }
 
     #[allow(unused_variables)]
-    pub fn handle_end_caption(&mut self, tag: &Tag<'_>) -> Control {
+    pub fn handle_end_search(&mut self, tag: &Tag<'_>) -> Control {
         loop {
             match self.mode {
                 mode!(Initial) => {
@@ -327,11 +241,8 @@ where
                     InHead,
                     InHeadNoscript,
                     AfterHead,
-                    InTable,
-                    InTableBody,
-                    InRow,
-                    InCell,
                     InSelect,
+                    InSelectInTable,
                     InTemplate,
                     InFrameset,
                     AfterFrameset,
@@ -349,33 +260,26 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InBody) => {
+                mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        let mut context_pos = self.context_stack.len() - 1;
-                        loop {
-                            let context = &self.context_stack[context_pos];
-                            let element = context.open_element.node;
-                            if context.is_html() && context.open_element.has_same_name(tag.name) {
-                                self.close_implied_tags_except_for(tag!(Caption)); // TODO
-                                if element != self.context().open_element.node {
-                                    // TODO: Parse error.
-                                    logger::debug!("Parse error");
-                                }
-                                while self.context_stack.len() > context_pos {
-                                    self.pop_element();
-                                }
-                                break;
-                            } else {
-                                if context.open_element.local_name.is_special() {
-                                    // TODO: Parse error.
-                                    logger::debug!("Parse error");
-                                    // Ignore the token.
-                                    break;
-                                }
+                        if !self.context().has_search_element_in_scope() {
+                            // TODO: Parse error.
+                            logger::debug!("Parse error");
+                            // Ignore the token.
+                            logger::debug!("Ignore the token");
+                            Control::Continue
+                        } else {
+                            self.close_implied_tags();
+                            if !self.context().is_html_element(tag!(Search)) {
+                                // TODO: Parse error.
+                                logger::debug!("Parse error");
                             }
-                            context_pos -= 1;
+                            while !self.context().is_html_element(tag!(Search)) {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop an html search element
+                            Control::Continue
                         }
-                        Control::Continue
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -387,6 +291,39 @@ where
                         self.pop_element();
                         self.switch_to_original_mode();
                         Control::Continue
+                    };
+                    match ctrl {
+                        Control::Reprocess => continue,
+                        _ => return ctrl,
+                    }
+                }
+                mode!(InTable, InTableBody, InRow) => {
+                    let ctrl = {
+                        // TODO: Parse error.
+                        logger::debug!("Parse error");
+                        self.enable_foster_parenting();
+                        let ctrl = {
+                            if !self.context().has_search_element_in_scope() {
+                                // TODO: Parse error.
+                                logger::debug!("Parse error");
+                                // Ignore the token.
+                                logger::debug!("Ignore the token");
+                                Control::Continue
+                            } else {
+                                self.close_implied_tags();
+                                if !self.context().is_html_element(tag!(Search)) {
+                                    // TODO: Parse error.
+                                    logger::debug!("Parse error");
+                                }
+                                while !self.context().is_html_element(tag!(Search)) {
+                                    self.pop_element();
+                                }
+                                self.pop_element(); // pop an html search element
+                                Control::Continue
+                            }
+                        };
+                        self.disable_foster_parenting();
+                        ctrl
                     };
                     match ctrl {
                         Control::Reprocess => continue,
@@ -419,33 +356,6 @@ where
                         _ => return ctrl,
                     }
                 }
-                mode!(InCaption) => {
-                    let ctrl = {
-                        if !self.context().has_caption_element_in_table_scope() {
-                            // TODO: Parse error.
-                            logger::debug!("Parse error");
-                            // Ignore the token.
-                        } else {
-                            self.close_implied_tags();
-                            if !self.context().is_html_element(tag!(Caption)) {
-                                // TODO: Parse error.
-                                logger::debug!("Parse error");
-                            }
-                            while !self.context().is_html_element(tag!(Caption)) {
-                                self.pop_element();
-                            }
-                            self.pop_element(); // pop an html caption element
-                            self.active_formatting_element_list
-                                .clear_up_to_last_marker();
-                            self.switch_to(mode!(InTable));
-                        }
-                        Control::Continue
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
                 mode!(InColumnGroup) => {
                     let ctrl = {
                         if !self.context().is_html_element(tag!(Colgroup)) {
@@ -457,28 +367,6 @@ where
                         } else {
                             self.pop_element();
                             self.switch_to(mode!(InTable));
-                            Control::Reprocess
-                        }
-                    };
-                    match ctrl {
-                        Control::Reprocess => continue,
-                        _ => return ctrl,
-                    }
-                }
-                mode!(InSelectInTable) => {
-                    let ctrl = {
-                        // TODO: Parse error.
-                        logger::debug!("Parse error");
-                        if !self.context().has_table_element_in_table_scope() {
-                            // Ignore the token.
-                            logger::debug!("Ignore the token");
-                            Control::Continue
-                        } else {
-                            while !self.context().is_html_element(tag!(Select)) {
-                                self.pop_element();
-                            }
-                            self.pop_element(); // pop an html select element
-                            self.reset_insertion_mode_appropriately();
                             Control::Reprocess
                         }
                     };

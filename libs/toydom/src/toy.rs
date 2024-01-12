@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::fmt::Debug;
 
 use htmlparser::*;
 
@@ -258,16 +257,16 @@ pub enum Node {
     },
 }
 
-impl Debug for Node {
+impl std::fmt::Debug for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Document { id, .. } => {
-                write!(f, "{}:#document", id)
+                write!(f, "{id}:#document")
             }
             Self::DocumentType { id, name, .. } => {
-                write!(f, "{}:<!DOCTYPE", id)?;
+                write!(f, "{id}:<!DOCTYPE")?;
                 if let Some(name) = name {
-                    write!(f, " {}", name)?;
+                    write!(f, " {name}")?;
                 }
                 write!(f, ">")
             }
@@ -277,13 +276,13 @@ impl Debug for Node {
                 namespace,
                 ..
             } => {
-                write!(f, "{}:<{:?}:{}>", id, namespace, name)
+                write!(f, "{id}:<{namespace:?}:{name}>")
             }
             Self::Text { id, data } => {
-                write!(f, "{}:#text:{}", id, data.escape_debug())
+                write!(f, "{id}:#text:{escaped}", escaped = data.escape_debug())
             }
             Self::Comment { id, data } => {
-                write!(f, "{}:#comment:{}", id, data.escape_debug())
+                write!(f, "{id}:#comment:{escaped}", escaped = data.escape_debug())
             }
         }
     }

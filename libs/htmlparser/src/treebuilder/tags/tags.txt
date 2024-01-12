@@ -81,6 +81,7 @@ ruby
 s
 sarcasm
 script
+search
 section
 select
 small
