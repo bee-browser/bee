@@ -27,15 +27,17 @@ lalr/%.rs: lalr/%.rs.hbs lalr.js $(CODEGEN_DIR)/lalr.json
 	@echo 'Generating $(abspath $@)...'
 	@cat $(CODEGEN_DIR)/lalr.json | \
 	  deno run --allow-read lalr.js | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $< | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin --no-escape $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # Generate an intermediate JSON data in order to avoid re-running lalrgen when lalr.js or
 # lalr.rs.hbs changes.
 .PRECIOUS: $(CODEGEN_DIR)/lalr.json
 $(CODEGEN_DIR)/lalr.json: grammar.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq '.' >$@
+	@cargo run -rqp lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq '.' | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 $(CODEGEN_DIR):
 	@mkdir -p $@

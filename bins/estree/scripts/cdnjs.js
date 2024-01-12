@@ -32,6 +32,8 @@ const { options } = await parseCommand({
   doc: DOC,
 });
 
+options.mode ||= 'release';
+
 const EXCLUDES = [
   // The following libraries consume a lot of memory and `deno` stops due to out of memory.
   // In addition, "buffer exceeds maximum length" error occurs in validate.js.

@@ -7,7 +7,7 @@ PROJ_DIR := $(realpath ../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 ECMA262_DIR := $(PROJ_DIR)/vendor/tc39/ecma262
 
-ECMA262_VERSION := es2022
+ECMA262_VERSION := es2023
 ifneq ($(shell git -C $(ECMA262_DIR) describe),$(ECMA262_VERSION))
   $(error ECMA-262 specification version must be $(ECMA262_VERSION))
 endif
@@ -40,12 +40,14 @@ codegen: $(CODEGEN_TARGETS)
 .PRECIOUS: lexer/grammar.txt
 lexer/grammar.txt: $(ECMA262_DIR)/spec.html
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -rqp esgrammar -- extract lexical-grammar >$@
+	@cat $< | cargo run -rqp esgrammar -- extract lexical-grammar | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 .PRECIOUS: parser/grammar.txt
 parser/grammar.txt: $(ECMA262_DIR)/spec.html
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | cargo run -rqp esgrammar -- extract syntactic-grammar >$@
+	@cat $< | cargo run -rqp esgrammar -- extract syntactic-grammar | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # 2. Transpile the extracted grammars into an equivalent but more computer-friendly data
 #
@@ -66,9 +68,11 @@ parser/grammar.txt: $(ECMA262_DIR)/spec.html
 .PRECIOUS: lexer/grammar.yaml
 lexer/grammar.yaml: lexer/grammar.txt transpile.js
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run transpile.js -g lexical $(TRANSPILE_ARGS) >$@
+	@cat $< | deno run transpile.js -g lexical $(TRANSPILE_ARGS) | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 .PRECIOUS: parser/grammar.yaml
 parser/grammar.yaml: parser/grammar.txt transpile.js lexer/tokens.json
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | deno run --allow-read transpile.js -g syntactic -t lexer/tokens.json $(TRANSPILE_ARGS) >$@
+	@cat $< | deno run --allow-read transpile.js -g syntactic -t lexer/tokens.json $(TRANSPILE_ARGS) | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@

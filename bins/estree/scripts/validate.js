@@ -18,11 +18,19 @@ Usage:
 Options:
   --progress
     Show progress.
+
+  --mode=(release | debug | coverage) [default: release]
+    Choice one of the following modes:
+      release: Use the release build
+      debug: Use the debug build
+      coverage: Use cargo-llvm-cov
 `.trim();
 
 const { options, args } = await parseCommand({
   doc: DOC,
 });
+
+options.mode ||= 'release';
 
 const spinner = ora({ spinner: 'line' });
 

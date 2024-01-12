@@ -99,6 +99,11 @@ const IGNORES = {
     'body.0.expression.expressions.3.arguments.1.body.body.0.argument.object.arguments.0.elements.137.body.body.1.declarations.22.init.arguments.0.body.body.0.argument.left.right.arguments.0.value',
     'body.0.expression.expressions.3.arguments.1.body.body.0.argument.object.arguments.0.elements.137.body.body.1.declarations.22.init.arguments.0.body.body.0.argument.right.right.arguments.0.value',
   ],
+  'citation-js': [
+    'body.0.expression.right.arguments.0.properties.522.value.elements.0.body.body.2.expression.arguments.0.properties.2.value.arguments.0.body.body.0.argument.left.value',
+    'body.0.expression.right.arguments.0.properties.420.value.elements.0.body.body.1.declarations.22.init.arguments.0.body.body.0.argument.left.right.arguments.0.value',
+    'body.0.expression.right.arguments.0.properties.420.value.elements.0.body.body.1.declarations.22.init.arguments.0.body.body.0.argument.right.right.arguments.0.value',
+  ],
   // Legacy octal escape sequence
   weld: [
     'body.0.expression.callee.body.body.3.declarations.0.init.properties.7.value.value',

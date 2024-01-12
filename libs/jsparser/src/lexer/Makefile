@@ -62,32 +62,36 @@ codegen: $(CODEGEN_TARGETS)
 .PRECIOUS: $(CODEGEN_DIR)/%.json
 $(CODEGEN_DIR)/%.json: grammar.yaml tokens.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' >$@
+	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # 2. Generate code for each DFA
 dfa/%.rs: $(CODEGEN_DIR)/%.json dfa.js dfa/dfa.rs.hbs
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | \
 	  deno run dfa.js | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin dfa/dfa.rs.hbs | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # 3. Generate a wrapper function
 #
 # A wrapper function that selects a DFA according to the specified goal symbol.  Goal symbols are
 # defined in `tokens.yaml` and extracted from it by using `jq`.
-dfa/mod.rs: dfa/mod.rs.hbs
+dfa/mod.rs: dfa/mod.rs.hbs tokens.yaml
 	@echo 'Generating $(abspath $@)...'
 	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin $< | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # 4. Generate an enum type for goal symbols
 goals.rs: goals.rs.hbs tokens.yaml
 	@echo 'Generating $(abspath $@)...'
 	@cat tokens.yaml | yq -o=json | jq -r '[.goals[].name]' | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --input-stdin $< | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # 5. Collect tokens from tokens.yaml
 #
@@ -97,13 +101,16 @@ goals.rs: goals.rs.hbs tokens.yaml
 .PRECIOUS: tokens.json
 tokens.json: tokens.yaml
 	@echo 'Generating $(abspath $@)...'
-	@cat $< | yq -o=json | jq '[.goals[].tokens] | flatten | unique' >$@
+	@cat $< | yq -o=json | jq '[.goals[].tokens] | flatten | unique' | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # 6. Generate an enum type for tokens.
-tokens.rs: tokens.json tokens.rs.hbs
+tokens.rs: tokens.rs.hbs tokens.json
 	@echo 'Generating $(abspath $@)...'
-	@deno run -qA $(TOOLS_BIN)/codegen.js tokens.rs.hbs $< | \
-	  rustfmt --emit=stdout >$@
+	@cat tokens.json | \
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 $(CODEGEN_DIR):
 	@mkdir -p $@
