@@ -10,4 +10,5 @@ pub enum Goal {
     InputElementRegExp,
     InputElementRegExpOrTemplateTail,
     InputElementTemplateTail,
+    InputElementHashbangOrRegExp,
 }

@@ -57,6 +57,7 @@ pub enum TokenKind {
     Get,
     Gt,
     Gte,
+    HashbangComment,
     If,
     Implements,
     Import,

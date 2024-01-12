@@ -101,6 +101,30 @@
   production:
     - type: non-terminal
       data: TemplateSubstitutionTail
+- name: InputElementHashbangOrRegExp
+  production:
+    - type: non-terminal
+      data: WhiteSpace
+- name: InputElementHashbangOrRegExp
+  production:
+    - type: non-terminal
+      data: LineTerminator
+- name: InputElementHashbangOrRegExp
+  production:
+    - type: non-terminal
+      data: Comment
+- name: InputElementHashbangOrRegExp
+  production:
+    - type: non-terminal
+      data: CommonToken
+- name: InputElementHashbangOrRegExp
+  production:
+    - type: non-terminal
+      data: HashbangComment
+- name: InputElementHashbangOrRegExp
+  production:
+    - type: non-terminal
+      data: RegularExpressionLiteral
 - name: WhiteSpace
   production:
     - type: unicode-set
@@ -319,6 +343,28 @@
           data: SourceCharacter
         - type: exclude
           data: LineTerminator
+- name: HashbangComment
+  production:
+    - type: unicode-set
+      data:
+        - type: char
+          data: '#'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '!'
+- name: HashbangComment
+  production:
+    - type: unicode-set
+      data:
+        - type: char
+          data: '#'
+    - type: unicode-set
+      data:
+        - type: char
+          data: '!'
+    - type: non-terminal
+      data: SingleLineCommentChars
 - name: CommonToken
   production:
     - type: non-terminal
@@ -423,6 +469,114 @@
       data:
         - type: built-in
           data: ZWJ
+- name: AsciiLetter
+  production:
+    - type: unicode-set
+      data:
+        - type: char
+          data: a
+        - type: char
+          data: b
+        - type: char
+          data: c
+        - type: char
+          data: d
+        - type: char
+          data: e
+        - type: char
+          data: f
+        - type: char
+          data: g
+        - type: char
+          data: h
+        - type: char
+          data: i
+        - type: char
+          data: j
+        - type: char
+          data: k
+        - type: char
+          data: l
+        - type: char
+          data: m
+        - type: char
+          data: 'n'
+        - type: char
+          data: o
+        - type: char
+          data: p
+        - type: char
+          data: q
+        - type: char
+          data: r
+        - type: char
+          data: s
+        - type: char
+          data: t
+        - type: char
+          data: u
+        - type: char
+          data: v
+        - type: char
+          data: w
+        - type: char
+          data: x
+        - type: char
+          data: 'y'
+        - type: char
+          data: z
+        - type: char
+          data: A
+        - type: char
+          data: B
+        - type: char
+          data: C
+        - type: char
+          data: D
+        - type: char
+          data: E
+        - type: char
+          data: F
+        - type: char
+          data: G
+        - type: char
+          data: H
+        - type: char
+          data: I
+        - type: char
+          data: J
+        - type: char
+          data: K
+        - type: char
+          data: L
+        - type: char
+          data: M
+        - type: char
+          data: 'N'
+        - type: char
+          data: O
+        - type: char
+          data: P
+        - type: char
+          data: Q
+        - type: char
+          data: R
+        - type: char
+          data: S
+        - type: char
+          data: T
+        - type: char
+          data: U
+        - type: char
+          data: V
+        - type: char
+          data: W
+        - type: char
+          data: X
+        - type: char
+          data: 'Y'
+        - type: char
+          data: Z
 - name: UnicodeIDStart
   production:
     - type: unicode-set
