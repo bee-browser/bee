@@ -1,7 +1,11 @@
-const name = Deno.args[0];
+'use strict';
 
-const decoder = new TextDecoder('utf-8');
-const dat = await decoder.decode(await Deno.readAll(Deno.stdin));
+import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
+import { snakeCase } from "https://deno.land/x/case/mod.ts";
+
+const datFile = Deno.args[0];
+const name = snakeCase(path.basename(datFile, '.dat'));
+const dat = await Deno.readTextFile(datFile);
 
 const State = {
   NONE: 1,
@@ -16,7 +20,7 @@ class Test {
   constructor() {
     this.data = null;
     this.errors = [];
-    this.newErrors = []
+    this.newErrors = [];
     this.document = [];
     this.scripting = 'Both';
   }
@@ -130,7 +134,7 @@ if (test.hasData()) {
   tests.push(test);
 }
 
-console.log(JSON.stringify({ name, tests }, null, 2));
+console.log(JSON.stringify({ name, tests }));
 
 // helper functions
 

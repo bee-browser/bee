@@ -6,7 +6,7 @@ html5-spec:
   #
   url: https://html.spec.whatwg.org
   # Change the commit-hash if you update this file based on another version.
-  version: 1257236bd7b301d1510bafbc072519d6355cee3f
+  version: 4ca6ec020803cbdfd05f90475b6e3a3a0d5b2424
 
 # Manually converted definitions of tree construction rules.
 # Almost all rules are the same as ones defined in the HTML5 specification.
@@ -426,7 +426,7 @@ modes:
       - match: >-
           <address> <article> <aside> <blockquote> <center> <details> <dialog>
           <dir> <div> <dl> <fieldset> <figcaption> <figure> <footer> <header>
-          <hgroup> <main> <menu> <nav> <ol> <p> <section> <summary> <ul>
+          <hgroup> <main> <menu> <nav> <ol> <p> <search> <section> <summary> <ul>
         run: |
           if self.context().has_p_element_in_button_scope() {
               self.close_p_element();
@@ -565,7 +565,7 @@ modes:
           </address> </article> </aside> </blockquote> </button> </center>
           </details> </dialog> </dir> </div> </dl> </fieldset> </figcaption>
           </figure> </footer> </header> </hgroup> </listing> </main> </menu>
-          </nav> </ol> </pre> </section> </summary> </ul>
+          </nav> </ol> </pre> </search> </section> </summary> </ul>
         run: |
           if !self.context().has_{{tag_name}}_element_in_scope() {
               {{use '$parse-error'}}
@@ -1358,6 +1358,8 @@ modes:
           }
       - match: <caption> <col> <colgroup> <tbody> <td> <tfoot> <th> <thead> <tr>
         run: |
+          // We keep the following check for safety even though it's changed to an assertion
+          // in the specification.  See whatwg/html@ab63afcb792f2558d0e4fd176999d5c520b49825.
           if !self.context().has_cell_element_in_table_scope() {
               {{use '$parse-error'}}
               {{use '$ignore-token'}}
@@ -1419,6 +1421,20 @@ modes:
               self.pop_element();
           }
           self.push_html_optgroup_element(tag);
+          Control::Continue
+      - match: <hr>
+        run: |
+          if self.context().is_html_element(tag!(Option)) {
+              self.pop_element();
+          }
+          if self.context().is_html_element(tag!(Optgroup)) {
+              self.pop_element();
+          }
+          self.push_html_hr_element(tag);
+          self.pop_element();
+          if tag.self_closing {
+              {{use '$acknowledge-self-closing' }}
+          }
           Control::Continue
       - match: </optgroup>
         run: |

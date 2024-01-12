@@ -1,10 +1,11 @@
+'use strict';
+
+import * as path from 'https://deno.land/std@0.210.0/path/mod.ts';
 import { pascalCase } from "https://deno.land/x/case/mod.ts";
 
-const name = Deno.args[0];
-
-const decoder = new TextDecoder('utf-8');
-const json = await decoder.decode(await Deno.readAll(Deno.stdin));
-const original = JSON.parse(json);
+const testFile = Deno.args[0];
+const name = path.basename(testFile, '.test');
+const original = JSON.parse(await Deno.readTextFile(testFile));
 
 function isString(v) {
   return typeof v === 'string' || v instanceof String;
@@ -122,7 +123,7 @@ for (let testIndex = 0; testIndex < original.tests.length; ++testIndex) {
       break;
     }
   }
-  if (name === 'unicode_chars_problematic') {
+  if (name === 'unicodeCharsProblematic') {
     if (test.input.includes('\uD800') || test.input.includes('\uDFFF')) {
       // Required for avoiding a parse error in serde_json.
       test.input = '';
@@ -149,4 +150,4 @@ for (let testIndex = 0; testIndex < original.tests.length; ++testIndex) {
   }
 }
 
-console.log(JSON.stringify(data, null, 2));
+console.log(JSON.stringify(data));
