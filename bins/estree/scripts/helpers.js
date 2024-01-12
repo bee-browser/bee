@@ -11,7 +11,7 @@ export class Acorn {
     try {
       return refine(acorn.parse(source, {
         sourceType,
-        ecmaVersion: 2022,
+        ecmaVersion: 2023,
       }));
     } catch {
       return null;

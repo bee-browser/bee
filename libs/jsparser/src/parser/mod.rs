@@ -127,7 +127,7 @@ where
                 self.new_line = true;
                 false
             }
-            TokenKind::WhiteSpaceSequence => false,
+            TokenKind::WhiteSpaceSequence | TokenKind::HashbangComment => false,
             // A comment having line terminators affects the new_line state as described in
             // "5.1.2 The Lexical and RegExp Grammars".
             TokenKind::Comment => {

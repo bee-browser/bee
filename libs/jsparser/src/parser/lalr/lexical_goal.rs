@@ -9,11 +9,11 @@ pub const TABLE: [Goal; 4109] = [
     // State(0)
     //   [Script -> (empty) .]*
     //   [^ -> . Script]*
-    Goal::InputElementRegExp,
+    Goal::InputElementHashbangOrRegExp,
     // State(1)
     //   [Module -> (empty) .]*
     //   [^ -> . Module]*
-    Goal::InputElementRegExp,
+    Goal::InputElementHashbangOrRegExp,
     // State(2)
     //   [UnaryExpression -> ADD . UnaryExpression]*
     Goal::InputElementRegExp,

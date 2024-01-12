@@ -62,6 +62,7 @@ for (let i = 0; i < spec.states.length; ++i) {
   let permitTemplateTail = false;
   let ignoreLineTerminatorSequence = true;
 
+  state.isStartState = spec.starts.some(([symbol, stateId]) => stateId === i);
   state.isAutoSemicolonDoWhile = isAutoSemicolonDoWhile(state);
 
   for (const action of state.actions) {
@@ -130,6 +131,12 @@ for (let i = 0; i < spec.states.length; ++i) {
       'Action::Ignore',
     ]);
   }
+  if (state.isStartState) {
+    state.actions.push([
+      { index: tokenIndexMap['HASHBANG_COMMENT'], label: 'HASHBANG_COMMENT' },
+      'Action::Ignore',
+    ]);
+  }
 
   // The lexical goal symbol.
   //
@@ -160,6 +167,9 @@ for (let i = 0; i < spec.states.length; ++i) {
     assert(!permitTemplateMiddle);
     assert(!permitTemplateTail);
     state.lexical_goal = 'InputElementDiv';
+  }
+  if (state.isStartState) {
+    state.lexical_goal = 'InputElementHashbangOrRegExp';
   }
 
   for (const goto_ of state.gotos) {
