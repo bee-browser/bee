@@ -37,7 +37,7 @@ Arguments:
   <uri>
     URI or path to a web page to be scraped.
 
-    Read a HTML content from STDIN and convert it into a data URI if the <uri> is not specified.
+    Read an HTML content from STDIN and convert it into a data URI if the <uri> is not specified.
 
 Environment Variables:
   BEE_TOOLS_DOM_SCRAPER_DEFAULT_EXECUTABLE
