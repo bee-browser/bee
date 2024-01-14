@@ -1,10 +1,10 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.211.0/path/mod.ts';
-import { equal } from "https://deno.land/std@0.211.0/testing/asserts.ts";
+import * as path from 'https://deno.land/std@0.212.0/path/mod.ts';
+import { equal } from "https://deno.land/std@0.212.0/testing/asserts.ts";
 
 import deepDiff from 'npm:deep-diff@1.0.2';
-import ora from 'npm:ora@7.0.1';
+import ora from 'npm:ora@^7.0.1'; // 8.0.1 does not work w/ deno
 import TestStream from 'npm:test262-stream@1.4.0';
 
 import { parseCommand } from '../../../tools/lib/cli.js';
