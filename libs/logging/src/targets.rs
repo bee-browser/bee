@@ -47,7 +47,7 @@ pub const fn len() -> usize {
 
 #[inline(always)]
 pub const fn name(id: usize) -> &'static str {
-    const NAMES: [&'static str; 11] = [
+    const NAMES: [&str; 11] = [
         "bee::logview",
         "bee::dfagen",
         "bee::lalrgen",

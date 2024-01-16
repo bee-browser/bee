@@ -78,7 +78,7 @@ fn build_filters(default: Flags, filters: &str) -> [Flags; targets::len()] {
     let mut data: [MaybeUninit<Flags>; targets::len()] =
         unsafe { MaybeUninit::uninit().assume_init() };
 
-    for i in 0..data.len() {
+    for (i, item) in data.iter_mut().enumerate() {
         let name = Target(i).name();
         let flags = filters
             .iter()
@@ -89,13 +89,13 @@ fn build_filters(default: Flags, filters: &str) -> [Flags; targets::len()] {
                 Op::Add => prev | flags,
                 Op::Remove => prev & !flags,
             });
-        data[i].write(flags);
+        item.write(flags);
     }
 
     unsafe { std::mem::transmute::<_, [Flags; targets::len()]>(data) }
 }
 
-fn load_filters<'a>(filters: &'a str) -> Vec<(&'a str, Op, Flags)> {
+fn load_filters(filters: &str) -> Vec<(&str, Op, Flags)> {
     filters
         .split(',')
         .map(str::trim)
@@ -105,7 +105,7 @@ fn load_filters<'a>(filters: &'a str) -> Vec<(&'a str, Op, Flags)> {
                 Flags::from_str(flags).map(|flags| (target, Op::Add, flags))
             } else if let Some((target, flags)) = filter.split_once("-=") {
                 Flags::from_str(flags).map(|flags| (target, Op::Remove, flags))
-            } else if let Some((target, flags)) = filter.split_once("=") {
+            } else if let Some((target, flags)) = filter.split_once('=') {
                 Flags::from_str(flags).map(|flags| (target, Op::Assign, flags))
             } else {
                 Flags::from_str(filter).map(|flags| ("", Op::Assign, flags))
@@ -146,8 +146,8 @@ impl FromStr for Flags {
             .split('|')
             .map(str::trim)
             .filter(|flag| !flag.is_empty())
-            .fold(Ok(Flags::empty()), |flags, flag| {
-                Ok(flags?
+            .try_fold(Flags::empty(), |flags, flag| {
+                Ok(flags
                     | match flag {
                         "error" => Flags::ERROR,
                         "warn" => Flags::WARN,
