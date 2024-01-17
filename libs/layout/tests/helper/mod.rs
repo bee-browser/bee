@@ -4,7 +4,6 @@ use std::io::BufReader;
 use std::path::Path;
 
 use assert_json_diff::assert_json_eq;
-use serde_json;
 
 use layout::service::JsonSink;
 use layout::service::MessageInterpreter;

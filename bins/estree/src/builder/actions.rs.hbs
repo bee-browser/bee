@@ -5,7 +5,9 @@
 
 use super::Builder;
 
-pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str)>; {{length .}}] = [
+type Action = fn(&mut Builder) -> Result<(), String>;
+
+pub static ACTIONS: [Option<(Action, &'static str)>; {{length .}}] = [
     {{#each .}}
     // {{rule}}
     {{#if action}}Some((Builder::{{action}}, "{{action}}")){{else}}None{{/if}},

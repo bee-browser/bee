@@ -105,7 +105,7 @@ impl<'a> TreeValidator<'a> {
                         Namespace::Html => format!(r#"{name}="{value}""#),
                         _ => {
                             // Adjust foreign attributes.
-                            const XLINK_ATTRS: [&str; 7] = [
+                            static XLINK_ATTRS: [&str; 7] = [
                                 "xlink:actuate",
                                 "xlink:arcrole",
                                 "xlink:href",
@@ -114,7 +114,7 @@ impl<'a> TreeValidator<'a> {
                                 "xlink:title",
                                 "xlink:type",
                             ];
-                            const XML_ATTRS: [&'static str; 2] = ["xml:lang", "xml:space"];
+                            static XML_ATTRS: [&str; 2] = ["xml:lang", "xml:space"];
                             if name == "xmlns:xlink"
                                 || XLINK_ATTRS.contains(&name.as_str())
                                 || XML_ATTRS.contains(&name.as_str())

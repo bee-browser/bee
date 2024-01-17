@@ -19,7 +19,7 @@ use crate::phrase::MatchStatus;
 /// Generally, the resultant grammar size is larger then the original grammar size.  As a result,
 /// the number of states in the corresponding LR(0) automaton increases.
 pub fn preprocess(grammar: &Grammar) -> Grammar {
-    preprocess_lookaheads(&grammar)
+    preprocess_lookaheads(grammar)
 }
 
 fn preprocess_lookaheads(grammar: &Grammar) -> Grammar {
@@ -61,7 +61,7 @@ fn preprocess_non_tail_lookaheads(
         changed = true;
 
         let mut preprocessor =
-            LookaheadPreprocessor::new(n, &grammar, variant_table, &mut original_rules);
+            LookaheadPreprocessor::new(n, grammar, variant_table, &mut original_rules);
         for term in rule.production.iter() {
             if !preprocessor.preprocess(&rule.name, term) {
                 break;
@@ -224,7 +224,7 @@ impl<'g, 't, 'u> LookaheadPreprocessor<'g, 't, 'u> {
     }
 
     fn take_production(&mut self) -> Vec<Term> {
-        let mut production = std::mem::replace(&mut self.production, vec![]);
+        let mut production = std::mem::take(&mut self.production);
         if let Some(lookahead) = self.lookahead.take() {
             production.push(Term::Lookahead(lookahead));
         }

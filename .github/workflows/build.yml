@@ -41,28 +41,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ inputs.rust }}
+          components: 'clippy, rustfmt'
       - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      # TODO: Caching dependencies
-      - name: Install nextest
-        uses: taiki-e/install-action@nextest
+      - uses: taiki-e/install-action@nextest
+      - name: Check
+        run: make check
       - name: Build
-        run: |
-          make build
-        env:
-          CARGO_TERM_VERBOSE: true
+        run: make build
       - name: Build (release)
-        run: |
-          make release-build
-        env:
-          CARGO_TERM_VERBOSE: true
+        run: make release-build
       - name: Run tests
-        run: |
-          make test
-        env:
-          CARGO_TERM_VERBOSE: true
+        run: make test
       - name: Run tc39/test262
-        run: |
-          make test262 ARGS=
+        run: make test262 ARGS=

@@ -13,11 +13,13 @@ codegen: $(SRCS)
 null.rs: null.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read collect.js rules -s spec.yaml nul nul | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 %.rs: %.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read collect.js rules -s spec.yaml $(subst .rs,,$@) $(subst .rs,,$@) | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@

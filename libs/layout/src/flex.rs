@@ -36,7 +36,7 @@ impl FlexContainer {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}flex:\n", "", indent = depth)?;
+        writeln!(write, "{:indent$}flex:", "", indent = depth)?;
         for line in self.lines.iter() {
             line.inspect(write, depth + 1)?;
         }
@@ -76,7 +76,7 @@ impl<'a> FlexLineBuilder<'a> {
     }
 
     fn process_element(&mut self, element: &LayoutElement) {
-        let item = element.build_flex_item(&self.avail);
+        let item = element.build_flex_item(self.avail);
         self.items.push(item);
     }
 
@@ -103,7 +103,7 @@ impl<'a> FlexLineBuilder<'a> {
         let multiline = self.style.flex.wrap.is_multiline();
         let dir = self.style.flex.direction;
 
-        let mut items = std::mem::replace(&mut self.items, vec![]);
+        let mut items = std::mem::take(&mut self.items);
 
         Self::reoder_items(&mut items);
 
@@ -122,11 +122,7 @@ impl<'a> FlexLineBuilder<'a> {
                     .max_by(|a, b| a.partial_cmp(b).unwrap())
                     .expect("`flows` must be a non-empty");
                 // TODO: Distribute free space
-                let line = FlexLine::new(
-                    cross_advance,
-                    cross_size,
-                    std::mem::replace(&mut flows, vec![]),
-                );
+                let line = FlexLine::new(cross_advance, cross_size, std::mem::take(&mut flows));
                 cross_advance += cross_size;
                 lines.push(line);
                 main_advance = LayoutLength::zero();
@@ -142,22 +138,18 @@ impl<'a> FlexLineBuilder<'a> {
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
                 .expect("`flows` must be a non-empty");
             // TODO: Distribute free space
-            let line = FlexLine::new(
-                cross_advance,
-                cross_size,
-                std::mem::replace(&mut flows, vec![]),
-            );
+            let line = FlexLine::new(cross_advance, cross_size, std::mem::take(&mut flows));
             lines.push(line);
         }
 
         lines
     }
 
-    fn reoder_items(items: &mut Vec<FlexItem>) {
+    fn reoder_items(items: &mut [FlexItem]) {
         logger::warn!("TODO: reorder items: {}", items.len());
     }
 
-    fn reverse_lines(&self, lines: &mut Vec<FlexLine>) {
+    fn reverse_lines(&self, lines: &mut [FlexLine]) {
         let dir = self.style.flex.direction;
         let avail_size = self.avail.cross_size(dir);
 
@@ -166,7 +158,7 @@ impl<'a> FlexLineBuilder<'a> {
         }
     }
 
-    fn reverse_items(&self, lines: &mut Vec<FlexLine>) {
+    fn reverse_items(&self, lines: &mut [FlexLine]) {
         let dir = self.style.flex.direction;
         let avail_size = self.avail.main_size(dir);
 
@@ -197,9 +189,9 @@ impl FlexLine {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(
+        writeln!(
             write,
-            "{:indent$}flex-line: {:?} {:?}\n",
+            "{:indent$}flex-line: {:?} {:?}",
             "",
             self.advance,
             self.cross_size,
@@ -240,7 +232,7 @@ impl FlexItemBond {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
+        writeln!(write, "{:indent$}{}", "", self, indent = depth)?;
         self.item.inspect(write, depth + 1)
     }
 
@@ -312,7 +304,7 @@ impl FlexItem {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
+        writeln!(write, "{:indent$}{}", "", self, indent = depth)?;
         self.container.inspect(write, depth + 1)?;
         Ok(())
     }
@@ -348,7 +340,7 @@ impl LayoutElement {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
             background: BoxBackground {
-                color: self.style.background.color.clone(),
+                color: self.style.background.color,
                 images: vec![], // TODO
             },
         };
@@ -375,33 +367,24 @@ impl LayoutElement {
 
 impl FlexDirection {
     fn is_row(&self) -> bool {
-        match self {
-            FlexDirection::Row | FlexDirection::RowReverse => true,
-            _ => false,
-        }
+        matches!(self, FlexDirection::Row | FlexDirection::RowReverse)
     }
 
     pub(crate) fn is_reverse(&self) -> bool {
-        match self {
-            FlexDirection::RowReverse | FlexDirection::ColumnReverse => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            FlexDirection::RowReverse | FlexDirection::ColumnReverse
+        )
     }
 }
 
 impl FlexWrap {
     fn is_multiline(&self) -> bool {
-        match self {
-            FlexWrap::Nowrap => false,
-            _ => true,
-        }
+        !matches!(self, FlexWrap::Nowrap)
     }
 
     fn is_reverse(&self) -> bool {
-        match self {
-            FlexWrap::WrapReverse => true,
-            _ => false,
-        }
+        matches!(self, FlexWrap::WrapReverse)
     }
 }
 

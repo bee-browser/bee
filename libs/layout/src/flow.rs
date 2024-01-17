@@ -33,7 +33,7 @@ impl LayoutElement {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
             background: BoxBackground {
-                color: self.style.background.color.clone(),
+                color: self.style.background.color,
                 images: vec![], // TODO
             },
         };
@@ -75,7 +75,7 @@ impl FlowContainer {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", "flow-root", indent = depth)?;
+        writeln!(write, "{:indent$}flow-root", "", indent = depth)?;
         self.container.inspect(write, depth + 1)?;
         Ok(())
     }
@@ -160,7 +160,7 @@ impl<'a> BlockFlowBuilder<'a> {
     }
 
     fn process_block_element(&mut self, element: &LayoutElement) {
-        let block = element.build_block(&self.avail);
+        let block = element.build_block(self.avail);
         let height = block.box_model.geometry.margin_box.height();
         self.flows.push(BlockFlow::new(self.advance, block));
         self.advance += height;
@@ -224,7 +224,7 @@ impl Block {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
+        writeln!(write, "{:indent$}{self}", "", indent = depth)?;
         self.content.inspect(write, depth + 1)?;
         Ok(())
     }
@@ -273,7 +273,7 @@ impl BlockContent {
             ContainerSpec::Block => Self::Block(BlockContainer::new(nodes, avail)),
             ContainerSpec::Flex => Self::Flex(FlexContainer::new(nodes, style, avail)),
             ContainerSpec::Canvas => Self::Canvas(CanvasContainer::new(style)),
-            spec => unreachable!("{:?}", spec),
+            spec => unreachable!("{spec:?}"),
         }
     }
 
@@ -282,7 +282,7 @@ impl BlockContent {
         W: std::io::Write + ?Sized,
     {
         match self {
-            Self::None => write!(write, "{:indent$}none\n", "", indent = depth),
+            Self::None => writeln!(write, "{:indent$}none", "", indent = depth),
             Self::Block(ref block) => block.inspect(write, depth),
             Self::Flow(ref flow) => flow.inspect(write, depth),
             Self::Flex(ref flex) => flex.inspect(write, depth),

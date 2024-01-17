@@ -103,7 +103,7 @@ impl Grammar {
         // Collect only rules actually used.
         let mut collected: HashSet<NonTerminal> = Default::default();
         let mut remaining: VecDeque<NonTerminal> = Default::default();
-        remaining.extend(goal_symbols.into_iter());
+        remaining.extend(goal_symbols);
         while let Some(non_terminal) = remaining.pop_front() {
             // `remaining` may contain a non-terminal already collected.
             if collected.contains(&non_terminal) {
@@ -146,7 +146,7 @@ impl Grammar {
                     _ => None,
                 })
                 .for_each(|non_terminal| {
-                    if let None = self.non_terminals.get(non_terminal) {
+                    if self.non_terminals.get(non_terminal).is_none() {
                         logger::error!("{non_terminal} is not defined");
                         valid = false;
                     }
@@ -216,10 +216,7 @@ impl Rule {
     /// Returns `true` if this has tail-lookahead restrictions.
     #[allow(dead_code)]
     pub fn has_tail_lookahead(&self) -> bool {
-        match self.production.last() {
-            Some(Term::Lookahead(_)) => true,
-            _ => false,
-        }
+        matches!(self.production.last(), Some(Term::Lookahead(_)))
     }
 }
 
@@ -280,18 +277,12 @@ impl NonTerminal {
     /// Returns `true` if this is a variant.
     #[allow(dead_code)]
     pub fn is_variant(&self) -> bool {
-        match self {
-            Self::Variant(..) => true,
-            _ => false,
-        }
+        matches!(self, Self::Variant(..))
     }
 
     /// Returns `true` if this is the goal symbol in the augmented grammar.
     pub fn is_goal_of_augmented_grammar(&self) -> bool {
-        match self {
-            Self::GoalOfAugmentedGrammar(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::GoalOfAugmentedGrammar(_))
     }
 
     /// Returns a symbol without a variant ID.
@@ -343,27 +334,18 @@ pub enum Term {
 impl Term {
     /// Returns `true` if this is a symbol (a token or a non-terminal).
     pub fn is_symbol(&self) -> bool {
-        match self {
-            Self::Token(_) | Self::NonTerminal(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Token(_) | Self::NonTerminal(_))
     }
 
     /// Returns `true` if this is a token.
     #[allow(dead_code)]
     pub fn is_token(&self) -> bool {
-        match self {
-            Self::Token(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Token(_))
     }
 
     /// Returns `true` if this is a lookahead restriction.
     pub fn is_lookahead(&self) -> bool {
-        match self {
-            Self::Lookahead(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Lookahead(_))
     }
 }
 

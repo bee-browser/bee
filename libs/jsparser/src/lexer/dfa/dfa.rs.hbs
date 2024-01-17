@@ -108,7 +108,7 @@ impl From<char> for UnicodeSet {
         }
         {{#each nonAsciiList}}
         {{#if span}}
-        if c >= {{firstCodePoint}} && c <= {{lastCodePoint}} {
+        if ({{firstCodePoint}}..={{lastCodePoint}}).contains(&c) {
             return UnicodeSet({{unicodeSet}}, Some(ch));
         }
         {{else}}
@@ -121,7 +121,7 @@ impl From<char> for UnicodeSet {
     }
 }
 
-const ASCII_TABLE: [u8; 128] = {{json asciiTable}};
+static ASCII_TABLE: [u8; 128] = {{json asciiTable}};
 
 #[derive(Clone, Copy, Debug, Default)]
 struct State(u16);
@@ -153,7 +153,7 @@ impl State {
     }
 }
 
-const TRANSITION_TABLE: [[u16; {{numTransitions}}]; {{numStates}}] = [
+static TRANSITION_TABLE: [[u16; {{numTransitions}}]; {{numStates}}] = [
     {{#each states}}
     // State({{@index}})
     {{#each labels}}
@@ -169,7 +169,7 @@ const TRANSITION_TABLE: [[u16; {{numTransitions}}]; {{numStates}}] = [
     {{/each}}
 ];
 
-const ACCEPT_TABLE: [Option<TokenKind>; {{numStates}}] = [
+static ACCEPT_TABLE: [Option<TokenKind>; {{numStates}}] = [
     {{#each states}}
     {{#if accept}}
     Some(TokenKind::{{pascalCase accept}}), // State({{@index}})
@@ -179,7 +179,7 @@ const ACCEPT_TABLE: [Option<TokenKind>; {{numStates}}] = [
     {{/each}}
 ];
 
-const LOOKAHEAD_TABLE: [bool; {{numStates}}] = [
+static LOOKAHEAD_TABLE: [bool; {{numStates}}] = [
     {{#each states}}
     {{#if lookahead}}
     true, // State({{@index}})
@@ -197,7 +197,7 @@ enum CheckIdStartContinue {
     CheckIdContinue,
 }
 
-const CHECK_ID_START_CONTINUE_TABLE: [CheckIdStartContinue; {{numStates}}] = [
+static CHECK_ID_START_CONTINUE_TABLE: [CheckIdStartContinue; {{numStates}}] = [
     {{#each states}}
     {{#if checkIdStart}}
     CheckIdStartContinue::CheckIdStart,

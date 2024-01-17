@@ -25,12 +25,12 @@ impl<'a> Lexer<'a> {
     ///
     /// `src` must contain a complete source text.
     ///
-    /// The initial goal symbol of the created JavaScript lexer is [`Goal::InputElementDiv`].
+    /// The initial goal symbol of the created JavaScript lexer is [`Goal::Div`].
     #[inline(always)]
     pub fn new(src: &'a str) -> Lexer {
         Lexer {
             cursor: SourceCursor::new(src),
-            goal: Goal::InputElementDiv,
+            goal: Goal::Div,
             location: Default::default(),
         }
     }
@@ -724,7 +724,7 @@ mod tests {
     #[test]
     fn test_template_tail() {
         let mut lexer = Lexer::new("}$`1");
-        lexer.set_goal(Goal::InputElementTemplateTail);
+        lexer.set_goal(Goal::TemplateTail);
         assert_token!(lexer, TemplateTail, "}$`", loc!(0, 1, 0), loc!(3, 1, 3));
     }
 

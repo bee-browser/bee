@@ -1,6 +1,5 @@
 use crate::Location;
 use std::fmt;
-use thiserror;
 
 #[derive(Debug, thiserror::Error)]
 #[error("{location}: {code}")]

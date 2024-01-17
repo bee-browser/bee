@@ -1404,7 +1404,7 @@ impl Builder {
         Ok(())
     }
 
-    fn from_clause(&mut self) -> Result<(), String> {
+    fn process_from_clause(&mut self) -> Result<(), String> {
         let (source, _, end) = self.pop_node();
         let (start, _) = self.check("from");
         self.push_node(source, start, end);
@@ -1718,7 +1718,7 @@ impl Builder {
             self.push_node(node, start, end);
             Ok(())
         } else {
-            Err(format!("async"))
+            Err("async".to_string())
         }
     }
 
@@ -2300,7 +2300,7 @@ impl Builder {
         Ok(())
     }
 
-    fn into_expression(&mut self) -> Result<(), String> {
+    fn convert_to_expression(&mut self) -> Result<(), String> {
         let (node, start, end) = self.pop_node();
         let node = node!(into_expression; node)?;
         self.push_node(node, start, end);
@@ -2536,7 +2536,7 @@ impl Builder {
         Ok(())
     }
 
-    fn into_nullable(&mut self) -> Result<(), String> {
+    fn create_nullable(&mut self) -> Result<(), String> {
         let (node, start, end) = self.pop_node();
         self.push_nullable(Some(node), start, end);
         Ok(())
@@ -2557,7 +2557,7 @@ impl Builder {
         Ok(())
     }
 
-    fn into_list(&mut self) -> Result<(), String> {
+    fn create_list(&mut self) -> Result<(), String> {
         let (node, start, end) = self.pop_node();
         self.push_list(vec![node], start, end);
         Ok(())
@@ -2571,7 +2571,7 @@ impl Builder {
         Ok(())
     }
 
-    fn into_array(&mut self) -> Result<(), String> {
+    fn create_array(&mut self) -> Result<(), String> {
         let (node, start, end) = self.pop_node();
         self.push_array(vec![Some(node)], start, end);
         Ok(())
@@ -2722,7 +2722,7 @@ impl SyntaxHandler for Builder {
         Ok(node)
     }
 
-    fn shift<'a>(&mut self, token: &Token<'a>) -> Result<(), Self::Error> {
+    fn shift(&mut self, token: &Token<'_>) -> Result<(), Self::Error> {
         let start = self.location.clone();
         let end = token.compute_end(&start);
         logger::debug!(

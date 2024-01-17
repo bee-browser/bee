@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
     let cl = CommandLine::parse();
 
     let config: Config = serde_yaml::from_reader(std::fs::File::open(&cl.config)?)?;
-    let listen = config.listen.clone();
+    let listen = config.listen;
 
     // Start a web server to serve static resources and events to a web browser
     // that will be opened by `open::that()`.
@@ -84,7 +84,7 @@ macro_rules! into_router {
 }
 
 async fn serve(workdir: PathBuf, config: Config, data: Vec<(String, String)>) {
-    let addr = config.listen.clone();
+    let addr = config.listen;
 
     let mut router = axum::Router::new()
         .route("/logs", axum::routing::get(logs))
@@ -150,13 +150,13 @@ async fn logs(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let stderr = child.stderr.take().unwrap();
     let stream = async_stream::stream! {
         logger::info!(pid, "spawned");
-        yield Result::<_, Infallible>::Ok(Event::default().event("spawned").json_data(&pid).unwrap());
+        yield Result::<_, Infallible>::Ok(Event::default().event("spawned").json_data(pid).unwrap());
         let mut lines = BufReader::new(stderr).lines();
         while let Some(log) = lines.next_line().await.unwrap() {
             logger::debug!(pid, log);
             yield Result::<_, Infallible>::Ok(Event::default().event("log").data(log));
         }
-        yield Result::<_, Infallible>::Ok(Event::default().event("terminated").json_data(&pid).unwrap());
+        yield Result::<_, Infallible>::Ok(Event::default().event("terminated").json_data(pid).unwrap());
         logger::info!(pid, "terminated");
     };
     Sse::new(stream).keep_alive(Default::default())

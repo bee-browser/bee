@@ -39,7 +39,7 @@ impl Builder {
             }) => child_nodes,
             _ => unreachable!(),
         };
-        std::mem::replace(child_nodes, vec![])
+        std::mem::take(child_nodes)
     }
 
     pub fn child_nodes(&self, node_id: usize) -> &Vec<usize> {
@@ -68,6 +68,12 @@ impl Builder {
             }) => child_nodes,
             _ => unreachable!(),
         }
+    }
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -166,7 +172,7 @@ impl DomTreeBuilder for Builder {
                 id,
                 name: name.clone(),
                 attrs: attrs.clone(),
-                namespace: namespace.clone(),
+                namespace: *namespace,
                 child_nodes: vec![],
             },
             _ => unreachable!(),

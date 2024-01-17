@@ -5,7 +5,7 @@
 
 use super::TrieNode;
 
-pub(super) const NODES: [TrieNode; {{nodes.length}}] = [
+pub(super) static NODES: [TrieNode; {{nodes.length}}] = [
     {{#each nodes}}
     TrieNode {
         buffer: "{{buffer}}",
