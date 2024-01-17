@@ -70,10 +70,7 @@ impl LrItem {
         if self.rule.production.is_empty() {
             return true;
         }
-        self.rule.production.iter().all(|term| match term {
-            Term::Empty | Term::Lookahead(_) | Term::Disallow(_) => true,
-            _ => false,
-        })
+        self.rule.production.iter().all(|term| matches!(term, Term::Empty | Term::Lookahead(_) | Term::Disallow(_)))
     }
 
     pub fn k(&self) -> usize {
@@ -101,10 +98,7 @@ impl LrItem {
     }
 
     pub fn is_restricted(&self) -> bool {
-        match self.next_term() {
-            Some(Term::Disallow(_)) => true,
-            _ => false,
-        }
+        matches!(self.next_term(), Some(Term::Disallow(_)))
     }
 
     pub fn prev_term(&self) -> Option<&Term> {

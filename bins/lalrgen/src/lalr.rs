@@ -88,7 +88,7 @@ pub fn build_lookahead_tables(
                     };
                     match next_symbol {
                         Some(next_symbol) => {
-                            let next_id = state.transitions.get(&next_symbol).unwrap().clone();
+                            let next_id = state.transitions.get(&next_symbol).cloned().unwrap();
                             let next_state = automaton.state(next_id);
                             assert!(next_state.item_set.contains(&kernel_item));
                             (next_state.id, kernel_item)
@@ -152,15 +152,15 @@ pub fn build_lookahead_tables(
                 // Then, re-compute the closure.
                 let item_set = closure_context.compute_closure(&kernel_items, &closure_cache);
                 let symbol = Symbol::Token(token);
-                let next_id = state.transitions.get(&symbol).unwrap().clone();
+                let next_id = state.transitions.get(&symbol).cloned().unwrap();
                 let next_state = automaton.state(next_id);
                 // Iterate over *original* items.  Because the lookahead table is built for the
                 // LR(0) automaton.  Variant symbols in items should be converted to corresponding
                 // symbols in the original grammar before updating the lookahead table with the
                 // items.
                 for item in item_set.to_original(grammar).iter() {
-                    assert!(state.item_set.contains(&item));
-                    assert!(next_state.item_set.contains(&item));
+                    assert!(state.item_set.contains(item));
+                    assert!(next_state.item_set.contains(item));
                     if let Some(lookahead_set) =
                         lookahead_tables[state.id.index()].get(item).cloned()
                     {

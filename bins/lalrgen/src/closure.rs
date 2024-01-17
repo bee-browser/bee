@@ -31,7 +31,7 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
 
     pub fn compute_closure(&self, items: &[LrItem], cache: &ClosureCache) -> LrItemSet {
         items
-            .into_iter()
+            .iter()
             .map(|item| self.compute_closure_of_item(item, cache))
             .fold(LrItemSet::default(), |set, closure| set.merge(&closure))
     }
@@ -78,7 +78,7 @@ impl<'g, 'f> ClosureContext<'g, 'f> {
                     } else {
                         phrase_set![phrase!()]
                     };
-                    for rule in context.grammar.non_terminal_rules(&non_terminal) {
+                    for rule in context.grammar.non_terminal_rules(non_terminal) {
                         'next_lookahead: for lookahead in lookahead_set.iter() {
                             if let Some(Term::Lookahead(condition)) = rule.production.last() {
                                 let mut condition = condition.clone();
