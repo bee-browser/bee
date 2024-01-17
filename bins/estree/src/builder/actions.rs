@@ -5,7 +5,9 @@
 
 use super::Builder;
 
-pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str)>; 2080] = [
+type Action = fn(&mut Builder) -> Result<(), String>;
+
+pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -19,11 +21,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ModuleBody -> ModuleItemList
     Some((Builder::nop, "nop")),
     // StatementList -> StatementListItem
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // StatementList -> StatementList StatementListItem
     Some((Builder::append_to_list, "append_to_list")),
     // ModuleItemList -> ModuleItem
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ModuleItemList -> ModuleItemList ModuleItem
     Some((Builder::append_to_list, "append_to_list")),
     // StatementListItem -> Statement
@@ -147,9 +149,9 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ImportClause -> ImportedDefaultBinding
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ImportClause -> NameSpaceImport
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ImportClause -> NamedImports
     Some((Builder::nop, "nop")),
     // ImportClause -> ImportedDefaultBinding COMMA NameSpaceImport
@@ -157,7 +159,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ImportClause -> ImportedDefaultBinding COMMA NamedImports
     Some((Builder::prepend_to_csv_list, "prepend_to_csv_list")),
     // FromClause -> FROM ModuleSpecifier
-    Some((Builder::from_clause, "from_clause")),
+    Some((Builder::process_from_clause, "process_from_clause")),
     // ModuleSpecifier -> STRING_LITERAL
     Some((Builder::string_literal, "string_literal")),
     // ExportFromClause -> MUL
@@ -245,7 +247,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // Block -> LBRACE StatementList RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In -> VariableDeclaration_In
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_In -> VariableDeclarationList_In COMMA VariableDeclaration_In
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Expression_In -> AssignmentExpression_In
@@ -314,7 +316,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // LetOrConst -> CONST
     Some((Builder::nop, "nop")),
     // BindingList_In -> LexicalBinding_In
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList_In -> BindingList_In COMMA LexicalBinding_In
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // ImportedDefaultBinding -> ImportedBinding
@@ -341,11 +343,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ModuleExportName -> STRING_LITERAL
     Some((Builder::string_literal, "string_literal")),
     // ExportsList -> ExportSpecifier
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ExportsList -> ExportsList COMMA ExportSpecifier
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // VariableDeclarationList_In_Await -> VariableDeclaration_In_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_In_Await -> VariableDeclarationList_In_Await COMMA VariableDeclaration_In_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // HoistableDeclaration_Await -> FunctionDeclaration_Await
@@ -634,7 +636,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FormalParameters -> (empty)
     Some((Builder::empty_list, "empty_list")),
     // FormalParameters -> FunctionRestParameter
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameters -> FormalParameterList
     Some((Builder::nop, "nop")),
     // FormalParameters -> FormalParameterList COMMA
@@ -646,7 +648,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FormalParameters_Yield -> (empty)
     Some((Builder::empty_list, "empty_list")),
     // FormalParameters_Yield -> FunctionRestParameter_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameters_Yield -> FormalParameterList_Yield
     Some((Builder::nop, "nop")),
     // FormalParameters_Yield -> FormalParameterList_Yield COMMA
@@ -658,7 +660,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FormalParameters_Await -> (empty)
     Some((Builder::empty_list, "empty_list")),
     // FormalParameters_Await -> FunctionRestParameter_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameters_Await -> FormalParameterList_Await
     Some((Builder::nop, "nop")),
     // FormalParameters_Await -> FormalParameterList_Await COMMA
@@ -670,7 +672,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FormalParameters_Yield_Await -> (empty)
     Some((Builder::empty_list, "empty_list")),
     // FormalParameters_Yield_Await -> FunctionRestParameter_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameters_Yield_Await -> FormalParameterList_Yield_Await
     Some((Builder::nop, "nop")),
     // FormalParameters_Yield_Await -> FormalParameterList_Yield_Await COMMA
@@ -698,7 +700,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ImportedBinding -> BindingIdentifier_Await
     Some((Builder::nop, "nop")),
     // ImportsList -> ImportSpecifier
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ImportsList -> ImportsList COMMA ImportSpecifier
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // KeywordOrIdentifierName -> IDENTIFIER_NAME
@@ -842,7 +844,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "async_generator_declaration",
     )),
     // BindingList_In_Await -> LexicalBinding_In_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList_In_Await -> BindingList_In_Await COMMA LexicalBinding_In_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // ClassHeritage_Await -> EXTENDS LeftHandSideExpression_Await
@@ -854,17 +856,17 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
     Some((Builder::nop, "nop")),
     // ArrowParameters_Await -> BindingIdentifier_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
     Some((Builder::arrow_parameters, "arrow_parameters")),
     // ConciseBody_In -> (?![LBRACE]) ExpressionBody_In
-    Some((Builder::into_expression, "into_expression")),
+    Some((Builder::convert_to_expression, "convert_to_expression")),
     // ConciseBody_In -> LBRACE FunctionBody RBRACE
     Some((Builder::function_body_block, "function_body_block")),
     // AsyncArrowBindingIdentifier -> BindingIdentifier_Await
     Some((Builder::nop, "nop")),
     // AsyncConciseBody_In -> (?![LBRACE]) ExpressionBody_In_Await
-    Some((Builder::into_expression, "into_expression")),
+    Some((Builder::convert_to_expression, "convert_to_expression")),
     // AsyncConciseBody_In -> LBRACE AsyncFunctionBody RBRACE
     Some((Builder::function_body_block, "function_body_block")),
     // CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await
@@ -969,7 +971,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // Expression -> Expression COMMA AssignmentExpression
     Some((Builder::sequence_expression, "sequence_expression")),
     // VariableDeclarationList -> VariableDeclaration
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // LexicalDeclaration -> LetOrConst BindingList SEMICOLON
@@ -981,7 +983,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ForDeclaration -> LetOrConst ForBinding
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses -> CaseClause
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // CaseClauses -> CaseClauses CaseClause
     Some((Builder::append_to_list, "append_to_list")),
     // DefaultClause -> DEFAULT COLON
@@ -1028,7 +1030,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FunctionRestParameter -> BindingRestElement
     Some((Builder::nop, "nop")),
     // FormalParameterList -> FormalParameter
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameterList -> FormalParameterList COMMA FormalParameter
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // FunctionStatementList -> (empty)
@@ -1038,7 +1040,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FunctionRestParameter_Yield -> BindingRestElement_Yield
     Some((Builder::nop, "nop")),
     // FormalParameterList_Yield -> FormalParameter_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameterList_Yield -> FormalParameterList_Yield COMMA FormalParameter_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // FunctionBody_Yield -> FunctionStatementList_Yield
@@ -1046,7 +1048,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FunctionRestParameter_Await -> BindingRestElement_Await
     Some((Builder::nop, "nop")),
     // FormalParameterList_Await -> FormalParameter_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameterList_Await -> FormalParameterList_Await COMMA FormalParameter_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // FunctionBody_Await -> FunctionStatementList_Await
@@ -1054,7 +1056,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FunctionRestParameter_Yield_Await -> BindingRestElement_Yield_Await
     Some((Builder::nop, "nop")),
     // FormalParameterList_Yield_Await -> FormalParameter_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // FormalParameterList_Yield_Await -> FormalParameterList_Yield_Await COMMA FormalParameter_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // FunctionBody_Yield_Await -> FunctionStatementList_Yield_Await
@@ -1206,7 +1208,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "optional_chain_append_private_identifier",
     )),
     // StatementList_Await -> StatementListItem_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // StatementList_Await -> StatementList_Await StatementListItem_Await
     Some((Builder::append_to_list, "append_to_list")),
     // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
@@ -1366,7 +1368,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ShortCircuitExpression_In -> CoalesceExpression_In
     Some((Builder::nop, "nop")),
     // ArrowParameters -> BindingIdentifier
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ArrowParameters -> CoverParenthesizedExpressionAndArrowParameterList
     Some((Builder::arrow_parameters, "arrow_parameters")),
     // CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments
@@ -1432,7 +1434,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "variable_declarator_init",
     )),
     // BindingList -> LexicalBinding
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList -> BindingList COMMA LexicalBinding
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // CaseClause -> CASE Expression_In COLON
@@ -1449,7 +1451,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FormalParameter -> BindingElement
     Some((Builder::nop, "nop")),
     // StatementList_Return -> StatementListItem_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // StatementList_Return -> StatementList_Return StatementListItem_Return
     Some((Builder::append_to_list, "append_to_list")),
     // BindingRestElement_Yield -> ELLIPSIS BindingIdentifier_Yield
@@ -1483,7 +1485,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return
     Some((Builder::nop, "nop")),
     // ClassElement -> MethodDefinition
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement -> STATIC MethodDefinition
     Some((
         Builder::class_element_static_method_definition,
@@ -1500,7 +1502,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "class_element_static_property_definition",
     )),
     // ClassElement -> ClassStaticBlock
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // ObjectBindingPattern_Await -> LBRACE RBRACE
@@ -1544,7 +1546,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "array_pattern_concat_rest",
     )),
     // ClassElement_Await -> MethodDefinition_Await
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement_Await -> STATIC MethodDefinition_Await
     Some((
         Builder::class_element_static_method_definition,
@@ -1561,7 +1563,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "class_element_static_property_definition",
     )),
     // ClassElement_Await -> ClassStaticBlock
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement_Await -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
@@ -1631,7 +1633,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // Expression_Await -> Expression_Await COMMA AssignmentExpression_Await
     Some((Builder::sequence_expression, "sequence_expression")),
     // VariableDeclarationList_Await -> VariableDeclaration_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
@@ -1643,7 +1645,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ForDeclaration_Await -> LetOrConst ForBinding_Await
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Await -> CaseClause_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // CaseClauses_Await -> CaseClauses_Await CaseClause_Await
     Some((Builder::append_to_list, "append_to_list")),
     // DefaultClause_Await -> DEFAULT COLON
@@ -1656,7 +1658,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingRestProperty -> ELLIPSIS BindingIdentifier
     Some((Builder::rest_element, "rest_element")),
     // BindingPropertyList -> BindingProperty
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingPropertyList -> BindingPropertyList COMMA BindingProperty
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Elision -> COMMA
@@ -1833,7 +1835,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingElement_Yield -> BindingPattern_Yield Initializer_In_Yield
     Some((Builder::assignment_pattern, "assignment_pattern")),
     // StatementList_Yield_Return -> StatementListItem_Yield_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // StatementList_Yield_Return -> StatementList_Yield_Return StatementListItem_Yield_Return
     Some((Builder::append_to_list, "append_to_list")),
     // BindingElement_Await -> SingleNameBinding_Await
@@ -1843,7 +1845,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingElement_Await -> BindingPattern_Await Initializer_In_Await
     Some((Builder::assignment_pattern, "assignment_pattern")),
     // StatementList_Await_Return -> StatementListItem_Await_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // StatementList_Await_Return -> StatementList_Await_Return StatementListItem_Await_Return
     Some((Builder::append_to_list, "append_to_list")),
     // BindingIdentifier_Yield_Await -> Identifier
@@ -1863,7 +1865,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingElement_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
     Some((Builder::assignment_pattern, "assignment_pattern")),
     // StatementList_Yield_Await_Return -> StatementListItem_Yield_Await_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return StatementListItem_Yield_Await_Return
     Some((Builder::append_to_list, "append_to_list")),
     // MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
@@ -1890,7 +1892,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingRestProperty_Await -> ELLIPSIS BindingIdentifier_Await
     Some((Builder::rest_element, "rest_element")),
     // BindingPropertyList_Await -> BindingProperty_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingPropertyList_Await -> BindingPropertyList_Await COMMA BindingProperty_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // BindingElementList_Await -> BindingElisionElement_Await
@@ -2036,7 +2038,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "variable_declarator_init",
     )),
     // BindingList_Await -> LexicalBinding_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // CaseClause_Await -> CASE Expression_In_Await COLON
@@ -2051,7 +2053,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingProperty -> PropertyName COLON BindingElement
     Some((Builder::property_value, "property_value")),
     // BindingElisionElement -> BindingElement
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // BindingElisionElement -> Elision BindingElement
     Some((Builder::append_to_array, "append_to_array")),
     // LogicalANDExpression_In -> BitwiseORExpression_In
@@ -2298,7 +2300,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "method_definition_async_generator",
     )),
     // PropertySetParameterList -> FormalParameter
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ClassStaticBlockBody -> ClassStaticBlockStatementList
     Some((Builder::nop, "nop")),
     // BindingProperty_Await -> SingleNameBinding_Await
@@ -2306,7 +2308,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingProperty_Await -> PropertyName_Await COLON BindingElement_Await
     Some((Builder::property_value, "property_value")),
     // BindingElisionElement_Await -> BindingElement_Await
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // BindingElisionElement_Await -> Elision BindingElement_Await
     Some((Builder::append_to_array, "append_to_array")),
     // ClassElementName_Await -> PropertyName_Await
@@ -2339,11 +2341,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BooleanLiteral -> FALSE
     Some((Builder::boolean_literal_false, "boolean_literal_false")),
     // ElementList_Await -> AssignmentExpression_In_Await
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList_Await -> Elision AssignmentExpression_In_Await
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList_Await -> SpreadElement_Await
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList_Await -> Elision SpreadElement_Await
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList_Await -> ElementList_Await COMMA AssignmentExpression_In_Await
@@ -2355,7 +2357,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ElementList_Await -> ElementList_Await COMMA Elision SpreadElement_Await
     Some((Builder::concat_and_append_array, "concat_and_append_array")),
     // PropertyDefinitionList_Await -> PropertyDefinition_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // PropertyDefinitionList_Await -> PropertyDefinitionList_Await COMMA PropertyDefinition_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // SubstitutionTemplate_Await -> TEMPLATE_HEAD Expression_In_Await TemplateSpans_Await
@@ -2494,7 +2496,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingRestProperty_Yield -> ELLIPSIS BindingIdentifier_Yield
     Some((Builder::rest_element, "rest_element")),
     // BindingPropertyList_Yield -> BindingProperty_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingPropertyList_Yield -> BindingPropertyList_Yield COMMA BindingProperty_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // BindingElementList_Yield -> BindingElisionElement_Yield
@@ -2584,7 +2586,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingRestProperty_Yield_Await -> ELLIPSIS BindingIdentifier_Yield_Await
     Some((Builder::rest_element, "rest_element")),
     // BindingPropertyList_Yield_Await -> BindingProperty_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingPropertyList_Yield_Await -> BindingPropertyList_Yield_Await COMMA BindingProperty_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // BindingElementList_Yield_Await -> BindingElisionElement_Yield_Await
@@ -2703,11 +2705,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BitwiseANDExpression_In -> BitwiseANDExpression_In BIT_AND EqualityExpression_In
     Some((Builder::binary_expression, "binary_expression")),
     // ElementList -> AssignmentExpression_In
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList -> Elision AssignmentExpression_In
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList -> SpreadElement
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList -> Elision SpreadElement
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList -> ElementList COMMA AssignmentExpression_In
@@ -2719,7 +2721,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ElementList -> ElementList COMMA Elision SpreadElement
     Some((Builder::concat_and_append_array, "concat_and_append_array")),
     // PropertyDefinitionList -> PropertyDefinition
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // PropertyDefinitionList -> PropertyDefinitionList COMMA PropertyDefinition
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // SubstitutionTemplate -> TEMPLATE_HEAD Expression_In TemplateSpans
@@ -2772,7 +2774,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingProperty_Yield -> PropertyName_Yield COLON BindingElement_Yield
     Some((Builder::property_value, "property_value")),
     // BindingElisionElement_Yield -> BindingElement_Yield
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // BindingElisionElement_Yield -> Elision BindingElement_Yield
     Some((Builder::append_to_array, "append_to_array")),
     // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
@@ -2906,7 +2908,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BindingProperty_Yield_Await -> PropertyName_Yield_Await COLON BindingElement_Yield_Await
     Some((Builder::property_value, "property_value")),
     // BindingElisionElement_Yield_Await -> BindingElement_Yield_Await
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // BindingElisionElement_Yield_Await -> Elision BindingElement_Yield_Await
     Some((Builder::append_to_array, "append_to_array")),
     // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await
@@ -3182,7 +3184,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ShortCircuitExpression_In_Yield -> CoalesceExpression_In_Yield
     Some((Builder::nop, "nop")),
     // ArrowParameters_Yield -> BindingIdentifier_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ArrowParameters_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
     Some((Builder::arrow_parameters, "arrow_parameters")),
     // AsyncArrowBindingIdentifier_Yield -> BindingIdentifier_Yield_Await
@@ -3226,7 +3228,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield COMMA VariableDeclaration_In_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Expression_In_Yield -> AssignmentExpression_In_Yield
@@ -3283,7 +3285,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield RBRACE
     Some((Builder::class_tail, "class_tail")),
     // BindingList_In_Yield -> LexicalBinding_In_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList_In_Yield -> BindingList_In_Yield COMMA LexicalBinding_In_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Block_Await_Return -> LBRACE RBRACE
@@ -3319,7 +3321,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ShortCircuitExpression_In_Yield_Await -> CoalesceExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
     // ArrowParameters_Yield_Await -> BindingIdentifier_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // ArrowParameters_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
     Some((Builder::arrow_parameters, "arrow_parameters")),
     // CoverCallExpressionAndAsyncArrowHead_Yield_Await -> MemberExpression_Yield_Await Arguments_Yield_Await
@@ -3361,7 +3363,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_In_Yield_Await -> VariableDeclarationList_In_Yield_Await COMMA VariableDeclaration_In_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Expression_In_Yield_Await -> AssignmentExpression_In_Yield_Await
@@ -3416,7 +3418,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE ClassBody_Yield_Await RBRACE
     Some((Builder::class_tail, "class_tail")),
     // BindingList_In_Yield_Await -> LexicalBinding_In_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList_In_Yield_Await -> BindingList_In_Yield_Await COMMA LexicalBinding_In_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // ShiftExpression_Await -> AdditiveExpression_Await
@@ -3472,7 +3474,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BitwiseANDExpression -> BitwiseANDExpression BIT_AND EqualityExpression
     Some((Builder::binary_expression, "binary_expression")),
     // CaseClauses_Return -> CaseClause_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // CaseClauses_Return -> CaseClauses_Return CaseClause_Return
     Some((Builder::append_to_list, "append_to_list")),
     // DefaultClause_Return -> DEFAULT COLON
@@ -4175,7 +4177,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // Expression_Yield -> Expression_Yield COMMA AssignmentExpression_Yield
     Some((Builder::sequence_expression, "sequence_expression")),
     // VariableDeclarationList_Yield -> VariableDeclaration_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
@@ -4187,7 +4189,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ForDeclaration_Yield -> LetOrConst ForBinding_Yield
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Yield_Return -> CaseClause_Yield_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // CaseClauses_Yield_Return -> CaseClauses_Yield_Return CaseClause_Yield_Return
     Some((Builder::append_to_list, "append_to_list")),
     // DefaultClause_Yield_Return -> DEFAULT COLON
@@ -4205,7 +4207,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "class_element_list_append",
     )),
     // CaseClauses_Await_Return -> CaseClause_Await_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // CaseClauses_Await_Return -> CaseClauses_Await_Return CaseClause_Await_Return
     Some((Builder::append_to_list, "append_to_list")),
     // DefaultClause_Await_Return -> DEFAULT COLON
@@ -4278,7 +4280,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // Expression_Yield_Await -> Expression_Yield_Await COMMA AssignmentExpression_Yield_Await
     Some((Builder::sequence_expression, "sequence_expression")),
     // VariableDeclarationList_Yield_Await -> VariableDeclaration_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
@@ -4290,7 +4292,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ForDeclaration_Yield_Await -> LetOrConst ForBinding_Yield_Await
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return CaseClause_Yield_Await_Return
     Some((Builder::append_to_list, "append_to_list")),
     // DefaultClause_Yield_Await_Return -> DEFAULT COLON
@@ -4409,7 +4411,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "variable_declarator_init",
     )),
     // BindingList_Yield -> LexicalBinding_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
@@ -4420,7 +4422,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON StatementList_Yield_Return
     Some((Builder::switch_case, "switch_case")),
     // ClassElement_Yield -> MethodDefinition_Yield
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement_Yield -> STATIC MethodDefinition_Yield
     Some((
         Builder::class_element_static_method_definition,
@@ -4437,7 +4439,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "class_element_static_property_definition",
     )),
     // ClassElement_Yield -> ClassStaticBlock
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement_Yield -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // CaseClause_Await_Return -> CASE Expression_In_Await COLON
@@ -4521,7 +4523,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "variable_declarator_init",
     )),
     // BindingList_Yield_Await -> LexicalBinding_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
@@ -4532,7 +4534,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON StatementList_Yield_Await_Return
     Some((Builder::switch_case, "switch_case")),
     // ClassElement_Yield_Await -> MethodDefinition_Yield_Await
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await
     Some((
         Builder::class_element_static_method_definition,
@@ -4549,7 +4551,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
         "class_element_static_property_definition",
     )),
     // ClassElement_Yield_Await -> ClassStaticBlock
-    Some((Builder::into_nullable, "into_nullable")),
+    Some((Builder::create_nullable, "create_nullable")),
     // ClassElement_Yield_Await -> SEMICOLON
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // ExponentiationExpression_Await -> UnaryExpression_Await
@@ -4581,11 +4583,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BitwiseANDExpression_In_Yield -> BitwiseANDExpression_In_Yield BIT_AND EqualityExpression_In_Yield
     Some((Builder::binary_expression, "binary_expression")),
     // ElementList_Yield -> AssignmentExpression_In_Yield
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList_Yield -> Elision AssignmentExpression_In_Yield
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList_Yield -> SpreadElement_Yield
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList_Yield -> Elision SpreadElement_Yield
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList_Yield -> ElementList_Yield COMMA AssignmentExpression_In_Yield
@@ -4597,7 +4599,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ElementList_Yield -> ElementList_Yield COMMA Elision SpreadElement_Yield
     Some((Builder::concat_and_append_array, "concat_and_append_array")),
     // PropertyDefinitionList_Yield -> PropertyDefinition_Yield
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // PropertyDefinitionList_Yield -> PropertyDefinitionList_Yield COMMA PropertyDefinition_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // SubstitutionTemplate_Yield -> TEMPLATE_HEAD Expression_In_Yield TemplateSpans_Yield
@@ -4678,11 +4680,11 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // BitwiseANDExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await BIT_AND EqualityExpression_In_Yield_Await
     Some((Builder::binary_expression, "binary_expression")),
     // ElementList_Yield_Await -> AssignmentExpression_In_Yield_Await
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList_Yield_Await -> Elision AssignmentExpression_In_Yield_Await
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList_Yield_Await -> SpreadElement_Yield_Await
-    Some((Builder::into_array, "into_array")),
+    Some((Builder::create_array, "create_array")),
     // ElementList_Yield_Await -> Elision SpreadElement_Yield_Await
     Some((Builder::append_to_array, "append_to_array")),
     // ElementList_Yield_Await -> ElementList_Yield_Await COMMA AssignmentExpression_In_Yield_Await
@@ -4694,7 +4696,7 @@ pub const ACTIONS: [Option<(fn(&mut Builder) -> Result<(), String>, &'static str
     // ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision SpreadElement_Yield_Await
     Some((Builder::concat_and_append_array, "concat_and_append_array")),
     // PropertyDefinitionList_Yield_Await -> PropertyDefinition_Yield_Await
-    Some((Builder::into_list, "into_list")),
+    Some((Builder::create_list, "create_list")),
     // PropertyDefinitionList_Yield_Await -> PropertyDefinitionList_Yield_Await COMMA PropertyDefinition_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // SubstitutionTemplate_Yield_Await -> TEMPLATE_HEAD Expression_In_Yield_Await TemplateSpans_Yield_Await
