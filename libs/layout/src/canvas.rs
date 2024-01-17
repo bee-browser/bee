@@ -18,7 +18,7 @@ impl CanvasContainer {
     where
         W: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}canvas:\n", "", indent = depth)?;
+        writeln!(write, "{:indent$}canvas:", "", indent = depth)?;
         Ok(())
     }
 

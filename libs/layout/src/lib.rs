@@ -18,8 +18,6 @@ use serde::Deserialize;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use geometry;
-
 use crate::flex::FlexContainer;
 use crate::flow::FlowContainer;
 use crate::spec::*;
@@ -126,7 +124,7 @@ pub fn build_visual_tree(layout_root: LayoutNodeHandle, width: usize, height: us
                 content_box: root_box.clone(),
             },
             background: BoxBackground {
-                color: element.style.background.color.clone(),
+                color: element.style.background.color,
                 images: vec![], // TODO
             },
         };
@@ -246,8 +244,8 @@ impl LayoutElement {
 
         // TODO: layout in-flow child elements.
         let content = self.build_layer_content(&AvailableSize {
-            width: solved_geom.width.value.clone(),
-            height: solved_geom.height.value.clone(),
+            width: solved_geom.width.value,
+            height: solved_geom.height.value,
         });
 
         // TODO:
@@ -257,7 +255,7 @@ impl LayoutElement {
             style: self.style.clone(),
             geometry: solved_geom.determine(),
             background: BoxBackground {
-                color: self.style.background.color.clone(),
+                color: self.style.background.color,
                 images: vec![], // TODO
             },
         };
@@ -313,7 +311,7 @@ impl LayoutElement {
     where
         T: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
+        writeln!(write, "{:indent$}{self}", "", indent = depth)?;
         for node_ref in self.children.iter() {
             node_ref.inspect(write, depth + 1)?;
         }
@@ -323,7 +321,7 @@ impl LayoutElement {
 
 impl std::fmt::Display for LayoutElement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "element: spec={:?} label=\"{}\"", self.spec, self.label)
+        write!(f, r#"element: spec={:?} label="{}""#, self.spec, self.label)
     }
 }
 
@@ -341,7 +339,7 @@ impl LayoutText {
     where
         T: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent = depth)
+        writeln!(write, "{:indent$}{self}", "", indent = depth)
     }
 }
 
@@ -349,8 +347,8 @@ impl std::fmt::Display for LayoutText {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "text: text=\"{}\", label=\"{}\"",
-            self.text.escape_debug().to_string(),
+            r#"text: text="{}", label="{}""#,
+            self.text.escape_debug(),
             self.label
         )
     }
@@ -369,7 +367,7 @@ impl VisualRoot {
     where
         T: std::io::Write + ?Sized,
     {
-        write!(write, "root: {:?}\n", self.box_model)?;
+        writeln!(write, "root: {:?}", self.box_model)?;
 
         for layer in self.layers.iter().filter(|layer| layer.stack_level < 0) {
             layer.inspect(write, 1)?;
@@ -445,9 +443,12 @@ impl VisualBoxModel {
 
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct VisualBackground {
-    #[serde(skip_serializing_if = "Color::is_transparent")]
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip_serializing_if = "Color::is_transparent")
+    )]
     pub color: Color,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty"))]
     pub images: Vec<VisualBackgroundImage>,
 }
 
@@ -492,7 +493,7 @@ impl ToVisual for BackgroundStyle {
 
     fn to_visual(&self) -> Self::VisualType {
         VisualBackground {
-            color: self.color.clone(),
+            color: self.color,
             images: vec![],
         }
     }
@@ -503,9 +504,9 @@ impl ToVisual for Border {
 
     fn to_visual(&self) -> Self::VisualType {
         VisualBorder {
-            style: self.style.clone(),
+            style: self.style,
             width: self.width.to_visual(),
-            color: self.color.clone(),
+            color: self.color,
         }
     }
 }
@@ -555,7 +556,7 @@ impl ToVisual for BoxBackground {
 
     fn to_visual(&self) -> Self::VisualType {
         VisualBackground {
-            color: self.color.clone(),
+            color: self.color,
             images: self.images.iter().map(|image| image.to_visual()).collect(),
         }
     }
@@ -632,7 +633,7 @@ impl VisualLayer {
     where
         T: std::io::Write + ?Sized,
     {
-        write!(write, "{:indent$}{}\n", "", self, indent = depth)?;
+        writeln!(write, "{:indent$}{self}", "", indent = depth)?;
 
         for layer in self
             .child_layers

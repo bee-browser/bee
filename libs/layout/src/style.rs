@@ -68,21 +68,16 @@ pub enum DisplayInside {
     Ruby,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum PositioningScheme {
+    #[default]
     Static,
     Relative,
     Absolute,
     Fixed,
     Sticky,
-}
-
-impl Default for PositioningScheme {
-    fn default() -> Self {
-        PositioningScheme::Static
-    }
 }
 
 #[derive(Default)]
@@ -101,18 +96,14 @@ pub struct BoxModelStyle {
     pub margin: BoxQuad<Margin>,
 }
 
+#[derive(Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BoxSizing {
+    #[default]
     ContentBox,
     BorderBox,
     PaddingBox,
-}
-
-impl Default for BoxSizing {
-    fn default() -> Self {
-        BoxSizing::ContentBox
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -123,10 +114,11 @@ pub enum NumericSize {
     Scale(Decimal),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentSize {
+    #[default]
     Auto,
     MaxContent,
     MinContent,
@@ -144,12 +136,6 @@ impl ContentSize {
             (ContentSize::Scale(scale), Some(base)) => Some(base * *scale),
             _ => None,
         }
-    }
-}
-
-impl Default for ContentSize {
-    fn default() -> Self {
-        ContentSize::Auto
     }
 }
 
@@ -184,10 +170,11 @@ impl Default for ContentMinSize {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum ContentMaxSize {
+    #[default]
     None,
     Pixel(LayoutLength),
     Scale(Decimal),
@@ -202,12 +189,6 @@ impl ContentMaxSize {
             (ContentMaxSize::Scale(scale), Some(base)) => base * *scale,
             _ => LayoutLength::max_value(),
         }
-    }
-}
-
-impl Default for ContentMaxSize {
-    fn default() -> Self {
-        ContentMaxSize::None
     }
 }
 
@@ -237,10 +218,11 @@ impl Default for Padding {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BorderStyle {
+    #[default]
     None,
     Hidden,
     Dotted,
@@ -256,16 +238,7 @@ pub enum BorderStyle {
 impl BorderStyle {
     #[inline]
     pub fn is_visible(&self) -> bool {
-        match *self {
-            BorderStyle::None | BorderStyle::Hidden => false,
-            _ => true,
-        }
-    }
-}
-
-impl Default for BorderStyle {
-    fn default() -> Self {
-        BorderStyle::None
+        !matches!(self, BorderStyle::None | BorderStyle::Hidden)
     }
 }
 
@@ -319,13 +292,13 @@ impl BoxQuad<Border> {
     }
 }
 
-impl Into<(LayoutLength, LayoutLength, LayoutLength, LayoutLength)> for BoxQuad<Border> {
-    fn into(self) -> (LayoutLength, LayoutLength, LayoutLength, LayoutLength) {
+impl From<BoxQuad<Border>> for (LayoutLength, LayoutLength, LayoutLength, LayoutLength) {
+    fn from(val: BoxQuad<Border>) -> Self {
         (
-            self.top.width,
-            self.right.width,
-            self.bottom.width,
-            self.left.width,
+            val.top.width,
+            val.right.width,
+            val.bottom.width,
+            val.left.width,
         )
     }
 }
@@ -336,7 +309,7 @@ impl std::fmt::Display for Border {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Color(u8, u8, u8, u8);
 
@@ -374,12 +347,6 @@ impl Color {
     }
 }
 
-impl Default for Color {
-    fn default() -> Self {
-        Color(0, 0, 0, 0)
-    }
-}
-
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -393,10 +360,11 @@ impl std::fmt::Display for Color {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum Margin {
+    #[default]
     Auto,
     Pixel(LayoutLength),
     Scale(Decimal),
@@ -411,12 +379,6 @@ impl Margin {
             (Margin::Scale(scale), Some(base)) => Some(base * *scale),
             _ => None,
         }
-    }
-}
-
-impl Default for Margin {
-    fn default() -> Self {
-        Margin::Auto
     }
 }
 
@@ -568,50 +530,35 @@ pub struct BackgroundImage {
     pub height: BackgroundSize,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BackgroundAttachment {
     Fixed,
     Local,
+    #[default]
     Scroll,
 }
 
-impl Default for BackgroundAttachment {
-    fn default() -> Self {
-        BackgroundAttachment::Scroll
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BackgroundClip {
+    #[default]
     BorderBox,
     PaddingBox,
     ContentBox,
     Text,
 }
 
-impl Default for BackgroundClip {
-    fn default() -> Self {
-        BackgroundClip::BorderBox
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BackgroundOrigin {
     BorderBox,
+    #[default]
     PaddingBox,
     ContentBox,
-}
-
-impl Default for BackgroundOrigin {
-    fn default() -> Self {
-        BackgroundOrigin::PaddingBox
-    }
 }
 
 #[derive(Clone)]
@@ -628,37 +575,27 @@ impl Default for BackgroundPosition {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BackgroundRepeat {
+    #[default]
     Repeat,
     Space,
     Round,
     NoRepeat,
 }
 
-impl Default for BackgroundRepeat {
-    fn default() -> Self {
-        BackgroundRepeat::Repeat
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum BackgroundSize {
+    #[default]
     Auto,
     Contain,
     Cover,
     Pixel(LayoutLength),
     Scale(Decimal),
-}
-
-impl Default for BackgroundSize {
-    fn default() -> Self {
-        BackgroundSize::Auto
-    }
 }
 
 #[derive(Default)]
@@ -669,10 +606,11 @@ pub struct LayerStyle {
     pub z_index: LayerZIndex,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum LayerOffset {
+    #[default]
     Auto,
     Pixel(LayoutLength),
     Scale(Decimal),
@@ -690,24 +628,13 @@ impl LayerOffset {
     }
 }
 
-impl Default for LayerOffset {
-    fn default() -> Self {
-        LayerOffset::Auto
-    }
-}
-
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum LayerZIndex {
+    #[default]
     Auto,
     Index(i32),
-}
-
-impl Default for LayerZIndex {
-    fn default() -> Self {
-        LayerZIndex::Auto
-    }
 }
 
 #[derive(Default)]
@@ -726,41 +653,32 @@ pub struct FlexStyle {
     pub align_content: AlignContent,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum FlexDirection {
+    #[default]
     Row,
     RowReverse,
     Column,
     ColumnReverse,
 }
 
-impl Default for FlexDirection {
-    fn default() -> Self {
-        FlexDirection::Row
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum FlexWrap {
+    #[default]
     Nowrap,
     Wrap,
     WrapReverse,
 }
 
-impl Default for FlexWrap {
-    fn default() -> Self {
-        FlexWrap::Nowrap
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum FlexBasis {
+    #[default]
     Auto,
     Content,
     Pixel(LayoutLength),
@@ -768,16 +686,11 @@ pub enum FlexBasis {
     Calc(String), // TODO: Fn
 }
 
-impl Default for FlexBasis {
-    fn default() -> Self {
-        FlexBasis::Auto
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum JustifyContent {
+    #[default]
     FlexStart,
     FlexEnd,
     Center,
@@ -785,13 +698,7 @@ pub enum JustifyContent {
     SpaceAround,
 }
 
-impl Default for JustifyContent {
-    fn default() -> Self {
-        JustifyContent::FlexStart
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum AlignItems {
@@ -799,19 +706,15 @@ pub enum AlignItems {
     FlexEnd,
     Center,
     Baseline,
+    #[default]
     Stretch,
 }
 
-impl Default for AlignItems {
-    fn default() -> Self {
-        AlignItems::Stretch
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum AlignSelf {
+    #[default]
     Auto,
     FlexStart,
     FlexEnd,
@@ -820,13 +723,7 @@ pub enum AlignSelf {
     Stretch,
 }
 
-impl Default for AlignSelf {
-    fn default() -> Self {
-        AlignSelf::Auto
-    }
-}
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
 pub enum AlignContent {
@@ -835,13 +732,8 @@ pub enum AlignContent {
     Center,
     SpaceBetween,
     SpaceAround,
+    #[default]
     Stretch,
-}
-
-impl Default for AlignContent {
-    fn default() -> Self {
-        AlignContent::Stretch
-    }
 }
 
 #[derive(Clone, Default)]

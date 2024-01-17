@@ -41,7 +41,7 @@ impl Spec {
         self
     }
 
-    fn check_positioning<'a>(&'a mut self, positioning: PositioningScheme) -> &'a mut Self {
+    fn check_positioning(&mut self, positioning: PositioningScheme) -> &mut Self {
         if !self.node.is_none() {
             match positioning {
                 PositioningScheme::Absolute
@@ -57,7 +57,7 @@ impl Spec {
         self
     }
 
-    fn validate<'a>(&'a self) -> &'a Self {
+    fn validate(&self) -> &Self {
         // TODO: panics in inconsistency
         self
     }
@@ -90,11 +90,7 @@ pub(crate) enum NodeSpec {
 impl NodeSpec {
     #[inline]
     pub(crate) fn is_none(&self) -> bool {
-        if let Self::None = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Self::None)
     }
 }
 
