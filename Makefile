@@ -32,8 +32,10 @@ list:
 	  grep -E -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 .PHONY: check
-check: format
-	cargo check --release --all-features
+check:
+	cargo fmt --all --check
+	cargo check --workspace --all-targets --all-features
+	cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 .PHONY: build
 build: format $(BUILD_TARGETS)
