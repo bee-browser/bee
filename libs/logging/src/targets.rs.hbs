@@ -34,7 +34,7 @@ mod tests {
     {{#each targets}}
     #[test]
     fn test_{{snakeCase symbol}}() {
-        const NAME: &'static str = {{symbol}}.name();
+        const NAME: &str = {{symbol}}.name();
         assert_eq!(NAME, "{{name}}");
     }
 

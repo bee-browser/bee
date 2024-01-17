@@ -776,7 +776,6 @@ pub struct AvailableSize {
 mod tests {
     use super::*;
     use assert_matches::assert_matches;
-    use serde_json;
 
     #[test]
     fn test_border_style_serde() {
@@ -796,7 +795,7 @@ mod tests {
             let result = assert_matches!(serde_json::to_string(&pair.0), Ok(v) => v);
             assert_eq!(result, pair.1);
 
-            let result: BorderStyle = assert_matches!(serde_json::from_str(&pair.1), Ok(v) => v);
+            let result: BorderStyle = assert_matches!(serde_json::from_str(pair.1), Ok(v) => v);
             assert_eq!(result, pair.0);
         }
     }
@@ -814,7 +813,7 @@ mod tests {
         let result = assert_matches!(serde_json::to_string(&border), Ok(v) => v);
         assert_eq!(result, json);
 
-        let result: Border = assert_matches!(serde_json::from_str(&json), Ok(v) => v);
+        let result: Border = assert_matches!(serde_json::from_str(json), Ok(v) => v);
         assert_eq!(result, border);
     }
 
@@ -831,7 +830,7 @@ mod tests {
         let result = assert_matches!(serde_json::to_string(&value), Ok(v) => v);
         assert_eq!(result, json);
 
-        let result: BoxQuad<Border> = assert_matches!(serde_json::from_str(&json), Ok(v) => v);
+        let result: BoxQuad<Border> = assert_matches!(serde_json::from_str(json), Ok(v) => v);
         assert_eq!(result, value);
     }
 }

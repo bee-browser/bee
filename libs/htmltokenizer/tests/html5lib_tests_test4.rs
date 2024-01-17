@@ -5,6 +5,7 @@ use helper::tokenize;
 #[test]
 fn test_0000() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"< in attribute name","initialState":"Data","input":"<z/0  <>","inputUtf16":[60,122,47,48,32,32,60,62],"output":[{"StartTag":{"name":"z","attrs":{"0":"","<":""},"self_closing":false}}],"errors":[{"code":"unexpected-solidus-in-tag","location":{"line":1,"column":4}},{"code":"unexpected-character-in-attribute-name","location":{"line":1,"column":7}}]}"##,
     );
 }
@@ -12,6 +13,7 @@ fn test_0000() {
 #[test]
 fn test_0001() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"< in unquoted attribute value","initialState":"Data","input":"<z x=<>","inputUtf16":[60,122,32,120,61,60,62],"output":[{"StartTag":{"name":"z","attrs":{"x":"<"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -19,6 +21,7 @@ fn test_0001() {
 #[test]
 fn test_0002() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"= in unquoted attribute value","initialState":"Data","input":"<z z=z=z>","inputUtf16":[60,122,32,122,61,122,61,122,62],"output":[{"StartTag":{"name":"z","attrs":{"z":"z=z"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":7}}]}"##,
     );
 }
@@ -26,6 +29,7 @@ fn test_0002() {
 #[test]
 fn test_0003() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"= attribute","initialState":"Data","input":"<z =>","inputUtf16":[60,122,32,61,62],"output":[{"StartTag":{"name":"z","attrs":{"=":""},"self_closing":false}}],"errors":[{"code":"unexpected-equals-sign-before-attribute-name","location":{"line":1,"column":4}}]}"##,
     );
 }
@@ -33,6 +37,7 @@ fn test_0003() {
 #[test]
 fn test_0004() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"== attribute","initialState":"Data","input":"<z ==>","inputUtf16":[60,122,32,61,61,62],"output":[{"StartTag":{"name":"z","attrs":{"=":""},"self_closing":false}}],"errors":[{"code":"unexpected-equals-sign-before-attribute-name","location":{"line":1,"column":4}},{"code":"missing-attribute-value","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -40,6 +45,7 @@ fn test_0004() {
 #[test]
 fn test_0005() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"=== attribute","initialState":"Data","input":"<z ===>","inputUtf16":[60,122,32,61,61,61,62],"output":[{"StartTag":{"name":"z","attrs":{"=":"="},"self_closing":false}}],"errors":[{"code":"unexpected-equals-sign-before-attribute-name","location":{"line":1,"column":4}},{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -47,6 +53,7 @@ fn test_0005() {
 #[test]
 fn test_0006() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"==== attribute","initialState":"Data","input":"<z ====>","inputUtf16":[60,122,32,61,61,61,61,62],"output":[{"StartTag":{"name":"z","attrs":{"=":"=="},"self_closing":false}}],"errors":[{"code":"unexpected-equals-sign-before-attribute-name","location":{"line":1,"column":4}},{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":6}},{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":7}}]}"##,
     );
 }
@@ -54,6 +61,7 @@ fn test_0006() {
 #[test]
 fn test_0007() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"\" after ampersand in double-quoted attribute value","initialState":"Data","input":"<z z=\"&\">","inputUtf16":[60,122,32,122,61,34,38,34,62],"output":[{"StartTag":{"name":"z","attrs":{"z":"&"},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -61,6 +69,7 @@ fn test_0007() {
 #[test]
 fn test_0008() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"' after ampersand in double-quoted attribute value","initialState":"Data","input":"<z z=\"&'\">","inputUtf16":[60,122,32,122,61,34,38,39,34,62],"output":[{"StartTag":{"name":"z","attrs":{"z":"&'"},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -68,6 +77,7 @@ fn test_0008() {
 #[test]
 fn test_0009() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"' after ampersand in single-quoted attribute value","initialState":"Data","input":"<z z='&'>","inputUtf16":[60,122,32,122,61,39,38,39,62],"output":[{"StartTag":{"name":"z","attrs":{"z":"&"},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -75,6 +85,7 @@ fn test_0009() {
 #[test]
 fn test_0010() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"\" after ampersand in single-quoted attribute value","initialState":"Data","input":"<z z='&\"'>","inputUtf16":[60,122,32,122,61,39,38,34,39,62],"output":[{"StartTag":{"name":"z","attrs":{"z":"&\""},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -82,6 +93,7 @@ fn test_0010() {
 #[test]
 fn test_0011() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Text after bogus character reference","initialState":"Data","input":"<z z='&xlink_xmlns;'>bar<z>","inputUtf16":[60,122,32,122,61,39,38,120,108,105,110,107,95,120,109,108,110,115,59,39,62,98,97,114,60,122,62],"output":[{"StartTag":{"name":"z","attrs":{"z":"&xlink_xmlns;"},"self_closing":false}},{"Character":{"data":"bar"}},{"StartTag":{"name":"z","attrs":{},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -89,6 +101,7 @@ fn test_0011() {
 #[test]
 fn test_0012() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Text after hex character reference","initialState":"Data","input":"<z z='&#x0020; foo'>bar<z>","inputUtf16":[60,122,32,122,61,39,38,35,120,48,48,50,48,59,32,102,111,111,39,62,98,97,114,60,122,62],"output":[{"StartTag":{"name":"z","attrs":{"z":"  foo"},"self_closing":false}},{"Character":{"data":"bar"}},{"StartTag":{"name":"z","attrs":{},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -96,6 +109,7 @@ fn test_0012() {
 #[test]
 fn test_0013() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Attribute name starting with \"","initialState":"Data","input":"<foo \"='bar'>","inputUtf16":[60,102,111,111,32,34,61,39,98,97,114,39,62],"output":[{"StartTag":{"name":"foo","attrs":{"\"":"bar"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-attribute-name","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -103,6 +117,7 @@ fn test_0013() {
 #[test]
 fn test_0014() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Attribute name starting with '","initialState":"Data","input":"<foo '='bar'>","inputUtf16":[60,102,111,111,32,39,61,39,98,97,114,39,62],"output":[{"StartTag":{"name":"foo","attrs":{"'":"bar"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-attribute-name","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -110,6 +125,7 @@ fn test_0014() {
 #[test]
 fn test_0015() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Attribute name containing \"","initialState":"Data","input":"<foo a\"b='bar'>","inputUtf16":[60,102,111,111,32,97,34,98,61,39,98,97,114,39,62],"output":[{"StartTag":{"name":"foo","attrs":{"a\"b":"bar"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-attribute-name","location":{"line":1,"column":7}}]}"##,
     );
 }
@@ -117,6 +133,7 @@ fn test_0015() {
 #[test]
 fn test_0016() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Attribute name containing '","initialState":"Data","input":"<foo a'b='bar'>","inputUtf16":[60,102,111,111,32,97,39,98,61,39,98,97,114,39,62],"output":[{"StartTag":{"name":"foo","attrs":{"a'b":"bar"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-attribute-name","location":{"line":1,"column":7}}]}"##,
     );
 }
@@ -124,6 +141,7 @@ fn test_0016() {
 #[test]
 fn test_0017() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Unquoted attribute value containing '","initialState":"Data","input":"<foo a=b'c>","inputUtf16":[60,102,111,111,32,97,61,98,39,99,62],"output":[{"StartTag":{"name":"foo","attrs":{"a":"b'c"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":9}}]}"##,
     );
 }
@@ -131,6 +149,7 @@ fn test_0017() {
 #[test]
 fn test_0018() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Unquoted attribute value containing \"","initialState":"Data","input":"<foo a=b\"c>","inputUtf16":[60,102,111,111,32,97,61,98,34,99,62],"output":[{"StartTag":{"name":"foo","attrs":{"a":"b\"c"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":9}}]}"##,
     );
 }
@@ -138,6 +157,7 @@ fn test_0018() {
 #[test]
 fn test_0019() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Double-quoted attribute value not followed by whitespace","initialState":"Data","input":"<foo a=\"b\"c>","inputUtf16":[60,102,111,111,32,97,61,34,98,34,99,62],"output":[{"StartTag":{"name":"foo","attrs":{"a":"b","c":""},"self_closing":false}}],"errors":[{"code":"missing-whitespace-between-attributes","location":{"line":1,"column":11}}]}"##,
     );
 }
@@ -145,6 +165,7 @@ fn test_0019() {
 #[test]
 fn test_0020() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Single-quoted attribute value not followed by whitespace","initialState":"Data","input":"<foo a='b'c>","inputUtf16":[60,102,111,111,32,97,61,39,98,39,99,62],"output":[{"StartTag":{"name":"foo","attrs":{"a":"b","c":""},"self_closing":false}}],"errors":[{"code":"missing-whitespace-between-attributes","location":{"line":1,"column":11}}]}"##,
     );
 }
@@ -152,6 +173,7 @@ fn test_0020() {
 #[test]
 fn test_0021() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Quoted attribute followed by permitted /","initialState":"Data","input":"<br a='b'/>","inputUtf16":[60,98,114,32,97,61,39,98,39,47,62],"output":[{"StartTag":{"name":"br","attrs":{"a":"b"},"self_closing":true}}],"errors":[]}"##,
     );
 }
@@ -159,6 +181,7 @@ fn test_0021() {
 #[test]
 fn test_0022() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Quoted attribute followed by non-permitted /","initialState":"Data","input":"<bar a='b'/>","inputUtf16":[60,98,97,114,32,97,61,39,98,39,47,62],"output":[{"StartTag":{"name":"bar","attrs":{"a":"b"},"self_closing":true}}],"errors":[]}"##,
     );
 }
@@ -166,6 +189,7 @@ fn test_0022() {
 #[test]
 fn test_0023() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"CR EOF after doctype name","initialState":"Data","input":"<!doctype html \r","inputUtf16":[60,33,100,111,99,116,121,112,101,32,104,116,109,108,32,13],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"eof-in-doctype","location":{"line":2,"column":1}}]}"##,
     );
 }
@@ -173,6 +197,7 @@ fn test_0023() {
 #[test]
 fn test_0024() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"CR EOF in tag name","initialState":"Data","input":"<z\r","inputUtf16":[60,122,13],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":2,"column":1}}]}"##,
     );
 }
@@ -180,6 +205,7 @@ fn test_0024() {
 #[test]
 fn test_0025() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Slash EOF in tag name","initialState":"Data","input":"<z/","inputUtf16":[60,122,47],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":4}}]}"##,
     );
 }
@@ -187,6 +213,7 @@ fn test_0025() {
 #[test]
 fn test_0026() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Zero hex numeric entity","initialState":"Data","input":"&#x0","inputUtf16":[38,35,120,48],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"missing-semicolon-after-character-reference","location":{"line":1,"column":5}},{"code":"null-character-reference","location":{"line":1,"column":5}}]}"##,
     );
 }
@@ -194,6 +221,7 @@ fn test_0026() {
 #[test]
 fn test_0027() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Zero decimal numeric entity","initialState":"Data","input":"&#0","inputUtf16":[38,35,48],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"missing-semicolon-after-character-reference","location":{"line":1,"column":4}},{"code":"null-character-reference","location":{"line":1,"column":4}}]}"##,
     );
 }
@@ -201,6 +229,7 @@ fn test_0027() {
 #[test]
 fn test_0028() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Zero-prefixed hex numeric entity","initialState":"Data","input":"&#x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041;","inputUtf16":[38,35,120,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,52,49,59],"output":[{"Character":{"data":"A"}}],"errors":[]}"##,
     );
 }
@@ -208,6 +237,7 @@ fn test_0028() {
 #[test]
 fn test_0029() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Zero-prefixed decimal numeric entity","initialState":"Data","input":"&#000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000065;","inputUtf16":[38,35,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,48,54,53,59],"output":[{"Character":{"data":"A"}}],"errors":[]}"##,
     );
 }
@@ -215,6 +245,7 @@ fn test_0029() {
 #[test]
 fn test_0030() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Empty hex numeric entities","initialState":"Data","input":"&#x &#X ","inputUtf16":[38,35,120,32,38,35,88,32],"output":[{"Character":{"data":"&#x &#X "}}],"errors":[{"code":"absence-of-digits-in-numeric-character-reference","location":{"line":1,"column":4}},{"code":"absence-of-digits-in-numeric-character-reference","location":{"line":1,"column":8}}]}"##,
     );
 }
@@ -222,6 +253,7 @@ fn test_0030() {
 #[test]
 fn test_0031() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Invalid digit in hex numeric entity","initialState":"Data","input":"&#xZ","inputUtf16":[38,35,120,90],"output":[{"Character":{"data":"&#xZ"}}],"errors":[{"code":"absence-of-digits-in-numeric-character-reference","location":{"line":1,"column":4}}]}"##,
     );
 }
@@ -229,6 +261,7 @@ fn test_0031() {
 #[test]
 fn test_0032() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Empty decimal numeric entities","initialState":"Data","input":"&# &#; ","inputUtf16":[38,35,32,38,35,59,32],"output":[{"Character":{"data":"&# &#; "}}],"errors":[{"code":"absence-of-digits-in-numeric-character-reference","location":{"line":1,"column":3}},{"code":"absence-of-digits-in-numeric-character-reference","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -236,6 +269,7 @@ fn test_0032() {
 #[test]
 fn test_0033() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Invalid digit in decimal numeric entity","initialState":"Data","input":"&#A","inputUtf16":[38,35,65],"output":[{"Character":{"data":"&#A"}}],"errors":[{"code":"absence-of-digits-in-numeric-character-reference","location":{"line":1,"column":3}}]}"##,
     );
 }
@@ -243,6 +277,7 @@ fn test_0033() {
 #[test]
 fn test_0034() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Non-BMP numeric entity","initialState":"Data","input":"&#x10000;","inputUtf16":[38,35,120,49,48,48,48,48,59],"output":[{"Character":{"data":"𐀀"}}],"errors":[]}"##,
     );
 }
@@ -250,6 +285,7 @@ fn test_0034() {
 #[test]
 fn test_0035() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Maximum non-BMP numeric entity","initialState":"Data","input":"&#X10FFFF;","inputUtf16":[38,35,88,49,48,70,70,70,70,59],"output":[{"Character":{"data":"􏿿"}}],"errors":[{"code":"noncharacter-character-reference","location":{"line":1,"column":11}}]}"##,
     );
 }
@@ -257,6 +293,7 @@ fn test_0035() {
 #[test]
 fn test_0036() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Above maximum numeric entity","initialState":"Data","input":"&#x110000;","inputUtf16":[38,35,120,49,49,48,48,48,48,59],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"character-reference-outside-unicode-range","location":{"line":1,"column":11}}]}"##,
     );
 }
@@ -264,6 +301,7 @@ fn test_0036() {
 #[test]
 fn test_0037() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"32-bit hex numeric entity","initialState":"Data","input":"&#x80000041;","inputUtf16":[38,35,120,56,48,48,48,48,48,52,49,59],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"character-reference-outside-unicode-range","location":{"line":1,"column":13}}]}"##,
     );
 }
@@ -271,6 +309,7 @@ fn test_0037() {
 #[test]
 fn test_0038() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"33-bit hex numeric entity","initialState":"Data","input":"&#x100000041;","inputUtf16":[38,35,120,49,48,48,48,48,48,48,52,49,59],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"character-reference-outside-unicode-range","location":{"line":1,"column":14}}]}"##,
     );
 }
@@ -278,6 +317,7 @@ fn test_0038() {
 #[test]
 fn test_0039() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"33-bit decimal numeric entity","initialState":"Data","input":"&#4294967361;","inputUtf16":[38,35,52,50,57,52,57,54,55,51,54,49,59],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"character-reference-outside-unicode-range","location":{"line":1,"column":14}}]}"##,
     );
 }
@@ -285,6 +325,7 @@ fn test_0039() {
 #[test]
 fn test_0040() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"65-bit hex numeric entity","initialState":"Data","input":"&#x10000000000000041;","inputUtf16":[38,35,120,49,48,48,48,48,48,48,48,48,48,48,48,48,48,48,52,49,59],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"character-reference-outside-unicode-range","location":{"line":1,"column":22}}]}"##,
     );
 }
@@ -292,6 +333,7 @@ fn test_0040() {
 #[test]
 fn test_0041() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"65-bit decimal numeric entity","initialState":"Data","input":"&#18446744073709551681;","inputUtf16":[38,35,49,56,52,52,54,55,52,52,48,55,51,55,48,57,53,53,49,54,56,49,59],"output":[{"Character":{"data":"�"}}],"errors":[{"code":"character-reference-outside-unicode-range","location":{"line":1,"column":24}}]}"##,
     );
 }
@@ -299,6 +341,7 @@ fn test_0041() {
 #[test]
 fn test_0042() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Surrogate code point edge cases","initialState":"Data","input":"&#xD7FF;&#xD800;&#xD801;&#xDFFE;&#xDFFF;&#xE000;","inputUtf16":[38,35,120,68,55,70,70,59,38,35,120,68,56,48,48,59,38,35,120,68,56,48,49,59,38,35,120,68,70,70,69,59,38,35,120,68,70,70,70,59,38,35,120,69,48,48,48,59],"output":[{"Character":{"data":"퟿����"}}],"errors":[{"code":"surrogate-character-reference","location":{"line":1,"column":17}},{"code":"surrogate-character-reference","location":{"line":1,"column":25}},{"code":"surrogate-character-reference","location":{"line":1,"column":33}},{"code":"surrogate-character-reference","location":{"line":1,"column":41}}]}"##,
     );
 }
@@ -306,6 +349,7 @@ fn test_0042() {
 #[test]
 fn test_0043() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Uppercase start tag name","initialState":"Data","input":"<X>","inputUtf16":[60,88,62],"output":[{"StartTag":{"name":"x","attrs":{},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -313,6 +357,7 @@ fn test_0043() {
 #[test]
 fn test_0044() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Uppercase end tag name","initialState":"Data","input":"</X>","inputUtf16":[60,47,88,62],"output":[{"EndTag":{"name":"x"}}],"errors":[]}"##,
     );
 }
@@ -320,6 +365,7 @@ fn test_0044() {
 #[test]
 fn test_0045() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Uppercase attribute name","initialState":"Data","input":"<x X>","inputUtf16":[60,120,32,88,62],"output":[{"StartTag":{"name":"x","attrs":{"x":""},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -327,6 +373,7 @@ fn test_0045() {
 #[test]
 fn test_0046() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Tag/attribute name case edge values","initialState":"Data","input":"<x@AZ[`az{ @AZ[`az{>","inputUtf16":[60,120,64,65,90,91,96,97,122,123,32,64,65,90,91,96,97,122,123,62],"output":[{"StartTag":{"name":"x@az[`az{","attrs":{"@az[`az{":""},"self_closing":false}}],"errors":[]}"##,
     );
 }
@@ -334,6 +381,7 @@ fn test_0046() {
 #[test]
 fn test_0047() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Duplicate different-case attributes","initialState":"Data","input":"<x x=1 x=2 X=3>","inputUtf16":[60,120,32,120,61,49,32,120,61,50,32,88,61,51,62],"output":[{"StartTag":{"name":"x","attrs":{"x":"1"},"self_closing":false}}],"errors":[{"code":"duplicate-attribute","location":{"line":1,"column":9}},{"code":"duplicate-attribute","location":{"line":1,"column":13}}]}"##,
     );
 }
@@ -341,6 +389,7 @@ fn test_0047() {
 #[test]
 fn test_0048() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Uppercase close tag attributes","initialState":"Data","input":"</x X>","inputUtf16":[60,47,120,32,88,62],"output":[{"EndTag":{"name":"x"}}],"errors":[{"code":"end-tag-with-attributes","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -348,6 +397,7 @@ fn test_0048() {
 #[test]
 fn test_0049() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Duplicate close tag attributes","initialState":"Data","input":"</x x x>","inputUtf16":[60,47,120,32,120,32,120,62],"output":[{"EndTag":{"name":"x"}}],"errors":[{"code":"duplicate-attribute","location":{"line":1,"column":8}},{"code":"end-tag-with-attributes","location":{"line":1,"column":8}}]}"##,
     );
 }
@@ -355,6 +405,7 @@ fn test_0049() {
 #[test]
 fn test_0050() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Permitted slash","initialState":"Data","input":"<br/>","inputUtf16":[60,98,114,47,62],"output":[{"StartTag":{"name":"br","attrs":{},"self_closing":true}}],"errors":[]}"##,
     );
 }
@@ -362,6 +413,7 @@ fn test_0050() {
 #[test]
 fn test_0051() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Non-permitted slash","initialState":"Data","input":"<xr/>","inputUtf16":[60,120,114,47,62],"output":[{"StartTag":{"name":"xr","attrs":{},"self_closing":true}}],"errors":[]}"##,
     );
 }
@@ -369,6 +421,7 @@ fn test_0051() {
 #[test]
 fn test_0052() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Permitted slash but in close tag","initialState":"Data","input":"</br/>","inputUtf16":[60,47,98,114,47,62],"output":[{"EndTag":{"name":"br"}}],"errors":[{"code":"end-tag-with-trailing-solidus","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -376,6 +429,7 @@ fn test_0052() {
 #[test]
 fn test_0053() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype public case-sensitivity (1)","initialState":"Data","input":"<!DoCtYpE HtMl PuBlIc \"AbC\" \"XyZ\">","inputUtf16":[60,33,68,111,67,116,89,112,69,32,72,116,77,108,32,80,117,66,108,73,99,32,34,65,98,67,34,32,34,88,121,90,34,62],"output":[{"Doctype":{"name":"html","public_id":"AbC","system_id":"XyZ","force_quirks":false}}],"errors":[]}"##,
     );
 }
@@ -383,6 +437,7 @@ fn test_0053() {
 #[test]
 fn test_0054() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype public case-sensitivity (2)","initialState":"Data","input":"<!dOcTyPe hTmL pUbLiC \"aBc\" \"xYz\">","inputUtf16":[60,33,100,79,99,84,121,80,101,32,104,84,109,76,32,112,85,98,76,105,67,32,34,97,66,99,34,32,34,120,89,122,34,62],"output":[{"Doctype":{"name":"html","public_id":"aBc","system_id":"xYz","force_quirks":false}}],"errors":[]}"##,
     );
 }
@@ -390,6 +445,7 @@ fn test_0054() {
 #[test]
 fn test_0055() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype system case-sensitivity (1)","initialState":"Data","input":"<!DoCtYpE HtMl SyStEm \"XyZ\">","inputUtf16":[60,33,68,111,67,116,89,112,69,32,72,116,77,108,32,83,121,83,116,69,109,32,34,88,121,90,34,62],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":"XyZ","force_quirks":false}}],"errors":[]}"##,
     );
 }
@@ -397,6 +453,7 @@ fn test_0055() {
 #[test]
 fn test_0056() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype system case-sensitivity (2)","initialState":"Data","input":"<!dOcTyPe hTmL sYsTeM \"xYz\">","inputUtf16":[60,33,100,79,99,84,121,80,101,32,104,84,109,76,32,115,89,115,84,101,77,32,34,120,89,122,34,62],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":"xYz","force_quirks":false}}],"errors":[]}"##,
     );
 }
@@ -404,6 +461,7 @@ fn test_0056() {
 #[test]
 fn test_0057() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"U+0000 in lookahead region after non-matching character","initialState":"Data","input":"<!doc>\u0000","inputUtf16":[60,33,100,111,99,62,0],"output":[{"Comment":{"data":"doc"}},{"Character":{"data":"\u0000"}}],"errors":[{"code":"incorrectly-opened-comment","location":{"line":1,"column":3}},{"code":"unexpected-null-character","location":{"line":1,"column":7}}]}"##,
     );
 }
@@ -411,6 +469,7 @@ fn test_0057() {
 #[test]
 fn test_0058() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"U+0000 in lookahead region","initialState":"Data","input":"<!doc\u0000","inputUtf16":[60,33,100,111,99,0],"output":[{"Comment":{"data":"doc�"}}],"errors":[{"code":"incorrectly-opened-comment","location":{"line":1,"column":3}},{"code":"unexpected-null-character","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -418,6 +477,7 @@ fn test_0058() {
 #[test]
 fn test_0059() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"U+0080 in lookahead region","initialState":"Data","input":"<!doc","inputUtf16":[60,33,100,111,99,128],"output":[{"Comment":{"data":"doc"}}],"errors":[{"code":"incorrectly-opened-comment","location":{"line":1,"column":3}},{"code":"control-character-in-input-stream","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -425,6 +485,7 @@ fn test_0059() {
 #[test]
 fn test_0060() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"U+FDD1 in lookahead region","initialState":"Data","input":"<!doc﷑","inputUtf16":[60,33,100,111,99,64977],"output":[{"Comment":{"data":"doc﷑"}}],"errors":[{"code":"incorrectly-opened-comment","location":{"line":1,"column":3}},{"code":"noncharacter-in-input-stream","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -432,6 +493,7 @@ fn test_0060() {
 #[test]
 fn test_0061() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"U+1FFFF in lookahead region","initialState":"Data","input":"<!doc🿿","inputUtf16":[60,33,100,111,99,55359,57343],"output":[{"Comment":{"data":"doc🿿"}}],"errors":[{"code":"incorrectly-opened-comment","location":{"line":1,"column":3}},{"code":"noncharacter-in-input-stream","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -439,6 +501,7 @@ fn test_0061() {
 #[test]
 fn test_0062() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"CR followed by non-LF","initialState":"Data","input":"\r?","inputUtf16":[13,63],"output":[{"Character":{"data":"\n?"}}],"errors":[]}"##,
     );
 }
@@ -446,6 +509,7 @@ fn test_0062() {
 #[test]
 fn test_0063() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"CR at EOF","initialState":"Data","input":"\r","inputUtf16":[13],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
@@ -453,6 +517,7 @@ fn test_0063() {
 #[test]
 fn test_0064() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"LF at EOF","initialState":"Data","input":"\n","inputUtf16":[10],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
@@ -460,6 +525,7 @@ fn test_0064() {
 #[test]
 fn test_0065() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"CR LF","initialState":"Data","input":"\r\n","inputUtf16":[13,10],"output":[{"Character":{"data":"\n"}}],"errors":[]}"##,
     );
 }
@@ -467,6 +533,7 @@ fn test_0065() {
 #[test]
 fn test_0066() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"CR CR","initialState":"Data","input":"\r\r","inputUtf16":[13,13],"output":[{"Character":{"data":"\n\n"}}],"errors":[]}"##,
     );
 }
@@ -474,6 +541,7 @@ fn test_0066() {
 #[test]
 fn test_0067() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"LF LF","initialState":"Data","input":"\n\n","inputUtf16":[10,10],"output":[{"Character":{"data":"\n\n"}}],"errors":[]}"##,
     );
 }
@@ -481,6 +549,7 @@ fn test_0067() {
 #[test]
 fn test_0068() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"LF CR","initialState":"Data","input":"\n\r","inputUtf16":[10,13],"output":[{"Character":{"data":"\n\n"}}],"errors":[]}"##,
     );
 }
@@ -488,6 +557,7 @@ fn test_0068() {
 #[test]
 fn test_0069() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"text CR CR CR text","initialState":"Data","input":"text\r\r\rtext","inputUtf16":[116,101,120,116,13,13,13,116,101,120,116],"output":[{"Character":{"data":"text\n\n\ntext"}}],"errors":[]}"##,
     );
 }
@@ -495,6 +565,7 @@ fn test_0069() {
 #[test]
 fn test_0070() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype publik","initialState":"Data","input":"<!DOCTYPE html PUBLIK \"AbC\" \"XyZ\">","inputUtf16":[60,33,68,79,67,84,89,80,69,32,104,116,109,108,32,80,85,66,76,73,75,32,34,65,98,67,34,32,34,88,121,90,34,62],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"invalid-character-sequence-after-doctype-name","location":{"line":1,"column":16}}]}"##,
     );
 }
@@ -502,6 +573,7 @@ fn test_0070() {
 #[test]
 fn test_0071() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype publi","initialState":"Data","input":"<!DOCTYPE html PUBLI","inputUtf16":[60,33,68,79,67,84,89,80,69,32,104,116,109,108,32,80,85,66,76,73],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"invalid-character-sequence-after-doctype-name","location":{"line":1,"column":16}}]}"##,
     );
 }
@@ -509,6 +581,7 @@ fn test_0071() {
 #[test]
 fn test_0072() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype sistem","initialState":"Data","input":"<!DOCTYPE html SISTEM \"AbC\">","inputUtf16":[60,33,68,79,67,84,89,80,69,32,104,116,109,108,32,83,73,83,84,69,77,32,34,65,98,67,34,62],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"invalid-character-sequence-after-doctype-name","location":{"line":1,"column":16}}]}"##,
     );
 }
@@ -516,6 +589,7 @@ fn test_0072() {
 #[test]
 fn test_0073() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype sys","initialState":"Data","input":"<!DOCTYPE html SYS","inputUtf16":[60,33,68,79,67,84,89,80,69,32,104,116,109,108,32,83,89,83],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":null,"force_quirks":true}}],"errors":[{"code":"invalid-character-sequence-after-doctype-name","location":{"line":1,"column":16}}]}"##,
     );
 }
@@ -523,6 +597,7 @@ fn test_0073() {
 #[test]
 fn test_0074() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Doctype html x>text","initialState":"Data","input":"<!DOCTYPE html x>text","inputUtf16":[60,33,68,79,67,84,89,80,69,32,104,116,109,108,32,120,62,116,101,120,116],"output":[{"Doctype":{"name":"html","public_id":null,"system_id":null,"force_quirks":true}},{"Character":{"data":"text"}}],"errors":[{"code":"invalid-character-sequence-after-doctype-name","location":{"line":1,"column":16}}]}"##,
     );
 }
@@ -530,6 +605,7 @@ fn test_0074() {
 #[test]
 fn test_0075() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"Grave accent in unquoted attribute","initialState":"Data","input":"<a a=aa`>","inputUtf16":[60,97,32,97,61,97,97,96,62],"output":[{"StartTag":{"name":"a","attrs":{"a":"aa`"},"self_closing":false}}],"errors":[{"code":"unexpected-character-in-unquoted-attribute-value","location":{"line":1,"column":8}}]}"##,
     );
 }
@@ -537,6 +613,7 @@ fn test_0075() {
 #[test]
 fn test_0076() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in tag name state ","initialState":"Data","input":"<a","inputUtf16":[60,97],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":3}}]}"##,
     );
 }
@@ -544,6 +621,7 @@ fn test_0076() {
 #[test]
 fn test_0077() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in before attribute name state","initialState":"Data","input":"<a ","inputUtf16":[60,97,32],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":4}}]}"##,
     );
 }
@@ -551,6 +629,7 @@ fn test_0077() {
 #[test]
 fn test_0078() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in attribute name state","initialState":"Data","input":"<a a","inputUtf16":[60,97,32,97],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":5}}]}"##,
     );
 }
@@ -558,6 +637,7 @@ fn test_0078() {
 #[test]
 fn test_0079() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in after attribute name state","initialState":"Data","input":"<a a ","inputUtf16":[60,97,32,97,32],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":6}}]}"##,
     );
 }
@@ -565,6 +645,7 @@ fn test_0079() {
 #[test]
 fn test_0080() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in before attribute value state","initialState":"Data","input":"<a a =","inputUtf16":[60,97,32,97,32,61],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":7}}]}"##,
     );
 }
@@ -572,6 +653,7 @@ fn test_0080() {
 #[test]
 fn test_0081() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in attribute value (double quoted) state","initialState":"Data","input":"<a a =\"a","inputUtf16":[60,97,32,97,32,61,34,97],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":9}}]}"##,
     );
 }
@@ -579,6 +661,7 @@ fn test_0081() {
 #[test]
 fn test_0082() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in attribute value (single quoted) state","initialState":"Data","input":"<a a ='a","inputUtf16":[60,97,32,97,32,61,39,97],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":9}}]}"##,
     );
 }
@@ -586,6 +669,7 @@ fn test_0082() {
 #[test]
 fn test_0083() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in attribute value (unquoted) state","initialState":"Data","input":"<a a =a","inputUtf16":[60,97,32,97,32,61,97],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":8}}]}"##,
     );
 }
@@ -593,6 +677,7 @@ fn test_0083() {
 #[test]
 fn test_0084() {
     tokenize(
+        #[allow(clippy::invisible_characters)]
         r##"{"description":"EOF in after attribute value state","initialState":"Data","input":"<a a ='a'","inputUtf16":[60,97,32,97,32,61,39,97,39],"output":[],"errors":[{"code":"eof-in-tag","location":{"line":1,"column":10}}]}"##,
     );
 }

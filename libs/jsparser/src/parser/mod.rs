@@ -427,7 +427,7 @@ mod tests {
         fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
             Ok(())
         }
-        fn shift<'a>(&mut self, _token: &Token<'a>) -> Result<(), Self::Error> {
+        fn shift(&mut self, _token: &Token<'_>) -> Result<(), Self::Error> {
             Ok(())
         }
         fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {
