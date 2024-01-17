@@ -14,24 +14,19 @@ fn main() -> Result<()> {
     std::io::stdin().read_to_string(&mut html)?;
     let data: Vec<u16> = html.encode_utf16().collect();
 
-    let mut parser = Parser::new(DemoBuilder::new());
+    let mut parser = Parser::new(DemoBuilder::default());
     parser.feed_data(&data);
     parser.feed_end();
     parser.parse();
     Ok(())
 }
 
+#[derive(Default)]
 struct DemoBuilder {
     inner: ToyBuilder,
 }
 
 impl DemoBuilder {
-    fn new() -> Self {
-        DemoBuilder {
-            inner: ToyBuilder::new(),
-        }
-    }
-
     fn print(&self, depth: usize, node_id: usize) {
         print!("{:depth$}", "");
         match self.inner.get_node(node_id) {
