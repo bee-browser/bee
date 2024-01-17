@@ -6,7 +6,7 @@
 use phf::phf_set;
 use phf::Set;
 
-pub const DISALLOWED: Set<u16> = phf_set! {
+pub static DISALLOWED: Set<u16> = phf_set! {
     // State(43)
     //   [EmptyStatement -> SEMICOLON .]*
     43u16,
@@ -312,7 +312,7 @@ pub const DISALLOWED: Set<u16> = phf_set! {
     4009u16,
 };
 
-pub const DO_WHITES: Set<u16> = phf_set! {
+pub static DO_WHITES: Set<u16> = phf_set! {
     // State(1799)
     //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
     1799u16,

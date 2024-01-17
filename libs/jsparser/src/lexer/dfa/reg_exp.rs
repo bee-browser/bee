@@ -182,7 +182,7 @@ impl From<char> for UnicodeSet {
         if c == 5760 {
             return UnicodeSet(7, Some(ch));
         }
-        if c >= 8192 && c <= 8202 {
+        if (8192..=8202).contains(&c) {
             return UnicodeSet(7, Some(ch));
         }
         if c == 8207 {
@@ -194,19 +194,19 @@ impl From<char> for UnicodeSet {
         if c == 65279 {
             return UnicodeSet(7, Some(ch));
         }
-        if c >= 8232 && c <= 8233 {
+        if (8232..=8233).contains(&c) {
             return UnicodeSet(9, Some(ch));
         }
-        if c >= 8204 && c <= 8205 {
+        if (8204..=8205).contains(&c) {
             return UnicodeSet(68, Some(ch));
         }
-        if c >= 128 && c <= 159 {
+        if (128..=159).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 161 && c <= 5759 {
+        if (161..=5759).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 5761 && c <= 8191 {
+        if (5761..=8191).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
         if c == 8203 {
@@ -215,23 +215,23 @@ impl From<char> for UnicodeSet {
         if c == 8206 {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 8208 && c <= 8231 {
+        if (8208..=8231).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 8234 && c <= 8286 {
+        if (8234..=8286).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 8288 && c <= 65278 {
+        if (8288..=65278).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 65280 && c <= 1114111 {
+        if (65280..=1114111).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
         UnicodeSet(71, Some(ch))
     }
 }
 
-const ASCII_TABLE: [u8; 128] = [
+static ASCII_TABLE: [u8; 128] = [
     69, 69, 69, 69, 69, 69, 69, 69, 69, 7, 8, 7, 7, 0, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69,
     69, 69, 69, 69, 69, 69, 69, 7, 58, 4, 3, 23, 54, 55, 5, 42, 43, 53, 51, 48, 52, 46, 1, 66, 63,
     64, 64, 64, 64, 64, 64, 65, 65, 61, 47, 49, 62, 50, 60, 69, 22, 21, 22, 22, 20, 22, 16, 16, 16,
@@ -270,7 +270,7 @@ impl State {
     }
 }
 
-const TRANSITION_TABLE: [[u16; 72]; 423] = [
+static TRANSITION_TABLE: [[u16; 72]; 423] = [
     // State(0)
     //   @start
     // Transitions
@@ -327,11 +327,12 @@ const TRANSITION_TABLE: [[u16; 72]; 423] = [
     //   [=] => State(391):ASSIGN
     //   [1..9] => State(407):NumericLiteral
     //   [0] => State(408):NumericLiteral
+    //   [}] => State(421):RBRACE
     [
         1, 2, 3, 5, 6, 7, 8, 118, 119, 119, 177, 178, 179, 179, 179, 179, 179, 179, 179, 179, 179,
         179, 179, 179, 186, 196, 218, 219, 220, 221, 251, 252, 253, 254, 255, 256, 257, 299, 300,
         301, 302, 354, 355, 356, 357, 358, 359, 361, 362, 363, 364, 371, 372, 373, 374, 381, 382,
-        383, 384, 385, 389, 390, 391, 407, 407, 407, 408, 423, 423, 423, 1, 423,
+        383, 384, 385, 389, 390, 391, 407, 407, 407, 408, 421, 423, 423, 1, 423,
     ],
     // State(1)
     //   LineTerminatorSequence -> [<CR>] . [<LF>]
@@ -404,17 +405,14 @@ const TRANSITION_TABLE: [[u16; 72]; 423] = [
     //   IdentifierStartChar -> . [$]
     //   IdentifierStartChar -> . [_]
     //   IdentifierStart -> . [\] UnicodeEscapeSequence
-    //   HashbangComment -> [#] . [!]
-    //   HashbangComment -> [#] . [!] SingleLineCommentChars
     // Transitions
     //   [\] => State(4)
     //   [$, A..Z, _, a..z] => State(352):PrivateIdentifier
-    //   [!] => State(421):HashbangComment
     [
         423, 423, 4, 423, 423, 423, 423, 423, 423, 423, 352, 352, 352, 352, 352, 352, 352, 352,
         352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352, 352,
         352, 352, 352, 352, 352, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423,
-        423, 423, 423, 423, 421, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 4, 423,
+        423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 4, 423,
     ],
     // State(6)
     //   StringLiteral -> ["] . ["]
@@ -9620,23 +9618,12 @@ const TRANSITION_TABLE: [[u16; 72]; 423] = [
         423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423,
     ],
     // State(421)
-    //   HashbangComment -> [#] [!] .
-    //   SingleLineCommentChars -> SingleLineCommentChar . SingleLineCommentChars
-    //   HashbangComment -> [#] [!] . SingleLineCommentChars
-    //   SingleLineCommentChars -> . SingleLineCommentChar
-    //   SingleLineCommentChar -> . [SourceCharacter -LineTerminator]
-    //   SingleLineCommentChars -> . SingleLineCommentChar SingleLineCommentChars
-    //   HashbangComment -> [#] [!] SingleLineCommentChars .
-    //   SingleLineCommentChars -> SingleLineCommentChar .
-    //   SingleLineCommentChar -> [SourceCharacter -LineTerminator] .
-    //   SingleLineCommentChars -> SingleLineCommentChar SingleLineCommentChars .
-    // Transitions
-    //   [<NUL>..<HT>, <VT>..<FF>, <SO>..U+2027, U+202A..U+10FFFF] => State(421):HashbangComment
+    //   RBRACE -> [}] .
     [
-        423, 421, 421, 421, 421, 421, 421, 421, 423, 423, 421, 421, 421, 421, 421, 421, 421, 421,
-        421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421,
-        421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421,
-        421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 421, 423,
+        423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423,
+        423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423,
+        423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423,
+        423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423, 423,
     ],
     // State(422)
     //   RegularExpressionLiteral -> [/] RegularExpressionBody [/] RegularExpressionFlags .
@@ -9666,7 +9653,7 @@ const TRANSITION_TABLE: [[u16; 72]; 423] = [
     ],
 ];
 
-const ACCEPT_TABLE: [Option<TokenKind>; 423] = [
+static ACCEPT_TABLE: [Option<TokenKind>; 423] = [
     None,                                      // State(0)
     None,                                      // State(1)
     None,                                      // State(2)
@@ -10088,11 +10075,11 @@ const ACCEPT_TABLE: [Option<TokenKind>; 423] = [
     Some(TokenKind::StringLiteral),            // State(418)
     Some(TokenKind::NoSubstitutionTemplate),   // State(419)
     Some(TokenKind::TemplateHead),             // State(420)
-    Some(TokenKind::HashbangComment),          // State(421)
+    Some(TokenKind::Rbrace),                   // State(421)
     Some(TokenKind::RegularExpressionLiteral), // State(422)
 ];
 
-const LOOKAHEAD_TABLE: [bool; 423] = [
+static LOOKAHEAD_TABLE: [bool; 423] = [
     false, // State(0)
     false, // State(1)
     false, // State(2)
@@ -10526,7 +10513,7 @@ enum CheckIdStartContinue {
     CheckIdContinue,
 }
 
-const CHECK_ID_START_CONTINUE_TABLE: [CheckIdStartContinue; 423] = [
+static CHECK_ID_START_CONTINUE_TABLE: [CheckIdStartContinue; 423] = [
     CheckIdStartContinue::CheckIdStart,
     CheckIdStartContinue::None,
     CheckIdStartContinue::None,

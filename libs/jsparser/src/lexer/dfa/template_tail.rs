@@ -182,7 +182,7 @@ impl From<char> for UnicodeSet {
         if c == 5760 {
             return UnicodeSet(7, Some(ch));
         }
-        if c >= 8192 && c <= 8202 {
+        if (8192..=8202).contains(&c) {
             return UnicodeSet(7, Some(ch));
         }
         if c == 8207 {
@@ -194,19 +194,19 @@ impl From<char> for UnicodeSet {
         if c == 65279 {
             return UnicodeSet(7, Some(ch));
         }
-        if c >= 8232 && c <= 8233 {
+        if (8232..=8233).contains(&c) {
             return UnicodeSet(9, Some(ch));
         }
-        if c >= 8204 && c <= 8205 {
+        if (8204..=8205).contains(&c) {
             return UnicodeSet(68, Some(ch));
         }
-        if c >= 128 && c <= 159 {
+        if (128..=159).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 161 && c <= 5759 {
+        if (161..=5759).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 5761 && c <= 8191 {
+        if (5761..=8191).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
         if c == 8203 {
@@ -215,23 +215,23 @@ impl From<char> for UnicodeSet {
         if c == 8206 {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 8208 && c <= 8231 {
+        if (8208..=8231).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 8234 && c <= 8286 {
+        if (8234..=8286).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 8288 && c <= 65278 {
+        if (8288..=65278).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
-        if c >= 65280 && c <= 1114111 {
+        if (65280..=1114111).contains(&c) {
             return UnicodeSet(69, Some(ch));
         }
         UnicodeSet(71, Some(ch))
     }
 }
 
-const ASCII_TABLE: [u8; 128] = [
+static ASCII_TABLE: [u8; 128] = [
     69, 69, 69, 69, 69, 69, 69, 69, 69, 7, 8, 7, 7, 0, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69,
     69, 69, 69, 69, 69, 69, 69, 7, 58, 4, 3, 23, 54, 55, 5, 42, 43, 53, 51, 48, 52, 46, 67, 66, 63,
     64, 64, 64, 64, 64, 64, 65, 65, 61, 47, 49, 62, 50, 60, 69, 22, 21, 22, 22, 20, 22, 16, 16, 16,
@@ -270,7 +270,7 @@ impl State {
     }
 }
 
-const TRANSITION_TABLE: [[u16; 72]; 463] = [
+static TRANSITION_TABLE: [[u16; 72]; 463] = [
     // State(0)
     //   @start
     // Transitions
@@ -11100,7 +11100,7 @@ const TRANSITION_TABLE: [[u16; 72]; 463] = [
     ],
 ];
 
-const ACCEPT_TABLE: [Option<TokenKind>; 463] = [
+static ACCEPT_TABLE: [Option<TokenKind>; 463] = [
     None,                                    // State(0)
     None,                                    // State(1)
     None,                                    // State(2)
@@ -11566,7 +11566,7 @@ const ACCEPT_TABLE: [Option<TokenKind>; 463] = [
     Some(TokenKind::TemplateTail),           // State(462)
 ];
 
-const LOOKAHEAD_TABLE: [bool; 463] = [
+static LOOKAHEAD_TABLE: [bool; 463] = [
     false, // State(0)
     false, // State(1)
     false, // State(2)
@@ -12040,7 +12040,7 @@ enum CheckIdStartContinue {
     CheckIdContinue,
 }
 
-const CHECK_ID_START_CONTINUE_TABLE: [CheckIdStartContinue; 463] = [
+static CHECK_ID_START_CONTINUE_TABLE: [CheckIdStartContinue; 463] = [
     CheckIdStartContinue::CheckIdStart,
     CheckIdStartContinue::None,
     CheckIdStartContinue::None,

@@ -3,7 +3,7 @@
 // This file was automagically generated with:
 // template: libs/jsparser/src/parser/lalr/debug.rs.hbs
 
-pub const PRODUCTION_RULE_LABELS: [&'static str; 2080] = [
+pub static PRODUCTION_RULE_LABELS: [&str; 2080] = [
     "Script -> (empty)",
     "Script -> ScriptBody",
     "Module -> (empty)",
@@ -2086,7 +2086,7 @@ pub const PRODUCTION_RULE_LABELS: [&'static str; 2080] = [
     "AwaitExpression_Yield -> AWAIT UnaryExpression_Yield_Await",
 ];
 
-pub const STATE_LABELS: [&'static str; 4109] = [
+pub static STATE_LABELS: [&str; 4109] = [
     // State(0)
     "[Script -> (empty) .]*, [^ -> . Script]*",
     // State(1)

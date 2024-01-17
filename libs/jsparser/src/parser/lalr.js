@@ -157,19 +157,19 @@ for (let i = 0; i < spec.states.length; ++i) {
   //
   // See the section #sec-ecmascript-language-lexical-grammar in the ECMA-262 specification.
   if (permitRegularExpressionLiteral && permitTemplateMiddle && permitTemplateTail) {
-    state.lexical_goal = 'InputElementRegExpOrTemplateTail';
+    state.lexical_goal = 'RegExpOrTemplateTail';
   } else if (permitRegularExpressionLiteral && !permitTemplateMiddle && !permitTemplateTail) {
-    state.lexical_goal = 'InputElementRegExp';
+    state.lexical_goal = 'RegExp';
   } else if (!permitRegularExpressionLiteral && permitTemplateMiddle && permitTemplateTail) {
-    state.lexical_goal = 'InputElementTemplateTail';
+    state.lexical_goal = 'TemplateTail';
   } else {
     assert(!permitRegularExpressionLiteral);
     assert(!permitTemplateMiddle);
     assert(!permitTemplateTail);
-    state.lexical_goal = 'InputElementDiv';
+    state.lexical_goal = 'Div';
   }
   if (state.isStartState) {
-    state.lexical_goal = 'InputElementHashbangOrRegExp';
+    state.lexical_goal = 'HashbangOrRegExp';
   }
 
   for (const goto_ of state.gotos) {

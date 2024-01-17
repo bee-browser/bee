@@ -5,7 +5,7 @@
 
 use crate::lexer::Goal;
 
-pub const TABLE: [Goal; {{length states}}] = [
+pub static TABLE: [Goal; {{length states}}] = [
     {{#each states}}
     // State({{@index}})
     {{#each kernel_items}}

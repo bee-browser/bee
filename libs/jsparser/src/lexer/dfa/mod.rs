@@ -3,11 +3,11 @@
 // This file was automagically generated with:
 // template: libs/jsparser/src/lexer/dfa/mod.rs.hbs
 
-mod input_element_div;
-mod input_element_hashbang_or_reg_exp;
-mod input_element_reg_exp;
-mod input_element_reg_exp_or_template_tail;
-mod input_element_template_tail;
+mod div;
+mod hashbang_or_reg_exp;
+mod reg_exp;
+mod reg_exp_or_template_tail;
+mod template_tail;
 
 use super::Error;
 use super::Goal;
@@ -17,12 +17,10 @@ use super::Token;
 #[inline(always)]
 pub fn recognize<'a>(goal: Goal, cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
     match goal {
-        Goal::InputElementDiv => input_element_div::recognize(cursor),
-        Goal::InputElementRegExp => input_element_reg_exp::recognize(cursor),
-        Goal::InputElementRegExpOrTemplateTail => {
-            input_element_reg_exp_or_template_tail::recognize(cursor)
-        }
-        Goal::InputElementTemplateTail => input_element_template_tail::recognize(cursor),
-        Goal::InputElementHashbangOrRegExp => input_element_hashbang_or_reg_exp::recognize(cursor),
+        Goal::Div => div::recognize(cursor),
+        Goal::RegExp => reg_exp::recognize(cursor),
+        Goal::RegExpOrTemplateTail => reg_exp_or_template_tail::recognize(cursor),
+        Goal::TemplateTail => template_tail::recognize(cursor),
+        Goal::HashbangOrRegExp => hashbang_or_reg_exp::recognize(cursor),
     }
 }

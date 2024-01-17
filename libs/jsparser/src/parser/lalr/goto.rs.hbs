@@ -9,7 +9,7 @@ use phf::phf_map;
 use super::State;
 
 // TODO: compress
-pub const TABLE: [Map<u16, State>; {{length states}}] = [
+pub static TABLE: [Map<u16, State>; {{length states}}] = [
     {{#each states}}
     // State({{@index}})
     {{#each kernel_items}}

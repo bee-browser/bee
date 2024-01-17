@@ -44,7 +44,7 @@ impl State {
     }
 
     #[inline(always)]
-    pub fn action<'a>(&self, token: &Token<'a>) -> Action {
+    pub fn action(&self, token: &Token<'_>) -> Action {
         let token = token.kind as u8;
         action::TABLE[self.0 as usize]
             .get(&token)
@@ -57,8 +57,8 @@ impl State {
         let non_terminal = non_terminal as u16;
         goto::TABLE[self.0 as usize]
             .get(&non_terminal)
+            .cloned()
             .unwrap()
-            .clone()
     }
 
     #[inline(always)]
