@@ -2833,12 +2833,12 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn does_append_to_attr_value(&self) -> bool {
-        match self.return_state {
+        matches!(
+            self.return_state,
             State::AttributeValueDoubleQuoted
-            | State::AttributeValueSingleQuoted
-            | State::AttributeValueUnquoted => true,
-            _ => false,
-        }
+                | State::AttributeValueSingleQuoted
+                | State::AttributeValueUnquoted
+        )
     }
 
     fn tokenize_named_character_reference(&mut self) {
@@ -3502,9 +3502,8 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn emit_token_if_exists(&mut self) {
-        match self.current_token.take() {
-            Some(token) => self.emit(token),
-            _ => (),
+        if let Some(token) = self.current_token.take() {
+            self.emit(token);
         }
     }
 
@@ -3599,7 +3598,7 @@ impl<'a> Tokenizer<'a> {
             // 0x__FFFE
             return true;
         }
-        return false;
+        false
     }
 
     #[inline]
@@ -3614,6 +3613,12 @@ impl<'a> Tokenizer<'a> {
             // Others
             _ => false,
         }
+    }
+}
+
+impl<'a> Default for Tokenizer<'a> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

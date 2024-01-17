@@ -5,7 +5,7 @@
 
 use super::TrieNode;
 
-pub(super) const NODES: [TrieNode; 9854] = [
+pub(super) static NODES: [TrieNode; 9854] = [
     TrieNode {
         buffer: "",
         next: [
