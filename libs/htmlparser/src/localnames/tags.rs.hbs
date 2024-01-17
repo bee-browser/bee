@@ -86,7 +86,7 @@ macro_rules! data {
     };
 }
 
-const DATA: [LocalNameData; {{length .}}] = [
+static DATA: [LocalNameData; {{length .}}] = [
     {{#each .}}
     {{#if obsolete}}
     data![obsolete: "{{@key}}", {{pascalCase category}}],

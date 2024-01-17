@@ -1841,7 +1841,7 @@ where
     }
 
     fn close_p_element(&mut self) {
-        const NAMES: &[LocalName] = &tags![Dd, Dt, Li, Optgroup, Option, Rb, Rp, Rt, Rtc];
+        static NAMES: &[LocalName] = &tags![Dd, Dt, Li, Optgroup, Option, Rb, Rp, Rt, Rtc];
         self.close_elements(NAMES);
         if self.context().local_name() != LocalName::P {
             // TODO: Parse error.
@@ -2012,7 +2012,7 @@ where
 
     #[inline(always)]
     fn is_html_heading_element(&self) -> bool {
-        const NAMES: &[LocalName] = &tags![H1, H2, H3, H4, H5, H6];
+        static NAMES: &[LocalName] = &tags![H1, H2, H3, H4, H5, H6];
         debug_assert!(!self.is_removed());
         self.is_one_of_html_elements(NAMES)
     }

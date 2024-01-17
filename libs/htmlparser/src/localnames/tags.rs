@@ -466,7 +466,7 @@ macro_rules! data {
     };
 }
 
-const DATA: [LocalNameData; 193] = [
+static DATA: [LocalNameData; 193] = [
     data!["a", Formatting],
     data!["abbr", Ordinary],
     data!["address", Special],
