@@ -63,7 +63,7 @@ impl From<u32> for CodePoint {
 
 impl std::fmt::Display for CodePoint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        const ASCII_TABLE: [&'static str; 0x21] = [
+        static ASCII_TABLE: [&str; 0x21] = [
             "<NUL>", "<SOH>", "<STX>", "<ETX>", "<EOT>", "<ENQ>", "<ACK>", "<BEL>", "<BS>", "<HT>",
             "<LF>", "<VT>", "<FF>", "<CR>", "<SO>", "<SI>", "<DLE>", "<DC1>", "<DC2>", "<DC3>",
             "<DC4>", "<NAK>", "<SYN>", "<ETB>", "<CAN>", "<EM>", "<SUB>", "<ESC>", "<FS>", "<GS>",
@@ -386,7 +386,7 @@ impl UnicodeSet {
 
     pub fn any() -> Self {
         UnicodeSet {
-            spans: Arc::new(vec![UnicodeSpan::ANY.into()]),
+            spans: Arc::new(vec![UnicodeSpan::ANY]),
             eof: false,
         }
     }
