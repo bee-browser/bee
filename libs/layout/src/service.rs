@@ -63,9 +63,9 @@ where
         W: std::io::Write + ?Sized,
     {
         for (ref layout, ref visual) in self.snapshots.iter() {
-            write!(write, "----- layout tree\n")?;
+            writeln!(write, "----- layout tree")?;
             layout.inspect(write)?;
-            write!(write, "----- visual tree\n")?;
+            writeln!(write, "----- visual tree")?;
             visual.inspect(write)?;
         }
         Ok(())
@@ -116,7 +116,7 @@ where
     }
 
     fn send(&mut self, msg: RenderMessage) {
-        self.sink.consume(serde_json::to_value(&msg).unwrap());
+        self.sink.consume(serde_json::to_value(msg).unwrap());
     }
 }
 
