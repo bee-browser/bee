@@ -90,10 +90,10 @@ where
                 }
                 mode!(InBody, InCaption, InCell) => {
                     let ctrl = {
-                        if self.quirks_mode != QuirksMode::Quirks {
-                            if self.context().has_p_element_in_button_scope() {
-                                self.close_p_element();
-                            }
+                        if self.quirks_mode != QuirksMode::Quirks
+                            && self.context().has_p_element_in_button_scope()
+                        {
+                            self.close_p_element();
                         }
                         self.push_html_table_element(tag);
                         self.frameset_ok = false;
@@ -291,13 +291,11 @@ where
                                     self.pop_element();
                                 }
                                 break;
-                            } else {
-                                if context.open_element.local_name.is_special() {
-                                    // TODO: Parse error.
-                                    logger::debug!("Parse error");
-                                    // Ignore the token.
-                                    break;
-                                }
+                            } else if context.open_element.local_name.is_special() {
+                                // TODO: Parse error.
+                                logger::debug!("Parse error");
+                                // Ignore the token.
+                                break;
                             }
                             context_pos -= 1;
                         }

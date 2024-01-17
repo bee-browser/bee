@@ -119,12 +119,11 @@ where
                                 break;
                             }
                             let local_name = context.local_name();
-                            if local_name.is_special() {
-                                if context.is_html()
-                                    && !tags![Address, Div, P].contains(&local_name)
-                                {
-                                    break;
-                                }
+                            if local_name.is_special()
+                                && context.is_html()
+                                && !tags![Address, Div, P].contains(&local_name)
+                            {
+                                break;
                             }
                             context_pos -= 1;
                         }
@@ -174,12 +173,11 @@ where
                                     break;
                                 }
                                 let local_name = context.local_name();
-                                if local_name.is_special() {
-                                    if context.is_html()
-                                        && !tags![Address, Div, P].contains(&local_name)
-                                    {
-                                        break;
-                                    }
+                                if local_name.is_special()
+                                    && context.is_html()
+                                    && !tags![Address, Div, P].contains(&local_name)
+                                {
+                                    break;
                                 }
                                 context_pos -= 1;
                             }

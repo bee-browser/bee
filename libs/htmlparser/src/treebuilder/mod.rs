@@ -358,11 +358,8 @@ where
                 local_name.name(),
             ));
             // TODO
-            match local_name {
-                tag!(Nobr) => {
-                    self.context_mut().element_in_scope |= ElementInScope::Nobr;
-                }
-                _ => {}
+            if local_name == tag!(Nobr) {
+                self.context_mut().element_in_scope |= ElementInScope::Nobr;
             }
             self.active_formatting_element_list.set_element(i, new_node);
             i += 1;
@@ -2575,10 +2572,8 @@ where
     }
 
     fn clean(&mut self) {
-        self.0.retain(|context| match context {
-            ActiveFormattingContext::Removed => false,
-            _ => true,
-        });
+        self.0
+            .retain(|context| !matches!(context, ActiveFormattingContext::Removed));
     }
 
     fn get(&self, i: usize) -> &ActiveFormattingContext<T> {

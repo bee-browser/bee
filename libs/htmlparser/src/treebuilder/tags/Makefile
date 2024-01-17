@@ -16,18 +16,21 @@ codegen: $(SRCS)
 mod.rs: mod.rs.hbs tags.txt
 	@echo 'Generating $(abspath $@)...'
 	@echo -n $(TAGS) | jq -Rsc 'split(" ")' | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin mod.rs.hbs | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 any_other.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read $(COLLECT_JS) rules -s $(SPEC_YAML) any_other '<_>' '</_>' | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 %.rs: tag.rs.hbs $(DEPS)
 	@echo 'Generating $(abspath $@)...'
 	@deno run --allow-read $(COLLECT_JS) rules -s $(SPEC_YAML) $(subst .rs,,$@) \
 	  '<$(subst .rs,,$@)>' '</$(subst .rs,,$@)>' | \
-	  deno run -qA $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
-	  rustfmt --emit=stdout >$@
+	  deno run -q --allow-read=. $(TOOLS_BIN)/codegen.js --no-escape --input-stdin $< | \
+	  rustfmt --emit=stdout | \
+	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@

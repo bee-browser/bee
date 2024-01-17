@@ -258,7 +258,6 @@ where
                     .any(|prefix| public_id.starts_with(prefix))
                 {
                     self.quirks_mode = QuirksMode::Quirks;
-                    return;
                 }
             }
         }

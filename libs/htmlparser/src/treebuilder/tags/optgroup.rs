@@ -286,13 +286,11 @@ where
                                     self.pop_element();
                                 }
                                 break;
-                            } else {
-                                if context.open_element.local_name.is_special() {
-                                    // TODO: Parse error.
-                                    logger::debug!("Parse error");
-                                    // Ignore the token.
-                                    break;
-                                }
+                            } else if context.open_element.local_name.is_special() {
+                                // TODO: Parse error.
+                                logger::debug!("Parse error");
+                                // Ignore the token.
+                                break;
                             }
                             context_pos -= 1;
                         }
@@ -335,13 +333,11 @@ where
                                         self.pop_element();
                                     }
                                     break;
-                                } else {
-                                    if context.open_element.local_name.is_special() {
-                                        // TODO: Parse error.
-                                        logger::debug!("Parse error");
-                                        // Ignore the token.
-                                        break;
-                                    }
+                                } else if context.open_element.local_name.is_special() {
+                                    // TODO: Parse error.
+                                    logger::debug!("Parse error");
+                                    // Ignore the token.
+                                    break;
                                 }
                                 context_pos -= 1;
                             }
@@ -402,14 +398,13 @@ where
                 }
                 mode!(InSelect, InSelectInTable) => {
                     let ctrl = {
-                        if self.context().is_html_element(tag!(Option)) {
-                            if self.context_stack.len() > 1 {
-                                let prev_context_pos = self.context_stack.len() - 2;
-                                if self.context_stack[prev_context_pos]
-                                    .is_html_element(tag!(Optgroup))
-                                {
-                                    self.pop_element();
-                                }
+                        if self.context().is_html_element(tag!(Option))
+                            && self.context_stack.len() > 1
+                        {
+                            let prev_context_pos = self.context_stack.len() - 2;
+                            if self.context_stack[prev_context_pos].is_html_element(tag!(Optgroup))
+                            {
+                                self.pop_element();
                             }
                         }
                         if self.context().is_html_element(tag!(Optgroup)) {

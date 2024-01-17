@@ -27,11 +27,15 @@ modes:
           Control::Continue
       - match: doctype
         run: |
-          if let Some("html") = doctype.name {
+          if let Some(name) = doctype.name {
+              if name != "html" {
+                  {{use '$parse-error'}}
+              }
+          }
+          if doctype.public_id.is_some() {
               {{use '$parse-error'}}
-          } else if let Some(_) = doctype.public_id {
-              {{use '$parse-error'}}
-          } else if let Some(system_id) = doctype.system_id {
+          }
+          if let Some(system_id) = doctype.system_id {
               if system_id != "about:legacy-compat" {
                   {{use '$parse-error'}}
               }
@@ -528,10 +532,8 @@ modes:
                   break;
               }
               let local_name = context.local_name();
-              if local_name.is_special() {
-                  if context.is_html() && !tags![Address, Div, P].contains(&local_name) {
-                      break;
-                  }
+              if local_name.is_special() && context.is_html() && !tags![Address, Div, P].contains(&local_name) {
+                  break;
               }
               context_pos -= 1;
           }
@@ -609,21 +611,19 @@ modes:
                       {{use '$ignore-token'}}
                   }
               }
+          } else if !self.context().has_form_element_in_scope() {
+              {{use '$parse-error'}}
+              {{use '$ignore-token'}}
           } else {
-              if !self.context().has_form_element_in_scope() {
+              self.close_implied_tags();
+              if !self.context().is_html_element(tag!(Form)) {
                   {{use '$parse-error'}}
-                  {{use '$ignore-token'}}
-              } else {
-                  self.close_implied_tags();
-                  if !self.context().is_html_element(tag!(Form)) {
-                      {{use '$parse-error'}}
-                  }
-                  while !self.context().is_html_element(tag!(Form)) {
-                      self.pop_element();
-                  }
-                  self.pop_element(); // pop an html form element
-                  Control::Continue
               }
+              while !self.context().is_html_element(tag!(Form)) {
+                  self.pop_element();
+              }
+              self.pop_element(); // pop an html form element
+              Control::Continue
           }
       - match: </p>
         run: |
@@ -751,10 +751,8 @@ modes:
           Control::Continue
       - match: <table>
         run: |
-          if self.quirks_mode != QuirksMode::Quirks {
-              if self.context().has_p_element_in_button_scope() {
-                  self.close_p_element();
-              }
+          if self.quirks_mode != QuirksMode::Quirks && self.context().has_p_element_in_button_scope() {
+              self.close_p_element();
           }
           self.push_html_table_element(tag);
           self.frameset_ok = false;
@@ -925,12 +923,10 @@ modes:
                       self.pop_element();
                   }
                   break;
-              } else {
-                  if context.open_element.local_name.is_special() {
-                      {{use '$parse-error'}}
-                      // Ignore the token.
-                      break;
-                  }
+              } else if context.open_element.local_name.is_special() {
+                  {{use '$parse-error'}}
+                  // Ignore the token.
+                  break;
               }
               context_pos -= 1;
           }
@@ -1438,12 +1434,10 @@ modes:
           Control::Continue
       - match: </optgroup>
         run: |
-          if self.context().is_html_element(tag!(Option)) {
-              if self.context_stack.len() > 1 {
-                  let prev_context_pos = self.context_stack.len() - 2;
-                  if self.context_stack[prev_context_pos].is_html_element(tag!(Optgroup)) {
-                      self.pop_element();
-                  }
+          if self.context().is_html_element(tag!(Option)) && self.context_stack.len() > 1 {
+              let prev_context_pos = self.context_stack.len() - 2;
+              if self.context_stack[prev_context_pos].is_html_element(tag!(Optgroup)) {
+                  self.pop_element();
               }
           }
           if self.context().is_html_element(tag!(Optgroup)) {
