@@ -300,13 +300,11 @@ where
                                     self.pop_element();
                                 }
                                 break;
-                            } else {
-                                if context.open_element.local_name.is_special() {
-                                    // TODO: Parse error.
-                                    logger::debug!("Parse error");
-                                    // Ignore the token.
-                                    break;
-                                }
+                            } else if context.open_element.local_name.is_special() {
+                                // TODO: Parse error.
+                                logger::debug!("Parse error");
+                                // Ignore the token.
+                                break;
                             }
                             context_pos -= 1;
                         }
@@ -349,13 +347,11 @@ where
                                         self.pop_element();
                                     }
                                     break;
-                                } else {
-                                    if context.open_element.local_name.is_special() {
-                                        // TODO: Parse error.
-                                        logger::debug!("Parse error");
-                                        // Ignore the token.
-                                        break;
-                                    }
+                                } else if context.open_element.local_name.is_special() {
+                                    // TODO: Parse error.
+                                    logger::debug!("Parse error");
+                                    // Ignore the token.
+                                    break;
                                 }
                                 context_pos -= 1;
                             }

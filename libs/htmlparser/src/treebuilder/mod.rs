@@ -358,11 +358,8 @@ where
                 local_name.name(),
             ));
             // TODO
-            match local_name {
-                tag!(Nobr) => {
-                    self.context_mut().element_in_scope |= ElementInScope::Nobr;
-                }
-                _ => {}
+            if local_name == tag!(Nobr) {
+                self.context_mut().element_in_scope |= ElementInScope::Nobr;
             }
             self.active_formatting_element_list.set_element(i, new_node);
             i += 1;
@@ -1844,7 +1841,7 @@ where
     }
 
     fn close_p_element(&mut self) {
-        const NAMES: &[LocalName] = &tags![Dd, Dt, Li, Optgroup, Option, Rb, Rp, Rt, Rtc];
+        static NAMES: &[LocalName] = &tags![Dd, Dt, Li, Optgroup, Option, Rb, Rp, Rt, Rtc];
         self.close_elements(NAMES);
         if self.context().local_name() != LocalName::P {
             // TODO: Parse error.
@@ -2015,7 +2012,7 @@ where
 
     #[inline(always)]
     fn is_html_heading_element(&self) -> bool {
-        const NAMES: &[LocalName] = &tags![H1, H2, H3, H4, H5, H6];
+        static NAMES: &[LocalName] = &tags![H1, H2, H3, H4, H5, H6];
         debug_assert!(!self.is_removed());
         self.is_one_of_html_elements(NAMES)
     }
@@ -2575,10 +2572,8 @@ where
     }
 
     fn clean(&mut self) {
-        self.0.retain(|context| match context {
-            ActiveFormattingContext::Removed => false,
-            _ => true,
-        });
+        self.0
+            .retain(|context| !matches!(context, ActiveFormattingContext::Removed));
     }
 
     fn get(&self, i: usize) -> &ActiveFormattingContext<T> {

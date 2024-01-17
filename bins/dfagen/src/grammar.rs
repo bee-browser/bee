@@ -160,10 +160,7 @@ pub enum Term {
 
 impl Term {
     fn is_lookahead(&self) -> bool {
-        match self {
-            Self::Lookahead { .. } => true,
-            _ => false,
-        }
+        matches!(self, Self::Lookahead { .. })
     }
 
     fn max_lookaheads(&self) -> usize {
@@ -236,6 +233,7 @@ impl std::fmt::Display for UnicodePattern {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Copy, Deserialize)]
 pub enum UnicodeBuiltInPattern {
     TAB,

@@ -1030,7 +1030,7 @@ impl Node {
         match *node {
             Self::CpeaaplExpr(ref expr) => Self::into_expression(expr.clone()),
             Self::CpeaaplExprComma(_) | Self::CpeaaplEmpty => {
-                Err(format!("Early errors: PrimaryExpression"))
+                Err("Early errors: PrimaryExpression".to_string())
             }
             Self::CpeaaplRest(ref rest) => Self::into_expression(rest.clone()),
             Self::ObjectExpression(ref expr) => Self::to_object_expression(expr),
@@ -1063,17 +1063,17 @@ impl Node {
             Self::CpeaaplExprComma(_)
             | Self::CpeaaplEmpty
             | Self::CpeaaplRest(_)
-            | Self::CpeaaplExprRest(_) => Err(format!("Early errors: PropertyDefinition")),
+            | Self::CpeaaplExprRest(_) => Err("Early errors: PropertyDefinition".to_string()),
             Node::ObjectExpression(ref expr) => {
                 if in_paren {
-                    Err(format!("AssignmentTargetType is invalid"))
+                    Err("AssignmentTargetType is invalid".to_string())
                 } else {
                     Self::to_object_pattern(expr)
                 }
             }
             Node::ArrayExpression(ref expr) => {
                 if in_paren {
-                    Err(format!("AssignmentTargetType is invalid"))
+                    Err("AssignmentTargetType is invalid".to_string())
                 } else {
                     Self::to_array_pattern(expr)
                 }
@@ -1109,11 +1109,7 @@ impl Node {
                         MethodKind::Set => PropertyKind::Set,
                         _ => PropertyKind::Init,
                     },
-                    method: match method.kind {
-                        MethodKind::Get => false,
-                        MethodKind::Set => false,
-                        _ => true,
-                    },
+                    method: !matches!(method.kind, MethodKind::Get | MethodKind::Set),
                     shorthand: false,
                     computed: method.computed,
                 }))
@@ -1293,7 +1289,7 @@ impl Node {
             | Self::CpeaaplExprComma(_)
             | Self::CpeaaplEmpty
             | Self::CpeaaplRest(_)
-            | Self::CpeaaplExprRest(_) => Err(format!("Early errors: ArrowParameter")),
+            | Self::CpeaaplExprRest(_) => Err("Early errors: ArrowParameter".to_string()),
             Self::SequenceExpression(ref seq) => seq
                 .expressions
                 .iter()
@@ -1344,7 +1340,7 @@ impl Node {
             Node::CpeaaplExprComma(_)
             | Node::CpeaaplEmpty
             | Node::CpeaaplRest(_)
-            | Node::CpeaaplExprRest(_) => Err(format!("Early error: PrimaryExpression")),
+            | Node::CpeaaplExprRest(_) => Err("Early error: PrimaryExpression".to_string()),
             _ => Ok(()),
         }
     }
@@ -1545,10 +1541,7 @@ impl Function {
         generator: bool,
         r#async: bool,
     ) -> Self {
-        let expression = match *body {
-            Node::BlockStatement(_) => false,
-            _ => true,
-        };
+        let expression = !matches!(*body, Node::BlockStatement(_));
         Self {
             id,
             params,
@@ -1648,14 +1641,11 @@ impl ExpressionStatement {
     }
 
     fn is_likely_directive(&self) -> bool {
-        match *self.expression {
-            Node::Literal(Literal {
-                location: LocationData { start, .. },
-                value: LiteralValue::String(_),
-                ..
-            }) if self.location.start == start => true,
-            _ => false,
-        }
+        matches!(*self.expression, Node::Literal(Literal {
+            location: LocationData { start, .. },
+            value: LiteralValue::String(_),
+            ..
+        }) if self.location.start == start)
     }
 
     fn to_directive(&self) -> Self {
@@ -2325,10 +2315,7 @@ impl Property {
             Node::ComputedPropertyName(ref expr) => expr.clone(),
             _ => key.clone(),
         };
-        let method = match kind {
-            PropertyKind::Init => false,
-            _ => true,
-        };
+        let method = !matches!(kind, PropertyKind::Init);
         Self {
             location: LocationData::new(start, end),
             key,

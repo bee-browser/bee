@@ -94,7 +94,7 @@ impl InputStream {
 
     #[inline]
     fn consume(&mut self, cp: u32, nunits: usize) -> Option<(CodePoint, Location)> {
-        let location = self.location.clone();
+        let location = self.location;
         self.pos += nunits;
         self.location.incr();
         Some((CodePoint::Scalar(cp), location))
@@ -102,7 +102,7 @@ impl InputStream {
 
     #[inline]
     fn consume_eol(&mut self) -> Option<(CodePoint, Location)> {
-        let location = self.location.clone();
+        let location = self.location;
         self.pos += 1;
         self.location.incr_line();
         Some((CodePoint::Scalar('\n' as u32), location))
@@ -120,7 +120,7 @@ impl InputStream {
 
     #[inline]
     fn surrogate_in_input_stream(&mut self, cp: u32) -> Option<(CodePoint, Location)> {
-        let location = self.location.clone();
+        let location = self.location;
         self.pos += 1;
         self.location.incr_line();
         Some((CodePoint::Surrogate(cp), location))

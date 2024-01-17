@@ -16,6 +16,12 @@ impl NullBuilder {
     }
 }
 
+impl Default for NullBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DomTreeBuilder for NullBuilder {
     type NodeId = usize;
 

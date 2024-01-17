@@ -30,13 +30,13 @@ pub enum Error {
 /// Converts a template literal content into a raw string.
 pub fn template_literal_to_raw_string(literal: &str) -> String {
     // TODO: 13.2.8.3 Static Semantics: TemplateString ( templateToken, raw )
-    literal.replace("\r\n", "\n").replace("\r", "\n")
+    literal.replace("\r\n", "\n").replace('\r', "\n")
 }
 
 /// Converts a template literal content into a cooked string.
 pub fn template_literal_to_cooked_string(literal: &str) -> Option<String> {
     // TODO: 13.2.8.3 Static Semantics: TemplateString ( templateToken, raw )
-    let s = literal.replace("\r\n", "\n").replace("\r", "\n");
+    let s = literal.replace("\r\n", "\n").replace('\r', "\n");
     literal_content_to_string(&s)
 }
 
@@ -55,7 +55,7 @@ pub fn literal_content_to_string(content: &str) -> Option<String> {
 
     #[inline(always)]
     fn put(c: char, result: &mut String, high_surrogate: &mut Option<u32>) {
-        if let Some(_) = high_surrogate.take() {
+        if high_surrogate.take().is_some() {
             result.push('\u{FFFD}');
         }
         result.push(c);
@@ -92,6 +92,7 @@ pub fn literal_content_to_string(content: &str) -> Option<String> {
                 if let Some('{') = chars.peek() {
                     let mut n = 0;
                     chars.next();
+                    #[allow(clippy::while_let_on_iterator)]
                     while let Some(c) = chars.next() {
                         if c == '}' {
                             break;

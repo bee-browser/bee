@@ -222,10 +222,7 @@ impl LocalName {
         if self == Self::Unknown {
             return false;
         }
-        match DATA[self.as_index()].category {
-            Category::Special => true,
-            _ => false,
-        }
+        matches!(DATA[self.as_index()].category, Category::Special)
     }
 
     fn as_index(self) -> usize {
@@ -469,7 +466,7 @@ macro_rules! data {
     };
 }
 
-const DATA: [LocalNameData; 193] = [
+static DATA: [LocalNameData; 193] = [
     data!["a", Formatting],
     data!["abbr", Ordinary],
     data!["address", Special],

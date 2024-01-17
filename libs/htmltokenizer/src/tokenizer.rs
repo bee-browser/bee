@@ -33,10 +33,10 @@ pub struct Tokenizer<'a> {
     in_html_namespace: bool,
 }
 
+static WHITESPACES: [char; 5] = ['\x09', '\x0A', '\x0C', '\x0D', ' '];
+
 impl<'a> Tokenizer<'a> {
     const INITIAL_BUFFER_SIZE: usize = 4096;
-
-    const WHITESPACES: [char; 5] = ['\x09', '\x0A', '\x0C', '\x0D', ' '];
 
     pub fn new() -> Self {
         Tokenizer {
@@ -266,7 +266,7 @@ impl<'a> Tokenizer<'a> {
                     self.append_null_to_text();
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -306,7 +306,7 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -335,7 +335,7 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -364,7 +364,7 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -388,7 +388,7 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -755,7 +755,7 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -788,7 +788,7 @@ impl<'a> Tokenizer<'a> {
             }
             Char(Some(c), _) => {
                 self.switch_to(State::ScriptDataEscaped);
-                if Self::WHITESPACES.contains(&c) {
+                if WHITESPACES.contains(&c) {
                     self.append_whitespace_to_text(c);
                 } else {
                     self.append_char_to_text(c);
@@ -828,7 +828,7 @@ impl<'a> Tokenizer<'a> {
                 }
                 Char(Some(c), _) => {
                     self.switch_to(State::ScriptDataEscaped);
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -929,7 +929,7 @@ impl<'a> Tokenizer<'a> {
                         self.switch_to(State::ScriptDataEscaped);
                     }
                     if let Char(Some(c), _) = ch {
-                        if Self::WHITESPACES.contains(&c) {
+                        if WHITESPACES.contains(&c) {
                             self.append_whitespace_to_text(c);
                         } else {
                             self.append_char_to_text(c);
@@ -978,7 +978,7 @@ impl<'a> Tokenizer<'a> {
                     return;
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -1011,7 +1011,7 @@ impl<'a> Tokenizer<'a> {
             }
             Char(Some(c), _) => {
                 self.switch_to(State::ScriptDataDoubleEscaped);
-                if Self::WHITESPACES.contains(&c) {
+                if WHITESPACES.contains(&c) {
                     self.append_whitespace_to_text(c);
                 } else {
                     self.append_char_to_text(c);
@@ -1051,7 +1051,7 @@ impl<'a> Tokenizer<'a> {
                 }
                 Char(Some(c), _) => {
                     self.switch_to(State::ScriptDataDoubleEscaped);
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -1092,7 +1092,7 @@ impl<'a> Tokenizer<'a> {
                         self.switch_to(State::ScriptDataDoubleEscaped);
                     }
                     if let Char(Some(c), _) = ch {
-                        if Self::WHITESPACES.contains(&c) {
+                        if WHITESPACES.contains(&c) {
                             self.append_whitespace_to_text(c);
                         } else {
                             self.append_char_to_text(c);
@@ -1168,7 +1168,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn tokenize_attribute_name(&mut self) {
-        const UNEXPECTED_CHARS: &[char] = &['\"', '\'', '<'];
+        static UNEXPECTED_CHARS: &[char] = &['\"', '\'', '<'];
 
         // TODO: duplicate-attribute
 
@@ -1341,7 +1341,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn tokenize_attribute_value_unquoted(&mut self) {
-        const UNEXPECTED_CHARS: [char; 5] = ['\"', '\'', '<', '=', '`'];
+        static UNEXPECTED_CHARS: [char; 5] = ['\"', '\'', '<', '=', '`'];
 
         loop {
             let ch = self.next_char();
@@ -2765,7 +2765,7 @@ impl<'a> Tokenizer<'a> {
                     self.append_null_to_text();
                 }
                 Char(Some(c), _) => {
-                    if Self::WHITESPACES.contains(&c) {
+                    if WHITESPACES.contains(&c) {
                         self.append_whitespace_to_text(c);
                     } else {
                         self.append_char_to_text(c);
@@ -2833,12 +2833,12 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn does_append_to_attr_value(&self) -> bool {
-        match self.return_state {
+        matches!(
+            self.return_state,
             State::AttributeValueDoubleQuoted
-            | State::AttributeValueSingleQuoted
-            | State::AttributeValueUnquoted => true,
-            _ => false,
-        }
+                | State::AttributeValueSingleQuoted
+                | State::AttributeValueUnquoted
+        )
     }
 
     fn tokenize_named_character_reference(&mut self) {
@@ -2865,7 +2865,7 @@ impl<'a> Tokenizer<'a> {
                     self.append_str_to_attr_value(chars);
                 } else {
                     for c in chars.chars() {
-                        if Self::WHITESPACES.contains(&c) {
+                        if WHITESPACES.contains(&c) {
                             self.append_whitespace_to_text(c);
                         } else {
                             self.append_char_to_text(c);
@@ -3026,7 +3026,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn tokenize_numeric_character_reference_end(&mut self) {
-        const CHARMAP_C1: [char; 32] = [
+        static CHARMAP_C1: [char; 32] = [
             '\u{20AC}', '\u{0081}', '\u{201A}', '\u{0192}', '\u{201E}', '\u{2026}', '\u{2020}',
             '\u{2021}', '\u{02C6}', '\u{2030}', '\u{0160}', '\u{2039}', '\u{0152}', '\u{008D}',
             '\u{017D}', '\u{008F}', '\u{0090}', '\u{2018}', '\u{2019}', '\u{201C}', '\u{201D}',
@@ -3093,7 +3093,7 @@ impl<'a> Tokenizer<'a> {
         };
         if self.does_append_to_attr_value() {
             self.append_char_to_attr_value(c);
-        } else if Self::WHITESPACES.contains(&c) {
+        } else if WHITESPACES.contains(&c) {
             self.append_whitespace_to_text(c);
         } else {
             self.append_char_to_text(c);
@@ -3433,7 +3433,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn append_whitespace_to_text(&mut self, c: char) {
-        debug_assert!(Self::WHITESPACES.contains(&c));
+        debug_assert!(WHITESPACES.contains(&c));
         let start_pos = self.char_buffer.len();
         self.char_buffer.push(c);
         let end_pos = self.char_buffer.len();
@@ -3502,9 +3502,8 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn emit_token_if_exists(&mut self) {
-        match self.current_token.take() {
-            Some(token) => self.emit(token),
-            _ => (),
+        if let Some(token) = self.current_token.take() {
+            self.emit(token);
         }
     }
 
@@ -3514,7 +3513,7 @@ impl<'a> Tokenizer<'a> {
 
     fn append_char_to_temp(&mut self, c: char) {
         debug_assert!(c != '\0');
-        debug_assert!(!Self::WHITESPACES.contains(&c));
+        debug_assert!(!WHITESPACES.contains(&c));
         self.temp_buffer.push(c);
     }
 
@@ -3599,7 +3598,7 @@ impl<'a> Tokenizer<'a> {
             // 0x__FFFE
             return true;
         }
-        return false;
+        false
     }
 
     #[inline]
@@ -3614,6 +3613,12 @@ impl<'a> Tokenizer<'a> {
             // Others
             _ => false,
         }
+    }
+}
+
+impl<'a> Default for Tokenizer<'a> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

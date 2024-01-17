@@ -151,11 +151,9 @@ where
     fn lexical_goal(&self) -> Goal {
         let template_tail_disallowed = self.template_literal_depth() == 0 || self.block_depth() > 0;
         match self.state().lexical_goal() {
-            Goal::InputElementRegExpOrTemplateTail if template_tail_disallowed => {
-                Goal::InputElementRegExp
-            }
-            Goal::InputElementTemplateTail if template_tail_disallowed => Goal::InputElementDiv,
-            goal @ _ => goal,
+            Goal::RegExpOrTemplateTail if template_tail_disallowed => Goal::RegExp,
+            Goal::TemplateTail if template_tail_disallowed => Goal::Div,
+            goal => goal,
         }
     }
 
@@ -358,7 +356,7 @@ where
 
     #[inline(always)]
     fn state(&self) -> State {
-        self.state_stack.last().unwrap().clone()
+        *self.state_stack.last().unwrap()
     }
 
     #[inline(always)]
@@ -368,7 +366,7 @@ where
 
     #[inline(always)]
     fn template_literal_depth(&self) -> usize {
-        debug_assert!(self.block_stack.len() > 0);
+        debug_assert!(!self.block_stack.is_empty());
         self.block_stack.len() - 1
     }
 
@@ -402,7 +400,7 @@ pub trait SyntaxHandler {
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error>;
 
     /// Called when a shift action has been performed.
-    fn shift<'a>(&mut self, token: &Token<'a>) -> Result<(), Self::Error>;
+    fn shift(&mut self, token: &Token<'_>) -> Result<(), Self::Error>;
 
     /// Called when a reduce action has been performed.
     fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error>;
@@ -429,7 +427,7 @@ mod tests {
         fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
             Ok(())
         }
-        fn shift<'a>(&mut self, _token: &Token<'a>) -> Result<(), Self::Error> {
+        fn shift(&mut self, _token: &Token<'_>) -> Result<(), Self::Error> {
             Ok(())
         }
         fn reduce(&mut self, _rule: ProductionRule) -> Result<(), Self::Error> {

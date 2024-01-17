@@ -84,67 +84,61 @@ impl GrammarPrinter {
                         self.search_grammar(child_id);
                     }
                 }
-                return;
             }
             _ => (),
         }
     }
 
     fn search_grammar(&self, node_id: usize) {
-        match self.inner.get_node(node_id) {
-            ToyNode::Element {
-                name,
-                attrs,
-                child_nodes,
-                ..
-            } => {
-                if name == "emu-grammar" {
-                    let type_ = match attrs.get("type") {
-                        Some(type_) => type_,
-                        None => return,
-                    };
-                    if type_ != "definition" {
-                        return;
-                    }
-                    for &child_id in child_nodes.iter() {
-                        self.print_grammar(child_id);
-                    }
+        if let ToyNode::Element {
+            name,
+            attrs,
+            child_nodes,
+            ..
+        } = self.inner.get_node(node_id)
+        {
+            if name == "emu-grammar" {
+                let type_ = match attrs.get("type") {
+                    Some(type_) => type_,
+                    None => return,
+                };
+                if type_ != "definition" {
                     return;
                 }
                 for &child_id in child_nodes.iter() {
-                    self.search_grammar(child_id);
+                    self.print_grammar(child_id);
                 }
+                return;
             }
-            _ => (),
+            for &child_id in child_nodes.iter() {
+                self.search_grammar(child_id);
+            }
         }
     }
 
     fn print_grammar(&self, node_id: usize) {
-        match self.inner.get_node(node_id) {
-            ToyNode::Text { data, .. } => {
-                let mut indent = false;
-                for line in data.split('\n') {
-                    let line = line.trim();
-                    if line.starts_with("//") {
-                        continue;
-                    }
-                    if line.is_empty() {
-                        if indent {
-                            println!("");
-                        }
-                        indent = false;
-                    } else if indent {
-                        println!("  {line}");
-                    } else {
-                        println!("{line}");
-                        indent = true;
-                    }
+        if let ToyNode::Text { data, .. } = self.inner.get_node(node_id) {
+            let mut indent = false;
+            for line in data.split('\n') {
+                let line = line.trim();
+                if line.starts_with("//") {
+                    continue;
                 }
-                if indent {
-                    println!("");
+                if line.is_empty() {
+                    if indent {
+                        println!();
+                    }
+                    indent = false;
+                } else if indent {
+                    println!("  {line}");
+                } else {
+                    println!("{line}");
+                    indent = true;
                 }
             }
-            _ => (),
+            if indent {
+                println!();
+            }
         }
     }
 }

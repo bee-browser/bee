@@ -5,6 +5,9 @@ use helper::tokenize;
 
 #[test]
 fn test_{{padStart @index 4 '0'}}() {
-    tokenize(r##"{{json .}}"##);
+    tokenize(
+        #[allow(clippy::invisible_characters)]
+        r##"{{json .}}"##
+    );
 }
 {{/each}}

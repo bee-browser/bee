@@ -158,7 +158,7 @@ CommonToken: &CommonToken
 
 goals:
   # For simplifying Makefile, we convert the goal symbols to snake case.
-  - name: input_element_div
+  - name: div
     tokens:
       # For efficiency, we replace WhiteSpace with WhiteSpaceSequence.
       # TODO: Should we ignore WhiteSpace in the lexer for further efficiency?
@@ -172,7 +172,7 @@ goals:
       - *CommonToken
       - *DivPunctuator
       - *RightBracePunctuator
-  - name: input_element_reg_exp
+  - name: reg_exp
     tokens:
       - WhiteSpaceSequence
       - LineTerminatorSequence
@@ -180,7 +180,7 @@ goals:
       - *CommonToken
       - *RightBracePunctuator
       - RegularExpressionLiteral
-  - name: input_element_reg_exp_or_template_tail
+  - name: reg_exp_or_template_tail
     tokens:
       - WhiteSpaceSequence
       - LineTerminatorSequence
@@ -189,7 +189,7 @@ goals:
       - RegularExpressionLiteral
       - TemplateMiddle
       - TemplateTail
-  - name: input_element_template_tail
+  - name: template_tail
     tokens:
       - WhiteSpaceSequence
       - LineTerminatorSequence
@@ -198,7 +198,7 @@ goals:
       - *DivPunctuator
       - TemplateMiddle
       - TemplateTail
-  - name: input_element_hashbang_or_reg_exp
+  - name: hashbang_or_reg_exp
     tokens:
       - WhiteSpaceSequence
       - LineTerminatorSequence

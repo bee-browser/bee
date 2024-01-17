@@ -39,7 +39,7 @@ impl CharRefResolver {
     }
 
     pub(crate) fn buffer(&self) -> &'static str {
-        &self.node().buffer[..]
+        self.node().buffer
     }
 
     pub(crate) fn remaining(&self) -> &'static str {

@@ -128,7 +128,7 @@ where
         }
         if let Some(public_id) = doctype.public_id {
             // TODO: use a hashmap
-            const QUIRKS_PUBLIC_IDS: [&str; 3] = [
+            static QUIRKS_PUBLIC_IDS: [&str; 3] = [
                 "-//W3O//DTD W3 HTML Strict 3.0//EN//",
                 "-/W3C/DTD HTML 4.0 Transitional/EN",
                 "HTML",
@@ -141,7 +141,7 @@ where
                 return;
             }
             // TODO: use a trie
-            const QUIRKS_PUBLIC_ID_PREFIXES: [&str; 55] = [
+            static QUIRKS_PUBLIC_ID_PREFIXES: [&str; 55] = [
                 "+//Silmaril//dtd html Pro v0r11 19970101//",
                 "-//AS//DTD HTML 3.0 asWedit + extensions//",
                 "-//AdvaSoft Ltd//DTD HTML 3.0 asWedit + extensions//",
@@ -207,7 +207,7 @@ where
                 return;
             }
             if doctype.system_id.is_none() {
-                const QUIRKS_PUBLIC_ID_PREFIXES: [&str; 2] = [
+                static QUIRKS_PUBLIC_ID_PREFIXES: [&str; 2] = [
                     "-//W3C//DTD HTML 4.01 Frameset//",
                     "-//W3C//DTD HTML 4.01 Transitional//",
                 ];
@@ -223,7 +223,7 @@ where
         }
         if let Some(system_id) = doctype.system_id {
             // TODO: use a hashmap
-            const QUIRKS_SYSTEM_IDS: [&str; 1] =
+            static QUIRKS_SYSTEM_IDS: [&str; 1] =
                 ["http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd"];
             if QUIRKS_SYSTEM_IDS
                 .iter()
@@ -235,7 +235,7 @@ where
         }
         if let Some(public_id) = doctype.public_id {
             // TODO: use a trie
-            const LIMITED_QUIRKS_PUBLIC_IDS: [&str; 2] = [
+            static LIMITED_QUIRKS_PUBLIC_IDS: [&str; 2] = [
                 "-//W3C//DTD XHTML 1.0 Frameset//",
                 "-//W3C//DTD XHTML 1.0 Transitional//",
             ];
@@ -248,7 +248,7 @@ where
             }
             if doctype.system_id.is_some() {
                 // TODO: duplicated, use a trie
-                const QUIRKS_PUBLIC_ID_PREFIXES: [&str; 2] = [
+                static QUIRKS_PUBLIC_ID_PREFIXES: [&str; 2] = [
                     "-//W3C//DTD HTML 4.01 Frameset//",
                     "-//W3C//DTD HTML 4.01 Transitional//",
                 ];
@@ -258,7 +258,6 @@ where
                     .any(|prefix| public_id.starts_with(prefix))
                 {
                     self.quirks_mode = QuirksMode::Quirks;
-                    return;
                 }
             }
         }

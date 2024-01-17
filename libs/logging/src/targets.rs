@@ -47,7 +47,7 @@ pub const fn len() -> usize {
 
 #[inline(always)]
 pub const fn name(id: usize) -> &'static str {
-    const NAMES: [&'static str; 11] = [
+    const NAMES: [&str; 11] = [
         "bee::logview",
         "bee::dfagen",
         "bee::lalrgen",
@@ -69,67 +69,67 @@ mod tests {
 
     #[test]
     fn test_logview() {
-        const NAME: &'static str = LOGVIEW.name();
+        const NAME: &str = LOGVIEW.name();
         assert_eq!(NAME, "bee::logview");
     }
 
     #[test]
     fn test_dfagen() {
-        const NAME: &'static str = DFAGEN.name();
+        const NAME: &str = DFAGEN.name();
         assert_eq!(NAME, "bee::dfagen");
     }
 
     #[test]
     fn test_lalrgen() {
-        const NAME: &'static str = LALRGEN.name();
+        const NAME: &str = LALRGEN.name();
         assert_eq!(NAME, "bee::lalrgen");
     }
 
     #[test]
     fn test_estree() {
-        const NAME: &'static str = ESTREE.name();
+        const NAME: &str = ESTREE.name();
         assert_eq!(NAME, "bee::estree");
     }
 
     #[test]
     fn test_jsparser_lexer() {
-        const NAME: &'static str = JSPARSER_LEXER.name();
+        const NAME: &str = JSPARSER_LEXER.name();
         assert_eq!(NAME, "bee::jsparser::lexer");
     }
 
     #[test]
     fn test_jsparser_parser() {
-        const NAME: &'static str = JSPARSER_PARSER.name();
+        const NAME: &str = JSPARSER_PARSER.name();
         assert_eq!(NAME, "bee::jsparser::parser");
     }
 
     #[test]
     fn test_htmlparser() {
-        const NAME: &'static str = HTMLPARSER.name();
+        const NAME: &str = HTMLPARSER.name();
         assert_eq!(NAME, "bee::htmlparser");
     }
 
     #[test]
     fn test_toydom() {
-        const NAME: &'static str = TOYDOM.name();
+        const NAME: &str = TOYDOM.name();
         assert_eq!(NAME, "bee::toydom");
     }
 
     #[test]
     fn test_htmltokenizer() {
-        const NAME: &'static str = HTMLTOKENIZER.name();
+        const NAME: &str = HTMLTOKENIZER.name();
         assert_eq!(NAME, "bee::htmltokenizer");
     }
 
     #[test]
     fn test_layout() {
-        const NAME: &'static str = LAYOUT.name();
+        const NAME: &str = LAYOUT.name();
         assert_eq!(NAME, "bee::layout");
     }
 
     #[test]
     fn test_tests() {
-        const NAME: &'static str = TESTS.name();
+        const NAME: &str = TESTS.name();
         assert_eq!(NAME, "bee::tests");
     }
 }

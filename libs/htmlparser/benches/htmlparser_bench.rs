@@ -16,7 +16,7 @@ fn run_bench(c: &mut Criterion, name: &str) {
         .join("benches")
         .join("data")
         .join(name);
-    let html = std::fs::read_to_string(&path).expect("cannot read file");
+    let html = std::fs::read_to_string(path).expect("cannot read file");
     let data: Vec<u16> = html.encode_utf16().collect();
     let test_name = format!("parsing {}", name);
     c.bench_function(&test_name, |b| {

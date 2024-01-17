@@ -6,9 +6,9 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(u8)]
 pub enum Goal {
-    InputElementDiv,
-    InputElementRegExp,
-    InputElementRegExpOrTemplateTail,
-    InputElementTemplateTail,
-    InputElementHashbangOrRegExp,
+    Div,
+    RegExp,
+    RegExpOrTemplateTail,
+    TemplateTail,
+    HashbangOrRegExp,
 }

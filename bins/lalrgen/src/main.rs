@@ -14,6 +14,7 @@ mod state;
 mod tests;
 
 use std::fs::File;
+use std::path::Path;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -140,7 +141,7 @@ fn main() -> Result<()> {
 
 // reporters
 
-fn report_preprocessed_grammar(dir: &PathBuf, grammar: &Grammar) -> Result<()> {
+fn report_preprocessed_grammar(dir: &Path, grammar: &Grammar) -> Result<()> {
     let rules = grammar
         .rules()
         .iter()
@@ -165,7 +166,7 @@ struct RuleReport {
     production: String,
 }
 
-fn report_first_set(dir: &PathBuf, first_set: &FirstSet) -> Result<()> {
+fn report_first_set(dir: &Path, first_set: &FirstSet) -> Result<()> {
     let report = FirstSetReport {
         max_tokens: first_set.max_tokens,
         entries: first_set
@@ -198,7 +199,7 @@ struct FirstSetEntryReport {
     first_set: Vec<String>,
 }
 
-fn report_lr0_automaton(dir: &PathBuf, automaton: &Automaton) -> Result<()> {
+fn report_lr0_automaton(dir: &Path, automaton: &Automaton) -> Result<()> {
     let report = Lr0AutomatonReport {
         starts: automaton
             .starts
@@ -255,7 +256,7 @@ struct TransitionReport {
     next_state: String,
 }
 
-fn report_lalr_lookahead_tables(dir: &PathBuf, lookahead_tables: &[LookaheadTable]) -> Result<()> {
+fn report_lalr_lookahead_tables(dir: &Path, lookahead_tables: &[LookaheadTable]) -> Result<()> {
     let report = lookahead_tables
         .iter()
         .enumerate()
@@ -291,7 +292,7 @@ struct LookaheadReport {
     lookaheads: Vec<String>,
 }
 
-fn report_lalr_problems(dir: &PathBuf, problems: &[LalrProblem]) -> Result<()> {
+fn report_lalr_problems(dir: &Path, problems: &[LalrProblem]) -> Result<()> {
     let path = dir.join("problems.json");
     let file = std::fs::File::create(path)?;
     serde_json::to_writer_pretty(file, problems)?;

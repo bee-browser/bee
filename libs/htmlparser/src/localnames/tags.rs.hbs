@@ -32,10 +32,7 @@ impl LocalName {
         if self == Self::Unknown {
             return false;
         }
-        match DATA[self.as_index()].category {
-            Category::Special => true,
-            _ => false,
-        }
+        matches!(DATA[self.as_index()].category, Category::Special)
     }
 
     fn as_index(self) -> usize {
@@ -89,7 +86,7 @@ macro_rules! data {
     };
 }
 
-const DATA: [LocalNameData; {{length .}}] = [
+static DATA: [LocalNameData; {{length .}}] = [
     {{#each .}}
     {{#if obsolete}}
     data![obsolete: "{{@key}}", {{pascalCase category}}],

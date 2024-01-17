@@ -306,25 +306,23 @@ where
                                     Control::Continue
                                 }
                             }
+                        } else if !self.context().has_form_element_in_scope() {
+                            // TODO: Parse error.
+                            logger::debug!("Parse error");
+                            // Ignore the token.
+                            logger::debug!("Ignore the token");
+                            Control::Continue
                         } else {
-                            if !self.context().has_form_element_in_scope() {
+                            self.close_implied_tags();
+                            if !self.context().is_html_element(tag!(Form)) {
                                 // TODO: Parse error.
                                 logger::debug!("Parse error");
-                                // Ignore the token.
-                                logger::debug!("Ignore the token");
-                                Control::Continue
-                            } else {
-                                self.close_implied_tags();
-                                if !self.context().is_html_element(tag!(Form)) {
-                                    // TODO: Parse error.
-                                    logger::debug!("Parse error");
-                                }
-                                while !self.context().is_html_element(tag!(Form)) {
-                                    self.pop_element();
-                                }
-                                self.pop_element(); // pop an html form element
-                                Control::Continue
                             }
+                            while !self.context().is_html_element(tag!(Form)) {
+                                self.pop_element();
+                            }
+                            self.pop_element(); // pop an html form element
+                            Control::Continue
                         }
                     };
                     match ctrl {
@@ -382,25 +380,23 @@ where
                                         Control::Continue
                                     }
                                 }
+                            } else if !self.context().has_form_element_in_scope() {
+                                // TODO: Parse error.
+                                logger::debug!("Parse error");
+                                // Ignore the token.
+                                logger::debug!("Ignore the token");
+                                Control::Continue
                             } else {
-                                if !self.context().has_form_element_in_scope() {
+                                self.close_implied_tags();
+                                if !self.context().is_html_element(tag!(Form)) {
                                     // TODO: Parse error.
                                     logger::debug!("Parse error");
-                                    // Ignore the token.
-                                    logger::debug!("Ignore the token");
-                                    Control::Continue
-                                } else {
-                                    self.close_implied_tags();
-                                    if !self.context().is_html_element(tag!(Form)) {
-                                        // TODO: Parse error.
-                                        logger::debug!("Parse error");
-                                    }
-                                    while !self.context().is_html_element(tag!(Form)) {
-                                        self.pop_element();
-                                    }
-                                    self.pop_element(); // pop an html form element
-                                    Control::Continue
                                 }
+                                while !self.context().is_html_element(tag!(Form)) {
+                                    self.pop_element();
+                                }
+                                self.pop_element(); // pop an html form element
+                                Control::Continue
                             }
                         };
                         self.disable_foster_parenting();
