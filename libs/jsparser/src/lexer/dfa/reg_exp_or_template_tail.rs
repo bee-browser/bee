@@ -40,19 +40,21 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
         if next.is_invalid() {
             // A dirty hack for handling ID_Start and ID_Continue.
             //
-            // TODO: Support Unicode properties including ID_Start and ID_Continue in
-            // `dfagen::unicode::UnicodeSet`.
+            // Non-ASCII characters included in ID_Start and/or ID_Continue has no entry in the
+            // transition table of the state in order to simplify the unicode set definition.
+            // Instead we use flags to indicate that the input character may include in ID_Start
+            // and/or ID_Continue.
             if let Some(ch) = unicode_set.1 {
                 match state.check_id_start_continue() {
                     CheckIdStartContinue::CheckIdStart => {
                         if unicode_id_start::is_id_start(ch) {
-                            unicode_set.0 = UnicodeSet::from('z').0;
+                            unicode_set.0 = 17; // Set pre-computed ID (ASCII_TABLE['z' as usize])
                             next = state.next_state(&unicode_set);
                         }
                     }
                     CheckIdStartContinue::CheckIdContinue => {
                         if unicode_id_start::is_id_continue(ch) {
-                            unicode_set.0 = UnicodeSet::from('z').0;
+                            unicode_set.0 = 17; // Set pre-computed ID (ASCII_TABLE['z' as usize])
                             next = state.next_state(&unicode_set);
                         }
                     }
@@ -176,6 +178,7 @@ impl From<char> for UnicodeSet {
         if c < 128 {
             return UnicodeSet(ASCII_TABLE[c], Some(ch));
         }
+        // TODO: Use more efficient search algorithm such as `slice::binary_search()`.
         if c == 160 {
             return UnicodeSet(8, Some(ch));
         }
@@ -243,6 +246,8 @@ static ASCII_TABLE: [u8; 128] = [
 #[derive(Clone, Copy, Debug, Default)]
 struct State(u16);
 
+// TODO: we use separate tables currently, but it might be better to organize data regarding a
+// state into a single entry in a cache efficient point of view.
 impl State {
     #[inline(always)]
     fn is_invalid(&self) -> bool {
