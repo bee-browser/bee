@@ -68,7 +68,7 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
             if !cursor.lexeme(lexeme_end).is_empty() {
                 return Err(Error::UnexpectedCharacter);
             }
-            if unicode_set == UnicodeSet::EOF {
+            if unicode_set.is_eof() {
                 break;
             }
             return Err(Error::UnexpectedCharacter);
@@ -99,7 +99,12 @@ pub fn recognize<'a>(cursor: &SourceCursor<'a>) -> Result<Token<'a>, Error> {
 struct UnicodeSet(u8, Option<char>);
 
 impl UnicodeSet {
-    const EOF: Self = UnicodeSet({{length unicodeSets}}, None);
+    const EOF: Self = UnicodeSet({{unicodeSetIdForEof}}, None);
+
+    #[inline(always)]
+    fn is_eof(&self) -> bool {
+        self.1.is_none()
+    }
 }
 
 impl From<char> for UnicodeSet {
@@ -120,7 +125,8 @@ impl From<char> for UnicodeSet {
         }
         {{/if}}
         {{/each}}
-        UnicodeSet({{length unicodeSets}}, Some(ch))
+        // Source text can contain any Unicode characters.
+        unreachable!("No UnicodeSet defined for {c}");
     }
 }
 
