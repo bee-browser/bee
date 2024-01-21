@@ -10,6 +10,10 @@ for (const state of spec.dfa.states) {
   const transitions = spec.unicodeSets.map((us) => {
     const trans = state.transitions.find((trans) => {
       // trans.unicode_set.contains(us)
+      if (us.eof && !trans.unicode_set.eof) {
+        return false;
+      }
+      // Array.empty([]) always returns true.
       return us.spans.every((span1) => {
         return trans.unicode_set.spans.some((span2) => {
           return span2.base <= span1.base &&
@@ -22,13 +26,6 @@ for (const state of spec.dfa.states) {
     }
     return trans.next_id;
   });
-  // EOF
-  const trans = state.transitions.find((trans) => trans.unicode_set.eof);
-  if (trans === undefined) {
-    transitions.push(spec.dfa.states.length);
-  } else {
-    transitions.push(trans.next_id);
-  }
   states.push({
     transitions,
     accept: state.accept,
@@ -44,11 +41,8 @@ for (let ascii = 0; ascii < 0x80; ++ascii) {
   const i = spec.unicodeSets.findIndex((us) => {
     return us.spans.some((span) => ascii >= span.base && ascii < span.base + span.length);
   });
-  if (i === -1) {
-    asciiTable[ascii] = spec.unicodeSets.length;  // EOF
-  } else {
-    asciiTable[ascii] = i;
-  }
+  assert(i !== -1);  // Source text can contain any ASCII characters.
+  asciiTable[ascii] = i;
 }
 
 const nonAsciiList = [];
@@ -97,7 +91,10 @@ assert(!states[0].checkIdContinue);
 
 spec.states = states;
 spec.numStates = states.length;
-spec.numTransitions = spec.unicodeSets.length + 1;
+spec.numTransitions = spec.unicodeSets.length;
+// spec.unicodeSet has single unicode set containing EOF.
+spec.unicodeSetIdForEof = spec.unicodeSets.findIndex((us) => us.eof);
+assert(spec.unicodeSetIdForEof !== -1);
 spec.asciiTable = asciiTable;
 spec.nonAsciiList = nonAsciiList;
 
