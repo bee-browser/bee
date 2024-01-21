@@ -62,7 +62,7 @@ codegen: $(CODEGEN_TARGETS)
 .PRECIOUS: $(CODEGEN_DIR)/%.json
 $(CODEGEN_DIR)/%.json: grammar.yaml tokens.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq -c '.' | \
+	@cargo run -rqp dfagen -- -g $< $(shell $(LIST_TOKENS)) | jq '.' | \
 	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 # 2. Generate code for each DFA

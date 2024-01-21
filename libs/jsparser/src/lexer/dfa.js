@@ -101,4 +101,11 @@ spec.numTransitions = spec.unicodeSets.length + 1;
 spec.asciiTable = asciiTable;
 spec.nonAsciiList = nonAsciiList;
 
+// There is no reserved word starting from the following character at this point.
+const dummyChar = 'z';
+spec.dummyCharForIdStart = dummyChar;
+spec.unicodeSetIdForIdStart = asciiTable[dummyChar.codePointAt(0)];
+spec.dummyCharForIdContinue = dummyChar;
+spec.unicodeSetIdForIdContinue = asciiTable[dummyChar.codePointAt(0)];
+
 console.log(JSON.stringify(spec));

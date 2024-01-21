@@ -665,11 +665,8 @@ function translateProduction(value, options) {
 
   // Special case: ID_Start
   if (value === '> any Unicode code point with the Unicode property “ID_Start”') {
-    // TODO:
-    // return [{
-    //   type: 'unicode-set',
-    //   data: [{ type: 'property', data: 'ID_Start' }],
-    // }];
+    // NOTE: Non-ASCII characters included in ID_Start will be handled when the first lookup fails.
+    // See `recognize()` in dfa/dfa.rs.hbs for details.
     return [{
       type: 'unicode-set',
       data: [
@@ -683,11 +680,8 @@ function translateProduction(value, options) {
 
   // Special case: ID_Continue
   if (value === '> any Unicode code point with the Unicode property “ID_Continue”') {
-    // TODO:
-    // return [{
-    //   type: 'unicode-set',
-    //   data: [{ type: 'property',  data: 'ID_Continue' }],
-    // }];
+    // NOTE: Non-ASCII characters included in ID_Continue will be handled when the first lookup
+    // fails.  See `recognize()` in dfa/dfa.rs.hbs for details.
     return [{
       type: 'unicode-set',
       data: [
