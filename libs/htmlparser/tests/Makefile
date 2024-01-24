@@ -3,7 +3,7 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 PROJ_DIR := ../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
-DATA_DIR := $(PROJ_DIR)/vendor/html5lib/html5lib-tests/tree-construction
+DATA_DIR := $(PROJ_DIR)/vendor/src/html5lib/html5lib-tests/tree-construction
 NAMES := $(subst .dat,,$(notdir $(wildcard $(DATA_DIR)/*.dat)))
 
 define html5lib_tests

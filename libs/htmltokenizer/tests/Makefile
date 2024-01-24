@@ -3,7 +3,7 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 PROJ_DIR := ../../..
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 
-DATA_DIR := $(PROJ_DIR)/vendor/html5lib/html5lib-tests/tokenizer
+DATA_DIR := $(PROJ_DIR)/vendor/src/html5lib/html5lib-tests/tokenizer
 EXCLUDES := xmlViolation
 NAMES := $(filter-out $(EXCLUDES),$(subst .test,,$(notdir $(wildcard $(DATA_DIR)/*.test))))
 
