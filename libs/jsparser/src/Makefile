@@ -5,7 +5,7 @@ SHELL := $(shell which bash) -eu -o pipefail -c
 
 PROJ_DIR := $(realpath ../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
-ECMA262_DIR := $(PROJ_DIR)/vendor/tc39/ecma262
+ECMA262_DIR := $(PROJ_DIR)/vendor/src/tc39/ecma262
 
 ECMA262_VERSION := es2023
 ifneq ($(shell git -C $(ECMA262_DIR) describe),$(ECMA262_VERSION))
