@@ -25,7 +25,7 @@ jobs:
       - name: Generate code coverage
         run: |
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json' TEST262_ARGS=''
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           token: '${{ secrets.CODECOV_TOKEN }}'
           files: codecov.json
