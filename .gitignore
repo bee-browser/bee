@@ -1,4 +1,8 @@
 /target
+/vendor/bin
+/vendor/include
+/vendor/lib
+/vendor/share
 .DS_Store
 .env
 .envrc
