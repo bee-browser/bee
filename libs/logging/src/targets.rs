@@ -35,19 +35,22 @@ pub const HTMLTOKENIZER: Target = Target(8);
 /// The target ID for `bee::layout`.
 pub const LAYOUT: Target = Target(9);
 
+/// The target ID for `bee::jsruntime`.
+pub const JSRUNTIME: Target = Target(10);
+
 /// The target ID for `bee::tests`.
-pub const TESTS: Target = Target(10);
+pub const TESTS: Target = Target(11);
 
 // Use `const fn len()` instead of `const LEN` in order to avoid conflicts between target symbols.
 // The `len` package might be created in the future.
 #[inline(always)]
 pub const fn len() -> usize {
-    11
+    12
 }
 
 #[inline(always)]
 pub const fn name(id: usize) -> &'static str {
-    const NAMES: [&str; 11] = [
+    const NAMES: [&str; 12] = [
         "bee::logview",
         "bee::dfagen",
         "bee::lalrgen",
@@ -58,6 +61,7 @@ pub const fn name(id: usize) -> &'static str {
         "bee::toydom",
         "bee::htmltokenizer",
         "bee::layout",
+        "bee::jsruntime",
         "bee::tests",
     ];
     NAMES[id]
@@ -125,6 +129,12 @@ mod tests {
     fn test_layout() {
         const NAME: &str = LAYOUT.name();
         assert_eq!(NAME, "bee::layout");
+    }
+
+    #[test]
+    fn test_jsruntime() {
+        const NAME: &str = JSRUNTIME.name();
+        assert_eq!(NAME, "bee::jsruntime");
     }
 
     #[test]
