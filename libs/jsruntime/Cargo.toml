@@ -1,0 +1,16 @@
+[package]
+name = "jsruntime"
+version = "0.0.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+jsparser = { path = "../../libs/jsparser", features = ["location"] }
+logging = { path = "../../libs/logging" }
+
+[build-dependencies]
+bindgen = "0.69.2"
+cbindgen = "0.26.0"
+cc = "1.0.83"
+duct = "0.13.7"

@@ -19,7 +19,7 @@ CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/jsparser \
   libs/layout \
   bins/estree \
-  bins/jsrun \
+  bins/jstb \
 )
 
 .PHONY: all
