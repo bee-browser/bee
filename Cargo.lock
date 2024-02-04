@@ -151,17 +151,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "atty"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
-dependencies = [
- "hermit-abi 0.1.19",
- "libc",
- "winapi",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -309,7 +298,6 @@ version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da6bc11b07529f16944307272d5bd9b22530bc7d05751717c9d416586cedab49"
 dependencies = [
- "clap 3.2.25",
  "heck",
  "indexmap 1.9.3",
  "log 0.4.20",
@@ -398,21 +386,6 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.2.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ea181bf566f71cb9a5d17a59e1871af638180a18fb0035c92ae62b705207123"
-dependencies = [
- "atty",
- "bitflags 1.3.2",
- "clap_lex 0.2.4",
- "indexmap 1.9.3",
- "strsim",
- "termcolor",
- "textwrap",
-]
-
-[[package]]
-name = "clap"
 version = "4.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e578d6ec4194633722ccf9544794b71b1385c3c027efe0c55db226fc880865c"
@@ -429,7 +402,7 @@ checksum = "4df4df40ec50c46000231c914968278b1eb05098cf8f1b3a518a95030e71d1c7"
 dependencies = [
  "anstream",
  "anstyle",
- "clap_lex 0.6.0",
+ "clap_lex",
  "strsim",
  "terminal_size",
 ]
@@ -444,15 +417,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.48",
-]
-
-[[package]]
-name = "clap_lex"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
-dependencies = [
- "os_str_bytes",
 ]
 
 [[package]]
@@ -482,7 +446,7 @@ dependencies = [
  "anes",
  "cast",
  "ciborium",
- "clap 4.4.18",
+ "clap",
  "criterion-plot",
  "is-terminal",
  "itertools 0.10.5",
@@ -569,7 +533,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "base",
- "clap 4.4.18",
+ "clap",
  "indexmap 2.2.2",
  "logging",
  "maplit",
@@ -624,7 +588,7 @@ name = "esgrammar"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "clap 4.4.18",
+ "clap",
  "htmlparser",
  "toydom",
 ]
@@ -635,7 +599,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert-json-diff",
- "clap 4.4.18",
+ "clap",
  "jsparser",
  "logging",
  "serde",
@@ -775,15 +739,6 @@ name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
-
-[[package]]
-name = "hermit-abi"
-version = "0.1.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "hermit-abi"
@@ -995,7 +950,7 @@ version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bad00257d07be169d870ab665980b06cdb366d792ad690bf2e76876dc503455"
 dependencies = [
- "hermit-abi 0.3.4",
+ "hermit-abi",
  "rustix",
  "windows-sys 0.52.0",
 ]
@@ -1049,7 +1004,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "assert-json-diff",
- "clap 4.4.18",
+ "clap",
  "serde",
  "serde_json",
 ]
@@ -1061,7 +1016,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "bitflags 2.4.2",
- "clap 4.4.18",
+ "clap",
  "logging",
  "phf",
  "thiserror",
@@ -1085,7 +1040,7 @@ name = "jstb"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "clap 4.4.18",
+ "clap",
  "jsruntime",
  "logging",
 ]
@@ -1097,7 +1052,7 @@ dependencies = [
  "anyhow",
  "assert_matches",
  "base",
- "clap 4.4.18",
+ "clap",
  "dashmap",
  "humantime",
  "im",
@@ -1166,7 +1121,7 @@ name = "lmp"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "clap 4.4.18",
+ "clap",
  "layout",
  "serde_json",
 ]
@@ -1218,7 +1173,7 @@ dependencies = [
  "async-stream",
  "axum",
  "bytes",
- "clap 4.4.18",
+ "clap",
  "logging",
  "mime",
  "mustache",
@@ -1346,7 +1301,7 @@ version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4161fcb6d602d4d2081af7c3a45852d875a03dd337a6bfdd6e06407b61342a43"
 dependencies = [
- "hermit-abi 0.3.4",
+ "hermit-abi",
  "libc",
 ]
 
@@ -1391,12 +1346,6 @@ dependencies = [
  "libc",
  "windows-sys 0.52.0",
 ]
-
-[[package]]
-name = "os_str_bytes"
-version = "6.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1"
 
 [[package]]
 name = "overload"
@@ -1940,15 +1889,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "termcolor"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
-dependencies = [
- "winapi-util",
-]
-
-[[package]]
 name = "terminal_size"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1957,12 +1897,6 @@ dependencies = [
  "rustix",
  "windows-sys 0.48.0",
 ]
-
-[[package]]
-name = "textwrap"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 
 [[package]]
 name = "thiserror"
