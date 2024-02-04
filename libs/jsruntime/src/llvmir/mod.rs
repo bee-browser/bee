@@ -12,7 +12,7 @@ impl Runtime {
     }
 
     pub fn new() -> Self {
-        Self(unsafe { bridge::runtime_new() })
+        Default::default()
     }
 
     pub fn compile_script(&self, source: &str) -> bool {
@@ -29,6 +29,12 @@ impl Runtime {
     }
 }
 
+impl Default for Runtime {
+    fn default() -> Self {
+        Self(unsafe { bridge::runtime_new() })
+    }
+}
+
 impl Drop for Runtime {
     fn drop(&mut self) {
         unsafe {
@@ -39,6 +45,7 @@ impl Drop for Runtime {
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
+#[allow(non_snake_case)]
 #[allow(non_upper_case_globals)]
 mod bridge {
     include!(concat!(env!("OUT_DIR"), "/bridge.rs"));

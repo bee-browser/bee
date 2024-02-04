@@ -22,7 +22,7 @@ fn main() {
     let output_file = out_dir.join("bindings.hh");
     cbindgen::generate(env!("CARGO_MANIFEST_DIR"))
         .expect("Unable to generate bindings for C++")
-        .write_to_file(&output_file);
+        .write_to_file(output_file);
 
     // Generate bindings for Rust.
     let input_file = "llvmir/bridge.hh";
@@ -32,7 +32,7 @@ fn main() {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings for Rust")
-        .write_to_file(&output_file)
+        .write_to_file(output_file)
         .expect("Couldn't write bindings for Rust");
 
     // Build LLVM-IR glue.
