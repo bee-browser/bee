@@ -3440,9 +3440,9 @@ pub static ACTIONS: [Action; 2080] = [
     // AdditiveExpression -> MultiplicativeExpression
     Action::Nop,
     // AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
-    Action::Undefined,
+    Action::Invoke(Compiler::handle_addition_expression, "handle_addition_expression"),
     // AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression
-    Action::Undefined,
+    Action::Invoke(Compiler::handle_subtraction_expression, "handle_subtraction_expression"),
     // RelationalExpression -> ShiftExpression
     Action::Undefined,
     // RelationalExpression -> RelationalExpression LT ShiftExpression
@@ -3622,11 +3622,11 @@ pub static ACTIONS: [Action; 2080] = [
     // ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
     Action::Undefined,
     // MultiplicativeOperator -> MUL
-    Action::Undefined,
+    Action::Invoke(Compiler::handle_multiplication_operator, "handle_multiplication_operator"),
     // MultiplicativeOperator -> DIV
-    Action::Undefined,
+    Action::Invoke(Compiler::handle_division_operator, "handle_division_operator"),
     // MultiplicativeOperator -> MOD
-    Action::Undefined,
+    Action::Invoke(Compiler::handle_remainder_operator, "handle_remainder_operator"),
     // EqualityExpression_Await -> RelationalExpression_Await
     Action::Undefined,
     // EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
@@ -3640,7 +3640,7 @@ pub static ACTIONS: [Action; 2080] = [
     // MultiplicativeExpression -> ExponentiationExpression
     Action::Nop,
     // MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator ExponentiationExpression
-    Action::Undefined,
+    Action::Invoke(Compiler::handle_multiplicative_expression, "handle_multiplicative_expression"),
     // BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
     Action::Undefined,
     // BitwiseANDExpression_In_Yield -> BitwiseANDExpression_In_Yield BIT_AND EqualityExpression_In_Yield

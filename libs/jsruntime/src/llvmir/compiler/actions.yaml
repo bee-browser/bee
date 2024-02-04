@@ -4485,9 +4485,9 @@
 - rule: AdditiveExpression -> MultiplicativeExpression
   action: nop
 - rule: AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
-  action: undefined
+  action: handle_addition_expression
 - rule: AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression
-  action: undefined
+  action: handle_subtraction_expression
 - rule: RelationalExpression -> ShiftExpression
   action: undefined
 - rule: RelationalExpression -> RelationalExpression LT ShiftExpression
@@ -4715,11 +4715,11 @@
     ExponentiationExpression_Await
   action: undefined
 - rule: MultiplicativeOperator -> MUL
-  action: undefined
+  action: handle_multiplication_operator
 - rule: MultiplicativeOperator -> DIV
-  action: undefined
+  action: handle_division_operator
 - rule: MultiplicativeOperator -> MOD
-  action: undefined
+  action: handle_remainder_operator
 - rule: EqualityExpression_Await -> RelationalExpression_Await
   action: undefined
 - rule: >-
@@ -4743,7 +4743,7 @@
 - rule: >-
     MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator
     ExponentiationExpression
-  action: undefined
+  action: handle_multiplicative_expression
 - rule: BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
   action: undefined
 - rule: >-

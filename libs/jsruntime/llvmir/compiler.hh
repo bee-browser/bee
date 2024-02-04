@@ -24,6 +24,11 @@ class Compiler {
   void EndMain();
   void PushNumber(double value);
   void PushString(const char* data, size_t size);
+  void Add();
+  void Sub();
+  void Mul();
+  void Div();
+  void Rem();
   void Print();
 
   llvm::orc::ThreadSafeModule TakeModule();

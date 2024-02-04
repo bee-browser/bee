@@ -52,8 +52,16 @@ impl<'r> Session<'r> {
 pub struct Compiler {
     runtime: *mut bridge::Runtime,
     compiler: *mut bridge::Compiler,
-    operations: VecDeque<Operation>,
+    multiplicative_operator: MultiplicativeOperator,
+    instructions: VecDeque<Instruction>,
     location: Location,
+}
+
+enum MultiplicativeOperator {
+    None,
+    Mul,
+    Div,
+    Rem,
 }
 
 impl Compiler {
@@ -61,7 +69,8 @@ impl Compiler {
         Self {
             runtime,
             compiler,
-            operations: Default::default(),
+            multiplicative_operator: MultiplicativeOperator::None,
+            instructions: Default::default(),
             location: Default::default(),
         }
     }
@@ -73,6 +82,44 @@ impl Compiler {
     }
 
     // semantic actions
+
+    // MultiplicativeOperator -> MUL
+    fn handle_multiplication_operator(&mut self) -> Result<(), <Self as SyntaxHandler>::Error> {
+        self.multiplicative_operator = MultiplicativeOperator::Mul;
+        Ok(())
+    }
+
+    // MultiplicativeOperator -> DIV
+    fn handle_division_operator(&mut self) -> Result<(), <Self as SyntaxHandler>::Error> {
+        self.multiplicative_operator = MultiplicativeOperator::Div;
+        Ok(())
+    }
+
+    // MultiplicativeOperator -> MOD
+    fn handle_remainder_operator(&mut self) -> Result<(), <Self as SyntaxHandler>::Error> {
+        self.multiplicative_operator = MultiplicativeOperator::Rem;
+        Ok(())
+    }
+
+    // AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
+    fn handle_addition_expression(&mut self) -> Result<(), <Self as SyntaxHandler>::Error> {
+        self.process_addition_expression()
+    }
+
+    // AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression
+    fn handle_subtraction_expression(&mut self) -> Result<(), <Self as SyntaxHandler>::Error> {
+        self.process_subtraction_expression()
+    }
+
+    // MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator ExponentiationExpression
+    fn handle_multiplicative_expression(&mut self) -> Result<(), <Self as SyntaxHandler>::Error> {
+        match self.multiplicative_operator {
+            MultiplicativeOperator::Mul => self.process_multiplication_expression(),
+            MultiplicativeOperator::Div => self.process_division_expression(),
+            MultiplicativeOperator::Rem => self.process_remainder_expression(),
+            _ => panic!(),
+        }
+    }
 
     // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     fn handle_expression_statement(&mut self) -> Result<(), <Self as SyntaxHandler>::Error> {
@@ -93,6 +140,11 @@ pub trait SemanticAction {
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error>;
     fn process_number_literal(&mut self, value: f64) -> Result<(), Self::Error>;
     fn process_string_literal(&mut self, value: String) -> Result<(), Self::Error>;
+    fn process_addition_expression(&mut self) -> Result<(), Self::Error>;
+    fn process_subtraction_expression(&mut self) -> Result<(), Self::Error>;
+    fn process_multiplication_expression(&mut self) -> Result<(), Self::Error>;
+    fn process_division_expression(&mut self) -> Result<(), Self::Error>;
+    fn process_remainder_expression(&mut self) -> Result<(), Self::Error>;
     fn process_expression_statement(&mut self) -> Result<(), Self::Error>;
     fn process_statement(&mut self) -> Result<(), Self::Error>;
 }
@@ -112,36 +164,87 @@ impl SemanticAction for Compiler {
     }
 
     fn process_number_literal(&mut self, value: f64) -> Result<(), Self::Error> {
-        logger::debug!(event = "semantic.process_number_literal", value);
-        self.operations.push_back(Operation::PushNumber(value));
+        logger::debug!(event = "process_number_literal", value);
+        self.instructions.push_back(Instruction::PushNumber(value));
         Ok(())
     }
 
     fn process_string_literal(&mut self, value: String) -> Result<(), Self::Error> {
-        logger::debug!(event = "semantic.process_string_literal", value);
-        self.operations.push_back(Operation::PushString(value));
+        logger::debug!(event = "process_string_literal", value);
+        self.instructions.push_back(Instruction::PushString(value));
+        Ok(())
+    }
+
+    fn process_addition_expression(&mut self) -> Result<(), Self::Error> {
+        logger::debug!(event = "process_addition_expression");
+        self.instructions.push_back(Instruction::Add);
+        Ok(())
+    }
+
+    fn process_subtraction_expression(&mut self) -> Result<(), Self::Error> {
+        logger::debug!(event = "process_subtraction_expression");
+        self.instructions.push_back(Instruction::Sub);
+        Ok(())
+    }
+
+    fn process_multiplication_expression(&mut self) -> Result<(), Self::Error> {
+        logger::debug!(event = "process_multiplication_expression");
+        self.instructions.push_back(Instruction::Mul);
+        Ok(())
+    }
+
+    fn process_division_expression(&mut self) -> Result<(), Self::Error> {
+        logger::debug!(event = "process_division_expression");
+        self.instructions.push_back(Instruction::Div);
+        Ok(())
+    }
+
+    fn process_remainder_expression(&mut self) -> Result<(), Self::Error> {
+        logger::debug!(event = "process_remainder_expression");
+        self.instructions.push_back(Instruction::Rem);
         Ok(())
     }
 
     fn process_expression_statement(&mut self) -> Result<(), Self::Error> {
-        logger::debug!(event = "semantic.process_expression_statement");
-        self.operations.push_back(Operation::Print);
+        logger::debug!(event = "process_expression_statement");
+        self.instructions.push_back(Instruction::Print);
         Ok(())
     }
 
     fn process_statement(&mut self) -> Result<(), Self::Error> {
-        logger::debug!(event = "semantic.process_statement");
-        while let Some(op) = self.operations.pop_front() {
+        logger::debug!(event = "process_statement");
+        while let Some(op) = self.instructions.pop_front() {
             match op {
-                Operation::PushNumber(value) => unsafe {
+                Instruction::PushNumber(value) => unsafe {
                     logger::debug!(event = "push_number", value);
                     bridge::compiler_push_number(self.compiler, value);
                 },
-                Operation::PushString(value) => unsafe {
+                Instruction::PushString(value) => unsafe {
+                    logger::debug!(event = "push_string", value);
                     let data = value.as_ptr() as *const i8;
                     bridge::compiler_push_string(self.compiler, data, value.len());
                 },
-                Operation::Print => unsafe {
+                Instruction::Add => unsafe {
+                    logger::debug!(event = "add");
+                    bridge::compiler_add(self.compiler);
+                },
+                Instruction::Sub => unsafe {
+                    logger::debug!(event = "sub");
+                    bridge::compiler_sub(self.compiler);
+                },
+                Instruction::Mul => unsafe {
+                    logger::debug!(event = "mul");
+                    bridge::compiler_mul(self.compiler);
+                },
+                Instruction::Div => unsafe {
+                    logger::debug!(event = "div");
+                    bridge::compiler_div(self.compiler);
+                },
+                Instruction::Rem => unsafe {
+                    logger::debug!(event = "rem");
+                    bridge::compiler_rem(self.compiler);
+                },
+                Instruction::Print => unsafe {
                     logger::debug!(event = "print");
                     bridge::compiler_print(self.compiler);
                 },
@@ -151,9 +254,14 @@ impl SemanticAction for Compiler {
     }
 }
 
-enum Operation {
+enum Instruction {
     PushNumber(f64),
     PushString(String),
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Rem,
     Print,
 }
 
