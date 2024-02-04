@@ -36,6 +36,8 @@ async function run(args, options) {
         return;
       }
     }
+    const now = new Date();
+    await Deno.utime(file, now, now);
   } catch {
     console.log(`Created: ${file}`);
     await Deno.writeFile(file, newContent);
