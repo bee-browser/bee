@@ -39,6 +39,26 @@ void compiler_push_string(Compiler* self, const char* data, size_t size) {
   self->PushString(data, size);
 }
 
+void compiler_add(Compiler* self) {
+  self->Add();
+}
+
+void compiler_sub(Compiler* self) {
+  self->Sub();
+}
+
+void compiler_mul(Compiler* self) {
+  self->Mul();
+}
+
+void compiler_div(Compiler* self) {
+  self->Div();
+}
+
+void compiler_rem(Compiler* self) {
+  self->Rem();
+}
+
 void compiler_print(Compiler* self) {
   self->Print();
 }

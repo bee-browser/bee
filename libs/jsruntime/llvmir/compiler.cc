@@ -1,5 +1,7 @@
 #include "compiler.hh"
 
+#include <cassert>
+
 Compiler::Compiler(const llvm::DataLayout& data_layout) {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
@@ -23,16 +25,75 @@ void Compiler::EndMain() {
 }
 
 void Compiler::PushNumber(double value) {
-  stack_.push_back(llvm::ConstantFP::get(*context_, llvm::APFloat(value)));
+  auto* v = llvm::ConstantFP::get(*context_, llvm::APFloat(value));
+  stack_.push_back(v);
 }
 
 void Compiler::PushString(const char* data, size_t size) {
-  stack_.push_back(llvm::ConstantDataArray::getString(*context_, llvm::StringRef(data, size)));
+  auto* v = llvm::ConstantDataArray::getString(*context_, llvm::StringRef(data, size));
+  stack_.push_back(v);
+}
+
+void Compiler::Add() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFAdd(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Sub() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFSub(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Mul() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFMul(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Div() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFDiv(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Rem() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFRem(lhs, rhs);
+  stack_.push_back(v);
 }
 
 void Compiler::Print() {
+  assert(stack_.size() > 0);
   llvm::Value* value = stack_.back();
   stack_.pop_back();
+  // TODO: function overloading
   auto* print = CreatePrintF64Function();
   builder_->CreateCall(print, {value});
 }

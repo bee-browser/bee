@@ -22,6 +22,11 @@ void runtime_populate_module(Runtime* self, Compiler* compiler);
 void runtime_end_compilation(Runtime* self, Compiler* compiler);
 void compiler_push_number(Compiler* self, double value);
 void compiler_push_string(Compiler* self, const char* buf, size_t len);
+void compiler_add(Compiler* self);
+void compiler_sub(Compiler* self);
+void compiler_mul(Compiler* self);
+void compiler_div(Compiler* self);
+void compiler_rem(Compiler* self);
 void compiler_print(Compiler* self);
 
 END_C_LINKAGE
