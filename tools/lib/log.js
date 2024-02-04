@@ -1,6 +1,6 @@
-import * as log from 'https://deno.land/std@0.212.0/log/mod.ts';
+import * as log from 'https://deno.land/std@0.214.0/log/mod.ts';
 
-class StderrHandler extends log.handlers.ConsoleHandler {
+class StderrHandler extends log.ConsoleHandler {
   constructor(label, level) {
     super(level);
     this.label_ = label;

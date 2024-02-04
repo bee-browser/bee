@@ -1,8 +1,8 @@
 'use strict';
 
-import * as fs from "https://deno.land/std@0.212.0/fs/mod.ts";
-import * as log from 'https://deno.land/std@0.212.0/log/mod.ts';
-import * as yaml from "https://deno.land/std@0.212.0/yaml/mod.ts";
+import * as fs from "https://deno.land/std@0.214.0/fs/mod.ts";
+import * as log from 'https://deno.land/std@0.214.0/log/mod.ts';
+import * as yaml from "https://deno.land/std@0.214.0/yaml/mod.ts";
 import { parseCommand } from '../../../../tools/lib/cli.js';
 import { setup } from '../../../../tools/lib/log.js';
 
