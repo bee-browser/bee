@@ -1,3 +1,4 @@
 targets:
   - bee::jsparser::lexer
   - bee::jsparser::parser
+  - bee::jsparser::syntax
