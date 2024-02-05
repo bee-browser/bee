@@ -1,7 +1,5 @@
 mod compiler;
 
-use jsparser::Parser;
-
 pub struct Runtime(*mut bridge::Runtime);
 
 impl Runtime {
@@ -17,7 +15,7 @@ impl Runtime {
 
     pub fn compile_script(&self, source: &str) -> bool {
         let session = compiler::Session::new(self);
-        Parser::for_script(source, session.compiler())
+        jsparser::for_script(source, session.compiler())
             .parse()
             .is_ok()
     }

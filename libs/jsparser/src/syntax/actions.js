@@ -3,26 +3,34 @@
 import * as fs from "https://deno.land/std@0.214.0/fs/mod.ts";
 import * as log from 'https://deno.land/std@0.214.0/log/mod.ts';
 import * as yaml from "https://deno.land/std@0.214.0/yaml/mod.ts";
-import { parseCommand } from '../../../../../tools/lib/cli.js';
-import { setup } from '../../../../../tools/lib/log.js';
+import { parseCommand } from '../../../../tools/lib/cli.js';
+import { setup } from '../../../../tools/lib/log.js';
 
-const PROGNAME = 'actions.js';
+const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
 const DOC = `
 Usage:
-  ${PROGNAME} update <lalr.json> [<actions.yaml>]
+  ${PROGNAME} <lalr.json> [<actions.yaml>]
   ${PROGNAME} -h | --help
 
 Options:
   -d, --debug
     Enable debug logs.
-`.trim();
+`;
 
-const { cmds, options, args } = await parseCommand({
+const { options, args } = await parseCommand({
   doc: DOC,
 });
 
-async function update(args, options) {
+if (options.debug) {
+  setup(PROGNAME, 'DEBUG');
+} else {
+  setup(PROGNAME, 'INFO');
+}
+
+Deno.exit(await main(args, options));
+
+async function main(args, options) {
   log.debug(`Loading ${args.lalrJson}...`);
   const lalrJson = await Deno.readTextFile(args.lalrJson);
   const lalrSpec = JSON.parse(lalrJson);
@@ -66,15 +74,4 @@ async function update(args, options) {
     const s = yaml.stringify(removed).trim();
     console.log(s.split(EOL).map((line) => `# ${line}`).join(EOL));
   }
-}
-
-if (options.debug) {
-  setup(PROGNAME, 'DEBUG');
-} else {
-  setup(PROGNAME, 'INFO');
-}
-
-switch (cmds[0]) {
-case 'update':
-  Deno.exit(await update(args, options));
 }

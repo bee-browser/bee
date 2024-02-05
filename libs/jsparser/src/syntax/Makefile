@@ -1,6 +1,6 @@
 SHELL := $(shell which bash) -eu -o pipefail -c
 
-PROJ_DIR := $(realpath ../../../../..)
+PROJ_DIR := $(realpath ../../../..)
 TOOLS_BIN := $(PROJ_DIR)/tools/bin
 LALR_JSON := $(PROJ_DIR)/target/codegen/libs/jsparser/lalrgen/lalr.json
 
@@ -20,6 +20,3 @@ actions.yaml: actions.js $(LALR_JSON)
 	@echo 'Updating $(abspath $@)...'
 	@deno run -q --allow-read=$(PROJ_DIR) actions.js update $(LALR_JSON) $@ | \
 	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
-
-$(LALR_JSON):
-	@$(MAKE) -s -C $(PROJ_DIR)/libs/jsparser/src codegen

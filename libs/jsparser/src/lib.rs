@@ -1,5 +1,6 @@
 mod lexer;
 mod parser;
+mod syntax;
 
 /// A JavaScript parser.
 pub use parser::Parser;
@@ -18,6 +19,8 @@ pub use lexer::Location;
 /// A production rule in the ECMA-262 syntactic grammar.
 pub use parser::ProductionRule;
 
+pub use syntax::SemanticHandler;
+
 /// Errors.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -25,6 +28,14 @@ pub enum Error {
     UnexpectedCharacter,
     #[error("Syntax error")]
     SyntaxError,
+}
+
+pub fn for_script<H: SemanticHandler>(src: &str, handler: H) -> Parser<'_, syntax::Processor<H>> {
+    Parser::for_script(src, syntax::Processor::new(handler))
+}
+
+pub fn for_module<H: SemanticHandler>(src: &str, handler: H) -> Parser<'_, syntax::Processor<H>> {
+    Parser::for_module(src, syntax::Processor::new(handler))
 }
 
 /// Converts a template literal content into a raw string.
