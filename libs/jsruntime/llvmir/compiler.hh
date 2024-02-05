@@ -22,8 +22,8 @@ class Compiler {
 
   void StartMain();
   void EndMain();
-  void PushNumber(double value);
-  void PushString(const char* data, size_t size);
+  void Number(double value);
+  void String(const char* data, size_t size);
   void Add();
   void Sub();
   void Mul();

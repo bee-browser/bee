@@ -165,13 +165,13 @@ impl SemanticAction for Compiler {
 
     fn process_number_literal(&mut self, value: f64) -> Result<(), Self::Error> {
         logger::debug!(event = "process_number_literal", value);
-        self.instructions.push_back(Instruction::PushNumber(value));
+        self.instructions.push_back(Instruction::Number(value));
         Ok(())
     }
 
     fn process_string_literal(&mut self, value: String) -> Result<(), Self::Error> {
         logger::debug!(event = "process_string_literal", value);
-        self.instructions.push_back(Instruction::PushString(value));
+        self.instructions.push_back(Instruction::String(value));
         Ok(())
     }
 
@@ -213,39 +213,32 @@ impl SemanticAction for Compiler {
 
     fn process_statement(&mut self) -> Result<(), Self::Error> {
         logger::debug!(event = "process_statement");
-        while let Some(op) = self.instructions.pop_front() {
-            match op {
-                Instruction::PushNumber(value) => unsafe {
-                    logger::debug!(event = "push_number", value);
-                    bridge::compiler_push_number(self.compiler, value);
+        while let Some(instruction) = self.instructions.pop_front() {
+            logger::debug!(event = "compile", ?instruction);
+            match instruction {
+                Instruction::Number(value) => unsafe {
+                    bridge::compiler_number(self.compiler, value);
                 },
-                Instruction::PushString(value) => unsafe {
-                    logger::debug!(event = "push_string", value);
+                Instruction::String(value) => unsafe {
                     let data = value.as_ptr() as *const i8;
-                    bridge::compiler_push_string(self.compiler, data, value.len());
+                    bridge::compiler_string(self.compiler, data, value.len());
                 },
                 Instruction::Add => unsafe {
-                    logger::debug!(event = "add");
                     bridge::compiler_add(self.compiler);
                 },
                 Instruction::Sub => unsafe {
-                    logger::debug!(event = "sub");
                     bridge::compiler_sub(self.compiler);
                 },
                 Instruction::Mul => unsafe {
-                    logger::debug!(event = "mul");
                     bridge::compiler_mul(self.compiler);
                 },
                 Instruction::Div => unsafe {
-                    logger::debug!(event = "div");
                     bridge::compiler_div(self.compiler);
                 },
                 Instruction::Rem => unsafe {
-                    logger::debug!(event = "rem");
                     bridge::compiler_rem(self.compiler);
                 },
                 Instruction::Print => unsafe {
-                    logger::debug!(event = "print");
                     bridge::compiler_print(self.compiler);
                 },
             }
@@ -254,9 +247,10 @@ impl SemanticAction for Compiler {
     }
 }
 
+#[derive(Debug)]
 enum Instruction {
-    PushNumber(f64),
-    PushString(String),
+    Number(f64),
+    String(String),
     Add,
     Sub,
     Mul,
