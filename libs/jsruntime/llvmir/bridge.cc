@@ -31,12 +31,12 @@ void runtime_end_compilation(Runtime* self, Compiler* compiler) {
   self->EndCompilation(compiler);
 }
 
-void compiler_push_number(Compiler* self, double value) {
-  self->PushNumber(value);
+void compiler_number(Compiler* self, double value) {
+  self->Number(value);
 }
 
-void compiler_push_string(Compiler* self, const char* data, size_t size) {
-  self->PushString(data, size);
+void compiler_string(Compiler* self, const char* data, size_t size) {
+  self->String(data, size);
 }
 
 void compiler_add(Compiler* self) {

@@ -24,12 +24,12 @@ void Compiler::EndMain() {
   DumpModule();
 }
 
-void Compiler::PushNumber(double value) {
+void Compiler::Number(double value) {
   auto* v = llvm::ConstantFP::get(*context_, llvm::APFloat(value));
   stack_.push_back(v);
 }
 
-void Compiler::PushString(const char* data, size_t size) {
+void Compiler::String(const char* data, size_t size) {
   auto* v = llvm::ConstantDataArray::getString(*context_, llvm::StringRef(data, size));
   stack_.push_back(v);
 }
