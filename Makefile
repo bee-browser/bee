@@ -70,6 +70,12 @@ bench:
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
+	cargo clean --profile=dev
+	cargo clean --profile=profiling
+	cargo clean --profile=release
+
+.PHONY: clean-all
+clean-all: $(CLEAN_TARGETS)
 	cargo clean
 
 .PHONY: release-build
