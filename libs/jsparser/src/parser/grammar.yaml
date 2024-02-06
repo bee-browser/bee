@@ -3436,8 +3436,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression
+- name: MultiplicativeExpression
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression
+- name: MultiplicativeExpression
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression
 - name: MultiplicativeExpression_Await
@@ -3448,8 +3464,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression_Await
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression_Await
+- name: MultiplicativeExpression_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Await
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression_Await
+- name: MultiplicativeExpression_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Await
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression_Await
 - name: MultiplicativeExpression_Yield
@@ -3460,8 +3492,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression_Yield
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression_Yield
+- name: MultiplicativeExpression_Yield
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression_Yield
+- name: MultiplicativeExpression_Yield
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression_Yield
 - name: MultiplicativeExpression_Yield_Await
@@ -3472,8 +3520,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression_Yield_Await
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression_Yield_Await
+- name: MultiplicativeExpression_Yield_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield_Await
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression_Yield_Await
+- name: MultiplicativeExpression_Yield_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield_Await
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression_Yield_Await
 - name: MultiplicativeOperator

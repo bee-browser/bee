@@ -12,22 +12,22 @@ use dfa::recognize;
 pub use goals::Goal;
 pub use tokens::TokenKind;
 
-type LexerResult<'a> = Result<Token<'a>, Error>;
+type LexerResult<'s> = Result<Token<'s>, Error>;
 
-pub struct Lexer<'a> {
-    cursor: SourceCursor<'a>,
+pub struct Lexer<'s> {
+    cursor: SourceCursor<'s>,
     goal: Goal,
     location: Location,
 }
 
-impl<'a> Lexer<'a> {
+impl<'s> Lexer<'s> {
     /// Creates a JavaScript lexer.
     ///
     /// `src` must contain a complete source text.
     ///
     /// The initial goal symbol of the created JavaScript lexer is [`Goal::Div`].
     #[inline(always)]
-    pub fn new(src: &'a str) -> Lexer {
+    pub fn new(src: &'s str) -> Lexer {
         Lexer {
             cursor: SourceCursor::new(src),
             goal: Goal::Div,
@@ -44,13 +44,13 @@ impl<'a> Lexer<'a> {
 
     /// Gets a next token in the source text.
     #[inline(always)]
-    pub fn next_token(&self) -> LexerResult<'a> {
+    pub fn next_token(&self) -> LexerResult<'s> {
         recognize(self.goal, &self.cursor)
     }
 
     /// Consumes the token and advances the cursor.
     #[inline(always)]
-    pub fn consume_token(&mut self, token: Token<'a>) {
+    pub fn consume_token(&mut self, token: Token<'s>) {
         match token.kind {
             TokenKind::Eof => {
                 if !self.cursor.eof() {
@@ -67,7 +67,7 @@ impl<'a> Lexer<'a> {
     }
 
     #[inline(always)]
-    pub fn src(&self) -> &'a str {
+    pub fn src(&self) -> &'s str {
         self.cursor.src()
     }
 
@@ -84,9 +84,9 @@ impl<'a> Lexer<'a> {
 
 /// A token in a source text.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Token<'a> {
+pub struct Token<'s> {
     /// The lexeme of the token.
-    pub lexeme: &'a str,
+    pub lexeme: &'s str,
 
     /// The kind of the token.
     pub kind: TokenKind,
@@ -95,7 +95,7 @@ pub struct Token<'a> {
     flags: TokenFlags,
 }
 
-impl<'a> Token<'a> {
+impl<'s> Token<'s> {
     /// A token used for automatic semicolon insertion.
     pub(crate) const AUTO_SEMICOLON: Token<'static> = Token {
         lexeme: ";",
@@ -158,7 +158,7 @@ impl<'a> Token<'a> {
     }
 }
 
-impl<'a> Default for Token<'a> {
+impl<'s> Default for Token<'s> {
     fn default() -> Self {
         Token {
             lexeme: "",
@@ -656,8 +656,8 @@ mod tests {
         );
         assert_eof!(lexer, loc!(5, 1, 5), loc!(5, 1, 5));
 
-        let mut lexer = Lexer::new("'abc'");
-        assert_token!(lexer, StringLiteral, "'abc'", loc!(0, 1, 0), loc!(5, 1, 5));
+        let mut lexer = Lexer::new("'sbc'");
+        assert_token!(lexer, StringLiteral, "'sbc'", loc!(0, 1, 0), loc!(5, 1, 5));
         assert_eof!(lexer, loc!(5, 1, 5), loc!(5, 1, 5));
 
         let mut lexer = Lexer::new("'\\''");

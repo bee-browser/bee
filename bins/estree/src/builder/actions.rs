@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -4311,7 +4311,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     )),
     // MultiplicativeExpression_Await -> ExponentiationExpression_Await
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MultiplicativeOperator ExponentiationExpression_Await
+    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL ExponentiationExpression_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV ExponentiationExpression_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD ExponentiationExpression_Await
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_Await -> EqualityExpression_Await
     Some((Builder::nop, "nop")),
@@ -4558,12 +4562,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
     Some((Builder::binary_expression, "binary_expression")),
-    // MultiplicativeOperator -> MUL
-    Some((Builder::nop, "nop")),
-    // MultiplicativeOperator -> DIV
-    Some((Builder::nop, "nop")),
-    // MultiplicativeOperator -> MOD
-    Some((Builder::nop, "nop")),
     // EqualityExpression_Await -> RelationalExpression_Await
     Some((Builder::nop, "nop")),
     // EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
@@ -4576,7 +4574,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::binary_expression, "binary_expression")),
     // MultiplicativeExpression -> ExponentiationExpression
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator ExponentiationExpression
+    // MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
     Some((Builder::nop, "nop")),
@@ -5102,7 +5104,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::binary_expression, "binary_expression")),
     // MultiplicativeExpression_Yield -> ExponentiationExpression_Yield
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MultiplicativeOperator ExponentiationExpression_Yield
+    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL ExponentiationExpression_Yield
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV ExponentiationExpression_Yield
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD ExponentiationExpression_Yield
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_Yield -> EqualityExpression_Yield
     Some((Builder::nop, "nop")),
@@ -5110,7 +5116,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::binary_expression, "binary_expression")),
     // MultiplicativeExpression_Yield_Await -> ExponentiationExpression_Yield_Await
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MultiplicativeOperator ExponentiationExpression_Yield_Await
+    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL ExponentiationExpression_Yield_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV ExponentiationExpression_Yield_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD ExponentiationExpression_Yield_Await
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await
     Some((Builder::nop, "nop")),

@@ -161,6 +161,7 @@ class Transpiler {
     case 'syntactic':
       this.passes_ = [
         rewriteIdentifierRule,
+        expandMultiplicativeOperator,
         // CPEAAPL cannot be replaced with refined production rules.  You will see many
         // conflicts in the LALR(1) parsing table generation when you actually try this.
         //rewriteCPEAAPL,
@@ -454,6 +455,25 @@ function rewriteIdentifierRule(rules) {
   assert(rule.values[0] === 'IdentifierName but not ReservedWord');
   // A generated lexer recognizes the reserved words as separate tokens.
   rule.values = ['IdentifierNameButNotReservedWord'];
+  return rules;
+}
+
+// Unkine other production rules for binary operators such as `+`, `MultiplicativeExpression` is
+// defined by using `MultiplicativeOperator`.  This causes a bothersome complication in the
+// semantic analysis.  This function replaces `MultiplicativeOperaor` in the production rule with
+// actual operators.
+function expandMultiplicativeOperator(rules) {
+  log.debug('Expanding MultiplicativeOperator...');
+  const rule = rules.find((rule) => rule.name === 'MultiplicativeExpression[Yield, Await]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 2);
+  const value = rule.values.pop();
+  assert(value === 'MultiplicativeExpression[?Yield, ?Await] MultiplicativeOperator ExponentiationExpression[?Yield, ?Await]');
+  const multiplicativeOperatorRule = rules.find((rule) => rule.name === 'MultiplicativeOperator');
+  assert(multiplicativeOperatorRule !== undefined);
+  for (const op of multiplicativeOperatorRule.values) {
+    rule.values.push(value.replace('MultiplicativeOperator', op));
+  }
   return rules;
 }
 

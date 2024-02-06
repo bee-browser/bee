@@ -533,7 +533,6 @@ pub enum NonTerminal {
     MultiplicativeExpression_Await,
     MultiplicativeExpression_Yield,
     MultiplicativeExpression_Yield_Await,
-    MultiplicativeOperator,
     NameSpaceImport,
     NamedExports,
     NamedImports,

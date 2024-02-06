@@ -267,11 +267,11 @@
 - rule: SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
   action: undefined
 - rule: LabelIdentifier -> Identifier
-  action: undefined
+  action: nop
 - rule: LabelIdentifier -> YIELD
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: LabelIdentifier -> AWAIT
-  action: undefined
+  action: syntax_error_in_module
 - rule: LabelledItem -> Statement
   action: undefined
 - rule: LabelledItem -> FunctionDeclaration
@@ -301,11 +301,11 @@
     AsyncGeneratorBody RBRACE
   action: undefined
 - rule: BindingIdentifier -> Identifier
-  action: undefined
+  action: syntax_error_if_arguments_or_eval
 - rule: BindingIdentifier -> YIELD
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: BindingIdentifier -> AWAIT
-  action: undefined
+  action: syntax_error_in_module
 - rule: ClassTail -> LBRACE RBRACE
   action: undefined
 - rule: ClassTail -> ClassHeritage LBRACE RBRACE
@@ -395,11 +395,11 @@
     AsyncGeneratorBody RBRACE
   action: undefined
 - rule: BindingIdentifier_Await -> Identifier
-  action: undefined
+  action: syntax_error_if_arguments_or_eval_or_await
 - rule: BindingIdentifier_Await -> YIELD
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: BindingIdentifier_Await -> AWAIT
-  action: undefined
+  action: syntax_error
 - rule: ClassTail_Await -> LBRACE RBRACE
   action: undefined
 - rule: ClassTail_Await -> ClassHeritage_Await LBRACE RBRACE
@@ -935,9 +935,9 @@
     CaseBlock_Await
   action: undefined
 - rule: LabelIdentifier_Await -> Identifier
-  action: undefined
+  action: syntax_error_if_await
 - rule: LabelIdentifier_Await -> YIELD
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: LabelledItem_Await -> Statement_Await
   action: undefined
 - rule: LabelledItem_Await -> FunctionDeclaration_Await
@@ -1004,23 +1004,23 @@
 - rule: DefaultClause -> DEFAULT COLON StatementList
   action: undefined
 - rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
-  action: nop
+  action: syntax_error_if_string_value_is_keyword_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> LET
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> STATIC
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> IMPLEMENTS
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> INTERFACE
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> PACKAGE
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> PRIVATE
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> PROTECTED
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> PUBLIC
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierNameButNotReservedWord -> AS
   action: undefined
 - rule: IdentifierNameButNotReservedWord -> ASYNC
@@ -1763,11 +1763,11 @@
 - rule: StatementListItem_Return -> Declaration
   action: undefined
 - rule: BindingIdentifier_Yield -> Identifier
-  action: undefined
+  action: syntax_error_if_arguments_or_eval_or_yield
 - rule: BindingIdentifier_Yield -> YIELD
-  action: undefined
+  action: syntax_error
 - rule: BindingIdentifier_Yield -> AWAIT
-  action: undefined
+  action: syntax_error_in_module
 - rule: BindingPattern_Yield -> ObjectBindingPattern_Yield
   action: undefined
 - rule: BindingPattern_Yield -> ArrayBindingPattern_Yield
@@ -1797,11 +1797,11 @@
     StatementListItem_Await_Return
   action: undefined
 - rule: BindingIdentifier_Yield_Await -> Identifier
-  action: undefined
+  action: syntax_error_if_arguments_or_eval_or_yield_or_await
 - rule: BindingIdentifier_Yield_Await -> YIELD
-  action: undefined
+  action: syntax_error
 - rule: BindingIdentifier_Yield_Await -> AWAIT
-  action: undefined
+  action: syntax_error
 - rule: BindingPattern_Yield_Await -> ObjectBindingPattern_Yield_Await
   action: undefined
 - rule: BindingPattern_Yield_Await -> ArrayBindingPattern_Yield_Await
@@ -1887,9 +1887,9 @@
     BitwiseANDExpression_In_Await
   action: undefined
 - rule: IdentifierReference_Await -> Identifier
-  action: undefined
+  action: syntax_error_if_await
 - rule: IdentifierReference_Await -> YIELD
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: Literal -> NullLiteral
   action: undefined
 - rule: Literal -> BooleanLiteral
@@ -2365,9 +2365,9 @@
 - rule: IdentifierReference -> Identifier
   action: nop
 - rule: IdentifierReference -> YIELD
-  action: undefined
+  action: syntax_error_in_strict_mode
 - rule: IdentifierReference -> AWAIT
-  action: undefined
+  action: syntax_error_in_module
 - rule: ArrayLiteral -> LBRACK RBRACK
   action: undefined
 - rule: ArrayLiteral -> LBRACK Elision RBRACK
@@ -3300,9 +3300,9 @@
     CaseBlock_Yield_Return
   action: undefined
 - rule: LabelIdentifier_Yield -> Identifier
-  action: undefined
+  action: syntax_error_if_yield
 - rule: LabelIdentifier_Yield -> AWAIT
-  action: undefined
+  action: syntax_error_in_module
 - rule: LabelledItem_Yield_Return -> Statement_Yield_Return
   action: undefined
 - rule: LabelledItem_Yield_Return -> FunctionDeclaration_Yield
@@ -3465,7 +3465,7 @@
     Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return
   action: undefined
 - rule: LabelIdentifier_Yield_Await -> Identifier
-  action: undefined
+  action: syntax_error_if_yield_or_await
 - rule: LabelledItem_Yield_Await_Return -> Statement_Yield_Await_Return
   action: undefined
 - rule: LabelledItem_Yield_Await_Return -> FunctionDeclaration_Yield_Await
@@ -4229,15 +4229,15 @@
     Initializer_In_Yield_Await
   action: undefined
 - rule: AdditiveExpression_Await -> MultiplicativeExpression_Await
-  action: undefined
+  action: nop
 - rule: >-
     AdditiveExpression_Await -> AdditiveExpression_Await ADD
     MultiplicativeExpression_Await
-  action: undefined
+  action: handle_addition_expression
 - rule: >-
     AdditiveExpression_Await -> AdditiveExpression_Await SUB
     MultiplicativeExpression_Await
-  action: undefined
+  action: handle_subtraction_expression
 - rule: BitwiseXORExpression_Await -> BitwiseANDExpression_Await
   action: undefined
 - rule: >-
@@ -4471,11 +4471,19 @@
     ClassElement_Yield_Await
   action: undefined
 - rule: MultiplicativeExpression_Await -> ExponentiationExpression_Await
-  action: undefined
+  action: nop
 - rule: >-
-    MultiplicativeExpression_Await -> MultiplicativeExpression_Await
-    MultiplicativeOperator ExponentiationExpression_Await
-  action: undefined
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL
+    ExponentiationExpression_Await
+  action: handle_multiplication_expression
+- rule: >-
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV
+    ExponentiationExpression_Await
+  action: handle_division_expression
+- rule: >-
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD
+    ExponentiationExpression_Await
+  action: handle_remainder_expression
 - rule: BitwiseANDExpression_Await -> EqualityExpression_Await
   action: undefined
 - rule: >-
@@ -4507,9 +4515,9 @@
     BitwiseANDExpression_In_Yield
   action: undefined
 - rule: IdentifierReference_Yield -> Identifier
-  action: undefined
+  action: syntax_error_if_yield
 - rule: IdentifierReference_Yield -> AWAIT
-  action: undefined
+  action: syntax_error_in_module
 - rule: ArrayLiteral_Yield -> LBRACK RBRACK
   action: undefined
 - rule: ArrayLiteral_Yield -> LBRACK Elision RBRACK
@@ -4607,7 +4615,7 @@
     BIT_XOR BitwiseANDExpression_In_Yield_Await
   action: undefined
 - rule: IdentifierReference_Yield_Await -> Identifier
-  action: undefined
+  action: syntax_error_if_yield_or_await
 - rule: ArrayLiteral_Yield_Await -> LBRACK RBRACK
   action: undefined
 - rule: ArrayLiteral_Yield_Await -> LBRACK Elision RBRACK
@@ -4714,12 +4722,6 @@
     ExponentiationExpression_Await -> UpdateExpression_Await EXP
     ExponentiationExpression_Await
   action: undefined
-- rule: MultiplicativeOperator -> MUL
-  action: handle_multiplication_operator
-- rule: MultiplicativeOperator -> DIV
-  action: handle_division_operator
-- rule: MultiplicativeOperator -> MOD
-  action: handle_remainder_operator
 - rule: EqualityExpression_Await -> RelationalExpression_Await
   action: undefined
 - rule: >-
@@ -4741,9 +4743,17 @@
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop
 - rule: >-
-    MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator
+    MultiplicativeExpression -> MultiplicativeExpression MUL
     ExponentiationExpression
-  action: handle_multiplicative_expression
+  action: handle_multiplication_expression
+- rule: >-
+    MultiplicativeExpression -> MultiplicativeExpression DIV
+    ExponentiationExpression
+  action: handle_division_expression
+- rule: >-
+    MultiplicativeExpression -> MultiplicativeExpression MOD
+    ExponentiationExpression
+  action: handle_remainder_expression
 - rule: BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
   action: undefined
 - rule: >-
@@ -5314,15 +5324,15 @@
     BitwiseXORExpression_Yield_Await
   action: undefined
 - rule: AdditiveExpression_Yield -> MultiplicativeExpression_Yield
-  action: undefined
+  action: nop
 - rule: >-
     AdditiveExpression_Yield -> AdditiveExpression_Yield ADD
     MultiplicativeExpression_Yield
-  action: undefined
+  action: handle_addition_expression
 - rule: >-
     AdditiveExpression_Yield -> AdditiveExpression_Yield SUB
     MultiplicativeExpression_Yield
-  action: undefined
+  action: handle_subtraction_expression
 - rule: BitwiseXORExpression_Yield -> BitwiseANDExpression_Yield
   action: undefined
 - rule: >-
@@ -5330,15 +5340,15 @@
     BitwiseANDExpression_Yield
   action: undefined
 - rule: AdditiveExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await ADD
     MultiplicativeExpression_Yield_Await
-  action: undefined
+  action: handle_addition_expression
 - rule: >-
     AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await SUB
     MultiplicativeExpression_Yield_Await
-  action: undefined
+  action: handle_subtraction_expression
 - rule: BitwiseXORExpression_Yield_Await -> BitwiseANDExpression_Yield_Await
   action: undefined
 - rule: >-
@@ -5346,11 +5356,19 @@
     BitwiseANDExpression_Yield_Await
   action: undefined
 - rule: MultiplicativeExpression_Yield -> ExponentiationExpression_Yield
-  action: undefined
+  action: nop
 - rule: >-
-    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield
-    MultiplicativeOperator ExponentiationExpression_Yield
-  action: undefined
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL
+    ExponentiationExpression_Yield
+  action: handle_multiplication_expression
+- rule: >-
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV
+    ExponentiationExpression_Yield
+  action: handle_division_expression
+- rule: >-
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD
+    ExponentiationExpression_Yield
+  action: handle_remainder_expression
 - rule: BitwiseANDExpression_Yield -> EqualityExpression_Yield
   action: undefined
 - rule: >-
@@ -5358,11 +5376,19 @@
     EqualityExpression_Yield
   action: undefined
 - rule: MultiplicativeExpression_Yield_Await -> ExponentiationExpression_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
-    MultiplicativeOperator ExponentiationExpression_Yield_Await
-  action: undefined
+    MUL ExponentiationExpression_Yield_Await
+  action: handle_multiplication_expression
+- rule: >-
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
+    DIV ExponentiationExpression_Yield_Await
+  action: handle_division_expression
+- rule: >-
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
+    MOD ExponentiationExpression_Yield_Await
+  action: handle_remainder_expression
 - rule: BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await
   action: undefined
 - rule: >-

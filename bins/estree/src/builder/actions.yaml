@@ -4012,7 +4012,15 @@
 - rule: MultiplicativeExpression_Await -> ExponentiationExpression_Await
   action: nop
 - rule: >-
-    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MultiplicativeOperator
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL
+    ExponentiationExpression_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV
+    ExponentiationExpression_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD
     ExponentiationExpression_Await
   action: binary_expression
 - rule: BitwiseANDExpression_Await -> EqualityExpression_Await
@@ -4225,12 +4233,6 @@
   action: nop
 - rule: ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
   action: binary_expression
-- rule: MultiplicativeOperator -> MUL
-  action: nop
-- rule: MultiplicativeOperator -> DIV
-  action: nop
-- rule: MultiplicativeOperator -> MOD
-  action: nop
 - rule: EqualityExpression_Await -> RelationalExpression_Await
   action: nop
 - rule: EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
@@ -4243,9 +4245,11 @@
   action: binary_expression
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop
-- rule: >-
-    MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator
-    ExponentiationExpression
+- rule: MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
+  action: binary_expression
+- rule: MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
+  action: binary_expression
+- rule: MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
   action: binary_expression
 - rule: BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
   action: nop
@@ -4751,7 +4755,15 @@
 - rule: MultiplicativeExpression_Yield -> ExponentiationExpression_Yield
   action: nop
 - rule: >-
-    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MultiplicativeOperator
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL
+    ExponentiationExpression_Yield
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV
+    ExponentiationExpression_Yield
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD
     ExponentiationExpression_Yield
   action: binary_expression
 - rule: BitwiseANDExpression_Yield -> EqualityExpression_Yield
@@ -4761,8 +4773,16 @@
 - rule: MultiplicativeExpression_Yield_Await -> ExponentiationExpression_Yield_Await
   action: nop
 - rule: >-
-    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
-    MultiplicativeOperator ExponentiationExpression_Yield_Await
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL
+    ExponentiationExpression_Yield_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV
+    ExponentiationExpression_Yield_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD
+    ExponentiationExpression_Yield_Await
   action: binary_expression
 - rule: BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await
   action: nop

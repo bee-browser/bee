@@ -1,10 +1,15 @@
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 
+use jsparser::Identifier;
+use jsparser::NumericLiteral;
 use jsparser::SemanticHandler;
+use jsparser::StringLiteral;
+use jsparser::SymbolTable;
 
 use super::bridge;
 use super::Runtime;
+
 use crate::logger;
 
 /// Represents a compilation session of a runtime.
@@ -45,6 +50,7 @@ pub struct Compiler {
     runtime: *mut bridge::Runtime,
     compiler: *mut bridge::Compiler,
     instructions: VecDeque<Instruction>,
+    symbol_table: SymbolTable,
 }
 
 impl Compiler {
@@ -53,6 +59,7 @@ impl Compiler {
             runtime,
             compiler,
             instructions: Default::default(),
+            symbol_table: SymbolTable::with_builtin_symbols(),
         }
     }
 
@@ -63,8 +70,16 @@ impl Compiler {
     }
 }
 
-impl SemanticHandler for Compiler {
+impl<'s> SemanticHandler<'s> for Compiler {
     type Artifact = ();
+
+    fn symbol_table(&mut self) -> &SymbolTable {
+        &self.symbol_table
+    }
+
+    fn symbol_table_mut(&mut self) -> &mut SymbolTable {
+        &mut self.symbol_table
+    }
 
     fn start(&mut self) {
         logger::debug!(event = "start");
@@ -76,15 +91,26 @@ impl SemanticHandler for Compiler {
         Ok(())
     }
 
-    fn handle_number_literal(&mut self, value: f64) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_number_literal", value);
-        self.instructions.push_back(Instruction::Number(value));
+    fn handle_numeric_literal(
+        &mut self,
+        literal: NumericLiteral<'s>,
+    ) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_numeric_literal", literal.value);
+        self.instructions
+            .push_back(Instruction::Number(literal.value));
         Ok(())
     }
 
-    fn handle_string_literal(&mut self, value: String) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_string_literal", value);
-        self.instructions.push_back(Instruction::String(value));
+    fn handle_string_literal(&mut self, literal: StringLiteral<'s>) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_string_literal", literal.raw);
+        self.instructions
+            .push_back(Instruction::String(literal.raw.to_owned())); // TODO
+        Ok(())
+    }
+
+    fn handle_identifier(&mut self, identifier: Identifier) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_identifier", identifier.raw);
+        // TODO
         Ok(())
     }
 

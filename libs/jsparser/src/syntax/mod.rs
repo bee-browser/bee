@@ -1,20 +1,28 @@
 mod actions;
 mod logger;
 
+use std::collections::VecDeque;
+
 use super::Error;
 use super::Location;
 use super::ProductionRule;
+use super::Symbol;
+use super::SymbolTable;
 use super::SyntaxHandler;
 use super::Token;
 use super::TokenKind;
 
-pub trait SemanticHandler {
+pub trait SemanticHandler<'s> {
     type Artifact;
+
+    fn symbol_table(&mut self) -> &SymbolTable;
+    fn symbol_table_mut(&mut self) -> &mut SymbolTable;
 
     fn start(&mut self);
     fn accept(&mut self) -> Result<Self::Artifact, Error>;
-    fn handle_number_literal(&mut self, value: f64) -> Result<(), Error>;
-    fn handle_string_literal(&mut self, value: String) -> Result<(), Error>;
+    fn handle_numeric_literal(&mut self, literal: NumericLiteral<'s>) -> Result<(), Error>;
+    fn handle_string_literal(&mut self, literal: StringLiteral<'s>) -> Result<(), Error>;
+    fn handle_identifier(&mut self, identifier: Identifier<'s>) -> Result<(), Error>;
     fn handle_addition_expression(&mut self) -> Result<(), Error>;
     fn handle_subtraction_expression(&mut self) -> Result<(), Error>;
     fn handle_multiplication_expression(&mut self) -> Result<(), Error>;
@@ -24,25 +32,57 @@ pub trait SemanticHandler {
     fn handle_statement(&mut self) -> Result<(), Error>;
 }
 
-pub struct Processor<H> {
+pub struct Processor<'s, H> {
     handler: H,
     location: Location,
-    multiplicative_operator: MultiplicativeOperator,
+    queue: VecDeque<Item<'s>>,
+    strict_mode: bool,
+    module: bool,
 }
 
-impl<H> Processor<H> {
-    pub fn new(handler: H) -> Self {
+enum Item<'s> {
+    NumericLiteral(NumericLiteral<'s>),
+    StringLiteral(StringLiteral<'s>),
+    Identifier(Identifier<'s>),
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
+    Remainder,
+}
+
+pub struct NumericLiteral<'s> {
+    pub value: f64,
+    pub raw: &'s str,
+}
+
+pub struct StringLiteral<'s> {
+    pub value: Vec<u16>,
+    pub raw: &'s str,
+}
+
+pub struct Identifier<'s> {
+    pub symbol: Symbol,
+    pub raw: &'s str,
+}
+
+impl<'s, H> Processor<'s, H> {
+    const INITIAL_STACK_CAPACITY: usize = 64;
+
+    pub fn new(handler: H, module: bool) -> Self {
         Self {
             handler,
             location: Default::default(),
-            multiplicative_operator: MultiplicativeOperator::Mul,
+            queue: VecDeque::with_capacity(Self::INITIAL_STACK_CAPACITY),
+            strict_mode: false,
+            module,
         }
     }
 }
 
-impl<H> SyntaxHandler for Processor<H>
+impl<'s, H> SyntaxHandler<'s> for Processor<'s, H>
 where
-    H: SemanticHandler,
+    H: SemanticHandler<'s>,
 {
     type Artifact = H::Artifact;
     type Error = Error;
@@ -57,7 +97,7 @@ where
         self.handler.accept()
     }
 
-    fn shift(&mut self, token: &Token<'_>) -> Result<(), Self::Error> {
+    fn shift(&mut self, token: &Token<'s>) -> Result<(), Self::Error> {
         logger::debug!(
             event = "shift",
             ?token.kind,
@@ -68,17 +108,34 @@ where
 
         match token.kind {
             TokenKind::NumericLiteral => {
-                // TODO: Perform `NumericValue`
+                // TODO: perform `NumericValue`
                 let value = token.lexeme.parse::<f64>().unwrap();
-                self.handler.handle_number_literal(value)
+                self.queue.push_back(Item::NumericLiteral(NumericLiteral {
+                    value,
+                    raw: token.lexeme,
+                }));
             }
             TokenKind::StringLiteral => {
-                // TODO: Perform `SV`
-                let value = token.lexeme.to_owned();
-                self.handler.handle_string_literal(value)
+                // TODO: perform `SV`
+                let value = token.lexeme.encode_utf16().collect();
+                self.queue.push_back(Item::StringLiteral(StringLiteral {
+                    value,
+                    raw: token.lexeme,
+                }));
             }
-            _ => Ok(()),
+            TokenKind::IdentifierName => {
+                // TODO: perform `StringValue`
+                let value = token.lexeme.encode_utf16().collect();
+                let symbol_table = self.handler.symbol_table_mut();
+                let symbol = symbol_table.intern(value);
+                self.queue.push_back(Item::Identifier(Identifier {
+                    symbol,
+                    raw: token.lexeme,
+                }));
+            }
+            _ => (),
         }
+        Ok(())
     }
 
     fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error> {
@@ -101,49 +158,178 @@ where
     }
 }
 
-impl<H> Processor<H>
+impl<'s, H> Processor<'s, H>
 where
-    H: SemanticHandler,
+    H: SemanticHandler<'s>,
 {
-    // MultiplicativeOperator -> MUL
-    fn handle_multiplication_operator(&mut self) -> Result<(), Error> {
-        self.multiplicative_operator = MultiplicativeOperator::Mul;
-        Ok(())
+    fn syntax_error(&mut self) -> Result<(), Error> {
+        Err(Error::SyntaxError)
     }
 
-    // MultiplicativeOperator -> DIV
-    fn handle_division_operator(&mut self) -> Result<(), Error> {
-        self.multiplicative_operator = MultiplicativeOperator::Div;
-        Ok(())
+    // 13.1.1 Static Semantics: Early Errors
+    //
+    // TODO: improve performance
+    // introduce a symbol table to intern identifier strings.
+
+    fn syntax_error_in_module(&mut self) -> Result<(), Error> {
+        if self.module {
+            Err(Error::SyntaxError)
+        } else {
+            Ok(())
+        }
     }
 
-    // MultiplicativeOperator -> MOD
-    fn handle_remainder_operator(&mut self) -> Result<(), Error> {
-        self.multiplicative_operator = MultiplicativeOperator::Rem;
-        Ok(())
+    fn syntax_error_in_strict_mode(&mut self) -> Result<(), Error> {
+        if self.strict_mode {
+            Err(Error::SyntaxError)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn syntax_error_if_string_value_is_keyword_in_strict_mode(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::IMPLEMENTS
+            | SymbolTable::LET
+            | SymbolTable::PACKAGE
+            | SymbolTable::PRIVATE
+            | SymbolTable::PROTECTED
+            | SymbolTable::PUBLIC
+            | SymbolTable::STATIC
+            | SymbolTable::YIELD
+                if self.strict_mode =>
+            {
+                return Err(Error::SyntaxError)
+            }
+            _ => Ok(()),
+        }
+    }
+
+    fn syntax_error_if_await(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => Ok(()),
+        }
+    }
+
+    fn syntax_error_if_yield(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::YIELD => Err(Error::SyntaxError),
+            _ => Ok(()),
+        }
+    }
+
+    fn syntax_error_if_yield_or_await(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => Ok(()),
+        }
+    }
+
+    fn syntax_error_if_arguments_or_eval(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
+                Err(Error::SyntaxError)
+            }
+            _ => Ok(()),
+        }
+    }
+
+    fn syntax_error_if_arguments_or_eval_or_await(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
+                Err(Error::SyntaxError)
+            }
+            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => Ok(()),
+        }
+    }
+
+    fn syntax_error_if_arguments_or_eval_or_yield(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
+                Err(Error::SyntaxError)
+            }
+            SymbolTable::YIELD => Err(Error::SyntaxError),
+            _ => Ok(()),
+        }
+    }
+
+    fn syntax_error_if_arguments_or_eval_or_yield_or_await(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.back().unwrap() {
+            Item::Identifier(identifier) => identifier,
+            _ => panic!(),
+        };
+        match identifier.symbol {
+            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
+                Err(Error::SyntaxError)
+            }
+            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => Ok(()),
+        }
     }
 
     // AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
     fn handle_addition_expression(&mut self) -> Result<(), Error> {
-        self.handler.handle_addition_expression()
+        self.queue.push_back(Item::Addition);
+        Ok(())
     }
 
     // AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression
     fn handle_subtraction_expression(&mut self) -> Result<(), Error> {
-        self.handler.handle_subtraction_expression()
+        self.queue.push_back(Item::Subtraction);
+        Ok(())
     }
 
-    // MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator ExponentiationExpression
-    fn handle_multiplicative_expression(&mut self) -> Result<(), Error> {
-        match self.multiplicative_operator {
-            MultiplicativeOperator::Mul => self.handler.handle_multiplication_expression(),
-            MultiplicativeOperator::Div => self.handler.handle_division_expression(),
-            MultiplicativeOperator::Rem => self.handler.handle_remainder_expression(),
-        }
+    // MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
+    fn handle_multiplication_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::Multiplication);
+        Ok(())
+    }
+
+    // MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
+    fn handle_division_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::Division);
+        Ok(())
+    }
+
+    // MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
+    fn handle_remainder_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::Remainder);
+        Ok(())
     }
 
     // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
+        self.flush()?;
         self.handler.handle_expression_statement()
     }
 
@@ -151,16 +337,26 @@ where
     fn handle_statement(&mut self) -> Result<(), Error> {
         self.handler.handle_statement()
     }
+
+    fn flush(&mut self) -> Result<(), Error> {
+        while let Some(item) = self.queue.pop_front() {
+            match item {
+                Item::NumericLiteral(literal) => self.handler.handle_numeric_literal(literal)?,
+                Item::StringLiteral(literal) => self.handler.handle_string_literal(literal)?,
+                Item::Identifier(identifier) => self.handler.handle_identifier(identifier)?,
+                Item::Addition => self.handler.handle_addition_expression()?,
+                Item::Subtraction => self.handler.handle_subtraction_expression()?,
+                Item::Multiplication => self.handler.handle_multiplication_expression()?,
+                Item::Division => self.handler.handle_division_expression()?,
+                Item::Remainder => self.handler.handle_remainder_expression()?,
+            }
+        }
+        Ok(())
+    }
 }
 
-enum MultiplicativeOperator {
-    Mul,
-    Div,
-    Rem,
-}
-
-enum Action<H> {
+enum Action<'s, H> {
     Undefined,
     Nop,
-    Invoke(fn(&mut Processor<H>) -> Result<(), Error>, &'static str),
+    Invoke(fn(&mut Processor<'s, H>) -> Result<(), Error>, &'static str),
 }
