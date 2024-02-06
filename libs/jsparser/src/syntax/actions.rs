@@ -7,9 +7,9 @@ use super::Action;
 use super::Processor;
 use super::SemanticHandler;
 
-impl<H> Processor<H>
+impl<'s, H> Processor<'s, H>
 where
-    H: SemanticHandler,
+    H: SemanticHandler<'s>,
 {
     /// A constant variable of a list of semantic actions.
     ///
@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<H>; 2080] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2085] = [
         // Script -> (empty)
         Action::Undefined,
         // Script -> ScriptBody
@@ -269,11 +269,14 @@ where
         // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
         Action::Undefined,
         // LabelIdentifier -> Identifier
-        Action::Undefined,
+        Action::Nop,
         // LabelIdentifier -> YIELD
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // LabelIdentifier -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
         // LabelledItem -> Statement
         Action::Undefined,
         // LabelledItem -> FunctionDeclaration
@@ -293,11 +296,17 @@ where
         // AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
         // BindingIdentifier -> Identifier
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_if_arguments_or_eval,
+            "syntax_error_if_arguments_or_eval",
+        ),
         // BindingIdentifier -> YIELD
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // BindingIdentifier -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
         // ClassTail -> LBRACE RBRACE
         Action::Undefined,
         // ClassTail -> ClassHeritage LBRACE RBRACE
@@ -365,11 +374,17 @@ where
         // AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
         // BindingIdentifier_Await -> Identifier
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_if_arguments_or_eval_or_await,
+            "syntax_error_if_arguments_or_eval_or_await",
+        ),
         // BindingIdentifier_Await -> YIELD
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // BindingIdentifier_Await -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // ClassTail_Await -> LBRACE RBRACE
         Action::Undefined,
         // ClassTail_Await -> ClassHeritage_Await LBRACE RBRACE
@@ -803,9 +818,12 @@ where
         // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await
         Action::Undefined,
         // LabelIdentifier_Await -> Identifier
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_if_await, "syntax_error_if_await"),
         // LabelIdentifier_Await -> YIELD
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // LabelledItem_Await -> Statement_Await
         Action::Undefined,
         // LabelledItem_Await -> FunctionDeclaration_Await
@@ -863,23 +881,50 @@ where
         // DefaultClause -> DEFAULT COLON StatementList
         Action::Undefined,
         // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
-        Action::Nop,
+        Action::Invoke(
+            Self::syntax_error_if_string_value_is_keyword_in_strict_mode,
+            "syntax_error_if_string_value_is_keyword_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> LET
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> STATIC
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> IMPLEMENTS
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> INTERFACE
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> PACKAGE
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> PRIVATE
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> PROTECTED
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> PUBLIC
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierNameButNotReservedWord -> AS
         Action::Undefined,
         // IdentifierNameButNotReservedWord -> ASYNC
@@ -1481,11 +1526,14 @@ where
         // StatementListItem_Return -> Declaration
         Action::Undefined,
         // BindingIdentifier_Yield -> Identifier
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_if_arguments_or_eval_or_yield,
+            "syntax_error_if_arguments_or_eval_or_yield",
+        ),
         // BindingIdentifier_Yield -> YIELD
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // BindingIdentifier_Yield -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
         // BindingPattern_Yield -> ObjectBindingPattern_Yield
         Action::Undefined,
         // BindingPattern_Yield -> ArrayBindingPattern_Yield
@@ -1511,11 +1559,14 @@ where
         // StatementList_Await_Return -> StatementList_Await_Return StatementListItem_Await_Return
         Action::Undefined,
         // BindingIdentifier_Yield_Await -> Identifier
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_if_arguments_or_eval_or_yield_or_await,
+            "syntax_error_if_arguments_or_eval_or_yield_or_await",
+        ),
         // BindingIdentifier_Yield_Await -> YIELD
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // BindingIdentifier_Yield_Await -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error, "syntax_error"),
         // BindingPattern_Yield_Await -> ObjectBindingPattern_Yield_Await
         Action::Undefined,
         // BindingPattern_Yield_Await -> ArrayBindingPattern_Yield_Await
@@ -1579,9 +1630,12 @@ where
         // BitwiseXORExpression_In_Await -> BitwiseXORExpression_In_Await BIT_XOR BitwiseANDExpression_In_Await
         Action::Undefined,
         // IdentifierReference_Await -> Identifier
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_if_await, "syntax_error_if_await"),
         // IdentifierReference_Await -> YIELD
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // Literal -> NullLiteral
         Action::Undefined,
         // Literal -> BooleanLiteral
@@ -1955,9 +2009,12 @@ where
         // IdentifierReference -> Identifier
         Action::Nop,
         // IdentifierReference -> YIELD
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_in_strict_mode,
+            "syntax_error_in_strict_mode",
+        ),
         // IdentifierReference -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
         // ArrayLiteral -> LBRACK RBRACK
         Action::Undefined,
         // ArrayLiteral -> LBRACK Elision RBRACK
@@ -2659,9 +2716,9 @@ where
         // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return
         Action::Undefined,
         // LabelIdentifier_Yield -> Identifier
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_if_yield, "syntax_error_if_yield"),
         // LabelIdentifier_Yield -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
         // LabelledItem_Yield_Return -> Statement_Yield_Return
         Action::Undefined,
         // LabelledItem_Yield_Return -> FunctionDeclaration_Yield
@@ -2779,7 +2836,10 @@ where
         // SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return
         Action::Undefined,
         // LabelIdentifier_Yield_Await -> Identifier
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_if_yield_or_await,
+            "syntax_error_if_yield_or_await",
+        ),
         // LabelledItem_Yield_Await_Return -> Statement_Yield_Await_Return
         Action::Undefined,
         // LabelledItem_Yield_Await_Return -> FunctionDeclaration_Yield_Await
@@ -3241,11 +3301,17 @@ where
         // LexicalBinding_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
         // AdditiveExpression_Await -> MultiplicativeExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // AdditiveExpression_Await -> AdditiveExpression_Await ADD MultiplicativeExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_addition_expression,
+            "handle_addition_expression",
+        ),
         // AdditiveExpression_Await -> AdditiveExpression_Await SUB MultiplicativeExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_subtraction_expression,
+            "handle_subtraction_expression",
+        ),
         // BitwiseXORExpression_Await -> BitwiseANDExpression_Await
         Action::Undefined,
         // BitwiseXORExpression_Await -> BitwiseXORExpression_Await BIT_XOR BitwiseANDExpression_Await
@@ -3441,9 +3507,22 @@ where
         // ClassElementList_Yield_Await -> ClassElementList_Yield_Await ClassElement_Yield_Await
         Action::Undefined,
         // MultiplicativeExpression_Await -> ExponentiationExpression_Await
-        Action::Undefined,
-        // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MultiplicativeOperator ExponentiationExpression_Await
-        Action::Undefined,
+        Action::Nop,
+        // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL ExponentiationExpression_Await
+        Action::Invoke(
+            Self::handle_multiplication_expression,
+            "handle_multiplication_expression",
+        ),
+        // MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV ExponentiationExpression_Await
+        Action::Invoke(
+            Self::handle_division_expression,
+            "handle_division_expression",
+        ),
+        // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD ExponentiationExpression_Await
+        Action::Invoke(
+            Self::handle_remainder_expression,
+            "handle_remainder_expression",
+        ),
         // BitwiseANDExpression_Await -> EqualityExpression_Await
         Action::Undefined,
         // BitwiseANDExpression_Await -> BitwiseANDExpression_Await BIT_AND EqualityExpression_Await
@@ -3477,9 +3556,9 @@ where
         // BitwiseXORExpression_In_Yield -> BitwiseXORExpression_In_Yield BIT_XOR BitwiseANDExpression_In_Yield
         Action::Undefined,
         // IdentifierReference_Yield -> Identifier
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_if_yield, "syntax_error_if_yield"),
         // IdentifierReference_Yield -> AWAIT
-        Action::Undefined,
+        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
         // ArrayLiteral_Yield -> LBRACK RBRACK
         Action::Undefined,
         // ArrayLiteral_Yield -> LBRACK Elision RBRACK
@@ -3561,7 +3640,10 @@ where
         // BitwiseXORExpression_In_Yield_Await -> BitwiseXORExpression_In_Yield_Await BIT_XOR BitwiseANDExpression_In_Yield_Await
         Action::Undefined,
         // IdentifierReference_Yield_Await -> Identifier
-        Action::Undefined,
+        Action::Invoke(
+            Self::syntax_error_if_yield_or_await,
+            "syntax_error_if_yield_or_await",
+        ),
         // ArrayLiteral_Yield_Await -> LBRACK RBRACK
         Action::Undefined,
         // ArrayLiteral_Yield_Await -> LBRACK Elision RBRACK
@@ -3638,15 +3720,6 @@ where
         Action::Undefined,
         // ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
         Action::Undefined,
-        // MultiplicativeOperator -> MUL
-        Action::Invoke(
-            Self::handle_multiplication_operator,
-            "handle_multiplication_operator",
-        ),
-        // MultiplicativeOperator -> DIV
-        Action::Invoke(Self::handle_division_operator, "handle_division_operator"),
-        // MultiplicativeOperator -> MOD
-        Action::Invoke(Self::handle_remainder_operator, "handle_remainder_operator"),
         // EqualityExpression_Await -> RelationalExpression_Await
         Action::Undefined,
         // EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
@@ -3659,10 +3732,20 @@ where
         Action::Undefined,
         // MultiplicativeExpression -> ExponentiationExpression
         Action::Nop,
-        // MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator ExponentiationExpression
+        // MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
         Action::Invoke(
-            Self::handle_multiplicative_expression,
-            "handle_multiplicative_expression",
+            Self::handle_multiplication_expression,
+            "handle_multiplication_expression",
+        ),
+        // MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
+        Action::Invoke(
+            Self::handle_division_expression,
+            "handle_division_expression",
+        ),
+        // MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
+        Action::Invoke(
+            Self::handle_remainder_expression,
+            "handle_remainder_expression",
         ),
         // BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
         Action::Undefined,
@@ -4053,37 +4136,75 @@ where
         // BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await BIT_OR BitwiseXORExpression_Yield_Await
         Action::Undefined,
         // AdditiveExpression_Yield -> MultiplicativeExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // AdditiveExpression_Yield -> AdditiveExpression_Yield ADD MultiplicativeExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_addition_expression,
+            "handle_addition_expression",
+        ),
         // AdditiveExpression_Yield -> AdditiveExpression_Yield SUB MultiplicativeExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_subtraction_expression,
+            "handle_subtraction_expression",
+        ),
         // BitwiseXORExpression_Yield -> BitwiseANDExpression_Yield
         Action::Undefined,
         // BitwiseXORExpression_Yield -> BitwiseXORExpression_Yield BIT_XOR BitwiseANDExpression_Yield
         Action::Undefined,
         // AdditiveExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await ADD MultiplicativeExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_addition_expression,
+            "handle_addition_expression",
+        ),
         // AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await SUB MultiplicativeExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_subtraction_expression,
+            "handle_subtraction_expression",
+        ),
         // BitwiseXORExpression_Yield_Await -> BitwiseANDExpression_Yield_Await
         Action::Undefined,
         // BitwiseXORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await BIT_XOR BitwiseANDExpression_Yield_Await
         Action::Undefined,
         // MultiplicativeExpression_Yield -> ExponentiationExpression_Yield
-        Action::Undefined,
-        // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MultiplicativeOperator ExponentiationExpression_Yield
-        Action::Undefined,
+        Action::Nop,
+        // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL ExponentiationExpression_Yield
+        Action::Invoke(
+            Self::handle_multiplication_expression,
+            "handle_multiplication_expression",
+        ),
+        // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV ExponentiationExpression_Yield
+        Action::Invoke(
+            Self::handle_division_expression,
+            "handle_division_expression",
+        ),
+        // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD ExponentiationExpression_Yield
+        Action::Invoke(
+            Self::handle_remainder_expression,
+            "handle_remainder_expression",
+        ),
         // BitwiseANDExpression_Yield -> EqualityExpression_Yield
         Action::Undefined,
         // BitwiseANDExpression_Yield -> BitwiseANDExpression_Yield BIT_AND EqualityExpression_Yield
         Action::Undefined,
         // MultiplicativeExpression_Yield_Await -> ExponentiationExpression_Yield_Await
-        Action::Undefined,
-        // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MultiplicativeOperator ExponentiationExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
+        // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL ExponentiationExpression_Yield_Await
+        Action::Invoke(
+            Self::handle_multiplication_expression,
+            "handle_multiplication_expression",
+        ),
+        // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV ExponentiationExpression_Yield_Await
+        Action::Invoke(
+            Self::handle_division_expression,
+            "handle_division_expression",
+        ),
+        // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD ExponentiationExpression_Yield_Await
+        Action::Invoke(
+            Self::handle_remainder_expression,
+            "handle_remainder_expression",
+        ),
         // BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await
         Action::Undefined,
         // BitwiseANDExpression_Yield_Await -> BitwiseANDExpression_Yield_Await BIT_AND EqualityExpression_Yield_Await

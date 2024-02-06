@@ -9,14 +9,14 @@ CODEGEN_TARGETS := actions.rs
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
-actions.rs: actions.yaml actions.rs.njk $(TOOLS_BIN)/nunjucks.js
+actions.rs: actions.yaml actions.rs.njk $(TOOLS_BIN)/nunjucks.js $(TOOLS_BIN)/update_file.js
 	@echo 'Generating $(abspath $@)...'
 	@cat $< | yq -o=json | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js actions.rs.njk | \
 	  rustfmt --emit=stdout | \
 	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
-actions.yaml: actions.js $(LALR_JSON)
+actions.yaml: actions.js $(LALR_JSON) $(TOOLS_BIN)/update_file.js
 	@echo 'Updating $(abspath $@)...'
-	@deno run -q --allow-read=$(PROJ_DIR) actions.js update $(LALR_JSON) $@ | \
+	@deno run -q --allow-read=$(PROJ_DIR) actions.js $(LALR_JSON) $@ | \
 	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@

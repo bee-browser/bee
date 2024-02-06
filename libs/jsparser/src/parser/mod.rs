@@ -19,7 +19,7 @@ const INITIAL_BLOCK_STACK_SIZE: usize = 32;
 
 pub struct Parser<'s, H>
 where
-    H: SyntaxHandler,
+    H: SyntaxHandler<'s>,
 {
     handler: H,
     goal_symbol: GoalSymbol,
@@ -35,7 +35,7 @@ where
 
 impl<'s, H> Parser<'s, H>
 where
-    H: SyntaxHandler,
+    H: SyntaxHandler<'s>,
 {
     /// Creates a parser recognizing a `Script`.
     pub fn for_script(src: &'s str, handler: H) -> Self {
@@ -212,7 +212,7 @@ where
         self.block_stack.last_mut().unwrap().depth -= 1;
     }
 
-    fn handle_token(&mut self, token: &Token<'_>) -> ParserResult<H::Artifact> {
+    fn handle_token(&mut self, token: &Token<'s>) -> ParserResult<H::Artifact> {
         // An comment having line terminators is treated as a single line terminator in the
         // grammar as described in "5.1.2 The Lexical and RegExp Grammars".
         let token_for_grammar = match token.kind {
@@ -279,7 +279,7 @@ where
         result
     }
 
-    fn is_auto_semicolon_allowed(&self, token: &Token<'_>) -> bool {
+    fn is_auto_semicolon_allowed(&self, token: &Token<'s>) -> bool {
         if self.new_line {
             return true;
         }
@@ -337,7 +337,7 @@ where
         }
     }
 
-    fn report_error(&self, token: &Token<'_>) {
+    fn report_error(&self, token: &Token<'s>) {
         let pos = self.lexer.pos();
         let src = self.lexer.src();
         let state = self.state();
@@ -389,7 +389,7 @@ enum ParserResult<T> {
     SyntaxError,
 }
 
-pub trait SyntaxHandler {
+pub trait SyntaxHandler<'s> {
     type Artifact;
     type Error: std::fmt::Debug + std::fmt::Display;
 
@@ -400,7 +400,7 @@ pub trait SyntaxHandler {
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error>;
 
     /// Called when a shift action has been performed.
-    fn shift(&mut self, token: &Token<'_>) -> Result<(), Self::Error>;
+    fn shift(&mut self, token: &Token<'s>) -> Result<(), Self::Error>;
 
     /// Called when a reduce action has been performed.
     fn reduce(&mut self, rule: ProductionRule) -> Result<(), Self::Error>;
@@ -420,7 +420,7 @@ mod tests {
     // TODO: use a mock.
     struct NullHandler;
 
-    impl SyntaxHandler for NullHandler {
+    impl SyntaxHandler<'_> for NullHandler {
         type Artifact = ();
         type Error = std::convert::Infallible;
         fn start(&mut self) {}
