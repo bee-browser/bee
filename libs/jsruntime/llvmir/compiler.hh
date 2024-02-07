@@ -29,6 +29,10 @@ class Compiler {
   void Mul();
   void Div();
   void Rem();
+  void Lt();
+  void Gt();
+  void Lte();
+  void Gte();
   void Print();
 
   llvm::orc::ThreadSafeModule TakeModule();
@@ -39,6 +43,7 @@ class Compiler {
 
   llvm::Function* CreateMainFunction();
   llvm::Function* CreatePrintStrFunction();
+  llvm::Function* CreatePrintBoolFunction();
   llvm::Function* CreatePrintF64Function();
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;

@@ -2534,15 +2534,15 @@ where
         // ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
         Action::Undefined,
         // RelationalExpression_In_Await -> ShiftExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // RelationalExpression_In_Await -> RelationalExpression_In_Await LT ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await GT ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await LTE ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await GTE ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await INSTANCEOF ShiftExpression_Await
         Action::Undefined,
         // RelationalExpression_In_Await -> RelationalExpression_In_Await IN ShiftExpression_Await
@@ -2893,13 +2893,13 @@ where
         // RelationalExpression_In -> ShiftExpression
         Action::Nop,
         // RelationalExpression_In -> RelationalExpression_In LT ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression_In -> RelationalExpression_In GT ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression_In -> RelationalExpression_In LTE ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression_In -> RelationalExpression_In GTE ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression_In -> RelationalExpression_In INSTANCEOF ShiftExpression
         Action::Undefined,
         // RelationalExpression_In -> RelationalExpression_In IN ShiftExpression
@@ -3540,15 +3540,15 @@ where
             "handle_subtraction_expression",
         ),
         // RelationalExpression -> ShiftExpression
-        Action::Undefined,
+        Action::Nop,
         // RelationalExpression -> RelationalExpression LT ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression -> RelationalExpression GT ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression -> RelationalExpression LTE ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression -> RelationalExpression GTE ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression -> RelationalExpression INSTANCEOF ShiftExpression
         Action::Undefined,
         // BitwiseXORExpression_In_Yield -> BitwiseANDExpression_In_Yield
@@ -3916,15 +3916,15 @@ where
         // UpdateExpression_Await -> DEC UnaryExpression_Await
         Action::Undefined,
         // RelationalExpression_Await -> ShiftExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // RelationalExpression_Await -> RelationalExpression_Await LT ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression_Await -> RelationalExpression_Await GT ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression_Await -> RelationalExpression_Await LTE ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression_Await -> RelationalExpression_Await GTE ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression_Await -> RelationalExpression_Await INSTANCEOF ShiftExpression_Await
         Action::Undefined,
         // ExponentiationExpression -> UnaryExpression
@@ -4040,15 +4040,15 @@ where
         // UpdateExpression -> DEC UnaryExpression
         Action::Undefined,
         // RelationalExpression_In_Yield -> ShiftExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield LT ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield GT ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield LTE ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield GTE ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield INSTANCEOF ShiftExpression_Yield
         Action::Undefined,
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield IN ShiftExpression_Yield
@@ -4068,15 +4068,15 @@ where
         // CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
         Action::Undefined,
         // RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LT ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GT ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LTE ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GTE ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await INSTANCEOF ShiftExpression_Yield_Await
         Action::Undefined,
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await IN ShiftExpression_Yield_Await
@@ -4264,15 +4264,15 @@ where
         // UpdateExpression_Yield -> DEC UnaryExpression_Yield
         Action::Undefined,
         // RelationalExpression_Yield -> ShiftExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // RelationalExpression_Yield -> RelationalExpression_Yield LT ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression_Yield -> RelationalExpression_Yield GT ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression_Yield -> RelationalExpression_Yield LTE ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression_Yield -> RelationalExpression_Yield GTE ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression_Yield -> RelationalExpression_Yield INSTANCEOF ShiftExpression_Yield
         Action::Undefined,
         // UnaryExpression_Yield_Await -> UpdateExpression_Yield_Await
@@ -4304,15 +4304,15 @@ where
         // UpdateExpression_Yield_Await -> DEC UnaryExpression_Yield_Await
         Action::Undefined,
         // RelationalExpression_Yield_Await -> ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LT ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GT ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LTE ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GTE ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await INSTANCEOF ShiftExpression_Yield_Await
         Action::Undefined,
         // AwaitExpression_Yield -> AWAIT UnaryExpression_Yield_Await

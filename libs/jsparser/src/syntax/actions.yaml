@@ -3036,23 +3036,23 @@
 - rule: ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
   action: undefined
 - rule: RelationalExpression_In_Await -> ShiftExpression_Await
-  action: undefined
+  action: nop
 - rule: >-
     RelationalExpression_In_Await -> RelationalExpression_In_Await LT
     ShiftExpression_Await
-  action: undefined
+  action: handle_lt_expression
 - rule: >-
     RelationalExpression_In_Await -> RelationalExpression_In_Await GT
     ShiftExpression_Await
-  action: undefined
+  action: handle_gt_expression
 - rule: >-
     RelationalExpression_In_Await -> RelationalExpression_In_Await LTE
     ShiftExpression_Await
-  action: undefined
+  action: handle_lte_expression
 - rule: >-
     RelationalExpression_In_Await -> RelationalExpression_In_Await GTE
     ShiftExpression_Await
-  action: undefined
+  action: handle_gte_expression
 - rule: >-
     RelationalExpression_In_Await -> RelationalExpression_In_Await INSTANCEOF
     ShiftExpression_Await
@@ -3540,13 +3540,13 @@
 - rule: RelationalExpression_In -> ShiftExpression
   action: nop
 - rule: RelationalExpression_In -> RelationalExpression_In LT ShiftExpression
-  action: undefined
+  action: handle_lt_expression
 - rule: RelationalExpression_In -> RelationalExpression_In GT ShiftExpression
-  action: undefined
+  action: handle_gt_expression
 - rule: RelationalExpression_In -> RelationalExpression_In LTE ShiftExpression
-  action: undefined
+  action: handle_lte_expression
 - rule: RelationalExpression_In -> RelationalExpression_In GTE ShiftExpression
-  action: undefined
+  action: handle_gte_expression
 - rule: >-
     RelationalExpression_In -> RelationalExpression_In INSTANCEOF
     ShiftExpression
@@ -4497,15 +4497,15 @@
 - rule: AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression
   action: handle_subtraction_expression
 - rule: RelationalExpression -> ShiftExpression
-  action: undefined
+  action: nop
 - rule: RelationalExpression -> RelationalExpression LT ShiftExpression
-  action: undefined
+  action: handle_lt_expression
 - rule: RelationalExpression -> RelationalExpression GT ShiftExpression
-  action: undefined
+  action: handle_gt_expression
 - rule: RelationalExpression -> RelationalExpression LTE ShiftExpression
-  action: undefined
+  action: handle_lte_expression
 - rule: RelationalExpression -> RelationalExpression GTE ShiftExpression
-  action: undefined
+  action: handle_gte_expression
 - rule: RelationalExpression -> RelationalExpression INSTANCEOF ShiftExpression
   action: undefined
 - rule: BitwiseXORExpression_In_Yield -> BitwiseANDExpression_In_Yield
@@ -5002,23 +5002,23 @@
 - rule: UpdateExpression_Await -> DEC UnaryExpression_Await
   action: undefined
 - rule: RelationalExpression_Await -> ShiftExpression_Await
-  action: undefined
+  action: nop
 - rule: >-
     RelationalExpression_Await -> RelationalExpression_Await LT
     ShiftExpression_Await
-  action: undefined
+  action: handle_lt_expression
 - rule: >-
     RelationalExpression_Await -> RelationalExpression_Await GT
     ShiftExpression_Await
-  action: undefined
+  action: handle_gt_expression
 - rule: >-
     RelationalExpression_Await -> RelationalExpression_Await LTE
     ShiftExpression_Await
-  action: undefined
+  action: handle_lte_expression
 - rule: >-
     RelationalExpression_Await -> RelationalExpression_Await GTE
     ShiftExpression_Await
-  action: undefined
+  action: handle_gte_expression
 - rule: >-
     RelationalExpression_Await -> RelationalExpression_Await INSTANCEOF
     ShiftExpression_Await
@@ -5174,23 +5174,23 @@
 - rule: UpdateExpression -> DEC UnaryExpression
   action: undefined
 - rule: RelationalExpression_In_Yield -> ShiftExpression_Yield
-  action: undefined
+  action: nop
 - rule: >-
     RelationalExpression_In_Yield -> RelationalExpression_In_Yield LT
     ShiftExpression_Yield
-  action: undefined
+  action: handle_lt_expression
 - rule: >-
     RelationalExpression_In_Yield -> RelationalExpression_In_Yield GT
     ShiftExpression_Yield
-  action: undefined
+  action: handle_gt_expression
 - rule: >-
     RelationalExpression_In_Yield -> RelationalExpression_In_Yield LTE
     ShiftExpression_Yield
-  action: undefined
+  action: handle_lte_expression
 - rule: >-
     RelationalExpression_In_Yield -> RelationalExpression_In_Yield GTE
     ShiftExpression_Yield
-  action: undefined
+  action: handle_gte_expression
 - rule: >-
     RelationalExpression_In_Yield -> RelationalExpression_In_Yield INSTANCEOF
     ShiftExpression_Yield
@@ -5220,23 +5220,23 @@
     BitwiseORExpression_Yield
   action: undefined
 - rule: RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
     LT ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_lt_expression
 - rule: >-
     RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
     GT ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_gt_expression
 - rule: >-
     RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
     LTE ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_lte_expression
 - rule: >-
     RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
     GTE ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_gte_expression
 - rule: >-
     RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
     INSTANCEOF ShiftExpression_Yield_Await
@@ -5474,23 +5474,23 @@
 - rule: UpdateExpression_Yield -> DEC UnaryExpression_Yield
   action: undefined
 - rule: RelationalExpression_Yield -> ShiftExpression_Yield
-  action: undefined
+  action: nop
 - rule: >-
     RelationalExpression_Yield -> RelationalExpression_Yield LT
     ShiftExpression_Yield
-  action: undefined
+  action: handle_lt_expression
 - rule: >-
     RelationalExpression_Yield -> RelationalExpression_Yield GT
     ShiftExpression_Yield
-  action: undefined
+  action: handle_gt_expression
 - rule: >-
     RelationalExpression_Yield -> RelationalExpression_Yield LTE
     ShiftExpression_Yield
-  action: undefined
+  action: handle_lte_expression
 - rule: >-
     RelationalExpression_Yield -> RelationalExpression_Yield GTE
     ShiftExpression_Yield
-  action: undefined
+  action: handle_gte_expression
 - rule: >-
     RelationalExpression_Yield -> RelationalExpression_Yield INSTANCEOF
     ShiftExpression_Yield
@@ -5528,23 +5528,23 @@
 - rule: UpdateExpression_Yield_Await -> DEC UnaryExpression_Yield_Await
   action: undefined
 - rule: RelationalExpression_Yield_Await -> ShiftExpression_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LT
     ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_lt_expression
 - rule: >-
     RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GT
     ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_gt_expression
 - rule: >-
     RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LTE
     ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_lte_expression
 - rule: >-
     RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GTE
     ShiftExpression_Yield_Await
-  action: undefined
+  action: handle_gte_expression
 - rule: >-
     RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await
     INSTANCEOF ShiftExpression_Yield_Await

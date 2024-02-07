@@ -144,6 +144,30 @@ impl<'s> SemanticHandler<'s> for Compiler {
         Ok(())
     }
 
+    fn handle_lt_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_lt_expression");
+        self.instructions.push_back(Instruction::Lt);
+        Ok(())
+    }
+
+    fn handle_gt_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_gt_expression");
+        self.instructions.push_back(Instruction::Gt);
+        Ok(())
+    }
+
+    fn handle_lte_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_lte_expression");
+        self.instructions.push_back(Instruction::Lte);
+        Ok(())
+    }
+
+    fn handle_gte_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_gte_expression");
+        self.instructions.push_back(Instruction::Gte);
+        Ok(())
+    }
+
     fn handle_expression_statement(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_expression_statement");
         self.instructions.push_back(Instruction::Print);
@@ -177,6 +201,18 @@ impl<'s> SemanticHandler<'s> for Compiler {
                 Instruction::Rem => unsafe {
                     bridge::compiler_rem(self.compiler);
                 },
+                Instruction::Lt => unsafe {
+                    bridge::compiler_lt(self.compiler);
+                },
+                Instruction::Gt => unsafe {
+                    bridge::compiler_gt(self.compiler);
+                },
+                Instruction::Lte => unsafe {
+                    bridge::compiler_lte(self.compiler);
+                },
+                Instruction::Gte => unsafe {
+                    bridge::compiler_gte(self.compiler);
+                },
                 Instruction::Print => unsafe {
                     bridge::compiler_print(self.compiler);
                 },
@@ -195,5 +231,9 @@ enum Instruction {
     Mul,
     Div,
     Rem,
+    Lt,
+    Gt,
+    Lte,
+    Gte,
     Print,
 }

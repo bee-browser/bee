@@ -12,6 +12,11 @@ pub unsafe extern "C" fn print_str(s: *const std::ffi::c_char) {
 }
 
 #[no_mangle]
+pub extern "C" fn print_bool(v: bool) {
+    println!("{v}");
+}
+
+#[no_mangle]
 pub extern "C" fn print_f64(v: f64) {
     println!("{v}");
 }

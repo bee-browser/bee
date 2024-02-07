@@ -59,6 +59,22 @@ void compiler_rem(Compiler* self) {
   self->Rem();
 }
 
+void compiler_lt(Compiler* self) {
+  self->Lt();
+}
+
+void compiler_gt(Compiler* self) {
+  self->Gt();
+}
+
+void compiler_lte(Compiler* self) {
+  self->Lte();
+}
+
+void compiler_gte(Compiler* self) {
+  self->Gte();
+}
+
 void compiler_print(Compiler* self) {
   self->Print();
 }

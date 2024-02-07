@@ -27,6 +27,10 @@ void compiler_sub(Compiler* self);
 void compiler_mul(Compiler* self);
 void compiler_div(Compiler* self);
 void compiler_rem(Compiler* self);
+void compiler_lt(Compiler* self);
+void compiler_gt(Compiler* self);
+void compiler_lte(Compiler* self);
+void compiler_gte(Compiler* self);
 void compiler_print(Compiler* self);
 
 END_C_LINKAGE
