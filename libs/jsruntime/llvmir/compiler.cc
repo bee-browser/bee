@@ -89,12 +89,61 @@ void Compiler::Rem() {
   stack_.push_back(v);
 }
 
+void Compiler::Lt() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOLT(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Gt() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOGT(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Lte() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOLE(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Gte() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOGE(lhs, rhs);
+  stack_.push_back(v);
+}
+
 void Compiler::Print() {
   assert(stack_.size() > 0);
   llvm::Value* value = stack_.back();
   stack_.pop_back();
   // TODO: function overloading
-  auto* print = CreatePrintF64Function();
+  llvm::Function* print = nullptr;
+  if (value->getType()->isDoubleTy()) {
+    print = CreatePrintF64Function();
+  } else {
+    print = CreatePrintBoolFunction();
+  }
   builder_->CreateCall(print, {value});
 }
 
@@ -110,6 +159,11 @@ llvm::Function* Compiler::CreateMainFunction() {
 llvm::Function* Compiler::CreatePrintStrFunction() {
   auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt8PtrTy()}, false);
   return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "print_str", module_.get());
+}
+
+llvm::Function* Compiler::CreatePrintBoolFunction() {
+  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt1Ty()}, false);
+  return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "print_bool", module_.get());
 }
 
 llvm::Function* Compiler::CreatePrintF64Function() {

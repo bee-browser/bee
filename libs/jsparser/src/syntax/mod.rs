@@ -28,6 +28,10 @@ pub trait SemanticHandler<'s> {
     fn handle_multiplication_expression(&mut self) -> Result<(), Error>;
     fn handle_division_expression(&mut self) -> Result<(), Error>;
     fn handle_remainder_expression(&mut self) -> Result<(), Error>;
+    fn handle_lt_expression(&mut self) -> Result<(), Error>;
+    fn handle_gt_expression(&mut self) -> Result<(), Error>;
+    fn handle_lte_expression(&mut self) -> Result<(), Error>;
+    fn handle_gte_expression(&mut self) -> Result<(), Error>;
     fn handle_expression_statement(&mut self) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
 }
@@ -49,6 +53,10 @@ enum Item<'s> {
     Multiplication,
     Division,
     Remainder,
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
 }
 
 pub struct NumericLiteral<'s> {
@@ -327,6 +335,26 @@ where
         Ok(())
     }
 
+    fn handle_lt_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::LessThan);
+        Ok(())
+    }
+
+    fn handle_gt_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::GreaterThan);
+        Ok(())
+    }
+
+    fn handle_lte_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::LessThanOrEqual);
+        Ok(())
+    }
+
+    fn handle_gte_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::GreaterThanOrEqual);
+        Ok(())
+    }
+
     // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
         self.flush()?;
@@ -349,6 +377,10 @@ where
                 Item::Multiplication => self.handler.handle_multiplication_expression()?,
                 Item::Division => self.handler.handle_division_expression()?,
                 Item::Remainder => self.handler.handle_remainder_expression()?,
+                Item::LessThan => self.handler.handle_lt_expression()?,
+                Item::GreaterThan => self.handler.handle_gt_expression()?,
+                Item::LessThanOrEqual => self.handler.handle_lte_expression()?,
+                Item::GreaterThanOrEqual => self.handler.handle_gte_expression()?,
             }
         }
         Ok(())

@@ -27,6 +27,10 @@ Runtime::Runtime() {
     llvm::orc::ExecutorAddr::fromPtr(print_str),
     llvm::JITSymbolFlags::Exported,
   };
+  symbols[exec_session.intern("print_bool")] = {
+    llvm::orc::ExecutorAddr::fromPtr(print_bool),
+    llvm::JITSymbolFlags::Exported,
+  };
   symbols[exec_session.intern("print_f64")] = {
     llvm::orc::ExecutorAddr::fromPtr(print_f64),
     llvm::JITSymbolFlags::Exported,
