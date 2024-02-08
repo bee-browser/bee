@@ -1006,19 +1006,37 @@ where
         // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH BitwiseORExpression_In_Await
         Action::Undefined,
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters,
+            "handle_maybe_arrow_formal_parameters",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_empty,
+            "handle_maybe_arrow_formal_parameters_empty",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS BindingIdentifier_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_parameter,
+            "handle_maybe_arrow_formal_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS BindingPattern_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_pattern,
+            "handle_maybe_arrow_formal_rest_pattern",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA ELLIPSIS BindingIdentifier_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
+            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA ELLIPSIS BindingPattern_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
+            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+        ),
         // ExpressionBody_In -> AssignmentExpression_In
         Action::Undefined,
         // ExpressionBody_In_Await -> AssignmentExpression_In_Await
@@ -1370,7 +1388,7 @@ where
         // PrimaryExpression_Await -> TemplateLiteral_Await
         Action::Undefined,
         // PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
         // SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
         Action::Undefined,
         // SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
@@ -1434,19 +1452,37 @@ where
         // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
         Action::Undefined,
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters,
+            "handle_maybe_arrow_formal_parameters",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_empty,
+            "handle_maybe_arrow_formal_parameters_empty",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingIdentifier RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_parameter,
+            "handle_maybe_arrow_formal_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingPattern RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_pattern,
+            "handle_maybe_arrow_formal_rest_pattern",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS BindingIdentifier RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
+            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS BindingPattern RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
+            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+        ),
         // MemberExpression -> PrimaryExpression
         Action::Nop,
         // MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
@@ -1767,7 +1803,7 @@ where
         // PrimaryExpression -> TemplateLiteral
         Action::Undefined,
         // PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
-        Action::Undefined,
+        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
         // SuperProperty -> SUPER LBRACK Expression_In RBRACK
         Action::Undefined,
         // SuperProperty -> SUPER DOT KeywordOrIdentifierName
@@ -2945,19 +2981,37 @@ where
         // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH BitwiseORExpression_In_Yield
         Action::Undefined,
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters,
+            "handle_maybe_arrow_formal_parameters",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_empty,
+            "handle_maybe_arrow_formal_parameters_empty",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingIdentifier_Yield RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_parameter,
+            "handle_maybe_arrow_formal_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingPattern_Yield RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_pattern,
+            "handle_maybe_arrow_formal_rest_pattern",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingIdentifier_Yield RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
+            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingPattern_Yield RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
+            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+        ),
         // MemberExpression_Yield -> PrimaryExpression_Yield
         Action::Undefined,
         // MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield RBRACK
@@ -3163,19 +3217,37 @@ where
         // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH BitwiseORExpression_In_Yield_Await
         Action::Undefined,
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters,
+            "handle_maybe_arrow_formal_parameters",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_empty,
+            "handle_maybe_arrow_formal_parameters_empty",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingIdentifier_Yield_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_parameter,
+            "handle_maybe_arrow_formal_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingPattern_Yield_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_rest_pattern,
+            "handle_maybe_arrow_formal_rest_pattern",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingIdentifier_Yield_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
+            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
+            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+        ),
         // MemberExpression_Yield_Await -> PrimaryExpression_Yield_Await
         Action::Undefined,
         // MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK Expression_In_Yield_Await RBRACK
@@ -3393,7 +3465,7 @@ where
         // PrimaryExpression_Yield -> TemplateLiteral_Yield
         Action::Undefined,
         // PrimaryExpression_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
         // SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
         Action::Undefined,
         // SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
@@ -3481,7 +3553,7 @@ where
         // PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
         Action::Undefined,
         // PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
         // SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
         Action::Undefined,
         // SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName
