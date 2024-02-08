@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::marker::PhantomData;
 
 use jsparser::Identifier;
@@ -49,7 +48,6 @@ impl<'r> Session<'r> {
 pub struct Compiler {
     runtime: *mut bridge::Runtime,
     compiler: *mut bridge::Compiler,
-    instructions: VecDeque<Instruction>,
     symbol_table: SymbolTable,
 }
 
@@ -58,7 +56,6 @@ impl Compiler {
         Self {
             runtime,
             compiler,
-            instructions: Default::default(),
             symbol_table: SymbolTable::with_builtin_symbols(),
         }
     }
@@ -96,15 +93,19 @@ impl<'s> SemanticHandler<'s> for Compiler {
         literal: NumericLiteral<'s>,
     ) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_numeric_literal", literal.value);
-        self.instructions
-            .push_back(Instruction::Number(literal.value));
+        unsafe {
+            bridge::compiler_number(self.compiler, literal.value);
+        }
         Ok(())
     }
 
     fn handle_string_literal(&mut self, literal: StringLiteral<'s>) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_string_literal", literal.raw);
-        self.instructions
-            .push_back(Instruction::String(literal.raw.to_owned())); // TODO
+        unsafe {
+            // TODO: use utf-16 string
+            let data = literal.raw.as_ptr() as *const i8;
+            bridge::compiler_string(self.compiler, data, literal.raw.len());
+        }
         Ok(())
     }
 
@@ -116,166 +117,122 @@ impl<'s> SemanticHandler<'s> for Compiler {
 
     fn handle_addition_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_addition_expression");
-        self.instructions.push_back(Instruction::Add);
+        unsafe {
+            bridge::compiler_add(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_subtraction_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_subtraction_expression");
-        self.instructions.push_back(Instruction::Sub);
+        unsafe {
+            bridge::compiler_sub(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_multiplication_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_multiplication_expression");
-        self.instructions.push_back(Instruction::Mul);
+        unsafe {
+            bridge::compiler_mul(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_division_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_division_expression");
-        self.instructions.push_back(Instruction::Div);
+        unsafe {
+            bridge::compiler_div(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_remainder_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_remainder_expression");
-        self.instructions.push_back(Instruction::Rem);
+        unsafe {
+            bridge::compiler_rem(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_lt_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_lt_expression");
-        self.instructions.push_back(Instruction::Lt);
+        unsafe {
+            bridge::compiler_lt(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_gt_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_gt_expression");
-        self.instructions.push_back(Instruction::Gt);
+        unsafe {
+            bridge::compiler_gt(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_lte_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_lte_expression");
-        self.instructions.push_back(Instruction::Lte);
+        unsafe {
+            bridge::compiler_lte(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_gte_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_gte_expression");
-        self.instructions.push_back(Instruction::Gte);
+        unsafe {
+            bridge::compiler_gte(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_eq_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_eq_expression");
-        self.instructions.push_back(Instruction::Eq);
+        unsafe {
+            bridge::compiler_eq(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_ne_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_ne_expression");
-        self.instructions.push_back(Instruction::Ne);
+        unsafe {
+            bridge::compiler_ne(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_strict_eq_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_strict_eq_expression");
         // TODO: check type
-        self.instructions.push_back(Instruction::StrictEq);
+        unsafe {
+            bridge::compiler_eq(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_strict_ne_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_strict_ne_expression");
         // TODO: check type
-        self.instructions.push_back(Instruction::StrictNe);
+        unsafe {
+            bridge::compiler_ne(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_expression_statement(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_expression_statement");
-        self.instructions.push_back(Instruction::Print);
+        // TODO
+        unsafe {
+            bridge::compiler_print(self.compiler);
+        }
         Ok(())
     }
 
     fn handle_statement(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_statement");
-        while let Some(instruction) = self.instructions.pop_front() {
-            logger::debug!(event = "compile", ?instruction);
-            match instruction {
-                Instruction::Number(value) => unsafe {
-                    bridge::compiler_number(self.compiler, value);
-                },
-                Instruction::String(value) => unsafe {
-                    let data = value.as_ptr() as *const i8;
-                    bridge::compiler_string(self.compiler, data, value.len());
-                },
-                Instruction::Add => unsafe {
-                    bridge::compiler_add(self.compiler);
-                },
-                Instruction::Sub => unsafe {
-                    bridge::compiler_sub(self.compiler);
-                },
-                Instruction::Mul => unsafe {
-                    bridge::compiler_mul(self.compiler);
-                },
-                Instruction::Div => unsafe {
-                    bridge::compiler_div(self.compiler);
-                },
-                Instruction::Rem => unsafe {
-                    bridge::compiler_rem(self.compiler);
-                },
-                Instruction::Lt => unsafe {
-                    bridge::compiler_lt(self.compiler);
-                },
-                Instruction::Gt => unsafe {
-                    bridge::compiler_gt(self.compiler);
-                },
-                Instruction::Lte => unsafe {
-                    bridge::compiler_lte(self.compiler);
-                },
-                Instruction::Gte => unsafe {
-                    bridge::compiler_gte(self.compiler);
-                },
-                Instruction::Eq => unsafe {
-                    bridge::compiler_eq(self.compiler);
-                },
-                Instruction::Ne => unsafe {
-                    bridge::compiler_ne(self.compiler);
-                },
-                Instruction::StrictEq => unsafe {
-                    bridge::compiler_eq(self.compiler);
-                },
-                Instruction::StrictNe => unsafe {
-                    bridge::compiler_ne(self.compiler);
-                },
-                Instruction::Print => unsafe {
-                    bridge::compiler_print(self.compiler);
-                },
-            }
-        }
+        // TODO
         Ok(())
     }
-}
-
-#[derive(Debug)]
-enum Instruction {
-    Number(f64),
-    String(String),
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Rem,
-    Lt,
-    Gt,
-    Lte,
-    Gte,
-    Eq,
-    Ne,
-    StrictEq,
-    StrictNe,
-    Print,
 }
