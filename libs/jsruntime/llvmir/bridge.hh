@@ -31,6 +31,8 @@ void compiler_lt(Compiler* self);
 void compiler_gt(Compiler* self);
 void compiler_lte(Compiler* self);
 void compiler_gte(Compiler* self);
+void compiler_eq(Compiler* self);
+void compiler_ne(Compiler* self);
 void compiler_print(Compiler* self);
 
 END_C_LINKAGE

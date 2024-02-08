@@ -2244,15 +2244,21 @@ where
         // PropertyName_Await -> ComputedPropertyName_Await
         Action::Undefined,
         // EqualityExpression_In_Await -> RelationalExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // EqualityExpression_In_Await -> EqualityExpression_In_Await EQ RelationalExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression_In_Await -> EqualityExpression_In_Await NE RelationalExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression_In_Await -> EqualityExpression_In_Await EQ_STRICT RelationalExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression_In_Await -> EqualityExpression_In_Await NE_STRICT RelationalExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
         Action::Undefined,
         // PropertyDefinition_Await -> IdentifierReference_Await
@@ -2564,13 +2570,19 @@ where
         // EqualityExpression_In -> RelationalExpression_In
         Action::Nop,
         // EqualityExpression_In -> EqualityExpression_In EQ RelationalExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression_In -> EqualityExpression_In NE RelationalExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression_In -> EqualityExpression_In EQ_STRICT RelationalExpression_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression_In -> EqualityExpression_In NE_STRICT RelationalExpression_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // SpreadElement -> ELLIPSIS AssignmentExpression_In
         Action::Undefined,
         // PropertyDefinition -> IdentifierReference
@@ -3325,15 +3337,21 @@ where
         // ShiftExpression -> ShiftExpression SHR AdditiveExpression
         Action::Undefined,
         // EqualityExpression -> RelationalExpression
-        Action::Undefined,
+        Action::Nop,
         // EqualityExpression -> EqualityExpression EQ RelationalExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression -> EqualityExpression NE RelationalExpression
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression -> EqualityExpression EQ_STRICT RelationalExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression -> EqualityExpression NE_STRICT RelationalExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // CaseClause_Return -> CASE Expression_In COLON
         Action::Undefined,
         // CaseClause_Return -> CASE Expression_In COLON StatementList_Return
@@ -3721,15 +3739,21 @@ where
         // ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
         Action::Undefined,
         // EqualityExpression_Await -> RelationalExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression_Await -> EqualityExpression_Await NE RelationalExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression_Await -> EqualityExpression_Await EQ_STRICT RelationalExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression_Await -> EqualityExpression_Await NE_STRICT RelationalExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // MultiplicativeExpression -> ExponentiationExpression
         Action::Nop,
         // MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
@@ -3932,15 +3956,21 @@ where
         // ExponentiationExpression -> UpdateExpression EXP ExponentiationExpression
         Action::Undefined,
         // EqualityExpression_In_Yield -> RelationalExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ RelationalExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE RelationalExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ_STRICT RelationalExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE_STRICT RelationalExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
         Action::Undefined,
         // PropertyDefinition_Yield -> IdentifierReference_Yield
@@ -3972,15 +4002,21 @@ where
         // AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
         // EqualityExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ RelationalExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE RelationalExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ_STRICT RelationalExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE_STRICT RelationalExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
@@ -4214,29 +4250,41 @@ where
         // ExponentiationExpression_Yield -> UpdateExpression_Yield EXP ExponentiationExpression_Yield
         Action::Undefined,
         // EqualityExpression_Yield -> RelationalExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // EqualityExpression_Yield -> EqualityExpression_Yield EQ RelationalExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression_Yield -> EqualityExpression_Yield NE RelationalExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression_Yield -> EqualityExpression_Yield EQ_STRICT RelationalExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression_Yield -> EqualityExpression_Yield NE_STRICT RelationalExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // ExponentiationExpression_Yield_Await -> UnaryExpression_Yield_Await
         Action::Undefined,
         // ExponentiationExpression_Yield_Await -> UpdateExpression_Yield_Await EXP ExponentiationExpression_Yield_Await
         Action::Undefined,
         // EqualityExpression_Yield_Await -> RelationalExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ RelationalExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE RelationalExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ_STRICT RelationalExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_eq_expression,
+            "handle_strict_eq_expression",
+        ),
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE_STRICT RelationalExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_strict_ne_expression,
+            "handle_strict_ne_expression",
+        ),
         // UnaryExpression_Yield -> UpdateExpression_Yield
         Action::Undefined,
         // UnaryExpression_Yield -> DELETE UnaryExpression_Yield

@@ -168,6 +168,32 @@ impl<'s> SemanticHandler<'s> for Compiler {
         Ok(())
     }
 
+    fn handle_eq_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_eq_expression");
+        self.instructions.push_back(Instruction::Eq);
+        Ok(())
+    }
+
+    fn handle_ne_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_ne_expression");
+        self.instructions.push_back(Instruction::Ne);
+        Ok(())
+    }
+
+    fn handle_strict_eq_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_strict_eq_expression");
+        // TODO: check type
+        self.instructions.push_back(Instruction::StrictEq);
+        Ok(())
+    }
+
+    fn handle_strict_ne_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_strict_ne_expression");
+        // TODO: check type
+        self.instructions.push_back(Instruction::StrictNe);
+        Ok(())
+    }
+
     fn handle_expression_statement(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_expression_statement");
         self.instructions.push_back(Instruction::Print);
@@ -213,6 +239,18 @@ impl<'s> SemanticHandler<'s> for Compiler {
                 Instruction::Gte => unsafe {
                     bridge::compiler_gte(self.compiler);
                 },
+                Instruction::Eq => unsafe {
+                    bridge::compiler_eq(self.compiler);
+                },
+                Instruction::Ne => unsafe {
+                    bridge::compiler_ne(self.compiler);
+                },
+                Instruction::StrictEq => unsafe {
+                    bridge::compiler_eq(self.compiler);
+                },
+                Instruction::StrictNe => unsafe {
+                    bridge::compiler_ne(self.compiler);
+                },
                 Instruction::Print => unsafe {
                     bridge::compiler_print(self.compiler);
                 },
@@ -235,5 +273,9 @@ enum Instruction {
     Gt,
     Lte,
     Gte,
+    Eq,
+    Ne,
+    StrictEq,
+    StrictNe,
     Print,
 }

@@ -75,6 +75,14 @@ void compiler_gte(Compiler* self) {
   self->Gte();
 }
 
+void compiler_eq(Compiler* self) {
+  self->Eq();
+}
+
+void compiler_ne(Compiler* self) {
+  self->Ne();
+}
+
 void compiler_print(Compiler* self) {
   self->Print();
 }

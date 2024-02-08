@@ -133,6 +133,28 @@ void Compiler::Gte() {
   stack_.push_back(v);
 }
 
+void Compiler::Eq() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOEQ(lhs, rhs);
+  stack_.push_back(v);
+}
+
+void Compiler::Ne() {
+  assert(stack_.size() > 1);
+  llvm::Value* rhs = stack_.back();
+  stack_.pop_back();
+  llvm::Value* lhs = stack_.back();
+  stack_.pop_back();
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpONE(lhs, rhs);
+  stack_.push_back(v);
+}
+
 void Compiler::Print() {
   assert(stack_.size() > 0);
   llvm::Value* value = stack_.back();

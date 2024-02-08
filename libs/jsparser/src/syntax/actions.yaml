@@ -2631,23 +2631,23 @@
 - rule: PropertyName_Await -> ComputedPropertyName_Await
   action: undefined
 - rule: EqualityExpression_In_Await -> RelationalExpression_In_Await
-  action: undefined
+  action: nop
 - rule: >-
     EqualityExpression_In_Await -> EqualityExpression_In_Await EQ
     RelationalExpression_In_Await
-  action: undefined
+  action: handle_eq_expression
 - rule: >-
     EqualityExpression_In_Await -> EqualityExpression_In_Await NE
     RelationalExpression_In_Await
-  action: undefined
+  action: handle_ne_expression
 - rule: >-
     EqualityExpression_In_Await -> EqualityExpression_In_Await EQ_STRICT
     RelationalExpression_In_Await
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: >-
     EqualityExpression_In_Await -> EqualityExpression_In_Await NE_STRICT
     RelationalExpression_In_Await
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
   action: undefined
 - rule: PropertyDefinition_Await -> IdentifierReference_Await
@@ -3084,17 +3084,17 @@
 - rule: EqualityExpression_In -> RelationalExpression_In
   action: nop
 - rule: EqualityExpression_In -> EqualityExpression_In EQ RelationalExpression_In
-  action: undefined
+  action: handle_eq_expression
 - rule: EqualityExpression_In -> EqualityExpression_In NE RelationalExpression_In
-  action: undefined
+  action: handle_ne_expression
 - rule: >-
     EqualityExpression_In -> EqualityExpression_In EQ_STRICT
     RelationalExpression_In
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: >-
     EqualityExpression_In -> EqualityExpression_In NE_STRICT
     RelationalExpression_In
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: SpreadElement -> ELLIPSIS AssignmentExpression_In
   action: undefined
 - rule: PropertyDefinition -> IdentifierReference
@@ -4253,15 +4253,15 @@
 - rule: ShiftExpression -> ShiftExpression SHR AdditiveExpression
   action: undefined
 - rule: EqualityExpression -> RelationalExpression
-  action: undefined
+  action: nop
 - rule: EqualityExpression -> EqualityExpression EQ RelationalExpression
-  action: undefined
+  action: handle_eq_expression
 - rule: EqualityExpression -> EqualityExpression NE RelationalExpression
-  action: undefined
+  action: handle_ne_expression
 - rule: EqualityExpression -> EqualityExpression EQ_STRICT RelationalExpression
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: EqualityExpression -> EqualityExpression NE_STRICT RelationalExpression
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: CaseClause_Return -> CASE Expression_In COLON
   action: undefined
 - rule: CaseClause_Return -> CASE Expression_In COLON StatementList_Return
@@ -4723,23 +4723,23 @@
     ExponentiationExpression_Await
   action: undefined
 - rule: EqualityExpression_Await -> RelationalExpression_Await
-  action: undefined
+  action: nop
 - rule: >-
     EqualityExpression_Await -> EqualityExpression_Await EQ
     RelationalExpression_Await
-  action: undefined
+  action: handle_eq_expression
 - rule: >-
     EqualityExpression_Await -> EqualityExpression_Await NE
     RelationalExpression_Await
-  action: undefined
+  action: handle_ne_expression
 - rule: >-
     EqualityExpression_Await -> EqualityExpression_Await EQ_STRICT
     RelationalExpression_Await
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: >-
     EqualityExpression_Await -> EqualityExpression_Await NE_STRICT
     RelationalExpression_Await
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop
 - rule: >-
@@ -5028,23 +5028,23 @@
 - rule: ExponentiationExpression -> UpdateExpression EXP ExponentiationExpression
   action: undefined
 - rule: EqualityExpression_In_Yield -> RelationalExpression_In_Yield
-  action: undefined
+  action: nop
 - rule: >-
     EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ
     RelationalExpression_In_Yield
-  action: undefined
+  action: handle_eq_expression
 - rule: >-
     EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE
     RelationalExpression_In_Yield
-  action: undefined
+  action: handle_ne_expression
 - rule: >-
     EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ_STRICT
     RelationalExpression_In_Yield
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: >-
     EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE_STRICT
     RelationalExpression_In_Yield
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
   action: undefined
 - rule: PropertyDefinition_Yield -> IdentifierReference_Yield
@@ -5086,23 +5086,23 @@
     LBRACE AsyncGeneratorBody RBRACE
   action: undefined
 - rule: EqualityExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ
     RelationalExpression_In_Yield_Await
-  action: undefined
+  action: handle_eq_expression
 - rule: >-
     EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE
     RelationalExpression_In_Yield_Await
-  action: undefined
+  action: handle_ne_expression
 - rule: >-
     EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await
     EQ_STRICT RelationalExpression_In_Yield_Await
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: >-
     EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await
     NE_STRICT RelationalExpression_In_Yield_Await
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
@@ -5402,23 +5402,23 @@
     ExponentiationExpression_Yield
   action: undefined
 - rule: EqualityExpression_Yield -> RelationalExpression_Yield
-  action: undefined
+  action: nop
 - rule: >-
     EqualityExpression_Yield -> EqualityExpression_Yield EQ
     RelationalExpression_Yield
-  action: undefined
+  action: handle_eq_expression
 - rule: >-
     EqualityExpression_Yield -> EqualityExpression_Yield NE
     RelationalExpression_Yield
-  action: undefined
+  action: handle_ne_expression
 - rule: >-
     EqualityExpression_Yield -> EqualityExpression_Yield EQ_STRICT
     RelationalExpression_Yield
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: >-
     EqualityExpression_Yield -> EqualityExpression_Yield NE_STRICT
     RelationalExpression_Yield
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: ExponentiationExpression_Yield_Await -> UnaryExpression_Yield_Await
   action: undefined
 - rule: >-
@@ -5426,23 +5426,23 @@
     ExponentiationExpression_Yield_Await
   action: undefined
 - rule: EqualityExpression_Yield_Await -> RelationalExpression_Yield_Await
-  action: undefined
+  action: nop
 - rule: >-
     EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ
     RelationalExpression_Yield_Await
-  action: undefined
+  action: handle_eq_expression
 - rule: >-
     EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE
     RelationalExpression_Yield_Await
-  action: undefined
+  action: handle_ne_expression
 - rule: >-
     EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ_STRICT
     RelationalExpression_Yield_Await
-  action: undefined
+  action: handle_strict_eq_expression
 - rule: >-
     EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE_STRICT
     RelationalExpression_Yield_Await
-  action: undefined
+  action: handle_strict_ne_expression
 - rule: UnaryExpression_Yield -> UpdateExpression_Yield
   action: undefined
 - rule: UnaryExpression_Yield -> DELETE UnaryExpression_Yield
