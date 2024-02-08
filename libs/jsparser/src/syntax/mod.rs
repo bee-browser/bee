@@ -32,6 +32,10 @@ pub trait SemanticHandler<'s> {
     fn handle_gt_expression(&mut self) -> Result<(), Error>;
     fn handle_lte_expression(&mut self) -> Result<(), Error>;
     fn handle_gte_expression(&mut self) -> Result<(), Error>;
+    fn handle_eq_expression(&mut self) -> Result<(), Error>;
+    fn handle_ne_expression(&mut self) -> Result<(), Error>;
+    fn handle_strict_eq_expression(&mut self) -> Result<(), Error>;
+    fn handle_strict_ne_expression(&mut self) -> Result<(), Error>;
     fn handle_expression_statement(&mut self) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
 }
@@ -57,6 +61,10 @@ enum Item<'s> {
     GreaterThan,
     LessThanOrEqual,
     GreaterThanOrEqual,
+    Equality,
+    Inequality,
+    StrictEquality,
+    StrictInequality,
 }
 
 pub struct NumericLiteral<'s> {
@@ -355,6 +363,26 @@ where
         Ok(())
     }
 
+    fn handle_eq_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::Equality);
+        Ok(())
+    }
+
+    fn handle_ne_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::Inequality);
+        Ok(())
+    }
+
+    fn handle_strict_eq_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::StrictEquality);
+        Ok(())
+    }
+
+    fn handle_strict_ne_expression(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::StrictInequality);
+        Ok(())
+    }
+
     // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
         self.flush()?;
@@ -381,6 +409,10 @@ where
                 Item::GreaterThan => self.handler.handle_gt_expression()?,
                 Item::LessThanOrEqual => self.handler.handle_lte_expression()?,
                 Item::GreaterThanOrEqual => self.handler.handle_gte_expression()?,
+                Item::Equality => self.handler.handle_eq_expression()?,
+                Item::Inequality => self.handler.handle_ne_expression()?,
+                Item::StrictEquality => self.handler.handle_strict_eq_expression()?,
+                Item::StrictInequality => self.handler.handle_strict_ne_expression()?,
             }
         }
         Ok(())

@@ -33,6 +33,8 @@ class Compiler {
   void Gt();
   void Lte();
   void Gte();
+  void Eq();
+  void Ne();
   void Print();
 
   llvm::orc::ThreadSafeModule TakeModule();
