@@ -1116,29 +1116,29 @@
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN
     Expression_In_Await RPAREN
-  action: undefined
+  action: handle_cpeaapl
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN
     Expression_In_Await COMMA RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_empty
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS
     BindingIdentifier_Await RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS
     BindingPattern_Await RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_pattern
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN
     Expression_In_Await COMMA ELLIPSIS BindingIdentifier_Await RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN
     Expression_In_Await COMMA ELLIPSIS BindingPattern_Await RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_pattern
 - rule: ExpressionBody_In -> AssignmentExpression_In
   action: undefined
 - rule: ExpressionBody_In_Await -> AssignmentExpression_In_Await
@@ -1580,7 +1580,7 @@
 - rule: >-
     PrimaryExpression_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Await
-  action: undefined
+  action: handle_group_expression
 - rule: SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
   action: undefined
 - rule: SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
@@ -1654,29 +1654,29 @@
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In
     RPAREN
-  action: undefined
+  action: handle_cpeaapl
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In
     COMMA RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters
 - rule: CoverParenthesizedExpressionAndArrowParameterList -> LPAREN RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_empty
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS
     BindingIdentifier RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS
     BindingPattern RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_pattern
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In
     COMMA ELLIPSIS BindingIdentifier RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In
     COMMA ELLIPSIS BindingPattern RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_pattern
 - rule: MemberExpression -> PrimaryExpression
   action: nop
 - rule: MemberExpression -> MemberExpression LBRACK Expression_In RBRACK
@@ -2055,7 +2055,7 @@
 - rule: PrimaryExpression -> TemplateLiteral
   action: undefined
 - rule: PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
-  action: undefined
+  action: handle_group_expression
 - rule: SuperProperty -> SUPER LBRACK Expression_In RBRACK
   action: undefined
 - rule: SuperProperty -> SUPER DOT KeywordOrIdentifierName
@@ -3590,29 +3590,29 @@
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN
     Expression_In_Yield RPAREN
-  action: undefined
+  action: handle_cpeaapl
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN
     Expression_In_Yield COMMA RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_empty
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS
     BindingIdentifier_Yield RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS
     BindingPattern_Yield RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_pattern
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN
     Expression_In_Yield COMMA ELLIPSIS BindingIdentifier_Yield RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN
     Expression_In_Yield COMMA ELLIPSIS BindingPattern_Yield RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_pattern
 - rule: MemberExpression_Yield -> PrimaryExpression_Yield
   action: undefined
 - rule: >-
@@ -3957,32 +3957,32 @@
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await RPAREN
-  action: undefined
+  action: handle_cpeaapl
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await COMMA RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_empty
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     ELLIPSIS BindingIdentifier_Yield_Await RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     ELLIPSIS BindingPattern_Yield_Await RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_rest_pattern
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await COMMA ELLIPSIS BindingIdentifier_Yield_Await
     RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_parameter
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
     Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN
-  action: undefined
+  action: handle_maybe_arrow_formal_parameters_with_rest_pattern
 - rule: MemberExpression_Yield_Await -> PrimaryExpression_Yield_Await
   action: undefined
 - rule: >-
@@ -4311,7 +4311,7 @@
 - rule: >-
     PrimaryExpression_Yield ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield
-  action: undefined
+  action: handle_group_expression
 - rule: SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
   action: undefined
 - rule: SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
@@ -4411,7 +4411,7 @@
 - rule: >-
     PrimaryExpression_Yield_Await ->
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
-  action: undefined
+  action: handle_group_expression
 - rule: SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
   action: undefined
 - rule: SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName

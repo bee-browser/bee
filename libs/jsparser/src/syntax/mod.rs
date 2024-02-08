@@ -48,6 +48,7 @@ pub struct Processor<'s, H> {
     module: bool,
 }
 
+#[derive(Debug)]
 enum Item<'s> {
     NumericLiteral(NumericLiteral<'s>),
     StringLiteral(StringLiteral<'s>),
@@ -65,18 +66,28 @@ enum Item<'s> {
     Inequality,
     StrictEquality,
     StrictInequality,
+    Cpeaapl,
+    MaybeArrowFormalParameters,
+    MaybeArrowFormalParametersEmpty,
+    MaybeArrowFormalParametersRestParameter,
+    MaybeArrowFormalParametersRestPattern,
+    MaybeArrowFormalParametersWithRestParameter,
+    MaybeArrowFormalParametersWithRestPattern,
 }
 
+#[derive(Debug)]
 pub struct NumericLiteral<'s> {
     pub value: f64,
     pub raw: &'s str,
 }
 
+#[derive(Debug)]
 pub struct StringLiteral<'s> {
     pub value: Vec<u16>,
     pub raw: &'s str,
 }
 
+#[derive(Debug)]
 pub struct Identifier<'s> {
     pub symbol: Symbol,
     pub raw: &'s str,
@@ -383,6 +394,47 @@ where
         Ok(())
     }
 
+    fn handle_cpeaapl(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::Cpeaapl);
+        Ok(())
+    }
+
+    fn handle_maybe_arrow_formal_parameters(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::MaybeArrowFormalParameters);
+        Ok(())
+    }
+
+    fn handle_maybe_arrow_formal_parameters_empty(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::MaybeArrowFormalParametersEmpty);
+        Ok(())
+    }
+
+    fn handle_maybe_arrow_formal_rest_parameter(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::MaybeArrowFormalParametersRestParameter);
+        Ok(())
+    }
+
+    fn handle_maybe_arrow_formal_rest_pattern(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::MaybeArrowFormalParametersRestPattern);
+        Ok(())
+    }
+
+    fn handle_maybe_arrow_formal_parameters_with_rest_parameter(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::MaybeArrowFormalParametersWithRestParameter);
+        Ok(())
+    }
+
+    fn handle_maybe_arrow_formal_parameters_with_rest_pattern(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::MaybeArrowFormalParametersWithRestPattern);
+        Ok(())
+    }
+
+    fn handle_group_expression(&mut self) -> Result<(), Error> {
+        debug_assert!(matches!(self.queue.back(), Some(Item::Cpeaapl)));
+        self.queue.pop_back();
+        self.flush()
+    }
+
     // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
         self.flush()?;
@@ -413,6 +465,7 @@ where
                 Item::Inequality => self.handler.handle_ne_expression()?,
                 Item::StrictEquality => self.handler.handle_strict_eq_expression()?,
                 Item::StrictInequality => self.handler.handle_strict_ne_expression()?,
+                _ => unreachable!("{item:?}"),
             }
         }
         Ok(())
