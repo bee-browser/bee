@@ -2,16 +2,20 @@
 
 #include <cstddef>
 
-#define BEGIN_C_LINKAGE extern "C" {
-#define END_C_LINKAGE }
+#include "host.hh"
+#include "macros.hh"
 
 BEGIN_C_LINKAGE
+
+// Runtime
 
 class Runtime;
 
 void runtime_initialize();
 Runtime* runtime_new();
 void runtime_delete(Runtime* self);
+void runtime_register_host(Runtime* self, const Host* host);
+void runtime_dump_module(Runtime* self);
 void runtime_eval(Runtime* self);
 
 // Compilation

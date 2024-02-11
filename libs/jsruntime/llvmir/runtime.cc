@@ -5,7 +5,7 @@
 
 #include "llvm/Support/TargetSelect.h"
 
-#include "bindings.hh"
+#include "host.hh"
 
 static llvm::ExitOnError ExitOnErr;
 
@@ -19,20 +19,22 @@ void Runtime::Initialize() {
 Runtime::Runtime() {
   evaluator_ = llvm::cantFail(Evaluator::Create());
   compiler_ = std::make_unique<Compiler>(evaluator_->data_layout());
+}
 
+void Runtime::RegisterHost(const Host* host) {
   // register built-in functions.
   auto& exec_session = evaluator_->exec_session();
   llvm::orc::SymbolMap symbols;
-  symbols[exec_session.intern("print_str")] = {
-    llvm::orc::ExecutorAddr::fromPtr(print_str),
-    llvm::JITSymbolFlags::Exported,
-  };
   symbols[exec_session.intern("print_bool")] = {
-    llvm::orc::ExecutorAddr::fromPtr(print_bool),
+    llvm::orc::ExecutorAddr::fromPtr(host->print_bool),
     llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("print_f64")] = {
-    llvm::orc::ExecutorAddr::fromPtr(print_f64),
+    llvm::orc::ExecutorAddr::fromPtr(host->print_f64),
+    llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session.intern("print_str")] = {
+    llvm::orc::ExecutorAddr::fromPtr(host->print_str),
     llvm::JITSymbolFlags::Exported,
   };
   ExitOnErr(evaluator_->main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
@@ -40,6 +42,10 @@ Runtime::Runtime() {
 
 void Runtime::SetSourceFileName(const char* input) {
   compiler_->SetSourceFileName(input);
+}
+
+void Runtime::DumpModule() {
+  compiler_->DumpModule();
 }
 
 void Runtime::Eval() {

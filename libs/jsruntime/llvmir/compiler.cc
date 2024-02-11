@@ -21,7 +21,6 @@ void Compiler::StartMain() {
 
 void Compiler::EndMain() {
   builder_->CreateRet(builder_->getInt32(0));
-  DumpModule();
 }
 
 void Compiler::Number(double value) {
@@ -169,6 +168,12 @@ void Compiler::Print() {
   builder_->CreateCall(print, {value});
 }
 
+void Compiler::DumpModule() {
+  llvm::errs() << "<llvm-ir:module>\n";
+  module_->print(llvm::errs(), nullptr);
+  llvm::errs() << "</llvm-ir:module>\n";
+}
+
 llvm::orc::ThreadSafeModule Compiler::TakeModule() {
   return llvm::orc::ThreadSafeModule(std::move(module_), std::move(context_));
 }
@@ -197,10 +202,4 @@ void Compiler::CompileHelloWorld() {
   auto* print = CreatePrintStrFunction();
   auto* hello_world = builder_->CreateGlobalStringPtr("hello, world!", "HELLO_WORLD");
   builder_->CreateCall(print, {hello_world});
-}
-
-void Compiler::DumpModule() {
-  llvm::errs() << "<llvm-ir:module>\n";
-  module_->print(llvm::errs(), nullptr);
-  llvm::errs() << "</llvm-ir:module>\n";
 }

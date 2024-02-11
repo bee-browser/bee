@@ -15,6 +15,14 @@ void runtime_delete(Runtime* self) {
   delete self;
 }
 
+void runtime_register_host(Runtime* self, const Host* host) {
+  self->RegisterHost(host);
+}
+
+void runtime_dump_module(Runtime *self) {
+  self->DumpModule();
+}
+
 void runtime_eval(Runtime* self) {
   self->Eval();
 }

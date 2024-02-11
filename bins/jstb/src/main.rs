@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     logging::init();
     Runtime::initialize();
     let cl = CommandLine::parse();
-    let runtime = Runtime::new();
+    let runtime = Runtime::default();
     match cl.command {
         Command::Eval(eval) => {
             let expr = match eval.expr {
@@ -36,6 +36,7 @@ fn main() -> Result<()> {
                 None => read_from_stdin()?,
             };
             let _ = runtime.compile_script(&expr);
+            runtime.dump_module();
             runtime.eval();
         }
     }

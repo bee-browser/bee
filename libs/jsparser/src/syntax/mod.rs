@@ -410,22 +410,26 @@ where
     }
 
     fn handle_maybe_arrow_formal_rest_parameter(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::MaybeArrowFormalParametersRestParameter);
+        self.queue
+            .push_back(Item::MaybeArrowFormalParametersRestParameter);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_rest_pattern(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::MaybeArrowFormalParametersRestPattern);
+        self.queue
+            .push_back(Item::MaybeArrowFormalParametersRestPattern);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_parameters_with_rest_parameter(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::MaybeArrowFormalParametersWithRestParameter);
+        self.queue
+            .push_back(Item::MaybeArrowFormalParametersWithRestParameter);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_parameters_with_rest_pattern(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::MaybeArrowFormalParametersWithRestPattern);
+        self.queue
+            .push_back(Item::MaybeArrowFormalParametersWithRestPattern);
         Ok(())
     }
 
