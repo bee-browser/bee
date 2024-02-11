@@ -5,6 +5,8 @@
 #include "compiler.hh"
 #include "evaluator.hh"
 
+struct Host;
+
 class Runtime {
  public:
   static void Initialize();
@@ -12,12 +14,15 @@ class Runtime {
   Runtime();
   ~Runtime() = default;
 
+  void RegisterHost(const Host* host);
   void SetSourceFileName(const char* input);
-  void Eval();
 
   Compiler* StartCompilation();
   void PopulateModule(Compiler* compiler);
   void EndCompilation(Compiler* compiler);
+
+  void DumpModule();
+  void Eval();
 
  private:
   std::unique_ptr<Evaluator> evaluator_ = nullptr;

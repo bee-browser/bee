@@ -37,11 +37,11 @@ class Compiler {
   void Ne();
   void Print();
 
+  void DumpModule();
   llvm::orc::ThreadSafeModule TakeModule();
 
  private:
   void CompileHelloWorld();
-  void DumpModule();
 
   llvm::Function* CreateMainFunction();
   llvm::Function* CreatePrintStrFunction();
