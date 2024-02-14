@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2085] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2095] = [
         // Script -> (empty)
         Action::Undefined,
         // Script -> ScriptBody
@@ -156,7 +156,9 @@ where
         Action::Undefined,
         // ClassDeclaration -> CLASS BindingIdentifier ClassTail
         Action::Undefined,
-        // LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
+        // LexicalDeclaration_In -> LET BindingList_In SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
         Action::Undefined,
         // ImportClause -> ImportedDefaultBinding
         Action::Undefined,
@@ -315,10 +317,6 @@ where
         Action::Undefined,
         // ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
         Action::Undefined,
-        // LetOrConst -> LET
-        Action::Undefined,
-        // LetOrConst -> CONST
-        Action::Undefined,
         // BindingList_In -> LexicalBinding_In
         Action::Undefined,
         // BindingList_In -> BindingList_In COMMA LexicalBinding_In
@@ -355,7 +353,9 @@ where
         Action::Undefined,
         // ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
         Action::Undefined,
-        // LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
+        // LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
         Action::Undefined,
         // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
         Action::Undefined,
@@ -864,13 +864,17 @@ where
         Action::Undefined,
         // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
         Action::Undefined,
-        // LexicalDeclaration -> LetOrConst BindingList SEMICOLON
+        // LexicalDeclaration -> LET BindingList SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration -> CONST BindingList SEMICOLON
         Action::Undefined,
         // ForBinding -> BindingIdentifier
         Action::Undefined,
         // ForBinding -> BindingPattern
         Action::Undefined,
-        // ForDeclaration -> LetOrConst ForBinding
+        // ForDeclaration -> LET ForBinding
+        Action::Undefined,
+        // ForDeclaration -> CONST ForBinding
         Action::Undefined,
         // CaseClauses -> CaseClause
         Action::Undefined,
@@ -1415,13 +1419,17 @@ where
         Action::Undefined,
         // VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
         Action::Undefined,
-        // LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
+        // LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
         Action::Undefined,
         // ForBinding_Await -> BindingIdentifier_Await
         Action::Undefined,
         // ForBinding_Await -> BindingPattern_Await
         Action::Undefined,
-        // ForDeclaration_Await -> LetOrConst ForBinding_Await
+        // ForDeclaration_Await -> LET ForBinding_Await
+        Action::Undefined,
+        // ForDeclaration_Await -> CONST ForBinding_Await
         Action::Undefined,
         // CaseClauses_Await -> CaseClause_Await
         Action::Undefined,
@@ -2467,7 +2475,9 @@ where
         Action::Undefined,
         // ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
         Action::Undefined,
-        // LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
+        // LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
         Action::Undefined,
         // BlockStatement_Await_Return -> Block_Await_Return
         Action::Undefined,
@@ -2571,7 +2581,9 @@ where
         Action::Undefined,
         // ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
         Action::Undefined,
-        // LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON
+        // LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON
         Action::Undefined,
         // ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
         Action::Undefined,
@@ -3488,13 +3500,17 @@ where
         Action::Undefined,
         // VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
         Action::Undefined,
-        // LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
+        // LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
         Action::Undefined,
         // ForBinding_Yield -> BindingIdentifier_Yield
         Action::Undefined,
         // ForBinding_Yield -> BindingPattern_Yield
         Action::Undefined,
-        // ForDeclaration_Yield -> LetOrConst ForBinding_Yield
+        // ForDeclaration_Yield -> LET ForBinding_Yield
+        Action::Undefined,
+        // ForDeclaration_Yield -> CONST ForBinding_Yield
         Action::Undefined,
         // CaseClauses_Yield_Return -> CaseClause_Yield_Return
         Action::Undefined,
@@ -3576,13 +3592,17 @@ where
         Action::Undefined,
         // VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await
         Action::Undefined,
-        // LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
+        // LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
+        Action::Undefined,
+        // LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
         Action::Undefined,
         // ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
         Action::Undefined,
         // ForBinding_Yield_Await -> BindingPattern_Yield_Await
         Action::Undefined,
-        // ForDeclaration_Yield_Await -> LetOrConst ForBinding_Yield_Await
+        // ForDeclaration_Yield_Await -> LET ForBinding_Yield_Await
+        Action::Undefined,
+        // ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
         Action::Undefined,
         // CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
         Action::Undefined,

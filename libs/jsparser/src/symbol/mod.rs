@@ -37,3 +37,9 @@ impl SymbolTable {
         self.symbols.get_index(symbol.0).map(|v| v.as_slice())
     }
 }
+
+impl Default for SymbolTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}

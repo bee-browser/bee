@@ -140,7 +140,9 @@
   action: undefined
 - rule: ClassDeclaration -> CLASS BindingIdentifier ClassTail
   action: undefined
-- rule: LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
+- rule: LexicalDeclaration_In -> LET BindingList_In SEMICOLON
+  action: undefined
+- rule: LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
   action: undefined
 - rule: ImportClause -> ImportedDefaultBinding
   action: undefined
@@ -316,10 +318,6 @@
   action: undefined
 - rule: ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
   action: undefined
-- rule: LetOrConst -> LET
-  action: undefined
-- rule: LetOrConst -> CONST
-  action: undefined
 - rule: BindingList_In -> LexicalBinding_In
   action: undefined
 - rule: BindingList_In -> BindingList_In COMMA LexicalBinding_In
@@ -358,7 +356,9 @@
   action: undefined
 - rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
   action: undefined
-- rule: LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
+- rule: LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
+  action: undefined
+- rule: LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
   action: undefined
 - rule: >-
     FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN
@@ -989,13 +989,17 @@
   action: undefined
 - rule: VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
   action: undefined
-- rule: LexicalDeclaration -> LetOrConst BindingList SEMICOLON
+- rule: LexicalDeclaration -> LET BindingList SEMICOLON
+  action: undefined
+- rule: LexicalDeclaration -> CONST BindingList SEMICOLON
   action: undefined
 - rule: ForBinding -> BindingIdentifier
   action: undefined
 - rule: ForBinding -> BindingPattern
   action: undefined
-- rule: ForDeclaration -> LetOrConst ForBinding
+- rule: ForDeclaration -> LET ForBinding
+  action: undefined
+- rule: ForDeclaration -> CONST ForBinding
   action: undefined
 - rule: CaseClauses -> CaseClause
   action: undefined
@@ -1613,13 +1617,17 @@
     VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA
     VariableDeclaration_Await
   action: undefined
-- rule: LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
+- rule: LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
+  action: undefined
+- rule: LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
   action: undefined
 - rule: ForBinding_Await -> BindingIdentifier_Await
   action: undefined
 - rule: ForBinding_Await -> BindingPattern_Await
   action: undefined
-- rule: ForDeclaration_Await -> LetOrConst ForBinding_Await
+- rule: ForDeclaration_Await -> LET ForBinding_Await
+  action: undefined
+- rule: ForDeclaration_Await -> CONST ForBinding_Await
   action: undefined
 - rule: CaseClauses_Await -> CaseClause_Await
   action: undefined
@@ -2864,7 +2872,9 @@
   action: undefined
 - rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
   action: undefined
-- rule: LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
+- rule: LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
+  action: undefined
+- rule: LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
   action: undefined
 - rule: BlockStatement_Await_Return -> Block_Await_Return
   action: undefined
@@ -3032,7 +3042,11 @@
     ClassTail_Yield_Await
   action: undefined
 - rule: >-
-    LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await
+    LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await
+    SEMICOLON
+  action: undefined
+- rule: >-
+    LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await
     SEMICOLON
   action: undefined
 - rule: ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
@@ -4340,13 +4354,17 @@
     VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA
     VariableDeclaration_Yield
   action: undefined
-- rule: LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
+- rule: LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
+  action: undefined
+- rule: LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
   action: undefined
 - rule: ForBinding_Yield -> BindingIdentifier_Yield
   action: undefined
 - rule: ForBinding_Yield -> BindingPattern_Yield
   action: undefined
-- rule: ForDeclaration_Yield -> LetOrConst ForBinding_Yield
+- rule: ForDeclaration_Yield -> LET ForBinding_Yield
+  action: undefined
+- rule: ForDeclaration_Yield -> CONST ForBinding_Yield
   action: undefined
 - rule: CaseClauses_Yield_Return -> CaseClause_Yield_Return
   action: undefined
@@ -4444,15 +4462,17 @@
     VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await
     COMMA VariableDeclaration_Yield_Await
   action: undefined
-- rule: >-
-    LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await
-    SEMICOLON
+- rule: LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
+  action: undefined
+- rule: LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
   action: undefined
 - rule: ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
   action: undefined
 - rule: ForBinding_Yield_Await -> BindingPattern_Yield_Await
   action: undefined
-- rule: ForDeclaration_Yield_Await -> LetOrConst ForBinding_Yield_Await
+- rule: ForDeclaration_Yield_Await -> LET ForBinding_Yield_Await
+  action: undefined
+- rule: ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
   action: undefined
 - rule: CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
   action: undefined

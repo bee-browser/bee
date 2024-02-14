@@ -230,7 +230,7 @@ where
             | SymbolTable::YIELD
                 if self.strict_mode =>
             {
-                return Err(Error::SyntaxError)
+                Err(Error::SyntaxError)
             }
             _ => Ok(()),
         }

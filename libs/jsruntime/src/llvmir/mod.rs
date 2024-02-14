@@ -96,10 +96,14 @@ mod tests {
         unsafe extern "C" fn validate(value: f64) {
             assert_eq!(value, A);
         }
-        let mut host = bridge::Host::default();
-        host.print_f64 = Some(validate);
 
-        eval(&format!("{A}"), host);
+        eval(
+            format!("{A}"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
     }
 
     #[test]
@@ -110,10 +114,14 @@ mod tests {
         unsafe extern "C" fn validate(value: f64) {
             assert_eq!(value, A + B);
         }
-        let mut host = bridge::Host::default();
-        host.print_f64 = Some(validate);
 
-        eval(&format!("{A} + {B}"), host);
+        eval(
+            format!("{A} + {B}"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
     }
 
     #[test]
@@ -124,10 +132,14 @@ mod tests {
         unsafe extern "C" fn validate(value: f64) {
             assert_eq!(value, A - B);
         }
-        let mut host = bridge::Host::default();
-        host.print_f64 = Some(validate);
 
-        eval(&format!("{A} - {B}"), host);
+        eval(
+            format!("{A} - {B}"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
     }
 
     #[test]
@@ -138,10 +150,14 @@ mod tests {
         unsafe extern "C" fn validate(value: f64) {
             assert_eq!(value, A * B);
         }
-        let mut host = bridge::Host::default();
-        host.print_f64 = Some(validate);
 
-        eval(&format!("{A} * {B}"), host);
+        eval(
+            format!("{A} * {B}"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
     }
 
     #[test]
@@ -152,10 +168,14 @@ mod tests {
         unsafe extern "C" fn validate(value: f64) {
             assert_eq!(value, A / B);
         }
-        let mut host = bridge::Host::default();
-        host.print_f64 = Some(validate);
 
-        eval(&format!("{A} / {B}"), host);
+        eval(
+            format!("{A} / {B}"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
     }
 
     #[test]
@@ -166,10 +186,14 @@ mod tests {
         unsafe extern "C" fn validate(value: f64) {
             assert_eq!(value, A % B);
         }
-        let mut host = bridge::Host::default();
-        host.print_f64 = Some(validate);
 
-        eval(&format!("{A} % {B}"), host);
+        eval(
+            format!("{A} % {B}"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
     }
 
     #[test]
@@ -181,16 +205,20 @@ mod tests {
         unsafe extern "C" fn validate(value: f64) {
             assert_eq!(value, A * (B + C));
         }
-        let mut host = bridge::Host::default();
-        host.print_f64 = Some(validate);
 
-        eval(&format!("{A} * ({B} + {C})"), host);
+        eval(
+            format!("{A} * ({B} + {C})"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
     }
 
-    fn eval(source: &str, host: bridge::Host) {
+    fn eval(source: String, host: bridge::Host) {
         Runtime::initialize();
         let runtime = Runtime::with_host(host);
-        let _ = runtime.compile_script(source);
+        let _ = runtime.compile_script(&source);
         runtime.eval();
     }
 }
