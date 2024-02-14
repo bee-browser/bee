@@ -134,7 +134,9 @@
   action: nop
 - rule: ClassDeclaration -> CLASS BindingIdentifier ClassTail
   action: class_declaration
-- rule: LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
+- rule: LexicalDeclaration_In -> LET BindingList_In SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
   action: variable_declaration
 - rule: ImportClause -> ImportedDefaultBinding
   action: create_list
@@ -302,10 +304,6 @@
   action: class_tail_no_super_class
 - rule: ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
   action: class_tail
-- rule: LetOrConst -> LET
-  action: nop
-- rule: LetOrConst -> CONST
-  action: nop
 - rule: BindingList_In -> LexicalBinding_In
   action: create_list
 - rule: BindingList_In -> BindingList_In COMMA LexicalBinding_In
@@ -344,7 +342,9 @@
   action: nop
 - rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
   action: class_declaration
-- rule: LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
+- rule: LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
   action: variable_declaration
 - rule: >-
     FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters
@@ -908,13 +908,17 @@
   action: create_list
 - rule: VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
   action: append_to_csv_list
-- rule: LexicalDeclaration -> LetOrConst BindingList SEMICOLON
+- rule: LexicalDeclaration -> LET BindingList SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration -> CONST BindingList SEMICOLON
   action: variable_declaration
 - rule: ForBinding -> BindingIdentifier
   action: for_binding
 - rule: ForBinding -> BindingPattern
   action: for_binding
-- rule: ForDeclaration -> LetOrConst ForBinding
+- rule: ForDeclaration -> LET ForBinding
+  action: for_declaration
+- rule: ForDeclaration -> CONST ForBinding
   action: for_declaration
 - rule: CaseClauses -> CaseClause
   action: create_list
@@ -1484,13 +1488,17 @@
   action: create_list
 - rule: VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
   action: append_to_csv_list
-- rule: LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
+- rule: LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Await -> BindingIdentifier_Await
   action: for_binding
 - rule: ForBinding_Await -> BindingPattern_Await
   action: for_binding
-- rule: ForDeclaration_Await -> LetOrConst ForBinding_Await
+- rule: ForDeclaration_Await -> LET ForBinding_Await
+  action: for_declaration
+- rule: ForDeclaration_Await -> CONST ForBinding_Await
   action: for_declaration
 - rule: CaseClauses_Await -> CaseClause_Await
   action: create_list
@@ -2619,7 +2627,9 @@
   action: nop
 - rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
   action: class_declaration
-- rule: LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
+- rule: LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
   action: variable_declaration
 - rule: BlockStatement_Await_Return -> Block_Await_Return
   action: nop
@@ -2759,7 +2769,9 @@
   action: nop
 - rule: ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
   action: class_declaration
-- rule: LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON
+- rule: LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON
   action: variable_declaration
 - rule: ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
   action: computed_property_name
@@ -3891,13 +3903,17 @@
   action: create_list
 - rule: VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
   action: append_to_csv_list
-- rule: LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
+- rule: LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Yield -> BindingIdentifier_Yield
   action: for_binding
 - rule: ForBinding_Yield -> BindingPattern_Yield
   action: for_binding
-- rule: ForDeclaration_Yield -> LetOrConst ForBinding_Yield
+- rule: ForDeclaration_Yield -> LET ForBinding_Yield
+  action: for_declaration
+- rule: ForDeclaration_Yield -> CONST ForBinding_Yield
   action: for_declaration
 - rule: CaseClauses_Yield_Return -> CaseClause_Yield_Return
   action: create_list
@@ -3989,13 +4005,17 @@
     VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA
     VariableDeclaration_Yield_Await
   action: append_to_csv_list
-- rule: LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
+- rule: LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
   action: for_binding
 - rule: ForBinding_Yield_Await -> BindingPattern_Yield_Await
   action: for_binding
-- rule: ForDeclaration_Yield_Await -> LetOrConst ForBinding_Yield_Await
+- rule: ForDeclaration_Yield_Await -> LET ForBinding_Yield_Await
+  action: for_declaration
+- rule: ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
   action: for_declaration
 - rule: CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
   action: create_list

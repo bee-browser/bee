@@ -7658,64 +7658,128 @@
       data: Declaration_Yield_Await
 - name: LexicalDeclaration
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_Await
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_Yield
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_Yield
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_Yield
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_Yield
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_Yield_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_Yield_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_Yield_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_Yield_Await
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In_Await
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In_Yield
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In_Yield
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In_Yield
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In_Yield
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In_Yield_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In_Yield_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In_Yield_Await
     - type: token
@@ -13586,26 +13650,50 @@
       data: Statement_Yield_Await_Return
 - name: ForDeclaration
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding
+- name: ForDeclaration
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding
 - name: ForDeclaration_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding_Await
+- name: ForDeclaration_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding_Await
 - name: ForDeclaration_Yield
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding_Yield
+- name: ForDeclaration_Yield
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding_Yield
 - name: ForDeclaration_Yield_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding_Yield_Await
+- name: ForDeclaration_Yield_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding_Yield_Await
 - name: ForBinding

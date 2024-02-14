@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2095] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -146,7 +146,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration -> CLASS BindingIdentifier ClassTail
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
+    // LexicalDeclaration_In -> LET BindingList_In SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ImportClause -> ImportedDefaultBinding
     Some((Builder::create_list, "create_list")),
@@ -311,10 +313,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     )),
     // ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
     Some((Builder::class_tail, "class_tail")),
-    // LetOrConst -> LET
-    Some((Builder::nop, "nop")),
-    // LetOrConst -> CONST
-    Some((Builder::nop, "nop")),
     // BindingList_In -> LexicalBinding_In
     Some((Builder::create_list, "create_list")),
     // BindingList_In -> BindingList_In COMMA LexicalBinding_In
@@ -360,7 +358,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
+    // LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
@@ -974,13 +974,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration -> LetOrConst BindingList SEMICOLON
+    // LexicalDeclaration -> LET BindingList SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration -> CONST BindingList SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding -> BindingIdentifier
     Some((Builder::for_binding, "for_binding")),
     // ForBinding -> BindingPattern
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration -> LetOrConst ForBinding
+    // ForDeclaration -> LET ForBinding
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration -> CONST ForBinding
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses -> CaseClause
     Some((Builder::create_list, "create_list")),
@@ -1636,13 +1640,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
+    // LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Await -> BindingIdentifier_Await
     Some((Builder::for_binding, "for_binding")),
     // ForBinding_Await -> BindingPattern_Await
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration_Await -> LetOrConst ForBinding_Await
+    // ForDeclaration_Await -> LET ForBinding_Await
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration_Await -> CONST ForBinding_Await
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Await -> CaseClause_Await
     Some((Builder::create_list, "create_list")),
@@ -2871,7 +2879,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
+    // LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // BlockStatement_Await_Return -> Block_Await_Return
     Some((Builder::nop, "nop")),
@@ -3005,7 +3015,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON
+    // LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
     Some((Builder::computed_property_name, "computed_property_name")),
@@ -4180,13 +4192,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
+    // LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Yield -> BindingIdentifier_Yield
     Some((Builder::for_binding, "for_binding")),
     // ForBinding_Yield -> BindingPattern_Yield
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration_Yield -> LetOrConst ForBinding_Yield
+    // ForDeclaration_Yield -> LET ForBinding_Yield
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration_Yield -> CONST ForBinding_Yield
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Yield_Return -> CaseClause_Yield_Return
     Some((Builder::create_list, "create_list")),
@@ -4283,13 +4299,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2085] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
+    // LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
     Some((Builder::for_binding, "for_binding")),
     // ForBinding_Yield_Await -> BindingPattern_Yield_Await
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration_Yield_Await -> LetOrConst ForBinding_Yield_Await
+    // ForDeclaration_Yield_Await -> LET ForBinding_Yield_Await
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
     Some((Builder::create_list, "create_list")),

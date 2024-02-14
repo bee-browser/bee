@@ -162,6 +162,7 @@ class Transpiler {
       this.passes_ = [
         rewriteIdentifierRule,
         expandMultiplicativeOperator,
+        expandLetOrConst,
         // CPEAAPL cannot be replaced with refined production rules.  You will see many
         // conflicts in the LALR(1) parsing table generation when you actually try this.
         //rewriteCPEAAPL,
@@ -473,6 +474,25 @@ function expandMultiplicativeOperator(rules) {
   assert(multiplicativeOperatorRule !== undefined);
   for (const op of multiplicativeOperatorRule.values) {
     rule.values.push(value.replace('MultiplicativeOperator', op));
+  }
+  return rules;
+}
+
+// For the same reason as `MultiplicativeOperator`, `LetOrConst` terms in production rules are
+// expanded.
+function expandLetOrConst(rules) {
+  log.debug('Expanding LetOrConst...');
+  for (const rule of rules) {
+    const values = [];
+    for (const value of rule.values) {
+      if (value.includes('LetOrConst')) {
+        values.push(value.replace('LetOrConst', 'LET'));
+        values.push(value.replace('LetOrConst', 'CONST'));
+      } else {
+        values.push(value);
+      }
+    }
+    rule.values = values;
   }
   return rules;
 }

@@ -479,7 +479,6 @@ pub enum NonTerminal {
     LeftHandSideExpression_Await,
     LeftHandSideExpression_Yield,
     LeftHandSideExpression_Yield_Await,
-    LetOrConst,
     LexicalBinding,
     LexicalBinding_Await,
     LexicalBinding_In,
