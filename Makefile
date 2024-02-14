@@ -38,11 +38,11 @@ check:
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 .PHONY: build
-build: format $(BUILD_TARGETS)
+build: $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: test
-test: format
+test:
 	cargo nextest run --all-features
 
 # TODO: remove '-' once we've fixed all failures.
@@ -111,7 +111,7 @@ update-devcontainer:
 	@sh .devcontainer/update-dockerfile-env.sh -c
 
 .PHONY: doc
-doc: format
+doc:
 	cargo doc --workspace --all-features
 
 .PHONY: format
