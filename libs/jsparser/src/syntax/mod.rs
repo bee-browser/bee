@@ -48,13 +48,13 @@ pub trait SemanticHandler<'s> {
 pub struct Processor<'s, H> {
     handler: H,
     location: Location,
-    queue: VecDeque<Item<'s>>,
+    queue: VecDeque<Syntax<'s>>,
     strict_mode: bool,
     module: bool,
 }
 
 #[derive(Debug)]
-enum Item<'s> {
+enum Syntax<'s> {
     NumericLiteral(NumericLiteral<'s>),
     StringLiteral(StringLiteral<'s>),
     Identifier(Identifier<'s>),
@@ -147,7 +147,7 @@ where
             TokenKind::NumericLiteral => {
                 // TODO: perform `NumericValue`
                 let value = token.lexeme.parse::<f64>().unwrap();
-                self.queue.push_back(Item::NumericLiteral(NumericLiteral {
+                self.queue.push_back(Syntax::NumericLiteral(NumericLiteral {
                     value,
                     raw: token.lexeme,
                 }));
@@ -155,7 +155,7 @@ where
             TokenKind::StringLiteral => {
                 // TODO: perform `SV`
                 let value = token.lexeme.encode_utf16().collect();
-                self.queue.push_back(Item::StringLiteral(StringLiteral {
+                self.queue.push_back(Syntax::StringLiteral(StringLiteral {
                     value,
                     raw: token.lexeme,
                 }));
@@ -165,7 +165,7 @@ where
                 let value = token.lexeme.encode_utf16().collect();
                 let symbol_table = self.handler.symbol_table_mut();
                 let symbol = symbol_table.intern(value);
-                self.queue.push_back(Item::Identifier(Identifier {
+                self.queue.push_back(Syntax::Identifier(Identifier {
                     symbol,
                     raw: token.lexeme,
                 }));
@@ -226,7 +226,7 @@ where
 
     fn syntax_error_if_string_value_is_keyword_in_strict_mode(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -248,7 +248,7 @@ where
 
     fn syntax_error_if_await(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -259,7 +259,7 @@ where
 
     fn syntax_error_if_yield(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -270,7 +270,7 @@ where
 
     fn syntax_error_if_yield_or_await(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -281,7 +281,7 @@ where
 
     fn syntax_error_if_arguments_or_eval(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -294,7 +294,7 @@ where
 
     fn syntax_error_if_arguments_or_eval_or_await(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -308,7 +308,7 @@ where
 
     fn syntax_error_if_arguments_or_eval_or_yield(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -322,7 +322,7 @@ where
 
     fn syntax_error_if_arguments_or_eval_or_yield_or_await(&mut self) -> Result<(), Error> {
         let identifier = match self.queue.back().unwrap() {
-            Item::Identifier(identifier) => identifier,
+            Syntax::Identifier(identifier) => identifier,
             _ => panic!(),
         };
         match identifier.symbol {
@@ -335,72 +335,72 @@ where
     }
 
     fn handle_addition_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Addition);
+        self.queue.push_back(Syntax::Addition);
         Ok(())
     }
 
     fn handle_subtraction_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Subtraction);
+        self.queue.push_back(Syntax::Subtraction);
         Ok(())
     }
 
     fn handle_multiplication_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Multiplication);
+        self.queue.push_back(Syntax::Multiplication);
         Ok(())
     }
 
     fn handle_division_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Division);
+        self.queue.push_back(Syntax::Division);
         Ok(())
     }
 
     fn handle_remainder_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Remainder);
+        self.queue.push_back(Syntax::Remainder);
         Ok(())
     }
 
     fn handle_lt_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::LessThan);
+        self.queue.push_back(Syntax::LessThan);
         Ok(())
     }
 
     fn handle_gt_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::GreaterThan);
+        self.queue.push_back(Syntax::GreaterThan);
         Ok(())
     }
 
     fn handle_lte_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::LessThanOrEqual);
+        self.queue.push_back(Syntax::LessThanOrEqual);
         Ok(())
     }
 
     fn handle_gte_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::GreaterThanOrEqual);
+        self.queue.push_back(Syntax::GreaterThanOrEqual);
         Ok(())
     }
 
     fn handle_eq_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Equality);
+        self.queue.push_back(Syntax::Equality);
         Ok(())
     }
 
     fn handle_ne_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Inequality);
+        self.queue.push_back(Syntax::Inequality);
         Ok(())
     }
 
     fn handle_strict_eq_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::StrictEquality);
+        self.queue.push_back(Syntax::StrictEquality);
         Ok(())
     }
 
     fn handle_strict_ne_expression(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::StrictInequality);
+        self.queue.push_back(Syntax::StrictInequality);
         Ok(())
     }
 
     fn handle_cpeaapl(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::Cpeaapl);
+        self.queue.push_back(Syntax::Cpeaapl);
         Ok(())
     }
 
@@ -411,46 +411,47 @@ where
     }
 
     fn handle_call_expression_or_async_arrow_head(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::CallExpressionOrAsyncArrowHead);
+        self.queue.push_back(Syntax::CallExpressionOrAsyncArrowHead);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_parameters(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::MaybeArrowFormalParameters);
+        self.queue.push_back(Syntax::MaybeArrowFormalParameters);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_parameters_empty(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::MaybeArrowFormalParametersEmpty);
+        self.queue
+            .push_back(Syntax::MaybeArrowFormalParametersEmpty);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_rest_parameter(&mut self) -> Result<(), Error> {
         self.queue
-            .push_back(Item::MaybeArrowFormalParametersRestParameter);
+            .push_back(Syntax::MaybeArrowFormalParametersRestParameter);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_rest_pattern(&mut self) -> Result<(), Error> {
         self.queue
-            .push_back(Item::MaybeArrowFormalParametersRestPattern);
+            .push_back(Syntax::MaybeArrowFormalParametersRestPattern);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_parameters_with_rest_parameter(&mut self) -> Result<(), Error> {
         self.queue
-            .push_back(Item::MaybeArrowFormalParametersWithRestParameter);
+            .push_back(Syntax::MaybeArrowFormalParametersWithRestParameter);
         Ok(())
     }
 
     fn handle_maybe_arrow_formal_parameters_with_rest_pattern(&mut self) -> Result<(), Error> {
         self.queue
-            .push_back(Item::MaybeArrowFormalParametersWithRestPattern);
+            .push_back(Syntax::MaybeArrowFormalParametersWithRestPattern);
         Ok(())
     }
 
     fn handle_group_expression(&mut self) -> Result<(), Error> {
-        debug_assert!(matches!(self.queue.back(), Some(Item::Cpeaapl)));
+        debug_assert!(matches!(self.queue.back(), Some(Syntax::Cpeaapl)));
         self.queue.pop_back();
         self.flush()
     }
@@ -480,7 +481,7 @@ where
     }
 
     fn handle_formal_parameters_empty(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::FormalParameters(0));
+        self.queue.push_back(Syntax::FormalParameters(0));
         Ok(())
     }
 
@@ -495,17 +496,17 @@ where
     }
 
     fn handle_empty_list(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::EmptyList);
+        self.queue.push_back(Syntax::EmptyList);
         Ok(())
     }
 
     fn handle_list_head(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::ListHead);
+        self.queue.push_back(Syntax::ListHead);
         Ok(())
     }
 
     fn handle_list_item(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Item::ListItem);
+        self.queue.push_back(Syntax::ListItem);
         Ok(())
     }
 
@@ -513,25 +514,25 @@ where
         logger::debug!(?self.queue);
         while let Some(item) = self.queue.pop_front() {
             match item {
-                Item::NumericLiteral(literal) => self.handler.handle_numeric_literal(literal)?,
-                Item::StringLiteral(literal) => self.handler.handle_string_literal(literal)?,
-                Item::Identifier(identifier) => self.handler.handle_identifier(identifier)?,
-                Item::Addition => self.handler.handle_addition_expression()?,
-                Item::Subtraction => self.handler.handle_subtraction_expression()?,
-                Item::Multiplication => self.handler.handle_multiplication_expression()?,
-                Item::Division => self.handler.handle_division_expression()?,
-                Item::Remainder => self.handler.handle_remainder_expression()?,
-                Item::LessThan => self.handler.handle_lt_expression()?,
-                Item::GreaterThan => self.handler.handle_gt_expression()?,
-                Item::LessThanOrEqual => self.handler.handle_lte_expression()?,
-                Item::GreaterThanOrEqual => self.handler.handle_gte_expression()?,
-                Item::Equality => self.handler.handle_eq_expression()?,
-                Item::Inequality => self.handler.handle_ne_expression()?,
-                Item::StrictEquality => self.handler.handle_strict_eq_expression()?,
-                Item::StrictInequality => self.handler.handle_strict_ne_expression()?,
-                Item::FormalParameters(nargs) => self.handler.handle_formal_parameters(nargs)?,
-                Item::EmptyList => (),
-                Item::ListHead => (),
+                Syntax::NumericLiteral(literal) => self.handler.handle_numeric_literal(literal)?,
+                Syntax::StringLiteral(literal) => self.handler.handle_string_literal(literal)?,
+                Syntax::Identifier(identifier) => self.handler.handle_identifier(identifier)?,
+                Syntax::Addition => self.handler.handle_addition_expression()?,
+                Syntax::Subtraction => self.handler.handle_subtraction_expression()?,
+                Syntax::Multiplication => self.handler.handle_multiplication_expression()?,
+                Syntax::Division => self.handler.handle_division_expression()?,
+                Syntax::Remainder => self.handler.handle_remainder_expression()?,
+                Syntax::LessThan => self.handler.handle_lt_expression()?,
+                Syntax::GreaterThan => self.handler.handle_gt_expression()?,
+                Syntax::LessThanOrEqual => self.handler.handle_lte_expression()?,
+                Syntax::GreaterThanOrEqual => self.handler.handle_gte_expression()?,
+                Syntax::Equality => self.handler.handle_eq_expression()?,
+                Syntax::Inequality => self.handler.handle_ne_expression()?,
+                Syntax::StrictEquality => self.handler.handle_strict_eq_expression()?,
+                Syntax::StrictInequality => self.handler.handle_strict_ne_expression()?,
+                Syntax::FormalParameters(nargs) => self.handler.handle_formal_parameters(nargs)?,
+                Syntax::EmptyList => (),
+                Syntax::ListHead => (),
                 _ => unreachable!("{item:?}"),
             }
         }

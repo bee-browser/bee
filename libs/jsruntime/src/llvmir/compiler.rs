@@ -260,7 +260,10 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         };
 
         let func_id = self.runtime.next_func_id();
-        self.runtime.global_scope.bindings.insert(symbol, Value::Function(func_id));
+        self.runtime
+            .global_scope
+            .bindings
+            .insert(symbol, Value::Function(func_id));
 
         // TODO: Should be kept while the function is alive.
         let func_name = format!("fn{}", func_id.0);
