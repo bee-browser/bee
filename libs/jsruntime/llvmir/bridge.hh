@@ -37,6 +37,10 @@ void compiler_lte(Compiler* self);
 void compiler_gte(Compiler* self);
 void compiler_eq(Compiler* self);
 void compiler_ne(Compiler* self);
+void compiler_call(Compiler* self, size_t id, size_t n);
+void compiler_start_function(Compiler* self, size_t id, const char* name, size_t len);
+void compiler_end_function(Compiler* self);
+void compiler_return(Compiler* self, size_t n);
 void compiler_print(Compiler* self);
 
 END_C_LINKAGE

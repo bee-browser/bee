@@ -91,6 +91,22 @@ void compiler_ne(Compiler* self) {
   self->Ne();
 }
 
+void compiler_call(Compiler* self, size_t id, size_t n) {
+  self->Call(id, n);
+}
+
+void compiler_start_function(Compiler* self, size_t id, const char* name, size_t len) {
+  self->StartFunction(id, name, len);
+}
+
+void compiler_end_function(Compiler* self) {
+  self->EndFunction();
+}
+
+void compiler_return(Compiler* self, size_t n) {
+  self->Return(n);
+}
+
 void compiler_print(Compiler* self) {
   self->Print();
 }

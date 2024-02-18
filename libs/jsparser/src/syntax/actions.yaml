@@ -13,9 +13,9 @@
 - rule: ModuleBody -> ModuleItemList
   action: undefined
 - rule: StatementList -> StatementListItem
-  action: nop
+  action: handle_list_head
 - rule: StatementList -> StatementList StatementListItem
-  action: undefined
+  action: handle_list_item
 - rule: ModuleItemList -> ModuleItem
   action: undefined
 - rule: ModuleItemList -> ModuleItemList ModuleItem
@@ -23,7 +23,7 @@
 - rule: StatementListItem -> Statement
   action: nop
 - rule: StatementListItem -> Declaration
-  action: undefined
+  action: nop
 - rule: ModuleItem -> ImportDeclaration
   action: undefined
 - rule: ModuleItem -> ExportDeclaration
@@ -57,7 +57,7 @@
 - rule: Statement -> DebuggerStatement
   action: undefined
 - rule: Declaration -> HoistableDeclaration
-  action: undefined
+  action: nop
 - rule: Declaration -> ClassDeclaration
   action: undefined
 - rule: Declaration -> LexicalDeclaration_In
@@ -83,9 +83,9 @@
     FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMICOLON
   action: undefined
 - rule: StatementListItem_Await -> Statement_Await
-  action: undefined
+  action: nop
 - rule: StatementListItem_Await -> Declaration_Await
-  action: undefined
+  action: nop
 - rule: BlockStatement -> Block
   action: undefined
 - rule: VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
@@ -131,7 +131,7 @@
 - rule: DebuggerStatement -> DEBUGGER SEMICOLON
   action: undefined
 - rule: HoistableDeclaration -> FunctionDeclaration
-  action: undefined
+  action: nop
 - rule: HoistableDeclaration -> GeneratorDeclaration
   action: undefined
 - rule: HoistableDeclaration -> AsyncFunctionDeclaration
@@ -173,13 +173,13 @@
 - rule: VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMICOLON
   action: undefined
 - rule: Declaration_Await -> HoistableDeclaration_Await
-  action: undefined
+  action: nop
 - rule: Declaration_Await -> ClassDeclaration_Await
   action: undefined
 - rule: Declaration_Await -> LexicalDeclaration_In_Await
   action: undefined
 - rule: HoistableDeclaration_Await_Default -> FunctionDeclaration_Await_Default
-  action: undefined
+  action: nop
 - rule: HoistableDeclaration_Await_Default -> GeneratorDeclaration_Await_Default
   action: undefined
 - rule: HoistableDeclaration_Await_Default -> AsyncFunctionDeclaration_Await_Default
@@ -288,8 +288,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters
-    RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+  action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN
     FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
@@ -347,7 +347,7 @@
     VariableDeclaration_In_Await
   action: undefined
 - rule: HoistableDeclaration_Await -> FunctionDeclaration_Await
-  action: undefined
+  action: nop
 - rule: HoistableDeclaration_Await -> GeneratorDeclaration_Await
   action: undefined
 - rule: HoistableDeclaration_Await -> AsyncFunctionDeclaration_Await
@@ -362,11 +362,11 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN
-    FormalParameters RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+  action: handle_function_declaration
 - rule: >-
     FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN
-    LBRACE FunctionBody RBRACE
+    LBRACE _SCOPE_ FunctionBody RBRACE
   action: undefined
 - rule: >-
     GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await
@@ -433,7 +433,7 @@
 - rule: LeftHandSideExpression_Await -> NewExpression_Await
   action: undefined
 - rule: LeftHandSideExpression_Await -> CallExpression_Await
-  action: undefined
+  action: nop
 - rule: LeftHandSideExpression_Await -> OptionalExpression_Await
   action: undefined
 - rule: AssignmentOperator -> MUL_ASSIGN
@@ -647,7 +647,7 @@
 - rule: CatchParameter -> BindingPattern
   action: undefined
 - rule: FormalParameters -> (empty)
-  action: undefined
+  action: handle_formal_parameters_empty
 - rule: FormalParameters -> FunctionRestParameter
   action: undefined
 - rule: FormalParameters -> FormalParameterList
@@ -656,10 +656,12 @@
   action: undefined
 - rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
   action: undefined
+- rule: _SCOPE_ -> (empty)
+  action: handle_scope
 - rule: FunctionBody -> FunctionStatementList
-  action: undefined
+  action: handle_function_body
 - rule: FormalParameters_Yield -> (empty)
-  action: undefined
+  action: handle_formal_parameters_empty
 - rule: FormalParameters_Yield -> FunctionRestParameter_Yield
   action: undefined
 - rule: FormalParameters_Yield -> FormalParameterList_Yield
@@ -673,7 +675,7 @@
 - rule: GeneratorBody -> FunctionBody_Yield
   action: undefined
 - rule: FormalParameters_Await -> (empty)
-  action: undefined
+  action: handle_formal_parameters_empty
 - rule: FormalParameters_Await -> FunctionRestParameter_Await
   action: undefined
 - rule: FormalParameters_Await -> FormalParameterList_Await
@@ -687,7 +689,7 @@
 - rule: AsyncFunctionBody -> FunctionBody_Await
   action: undefined
 - rule: FormalParameters_Yield_Await -> (empty)
-  action: undefined
+  action: handle_formal_parameters_empty
 - rule: FormalParameters_Yield_Await -> FunctionRestParameter_Yield_Await
   action: undefined
 - rule: FormalParameters_Yield_Await -> FormalParameterList_Yield_Await
@@ -838,8 +840,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN
-    FormalParameters RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+  action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN
     FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
@@ -885,13 +887,13 @@
 - rule: >-
     CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await
     Arguments_Await
-  action: undefined
+  action: handle_call_expression_or_async_arrow_head
 - rule: NewExpression_Await -> MemberExpression_Await
   action: undefined
 - rule: NewExpression_Await -> NEW NewExpression_Await
   action: undefined
 - rule: CallExpression_Await -> CoverCallExpressionAndAsyncArrowHead_Await
-  action: undefined
+  action: handle_call_expression
 - rule: CallExpression_Await -> SuperCall_Await
   action: undefined
 - rule: CallExpression_Await -> ImportCall_Await
@@ -978,7 +980,7 @@
 - rule: LeftHandSideExpression -> NewExpression
   action: nop
 - rule: LeftHandSideExpression -> CallExpression
-  action: undefined
+  action: nop
 - rule: LeftHandSideExpression -> OptionalExpression
   action: undefined
 - rule: Expression -> AssignmentExpression
@@ -1050,9 +1052,9 @@
 - rule: FormalParameterList -> FormalParameterList COMMA FormalParameter
   action: undefined
 - rule: FunctionStatementList -> (empty)
-  action: undefined
+  action: handle_empty_list
 - rule: FunctionStatementList -> StatementList_Return
-  action: undefined
+  action: nop
 - rule: FunctionRestParameter_Yield -> BindingRestElement_Yield
   action: undefined
 - rule: FormalParameterList_Yield -> FormalParameter_Yield
@@ -1062,7 +1064,7 @@
     FormalParameter_Yield
   action: undefined
 - rule: FunctionBody_Yield -> FunctionStatementList_Yield
-  action: undefined
+  action: handle_function_body
 - rule: FunctionRestParameter_Await -> BindingRestElement_Await
   action: undefined
 - rule: FormalParameterList_Await -> FormalParameter_Await
@@ -1072,7 +1074,7 @@
     FormalParameter_Await
   action: undefined
 - rule: FunctionBody_Await -> FunctionStatementList_Await
-  action: undefined
+  action: handle_function_body
 - rule: FunctionRestParameter_Yield_Await -> BindingRestElement_Yield_Await
   action: undefined
 - rule: FormalParameterList_Yield_Await -> FormalParameter_Yield_Await
@@ -1082,7 +1084,7 @@
     FormalParameter_Yield_Await
   action: undefined
 - rule: FunctionBody_Yield_Await -> FunctionStatementList_Yield_Await
-  action: undefined
+  action: handle_function_body
 - rule: ClassElementList -> ClassElement
   action: undefined
 - rule: ClassElementList -> ClassElementList ClassElement
@@ -1168,7 +1170,7 @@
 - rule: MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: Arguments_Await -> LPAREN RPAREN
-  action: undefined
+  action: handle_empty_list
 - rule: Arguments_Await -> LPAREN ArgumentList_Await RPAREN
   action: undefined
 - rule: Arguments_Await -> LPAREN ArgumentList_Await COMMA RPAREN
@@ -1202,9 +1204,9 @@
 - rule: OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: StatementList_Await -> StatementListItem_Await
-  action: undefined
+  action: handle_list_head
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
-  action: undefined
+  action: handle_list_item
 - rule: >-
     DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN
     Expression_In_Await RPAREN SEMICOLON
@@ -1376,13 +1378,13 @@
 - rule: ArrowParameters -> CoverParenthesizedExpressionAndArrowParameterList
   action: undefined
 - rule: CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments
-  action: undefined
+  action: handle_call_expression_or_async_arrow_head
 - rule: NewExpression -> MemberExpression
   action: nop
 - rule: NewExpression -> NEW NewExpression
   action: undefined
 - rule: CallExpression -> CoverCallExpressionAndAsyncArrowHead
-  action: undefined
+  action: handle_call_expression
 - rule: CallExpression -> SuperCall
   action: undefined
 - rule: CallExpression -> ImportCall
@@ -1448,9 +1450,9 @@
 - rule: FormalParameter -> BindingElement
   action: undefined
 - rule: StatementList_Return -> StatementListItem_Return
-  action: undefined
+  action: handle_list_head
 - rule: StatementList_Return -> StatementList_Return StatementListItem_Return
-  action: undefined
+  action: handle_list_item
 - rule: BindingRestElement_Yield -> ELLIPSIS BindingIdentifier_Yield
   action: undefined
 - rule: BindingRestElement_Yield -> ELLIPSIS BindingPattern_Yield
@@ -1458,9 +1460,9 @@
 - rule: FormalParameter_Yield -> BindingElement_Yield
   action: undefined
 - rule: FunctionStatementList_Yield -> (empty)
-  action: undefined
+  action: handle_empty_list
 - rule: FunctionStatementList_Yield -> StatementList_Yield_Return
-  action: undefined
+  action: nop
 - rule: BindingRestElement_Await -> ELLIPSIS BindingIdentifier_Await
   action: undefined
 - rule: BindingRestElement_Await -> ELLIPSIS BindingPattern_Await
@@ -1468,9 +1470,9 @@
 - rule: FormalParameter_Await -> BindingElement_Await
   action: undefined
 - rule: FunctionStatementList_Await -> (empty)
-  action: undefined
+  action: handle_empty_list
 - rule: FunctionStatementList_Await -> StatementList_Await_Return
-  action: undefined
+  action: nop
 - rule: BindingRestElement_Yield_Await -> ELLIPSIS BindingIdentifier_Yield_Await
   action: undefined
 - rule: BindingRestElement_Yield_Await -> ELLIPSIS BindingPattern_Yield_Await
@@ -1478,9 +1480,9 @@
 - rule: FormalParameter_Yield_Await -> BindingElement_Yield_Await
   action: undefined
 - rule: FunctionStatementList_Yield_Await -> (empty)
-  action: undefined
+  action: handle_empty_list
 - rule: FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: ClassElement -> MethodDefinition
   action: undefined
 - rule: ClassElement -> STATIC MethodDefinition
@@ -1702,7 +1704,7 @@
 - rule: MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: Arguments -> LPAREN RPAREN
-  action: undefined
+  action: handle_empty_list
 - rule: Arguments -> LPAREN ArgumentList RPAREN
   action: undefined
 - rule: Arguments -> LPAREN ArgumentList COMMA RPAREN
@@ -1769,9 +1771,9 @@
 - rule: BindingElement -> BindingPattern Initializer_In
   action: undefined
 - rule: StatementListItem_Return -> Statement_Return
-  action: undefined
+  action: nop
 - rule: StatementListItem_Return -> Declaration
-  action: undefined
+  action: nop
 - rule: BindingIdentifier_Yield -> Identifier
   action: syntax_error_if_arguments_or_eval_or_yield
 - rule: BindingIdentifier_Yield -> YIELD
@@ -1789,11 +1791,11 @@
 - rule: BindingElement_Yield -> BindingPattern_Yield Initializer_In_Yield
   action: undefined
 - rule: StatementList_Yield_Return -> StatementListItem_Yield_Return
-  action: undefined
+  action: handle_list_head
 - rule: >-
     StatementList_Yield_Return -> StatementList_Yield_Return
     StatementListItem_Yield_Return
-  action: undefined
+  action: handle_list_item
 - rule: BindingElement_Await -> SingleNameBinding_Await
   action: undefined
 - rule: BindingElement_Await -> BindingPattern_Await
@@ -1801,11 +1803,11 @@
 - rule: BindingElement_Await -> BindingPattern_Await Initializer_In_Await
   action: undefined
 - rule: StatementList_Await_Return -> StatementListItem_Await_Return
-  action: undefined
+  action: handle_list_head
 - rule: >-
     StatementList_Await_Return -> StatementList_Await_Return
     StatementListItem_Await_Return
-  action: undefined
+  action: handle_list_item
 - rule: BindingIdentifier_Yield_Await -> Identifier
   action: syntax_error_if_arguments_or_eval_or_yield_or_await
 - rule: BindingIdentifier_Yield_Await -> YIELD
@@ -1825,11 +1827,11 @@
     Initializer_In_Yield_Await
   action: undefined
 - rule: StatementList_Yield_Await_Return -> StatementListItem_Yield_Await_Return
-  action: undefined
+  action: handle_list_head
 - rule: >-
     StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return
     StatementListItem_Yield_Await_Return
-  action: undefined
+  action: handle_list_item
 - rule: >-
     MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN
     LBRACE FunctionBody RBRACE
@@ -2113,7 +2115,7 @@
 - rule: Statement_Return -> BreakStatement
   action: undefined
 - rule: Statement_Return -> ReturnStatement
-  action: undefined
+  action: nop
 - rule: Statement_Return -> WithStatement_Return
   action: undefined
 - rule: Statement_Return -> LabelledStatement_Return
@@ -2167,17 +2169,17 @@
 - rule: Initializer_In_Yield -> ASSIGN AssignmentExpression_In_Yield
   action: undefined
 - rule: StatementListItem_Yield_Return -> Statement_Yield_Return
-  action: undefined
+  action: nop
 - rule: StatementListItem_Yield_Return -> Declaration_Yield
-  action: undefined
+  action: nop
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await
   action: undefined
 - rule: SingleNameBinding_Await -> BindingIdentifier_Await Initializer_In_Await
   action: undefined
 - rule: StatementListItem_Await_Return -> Statement_Await_Return
-  action: undefined
+  action: nop
 - rule: StatementListItem_Await_Return -> Declaration_Await
-  action: undefined
+  action: nop
 - rule: ObjectBindingPattern_Yield_Await -> LBRACE RBRACE
   action: undefined
 - rule: >-
@@ -2237,9 +2239,9 @@
 - rule: Initializer_In_Yield_Await -> ASSIGN AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: StatementListItem_Yield_Await_Return -> Statement_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: StatementListItem_Yield_Await_Return -> Declaration_Yield_Await
-  action: undefined
+  action: nop
 - rule: ClassElementName -> PropertyName
   action: undefined
 - rule: ClassElementName -> PRIVATE_IDENTIFIER
@@ -2431,11 +2433,11 @@
 - rule: BreakableStatement_Return -> SwitchStatement_Return
   action: undefined
 - rule: ReturnStatement -> RETURN SEMICOLON
-  action: undefined
+  action: handle_return_statement_0
 - rule: >-
     ReturnStatement -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In
     SEMICOLON
-  action: undefined
+  action: handle_return_statement_1
 - rule: WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
   action: undefined
 - rule: LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
@@ -2505,7 +2507,7 @@
 - rule: Statement_Yield_Return -> BreakStatement_Yield
   action: undefined
 - rule: Statement_Yield_Return -> ReturnStatement_Yield
-  action: undefined
+  action: nop
 - rule: Statement_Yield_Return -> WithStatement_Yield_Return
   action: undefined
 - rule: Statement_Yield_Return -> LabelledStatement_Yield_Return
@@ -2517,7 +2519,7 @@
 - rule: Statement_Yield_Return -> DebuggerStatement
   action: undefined
 - rule: Declaration_Yield -> HoistableDeclaration_Yield
-  action: undefined
+  action: nop
 - rule: Declaration_Yield -> ClassDeclaration_Yield
   action: undefined
 - rule: Declaration_Yield -> LexicalDeclaration_In_Yield
@@ -2539,7 +2541,7 @@
 - rule: Statement_Await_Return -> BreakStatement_Await
   action: undefined
 - rule: Statement_Await_Return -> ReturnStatement_Await
-  action: undefined
+  action: nop
 - rule: Statement_Await_Return -> WithStatement_Await_Return
   action: undefined
 - rule: Statement_Await_Return -> LabelledStatement_Await_Return
@@ -2609,7 +2611,7 @@
 - rule: Statement_Yield_Await_Return -> BreakStatement_Yield_Await
   action: undefined
 - rule: Statement_Yield_Await_Return -> ReturnStatement_Yield_Await
-  action: undefined
+  action: nop
 - rule: Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
   action: undefined
 - rule: Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return
@@ -2621,7 +2623,7 @@
 - rule: Statement_Yield_Await_Return -> DebuggerStatement
   action: undefined
 - rule: Declaration_Yield_Await -> HoistableDeclaration_Yield_Await
-  action: undefined
+  action: nop
 - rule: Declaration_Yield_Await -> ClassDeclaration_Yield_Await
   action: undefined
 - rule: Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await
@@ -2801,7 +2803,7 @@
 - rule: LeftHandSideExpression_Yield -> NewExpression_Yield
   action: undefined
 - rule: LeftHandSideExpression_Yield -> CallExpression_Yield
-  action: undefined
+  action: nop
 - rule: LeftHandSideExpression_Yield -> OptionalExpression_Yield
   action: undefined
 - rule: BlockStatement_Yield_Return -> Block_Yield_Return
@@ -2837,11 +2839,11 @@
     LabelIdentifier_Yield SEMICOLON
   action: undefined
 - rule: ReturnStatement_Yield -> RETURN SEMICOLON
-  action: undefined
+  action: handle_return_statement_0
 - rule: >-
     ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Yield SEMICOLON
-  action: undefined
+  action: handle_return_statement_1
 - rule: >-
     WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN
     Statement_Yield_Return
@@ -2863,7 +2865,7 @@
     Finally_Yield_Return
   action: undefined
 - rule: HoistableDeclaration_Yield -> FunctionDeclaration_Yield
-  action: undefined
+  action: nop
 - rule: HoistableDeclaration_Yield -> GeneratorDeclaration_Yield
   action: undefined
 - rule: HoistableDeclaration_Yield -> AsyncFunctionDeclaration_Yield
@@ -2891,11 +2893,11 @@
 - rule: BreakableStatement_Await_Return -> SwitchStatement_Await_Return
   action: undefined
 - rule: ReturnStatement_Await -> RETURN SEMICOLON
-  action: undefined
+  action: handle_return_statement_0
 - rule: >-
     ReturnStatement_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Await SEMICOLON
-  action: undefined
+  action: handle_return_statement_1
 - rule: >-
     WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN
     Statement_Await_Return
@@ -2959,7 +2961,7 @@
 - rule: LeftHandSideExpression_Yield_Await -> NewExpression_Yield_Await
   action: undefined
 - rule: LeftHandSideExpression_Yield_Await -> CallExpression_Yield_Await
-  action: undefined
+  action: nop
 - rule: LeftHandSideExpression_Yield_Await -> OptionalExpression_Yield_Await
   action: undefined
 - rule: BlockStatement_Yield_Await_Return -> Block_Yield_Await_Return
@@ -3000,11 +3002,11 @@
     LabelIdentifier_Yield_Await SEMICOLON
   action: undefined
 - rule: ReturnStatement_Yield_Await -> RETURN SEMICOLON
-  action: undefined
+  action: handle_return_statement_0
 - rule: >-
     ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE)
     Expression_In_Yield_Await SEMICOLON
-  action: undefined
+  action: handle_return_statement_1
 - rule: >-
     WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await
     RPAREN Statement_Yield_Await_Return
@@ -3030,7 +3032,7 @@
     Catch_Yield_Await_Return Finally_Yield_Await_Return
   action: undefined
 - rule: HoistableDeclaration_Yield_Await -> FunctionDeclaration_Yield_Await
-  action: undefined
+  action: nop
 - rule: HoistableDeclaration_Yield_Await -> GeneratorDeclaration_Yield_Await
   action: undefined
 - rule: HoistableDeclaration_Yield_Await -> AsyncFunctionDeclaration_Yield_Await
@@ -3258,13 +3260,13 @@
 - rule: >-
     CoverCallExpressionAndAsyncArrowHead_Yield -> MemberExpression_Yield
     Arguments_Yield
-  action: undefined
+  action: handle_call_expression_or_async_arrow_head
 - rule: NewExpression_Yield -> MemberExpression_Yield
   action: undefined
 - rule: NewExpression_Yield -> NEW NewExpression_Yield
   action: undefined
 - rule: CallExpression_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
-  action: undefined
+  action: handle_call_expression
 - rule: CallExpression_Yield -> SuperCall_Yield
   action: undefined
 - rule: CallExpression_Yield -> ImportCall_Yield
@@ -3333,8 +3335,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN
-    FormalParameters RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+  action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN
     FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
@@ -3406,7 +3408,7 @@
 - rule: >-
     CoverCallExpressionAndAsyncArrowHead_Yield_Await ->
     MemberExpression_Yield_Await Arguments_Yield_Await
-  action: undefined
+  action: handle_call_expression_or_async_arrow_head
 - rule: NewExpression_Yield_Await -> MemberExpression_Yield_Await
   action: undefined
 - rule: NewExpression_Yield_Await -> NEW NewExpression_Yield_Await
@@ -3496,8 +3498,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await
-    LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+  action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration_Yield_Await -> FUNCTION MUL
     BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE
@@ -3648,7 +3650,7 @@
 - rule: MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: Arguments_Yield -> LPAREN RPAREN
-  action: undefined
+  action: handle_empty_list
 - rule: Arguments_Yield -> LPAREN ArgumentList_Yield RPAREN
   action: undefined
 - rule: Arguments_Yield -> LPAREN ArgumentList_Yield COMMA RPAREN
@@ -4024,7 +4026,7 @@
     PRIVATE_IDENTIFIER
   action: undefined
 - rule: Arguments_Yield_Await -> LPAREN RPAREN
-  action: undefined
+  action: handle_empty_list
 - rule: Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await RPAREN
   action: undefined
 - rule: Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await COMMA RPAREN

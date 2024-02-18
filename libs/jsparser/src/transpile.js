@@ -166,6 +166,7 @@ class Transpiler {
         // CPEAAPL cannot be replaced with refined production rules.  You will see many
         // conflicts in the LALR(1) parsing table generation when you actually try this.
         //rewriteCPEAAPL,
+        insertActionsForScopes,
         expandOptionals,
         expandParameterizedRules,
         translateRules,
@@ -521,6 +522,26 @@ function rewriteCPEAAPL(rules) {
       break;
     }
   }
+
+  return rules;
+}
+
+function insertActionsForScopes(rules) {
+  log.debug('Inserting actions for scopes...');
+
+  let rule;
+
+  rule = rules.find((rule) => rule.name === 'FunctionDeclaration[Yield, Await, Default]');
+  assert(rule !== undefined);
+  for (let i = 0; i < rule.values.length; ++i) {
+    const [head, tail] = rule.values[i].split('`{`');
+    rule.values[i] = `${head} \`{\` _SCOPE_ ${tail}`;
+  }
+
+  rules.push({
+    name: '_SCOPE_',
+    values: ['[empty]'],
+  });
 
   return rules;
 }
