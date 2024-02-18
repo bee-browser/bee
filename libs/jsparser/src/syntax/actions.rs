@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2095] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2096] = [
         // Script -> (empty)
         Action::Undefined,
         // Script -> ScriptBody
@@ -34,9 +34,9 @@ where
         // ModuleBody -> ModuleItemList
         Action::Undefined,
         // StatementList -> StatementListItem
-        Action::Nop,
+        Action::Invoke(Self::handle_list_head, "handle_list_head"),
         // StatementList -> StatementList StatementListItem
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_item, "handle_list_item"),
         // ModuleItemList -> ModuleItem
         Action::Undefined,
         // ModuleItemList -> ModuleItemList ModuleItem
@@ -44,7 +44,7 @@ where
         // StatementListItem -> Statement
         Action::Nop,
         // StatementListItem -> Declaration
-        Action::Undefined,
+        Action::Nop,
         // ModuleItem -> ImportDeclaration
         Action::Undefined,
         // ModuleItem -> ExportDeclaration
@@ -78,7 +78,7 @@ where
         // Statement -> DebuggerStatement
         Action::Undefined,
         // Declaration -> HoistableDeclaration
-        Action::Undefined,
+        Action::Nop,
         // Declaration -> ClassDeclaration
         Action::Undefined,
         // Declaration -> LexicalDeclaration_In
@@ -102,9 +102,9 @@ where
         // ExportDeclaration -> EXPORT DEFAULT (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMICOLON
         Action::Undefined,
         // StatementListItem_Await -> Statement_Await
-        Action::Undefined,
+        Action::Nop,
         // StatementListItem_Await -> Declaration_Await
-        Action::Undefined,
+        Action::Nop,
         // BlockStatement -> Block
         Action::Undefined,
         // VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
@@ -147,7 +147,7 @@ where
         // DebuggerStatement -> DEBUGGER SEMICOLON
         Action::Undefined,
         // HoistableDeclaration -> FunctionDeclaration
-        Action::Undefined,
+        Action::Nop,
         // HoistableDeclaration -> GeneratorDeclaration
         Action::Undefined,
         // HoistableDeclaration -> AsyncFunctionDeclaration
@@ -189,13 +189,13 @@ where
         // VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMICOLON
         Action::Undefined,
         // Declaration_Await -> HoistableDeclaration_Await
-        Action::Undefined,
+        Action::Nop,
         // Declaration_Await -> ClassDeclaration_Await
         Action::Undefined,
         // Declaration_Await -> LexicalDeclaration_In_Await
         Action::Undefined,
         // HoistableDeclaration_Await_Default -> FunctionDeclaration_Await_Default
-        Action::Undefined,
+        Action::Nop,
         // HoistableDeclaration_Await_Default -> GeneratorDeclaration_Await_Default
         Action::Undefined,
         // HoistableDeclaration_Await_Default -> AsyncFunctionDeclaration_Await_Default
@@ -289,8 +289,11 @@ where
         Action::Undefined,
         // Finally -> FINALLY Block
         Action::Undefined,
-        // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-        Action::Undefined,
+        // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+        Action::Invoke(
+            Self::handle_function_declaration,
+            "handle_function_declaration",
+        ),
         // GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
         // AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
@@ -344,7 +347,7 @@ where
         // VariableDeclarationList_In_Await -> VariableDeclarationList_In_Await COMMA VariableDeclaration_In_Await
         Action::Undefined,
         // HoistableDeclaration_Await -> FunctionDeclaration_Await
-        Action::Undefined,
+        Action::Nop,
         // HoistableDeclaration_Await -> GeneratorDeclaration_Await
         Action::Undefined,
         // HoistableDeclaration_Await -> AsyncFunctionDeclaration_Await
@@ -357,9 +360,12 @@ where
         Action::Undefined,
         // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
         Action::Undefined,
-        // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-        Action::Undefined,
-        // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+        // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+        Action::Invoke(
+            Self::handle_function_declaration,
+            "handle_function_declaration",
+        ),
+        // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
         Action::Undefined,
         // GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -406,7 +412,7 @@ where
         // LeftHandSideExpression_Await -> NewExpression_Await
         Action::Undefined,
         // LeftHandSideExpression_Await -> CallExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // LeftHandSideExpression_Await -> OptionalExpression_Await
         Action::Undefined,
         // AssignmentOperator -> MUL_ASSIGN
@@ -554,7 +560,10 @@ where
         // CatchParameter -> BindingPattern
         Action::Undefined,
         // FormalParameters -> (empty)
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_formal_parameters_empty,
+            "handle_formal_parameters_empty",
+        ),
         // FormalParameters -> FunctionRestParameter
         Action::Undefined,
         // FormalParameters -> FormalParameterList
@@ -563,10 +572,15 @@ where
         Action::Undefined,
         // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
         Action::Undefined,
+        // _SCOPE_ -> (empty)
+        Action::Invoke(Self::handle_scope, "handle_scope"),
         // FunctionBody -> FunctionStatementList
-        Action::Undefined,
+        Action::Invoke(Self::handle_function_body, "handle_function_body"),
         // FormalParameters_Yield -> (empty)
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_formal_parameters_empty,
+            "handle_formal_parameters_empty",
+        ),
         // FormalParameters_Yield -> FunctionRestParameter_Yield
         Action::Undefined,
         // FormalParameters_Yield -> FormalParameterList_Yield
@@ -578,7 +592,10 @@ where
         // GeneratorBody -> FunctionBody_Yield
         Action::Undefined,
         // FormalParameters_Await -> (empty)
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_formal_parameters_empty,
+            "handle_formal_parameters_empty",
+        ),
         // FormalParameters_Await -> FunctionRestParameter_Await
         Action::Undefined,
         // FormalParameters_Await -> FormalParameterList_Await
@@ -590,7 +607,10 @@ where
         // AsyncFunctionBody -> FunctionBody_Await
         Action::Undefined,
         // FormalParameters_Yield_Await -> (empty)
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_formal_parameters_empty,
+            "handle_formal_parameters_empty",
+        ),
         // FormalParameters_Yield_Await -> FunctionRestParameter_Yield_Await
         Action::Undefined,
         // FormalParameters_Yield_Await -> FormalParameterList_Yield_Await
@@ -737,8 +757,11 @@ where
         Action::Undefined,
         // VariableDeclaration_In_Await -> BindingPattern_Await Initializer_In_Await
         Action::Undefined,
-        // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-        Action::Undefined,
+        // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+        Action::Invoke(
+            Self::handle_function_declaration,
+            "handle_function_declaration",
+        ),
         // GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
         // AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
@@ -772,13 +795,16 @@ where
         // AsyncConciseBody_In -> LBRACE AsyncFunctionBody RBRACE
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_call_expression_or_async_arrow_head,
+            "handle_call_expression_or_async_arrow_head",
+        ),
         // NewExpression_Await -> MemberExpression_Await
         Action::Undefined,
         // NewExpression_Await -> NEW NewExpression_Await
         Action::Undefined,
         // CallExpression_Await -> CoverCallExpressionAndAsyncArrowHead_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_call_expression, "handle_call_expression"),
         // CallExpression_Await -> SuperCall_Await
         Action::Undefined,
         // CallExpression_Await -> ImportCall_Await
@@ -853,7 +879,7 @@ where
         // LeftHandSideExpression -> NewExpression
         Action::Nop,
         // LeftHandSideExpression -> CallExpression
-        Action::Undefined,
+        Action::Nop,
         // LeftHandSideExpression -> OptionalExpression
         Action::Undefined,
         // Expression -> AssignmentExpression
@@ -952,9 +978,9 @@ where
         // FormalParameterList -> FormalParameterList COMMA FormalParameter
         Action::Undefined,
         // FunctionStatementList -> (empty)
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // FunctionStatementList -> StatementList_Return
-        Action::Undefined,
+        Action::Nop,
         // FunctionRestParameter_Yield -> BindingRestElement_Yield
         Action::Undefined,
         // FormalParameterList_Yield -> FormalParameter_Yield
@@ -962,7 +988,7 @@ where
         // FormalParameterList_Yield -> FormalParameterList_Yield COMMA FormalParameter_Yield
         Action::Undefined,
         // FunctionBody_Yield -> FunctionStatementList_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_function_body, "handle_function_body"),
         // FunctionRestParameter_Await -> BindingRestElement_Await
         Action::Undefined,
         // FormalParameterList_Await -> FormalParameter_Await
@@ -970,7 +996,7 @@ where
         // FormalParameterList_Await -> FormalParameterList_Await COMMA FormalParameter_Await
         Action::Undefined,
         // FunctionBody_Await -> FunctionStatementList_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_function_body, "handle_function_body"),
         // FunctionRestParameter_Yield_Await -> BindingRestElement_Yield_Await
         Action::Undefined,
         // FormalParameterList_Yield_Await -> FormalParameter_Yield_Await
@@ -978,7 +1004,7 @@ where
         // FormalParameterList_Yield_Await -> FormalParameterList_Yield_Await COMMA FormalParameter_Yield_Await
         Action::Undefined,
         // FunctionBody_Yield_Await -> FunctionStatementList_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_function_body, "handle_function_body"),
         // ClassElementList -> ClassElement
         Action::Undefined,
         // ClassElementList -> ClassElementList ClassElement
@@ -1062,7 +1088,7 @@ where
         // MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments_Await -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // Arguments_Await -> LPAREN ArgumentList_Await RPAREN
         Action::Undefined,
         // Arguments_Await -> LPAREN ArgumentList_Await COMMA RPAREN
@@ -1096,9 +1122,9 @@ where
         // OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // StatementList_Await -> StatementListItem_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_head, "handle_list_head"),
         // StatementList_Await -> StatementList_Await StatementListItem_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_item, "handle_list_item"),
         // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
         Action::Undefined,
         // WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
@@ -1206,13 +1232,16 @@ where
         // ArrowParameters -> CoverParenthesizedExpressionAndArrowParameterList
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_call_expression_or_async_arrow_head,
+            "handle_call_expression_or_async_arrow_head",
+        ),
         // NewExpression -> MemberExpression
         Action::Nop,
         // NewExpression -> NEW NewExpression
         Action::Undefined,
         // CallExpression -> CoverCallExpressionAndAsyncArrowHead
-        Action::Undefined,
+        Action::Invoke(Self::handle_call_expression, "handle_call_expression"),
         // CallExpression -> SuperCall
         Action::Undefined,
         // CallExpression -> ImportCall
@@ -1270,9 +1299,9 @@ where
         // FormalParameter -> BindingElement
         Action::Undefined,
         // StatementList_Return -> StatementListItem_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_head, "handle_list_head"),
         // StatementList_Return -> StatementList_Return StatementListItem_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_item, "handle_list_item"),
         // BindingRestElement_Yield -> ELLIPSIS BindingIdentifier_Yield
         Action::Undefined,
         // BindingRestElement_Yield -> ELLIPSIS BindingPattern_Yield
@@ -1280,9 +1309,9 @@ where
         // FormalParameter_Yield -> BindingElement_Yield
         Action::Undefined,
         // FunctionStatementList_Yield -> (empty)
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // FunctionStatementList_Yield -> StatementList_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // BindingRestElement_Await -> ELLIPSIS BindingIdentifier_Await
         Action::Undefined,
         // BindingRestElement_Await -> ELLIPSIS BindingPattern_Await
@@ -1290,9 +1319,9 @@ where
         // FormalParameter_Await -> BindingElement_Await
         Action::Undefined,
         // FunctionStatementList_Await -> (empty)
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // FunctionStatementList_Await -> StatementList_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // BindingRestElement_Yield_Await -> ELLIPSIS BindingIdentifier_Yield_Await
         Action::Undefined,
         // BindingRestElement_Yield_Await -> ELLIPSIS BindingPattern_Yield_Await
@@ -1300,9 +1329,9 @@ where
         // FormalParameter_Yield_Await -> BindingElement_Yield_Await
         Action::Undefined,
         // FunctionStatementList_Yield_Await -> (empty)
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // ClassElement -> MethodDefinition
         Action::Undefined,
         // ClassElement -> STATIC MethodDefinition
@@ -1508,7 +1537,7 @@ where
         // MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // Arguments -> LPAREN ArgumentList RPAREN
         Action::Undefined,
         // Arguments -> LPAREN ArgumentList COMMA RPAREN
@@ -1566,9 +1595,9 @@ where
         // BindingElement -> BindingPattern Initializer_In
         Action::Undefined,
         // StatementListItem_Return -> Statement_Return
-        Action::Undefined,
+        Action::Nop,
         // StatementListItem_Return -> Declaration
-        Action::Undefined,
+        Action::Nop,
         // BindingIdentifier_Yield -> Identifier
         Action::Invoke(
             Self::syntax_error_if_arguments_or_eval_or_yield,
@@ -1589,9 +1618,9 @@ where
         // BindingElement_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
         // StatementList_Yield_Return -> StatementListItem_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_head, "handle_list_head"),
         // StatementList_Yield_Return -> StatementList_Yield_Return StatementListItem_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_item, "handle_list_item"),
         // BindingElement_Await -> SingleNameBinding_Await
         Action::Undefined,
         // BindingElement_Await -> BindingPattern_Await
@@ -1599,9 +1628,9 @@ where
         // BindingElement_Await -> BindingPattern_Await Initializer_In_Await
         Action::Undefined,
         // StatementList_Await_Return -> StatementListItem_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_head, "handle_list_head"),
         // StatementList_Await_Return -> StatementList_Await_Return StatementListItem_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_item, "handle_list_item"),
         // BindingIdentifier_Yield_Await -> Identifier
         Action::Invoke(
             Self::syntax_error_if_arguments_or_eval_or_yield_or_await,
@@ -1622,9 +1651,9 @@ where
         // BindingElement_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
         // StatementList_Yield_Await_Return -> StatementListItem_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_head, "handle_list_head"),
         // StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return StatementListItem_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_list_item, "handle_list_item"),
         // MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
         Action::Undefined,
         // MethodDefinition -> GeneratorMethod
@@ -1859,7 +1888,7 @@ where
         // Statement_Return -> BreakStatement
         Action::Undefined,
         // Statement_Return -> ReturnStatement
-        Action::Undefined,
+        Action::Nop,
         // Statement_Return -> WithStatement_Return
         Action::Undefined,
         // Statement_Return -> LabelledStatement_Return
@@ -1905,17 +1934,17 @@ where
         // Initializer_In_Yield -> ASSIGN AssignmentExpression_In_Yield
         Action::Undefined,
         // StatementListItem_Yield_Return -> Statement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // StatementListItem_Yield_Return -> Declaration_Yield
-        Action::Undefined,
+        Action::Nop,
         // SingleNameBinding_Await -> BindingIdentifier_Await
         Action::Undefined,
         // SingleNameBinding_Await -> BindingIdentifier_Await Initializer_In_Await
         Action::Undefined,
         // StatementListItem_Await_Return -> Statement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // StatementListItem_Await_Return -> Declaration_Await
-        Action::Undefined,
+        Action::Nop,
         // ObjectBindingPattern_Yield_Await -> LBRACE RBRACE
         Action::Undefined,
         // ObjectBindingPattern_Yield_Await -> LBRACE BindingRestProperty_Yield_Await RBRACE
@@ -1951,9 +1980,9 @@ where
         // Initializer_In_Yield_Await -> ASSIGN AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // StatementListItem_Yield_Await_Return -> Statement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // StatementListItem_Yield_Await_Return -> Declaration_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ClassElementName -> PropertyName
         Action::Undefined,
         // ClassElementName -> PRIVATE_IDENTIFIER
@@ -2108,9 +2137,9 @@ where
         // BreakableStatement_Return -> SwitchStatement_Return
         Action::Undefined,
         // ReturnStatement -> RETURN SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
         // ReturnStatement -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
         // WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
         Action::Undefined,
         // LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
@@ -2166,7 +2195,7 @@ where
         // Statement_Yield_Return -> BreakStatement_Yield
         Action::Undefined,
         // Statement_Yield_Return -> ReturnStatement_Yield
-        Action::Undefined,
+        Action::Nop,
         // Statement_Yield_Return -> WithStatement_Yield_Return
         Action::Undefined,
         // Statement_Yield_Return -> LabelledStatement_Yield_Return
@@ -2178,7 +2207,7 @@ where
         // Statement_Yield_Return -> DebuggerStatement
         Action::Undefined,
         // Declaration_Yield -> HoistableDeclaration_Yield
-        Action::Undefined,
+        Action::Nop,
         // Declaration_Yield -> ClassDeclaration_Yield
         Action::Undefined,
         // Declaration_Yield -> LexicalDeclaration_In_Yield
@@ -2200,7 +2229,7 @@ where
         // Statement_Await_Return -> BreakStatement_Await
         Action::Undefined,
         // Statement_Await_Return -> ReturnStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // Statement_Await_Return -> WithStatement_Await_Return
         Action::Undefined,
         // Statement_Await_Return -> LabelledStatement_Await_Return
@@ -2256,7 +2285,7 @@ where
         // Statement_Yield_Await_Return -> BreakStatement_Yield_Await
         Action::Undefined,
         // Statement_Yield_Await_Return -> ReturnStatement_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
         Action::Undefined,
         // Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return
@@ -2268,7 +2297,7 @@ where
         // Statement_Yield_Await_Return -> DebuggerStatement
         Action::Undefined,
         // Declaration_Yield_Await -> HoistableDeclaration_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // Declaration_Yield_Await -> ClassDeclaration_Yield_Await
         Action::Undefined,
         // Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await
@@ -2424,7 +2453,7 @@ where
         // LeftHandSideExpression_Yield -> NewExpression_Yield
         Action::Undefined,
         // LeftHandSideExpression_Yield -> CallExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // LeftHandSideExpression_Yield -> OptionalExpression_Yield
         Action::Undefined,
         // BlockStatement_Yield_Return -> Block_Yield_Return
@@ -2450,9 +2479,9 @@ where
         // BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
         Action::Undefined,
         // ReturnStatement_Yield -> RETURN SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
         // ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
         // WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
         // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
@@ -2466,7 +2495,7 @@ where
         // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return Finally_Yield_Return
         Action::Undefined,
         // HoistableDeclaration_Yield -> FunctionDeclaration_Yield
-        Action::Undefined,
+        Action::Nop,
         // HoistableDeclaration_Yield -> GeneratorDeclaration_Yield
         Action::Undefined,
         // HoistableDeclaration_Yield -> AsyncFunctionDeclaration_Yield
@@ -2490,9 +2519,9 @@ where
         // BreakableStatement_Await_Return -> SwitchStatement_Await_Return
         Action::Undefined,
         // ReturnStatement_Await -> RETURN SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
         // ReturnStatement_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
         // WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
         // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
@@ -2530,7 +2559,7 @@ where
         // LeftHandSideExpression_Yield_Await -> NewExpression_Yield_Await
         Action::Undefined,
         // LeftHandSideExpression_Yield_Await -> CallExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // LeftHandSideExpression_Yield_Await -> OptionalExpression_Yield_Await
         Action::Undefined,
         // BlockStatement_Yield_Await_Return -> Block_Yield_Await_Return
@@ -2556,9 +2585,9 @@ where
         // BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
         Action::Undefined,
         // ReturnStatement_Yield_Await -> RETURN SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
         // ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
         // WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
         // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON LabelledItem_Yield_Await_Return
@@ -2572,7 +2601,7 @@ where
         // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return Finally_Yield_Await_Return
         Action::Undefined,
         // HoistableDeclaration_Yield_Await -> FunctionDeclaration_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // HoistableDeclaration_Yield_Await -> GeneratorDeclaration_Yield_Await
         Action::Undefined,
         // HoistableDeclaration_Yield_Await -> AsyncFunctionDeclaration_Yield_Await
@@ -2726,13 +2755,16 @@ where
         // AsyncArrowBindingIdentifier_Yield -> BindingIdentifier_Yield_Await
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead_Yield -> MemberExpression_Yield Arguments_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_call_expression_or_async_arrow_head,
+            "handle_call_expression_or_async_arrow_head",
+        ),
         // NewExpression_Yield -> MemberExpression_Yield
         Action::Undefined,
         // NewExpression_Yield -> NEW NewExpression_Yield
         Action::Undefined,
         // CallExpression_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_call_expression, "handle_call_expression"),
         // CallExpression_Yield -> SuperCall_Yield
         Action::Undefined,
         // CallExpression_Yield -> ImportCall_Yield
@@ -2789,8 +2821,11 @@ where
         Action::Undefined,
         // Finally_Yield_Return -> FINALLY Block_Yield_Return
         Action::Undefined,
-        // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-        Action::Undefined,
+        // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+        Action::Invoke(
+            Self::handle_function_declaration,
+            "handle_function_declaration",
+        ),
         // GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
         // AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
@@ -2846,7 +2881,10 @@ where
         // ArrowParameters_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead_Yield_Await -> MemberExpression_Yield_Await Arguments_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_call_expression_or_async_arrow_head,
+            "handle_call_expression_or_async_arrow_head",
+        ),
         // NewExpression_Yield_Await -> MemberExpression_Yield_Await
         Action::Undefined,
         // NewExpression_Yield_Await -> NEW NewExpression_Yield_Await
@@ -2910,8 +2948,11 @@ where
         Action::Undefined,
         // Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
         Action::Undefined,
-        // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-        Action::Undefined,
+        // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+        Action::Invoke(
+            Self::handle_function_declaration,
+            "handle_function_declaration",
+        ),
         // GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
         // AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
@@ -3041,7 +3082,7 @@ where
         // MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments_Yield -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // Arguments_Yield -> LPAREN ArgumentList_Yield RPAREN
         Action::Undefined,
         // Arguments_Yield -> LPAREN ArgumentList_Yield COMMA RPAREN
@@ -3277,7 +3318,7 @@ where
         // MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments_Yield_Await -> LPAREN RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await RPAREN
         Action::Undefined,
         // Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await COMMA RPAREN

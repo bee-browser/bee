@@ -6,6 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
+indexmap = "2.2.2"
 jsparser = { path = "../../libs/jsparser", features = ["location"] }
 logging = { path = "../../libs/logging" }
 

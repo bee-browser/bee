@@ -15697,6 +15697,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15715,6 +15717,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15730,6 +15734,8 @@
       data: RPAREN
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token
@@ -15749,6 +15755,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15767,6 +15775,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15782,6 +15792,8 @@
       data: RPAREN
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token
@@ -15801,6 +15813,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15819,6 +15833,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15834,6 +15850,8 @@
       data: RPAREN
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token
@@ -15853,6 +15871,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15871,6 +15891,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15886,6 +15908,8 @@
       data: RPAREN
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token
@@ -18800,6 +18824,9 @@
       data: AS
     - type: non-terminal
       data: ModuleExportName
+- name: _SCOPE_
+  production:
+    - type: empty
 - name: NullLiteral
   production:
     - type: token

@@ -36,8 +36,13 @@ pub trait SemanticHandler<'s> {
     fn handle_ne_expression(&mut self) -> Result<(), Error>;
     fn handle_strict_eq_expression(&mut self) -> Result<(), Error>;
     fn handle_strict_ne_expression(&mut self) -> Result<(), Error>;
+    fn handle_call_expression(&mut self) -> Result<(), Error>;
     fn handle_expression_statement(&mut self) -> Result<(), Error>;
+    fn handle_return_statement(&mut self, n: usize) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
+    fn handle_formal_parameters(&mut self, nargs: usize) -> Result<(), Error>;
+    fn handle_scope(&mut self) -> Result<(), Error>;
+    fn handle_function_declaration(&mut self) -> Result<(), Error>;
 }
 
 pub struct Processor<'s, H> {
@@ -67,12 +72,17 @@ enum Item<'s> {
     StrictEquality,
     StrictInequality,
     Cpeaapl,
+    CallExpressionOrAsyncArrowHead,
     MaybeArrowFormalParameters,
     MaybeArrowFormalParametersEmpty,
     MaybeArrowFormalParametersRestParameter,
     MaybeArrowFormalParametersRestPattern,
     MaybeArrowFormalParametersWithRestParameter,
     MaybeArrowFormalParametersWithRestPattern,
+    FormalParameters(usize),
+    EmptyList,
+    ListHead,
+    ListItem,
 }
 
 #[derive(Debug)]
@@ -324,31 +334,26 @@ where
         }
     }
 
-    // AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
     fn handle_addition_expression(&mut self) -> Result<(), Error> {
         self.queue.push_back(Item::Addition);
         Ok(())
     }
 
-    // AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression
     fn handle_subtraction_expression(&mut self) -> Result<(), Error> {
         self.queue.push_back(Item::Subtraction);
         Ok(())
     }
 
-    // MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
     fn handle_multiplication_expression(&mut self) -> Result<(), Error> {
         self.queue.push_back(Item::Multiplication);
         Ok(())
     }
 
-    // MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
     fn handle_division_expression(&mut self) -> Result<(), Error> {
         self.queue.push_back(Item::Division);
         Ok(())
     }
 
-    // MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
     fn handle_remainder_expression(&mut self) -> Result<(), Error> {
         self.queue.push_back(Item::Remainder);
         Ok(())
@@ -399,6 +404,17 @@ where
         Ok(())
     }
 
+    fn handle_call_expression(&mut self) -> Result<(), Error> {
+        self.queue.pop_back();
+        self.flush()?;
+        self.handler.handle_call_expression()
+    }
+
+    fn handle_call_expression_or_async_arrow_head(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::CallExpressionOrAsyncArrowHead);
+        Ok(())
+    }
+
     fn handle_maybe_arrow_formal_parameters(&mut self) -> Result<(), Error> {
         self.queue.push_back(Item::MaybeArrowFormalParameters);
         Ok(())
@@ -439,18 +455,62 @@ where
         self.flush()
     }
 
-    // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
         self.flush()?;
         self.handler.handle_expression_statement()
     }
 
-    // Statement -> ExpressionStatement
     fn handle_statement(&mut self) -> Result<(), Error> {
         self.handler.handle_statement()
     }
 
+    fn handle_return_statement_0(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_return_statement(0)
+    }
+
+    fn handle_return_statement_1(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_return_statement(1)
+    }
+
+    fn handle_function_declaration(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_function_declaration()
+    }
+
+    fn handle_formal_parameters_empty(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::FormalParameters(0));
+        Ok(())
+    }
+
+    fn handle_scope(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_scope()
+    }
+
+    fn handle_function_body(&mut self) -> Result<(), Error> {
+        // TODO: early errors
+        Ok(())
+    }
+
+    fn handle_empty_list(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::EmptyList);
+        Ok(())
+    }
+
+    fn handle_list_head(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::ListHead);
+        Ok(())
+    }
+
+    fn handle_list_item(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Item::ListItem);
+        Ok(())
+    }
+
     fn flush(&mut self) -> Result<(), Error> {
+        logger::debug!(?self.queue);
         while let Some(item) = self.queue.pop_front() {
             match item {
                 Item::NumericLiteral(literal) => self.handler.handle_numeric_literal(literal)?,
@@ -469,6 +529,9 @@ where
                 Item::Inequality => self.handler.handle_ne_expression()?,
                 Item::StrictEquality => self.handler.handle_strict_eq_expression()?,
                 Item::StrictInequality => self.handler.handle_strict_ne_expression()?,
+                Item::FormalParameters(nargs) => self.handler.handle_formal_parameters(nargs)?,
+                Item::EmptyList => (),
+                Item::ListHead => (),
                 _ => unreachable!("{item:?}"),
             }
         }

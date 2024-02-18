@@ -1,4 +1,5 @@
 #include "compiler.hh"
+#include "macros.hh"
 
 #include <cassert>
 
@@ -152,6 +153,49 @@ void Compiler::Ne() {
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpONE(lhs, rhs);
   stack_.push_back(v);
+}
+
+void Compiler::Call(size_t id, size_t n) {
+  assert(stack_.size() >= n);
+  auto* func = funcs_[id];
+  auto* value = builder_->CreateCall(func, {});
+  stack_.push_back(value);
+}
+
+void Compiler::StartFunction(size_t id, const char* name, size_t len) {
+  // Push the current block.
+  auto* current_block = builder_->GetInsertBlock();
+  assert(current_block != nullptr);
+  stack_.push_back(current_block);
+
+  // Create a function.
+  auto* prototype = llvm::FunctionType::get(builder_->getDoubleTy(), {}, false);
+  auto* func = llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, llvm::StringRef(name, len), *module_);
+  auto* block = llvm::BasicBlock::Create(*context_, "entry", func);
+
+  // Switch the insertion point.
+  builder_->SetInsertPoint(block);
+
+  // Keep the function for recursive calls.
+  funcs_[id] = func;
+}
+
+void Compiler::EndFunction() {
+  assert(stack_.size() > 0);
+  llvm::BasicBlock* block = static_cast<llvm::BasicBlock*>(stack_.back());
+  stack_.pop_back();
+
+  // Switch the insertion point.
+  builder_->SetInsertPoint(block);
+}
+
+void Compiler::Return(size_t n) {
+  assert(stack_.size() >= n);
+  UNUSED(n);
+  llvm::Value* value = stack_.back();
+  stack_.pop_back();
+  builder_->CreateRet(value);
 }
 
 void Compiler::Print() {

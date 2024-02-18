@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     logging::init();
     Runtime::initialize();
     let cl = CommandLine::parse();
-    let runtime = Runtime::default();
+    let mut runtime = Runtime::default();
     match cl.command {
         Command::Eval(eval) => {
             let expr = match eval.expr {

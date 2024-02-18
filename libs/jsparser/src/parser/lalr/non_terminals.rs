@@ -730,4 +730,5 @@ pub enum NonTerminal {
     YieldExpression_Await,
     YieldExpression_In,
     YieldExpression_In_Await,
+    _SCOPE_,
 }

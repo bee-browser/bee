@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #pragma GCC diagnostic push
@@ -35,6 +36,10 @@ class Compiler {
   void Gte();
   void Eq();
   void Ne();
+  void Call(size_t id, size_t n);
+  void StartFunction(size_t id, const char* name, size_t len);
+  void EndFunction();
+  void Return(size_t n);
   void Print();
 
   void DumpModule();
@@ -52,4 +57,5 @@ class Compiler {
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
   std::vector<llvm::Value*> stack_;
+  std::unordered_map<size_t, llvm::Function*> funcs_;
 };
