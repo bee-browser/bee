@@ -269,8 +269,7 @@ mod tests {
         }
 
         eval(
-            format!("function a() {{ return {A}; }}\n\
-                     a();"),
+            format!("function a() {{ return {A}; }} a();"),
             bridge::Host {
                 print_f64: Some(validate),
                 ..Default::default()
