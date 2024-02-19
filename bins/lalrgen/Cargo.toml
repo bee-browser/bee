@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 base = { path = "../../libs/base" }
 clap = { version = "4.5.1", features = ["derive", "env"] }
 dashmap = "5.5.3"
