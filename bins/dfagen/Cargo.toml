@@ -12,7 +12,7 @@ clap = { version = "4.5.1", features = ["derive", "env"] }
 indexmap = { version = "2.2.3", features = ["serde"] }
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
-serde = { version = "1.0.196", features = ["derive", "rc"] }
+serde = { version = "1.0.197", features = ["derive", "rc"] }
 serde_json = "1.0.114"
 serde_yaml = "0.9.32"
 smallvec = "1.13.1"
