@@ -9,4 +9,4 @@ publish = false
 anyhow = "1.0.80"
 clap = { version = "4.5.1", features = ["env", "derive", "wrap_help"] }
 layout = { path = "../../libs/layout", features = ["service"] }
-serde_json = "1.0.113"
+serde_json = "1.0.114"
