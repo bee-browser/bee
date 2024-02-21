@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <memory>
 
 #include "compiler.hh"
@@ -22,7 +24,8 @@ class Runtime {
   void EndCompilation(Compiler* compiler);
 
   void DumpModule();
-  void Eval();
+  void Eval(uintptr_t context);
+  void Call(const char* name, size_t name_len, double* return_value);
 
  private:
   std::unique_ptr<Evaluator> evaluator_ = nullptr;

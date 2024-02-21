@@ -29,7 +29,7 @@ enum Value {
 struct FuncId(usize);
 
 pub struct Runtime {
-    imp: *mut bridge::Runtime,
+    peer: *mut bridge::Runtime,
     symbol_table: SymbolTable,
     global_scope: Scope,
     next_func_id: usize,
@@ -38,7 +38,7 @@ pub struct Runtime {
 impl Runtime {
     pub fn initialize() {
         unsafe {
-            bridge::runtime_initialize();
+            bridge::runtime_peer_initialize();
         }
     }
 
@@ -50,19 +50,19 @@ impl Runtime {
 
     pub fn dump_module(&self) {
         unsafe {
-            bridge::runtime_dump_module(self.imp);
+            bridge::runtime_peer_dump_module(self.peer);
         }
     }
 
     pub fn eval(&self) {
         unsafe {
-            bridge::runtime_eval(self.imp);
+            bridge::runtime_peer_eval(self.peer, self as *const Runtime as usize);
         }
     }
 
     fn new() -> Self {
         Self {
-            imp: unsafe { bridge::runtime_new() },
+            peer: unsafe { bridge::runtime_peer_new() },
             symbol_table: SymbolTable::with_builtin_symbols(),
             global_scope: Scope::new(),
             next_func_id: 1,
@@ -71,7 +71,7 @@ impl Runtime {
 
     fn with_host(host: bridge::Host) -> Self {
         let runtime = Self::new();
-        unsafe { bridge::runtime_register_host(runtime.imp, &host) }
+        unsafe { bridge::runtime_peer_register_host(runtime.peer, &host) }
         runtime
     }
 }
@@ -93,7 +93,7 @@ impl Default for Runtime {
 impl Drop for Runtime {
     fn drop(&mut self) {
         unsafe {
-            bridge::runtime_delete(self.imp);
+            bridge::runtime_peer_delete(self.peer);
         }
     }
 }
@@ -111,6 +111,7 @@ mod bridge {
                 print_bool: Some(print_bool),
                 print_f64: Some(print_f64),
                 print_str: Some(print_str),
+                runtime_call: Some(runtime_call),
             }
         }
     }
@@ -127,6 +128,24 @@ mod bridge {
         // std::ffi::CStr::from_ptr(value).to_str() is safer but slower than the following code.
         let value = std::str::from_utf8_unchecked(std::ffi::CStr::from_ptr(value).to_bytes());
         println!("{value}");
+    }
+
+    unsafe extern "C" fn runtime_call(userdata: usize, symbol_id: u32) -> f64 {
+        use super::Symbol;
+        use super::Value;
+
+        let runtime = (userdata as *const super::Runtime).as_ref().unwrap();
+        let symbol = Symbol::from(symbol_id);
+
+        let value = runtime.global_scope.bindings.get(&symbol).unwrap();
+        let func_name = match value {
+            Value::Function(func_id) => format!("fn{}", func_id.0),
+        };
+
+        let name = func_name.as_ptr() as *const i8;
+        let mut return_value = 0.0;
+        runtime_peer_call(runtime.peer, name, func_name.len(), &mut return_value);
+        return_value
     }
 }
 
@@ -270,6 +289,23 @@ mod tests {
 
         eval(
             format!("function a() {{ return {A}; }} a();"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_call_with_no_argument_hoistable_declaration() {
+        const A: f64 = 1.2;
+
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, A);
+        }
+
+        eval(
+            format!("a(); function a() {{ return {A}; }}"),
             bridge::Host {
                 print_f64: Some(validate),
                 ..Default::default()

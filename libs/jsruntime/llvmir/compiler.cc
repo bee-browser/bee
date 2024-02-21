@@ -18,6 +18,9 @@ void Compiler::StartMain() {
   auto* main_func = CreateMainFunction();
   auto* entry = llvm::BasicBlock::Create(*context_, "entry", main_func);
   builder_->SetInsertPoint(entry);
+  auto* exec_context = main_func->getArg(0);
+  // TODO: use a global variable to hold the execution context.
+  stack_.push_back(exec_context);
 }
 
 void Compiler::EndMain() {
@@ -155,10 +158,14 @@ void Compiler::Ne() {
   stack_.push_back(v);
 }
 
-void Compiler::Call(size_t id, size_t n) {
-  assert(stack_.size() >= n);
-  auto* func = funcs_[id];
-  auto* value = builder_->CreateCall(func, {});
+void Compiler::Call(uint32_t symbol_id, size_t argc) {
+  assert(stack_.size() >= argc);
+  // TODO: use a global variable to hold the execution context.
+  auto* exec_context = stack_[0];
+  auto* symbol = builder_->getInt32(symbol_id);
+  // TODO: argv
+  auto* call = CreateRuntimeCall();
+  auto* value = builder_->CreateCall(call, {exec_context, symbol});
   stack_.push_back(value);
 }
 
@@ -223,23 +230,38 @@ llvm::orc::ThreadSafeModule Compiler::TakeModule() {
 }
 
 llvm::Function* Compiler::CreateMainFunction() {
-  auto* prototype = llvm::FunctionType::get(builder_->getInt32Ty(), false);
-  return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "main", *module_);
+  auto* prototype = llvm::FunctionType::get(
+      builder_->getInt32Ty(), {builder_->getPtrTy()}, false);
+  return llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, "main", module_.get());
 }
 
 llvm::Function* Compiler::CreatePrintStrFunction() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt8PtrTy()}, false);
-  return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "print_str", module_.get());
+  auto* prototype = llvm::FunctionType::get(
+      builder_->getVoidTy(), {builder_->getInt8PtrTy()}, false);
+  return llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, "print_str", module_.get());
 }
 
 llvm::Function* Compiler::CreatePrintBoolFunction() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt1Ty()}, false);
-  return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "print_bool", module_.get());
+  auto* prototype = llvm::FunctionType::get(
+      builder_->getVoidTy(), {builder_->getInt1Ty()}, false);
+  return llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, "print_bool", module_.get());
 }
 
 llvm::Function* Compiler::CreatePrintF64Function() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getDoubleTy()}, false);
-  return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "print_f64", module_.get());
+  auto* prototype = llvm::FunctionType::get(
+      builder_->getVoidTy(), {builder_->getDoubleTy()}, false);
+  return llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, "print_f64", module_.get());
+}
+
+llvm::Function* Compiler::CreateRuntimeCall() {
+  auto* prototype = llvm::FunctionType::get(
+      builder_->getDoubleTy(), {builder_->getPtrTy(), builder_->getInt64Ty()}, false);
+  return llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, "runtime_call", module_.get());
 }
 
 void Compiler::CompileHelloWorld() {

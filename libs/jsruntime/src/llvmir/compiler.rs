@@ -14,7 +14,7 @@ use crate::logger;
 pub struct Compiler<'r> {
     stack: Vec<Item>,
     runtime: &'r mut Runtime,
-    imp: *mut bridge::Compiler,
+    peer: *mut bridge::Compiler,
 }
 
 enum Item {
@@ -25,17 +25,17 @@ impl<'r> Compiler<'r> {
     const INITIAL_CAPACITY: usize = 32;
 
     pub fn new(runtime: &'r mut Runtime) -> Self {
-        let imp = unsafe { bridge::runtime_start_compilation(runtime.imp) };
+        let peer = unsafe { bridge::runtime_peer_start_compilation(runtime.peer) };
         Self {
             stack: Vec::with_capacity(Self::INITIAL_CAPACITY),
             runtime,
-            imp,
+            peer,
         }
     }
 
     fn populate_module(&self) {
         unsafe {
-            bridge::runtime_populate_module(self.runtime.imp, self.imp);
+            bridge::runtime_peer_populate_module(self.runtime.peer, self.peer);
         }
     }
 }
@@ -43,7 +43,7 @@ impl<'r> Compiler<'r> {
 impl<'r> Drop for Compiler<'r> {
     fn drop(&mut self) {
         unsafe {
-            bridge::runtime_end_compilation(self.runtime.imp, self.imp);
+            bridge::runtime_peer_end_compilation(self.runtime.peer, self.peer);
         }
     }
 }
@@ -75,7 +75,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     ) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_numeric_literal", literal.value);
         unsafe {
-            bridge::compiler_number(self.imp, literal.value);
+            bridge::compiler_peer_number(self.peer, literal.value);
         }
         Ok(())
     }
@@ -85,7 +85,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         unsafe {
             // TODO: use utf-16 string
             let data = literal.raw.as_ptr() as *const i8;
-            bridge::compiler_string(self.imp, data, literal.raw.len());
+            bridge::compiler_peer_string(self.peer, data, literal.raw.len());
         }
         Ok(())
     }
@@ -99,7 +99,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_addition_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_addition_expression");
         unsafe {
-            bridge::compiler_add(self.imp);
+            bridge::compiler_peer_add(self.peer);
         }
         Ok(())
     }
@@ -107,7 +107,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_subtraction_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_subtraction_expression");
         unsafe {
-            bridge::compiler_sub(self.imp);
+            bridge::compiler_peer_sub(self.peer);
         }
         Ok(())
     }
@@ -115,7 +115,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_multiplication_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_multiplication_expression");
         unsafe {
-            bridge::compiler_mul(self.imp);
+            bridge::compiler_peer_mul(self.peer);
         }
         Ok(())
     }
@@ -123,7 +123,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_division_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_division_expression");
         unsafe {
-            bridge::compiler_div(self.imp);
+            bridge::compiler_peer_div(self.peer);
         }
         Ok(())
     }
@@ -131,7 +131,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_remainder_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_remainder_expression");
         unsafe {
-            bridge::compiler_rem(self.imp);
+            bridge::compiler_peer_rem(self.peer);
         }
         Ok(())
     }
@@ -139,7 +139,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_lt_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_lt_expression");
         unsafe {
-            bridge::compiler_lt(self.imp);
+            bridge::compiler_peer_lt(self.peer);
         }
         Ok(())
     }
@@ -147,7 +147,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_gt_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_gt_expression");
         unsafe {
-            bridge::compiler_gt(self.imp);
+            bridge::compiler_peer_gt(self.peer);
         }
         Ok(())
     }
@@ -155,7 +155,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_lte_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_lte_expression");
         unsafe {
-            bridge::compiler_lte(self.imp);
+            bridge::compiler_peer_lte(self.peer);
         }
         Ok(())
     }
@@ -163,7 +163,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_gte_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_gte_expression");
         unsafe {
-            bridge::compiler_gte(self.imp);
+            bridge::compiler_peer_gte(self.peer);
         }
         Ok(())
     }
@@ -171,7 +171,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_eq_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_eq_expression");
         unsafe {
-            bridge::compiler_eq(self.imp);
+            bridge::compiler_peer_eq(self.peer);
         }
         Ok(())
     }
@@ -179,7 +179,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_ne_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_ne_expression");
         unsafe {
-            bridge::compiler_ne(self.imp);
+            bridge::compiler_peer_ne(self.peer);
         }
         Ok(())
     }
@@ -188,7 +188,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         logger::debug!(event = "handle_strict_eq_expression");
         // TODO: check type
         unsafe {
-            bridge::compiler_eq(self.imp);
+            bridge::compiler_peer_eq(self.peer);
         }
         Ok(())
     }
@@ -197,7 +197,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         logger::debug!(event = "handle_strict_ne_expression");
         // TODO: check type
         unsafe {
-            bridge::compiler_ne(self.imp);
+            bridge::compiler_peer_ne(self.peer);
         }
         Ok(())
     }
@@ -210,13 +210,8 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
             _ => panic!(),
         };
 
-        let func_id = match self.runtime.global_scope.bindings.get(&symbol) {
-            Some(Value::Function(func_id)) => func_id,
-            _ => panic!(),
-        };
-
         unsafe {
-            bridge::compiler_call(self.imp, func_id.0, 0);
+            bridge::compiler_peer_call(self.peer, symbol.id(), 0);
         }
 
         Ok(())
@@ -226,7 +221,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         logger::debug!(event = "handle_expression_statement");
         // TODO
         unsafe {
-            bridge::compiler_print(self.imp);
+            bridge::compiler_peer_print(self.peer);
         }
         Ok(())
     }
@@ -234,7 +229,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_return_statement(&mut self, n: usize) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_return_statement", n);
         unsafe {
-            bridge::compiler_return(self.imp, n);
+            bridge::compiler_peer_return(self.peer, n);
         }
         Ok(())
     }
@@ -269,7 +264,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         let func_name = format!("fn{}", func_id.0);
         let data = func_name.as_ptr() as *const i8;
         unsafe {
-            bridge::compiler_start_function(self.imp, func_id.0, data, func_name.len());
+            bridge::compiler_peer_start_function(self.peer, func_id.0, data, func_name.len());
         }
 
         Ok(())
@@ -279,7 +274,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         logger::debug!(event = "handle_function_declaration");
 
         unsafe {
-            bridge::compiler_end_function(self.imp);
+            bridge::compiler_peer_end_function(self.peer);
         }
 
         Ok(())

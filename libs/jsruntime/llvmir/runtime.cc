@@ -37,6 +37,10 @@ void Runtime::RegisterHost(const Host* host) {
     llvm::orc::ExecutorAddr::fromPtr(host->print_str),
     llvm::JITSymbolFlags::Exported,
   };
+  symbols[exec_session.intern("runtime_call")] = {
+    llvm::orc::ExecutorAddr::fromPtr(host->runtime_call),
+    llvm::JITSymbolFlags::Exported,
+  };
   ExitOnErr(evaluator_->main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
 }
 
@@ -48,16 +52,22 @@ void Runtime::DumpModule() {
   compiler_->DumpModule();
 }
 
-void Runtime::Eval() {
+void Runtime::Eval(uintptr_t context) {
   auto mod = compiler_->TakeModule();
   // Create a ResourceTracker to track JIT'd memory allocated to our
   // anonymous expression -- that way we can free it after executing.
   auto tracker = evaluator_->main_jd().createResourceTracker();
   ExitOnErr(evaluator_->AddModule(std::move(mod), tracker));
   auto sym = ExitOnErr(evaluator_->Lookup("main"));
-  int32_t (*fp)() = sym.getAddress().toPtr<int32_t (*)()>();
-  fp();
+  int32_t (*func)(uintptr_t) = sym.getAddress().toPtr<int32_t (*)(uintptr_t)>();
+  func(context);
   ExitOnErr(tracker->remove());
+}
+
+void Runtime::Call(const char* name, size_t name_len, double* return_value) {
+  auto sym = ExitOnErr(evaluator_->Lookup({name, name_len}));
+  double (*func)() = sym.getAddress().toPtr<double (*)()>();
+  *return_value = func();
 }
 
 Compiler* Runtime::StartCompilation() {
