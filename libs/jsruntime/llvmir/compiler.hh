@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -36,7 +37,7 @@ class Compiler {
   void Gte();
   void Eq();
   void Ne();
-  void Call(size_t id, size_t n);
+  void Call(uint32_t symbol_id, size_t argc);
   void StartFunction(size_t id, const char* name, size_t len);
   void EndFunction();
   void Return(size_t n);
@@ -52,6 +53,7 @@ class Compiler {
   llvm::Function* CreatePrintStrFunction();
   llvm::Function* CreatePrintBoolFunction();
   llvm::Function* CreatePrintF64Function();
+  llvm::Function* CreateRuntimeCall();
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;

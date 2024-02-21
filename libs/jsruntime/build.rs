@@ -11,6 +11,8 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
     "llvmir/compiler.cc",
     "llvmir/compiler.hh",
     "llvmir/evaluator.hh",
+    "llvmir/host.hh",
+    "llvmir/macros.hh",
     "llvmir/runtime.cc",
     "llvmir/runtime.hh",
 ];

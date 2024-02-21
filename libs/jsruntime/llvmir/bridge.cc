@@ -1,112 +1,118 @@
 #include "bridge.hh"
 
+#include <cstdint>
+
 #include "compiler.hh"
 #include "runtime.hh"
 
-void runtime_initialize() {
+void runtime_peer_initialize() {
   Runtime::Initialize();
 }
 
-Runtime* runtime_new() {
+Runtime* runtime_peer_new() {
   return new Runtime();
 }
 
-void runtime_delete(Runtime* self) {
+void runtime_peer_delete(Runtime* self) {
   delete self;
 }
 
-void runtime_register_host(Runtime* self, const Host* host) {
+void runtime_peer_register_host(Runtime* self, const Host* host) {
   self->RegisterHost(host);
 }
 
-void runtime_dump_module(Runtime *self) {
+void runtime_peer_dump_module(Runtime *self) {
   self->DumpModule();
 }
 
-void runtime_eval(Runtime* self) {
-  self->Eval();
+void runtime_peer_eval(Runtime* self, uintptr_t context) {
+  self->Eval(context);
 }
 
-Compiler* runtime_start_compilation(Runtime* self) {
+void runtime_peer_call(Runtime* self, const char *name, size_t name_len, double *return_value) {
+  self->Call(name, name_len, return_value);
+}
+
+Compiler* runtime_peer_start_compilation(Runtime* self) {
   return self->StartCompilation();
 }
 
-void runtime_populate_module(Runtime* self, Compiler* compiler) {
+void runtime_peer_populate_module(Runtime* self, Compiler* compiler) {
   self->PopulateModule(compiler);
 }
 
-void runtime_end_compilation(Runtime* self, Compiler* compiler) {
+void runtime_peer_end_compilation(Runtime* self, Compiler* compiler) {
   self->EndCompilation(compiler);
 }
 
-void compiler_number(Compiler* self, double value) {
+void compiler_peer_number(Compiler* self, double value) {
   self->Number(value);
 }
 
-void compiler_string(Compiler* self, const char* data, size_t size) {
+void compiler_peer_string(Compiler* self, const char* data, size_t size) {
   self->String(data, size);
 }
 
-void compiler_add(Compiler* self) {
+void compiler_peer_add(Compiler* self) {
   self->Add();
 }
 
-void compiler_sub(Compiler* self) {
+void compiler_peer_sub(Compiler* self) {
   self->Sub();
 }
 
-void compiler_mul(Compiler* self) {
+void compiler_peer_mul(Compiler* self) {
   self->Mul();
 }
 
-void compiler_div(Compiler* self) {
+void compiler_peer_div(Compiler* self) {
   self->Div();
 }
 
-void compiler_rem(Compiler* self) {
+void compiler_peer_rem(Compiler* self) {
   self->Rem();
 }
 
-void compiler_lt(Compiler* self) {
+void compiler_peer_lt(Compiler* self) {
   self->Lt();
 }
 
-void compiler_gt(Compiler* self) {
+void compiler_peer_gt(Compiler* self) {
   self->Gt();
 }
 
-void compiler_lte(Compiler* self) {
+void compiler_peer_lte(Compiler* self) {
   self->Lte();
 }
 
-void compiler_gte(Compiler* self) {
+void compiler_peer_gte(Compiler* self) {
   self->Gte();
 }
 
-void compiler_eq(Compiler* self) {
+void compiler_peer_eq(Compiler* self) {
   self->Eq();
 }
 
-void compiler_ne(Compiler* self) {
+void compiler_peer_ne(Compiler* self) {
   self->Ne();
 }
 
-void compiler_call(Compiler* self, size_t id, size_t n) {
-  self->Call(id, n);
+void compiler_peer_call(Compiler* self, uint32_t symbol_id, size_t argc) {
+  self->Call(symbol_id, argc);
 }
 
-void compiler_start_function(Compiler* self, size_t id, const char* name, size_t len) {
+void compiler_peer_start_function(Compiler* self, size_t id, const char* name, size_t len) {
   self->StartFunction(id, name, len);
 }
 
-void compiler_end_function(Compiler* self) {
+void compiler_peer_end_function(Compiler* self) {
   self->EndFunction();
 }
 
-void compiler_return(Compiler* self, size_t n) {
+void compiler_peer_return(Compiler* self, size_t n) {
   self->Return(n);
 }
 
-void compiler_print(Compiler* self) {
+void compiler_peer_print(Compiler* self) {
   self->Print();
 }
