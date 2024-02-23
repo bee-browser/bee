@@ -37,12 +37,21 @@ pub trait SemanticHandler<'s> {
     fn handle_strict_eq_expression(&mut self) -> Result<(), Error>;
     fn handle_strict_ne_expression(&mut self) -> Result<(), Error>;
     fn handle_call_expression(&mut self) -> Result<(), Error>;
+    fn handle_assignment_expression(&mut self) -> Result<(), Error>;
     fn handle_expression_statement(&mut self) -> Result<(), Error>;
     fn handle_return_statement(&mut self, n: usize) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
     fn handle_formal_parameters(&mut self, nargs: usize) -> Result<(), Error>;
-    fn handle_scope(&mut self) -> Result<(), Error>;
+    fn handle_start_function_declaration(&mut self, symbol: Symbol) -> Result<(), Error>;
     fn handle_function_declaration(&mut self) -> Result<(), Error>;
+
+    fn handle_start_let_declaration(&mut self) -> Result<(), Error>;
+    fn handle_let_binding(&mut self, with_init: bool) -> Result<(), Error>;
+    fn handle_end_let_declaration(&mut self) -> Result<(), Error>;
+
+    fn handle_start_const_declaration(&mut self) -> Result<(), Error>;
+    fn handle_const_binding(&mut self) -> Result<(), Error>;
+    fn handle_end_const_declaration(&mut self) -> Result<(), Error>;
 }
 
 pub struct Processor<'s, H> {
@@ -71,6 +80,7 @@ enum Syntax<'s> {
     Inequality,
     StrictEquality,
     StrictInequality,
+    Assignment,
     Cpeaapl,
     CallExpressionOrAsyncArrowHead,
     MaybeArrowFormalParameters,
@@ -80,9 +90,9 @@ enum Syntax<'s> {
     MaybeArrowFormalParametersWithRestParameter,
     MaybeArrowFormalParametersWithRestPattern,
     FormalParameters(usize),
+    LexicalBinding,
+    LexicalBindingWithInitializer,
     EmptyList,
-    ListHead,
-    ListItem,
 }
 
 #[derive(Debug)]
@@ -334,6 +344,81 @@ where
         }
     }
 
+    fn handle_identifier_reference(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.pop_back() {
+            Some(Syntax::Identifier(identifier)) => identifier,
+            _ => panic!(),
+        };
+        self.queue.push_back(Syntax::Identifier(identifier));
+        Ok(())
+    }
+
+    fn handle_identifier_reference_except_for_await(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.pop_back() {
+            Some(Syntax::Identifier(identifier)) => identifier,
+            _ => panic!(),
+        };
+        if matches!(identifier.symbol, SymbolTable::AWAIT) {
+            return Err(Error::SyntaxError);
+        }
+        self.queue.push_back(Syntax::Identifier(identifier));
+        Ok(())
+    }
+
+    fn handle_identifier_reference_except_for_yield(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.pop_back() {
+            Some(Syntax::Identifier(identifier)) => identifier,
+            _ => panic!(),
+        };
+        if matches!(identifier.symbol, SymbolTable::AWAIT) {
+            return Err(Error::SyntaxError);
+        }
+        self.queue.push_back(Syntax::Identifier(identifier));
+        Ok(())
+    }
+
+    fn handle_identifier_reference_except_for_yield_await(&mut self) -> Result<(), Error> {
+        let identifier = match self.queue.pop_back() {
+            Some(Syntax::Identifier(identifier)) => identifier,
+            _ => panic!(),
+        };
+        if matches!(identifier.symbol, SymbolTable::YIELD | SymbolTable::AWAIT) {
+            return Err(Error::SyntaxError);
+        }
+        self.queue.push_back(Syntax::Identifier(identifier));
+        Ok(())
+    }
+
+    fn handle_await_as_identifier_reference_in_script(&mut self) -> Result<(), Error> {
+        if self.module {
+            return Err(Error::SyntaxError);
+        }
+        self.handle_await_as_identifier_reference()
+    }
+
+    fn handle_yield_as_identifier_reference_in_non_strict_code(&mut self) -> Result<(), Error> {
+        if self.strict_mode {
+            return Err(Error::SyntaxError);
+        }
+        self.handle_yield_as_identifier_reference()
+    }
+
+    fn handle_await_as_identifier_reference(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Syntax::Identifier(Identifier {
+            symbol: SymbolTable::AWAIT,
+            raw: "await",
+        }));
+        Ok(())
+    }
+
+    fn handle_yield_as_identifier_reference(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Syntax::Identifier(Identifier {
+            symbol: SymbolTable::YIELD,
+            raw: "yield",
+        }));
+        Ok(())
+    }
+
     fn handle_addition_expression(&mut self) -> Result<(), Error> {
         self.queue.push_back(Syntax::Addition);
         Ok(())
@@ -405,8 +490,13 @@ where
     }
 
     fn handle_call_expression(&mut self) -> Result<(), Error> {
-        self.queue.pop_back();
-        self.flush()?;
+        self.queue.pop_back(); // removes the cover syntax
+        logger::debug!(?self.queue);
+        while let Some(syntax) = self.queue.pop_front() {
+            match syntax {
+                _ => self.dispatch(syntax)?,
+            }
+        }
         self.handler.handle_call_expression()
     }
 
@@ -456,6 +546,12 @@ where
         self.flush()
     }
 
+    fn handle_assignment_expression(&mut self) -> Result<(), Error> {
+        // TODO: EE
+        self.queue.push_back(Syntax::Assignment);
+        Ok(())
+    }
+
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
         self.flush()?;
         self.handler.handle_expression_statement()
@@ -475,6 +571,56 @@ where
         self.handler.handle_return_statement(1)
     }
 
+    fn handle_let_declaration(&mut self) -> Result<(), Error> {
+        logger::debug!(?self.queue);
+        // TODO: Check uniqueness of identifiers
+        self.handler.handle_start_let_declaration()?;
+        while let Some(syntax) = self.queue.pop_front() {
+            match syntax {
+                Syntax::Identifier(identifier) => {
+                    if identifier.symbol == SymbolTable::LET {
+                        return Err(Error::SyntaxError);
+                    }
+                    self.handler.handle_identifier(identifier)?;
+                }
+                Syntax::LexicalBinding => self.handler.handle_let_binding(false)?,
+                Syntax::LexicalBindingWithInitializer => self.handler.handle_let_binding(true)?,
+                _ => self.dispatch(syntax)?,
+            }
+        }
+        self.handler.handle_end_let_declaration()
+    }
+
+    fn handle_const_declaration(&mut self) -> Result<(), Error> {
+        logger::debug!(?self.queue);
+        // TODO: Check uniqueness of identifiers
+        self.handler.handle_start_const_declaration()?;
+        while let Some(syntax) = self.queue.pop_front() {
+            match syntax {
+                Syntax::Identifier(identifier) => {
+                    if identifier.symbol == SymbolTable::LET {
+                        return Err(Error::SyntaxError);
+                    }
+                    self.handler.handle_identifier(identifier)?;
+                }
+                Syntax::LexicalBinding => return Err(Error::SyntaxError),
+                Syntax::LexicalBindingWithInitializer => self.handler.handle_const_binding()?,
+                _ => self.dispatch(syntax)?,
+            }
+        }
+        self.handler.handle_end_const_declaration()
+    }
+
+    fn handle_lexical_binding(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Syntax::LexicalBinding);
+        Ok(())
+    }
+
+    fn handle_lexical_binding_with_initializer(&mut self) -> Result<(), Error> {
+        self.queue.push_back(Syntax::LexicalBindingWithInitializer);
+        Ok(())
+    }
+
     fn handle_function_declaration(&mut self) -> Result<(), Error> {
         self.flush()?;
         self.handler.handle_function_declaration()
@@ -485,9 +631,18 @@ where
         Ok(())
     }
 
-    fn handle_scope(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_scope()
+    fn handle_start_function_declaration(&mut self) -> Result<(), Error> {
+        logger::debug!(?self.queue);
+
+        let identifier = match self.queue.pop_front() {
+            Some(Syntax::Identifier(identifier)) => identifier,
+            _ => panic!(),
+        };
+
+        self.handler.handle_start_function_declaration(identifier.symbol)?;
+        self.queue.clear();
+
+        Ok(())
     }
 
     fn handle_function_body(&mut self) -> Result<(), Error> {
@@ -501,42 +656,46 @@ where
     }
 
     fn handle_list_head(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Syntax::ListHead);
+        // TODO
         Ok(())
     }
 
     fn handle_list_item(&mut self) -> Result<(), Error> {
-        self.queue.push_back(Syntax::ListItem);
+        // TODO
         Ok(())
     }
 
     fn flush(&mut self) -> Result<(), Error> {
         logger::debug!(?self.queue);
-        while let Some(item) = self.queue.pop_front() {
-            match item {
-                Syntax::NumericLiteral(literal) => self.handler.handle_numeric_literal(literal)?,
-                Syntax::StringLiteral(literal) => self.handler.handle_string_literal(literal)?,
-                Syntax::Identifier(identifier) => self.handler.handle_identifier(identifier)?,
-                Syntax::Addition => self.handler.handle_addition_expression()?,
-                Syntax::Subtraction => self.handler.handle_subtraction_expression()?,
-                Syntax::Multiplication => self.handler.handle_multiplication_expression()?,
-                Syntax::Division => self.handler.handle_division_expression()?,
-                Syntax::Remainder => self.handler.handle_remainder_expression()?,
-                Syntax::LessThan => self.handler.handle_lt_expression()?,
-                Syntax::GreaterThan => self.handler.handle_gt_expression()?,
-                Syntax::LessThanOrEqual => self.handler.handle_lte_expression()?,
-                Syntax::GreaterThanOrEqual => self.handler.handle_gte_expression()?,
-                Syntax::Equality => self.handler.handle_eq_expression()?,
-                Syntax::Inequality => self.handler.handle_ne_expression()?,
-                Syntax::StrictEquality => self.handler.handle_strict_eq_expression()?,
-                Syntax::StrictInequality => self.handler.handle_strict_ne_expression()?,
-                Syntax::FormalParameters(nargs) => self.handler.handle_formal_parameters(nargs)?,
-                Syntax::EmptyList => (),
-                Syntax::ListHead => (),
-                _ => unreachable!("{item:?}"),
-            }
+        while let Some(syntax) = self.queue.pop_front() {
+            self.dispatch(syntax)?;
         }
         Ok(())
+    }
+
+    fn dispatch(&mut self, syntax: Syntax<'s>) -> Result<(), Error> {
+        match syntax {
+            Syntax::NumericLiteral(literal) => self.handler.handle_numeric_literal(literal),
+            Syntax::StringLiteral(literal) => self.handler.handle_string_literal(literal),
+            Syntax::Identifier(identifier) => self.handler.handle_identifier(identifier),
+            Syntax::Addition => self.handler.handle_addition_expression(),
+            Syntax::Subtraction => self.handler.handle_subtraction_expression(),
+            Syntax::Multiplication => self.handler.handle_multiplication_expression(),
+            Syntax::Division => self.handler.handle_division_expression(),
+            Syntax::Remainder => self.handler.handle_remainder_expression(),
+            Syntax::LessThan => self.handler.handle_lt_expression(),
+            Syntax::GreaterThan => self.handler.handle_gt_expression(),
+            Syntax::LessThanOrEqual => self.handler.handle_lte_expression(),
+            Syntax::GreaterThanOrEqual => self.handler.handle_gte_expression(),
+            Syntax::Equality => self.handler.handle_eq_expression(),
+            Syntax::Inequality => self.handler.handle_ne_expression(),
+            Syntax::StrictEquality => self.handler.handle_strict_eq_expression(),
+            Syntax::StrictInequality => self.handler.handle_strict_ne_expression(),
+            Syntax::Assignment => self.handler.handle_assignment_expression(),
+            Syntax::FormalParameters(nargs) => self.handler.handle_formal_parameters(nargs),
+            Syntax::EmptyList => Ok(()),
+            _ => unreachable!("{syntax:?}"),
+        }
     }
 }
 

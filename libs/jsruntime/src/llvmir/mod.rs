@@ -22,7 +22,9 @@ impl Scope {
 }
 
 enum Value {
-    Function(FuncId),
+    Undefined,
+    Number(f64),
+    Function(String),
 }
 
 #[derive(Clone, Copy)]
@@ -77,10 +79,10 @@ impl Runtime {
 }
 
 impl Runtime {
-    fn next_func_id(&mut self) -> FuncId {
+    fn next_func_name(&mut self) -> String {
         let id = self.next_func_id;
         self.next_func_id += 1;
-        FuncId(id)
+        format!("fn{id}")
     }
 }
 
@@ -111,6 +113,9 @@ mod bridge {
                 print_bool: Some(print_bool),
                 print_f64: Some(print_f64),
                 print_str: Some(print_str),
+                runtime_get: Some(runtime_get),
+                runtime_set: Some(runtime_set),
+                runtime_set_undefined: Some(runtime_set_undefined),
                 runtime_call: Some(runtime_call),
             }
         }
@@ -130,6 +135,40 @@ mod bridge {
         println!("{value}");
     }
 
+    unsafe extern "C" fn runtime_get(context: usize, symbol_id: u32) -> f64 {
+        use super::Symbol;
+        use super::Value;
+
+        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
+        let symbol = Symbol::from(symbol_id);
+
+        let value = runtime.global_scope.bindings.get(&symbol);
+        match value {
+            Some(Value::Number(value)) => *value,
+            _ => panic!(),
+        }
+    }
+
+    unsafe extern "C" fn runtime_set(context: usize, symbol_id: u32, value: f64) {
+        use super::Symbol;
+        use super::Value;
+
+        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
+        let symbol = Symbol::from(symbol_id);
+
+        runtime.global_scope.bindings.insert(symbol, Value::Number(value));
+    }
+
+    unsafe extern "C" fn runtime_set_undefined(context: usize, symbol_id: u32) {
+        use super::Symbol;
+        use super::Value;
+
+        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
+        let symbol = Symbol::from(symbol_id);
+
+        runtime.global_scope.bindings.insert(symbol, Value::Undefined);
+    }
+
     unsafe extern "C" fn runtime_call(userdata: usize, symbol_id: u32) -> f64 {
         use super::Symbol;
         use super::Value;
@@ -137,14 +176,14 @@ mod bridge {
         let runtime = (userdata as *const super::Runtime).as_ref().unwrap();
         let symbol = Symbol::from(symbol_id);
 
-        let value = runtime.global_scope.bindings.get(&symbol).unwrap();
-        let func_name = match value {
-            Value::Function(func_id) => format!("fn{}", func_id.0),
+        let value = runtime.global_scope.bindings.get(&symbol);
+        let (name, len) = match value {
+            Some(Value::Function(name)) => (name.as_ptr() as *const i8, name.len()),
+            _ => panic!(),
         };
 
-        let name = func_name.as_ptr() as *const i8;
         let mut return_value = 0.0;
-        runtime_peer_call(runtime.peer, name, func_name.len(), &mut return_value);
+        runtime_peer_call(runtime.peer, name, len, &mut return_value);
         return_value
     }
 }
@@ -306,6 +345,61 @@ mod tests {
 
         eval(
             format!("a(); function a() {{ return {A}; }}"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_const_declaration() {
+        const A: f64 = 1.2;
+        const B: f64 = 3.4;
+
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, A);
+        }
+
+        eval(
+            format!("const a={A},b={B}; a;"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_let_declaration() {
+        const A: f64 = 1.2;
+        const B: f64 = 3.4;
+
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, A);
+        }
+
+        eval(
+            format!("let a,b={B}; a={A}; a;"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_arithmetic_operations_with_variables() {
+        const A: f64 = 1.2;
+        const B: f64 = 3.4;
+        const C: f64 = 5.6;
+
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, A + B * C);
+        }
+
+        eval(
+            format!("const a={A},b={B},c={C}; a+b*c;"),
             bridge::Host {
                 print_f64: Some(validate),
                 ..Default::default()

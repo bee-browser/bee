@@ -37,6 +37,18 @@ void Runtime::RegisterHost(const Host* host) {
     llvm::orc::ExecutorAddr::fromPtr(host->print_str),
     llvm::JITSymbolFlags::Exported,
   };
+  symbols[exec_session.intern("runtime_get")] = {
+    llvm::orc::ExecutorAddr::fromPtr(host->runtime_get),
+    llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session.intern("runtime_set")] = {
+    llvm::orc::ExecutorAddr::fromPtr(host->runtime_set),
+    llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session.intern("runtime_set_undefined")] = {
+    llvm::orc::ExecutorAddr::fromPtr(host->runtime_set_undefined),
+    llvm::JITSymbolFlags::Exported,
+  };
   symbols[exec_session.intern("runtime_call")] = {
     llvm::orc::ExecutorAddr::fromPtr(host->runtime_call),
     llvm::JITSymbolFlags::Exported,

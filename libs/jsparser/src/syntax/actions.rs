@@ -82,7 +82,7 @@ where
         // Declaration -> ClassDeclaration
         Action::Undefined,
         // Declaration -> LexicalDeclaration_In
-        Action::Undefined,
+        Action::Nop,
         // ImportDeclaration -> IMPORT ImportClause FromClause SEMICOLON
         Action::Undefined,
         // ImportDeclaration -> IMPORT ModuleSpecifier SEMICOLON
@@ -157,9 +157,9 @@ where
         // ClassDeclaration -> CLASS BindingIdentifier ClassTail
         Action::Undefined,
         // LexicalDeclaration_In -> LET BindingList_In SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // ImportClause -> ImportedDefaultBinding
         Action::Undefined,
         // ImportClause -> NameSpaceImport
@@ -193,7 +193,7 @@ where
         // Declaration_Await -> ClassDeclaration_Await
         Action::Undefined,
         // Declaration_Await -> LexicalDeclaration_In_Await
-        Action::Undefined,
+        Action::Nop,
         // HoistableDeclaration_Await_Default -> FunctionDeclaration_Await_Default
         Action::Nop,
         // HoistableDeclaration_Await_Default -> GeneratorDeclaration_Await_Default
@@ -213,7 +213,10 @@ where
         // AssignmentExpression_In_Await -> AsyncArrowFunction_In_Await
         Action::Undefined,
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await ASSIGN AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await AssignmentOperator AssignmentExpression_In_Await
         Action::Undefined,
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await AND_ASSIGN AssignmentExpression_In_Await
@@ -321,9 +324,9 @@ where
         // ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
         Action::Undefined,
         // BindingList_In -> LexicalBinding_In
-        Action::Undefined,
+        Action::Nop,
         // BindingList_In -> BindingList_In COMMA LexicalBinding_In
-        Action::Undefined,
+        Action::Nop,
         // ImportedDefaultBinding -> ImportedBinding
         Action::Undefined,
         // NameSpaceImport -> MUL AS ImportedBinding
@@ -357,9 +360,9 @@ where
         // ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
         Action::Undefined,
         // LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
         Action::Invoke(
             Self::handle_function_declaration,
@@ -484,7 +487,10 @@ where
         // AssignmentExpression_In -> AsyncArrowFunction_In
         Action::Undefined,
         // AssignmentExpression_In -> LeftHandSideExpression ASSIGN AssignmentExpression_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression_In -> LeftHandSideExpression AssignmentOperator AssignmentExpression_In
         Action::Undefined,
         // AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN AssignmentExpression_In
@@ -573,7 +579,10 @@ where
         // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
         Action::Undefined,
         // _SCOPE_ -> (empty)
-        Action::Invoke(Self::handle_scope, "handle_scope"),
+        Action::Invoke(
+            Self::handle_start_function_declaration,
+            "handle_start_function_declaration",
+        ),
         // FunctionBody -> FunctionStatementList
         Action::Invoke(Self::handle_function_body, "handle_function_body"),
         // FormalParameters_Yield -> (empty)
@@ -626,9 +635,12 @@ where
         // ClassBody -> ClassElementList
         Action::Undefined,
         // LexicalBinding_In -> BindingIdentifier
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding_In -> BindingIdentifier Initializer_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding_In -> BindingPattern Initializer_In
         Action::Undefined,
         // ImportedBinding -> BindingIdentifier_Await
@@ -769,9 +781,9 @@ where
         // AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
         // BindingList_In_Await -> LexicalBinding_In_Await
-        Action::Undefined,
+        Action::Nop,
         // BindingList_In_Await -> BindingList_In_Await COMMA LexicalBinding_In_Await
-        Action::Undefined,
+        Action::Nop,
         // ClassHeritage_Await -> EXTENDS LeftHandSideExpression_Await
         Action::Undefined,
         // ClassBody_Await -> ClassElementList_Await
@@ -861,7 +873,7 @@ where
         // Finally_Await -> FINALLY Block_Await
         Action::Undefined,
         // Initializer_In -> ASSIGN AssignmentExpression_In
-        Action::Undefined,
+        Action::Nop,
         // BindingPattern -> ObjectBindingPattern
         Action::Undefined,
         // BindingPattern -> ArrayBindingPattern
@@ -891,9 +903,9 @@ where
         // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
         Action::Undefined,
         // LexicalDeclaration -> LET BindingList SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration -> CONST BindingList SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // ForBinding -> BindingIdentifier
         Action::Undefined,
         // ForBinding -> BindingPattern
@@ -1014,15 +1026,18 @@ where
         // ImportSpecifier -> ModuleExportName AS ImportedBinding
         Action::Undefined,
         // Initializer_In_Await -> ASSIGN AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // BindingPattern_Await -> ObjectBindingPattern_Await
         Action::Undefined,
         // BindingPattern_Await -> ArrayBindingPattern_Await
         Action::Undefined,
         // LexicalBinding_In_Await -> BindingIdentifier_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding_In_Await -> BindingIdentifier_Await Initializer_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding_In_Await -> BindingPattern_Await Initializer_In_Await
         Action::Undefined,
         // ClassElementList_Await -> ClassElement_Await
@@ -1269,7 +1284,10 @@ where
         // AssignmentExpression -> AsyncArrowFunction
         Action::Undefined,
         // AssignmentExpression -> LeftHandSideExpression ASSIGN AssignmentExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression -> LeftHandSideExpression AssignmentOperator AssignmentExpression
         Action::Undefined,
         // AssignmentExpression -> LeftHandSideExpression AND_ASSIGN AssignmentExpression
@@ -1285,9 +1303,9 @@ where
         // VariableDeclaration -> BindingPattern Initializer
         Action::Undefined,
         // BindingList -> LexicalBinding
-        Action::Undefined,
+        Action::Nop,
         // BindingList -> BindingList COMMA LexicalBinding
-        Action::Undefined,
+        Action::Nop,
         // CaseClause -> CASE Expression_In COLON
         Action::Undefined,
         // CaseClause -> CASE Expression_In COLON StatementList
@@ -1449,9 +1467,9 @@ where
         // VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
         Action::Undefined,
         // LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // ForBinding_Await -> BindingIdentifier_Await
         Action::Undefined,
         // ForBinding_Await -> BindingPattern_Await
@@ -1581,11 +1599,14 @@ where
         // AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer -> ASSIGN AssignmentExpression
-        Action::Undefined,
+        Action::Nop,
         // LexicalBinding -> BindingIdentifier
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding -> BindingIdentifier Initializer
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding -> BindingPattern Initializer
         Action::Undefined,
         // BindingElement -> SingleNameBinding
@@ -1703,11 +1724,14 @@ where
         // BitwiseXORExpression_In_Await -> BitwiseXORExpression_In_Await BIT_XOR BitwiseANDExpression_In_Await
         Action::Undefined,
         // IdentifierReference_Await -> Identifier
-        Action::Invoke(Self::syntax_error_if_await, "syntax_error_if_await"),
+        Action::Invoke(
+            Self::handle_identifier_reference_except_for_await,
+            "handle_identifier_reference_except_for_await",
+        ),
         // IdentifierReference_Await -> YIELD
         Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
+            Self::handle_yield_as_identifier_reference,
+            "handle_yield_as_identifier_reference",
         ),
         // Literal -> NullLiteral
         Action::Undefined,
@@ -1772,7 +1796,10 @@ where
         // AssignmentExpression_Await -> AsyncArrowFunction_Await
         Action::Undefined,
         // AssignmentExpression_Await -> LeftHandSideExpression_Await ASSIGN AssignmentExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression_Await -> LeftHandSideExpression_Await AssignmentOperator AssignmentExpression_Await
         Action::Undefined,
         // AssignmentExpression_Await -> LeftHandSideExpression_Await AND_ASSIGN AssignmentExpression_Await
@@ -1788,9 +1815,9 @@ where
         // VariableDeclaration_Await -> BindingPattern_Await Initializer_Await
         Action::Undefined,
         // BindingList_Await -> LexicalBinding_Await
-        Action::Undefined,
+        Action::Nop,
         // BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
-        Action::Undefined,
+        Action::Nop,
         // CaseClause_Await -> CASE Expression_In_Await COLON
         Action::Undefined,
         // CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
@@ -1932,7 +1959,7 @@ where
         // SingleNameBinding_Yield -> BindingIdentifier_Yield Initializer_In_Yield
         Action::Undefined,
         // Initializer_In_Yield -> ASSIGN AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // StatementListItem_Yield_Return -> Statement_Yield_Return
         Action::Nop,
         // StatementListItem_Yield_Return -> Declaration_Yield
@@ -1978,7 +2005,7 @@ where
         // SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
         // Initializer_In_Yield_Await -> ASSIGN AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // StatementListItem_Yield_Await_Return -> Statement_Yield_Await_Return
         Action::Nop,
         // StatementListItem_Yield_Await_Return -> Declaration_Yield_Await
@@ -2064,11 +2091,14 @@ where
         // AsyncArrowFunction_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer_Await -> ASSIGN AssignmentExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // LexicalBinding_Await -> BindingIdentifier_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding_Await -> BindingIdentifier_Await Initializer_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding_Await -> BindingPattern_Await Initializer_Await
         Action::Undefined,
         // PropertyName -> LiteralPropertyName
@@ -2080,14 +2110,20 @@ where
         // BitwiseXORExpression_In -> BitwiseXORExpression_In BIT_XOR BitwiseANDExpression_In
         Action::Undefined,
         // IdentifierReference -> Identifier
-        Action::Nop,
+        Action::Invoke(
+            Self::handle_identifier_reference,
+            "handle_identifier_reference",
+        ),
         // IdentifierReference -> YIELD
         Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
+            Self::handle_yield_as_identifier_reference_in_non_strict_code,
+            "handle_yield_as_identifier_reference_in_non_strict_code",
         ),
         // IdentifierReference -> AWAIT
-        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
+        Action::Invoke(
+            Self::handle_await_as_identifier_reference_in_script,
+            "handle_await_as_identifier_reference_in_script",
+        ),
         // ArrayLiteral -> LBRACK RBRACK
         Action::Undefined,
         // ArrayLiteral -> LBRACK Elision RBRACK
@@ -2169,7 +2205,10 @@ where
         // AssignmentExpression_In_Yield -> AsyncArrowFunction_In_Yield
         Action::Undefined,
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield ASSIGN AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AssignmentOperator AssignmentExpression_In_Yield
         Action::Undefined,
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN AssignmentExpression_In_Yield
@@ -2211,7 +2250,7 @@ where
         // Declaration_Yield -> ClassDeclaration_Yield
         Action::Undefined,
         // Declaration_Yield -> LexicalDeclaration_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // Statement_Await_Return -> BlockStatement_Await_Return
         Action::Undefined,
         // Statement_Await_Return -> VariableStatement_Await
@@ -2259,7 +2298,10 @@ where
         // AssignmentExpression_In_Yield_Await -> AsyncArrowFunction_In_Yield_Await
         Action::Undefined,
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN AssignmentExpression_In_Yield_Await
@@ -2301,7 +2343,7 @@ where
         // Declaration_Yield_Await -> ClassDeclaration_Yield_Await
         Action::Undefined,
         // Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // UniqueFormalParameters_Yield -> FormalParameters_Yield
         Action::Undefined,
         // UniqueFormalParameters_Await -> FormalParameters_Await
@@ -2505,9 +2547,9 @@ where
         // ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
         Action::Undefined,
         // LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // BlockStatement_Await_Return -> Block_Await_Return
         Action::Undefined,
         // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE Statement_Await_Return
@@ -2611,9 +2653,9 @@ where
         // ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
         Action::Undefined,
         // LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
         Action::Undefined,
         // RelationalExpression_In_Await -> ShiftExpression_Await
@@ -2841,9 +2883,9 @@ where
         // ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield RBRACE
         Action::Undefined,
         // BindingList_In_Yield -> LexicalBinding_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // BindingList_In_Yield -> BindingList_In_Yield COMMA LexicalBinding_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // Block_Await_Return -> LBRACE RBRACE
         Action::Undefined,
         // Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE
@@ -2968,9 +3010,9 @@ where
         // ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE ClassBody_Yield_Await RBRACE
         Action::Undefined,
         // BindingList_In_Yield_Await -> LexicalBinding_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BindingList_In_Yield_Await -> BindingList_In_Yield_Await COMMA LexicalBinding_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ShiftExpression_Await -> AdditiveExpression_Await
         Action::Undefined,
         // ShiftExpression_Await -> ShiftExpression_Await SHL AdditiveExpression_Await
@@ -3190,9 +3232,12 @@ where
         // ClassBody_Yield -> ClassElementList_Yield
         Action::Undefined,
         // LexicalBinding_In_Yield -> BindingIdentifier_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding_In_Yield -> BindingIdentifier_Yield Initializer_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
         // DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
@@ -3432,9 +3477,12 @@ where
         // ClassBody_Yield_Await -> ClassElementList_Yield_Await
         Action::Undefined,
         // LexicalBinding_In_Yield_Await -> BindingIdentifier_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding_In_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
         // AdditiveExpression_Await -> MultiplicativeExpression_Await
@@ -3542,9 +3590,9 @@ where
         // VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
         Action::Undefined,
         // LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // ForBinding_Yield -> BindingIdentifier_Yield
         Action::Undefined,
         // ForBinding_Yield -> BindingPattern_Yield
@@ -3634,9 +3682,9 @@ where
         // VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await
         Action::Undefined,
         // LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
         Action::Undefined,
         // ForBinding_Yield_Await -> BindingPattern_Yield_Await
@@ -3707,9 +3755,15 @@ where
         // BitwiseXORExpression_In_Yield -> BitwiseXORExpression_In_Yield BIT_XOR BitwiseANDExpression_In_Yield
         Action::Undefined,
         // IdentifierReference_Yield -> Identifier
-        Action::Invoke(Self::syntax_error_if_yield, "syntax_error_if_yield"),
+        Action::Invoke(
+            Self::handle_identifier_reference_except_for_yield,
+            "handle_identifier_reference_except_for_yield",
+        ),
         // IdentifierReference_Yield -> AWAIT
-        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
+        Action::Invoke(
+            Self::handle_await_as_identifier_reference,
+            "handle_await_as_identifier_reference",
+        ),
         // ArrayLiteral_Yield -> LBRACK RBRACK
         Action::Undefined,
         // ArrayLiteral_Yield -> LBRACK Elision RBRACK
@@ -3747,7 +3801,10 @@ where
         // AssignmentExpression_Yield -> AsyncArrowFunction_Yield
         Action::Undefined,
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield ASSIGN AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield AssignmentOperator AssignmentExpression_Yield
         Action::Undefined,
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN AssignmentExpression_Yield
@@ -3763,9 +3820,9 @@ where
         // VariableDeclaration_Yield -> BindingPattern_Yield Initializer_Yield
         Action::Undefined,
         // BindingList_Yield -> LexicalBinding_Yield
-        Action::Undefined,
+        Action::Nop,
         // BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
-        Action::Undefined,
+        Action::Nop,
         // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
         Action::Undefined,
         // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON StatementList_Yield_Return
@@ -3792,8 +3849,8 @@ where
         Action::Undefined,
         // IdentifierReference_Yield_Await -> Identifier
         Action::Invoke(
-            Self::syntax_error_if_yield_or_await,
-            "syntax_error_if_yield_or_await",
+            Self::handle_identifier_reference_except_for_yield_await,
+            "handle_identifier_reference_except_for_yield_await",
         ),
         // ArrayLiteral_Yield_Await -> LBRACK RBRACK
         Action::Undefined,
@@ -3832,7 +3889,10 @@ where
         // AssignmentExpression_Yield_Await -> AsyncArrowFunction_Yield_Await
         Action::Undefined,
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN AssignmentExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_assignment_expression,
+            "handle_assignment_expression",
+        ),
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator AssignmentExpression_Yield_Await
         Action::Undefined,
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN AssignmentExpression_Yield_Await
@@ -3848,9 +3908,9 @@ where
         // VariableDeclaration_Yield_Await -> BindingPattern_Yield_Await Initializer_Yield_Await
         Action::Undefined,
         // BindingList_Yield_Await -> LexicalBinding_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
         Action::Undefined,
         // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON StatementList_Yield_Await_Return
@@ -3951,11 +4011,14 @@ where
         // AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer_Yield -> ASSIGN AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // LexicalBinding_Yield -> BindingIdentifier_Yield
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding_Yield -> BindingIdentifier_Yield Initializer_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding_Yield -> BindingPattern_Yield Initializer_Yield
         Action::Undefined,
         // MethodDefinition_Yield -> ClassElementName_Yield LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
@@ -4021,11 +4084,14 @@ where
         // AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer_Yield_Await -> ASSIGN AssignmentExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
         // LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_lexical_binding_with_initializer,
+            "handle_lexical_binding_with_initializer",
+        ),
         // LexicalBinding_Yield_Await -> BindingPattern_Yield_Await Initializer_Yield_Await
         Action::Undefined,
         // MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
