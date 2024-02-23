@@ -166,7 +166,8 @@ class Transpiler {
         // CPEAAPL cannot be replaced with refined production rules.  You will see many
         // conflicts in the LALR(1) parsing table generation when you actually try this.
         //rewriteCPEAAPL,
-        insertActionsForScopes,
+        modifyFunctionDeclaration,
+        modifyConditionalExpression,
         expandOptionals,
         expandParameterizedRules,
         translateRules,
@@ -526,8 +527,8 @@ function rewriteCPEAAPL(rules) {
   return rules;
 }
 
-function insertActionsForScopes(rules) {
-  log.debug('Inserting actions for scopes...');
+function modifyFunctionDeclaration(rules) {
+  log.debug('Modifying FunctionDeclaration...');
 
   let rule;
 
@@ -540,6 +541,41 @@ function insertActionsForScopes(rules) {
 
   rules.push({
     name: '_SCOPE_',
+    values: ['[empty]'],
+  });
+
+  return rules;
+}
+
+function modifyConditionalExpression(rules) {
+  log.debug('Modifying ConditionalExpression...');
+
+  let rule;
+
+  rule = rules.find((rule) => rule.name === 'ConditionalExpression[In, Yield, Await]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 2);
+  const [cond, thenBlock, elseBlock] = rule
+    .values[1]
+    .split(/`\?`|`\:`/)
+    .map((term) => term.trim());
+  rule.values[1] = [
+    cond,
+    '`?`',
+    '_THEN_BLOCK_',
+    thenBlock,
+    '`:`',
+    '_ELSE_BLOCK_',
+    elseBlock,
+  ].join(' ');
+
+  rules.push({
+    name: '_THEN_BLOCK_',
+    values: ['[empty]'],
+  });
+
+  rules.push({
+    name: '_ELSE_BLOCK_',
     values: ['[empty]'],
   });
 

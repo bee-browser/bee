@@ -5131,9 +5131,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression
 - name: ConditionalExpression_Await
@@ -5147,9 +5151,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_Await
 - name: ConditionalExpression_Yield
@@ -5163,9 +5171,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_Yield
 - name: ConditionalExpression_Yield_Await
@@ -5179,9 +5191,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_Yield_Await
 - name: ConditionalExpression_In
@@ -5195,9 +5211,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In
 - name: ConditionalExpression_In_Await
@@ -5211,9 +5231,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Await
 - name: ConditionalExpression_In_Yield
@@ -5227,9 +5251,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Yield
 - name: ConditionalExpression_In_Yield_Await
@@ -5242,10 +5270,14 @@
       data: ShortCircuitExpression_In_Yield_Await
     - type: token
       data: CONDITIONAL
+    - type: non-terminal
+      data: _THEN_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
 - name: AssignmentExpression
@@ -18825,6 +18857,12 @@
     - type: non-terminal
       data: ModuleExportName
 - name: _SCOPE_
+  production:
+    - type: empty
+- name: _THEN_BLOCK_
+  production:
+    - type: empty
+- name: _ELSE_BLOCK_
   production:
     - type: empty
 - name: NullLiteral

@@ -219,6 +219,37 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         Ok(())
     }
 
+    fn handle_then_block(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_then_block");
+
+        unsafe {
+            bridge::compiler_peer_to_boolean(self.peer);
+            bridge::compiler_peer_block(self.peer);
+        }
+
+        Ok(())
+    }
+
+    fn handle_else_block(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_else_block");
+
+        unsafe {
+            bridge::compiler_peer_block(self.peer);
+        }
+
+        Ok(())
+    }
+
+    fn handle_conditional_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_conditional_expression");
+
+        unsafe {
+            bridge::compiler_peer_conditional_expression(self.peer);
+        }
+
+        Ok(())
+    }
+
     fn handle_expression_statement(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_expression_statement");
         // TODO

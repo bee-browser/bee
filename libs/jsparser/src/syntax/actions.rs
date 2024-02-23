@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2096] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2098] = [
         // Script -> (empty)
         Action::Undefined,
         // Script -> ScriptBody
@@ -404,8 +404,11 @@ where
         Action::Undefined,
         // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
         Action::Undefined,
-        // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_In_Await
-        Action::Undefined,
+        // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Await
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
         Action::Undefined,
         // AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
@@ -792,6 +795,10 @@ where
         Action::Undefined,
         // ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
         Action::Undefined,
+        // _THEN_BLOCK_ -> (empty)
+        Action::Invoke(Self::handle_then_block, "handle_then_block"),
+        // _ELSE_BLOCK_ -> (empty)
+        Action::Invoke(Self::handle_else_block, "handle_else_block"),
         // ArrowParameters_Await -> BindingIdentifier_Await
         Action::Undefined,
         // ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
@@ -880,8 +887,11 @@ where
         Action::Undefined,
         // ConditionalExpression_In -> ShortCircuitExpression_In
         Action::Nop,
-        // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON AssignmentExpression_In
-        Action::Undefined,
+        // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
         Action::Undefined,
         // AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
@@ -1589,9 +1599,12 @@ where
         // OptionalChain -> OptionalChain DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // ConditionalExpression -> ShortCircuitExpression
-        Action::Undefined,
-        // ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON AssignmentExpression
-        Action::Undefined,
+        Action::Nop,
+        // ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
         Action::Undefined,
         // AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
@@ -2081,9 +2094,12 @@ where
         // TemplateMiddleList_Await_Tagged -> TemplateMiddleList_Await_Tagged TEMPLATE_MIDDLE Expression_In_Await
         Action::Undefined,
         // ConditionalExpression_Await -> ShortCircuitExpression_Await
-        Action::Undefined,
-        // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_Await
-        Action::Undefined,
+        Action::Nop,
+        // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
         Action::Undefined,
         // AsyncArrowFunction_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
@@ -2477,9 +2493,12 @@ where
         // BindingElisionElement_Yield -> Elision BindingElement_Yield
         Action::Undefined,
         // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
-        Action::Undefined,
-        // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL AssignmentExpression_In_Yield COLON AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
+        // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // YieldExpression_In -> YIELD
         Action::Undefined,
         // YieldExpression_In -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_In_Yield
@@ -2583,9 +2602,12 @@ where
         // BindingElisionElement_Yield_Await -> Elision BindingElement_Yield_Await
         Action::Undefined,
         // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await
-        Action::Undefined,
-        // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
+        // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // YieldExpression_In_Await -> YIELD
         Action::Undefined,
         // YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_In_Yield_Await
@@ -3995,9 +4017,12 @@ where
         // TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_MIDDLE Expression_In_Yield
         Action::Undefined,
         // ConditionalExpression_Yield -> ShortCircuitExpression_Yield
-        Action::Undefined,
-        // ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL AssignmentExpression_In_Yield COLON AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Nop,
+        // ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // YieldExpression -> YIELD
         Action::Undefined,
         // YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield
@@ -4068,9 +4093,12 @@ where
         // TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_MIDDLE Expression_In_Yield_Await
         Action::Undefined,
         // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await
-        Action::Undefined,
-        // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON AssignmentExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
+        // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await
+        Action::Invoke(
+            Self::handle_conditional_expression,
+            "handle_conditional_expression",
+        ),
         // YieldExpression_Await -> YIELD
         Action::Undefined,
         // YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield_Await

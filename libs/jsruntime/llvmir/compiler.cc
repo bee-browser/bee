@@ -169,6 +169,62 @@ void Compiler::Call(size_t argc) {
   PushValue(value);
 }
 
+void Compiler::ToBoolean() {
+  auto* value = Dereference();
+  if (value->getType()->isDoubleTy()) {
+    value = builder_->CreateFCmpONE(value, llvm::ConstantFP::get(*context_, llvm::APFloat(0.0)));
+  }
+  PushValue(value);
+}
+
+void Compiler::Block() {
+  // Push the current block.
+  auto* current_block = builder_->GetInsertBlock();
+  assert(current_block != nullptr);
+  PushBlock(current_block);
+
+  // Push a newly created block.
+  // This will be used in ConditionalExpression() in order to build a branch instruction.
+  auto* func = current_block->getParent();
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+  PushBlock(block);
+
+  builder_->SetInsertPoint(block);
+}
+
+void Compiler::ConditionalExpression() {
+  auto* else_tail_block = builder_->GetInsertBlock();
+  auto* func = else_tail_block->getParent();
+
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+
+  auto* else_value = Dereference();
+  builder_->CreateBr(block);
+
+  auto* else_head_block = PopBlock();
+  auto* then_tail_block = PopBlock();
+
+  builder_->SetInsertPoint(then_tail_block);
+  auto* then_value = Dereference();
+  builder_->CreateBr(block);
+
+  auto* then_head_block = PopBlock();
+  auto* cond_block = PopBlock();
+
+  builder_->SetInsertPoint(cond_block);
+  auto* cond_value = PopValue();
+
+  builder_->SetInsertPoint(cond_block);
+  builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
+
+  builder_->SetInsertPoint(block);
+  auto* phi = builder_->CreatePHI(llvm::Type::getDoubleTy(*context_), 2);
+  phi->addIncoming(then_value, then_tail_block);
+  phi->addIncoming(else_value, else_tail_block);
+
+  PushValue(phi);
+}
+
 void Compiler::StartFunction(const char* name, size_t len) {
   // Push the current block.
   auto* current_block = builder_->GetInsertBlock();

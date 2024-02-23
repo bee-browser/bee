@@ -42,6 +42,9 @@ class Compiler {
   void Set();
   void SetUndefined();
   void Call(size_t argc);
+  void ToBoolean();
+  void Block();
+  void ConditionalExpression();
   void StartFunction(const char* name, size_t len);
   void EndFunction();
   void Return(size_t n);

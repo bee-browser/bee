@@ -94,7 +94,7 @@ async function update(args, options) {
           actions[indexMap.get(entry.rule)].note = entry.note;
         }
       } else {
-        log.warning(`${entry.rule} was removed`);
+        log.warn(`${entry.rule} was removed`);
         removed.push(entry);
       }
     }

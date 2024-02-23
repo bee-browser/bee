@@ -60,10 +60,10 @@ async function main(args, options) {
           actions[indexMap.get(entry.rule)].note = entry.note;
         }
       } else {
-        log.warning(`${entry.rule} was removed`);
-        log.warning(`  action: ${entry.action}`);
+        log.warn(`${entry.rule} was removed`);
+        log.warn(`  action: ${entry.action}`);
         if (entry.note) {
-          log.warning(`  note: ${entry.note}`);
+          log.warn(`  note: ${entry.note}`);
         }
       }
     }
