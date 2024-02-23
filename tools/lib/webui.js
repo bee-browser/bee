@@ -39,7 +39,7 @@ export async function serve(options) {
         log.info(msg, ...args);
         break;
       case servest.Loglevel.WARN:
-        log.warning(msg, ...args);
+        log.warn(msg, ...args);
         break;
       case servest.Loglevel.ERROR:
         log.error(msg, ...args);

@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -415,7 +415,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     Some((Builder::class_tail, "class_tail")),
     // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_In_Await
+    // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
@@ -857,6 +857,10 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     Some((Builder::nop, "nop")),
     // ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
     Some((Builder::nop, "nop")),
+    // _THEN_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
+    // _ELSE_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
     // ArrowParameters_Await -> BindingIdentifier_Await
     Some((Builder::create_list, "create_list")),
     // ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
@@ -945,7 +949,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     Some((Builder::nop, "nop")),
     // ConditionalExpression_In -> ShortCircuitExpression_In
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON AssignmentExpression_In
+    // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
@@ -1787,7 +1791,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     )),
     // ConditionalExpression -> ShortCircuitExpression
     Some((Builder::nop, "nop")),
-    // ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON AssignmentExpression
+    // ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
@@ -2381,7 +2385,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     )),
     // ConditionalExpression_Await -> ShortCircuitExpression_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_Await
+    // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
@@ -2789,7 +2793,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     Some((Builder::append_to_array, "append_to_array")),
     // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL AssignmentExpression_In_Yield COLON AssignmentExpression_In_Yield
+    // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression_In -> YIELD
     Some((
@@ -2925,7 +2929,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     Some((Builder::append_to_array, "append_to_array")),
     // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON AssignmentExpression_In_Yield_Await
+    // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression_In_Await -> YIELD
     Some((
@@ -4637,7 +4641,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     )),
     // ConditionalExpression_Yield -> ShortCircuitExpression_Yield
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL AssignmentExpression_In_Yield COLON AssignmentExpression_Yield
+    // ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression -> YIELD
     Some((
@@ -4734,7 +4738,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2096] = [
     )),
     // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON AssignmentExpression_Yield_Await
+    // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression_Await -> YIELD
     Some((

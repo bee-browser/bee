@@ -407,6 +407,36 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_eval_conditional_expression() {
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, 2.);
+        }
+
+        eval(
+            format!("1 > 0 ? 2 : 3"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_nested_conditional_expression() {
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, 2.);
+        }
+
+        eval(
+            format!("1 > 0 ? 1 > 0 ? 2 : 3 : 1 > 0 ? 4 : 5"),
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
     fn eval(source: String, host: bridge::Host) {
         Runtime::initialize();
         let mut runtime = Runtime::with_host(host);

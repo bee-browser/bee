@@ -396,8 +396,8 @@
 - rule: ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
   action: nop
 - rule: >-
-    ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL
-    AssignmentExpression_In_Await COLON AssignmentExpression_In_Await
+    ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Await
   action: conditional_expression
 - rule: >-
     ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -800,6 +800,10 @@
   action: nop
 - rule: ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
   action: nop
+- rule: _THEN_BLOCK_ -> (empty)
+  action: nop
+- rule: _ELSE_BLOCK_ -> (empty)
+  action: nop
 - rule: ArrowParameters_Await -> BindingIdentifier_Await
   action: create_list
 - rule: ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
@@ -883,8 +887,8 @@
 - rule: ConditionalExpression_In -> ShortCircuitExpression_In
   action: nop
 - rule: >-
-    ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON
-    AssignmentExpression_In
+    ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
   action: conditional_expression
 - rule: ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
   action: arrow_function_expression
@@ -1601,8 +1605,8 @@
 - rule: ConditionalExpression -> ShortCircuitExpression
   action: nop
 - rule: >-
-    ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON
-    AssignmentExpression
+    ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
   action: conditional_expression
 - rule: ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
   action: arrow_function_expression
@@ -2142,8 +2146,8 @@
 - rule: ConditionalExpression_Await -> ShortCircuitExpression_Await
   action: nop
 - rule: >-
-    ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL
-    AssignmentExpression_In_Await COLON AssignmentExpression_Await
+    ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await
   action: conditional_expression
 - rule: ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
   action: arrow_function_expression
@@ -2548,8 +2552,8 @@
 - rule: ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
   action: nop
 - rule: >-
-    ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL
-    AssignmentExpression_In_Yield COLON AssignmentExpression_In_Yield
+    ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield
   action: conditional_expression
 - rule: YieldExpression_In -> YIELD
   action: yield_expression_no_argument
@@ -2673,7 +2677,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL
-    AssignmentExpression_In_Yield_Await COLON AssignmentExpression_In_Yield_Await
+    _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_
+    AssignmentExpression_In_Yield_Await
   action: conditional_expression
 - rule: YieldExpression_In_Await -> YIELD
   action: yield_expression_no_argument
@@ -4310,8 +4315,8 @@
 - rule: ConditionalExpression_Yield -> ShortCircuitExpression_Yield
   action: nop
 - rule: >-
-    ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL
-    AssignmentExpression_In_Yield COLON AssignmentExpression_Yield
+    ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield
   action: conditional_expression
 - rule: YieldExpression -> YIELD
   action: yield_expression_no_argument
@@ -4401,7 +4406,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL
-    AssignmentExpression_In_Yield_Await COLON AssignmentExpression_Yield_Await
+    _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_
+    AssignmentExpression_Yield_Await
   action: conditional_expression
 - rule: YieldExpression_Await -> YIELD
   action: yield_expression_no_argument

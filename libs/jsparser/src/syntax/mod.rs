@@ -38,6 +38,9 @@ pub trait SemanticHandler<'s> {
     fn handle_strict_ne_expression(&mut self) -> Result<(), Error>;
     fn handle_call_expression(&mut self) -> Result<(), Error>;
     fn handle_assignment_expression(&mut self) -> Result<(), Error>;
+    fn handle_then_block(&mut self) -> Result<(), Error>;
+    fn handle_else_block(&mut self) -> Result<(), Error>;
+    fn handle_conditional_expression(&mut self) -> Result<(), Error>;
     fn handle_expression_statement(&mut self) -> Result<(), Error>;
     fn handle_return_statement(&mut self, n: usize) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
@@ -550,6 +553,21 @@ where
         // TODO: EE
         self.queue.push_back(Syntax::Assignment);
         Ok(())
+    }
+
+    fn handle_then_block(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_then_block()
+    }
+
+    fn handle_else_block(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_else_block()
+    }
+
+    fn handle_conditional_expression(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_conditional_expression()
     }
 
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
