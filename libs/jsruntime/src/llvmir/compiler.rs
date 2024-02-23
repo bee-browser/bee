@@ -12,22 +12,14 @@ use super::Value;
 use crate::logger;
 
 pub struct Compiler<'r> {
-    stack: Vec<Item>,
     runtime: &'r mut Runtime,
     peer: *mut bridge::Compiler,
 }
 
-enum Item {
-    Identifier(Symbol),
-}
-
 impl<'r> Compiler<'r> {
-    const INITIAL_CAPACITY: usize = 32;
-
     pub fn new(runtime: &'r mut Runtime) -> Self {
         let peer = unsafe { bridge::runtime_peer_start_compilation(runtime.peer) };
         Self {
-            stack: Vec::with_capacity(Self::INITIAL_CAPACITY),
             runtime,
             peer,
         }
@@ -65,6 +57,9 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
     fn accept(&mut self) -> Result<Self::Artifact, jsparser::Error> {
         logger::debug!(event = "accept");
+        unsafe {
+            bridge::compiler_peer_print(self.peer);
+        }
         self.populate_module();
         Ok(())
     }
@@ -92,7 +87,9 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
     fn handle_identifier(&mut self, identifier: Identifier) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_identifier", identifier.raw);
-        self.stack.push(Item::Identifier(identifier.symbol));
+        unsafe {
+            bridge::compiler_peer_symbol(self.peer, identifier.symbol.id());
+        }
         Ok(())
     }
 
@@ -205,13 +202,18 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_call_expression(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_call_expression");
 
-        let symbol = match self.stack.pop() {
-            Some(Item::Identifier(symbol)) => symbol,
-            _ => panic!(),
-        };
+        unsafe {
+            bridge::compiler_peer_call(self.peer, 0);
+        }
+
+        Ok(())
+    }
+
+    fn handle_assignment_expression(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_assignment_expression");
 
         unsafe {
-            bridge::compiler_peer_call(self.peer, symbol.id(), 0);
+            bridge::compiler_peer_set(self.peer);
         }
 
         Ok(())
@@ -220,9 +222,6 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_expression_statement(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_expression_statement");
         // TODO
-        unsafe {
-            bridge::compiler_peer_print(self.peer);
-        }
         Ok(())
     }
 
@@ -240,32 +239,27 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         Ok(())
     }
 
-    fn handle_formal_parameters(&mut self, nargs: usize) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_formal_parameters", nargs);
+    fn handle_formal_parameters(&mut self, argc: usize) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_formal_parameters", argc);
         // TODO
         Ok(())
     }
 
-    fn handle_scope(&mut self) -> Result<(), jsparser::Error> {
+    fn handle_start_function_declaration(&mut self, symbol: Symbol) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_scope");
 
-        let symbol = match self.stack.pop() {
-            Some(Item::Identifier(symbol)) => symbol,
-            _ => panic!(),
-        };
+        let name = self.runtime.next_func_name();
 
-        let func_id = self.runtime.next_func_id();
+        unsafe {
+            let len = name.len();
+            let name = name.as_ptr() as *const i8;
+            bridge::compiler_peer_start_function(self.peer, name, len);
+        }
+
         self.runtime
             .global_scope
             .bindings
-            .insert(symbol, Value::Function(func_id));
-
-        // TODO: Should be kept while the function is alive.
-        let func_name = format!("fn{}", func_id.0);
-        let data = func_name.as_ptr() as *const i8;
-        unsafe {
-            bridge::compiler_peer_start_function(self.peer, func_id.0, data, func_name.len());
-        }
+            .insert(symbol, Value::Function(name));
 
         Ok(())
     }
@@ -277,6 +271,56 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
             bridge::compiler_peer_end_function(self.peer);
         }
 
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn handle_start_let_declaration(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_start_let_declaration");
+        Ok(())
+    }
+
+    fn handle_let_binding(&mut self, with_init: bool) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_let_binding");
+
+        if with_init {
+            unsafe {
+                bridge::compiler_peer_set(self.peer);
+            }
+        } else {
+            unsafe {
+                bridge::compiler_peer_set_undefined(self.peer);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn handle_end_let_declaration(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_end_let_declaration");
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn handle_start_const_declaration(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_start_const_declaration");
+        Ok(())
+    }
+
+    fn handle_const_binding(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_const_binding");
+
+        unsafe {
+            bridge::compiler_peer_set(self.peer);
+        }
+
+        Ok(())
+    }
+
+    #[inline(always)]
+    fn handle_end_const_declaration(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_end_const_declaration");
         Ok(())
     }
 }

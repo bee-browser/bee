@@ -53,6 +53,10 @@ void compiler_peer_string(Compiler* self, const char* data, size_t size) {
   self->String(data, size);
 }
 
+void compiler_peer_symbol(Compiler* self, uint32_t symbol_id) {
+  self->Symbol(symbol_id);
+}
+
 void compiler_peer_add(Compiler* self) {
   self->Add();
 }
@@ -97,12 +101,24 @@ void compiler_peer_ne(Compiler* self) {
   self->Ne();
 }
 
-void compiler_peer_call(Compiler* self, uint32_t symbol_id, size_t argc) {
-  self->Call(symbol_id, argc);
+void compiler_peer_get(Compiler* self) {
+  self->Get();
 }
 
-void compiler_peer_start_function(Compiler* self, size_t id, const char* name, size_t len) {
-  self->StartFunction(id, name, len);
+void compiler_peer_set(Compiler* self) {
+  self->Set();
+}
+
+void compiler_peer_set_undefined(Compiler* self) {
+  self->SetUndefined();
+}
+
+void compiler_peer_call(Compiler* self, size_t argc) {
+  self->Call(argc);
+}
+
+void compiler_peer_start_function(Compiler* self, const char* name, size_t len) {
+  self->StartFunction(name, len);
 }
 
 void compiler_peer_end_function(Compiler* self) {
