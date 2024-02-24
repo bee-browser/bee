@@ -19,7 +19,8 @@ export default class LogView extends Widget {
     this.elem_.appendChild(h('td', { 'class': 'log-type' }, t(type)));
     this.elem_.appendChild(h('td', { 'class': 'log-level' }, t(this.log_.level)));
     this.elem_.appendChild(
-      h('td', { 'class': 'log-fields' }, t(JSON.stringify(this.log_.fields))));
+      h('td', { 'class': 'log-fields' }, t(JSON.stringify(this.log_.fields))),
+    );
     return this.elem_;
   }
 }

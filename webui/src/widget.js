@@ -4,7 +4,7 @@ import EventEmitter from 'https://deno.land/x/events@v1.0.0/mod.ts';
 
 export default class Widget extends EventEmitter {
   constructor() {
-    super()
+    super();
     this.elem_ = null;
   }
 
@@ -51,7 +51,7 @@ export default class Widget extends EventEmitter {
     if (!this.hasRendered()) {
       return;
     }
-    this.elem_.scrollIntoViewIfNeeded(true);  // works only on Chrome
+    this.elem_.scrollIntoViewIfNeeded(true); // works only on Chrome
   }
 
   hasRendered() {

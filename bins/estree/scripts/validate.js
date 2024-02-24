@@ -3,7 +3,7 @@
 import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
 
 import deepDiff from 'npm:deep-diff@1.0.2';
-import ora from 'npm:ora@^7.0.1';  // 8.0.1 does not work w/ deno
+import ora from 'npm:ora@^7.0.1'; // 8.0.1 does not work w/ deno
 
 import { parseCommand, readAllText } from '../../../tools/lib/cli.js';
 import { Acorn, ESTree, showDiffs } from './helpers.js';
@@ -35,7 +35,7 @@ options.mode ||= 'release';
 const spinner = ora({ spinner: 'line' });
 
 // The signal handler must be registered before starting the estree server.
-Deno.addSignalListener("SIGINT", () => {
+Deno.addSignalListener('SIGINT', () => {
   spinner.stop();
   Deno.exit(0);
 });

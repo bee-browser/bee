@@ -156,7 +156,10 @@ mod bridge {
         let runtime = (context as *mut super::Runtime).as_mut().unwrap();
         let symbol = Symbol::from(symbol_id);
 
-        runtime.global_scope.bindings.insert(symbol, Value::Number(value));
+        runtime
+            .global_scope
+            .bindings
+            .insert(symbol, Value::Number(value));
     }
 
     unsafe extern "C" fn runtime_set_undefined(context: usize, symbol_id: u32) {
@@ -166,7 +169,10 @@ mod bridge {
         let runtime = (context as *mut super::Runtime).as_mut().unwrap();
         let symbol = Symbol::from(symbol_id);
 
-        runtime.global_scope.bindings.insert(symbol, Value::Undefined);
+        runtime
+            .global_scope
+            .bindings
+            .insert(symbol, Value::Undefined);
     }
 
     unsafe extern "C" fn runtime_call(userdata: usize, symbol_id: u32) -> f64 {
@@ -414,7 +420,7 @@ mod tests {
         }
 
         eval(
-            format!("1 > 0 ? 2 : 3"),
+            "1 > 0 ? 2 : 3",
             bridge::Host {
                 print_f64: Some(validate),
                 ..Default::default()
@@ -429,7 +435,7 @@ mod tests {
         }
 
         eval(
-            format!("1 > 0 ? 1 > 0 ? 2 : 3 : 1 > 0 ? 4 : 5"),
+            "1 > 0 ? 1 > 0 ? 2 : 3 : 1 > 0 ? 4 : 5",
             bridge::Host {
                 print_f64: Some(validate),
                 ..Default::default()
@@ -437,10 +443,10 @@ mod tests {
         );
     }
 
-    fn eval(source: String, host: bridge::Host) {
+    fn eval<T: AsRef<str>>(source: T, host: bridge::Host) {
         Runtime::initialize();
         let mut runtime = Runtime::with_host(host);
-        let _ = runtime.compile_script(&source);
+        let _ = runtime.compile_script(source.as_ref());
         runtime.eval();
     }
 }

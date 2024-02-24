@@ -5,15 +5,19 @@ import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
 // See https://github.com/denoland/deno/issues/19507
 //import puppeteer from 'npm:puppeteer@21.3.6';
 import { default as puppeteer } from 'https://deno.land/x/puppeteer@16.2.0/mod.ts';
-import { RESOURCES_DIR, } from './consts.js';
+import { RESOURCES_DIR } from './consts.js';
 
 const DEFAULT_LINUX_EXECUTABLE = '/opt/google/chrome/google-chrome';
 const DEFAULT_MACOS_EXECUTABLE = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const DEFAULT_WINDOWS_EXECUTABLE = path.join(
-  '%ProgramFiles%', 'Google', 'Chrome', 'Application', 'chrome.exe');
+  '%ProgramFiles%',
+  'Google',
+  'Chrome',
+  'Application',
+  'chrome.exe',
+);
 
-export const DEFAULT_EXECUTABLE =
-  Deno.env.get('BEE_TOOLS_DOM_SCRAPER_DEFAULT_EXECUTABLE') ||
+export const DEFAULT_EXECUTABLE = Deno.env.get('BEE_TOOLS_DOM_SCRAPER_DEFAULT_EXECUTABLE') ||
   (Deno.build.os === 'linux' && DEFAULT_LINUX_EXECUTABLE) ||
   (Deno.build.os === 'darwin' && DEFAULT_MACOS_EXECUTABLE) ||
   (Deno.build.os === 'windows' && DEFAULT_WINDOWS_EXECUTABLE) ||
@@ -22,10 +26,12 @@ export const DEFAULT_EXECUTABLE =
 export const DEFAULT_VIEWPORT_SIZE = '1280x720';
 
 const TAKE_SNAPSHOT_SCRIPT = await Deno.readTextFile(
-  path.join(RESOURCES_DIR, 'dom_scraper', 'take_snapshot.js'));
+  path.join(RESOURCES_DIR, 'dom_scraper', 'take_snapshot.js'),
+);
 
 const TRANSFER_DATA_SCRIPT = await Deno.readTextFile(
-  path.join(RESOURCES_DIR, 'dom_scraper', 'transfer_data.js'));
+  path.join(RESOURCES_DIR, 'dom_scraper', 'transfer_data.js'),
+);
 
 export async function scrape(url, options) {
   const browser = await launch_puppeteer(options);
@@ -118,17 +124,25 @@ async function scrapeDomUsingScript(page, options) {
 }
 
 async function takeSnapshot(page, options) {
-  await page.evaluate((script, options) => {
-    const takeSnapshot = new Function('$OPTIONS', script);
-    return takeSnapshot(options);
-  }, TAKE_SNAPSHOT_SCRIPT, { debug: options.debug });
+  await page.evaluate(
+    (script, options) => {
+      const takeSnapshot = new Function('$OPTIONS', script);
+      return takeSnapshot(options);
+    },
+    TAKE_SNAPSHOT_SCRIPT,
+    { debug: options.debug },
+  );
 }
 
 async function transferData(page, options) {
-  return await page.evaluate((script, options) => {
-    const transferData = new Function('$OPTIONS', script);
-    return transferData(options);
-  }, TRANSFER_DATA_SCRIPT, { debug: options.debug });
+  return await page.evaluate(
+    (script, options) => {
+      const transferData = new Function('$OPTIONS', script);
+      return transferData(options);
+    },
+    TRANSFER_DATA_SCRIPT,
+    { debug: options.debug },
+  );
 }
 
 // experimental scraper using CDP.
@@ -153,7 +167,7 @@ async function scrapeDomUsingCdp(page, options) {
       title: await page.title(),
       root,
     },
-    resources: {},  // TODO
+    resources: {}, // TODO
   });
 }
 
@@ -162,9 +176,11 @@ async function scrapeDomUsingCdp(page, options) {
 // The current implementation is very slow...
 // Sending a request for each node results a lot of overhead due to IPC communication costs.
 async function collectStylesUsingCdp(client, node) {
-  if (node.nodeType === 1) {  // ELEMENT_NODE
+  if (node.nodeType === 1) { // ELEMENT_NODE
     const { computedStyle } = await client.send(
-      'CSS.getComputedStyleForNode', { nodeId: node.nodeId });
+      'CSS.getComputedStyleForNode',
+      { nodeId: node.nodeId },
+    );
     node.computedStyle = computedStyle;
   }
   for (let i = 0; i < node.childNodeCount; ++i) {

@@ -541,6 +541,6 @@ class MainView extends Widget {
     }
 }
 'use strict';
-const widget = new MainView;
+const widget = new MainView();
 document.body.appendChild(widget.render());
 widget.start();

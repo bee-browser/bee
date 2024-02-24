@@ -7,7 +7,7 @@ export default class Surface extends Widget {
   constructor() {
     super();
     this.assets_ = {};
-    this.boxes_ = [];  // in CSS painting order (back-to-front)
+    this.boxes_ = []; // in CSS painting order (back-to-front)
     this.selections_ = [];
     this.boxOutlines_ = {};
   }
@@ -55,7 +55,7 @@ export default class Surface extends Widget {
 
   deselectAll() {
     while (this.selections_.length > 0) {
-      const selected =  this.selections_.pop();
+      const selected = this.selections_.pop();
       selected.deselect();
     }
   }
@@ -101,7 +101,7 @@ export default class Surface extends Widget {
   // Private Methods
 
   append_(box) {
-    this.boxes_.push(box)
+    this.boxes_.push(box);
     this.elem_.appendChild(box.render());
   }
 
@@ -147,12 +147,12 @@ class Box extends Widget {
 
   static convertColor_(color) {
     if (color[3] === 0) {
-      return "transparent";
+      return 'transparent';
     }
     if (color[3] === 255) {
       return `rgb(${color[0]},${color[1]},${color[2]})`;
     }
-    return `rgba(${color[0]},${color[1]},${color[2]},${color[3]/255.0})`;
+    return `rgba(${color[0]},${color[1]},${color[2]},${color[3] / 255.0})`;
   }
 
   renderStyle_(style) {
@@ -160,7 +160,7 @@ class Box extends Widget {
     if (this.background_) {
       style.backgroundColor = Box.convertColor_(this.background_.color);
       if (this.background_.images) {
-        const images =  this.background_.images.map((image) => {
+        const images = this.background_.images.map((image) => {
           const asset = this.surface_.assets_[image.asset.id];
           if (asset !== undefined) {
             return `url(${asset.dataUrl})`;
@@ -195,12 +195,12 @@ class Asset extends Box {
 
   render() {
     switch (this.asset_.type) {
-    case 'image':
-    case 'canvas':
-      return this.renderImage_();
-    default:
-      console.error(`Unknown asset type: ${asset.type}`);
-      return;
+      case 'image':
+      case 'canvas':
+        return this.renderImage_();
+      default:
+        console.error(`Unknown asset type: ${asset.type}`);
+        return;
     }
   }
 

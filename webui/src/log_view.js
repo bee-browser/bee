@@ -12,17 +12,23 @@ export default class LogView extends Widget {
   render() {
     this.elem_ = h('tr', {});
     this.elem_.appendChild(
-      h('td', { 'class': 'log-type' }, t(this.log_.type)));
+      h('td', { 'class': 'log-type' }, t(this.log_.type)),
+    );
     this.elem_.appendChild(
-      h('td', { 'class': 'log-label' }, t(this.log_.label)));
+      h('td', { 'class': 'log-label' }, t(this.log_.label)),
+    );
     this.elem_.appendChild(
-      h('td', { 'class': 'log-file' }, t(this.log_.file)));
+      h('td', { 'class': 'log-file' }, t(this.log_.file)),
+    );
     this.elem_.appendChild(
-      h('td', { 'class': 'log-line' }, t(this.log_.line)));
+      h('td', { 'class': 'log-line' }, t(this.log_.line)),
+    );
     this.elem_.appendChild(
-      h('td', { 'class': 'log-func' }, t(this.log_.func)));
+      h('td', { 'class': 'log-func' }, t(this.log_.func)),
+    );
     this.elem_.appendChild(
-      h('td', { 'class': 'log-message' }, t(this.log_.message)));
+      h('td', { 'class': 'log-message' }, t(this.log_.message)),
+    );
     return this.elem_;
   }
 }

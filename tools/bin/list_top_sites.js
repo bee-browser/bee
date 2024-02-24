@@ -32,22 +32,22 @@ const { options, args } = await parseCommand({
   doc: DOC,
   conv: async (name, value) => {
     switch (name) {
-    case '<ranking>':
-      if (!top_sites.RANKINGS.includes(value)) {
-        throw new Error(`Not supported: ${value}`);
-      }
-      return value;
-    case '<limit>':
-      if (value === null) {
-        return DEFAULT_LIMIT;
-      }
-      const limit = parseInt(value);
-      if (isNaN(limit)) {
-        throw new Error(`Not a number: ${value}`);
-      }
-      return limit;
-    default:
-      return value;
+      case '<ranking>':
+        if (!top_sites.RANKINGS.includes(value)) {
+          throw new Error(`Not supported: ${value}`);
+        }
+        return value;
+      case '<limit>':
+        if (value === null) {
+          return DEFAULT_LIMIT;
+        }
+        const limit = parseInt(value);
+        if (isNaN(limit)) {
+          throw new Error(`Not a number: ${value}`);
+        }
+        return limit;
+      default:
+        return value;
     }
   },
 });

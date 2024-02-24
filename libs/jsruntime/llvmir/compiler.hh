@@ -55,7 +55,6 @@ class Compiler {
   llvm::orc::ThreadSafeModule TakeModule();
 
  private:
-
   struct Item {
     enum Type {
       Value,

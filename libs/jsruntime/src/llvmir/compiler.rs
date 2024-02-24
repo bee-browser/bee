@@ -19,10 +19,7 @@ pub struct Compiler<'r> {
 impl<'r> Compiler<'r> {
     pub fn new(runtime: &'r mut Runtime) -> Self {
         let peer = unsafe { bridge::runtime_peer_start_compilation(runtime.peer) };
-        Self {
-            runtime,
-            peer,
-        }
+        Self { runtime, peer }
     }
 
     fn populate_module(&self) {

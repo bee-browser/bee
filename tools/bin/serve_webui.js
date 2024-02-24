@@ -24,12 +24,12 @@ Options:
     Use debug-build binaries.
 `.trim();
 
-const { options, args, } = await parseCommand({
+const { options, args } = await parseCommand({
   doc: DOC,
   conv: (name, value) => {
     switch (name) {
-    case '--port':
-      return parseInt(value);
+      case '--port':
+        return parseInt(value);
     }
     return value;
   },

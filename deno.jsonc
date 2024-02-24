@@ -1,0 +1,14 @@
+{
+  "fmt": {
+    "lineWidth": 99,
+    "singleQuote": true,
+    // Format only JavaScript files.
+    "include": [
+      "**/*.js"
+    ],
+    "exclude": [
+      "target/*",
+      "vendor/*"
+    ]
+  }
+}

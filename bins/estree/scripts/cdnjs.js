@@ -2,7 +2,7 @@
 
 import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
 
-import ora from 'npm:ora@^7.0.1';  // 8.0.1 does not work w/ deno
+import ora from 'npm:ora@^7.0.1'; // 8.0.1 does not work w/ deno
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { showDiffs } from './helpers.js';
@@ -47,12 +47,14 @@ const EXCLUDES = [
 // We use a worker because the spinner sometimes gets stuck due to a large EStree.
 // Computation of JSON5.parse() and microdiff() takes a long time.
 const worker = new Worker(
-  new URL("./cdnjs_worker.js", import.meta.url).href, { type: 'module' });
+  new URL('./cdnjs_worker.js', import.meta.url).href,
+  { type: 'module' },
+);
 
 const spinner = ora({ spinner: 'line' });
 
 // The signal handler must be registered before starting the estree server.
-Deno.addSignalListener("SIGINT", () => {
+Deno.addSignalListener('SIGINT', () => {
   spinner.stop();
   Deno.exit(0);
 });
@@ -66,10 +68,9 @@ if (options.progress) {
 }
 
 spinner.text = 'loading libraries from cdnjs.com...';
-const libs =
-    (await getJson('https://api.cdnjs.com/libraries?fields=fileType'))
-      .results
-      .filter((lib) => lib.latest !== null && lib.fileType === 'js');
+const libs = (await getJson('https://api.cdnjs.com/libraries?fields=fileType'))
+  .results
+  .filter((lib) => lib.latest !== null && lib.fileType === 'js');
 
 const skipped = [];
 const fails = [];
@@ -84,24 +85,24 @@ for (let i = 0; i < libs.length; ++i) {
   const promise = new Promise((resolve, reject) => {
     worker.onmessage = ({ data }) => {
       switch (data.type) {
-      case 'progress':
-        spinner.text = `${i}/${libs.length} ${url}: ${data.message}`;
-        break;
-      case 'pass':
-        resolve();
-        break;
-      case 'skip':
-        skipped.push({ url, reason: data.reason });
-        resolve();
-        break;
-      case 'fail':
-        spinner.fail(`${url}: ${data.reason}`);
-        if (options.progress) {
-          spinner.start();
-        }
-        skipped.push({ url, reason: data.reason, diffs: data.diffs });
-        resolve();
-        break;
+        case 'progress':
+          spinner.text = `${i}/${libs.length} ${url}: ${data.message}`;
+          break;
+        case 'pass':
+          resolve();
+          break;
+        case 'skip':
+          skipped.push({ url, reason: data.reason });
+          resolve();
+          break;
+        case 'fail':
+          spinner.fail(`${url}: ${data.reason}`);
+          if (options.progress) {
+            spinner.start();
+          }
+          skipped.push({ url, reason: data.reason, diffs: data.diffs });
+          resolve();
+          break;
       }
     };
     worker.onerror = (event) => reject(event);
@@ -133,6 +134,8 @@ if (options.details) {
 }
 
 const passed = libs.length - fails.length - skipped.length;
-console.log(`${libs.length} urls: ${passed} passed, ${skipped.length} skipped, ${fails.length} failed`);
+console.log(
+  `${libs.length} urls: ${passed} passed, ${skipped.length} skipped, ${fails.length} failed`,
+);
 
 Deno.exit(fails.length === 0 ? 0 : 1);

@@ -68,11 +68,13 @@ async function run(args, options) {
     autoescape: options.escape,
   });
   registerHelpers(env);
-  console.log(env.renderString(template, {
-    data,
-    command: `${PROGNAME} ${Deno.args.join(' ')}`,
-    template: path.relative(PROJ_DIR, args.template),
-  }).trim());
+  console.log(
+    env.renderString(template, {
+      data,
+      command: `${PROGNAME} ${Deno.args.join(' ')}`,
+      template: path.relative(PROJ_DIR, args.template),
+    }).trim(),
+  );
   return 0;
 }
 

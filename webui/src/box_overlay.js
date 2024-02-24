@@ -16,12 +16,14 @@ export default class BoxOverlay extends Widget {
   // Widget
 
   render() {
-    this.elem_ =
-      h('div', { 'class': 'box-overlay' },
-        this.marginBox_.render(),
-        this.borderBox_.render(),
-        this.paddingBox_.render(),
-        this.contentBox_.render());
+    this.elem_ = h(
+      'div',
+      { 'class': 'box-overlay' },
+      this.marginBox_.render(),
+      this.borderBox_.render(),
+      this.paddingBox_.render(),
+      this.contentBox_.render(),
+    );
 
     return this.elem_;
   }
@@ -46,7 +48,10 @@ export default class BoxOverlay extends Widget {
 }
 
 const STYLE_RECT_PROP_MAP_ = {
-  top: 'y', left: 'x', width: 'width', height: 'height'
+  top: 'y',
+  left: 'x',
+  width: 'width',
+  height: 'height',
 };
 
 class BoxOutline extends Widget {
@@ -56,7 +61,7 @@ class BoxOutline extends Widget {
   }
 
   render() {
-    this.elem_ = h('div', { 'class': `${this.type_}-box-outline hide` })
+    this.elem_ = h('div', { 'class': `${this.type_}-box-outline hide` });
     return this.elem_;
   }
 

@@ -28,7 +28,9 @@ export default class TreeNode extends Widget {
     }
     if (this.elem_) {
       this.containerElem_.insertBefore(
-        node.render(), sibling ? sibling.elem_ : null);
+        node.render(),
+        sibling ? sibling.elem_ : null,
+      );
     }
   }
 
@@ -55,15 +57,15 @@ export default class TreeNode extends Widget {
   // Widget
 
   render() {
-    this.elem_ =
-      h('div', { class: 'tree-node' },
-        h('div', {
-          class: 'tree-node-content',
-          style: `padding-left: ${this.depth_ * 10 + 'px'}`
-        },
-          h('span', { class: 'tree-node-label' },
-            t(this.label))),
-        h('div', { class: 'tree-node-container' }));
+    this.elem_ = h(
+      'div',
+      { class: 'tree-node' },
+      h('div', {
+        class: 'tree-node-content',
+        style: `padding-left: ${this.depth_ * 10 + 'px'}`,
+      }, h('span', { class: 'tree-node-label' }, t(this.label))),
+      h('div', { class: 'tree-node-container' }),
+    );
 
     this.contentElem_ = this.elem_.querySelector('.tree-node-content');
     this.contentElem_.addEventListener('click', (event) => {
@@ -86,8 +88,7 @@ export default class TreeNode extends Widget {
       this.emit('mouseout', this);
     });
 
-    this.containerElem_ =
-      this.elem_.querySelector('.tree-node-container');
+    this.containerElem_ = this.elem_.querySelector('.tree-node-container');
 
     for (const node of this.nodes_) {
       node.depth_ = this.depth_ + 1;
@@ -98,6 +99,6 @@ export default class TreeNode extends Widget {
   }
 
   scrollIntoView() {
-    this.contentElem_.scrollIntoViewIfNeeded(true);  // works only on Chrome
+    this.contentElem_.scrollIntoViewIfNeeded(true); // works only on Chrome
   }
 }

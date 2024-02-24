@@ -1,10 +1,10 @@
 'use strict';
 
 import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
-import { equal } from "https://deno.land/std@0.220.1/testing/asserts.ts";
+import { equal } from 'https://deno.land/std@0.220.1/testing/asserts.ts';
 
 import deepDiff from 'npm:deep-diff@1.0.2';
-import ora from 'npm:ora@^7.0.1';  // 8.0.1 does not work w/ deno
+import ora from 'npm:ora@^7.0.1'; // 8.0.1 does not work w/ deno
 
 import { parseCommand } from '../../../tools/lib/cli.js';
 import { VENDOR_DIR } from '../../../tools/lib/consts.js';
@@ -107,7 +107,7 @@ const EXCLUDES = [
 const spinner = ora({ spinner: 'line' });
 
 // The signal handler must be registered before starting the estree server.
-Deno.addSignalListener("SIGINT", () => {
+Deno.addSignalListener('SIGINT', () => {
   spinner.stop();
   // We cannot call server?.stop() here because it's async method...
   Deno.exit(0);
@@ -300,6 +300,7 @@ if (options.details) {
 const passed = count - fails.length - skipped.length;
 console.log(
   `${count} tests: ${passed} passed, ${EXCLUDES.length} excluded, ` +
-    `${skipped.length} skipped, ${fails.length} failed`);
+    `${skipped.length} skipped, ${fails.length} failed`,
+);
 
 Deno.exit(fails.length === 0 ? 0 : 1);

@@ -106,7 +106,7 @@ function registerHelpers() {
     Handlebars.registerHelper(name, changeCase[name]);
   }
 
-  Handlebars.registerHelper("escapeForRust", (str) => {
+  Handlebars.registerHelper('escapeForRust', (str) => {
     const CHARMAP = {
       '\0': '\\0',
       '\n': '\\n',
@@ -127,7 +127,7 @@ function registerHelpers() {
     return escaped;
   });
 
-  Handlebars.registerHelper("escapeUnicodeForRust", (str) => {
+  Handlebars.registerHelper('escapeUnicodeForRust', (str) => {
     let escaped = '';
     let i = 0;
     while (i < str.length) {
@@ -156,12 +156,14 @@ async function codegen(src, input, args, options) {
     noEscape: options.noEscape,
     strict: true,
   });
-  console.log(template(input, {
-    data: {
-      command: `${PROGNAME} ${Deno.args.join(' ')}`,
-      template: path.relative(PROJ_DIR, args.template),
-    },
-  }).trim());
+  console.log(
+    template(input, {
+      data: {
+        command: `${PROGNAME} ${Deno.args.join(' ')}`,
+        template: path.relative(PROJ_DIR, args.template),
+      },
+    }).trim(),
+  );
 }
 
 async function depsgen(src, input, args, options) {

@@ -3,9 +3,8 @@
 #include <cstdint>
 #include <iostream>
 
-#include "llvm/Support/TargetSelect.h"
-
 #include "host.hh"
+#include "llvm/Support/TargetSelect.h"
 
 static llvm::ExitOnError ExitOnErr;
 
@@ -26,32 +25,32 @@ void Runtime::RegisterHost(const Host* host) {
   auto& exec_session = evaluator_->exec_session();
   llvm::orc::SymbolMap symbols;
   symbols[exec_session.intern("print_bool")] = {
-    llvm::orc::ExecutorAddr::fromPtr(host->print_bool),
-    llvm::JITSymbolFlags::Exported,
+      llvm::orc::ExecutorAddr::fromPtr(host->print_bool),
+      llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("print_f64")] = {
-    llvm::orc::ExecutorAddr::fromPtr(host->print_f64),
-    llvm::JITSymbolFlags::Exported,
+      llvm::orc::ExecutorAddr::fromPtr(host->print_f64),
+      llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("print_str")] = {
-    llvm::orc::ExecutorAddr::fromPtr(host->print_str),
-    llvm::JITSymbolFlags::Exported,
+      llvm::orc::ExecutorAddr::fromPtr(host->print_str),
+      llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("runtime_get")] = {
-    llvm::orc::ExecutorAddr::fromPtr(host->runtime_get),
-    llvm::JITSymbolFlags::Exported,
+      llvm::orc::ExecutorAddr::fromPtr(host->runtime_get),
+      llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("runtime_set")] = {
-    llvm::orc::ExecutorAddr::fromPtr(host->runtime_set),
-    llvm::JITSymbolFlags::Exported,
+      llvm::orc::ExecutorAddr::fromPtr(host->runtime_set),
+      llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("runtime_set_undefined")] = {
-    llvm::orc::ExecutorAddr::fromPtr(host->runtime_set_undefined),
-    llvm::JITSymbolFlags::Exported,
+      llvm::orc::ExecutorAddr::fromPtr(host->runtime_set_undefined),
+      llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("runtime_call")] = {
-    llvm::orc::ExecutorAddr::fromPtr(host->runtime_call),
-    llvm::JITSymbolFlags::Exported,
+      llvm::orc::ExecutorAddr::fromPtr(host->runtime_call),
+      llvm::JITSymbolFlags::Exported,
   };
   ExitOnErr(evaluator_->main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
 }

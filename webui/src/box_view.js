@@ -1,13 +1,16 @@
 'use strict';
 
-import { h, formatBeeRect } from './helper.js';
+import { formatBeeRect, h } from './helper.js';
 import Widget from './widget.js';
 import BoxOverlay from './box_overlay.js';
 import Surface from './surface.js';
 import BoxPropView from './box_prop_view.js';
 
 const BOX_OUTLINE_PROP_MAP = {
-  top: 'y', left: 'x', width: 'width', height: 'height'
+  top: 'y',
+  left: 'x',
+  width: 'width',
+  height: 'height',
 };
 
 export default class BoxView extends Widget {
@@ -38,13 +41,16 @@ export default class BoxView extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { id: 'box-view' },
-        h('div', { 'class': 'grid' },
-          h('div', { 'id': 'surface-container' },
-            this.overlay_.render(),
-            this.surface_.render()),
-          this.propView_.render()));
+    this.elem_ = h(
+      'div',
+      { id: 'box-view' },
+      h(
+        'div',
+        { 'class': 'grid' },
+        h('div', { 'id': 'surface-container' }, this.overlay_.render(), this.surface_.render()),
+        this.propView_.render(),
+      ),
+    );
 
     return this.elem_;
   }
@@ -79,32 +85,32 @@ export default class BoxView extends Widget {
 
   handleMessage(msg) {
     switch (msg.type) {
-    case 'asset.add':
-      this.surface_.addAsset(msg.data);
-      break;
-    case 'render.start':
-      this.surface_.start(msg.data);
-      break;
-    case 'render.render_box':
-      this.surface_.renderBox(msg.data);
-      break;
-    case 'render.render_asset':
-      this.surface_.renderAsset(msg.data);
-      break;
-    case 'render.end':
-      this.surface_.end();
-      break;
-    case 'layout.monitor.render_box':
-      if (!(msg.data.object_id in this.props_)) {
-        this.props_[msg.data.object_id] = {};
-      }
-      this.props_[msg.data.object_id].rects = {
-        marginRect: msg.data.margin_rect,
-        borderRect: msg.data.border_rect,
-        paddingRect: msg.data.padding_rect,
-        contentRect: msg.data.content_rect,
-      };
-      break;
+      case 'asset.add':
+        this.surface_.addAsset(msg.data);
+        break;
+      case 'render.start':
+        this.surface_.start(msg.data);
+        break;
+      case 'render.render_box':
+        this.surface_.renderBox(msg.data);
+        break;
+      case 'render.render_asset':
+        this.surface_.renderAsset(msg.data);
+        break;
+      case 'render.end':
+        this.surface_.end();
+        break;
+      case 'layout.monitor.render_box':
+        if (!(msg.data.object_id in this.props_)) {
+          this.props_[msg.data.object_id] = {};
+        }
+        this.props_[msg.data.object_id].rects = {
+          marginRect: msg.data.margin_rect,
+          borderRect: msg.data.border_rect,
+          paddingRect: msg.data.padding_rect,
+          contentRect: msg.data.content_rect,
+        };
+        break;
     }
   }
 }

@@ -39,16 +39,16 @@ const { options, args } = await parseCommand({
   doc: DOC,
   conv: async (name, value) => {
     switch (name) {
-    case '--box':
-      const [width, height] = value.split('x', 2);
-      return { width: parseInt(width), height: parseInt(height) };
-    case '<text>':
-      if (value) {
+      case '--box':
+        const [width, height] = value.split('x', 2);
+        return { width: parseInt(width), height: parseInt(height) };
+      case '<text>':
+        if (value) {
+          return value;
+        }
+        return await readAllText(Deno.stdin);
+      default:
         return value;
-      }
-      return await readAllText(Deno.stdin);
-    default:
-      return value;
     }
   },
 });

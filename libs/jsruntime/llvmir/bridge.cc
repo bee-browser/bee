@@ -21,7 +21,7 @@ void runtime_peer_register_host(Runtime* self, const Host* host) {
   self->RegisterHost(host);
 }
 
-void runtime_peer_dump_module(Runtime *self) {
+void runtime_peer_dump_module(Runtime* self) {
   self->DumpModule();
 }
 
@@ -29,7 +29,7 @@ void runtime_peer_eval(Runtime* self, uintptr_t context) {
   self->Eval(context);
 }
 
-void runtime_peer_call(Runtime* self, const char *name, size_t name_len, double *return_value) {
+void runtime_peer_call(Runtime* self, const char* name, size_t name_len, double* return_value) {
   self->Call(name, name_len, return_value);
 }
 
@@ -121,11 +121,11 @@ void compiler_peer_to_boolean(Compiler* self) {
   self->ToBoolean();
 }
 
-void compiler_peer_block(Compiler *self) {
+void compiler_peer_block(Compiler* self) {
   self->Block();
 }
 
-void compiler_peer_conditional_expression(Compiler *self) {
+void compiler_peer_conditional_expression(Compiler* self) {
   self->ConditionalExpression();
 }
 

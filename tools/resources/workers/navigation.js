@@ -97,7 +97,7 @@ async function layout(input, { layouter }) {
   shell.close();
 }
 
-function buildScript({ uri, width, height, layouter}) {
+function buildScript({ uri, width, height, layouter }) {
   const commands = [];
 
   if (uri.startsWith('text:')) {

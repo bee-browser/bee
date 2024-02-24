@@ -31,11 +31,13 @@ export default class Toolbar extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { id: 'toolbar' },
-        this.actionButton_,
-        this.nextButton_,
-        this.resetButton_);
+    this.elem_ = h(
+      'div',
+      { id: 'toolbar' },
+      this.actionButton_,
+      this.nextButton_,
+      this.resetButton_,
+    );
     return this.elem_;
   }
 }
