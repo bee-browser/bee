@@ -35,13 +35,13 @@ class Scraper {
 
   async scrapeNode_(node) {
     switch (node.nodeType) {
-    case Node.ELEMENT_NODE:
-      return await this.scrapeElement_(node);
-    case Node.TEXT_NODE:
-      return await this.scrapeTextNode_(node);
-    default:
-      // TODO: throw an exception?
-      return null;
+      case Node.ELEMENT_NODE:
+        return await this.scrapeElement_(node);
+      case Node.TEXT_NODE:
+        return await this.scrapeTextNode_(node);
+      default:
+        // TODO: throw an exception?
+        return null;
     }
   }
 
@@ -57,7 +57,7 @@ class Scraper {
       childNodes.push(await this.scrapeNode_(element.childNodes[i]));
     }
     childNodes.push(await this.scrapePseudoElement_(element, '::after'));
-    childNodes = childNodes.filter((node) => node !== null);  // remove nulls
+    childNodes = childNodes.filter((node) => node !== null); // remove nulls
 
     // Should we remove an empty 'style' attribute which has created in
     // `Scraper.scrapeComputedStyle_()`?  See comments in this method for details.
@@ -144,77 +144,77 @@ class Scraper {
 
   async collectAssets_(element, style) {
     switch (element?.tagName) {
-    case 'IMG':
-      {
-        let url = element.currentSrc;
-        if (url === '') {
-          url = Scraper.convertImageToDataUrl_(element);
+      case 'IMG':
+        {
+          let url = element.currentSrc;
+          if (url === '') {
+            url = Scraper.convertImageToDataUrl_(element);
+          }
+          let id = this.assetUrlMap_[url];
+          if (id === undefined) {
+            id = Scraper.getNextAssetId_();
+            this.assets_[id] = {
+              id,
+              url,
+              type: 'image',
+              width: element.naturalWidth,
+              height: element.naturalHeight,
+            };
+            this.assetUrlMap_[url] = id;
+          }
+          style['-bee-content-asset-id'] = id;
         }
-        let id = this.assetUrlMap_[url];
-        if (id === undefined) {
-          id = Scraper.getNextAssetId_();
-          this.assets_[id] = {
-            id,
-            url,
-            type: 'image',
-            width: element.naturalWidth,
-            height: element.naturalHeight,
-          };
-          this.assetUrlMap_[url] = id;
+        break;
+      case 'VIDEO':
+        {
+          const url = element.currentSrc;
+          let id = this.assetUrlMap_[url];
+          if (id === undefined) {
+            id = Scraper.getNextAssetId_();
+            this.assets_[id] = {
+              id,
+              url,
+              type: 'video',
+              width: element.videoWidth,
+              height: element.videoHeight,
+            };
+            this.assetUrlMap_[url] = id;
+          }
+          style['-bee-content-asset-id'] = id;
         }
-        style['-bee-content-asset-id'] = id;
-      }
-      break;
-    case 'VIDEO':
-      {
-        const url = element.currentSrc;
-        let id = this.assetUrlMap_[url];
-        if (id === undefined) {
-          id = Scraper.getNextAssetId_();
-          this.assets_[id] = {
-            id,
-            url,
-            type: 'video',
-            width: element.videoWidth,
-            height: element.videoHeight,
-          };
-          this.assetUrlMap_[url] = id;
+        break;
+      case 'CANVAS':
+        {
+          const url = element.toDataURL('image/png');
+          let id = this.assetUrlMap_[url];
+          if (id === undefined) {
+            id = Scraper.getNextAssetId_();
+            this.assets_[id] = {
+              id,
+              url,
+              type: 'canvas',
+              width: element.width,
+              height: element.height,
+            };
+            this.assetUrlMap_[url] = id;
+          }
+          style['-bee-content-asset-id'] = id;
         }
-        style['-bee-content-asset-id'] = id;
-      }
-      break;
-    case 'CANVAS':
-      {
-        const url = element.toDataURL('image/png');
-        let id = this.assetUrlMap_[url];
-        if (id === undefined) {
-          id = Scraper.getNextAssetId_();
-          this.assets_[id] = {
-            id,
-            url,
-            type: 'canvas',
-            width: element.width,
-            height: element.height,
-          };
-          this.assetUrlMap_[url] = id;
-        }
-        style['-bee-content-asset-id'] = id;
-      }
-      break;
-    case 'OBJECT':
-      // TODO
-      break;
+        break;
+      case 'OBJECT':
+        // TODO
+        break;
     }
   }
 
-  static nextNodeId_ = 1;  // unique in the same document
+  static nextNodeId_ = 1; // unique in the same document
 
   static getNextNodeId_() {
     const id = this.nextNodeId_++;
     return id;
   }
 
-  static nextAssetId_ = 1;  // unique in the same document
+  static nextAssetId_ = 1; // unique in the same document
 
   static getNextAssetId_() {
     const id = this.nextAssetId_++;

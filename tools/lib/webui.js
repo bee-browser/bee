@@ -17,7 +17,7 @@ await log.setup({
       formatter: (rec) => {
         const timestamp = rec.datetime.toISOString();
         return `${timestamp} ${rec.levelName.padEnd(7)} ${rec.msg}`;
-      }
+      },
     }),
   },
   loggers: {
@@ -32,18 +32,18 @@ export async function serve(options) {
   const app = servest.createApp({
     logger: (level, msg, ...args) => {
       switch (level) {
-      case servest.Loglevel.DEBUG:
-        log.debug(msg, ...args);
-        break;
-      case servest.Loglevel.INFO:
-        log.info(msg, ...args);
-        break;
-      case servest.Loglevel.WARN:
-        log.warn(msg, ...args);
-        break;
-      case servest.Loglevel.ERROR:
-        log.error(msg, ...args);
-        break;
+        case servest.Loglevel.DEBUG:
+          log.debug(msg, ...args);
+          break;
+        case servest.Loglevel.INFO:
+          log.info(msg, ...args);
+          break;
+        case servest.Loglevel.WARN:
+          log.warn(msg, ...args);
+          break;
+        case servest.Loglevel.ERROR:
+          log.error(msg, ...args);
+          break;
       }
     },
   });
@@ -64,15 +64,15 @@ export async function serve(options) {
 async function handleJson_(socket, json, options) {
   const msg = JSON.parse(json);
   switch (msg.type) {
-  case 'navigation.go':
-    return await handleNavigationGo_(socket, msg.data, options);
+    case 'navigation.go':
+      return await handleNavigationGo_(socket, msg.data, options);
   }
 }
 
 async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBuild }) {
   log.info(`navigation: navigation.go: ${uri}`);
 
-  if (!uri) {  // required
+  if (!uri) { // required
     return;
   }
 
@@ -100,7 +100,7 @@ async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBu
   // the main thread as messages.
 
   const worker = new Worker(new URL(NAVIGATION_JS, import.meta.url).href, {
-    type: "module",
+    type: 'module',
     deno: {
       namespace: true,
       permissions: 'inherit',
@@ -108,21 +108,21 @@ async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBu
   });
   worker.onmessage = async ({ data }) => {
     switch (data.type) {
-    case 'asset':
-      log.debug('navigation: worker: asset message');
-      socket.send(data.data);
-      break;
-    case 'render':
-      log.debug('navigation: worker: render message');
-      socket.send(data.data);
-      break;
-    case 'done':
-      socket.send(JSON.stringify({ type: 'navigation.end' }));
-      log.info('navigation: navigation.end');
-      break;
-    default:
-      log.debug(data);
-      break;
+      case 'asset':
+        log.debug('navigation: worker: asset message');
+        socket.send(data.data);
+        break;
+      case 'render':
+        log.debug('navigation: worker: render message');
+        socket.send(data.data);
+        break;
+      case 'done':
+        socket.send(JSON.stringify({ type: 'navigation.end' }));
+        log.info('navigation: navigation.end');
+        break;
+      default:
+        log.debug(data);
+        break;
     }
   };
   worker.onerror = (err) => {
@@ -133,5 +133,5 @@ async function handleNavigationGo_(socket, { uri, viewport, remotes }, { debugBu
   worker.postMessage({ uri, width, height, layouter });
 
   socket.send(JSON.stringify({ type: 'navigation.start' }));
-  log.info('navigation: navigation.start')
+  log.info('navigation: navigation.start');
 }

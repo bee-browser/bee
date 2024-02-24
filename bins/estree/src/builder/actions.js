@@ -1,8 +1,8 @@
 'use strict';
 
-import * as fs from "https://deno.land/std@0.220.1/fs/mod.ts";
+import * as fs from 'https://deno.land/std@0.220.1/fs/mod.ts';
 import * as log from 'https://deno.land/std@0.220.1/log/mod.ts';
-import * as yaml from "https://deno.land/std@0.220.1/yaml/mod.ts";
+import * as yaml from 'https://deno.land/std@0.220.1/yaml/mod.ts';
 import { parseCommand } from '../../../../tools/lib/cli.js';
 import { setup } from '../../../../tools/lib/log.js';
 
@@ -50,7 +50,7 @@ async function collect(args, options) {
       });
       continue;
     }
-    let actionName= `action${actions.length}`;
+    let actionName = `action${actions.length}`;
     actions.push({
       name: actionName,
       code: action,
@@ -117,8 +117,8 @@ if (options.debug) {
 }
 
 switch (cmds[0]) {
-case 'collect':
-  Deno.exit(await collect(args, options));
-case 'update':
-  Deno.exit(await update(args, options));
+  case 'collect':
+    Deno.exit(await collect(args, options));
+  case 'update':
+    Deno.exit(await update(args, options));
 }

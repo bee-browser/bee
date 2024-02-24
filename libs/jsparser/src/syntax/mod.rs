@@ -496,9 +496,7 @@ where
         self.queue.pop_back(); // removes the cover syntax
         logger::debug!(?self.queue);
         while let Some(syntax) = self.queue.pop_front() {
-            match syntax {
-                _ => self.dispatch(syntax)?,
-            }
+            self.dispatch(syntax)?;
         }
         self.handler.handle_call_expression()
     }
@@ -657,7 +655,8 @@ where
             _ => panic!(),
         };
 
-        self.handler.handle_start_function_declaration(identifier.symbol)?;
+        self.handler
+            .handle_start_function_declaration(identifier.symbol)?;
         self.queue.clear();
 
         Ok(())

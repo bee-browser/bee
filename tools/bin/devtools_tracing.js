@@ -45,23 +45,23 @@ const { options, args } = await parseCommand({
   doc: DOC,
   conv: async (name, value) => {
     switch (name) {
-    case '--viewport':
-      const [width, height] = value.split('x', 2);
-      return { width: parseInt(width), height: parseInt(height) };
-    case '<uri>':
-      if (value) {
-        try {
-          new URL(value);
-          return value;
-        } catch (err) {
-          return path.toFileUrl(path.resolve(value));
+      case '--viewport':
+        const [width, height] = value.split('x', 2);
+        return { width: parseInt(width), height: parseInt(height) };
+      case '<uri>':
+        if (value) {
+          try {
+            new URL(value);
+            return value;
+          } catch (err) {
+            return path.toFileUrl(path.resolve(value));
+          }
+        } else {
+          const html = base64.fromUint8Array(await Deno.readAll(Deno.stdin));
+          return `data:text/html;charset=utf-8;base64,${html}`;
         }
-      } else {
-        const html = base64.fromUint8Array(await Deno.readAll(Deno.stdin));
-        return `data:text/html;charset=utf-8;base64,${html}`;
-      }
-    default:
-      return value;
+      default:
+        return value;
     }
   },
 });

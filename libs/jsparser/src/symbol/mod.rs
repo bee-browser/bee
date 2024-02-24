@@ -48,7 +48,9 @@ impl SymbolTable {
     }
 
     pub fn resolve(&self, symbol: Symbol) -> Option<&[u16]> {
-        self.symbols.get_index(symbol.0 as usize).map(|v| v.as_slice())
+        self.symbols
+            .get_index(symbol.0 as usize)
+            .map(|v| v.as_slice())
     }
 }
 

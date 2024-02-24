@@ -70,21 +70,21 @@ function convertTokenNames(rules) {
   for (const rule of rules) {
     for (const term of rule.production) {
       switch (term.type) {
-      case 'token':
-      case 'disallow':
-        term.data = changeCase.constantCase(term.data);
-        break;
-      case 'lookahead':
-        term.data.data = term.data.data.map((patterns) => {
-          return patterns.map((pattern) => {
-            if (pattern.startsWith('(!')) {
-              let token = pattern.substring(2, pattern.length - 1);
-              return `(!${changeCase.constantCase(token)})`;
-            }
-            return changeCase.constantCase(pattern);
+        case 'token':
+        case 'disallow':
+          term.data = changeCase.constantCase(term.data);
+          break;
+        case 'lookahead':
+          term.data.data = term.data.data.map((patterns) => {
+            return patterns.map((pattern) => {
+              if (pattern.startsWith('(!')) {
+                let token = pattern.substring(2, pattern.length - 1);
+                return `(!${changeCase.constantCase(token)})`;
+              }
+              return changeCase.constantCase(pattern);
+            });
           });
-        });
-        break;
+          break;
       }
     }
   }
@@ -145,41 +145,41 @@ class Transpiler {
   constructor(options) {
     this.options_ = options;
     switch (options.grammarType) {
-    case 'lexical':
-      this.passes_ = [
-        addLexicalRules,
-        rewriteReservedWord,
-        rewritePunctuator,
-        expandOptionals,
-        expandParameterizedRules,
-        translateRules,
-        addSourceCharacter,
-        mergeUnicodeSets,
-        transform,
-      ];
-      break;
-    case 'syntactic':
-      this.passes_ = [
-        rewriteIdentifierRule,
-        expandMultiplicativeOperator,
-        expandLetOrConst,
-        // CPEAAPL cannot be replaced with refined production rules.  You will see many
-        // conflicts in the LALR(1) parsing table generation when you actually try this.
-        //rewriteCPEAAPL,
-        modifyFunctionDeclaration,
-        modifyConditionalExpression,
-        expandOptionals,
-        expandParameterizedRules,
-        translateRules,
-        processLookaheads,
-        addLiterals,
-        transform,
-        rewriteIdentifierName,
-        convertTokenNames,
-      ];
-      break;
-    default:
-      unreachable();
+      case 'lexical':
+        this.passes_ = [
+          addLexicalRules,
+          rewriteReservedWord,
+          rewritePunctuator,
+          expandOptionals,
+          expandParameterizedRules,
+          translateRules,
+          addSourceCharacter,
+          mergeUnicodeSets,
+          transform,
+        ];
+        break;
+      case 'syntactic':
+        this.passes_ = [
+          rewriteIdentifierRule,
+          expandMultiplicativeOperator,
+          expandLetOrConst,
+          // CPEAAPL cannot be replaced with refined production rules.  You will see many
+          // conflicts in the LALR(1) parsing table generation when you actually try this.
+          //rewriteCPEAAPL,
+          modifyFunctionDeclaration,
+          modifyConditionalExpression,
+          expandOptionals,
+          expandParameterizedRules,
+          translateRules,
+          processLookaheads,
+          addLiterals,
+          transform,
+          rewriteIdentifierName,
+          convertTokenNames,
+        ];
+        break;
+      default:
+        unreachable();
     }
   }
 
@@ -308,19 +308,66 @@ function addLexicalRules(rules) {
 
 // TODO: Read keywords from lexer/tokens.yaml.
 const RESERVED_KEYWORDS = [
-  'await', 'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
-  'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false',
-  'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new',
-  'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof',
-  'var', 'void', 'while', 'with', 'yield'
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'import',
+  'in',
+  'instanceof',
+  'new',
+  'null',
+  'return',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
 ];
 
 // TODO: Read keywords from lexer/tokens.yaml.
 const ADDITIONAL_KEYWORDS = [
   // KeywordInStrictMode
-  'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public',
+  'let',
+  'static',
+  'implements',
+  'interface',
+  'package',
+  'private',
+  'protected',
+  'public',
   // UnreservedKeyword
-  'as', 'async', 'from', 'get', 'meta', 'of', 'set', 'target',
+  'as',
+  'async',
+  'from',
+  'get',
+  'meta',
+  'of',
+  'set',
+  'target',
 ];
 
 function rewriteReservedWord(rules) {
@@ -419,7 +466,7 @@ function rewritePunctuator(rules) {
   otherPunctuator.values.forEach((value) => {
     rules.push({
       name: PUNCTUATORS[value.slice(1, -1)],
-      values: [value]
+      values: [value],
     });
   });
   otherPunctuator.values = otherPunctuator.values.map((value) => {
@@ -471,7 +518,10 @@ function expandMultiplicativeOperator(rules) {
   assert(rule !== undefined);
   assert(rule.values.length === 2);
   const value = rule.values.pop();
-  assert(value === 'MultiplicativeExpression[?Yield, ?Await] MultiplicativeOperator ExponentiationExpression[?Yield, ?Await]');
+  assert(
+    value ===
+      'MultiplicativeExpression[?Yield, ?Await] MultiplicativeOperator ExponentiationExpression[?Yield, ?Await]',
+  );
   const multiplicativeOperatorRule = rules.find((rule) => rule.name === 'MultiplicativeOperator');
   assert(multiplicativeOperatorRule !== undefined);
   for (const op of multiplicativeOperatorRule.values) {
@@ -713,13 +763,13 @@ function expandParameterizedValue(value, combination) {
     pos = value.indexOf(']');
     assert(pos !== -1);
     const patterns = value
-          .slice(1, pos)  // remove '[' and ']'
-          .split(', ');
+      .slice(1, pos) // remove '[' and ']'
+      .split(', ');
     const suffix = expandSuffixPatterns(patterns, combination);
     if (suffix.length > 0) {
       expanded = expanded + '_' + suffix;
     }
-    value = value.slice(pos + 1);  // remove '[...]'
+    value = value.slice(pos + 1); // remove '[...]'
   }
   return expanded;
 }
@@ -731,7 +781,7 @@ function expandSuffixPatterns(patterns, combination) {
       continue;
     }
     if (pattern.startsWith('+')) {
-      params.push(pattern.slice(1))
+      params.push(pattern.slice(1));
       continue;
     }
     if (pattern.startsWith('?')) {
@@ -771,7 +821,7 @@ function translateProduction(value, options) {
         { type: 'span', data: ['A', 'Z'] },
         { type: 'char', data: '$' },
         { type: 'char', data: '_' },
-      ]
+      ],
     }];
   }
 
@@ -787,14 +837,15 @@ function translateProduction(value, options) {
         { type: 'span', data: ['A', 'Z'] },
         { type: 'char', data: '$' },
         { type: 'char', data: '_' },
-      ]
+      ],
     }];
   }
 
   // Special case: X but not one of ...
   if (value.includes('but not one of')) {
-    const [base, ...excludes] =
-      value.replace('but not one of', '').replaceAll(' or', '').split(/\s+/u);
+    const [base, ...excludes] = value.replace('but not one of', '').replaceAll(' or', '').split(
+      /\s+/u,
+    );
     return [{
       type: 'unicode-set',
       data: [
@@ -805,7 +856,7 @@ function translateProduction(value, options) {
           }
           return { type: 'exclude', data: exclude };
         }),
-      ]
+      ],
     }];
   }
 
@@ -822,7 +873,7 @@ function translateProduction(value, options) {
           }
           return { type: 'exclude', data: exclude };
         }),
-      ]
+      ],
     }];
   }
 
@@ -909,7 +960,7 @@ function translateLookahead(terms, options) {
     const seq = [];
     for (;;) {
       if (target.endsWith(']')) {
-        seq.push(target.slice(0, -1));  // remove the last ']'
+        seq.push(target.slice(0, -1)); // remove the last ']'
         break;
       } else {
         seq.push(target);
@@ -919,17 +970,17 @@ function translateLookahead(terms, options) {
     values = [seq];
   }
   switch (op) {
-  case '=':
-    return translateLookaheadSet(values, false, options);
-  case '!=':
-    return translateLookaheadSet(values, true/* negate */, options);
-  case '\u2208':
-    return translateLookaheadSet(values, false, options);
-  case '\u2209':
-    return translateLookaheadSet(values, true/* negate */, options);
-  default:
-    log.error(`translateLookahead: Unknown op: U+${op.codePointAt(0).toString(16)}`);
-    Deno.exit(1);
+    case '=':
+      return translateLookaheadSet(values, false, options);
+    case '!=':
+      return translateLookaheadSet(values, true, /* negate */ options);
+    case '\u2208':
+      return translateLookaheadSet(values, false, options);
+    case '\u2209':
+      return translateLookaheadSet(values, true, /* negate */ options);
+    default:
+      log.error(`translateLookahead: Unknown op: U+${op.codePointAt(0).toString(16)}`);
+      Deno.exit(1);
   }
 }
 
@@ -947,14 +998,14 @@ function translateLookaheadSet(values, negate, options) {
           if (token === undefined) {
             token = str.toUpperCase();
           }
-          return  { type: 'token', data: token };
+          return { type: 'token', data: token };
         }
       } else if (value.startsWith('<')) {
         assertEquals(options.grammarType, 'lexical');
         return { type: 'built-in', data: value.slice(1, -1) };
       } else if (value === '[no-line-terminator]') {
         assertEquals(options.grammarType, 'syntactic');
-        return { type: 'disallow',  data: 'LineTerminatorSequence' };
+        return { type: 'disallow', data: 'LineTerminatorSequence' };
       } else {
         assertEquals(options.grammarType, 'lexical');
         return { type: 'non-terminal', data: value };
@@ -972,15 +1023,15 @@ function translateLookaheadSet(values, negate, options) {
   }
   return {
     type: 'lookahead',
-    data: { patterns,  negate },
+    data: { patterns, negate },
   };
 }
 
 function addSourceCharacter(rules) {
   log.debug(`Adding SourceCharacter...`);
   return [
-    { name: 'SourceCharacter',  productions: [[{ type: 'any' }]] },
-    ...rules
+    { name: 'SourceCharacter', productions: [[{ type: 'any' }]] },
+    ...rules,
   ];
 }
 
@@ -1021,27 +1072,27 @@ function processLookaheads(rules) {
 function processLookaheadsInProduction(context, name, production, index) {
   for (const term of production) {
     switch (term.type) {
-    case 'lookahead':
-      log.debug(`Processing lookaheads in ${name}...`);
-      // A pattern is a sequence of tokens.
-      const data = term.data.patterns.map((pattern) => {
-        return pattern.map((term) => {
-          switch (term.type) {
-          case 'token':
-            return term.data;
-          case 'disallow':
-            return `(!${term.data})`;
-          default:
-            unreachable();
-          }
+      case 'lookahead':
+        log.debug(`Processing lookaheads in ${name}...`);
+        // A pattern is a sequence of tokens.
+        const data = term.data.patterns.map((pattern) => {
+          return pattern.map((term) => {
+            switch (term.type) {
+              case 'token':
+                return term.data;
+              case 'disallow':
+                return `(!${term.data})`;
+              default:
+                unreachable();
+            }
+          });
         });
-      });
-      if (term.data.negate) {
-        term.data = { type: 'exclude', data };
-      } else {
-        term.data = { type: 'include', data };
-      }
-      break;
+        if (term.data.negate) {
+          term.data = { type: 'exclude', data };
+        } else {
+          term.data = { type: 'include', data };
+        }
+        break;
     }
   }
 }
@@ -1051,14 +1102,14 @@ function addLiterals(rules) {
     name: 'NullLiteral',
     productions: [
       [{ type: 'token', data: 'NULL' }],
-    ]
+    ],
   });
   rules.push({
     name: 'BooleanLiteral',
     productions: [
       [{ type: 'token', data: 'TRUE' }],
       [{ type: 'token', data: 'FALSE' }],
-    ]
+    ],
   });
   return rules;
 }
@@ -1074,13 +1125,13 @@ if (import.meta.main) {
     doc: DOC,
     conv: async (name, value) => {
       switch (name) {
-      case '--tokens':
-        if (value) {
-          return JSON.parse(await Deno.readTextFile(value));
-        }
-        return value;
-      default:
-        return value;
+        case '--tokens':
+          if (value) {
+            return JSON.parse(await Deno.readTextFile(value));
+          }
+          return value;
+        default:
+          return value;
       }
     },
   });
@@ -1103,13 +1154,13 @@ Deno.test('expandSuffixPatterns', () => {
 });
 
 Deno.test('expandParameterizedValue', () => {
-  const VALUE = 'R1[+A] R2[~B] R3[?C] R4[+A, ~B, ?C] R5'
+  const VALUE = 'R1[+A] R2[~B] R3[?C] R4[+A, ~B, ?C] R5';
   assertEquals(
     expandParameterizedValue(VALUE, []),
-    'R1_A R2 R3 R4_A R5'
+    'R1_A R2 R3 R4_A R5',
   );
   assertEquals(
     expandParameterizedValue(VALUE, ['C']),
-    'R1_A R2 R3_C R4_A_C R5'
+    'R1_A R2 R3_C R4_A_C R5',
   );
 });

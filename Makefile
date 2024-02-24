@@ -32,10 +32,21 @@ list:
 	  grep -E -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 .PHONY: check
-check:
+check: check-rust check-cxx check-js
+
+.PHONY: check-rust
+check-rust:
 	cargo fmt --all --check
 	cargo check --workspace --all-targets --all-features
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+.PHONY: check-cxx
+# TODO
+check-cxx:
+
+.PHONY: check-js
+# TODO
+check-js:
 
 .PHONY: build
 build: $(BUILD_TARGETS)
@@ -115,8 +126,23 @@ doc:
 	cargo doc --workspace --all-features
 
 .PHONY: format
-format:
-	cargo fmt --all
+format: format-rust format-cxx format-js
+
+.PHONY: format-rust
+format-rust:
+	@echo 'Formatting *.rs...'
+	@cargo fmt --all
+
+.PHONY: format-cxx
+format-cxx:
+	@echo 'Formatting *.[cc|hh]...'
+	@find . -name '*.cc' -o -name '*.hh' | grep -v './target/' | grep -v './vendor/' | \
+	  xargs clang-format -i
+
+.PHONY: format-js
+format-js:
+	@echo 'Formatting *.js...'
+	@deno fmt -q 2>/dev/null
 
 # On my environment, the maximum size of memory usage of a linker is smaller than 10GB.
 LLVM_LINK_MAX_RAM_USAGE := $(shell deno eval -p '10 * 1024 * 1024 * 1024')

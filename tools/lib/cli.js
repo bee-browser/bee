@@ -17,7 +17,7 @@ export async function parseCommand({ doc, conv, init }) {
         cmds.push(name);
       }
     }
-    return { cmds, options, args, };
+    return { cmds, options, args };
   } catch (err) {
     console.error(err.message);
     // FIXME

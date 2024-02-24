@@ -8,13 +8,15 @@ export default class LexerView extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { id: 'lexer-view' },
-        h('div', { id: 'lexer-cursor' }, t('0, 0')),
-        h('div', { id: 'lexer-state' }),
-        h('div', { id: 'lexical-goal' }),
-        h('div', { id: 'candidate-token' }),
-        h('div', { id: 'candidate-lexeme' }));
+    this.elem_ = h(
+      'div',
+      { id: 'lexer-view' },
+      h('div', { id: 'lexer-cursor' }, t('0, 0')),
+      h('div', { id: 'lexer-state' }),
+      h('div', { id: 'lexical-goal' }),
+      h('div', { id: 'candidate-token' }),
+      h('div', { id: 'candidate-lexeme' }),
+    );
     return this.elem_;
   }
 
@@ -24,34 +26,35 @@ export default class LexerView extends Widget {
       h('div', { id: 'lexer-state' }),
       h('div', { id: 'lexical-goal' }),
       h('div', { id: 'candidate-token' }),
-      h('div', { id: 'candidate-lexeme' }));
+      h('div', { id: 'candidate-lexeme' }),
+    );
   }
 
   feed(data) {
     switch (data.opcode) {
-    case 'set_goal':
-      this.setGoal_(data.goal);
-      break;
-    case 'init':
-      this.setState_(data.state);
-      break;
-    case 'next':
-      this.setState_(data.state);
-      break;
-    case 'accept':
-      this.setToken_({
-        kind: data['token.kind'],
-        lexeme: data['token.lexeme'],
-      });
-      break;
-    case 'consume':
-      this.cursorTokenEnd_ = data['cursor.token_end'];
-      this.updateCursor_();
-      break;
-    case 'advance':
-      this.cursorPos_ = data['cursor.pos'];
-      this.updateCursor_();
-      break;
+      case 'set_goal':
+        this.setGoal_(data.goal);
+        break;
+      case 'init':
+        this.setState_(data.state);
+        break;
+      case 'next':
+        this.setState_(data.state);
+        break;
+      case 'accept':
+        this.setToken_({
+          kind: data['token.kind'],
+          lexeme: data['token.lexeme'],
+        });
+        break;
+      case 'consume':
+        this.cursorTokenEnd_ = data['cursor.token_end'];
+        this.updateCursor_();
+        break;
+      case 'advance':
+        this.cursorPos_ = data['cursor.pos'];
+        this.updateCursor_();
+        break;
     }
   }
 

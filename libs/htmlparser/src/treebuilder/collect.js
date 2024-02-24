@@ -1,7 +1,7 @@
-import * as path from "https://deno.land/std@0.220.1/path/mod.ts";
+import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
 import * as yaml from 'https://deno.land/std@0.220.1/yaml/mod.ts';
 import { pascalCase } from 'https://deno.land/x/case@2.2.0/mod.ts';
-import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
+import { Command } from 'https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts';
 import Handlebars from 'npm:handlebars@4.7.8';
 import * as log from '../../../../tools/lib/log.js';
 
@@ -68,7 +68,7 @@ async function collectTags(options) {
         if (!token.startsWith('<')) {
           continue;
         }
-        const tagName = getTagNameFromToken(token)
+        const tagName = getTagNameFromToken(token);
         if (tagName !== '_') {
           tagNames.add(tagName);
         }
@@ -215,7 +215,7 @@ function render(spec, modes, ids, token, run, arrow) {
       log.debug(`${arrow} using ${ref} in the mode`);
       return render(spec, modes, ids, targetToken, ids[ref].run, arrow);
     }
-    log.error("Invalid reference: ${ref}");
+    log.error('Invalid reference: ${ref}');
     Deno.exit(1);
   });
   const template = hbs.compile(run.trim(), {

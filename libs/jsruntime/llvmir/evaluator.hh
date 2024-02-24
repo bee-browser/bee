@@ -44,18 +44,15 @@ class Evaluator {
         std::move(exec_session), std::move(jtmb), std::move(*data_layout));
   }
 
-  Evaluator(
-      std::unique_ptr<llvm::orc::ExecutionSession> exec_session,
+  Evaluator(std::unique_ptr<llvm::orc::ExecutionSession> exec_session,
       llvm::orc::JITTargetMachineBuilder jtmb,
       llvm::DataLayout data_layout)
       : exec_session_(std::move(exec_session)),
         data_layout_(std::move(data_layout)),
         mangle_(*exec_session_, data_layout_),
-        object_layer_(
-            *exec_session_,
+        object_layer_(*exec_session_,
             []() { return std::make_unique<llvm::SectionMemoryManager>(); }),
-        compile_layer_(
-            *exec_session_,
+        compile_layer_(*exec_session_,
             object_layer_,
             std::make_unique<llvm::orc::ConcurrentIRCompiler>(std::move(jtmb))),
         main_jd_(exec_session_->createBareJITDylib("<main>")) {
@@ -84,8 +81,8 @@ class Evaluator {
     return main_jd_;
   }
 
-  llvm::Error AddModule(
-      llvm::orc::ThreadSafeModule mod, llvm::orc::ResourceTrackerSP tracker = nullptr) {
+  llvm::Error AddModule(llvm::orc::ThreadSafeModule mod,
+      llvm::orc::ResourceTrackerSP tracker = nullptr) {
     if (!tracker) {
       tracker = main_jd_.getDefaultResourceTracker();
     }

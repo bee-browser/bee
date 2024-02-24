@@ -25,12 +25,12 @@ export default class MainView extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { id: 'main-view' },
-        this.toolbar_.render(),
-        h('div', { id: 'views' },
-          this.parserView_.render(),
-          this.lexerView_.render()));
+    this.elem_ = h(
+      'div',
+      { id: 'main-view' },
+      this.toolbar_.render(),
+      h('div', { id: 'views' }, this.parserView_.render(), this.lexerView_.render()),
+    );
     return this.elem_;
   }
 
@@ -75,36 +75,36 @@ export default class MainView extends Widget {
     }
     this.pc_++;
     switch (log.type) {
-    case 'parser':
-      this.parserView_.feed(log.data);
-      break;
-    case 'lexer':
-      this.lexerView_.feed(log.data);
-      break;
+      case 'parser':
+        this.parserView_.feed(log.data);
+        break;
+      case 'lexer':
+        this.lexerView_.feed(log.data);
+        break;
     }
   }
 
   handleLog_(log) {
     if (log.target.startsWith('jsparser::parser')) {
       switch (log.level) {
-      case 'TRACE':
-        this.logs_.push({
-          type: 'parser',
-          level: 'trace',
-          data: log.fields,
-        });
-        break;
+        case 'TRACE':
+          this.logs_.push({
+            type: 'parser',
+            level: 'trace',
+            data: log.fields,
+          });
+          break;
       }
     }
     if (log.target.startsWith('jsparser::lexer')) {
       switch (log.level) {
-      case 'TRACE':
-        this.logs_.push({
-          type: 'lexer',
-          level: 'trace',
-          data: log.fields,
-        });
-        break;
+        case 'TRACE':
+          this.logs_.push({
+            type: 'lexer',
+            level: 'trace',
+            data: log.fields,
+          });
+          break;
       }
     }
   }
