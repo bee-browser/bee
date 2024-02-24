@@ -45,7 +45,7 @@ pub trait SemanticHandler<'s> {
     fn handle_return_statement(&mut self, n: usize) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
     fn handle_formal_parameters(&mut self, nargs: usize) -> Result<(), Error>;
-    fn handle_start_function_declaration(&mut self, symbol: Symbol) -> Result<(), Error>;
+    fn handle_function_signature(&mut self, symbol: Symbol) -> Result<(), Error>;
     fn handle_function_declaration(&mut self) -> Result<(), Error>;
 
     fn handle_start_let_declaration(&mut self) -> Result<(), Error>;
@@ -647,7 +647,7 @@ where
         Ok(())
     }
 
-    fn handle_start_function_declaration(&mut self) -> Result<(), Error> {
+    fn handle_function_signature(&mut self) -> Result<(), Error> {
         logger::debug!(?self.queue);
 
         let identifier = match self.queue.pop_front() {
@@ -655,8 +655,7 @@ where
             _ => panic!(),
         };
 
-        self.handler
-            .handle_start_function_declaration(identifier.symbol)?;
+        self.handler.handle_function_signature(identifier.symbol)?;
         self.queue.clear();
 
         Ok(())

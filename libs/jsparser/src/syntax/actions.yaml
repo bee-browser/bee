@@ -288,7 +288,7 @@
   action: undefined
 - rule: >-
     FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters
-    RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
   action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN
@@ -362,11 +362,12 @@
   action: handle_const_declaration
 - rule: >-
     FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN
-    FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody
+    RBRACE
   action: handle_function_declaration
 - rule: >-
     FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN
-    LBRACE _SCOPE_ FunctionBody RBRACE
+    _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
   action: undefined
 - rule: >-
     GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await
@@ -656,8 +657,10 @@
   action: undefined
 - rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
   action: undefined
+- rule: _FUNCTION_SIGNATURE_ -> (empty)
+  action: handle_function_signature
 - rule: _SCOPE_ -> (empty)
-  action: handle_start_function_declaration
+  action: nop
 - rule: FunctionBody -> FunctionStatementList
   action: handle_function_body
 - rule: FormalParameters_Yield -> (empty)
@@ -840,7 +843,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN
-    FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody
+    RBRACE
   action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN
@@ -3341,7 +3345,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN
-    FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody
+    RBRACE
   action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN
@@ -3504,7 +3509,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await
-    LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_
+    FunctionBody RBRACE
   action: handle_function_declaration
 - rule: >-
     GeneratorDeclaration_Yield_Await -> FUNCTION MUL

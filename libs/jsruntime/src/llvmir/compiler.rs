@@ -273,8 +273,8 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         Ok(())
     }
 
-    fn handle_start_function_declaration(&mut self, symbol: Symbol) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_scope");
+    fn handle_function_signature(&mut self, symbol: Symbol) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_function_signature");
 
         let name = self.runtime.next_func_name();
 

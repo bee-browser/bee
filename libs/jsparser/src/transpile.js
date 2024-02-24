@@ -166,6 +166,7 @@ class Transpiler {
           // CPEAAPL cannot be replaced with refined production rules.  You will see many
           // conflicts in the LALR(1) parsing table generation when you actually try this.
           //rewriteCPEAAPL,
+          addActions,
           modifyFunctionDeclaration,
           modifyConditionalExpression,
           expandOptionals,
@@ -577,6 +578,26 @@ function rewriteCPEAAPL(rules) {
   return rules;
 }
 
+function addActions(rules) {
+  log.debug('Adding production rules for semantic actions...');
+
+  const ACTIONS = [
+    '_FUNCTION_SIGNATURE_',
+    '_ELSE_BLOCK_',
+    '_THEN_BLOCK_',
+    '_SCOPE_',
+  ];
+
+  for (const action of ACTIONS) {
+    rules.push({
+      name: action,
+      values: ['[empty]'],
+    });
+  }
+
+  return rules;
+}
+
 function modifyFunctionDeclaration(rules) {
   log.debug('Modifying FunctionDeclaration...');
 
@@ -586,13 +607,8 @@ function modifyFunctionDeclaration(rules) {
   assert(rule !== undefined);
   for (let i = 0; i < rule.values.length; ++i) {
     const [head, tail] = rule.values[i].split('`{`');
-    rule.values[i] = `${head} \`{\` _SCOPE_ ${tail}`;
+    rule.values[i] = `${head} _FUNCTION_SIGNATURE_ \`{\` _SCOPE_ ${tail}`;
   }
-
-  rules.push({
-    name: '_SCOPE_',
-    values: ['[empty]'],
-  });
 
   return rules;
 }
@@ -618,16 +634,6 @@ function modifyConditionalExpression(rules) {
     '_ELSE_BLOCK_',
     elseBlock,
   ].join(' ');
-
-  rules.push({
-    name: '_THEN_BLOCK_',
-    values: ['[empty]'],
-  });
-
-  rules.push({
-    name: '_ELSE_BLOCK_',
-    values: ['[empty]'],
-  });
 
   return rules;
 }
