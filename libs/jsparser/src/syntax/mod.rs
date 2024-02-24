@@ -42,6 +42,8 @@ pub trait SemanticHandler<'s> {
     fn handle_else_block(&mut self) -> Result<(), Error>;
     fn handle_conditional_expression(&mut self) -> Result<(), Error>;
     fn handle_expression_statement(&mut self) -> Result<(), Error>;
+    fn handle_if_else_statement(&mut self) -> Result<(), Error>;
+    fn handle_if_statement(&mut self) -> Result<(), Error>;
     fn handle_return_statement(&mut self, n: usize) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
     fn handle_formal_parameters(&mut self, nargs: usize) -> Result<(), Error>;
@@ -571,6 +573,21 @@ where
     fn handle_expression_statement(&mut self) -> Result<(), Error> {
         self.flush()?;
         self.handler.handle_expression_statement()
+    }
+
+    fn handle_block_statement(&mut self) -> Result<(), Error> {
+        // TODO
+        Ok(())
+    }
+
+    fn handle_if_else_statement(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_if_else_statement()
+    }
+
+    fn handle_if_statement(&mut self) -> Result<(), Error> {
+        self.flush()?;
+        self.handler.handle_if_statement()
     }
 
     fn handle_statement(&mut self) -> Result<(), Error> {

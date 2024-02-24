@@ -129,6 +129,14 @@ void compiler_peer_conditional_expression(Compiler* self) {
   self->ConditionalExpression();
 }
 
+void compiler_peer_if_else_statement(Compiler* self) {
+  self->IfElseStatement();
+}
+
+void compiler_peer_if_statement(Compiler* self) {
+  self->IfStatement();
+}
+
 void compiler_peer_start_function(Compiler* self, const char* name, size_t len) {
   self->StartFunction(name, len);
 }

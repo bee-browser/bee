@@ -168,6 +168,7 @@ class Transpiler {
           //rewriteCPEAAPL,
           addActions,
           modifyFunctionDeclaration,
+          modifyIfStatement,
           modifyConditionalExpression,
           expandOptionals,
           expandParameterizedRules,
@@ -609,6 +610,27 @@ function modifyFunctionDeclaration(rules) {
     const [head, tail] = rule.values[i].split('`{`');
     rule.values[i] = `${head} _FUNCTION_SIGNATURE_ \`{\` _SCOPE_ ${tail}`;
   }
+
+  return rules;
+}
+
+function modifyIfStatement(rules) {
+  log.debug('Modifying IfStatement...');
+
+  let rule;
+
+  rule = rules.find((rule) => rule.name === 'IfStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 2);
+
+  rule.values[0] = rule
+    .values[0]
+    .replace('`)` Statement[', '`)` _THEN_BLOCK_ Statement[')
+    .replace('`else` Statement[', '`else` _ELSE_BLOCK_ Statement[');
+
+  rule.values[1] = rule
+    .values[1]
+    .replace('`)` Statement[', '`)` _THEN_BLOCK_ Statement[');
 
   return rules;
 }

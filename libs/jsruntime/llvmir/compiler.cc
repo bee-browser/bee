@@ -225,6 +225,52 @@ void Compiler::ConditionalExpression() {
   PushValue(phi);
 }
 
+void Compiler::IfElseStatement() {
+  auto* else_tail_block = builder_->GetInsertBlock();
+  auto* func = else_tail_block->getParent();
+
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+
+  builder_->CreateBr(block);
+
+  auto* else_head_block = PopBlock();
+  auto* then_tail_block = PopBlock();
+
+  builder_->SetInsertPoint(then_tail_block);
+  builder_->CreateBr(block);
+
+  auto* then_head_block = PopBlock();
+  auto* cond_block = PopBlock();
+
+  builder_->SetInsertPoint(cond_block);
+  auto* cond_value = PopValue();
+
+  builder_->SetInsertPoint(cond_block);
+  builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
+
+  builder_->SetInsertPoint(block);
+}
+
+void Compiler::IfStatement() {
+  auto* else_tail_block = builder_->GetInsertBlock();
+  auto* func = else_tail_block->getParent();
+
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+
+  builder_->CreateBr(block);
+
+  auto* then_head_block = PopBlock();
+  auto* cond_block = PopBlock();
+
+  builder_->SetInsertPoint(cond_block);
+  auto* cond_value = PopValue();
+
+  builder_->SetInsertPoint(cond_block);
+  builder_->CreateCondBr(cond_value, then_head_block, block);
+
+  builder_->SetInsertPoint(block);
+}
+
 void Compiler::StartFunction(const char* name, size_t len) {
   // Push the current block.
   auto* current_block = builder_->GetInsertBlock();

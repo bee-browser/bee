@@ -45,6 +45,8 @@ class Compiler {
   void ToBoolean();
   void Block();
   void ConditionalExpression();
+  void IfElseStatement();
+  void IfStatement();
   void StartFunction(const char* name, size_t len);
   void EndFunction();
   void Return(size_t n);

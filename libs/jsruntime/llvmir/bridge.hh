@@ -48,6 +48,8 @@ void compiler_peer_call(Compiler* self, size_t argc);
 void compiler_peer_to_boolean(Compiler* self);
 void compiler_peer_block(Compiler* self);
 void compiler_peer_conditional_expression(Compiler* self);
+void compiler_peer_if_else_statement(Compiler* self);
+void compiler_peer_if_statement(Compiler* self);
 void compiler_peer_start_function(Compiler* self, const char* name, size_t len);
 void compiler_peer_end_function(Compiler* self);
 void compiler_peer_return(Compiler* self, size_t n);

@@ -31,7 +31,7 @@
 - rule: ModuleItem -> StatementListItem_Await
   action: undefined
 - rule: Statement -> BlockStatement
-  action: undefined
+  action: nop
 - rule: Statement -> VariableStatement
   action: undefined
 - rule: Statement -> EmptyStatement
@@ -39,7 +39,7 @@
 - rule: Statement -> ExpressionStatement
   action: handle_statement
 - rule: Statement -> IfStatement
-  action: undefined
+  action: nop
 - rule: Statement -> BreakableStatement
   action: undefined
 - rule: Statement -> ContinueStatement
@@ -87,7 +87,7 @@
 - rule: StatementListItem_Await -> Declaration_Await
   action: nop
 - rule: BlockStatement -> Block
-  action: undefined
+  action: handle_block_statement
 - rule: VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
   action: undefined
 - rule: EmptyStatement -> SEMICOLON
@@ -96,10 +96,14 @@
     ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION,
     CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
   action: handle_expression_statement
-- rule: IfStatement -> IF LPAREN Expression_In RPAREN Statement ELSE Statement
-  action: undefined
-- rule: 'IfStatement -> IF LPAREN Expression_In RPAREN Statement (?![ELSE])'
-  action: undefined
+- rule: >-
+    IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE
+    _ELSE_BLOCK_ Statement
+  action: handle_if_else_statement
+- rule: >-
+    IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement
+    (?![ELSE])
+  action: handle_if_statement
 - rule: BreakableStatement -> IterationStatement
   action: undefined
 - rule: BreakableStatement -> SwitchStatement
@@ -249,7 +253,7 @@
 - rule: Block -> LBRACE RBRACE
   action: undefined
 - rule: Block -> LBRACE StatementList RBRACE
-  action: undefined
+  action: nop
 - rule: VariableDeclarationList_In -> VariableDeclaration_In
   action: undefined
 - rule: >-
@@ -260,6 +264,10 @@
   action: nop
 - rule: Expression_In -> Expression_In COMMA AssignmentExpression_In
   action: undefined
+- rule: _THEN_BLOCK_ -> (empty)
+  action: handle_then_block
+- rule: _ELSE_BLOCK_ -> (empty)
+  action: handle_else_block
 - rule: IterationStatement -> DoWhileStatement
   action: undefined
 - rule: IterationStatement -> WhileStatement
@@ -468,12 +476,12 @@
     CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
   action: undefined
 - rule: >-
-    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await
-    ELSE Statement_Await
+    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_
+    Statement_Await ELSE _ELSE_BLOCK_ Statement_Await
   action: undefined
 - rule: >-
-    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await
-    (?![ELSE])
+    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_
+    Statement_Await (?![ELSE])
   action: undefined
 - rule: BreakableStatement_Await -> IterationStatement_Await
   action: undefined
@@ -872,10 +880,6 @@
   action: undefined
 - rule: ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
   action: undefined
-- rule: _THEN_BLOCK_ -> (empty)
-  action: handle_then_block
-- rule: _ELSE_BLOCK_ -> (empty)
-  action: handle_else_block
 - rule: ArrowParameters_Await -> BindingIdentifier_Await
   action: undefined
 - rule: >-
@@ -2431,12 +2435,12 @@
 - rule: BlockStatement_Return -> Block_Return
   action: undefined
 - rule: >-
-    IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return ELSE
-    Statement_Return
+    IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_
+    Statement_Return ELSE _ELSE_BLOCK_ Statement_Return
   action: undefined
 - rule: >-
-    IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return
-    (?![ELSE])
+    IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_
+    Statement_Return (?![ELSE])
   action: undefined
 - rule: BreakableStatement_Return -> IterationStatement_Return
   action: undefined
@@ -2826,11 +2830,11 @@
   action: undefined
 - rule: >-
     IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN
-    Statement_Yield_Return ELSE Statement_Yield_Return
+    _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return
   action: undefined
 - rule: >-
     IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN
-    Statement_Yield_Return (?![ELSE])
+    _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
   action: undefined
 - rule: BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
   action: undefined
@@ -2892,11 +2896,11 @@
   action: undefined
 - rule: >-
     IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN
-    Statement_Await_Return ELSE Statement_Await_Return
+    _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return
   action: undefined
 - rule: >-
     IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN
-    Statement_Await_Return (?![ELSE])
+    _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
   action: undefined
 - rule: BreakableStatement_Await_Return -> IterationStatement_Await_Return
   action: undefined
@@ -2987,11 +2991,12 @@
   action: undefined
 - rule: >-
     IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN
-    Statement_Yield_Await_Return ELSE Statement_Yield_Await_Return
+    _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_
+    Statement_Yield_Await_Return
   action: undefined
 - rule: >-
     IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN
-    Statement_Yield_Await_Return (?![ELSE])
+    _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
   action: undefined
 - rule: >-
     BreakableStatement_Yield_Await_Return ->

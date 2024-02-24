@@ -443,6 +443,36 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_eval_if_statement() {
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, 2.);
+        }
+
+        eval(
+            "let a = 1; if (1) { a = 2; } a;",
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_if_else_statement() {
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, 3.);
+        }
+
+        eval(
+            "let a = 1; if (0) { a = 2; } else { a = 3; } a;",
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
     fn eval<T: AsRef<str>>(source: T, host: bridge::Host) {
         Runtime::initialize();
         let mut runtime = Runtime::with_host(host);
