@@ -9303,9 +9303,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement
 - name: IfStatement
@@ -9319,6 +9323,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement
     - type: lookahead
       data:
@@ -9336,9 +9342,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Return
 - name: IfStatement_Return
@@ -9352,6 +9362,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Return
     - type: lookahead
       data:
@@ -9369,9 +9381,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Await
 - name: IfStatement_Await
@@ -9385,6 +9401,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await
     - type: lookahead
       data:
@@ -9402,9 +9420,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Await_Return
 - name: IfStatement_Await_Return
@@ -9418,6 +9440,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await_Return
     - type: lookahead
       data:
@@ -9435,9 +9459,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield
 - name: IfStatement_Yield
@@ -9451,6 +9479,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield
     - type: lookahead
       data:
@@ -9468,9 +9498,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Return
 - name: IfStatement_Yield_Return
@@ -9484,6 +9518,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Return
     - type: lookahead
       data:
@@ -9501,9 +9537,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Await
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await
 - name: IfStatement_Yield_Await
@@ -9516,6 +9556,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _THEN_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await
     - type: lookahead
@@ -9534,9 +9576,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Await_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await_Return
 - name: IfStatement_Yield_Await_Return
@@ -9549,6 +9595,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _THEN_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await_Return
     - type: lookahead

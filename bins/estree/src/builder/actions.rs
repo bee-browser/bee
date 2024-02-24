@@ -100,9 +100,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::empty_statement, "empty_statement")),
     // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement -> IF LPAREN Expression_In RPAREN Statement ELSE Statement
+    // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement -> IF LPAREN Expression_In RPAREN Statement (?![ELSE])
+    // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement -> IterationStatement
     Some((Builder::nop, "nop")),
@@ -256,6 +256,10 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::nop, "nop")),
     // Expression_In -> Expression_In COMMA AssignmentExpression_In
     Some((Builder::sequence_expression, "sequence_expression")),
+    // _THEN_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
+    // _ELSE_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
     // IterationStatement -> DoWhileStatement
     Some((Builder::nop, "nop")),
     // IterationStatement -> WhileStatement
@@ -466,9 +470,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::nop, "nop")),
     // ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await ELSE Statement_Await
+    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE _ELSE_BLOCK_ Statement_Await
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await (?![ELSE])
+    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Await -> IterationStatement_Await
     Some((Builder::nop, "nop")),
@@ -858,10 +862,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     // ShortCircuitExpression_In_Await -> LogicalORExpression_In_Await
     Some((Builder::nop, "nop")),
     // ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
-    Some((Builder::nop, "nop")),
-    // _THEN_BLOCK_ -> (empty)
-    Some((Builder::nop, "nop")),
-    // _ELSE_BLOCK_ -> (empty)
     Some((Builder::nop, "nop")),
     // ArrowParameters_Await -> BindingIdentifier_Await
     Some((Builder::create_list, "create_list")),
@@ -2481,9 +2481,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::nop, "nop")),
     // BlockStatement_Return -> Block_Return
     Some((Builder::nop, "nop")),
-    // IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return ELSE Statement_Return
+    // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return (?![ELSE])
+    // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Return -> IterationStatement_Return
     Some((Builder::nop, "nop")),
@@ -2836,9 +2836,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::variable_declaration, "variable_declaration")),
     // ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return ELSE Statement_Yield_Return
+    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return (?![ELSE])
+    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
     Some((Builder::nop, "nop")),
@@ -2893,9 +2893,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::variable_declaration, "variable_declaration")),
     // BlockStatement_Await_Return -> Block_Await_Return
     Some((Builder::nop, "nop")),
-    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE Statement_Await_Return
+    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return (?![ELSE])
+    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Await_Return -> IterationStatement_Await_Return
     Some((Builder::nop, "nop")),
@@ -2972,9 +2972,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::variable_declaration, "variable_declaration")),
     // ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return ELSE Statement_Yield_Await_Return
+    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return (?![ELSE])
+    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
     Some((Builder::nop, "nop")),

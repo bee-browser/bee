@@ -52,7 +52,7 @@ where
         // ModuleItem -> StatementListItem_Await
         Action::Undefined,
         // Statement -> BlockStatement
-        Action::Undefined,
+        Action::Nop,
         // Statement -> VariableStatement
         Action::Undefined,
         // Statement -> EmptyStatement
@@ -60,7 +60,7 @@ where
         // Statement -> ExpressionStatement
         Action::Invoke(Self::handle_statement, "handle_statement"),
         // Statement -> IfStatement
-        Action::Undefined,
+        Action::Nop,
         // Statement -> BreakableStatement
         Action::Undefined,
         // Statement -> ContinueStatement
@@ -106,7 +106,7 @@ where
         // StatementListItem_Await -> Declaration_Await
         Action::Nop,
         // BlockStatement -> Block
-        Action::Undefined,
+        Action::Invoke(Self::handle_block_statement, "handle_block_statement"),
         // VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
         Action::Undefined,
         // EmptyStatement -> SEMICOLON
@@ -116,10 +116,10 @@ where
             Self::handle_expression_statement,
             "handle_expression_statement",
         ),
-        // IfStatement -> IF LPAREN Expression_In RPAREN Statement ELSE Statement
-        Action::Undefined,
-        // IfStatement -> IF LPAREN Expression_In RPAREN Statement (?![ELSE])
-        Action::Undefined,
+        // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement
+        Action::Invoke(Self::handle_if_else_statement, "handle_if_else_statement"),
+        // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])
+        Action::Invoke(Self::handle_if_statement, "handle_if_statement"),
         // BreakableStatement -> IterationStatement
         Action::Undefined,
         // BreakableStatement -> SwitchStatement
@@ -254,7 +254,7 @@ where
         // Block -> LBRACE RBRACE
         Action::Undefined,
         // Block -> LBRACE StatementList RBRACE
-        Action::Undefined,
+        Action::Nop,
         // VariableDeclarationList_In -> VariableDeclaration_In
         Action::Undefined,
         // VariableDeclarationList_In -> VariableDeclarationList_In COMMA VariableDeclaration_In
@@ -263,6 +263,10 @@ where
         Action::Nop,
         // Expression_In -> Expression_In COMMA AssignmentExpression_In
         Action::Undefined,
+        // _THEN_BLOCK_ -> (empty)
+        Action::Invoke(Self::handle_then_block, "handle_then_block"),
+        // _ELSE_BLOCK_ -> (empty)
+        Action::Invoke(Self::handle_else_block, "handle_else_block"),
         // IterationStatement -> DoWhileStatement
         Action::Undefined,
         // IterationStatement -> WhileStatement
@@ -449,9 +453,9 @@ where
         Action::Undefined,
         // ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
         Action::Undefined,
-        // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await ELSE Statement_Await
+        // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE _ELSE_BLOCK_ Statement_Await
         Action::Undefined,
-        // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await (?![ELSE])
+        // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])
         Action::Undefined,
         // BreakableStatement_Await -> IterationStatement_Await
         Action::Undefined,
@@ -794,10 +798,6 @@ where
         Action::Undefined,
         // ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
         Action::Undefined,
-        // _THEN_BLOCK_ -> (empty)
-        Action::Invoke(Self::handle_then_block, "handle_then_block"),
-        // _ELSE_BLOCK_ -> (empty)
-        Action::Invoke(Self::handle_else_block, "handle_else_block"),
         // ArrowParameters_Await -> BindingIdentifier_Await
         Action::Undefined,
         // ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
@@ -2179,9 +2179,9 @@ where
         Action::Undefined,
         // BlockStatement_Return -> Block_Return
         Action::Undefined,
-        // IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return ELSE Statement_Return
+        // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return
         Action::Undefined,
-        // IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return (?![ELSE])
+        // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
         Action::Undefined,
         // BreakableStatement_Return -> IterationStatement_Return
         Action::Undefined,
@@ -2522,9 +2522,9 @@ where
         Action::Undefined,
         // ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
         Action::Undefined,
-        // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return ELSE Statement_Yield_Return
+        // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return
         Action::Undefined,
-        // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return (?![ELSE])
+        // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
         Action::Undefined,
         // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
         Action::Undefined,
@@ -2570,9 +2570,9 @@ where
         Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
         // BlockStatement_Await_Return -> Block_Await_Return
         Action::Undefined,
-        // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE Statement_Await_Return
+        // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return
         Action::Undefined,
-        // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return (?![ELSE])
+        // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
         Action::Undefined,
         // BreakableStatement_Await_Return -> IterationStatement_Await_Return
         Action::Undefined,
@@ -2631,9 +2631,9 @@ where
         Action::Undefined,
         // ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
         Action::Undefined,
-        // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return ELSE Statement_Yield_Await_Return
+        // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return
         Action::Undefined,
-        // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return (?![ELSE])
+        // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
         Action::Undefined,
         // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
         Action::Undefined,

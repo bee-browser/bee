@@ -261,6 +261,26 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         Ok(())
     }
 
+    fn handle_if_else_statement(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_if_else_statement");
+
+        unsafe {
+            bridge::compiler_peer_if_else_statement(self.peer);
+        }
+
+        Ok(())
+    }
+
+    fn handle_if_statement(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_if_statement");
+
+        unsafe {
+            bridge::compiler_peer_if_statement(self.peer);
+        }
+
+        Ok(())
+    }
+
     fn handle_statement(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_statement");
         // TODO
