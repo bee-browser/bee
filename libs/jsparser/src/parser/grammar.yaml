@@ -15726,6 +15726,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15746,6 +15748,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15764,6 +15768,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15784,6 +15790,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15804,6 +15812,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15822,6 +15832,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15842,6 +15854,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15862,6 +15876,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15880,6 +15896,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15900,6 +15918,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15920,6 +15940,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15938,6 +15960,8 @@
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -18856,13 +18880,16 @@
       data: AS
     - type: non-terminal
       data: ModuleExportName
-- name: _SCOPE_
+- name: _FUNCTION_SIGNATURE_
+  production:
+    - type: empty
+- name: _ELSE_BLOCK_
   production:
     - type: empty
 - name: _THEN_BLOCK_
   production:
     - type: empty
-- name: _ELSE_BLOCK_
+- name: _SCOPE_
   production:
     - type: empty
 - name: NullLiteral

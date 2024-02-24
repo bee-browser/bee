@@ -10,8 +10,7 @@ const PROGNAME = 'actions.js';
 
 const DOC = `
 Usage:
-  ${PROGNAME} collect <actions.yaml>
-  ${PROGNAME} update <lalr.json> [<actions.yaml>]
+  ${PROGNAME} <lalr.json> [<actions.yaml>]
   ${PROGNAME} -h | --help
 
 Options:
@@ -27,44 +26,15 @@ const YAML_OPTIONS = {
   lineWidth: 99,
 };
 
-async function collect(args, options) {
-  log.debug(`Loading ${args.actionsYaml}...`);
-  const actionsYaml = await Deno.readTextFile(args.actionsYaml);
-  const spec = yaml.parse(actionsYaml);
-  let actions = [];
-  let entries = [];
-  let actionMap = new Map();
-  for (const entry of spec) {
-    if (entry.action === null) {
-      entries.push({
-        rule: entry.rule,
-        action: null,
-      });
-      continue;
-    }
-    let action = entry.action.trim();
-    if (actionMap.has(action)) {
-      entries.push({
-        rule: entry.rule,
-        action: actionMap.get(action),
-      });
-      continue;
-    }
-    let actionName = `action${actions.length}`;
-    actions.push({
-      name: actionName,
-      code: action,
-    });
-    actionMap.set(action, actionName);
-    entries.push({
-      rule: entry.rule,
-      action: actionName,
-    });
-  }
-  console.log(JSON.stringify({ actions, entries }));
+if (options.debug) {
+  setup(PROGNAME, 'DEBUG');
+} else {
+  setup(PROGNAME, 'INFO');
 }
 
-async function update(args, options) {
+Deno.exit(await main(args, options));
+
+async function main(args, options) {
   log.debug(`Loading ${args.lalrJson}...`);
   const lalrJson = await Deno.readTextFile(args.lalrJson);
   const lalrSpec = JSON.parse(lalrJson);
@@ -82,7 +52,6 @@ async function update(args, options) {
     indexMap.set(entry.rule, i);
   }
 
-  const removed = [];
   if (args.actionsYaml && await fs.exists(args.actionsYaml)) {
     log.debug(`Overridding with existing ${args.actionsYaml}...`);
     const actionsYaml = await Deno.readTextFile(args.actionsYaml);
@@ -95,30 +64,13 @@ async function update(args, options) {
         }
       } else {
         log.warn(`${entry.rule} was removed`);
-        removed.push(entry);
+        log.warn(`  action: ${entry.action}`);
+        if (entry.note) {
+          log.warn(`  note: ${entry.note}`);
+        }
       }
     }
   }
 
   console.log(yaml.stringify(actions, YAML_OPTIONS).trim());
-
-  if (removed.length > 0) {
-    // std/yaml always uses '\n' as EOL.
-    const EOL = '\n';
-    const s = yaml.stringify(removed, YAML_OPTIONS).trim();
-    console.log(s.split(EOL).map((line) => `# ${line}`).join(EOL));
-  }
-}
-
-if (options.debug) {
-  setup(PROGNAME, 'DEBUG');
-} else {
-  setup(PROGNAME, 'INFO');
-}
-
-switch (cmds[0]) {
-  case 'collect':
-    Deno.exit(await collect(args, options));
-  case 'update':
-    Deno.exit(await update(args, options));
 }

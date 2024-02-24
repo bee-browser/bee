@@ -17,7 +17,7 @@ actions.rs: actions.yaml actions.rs.hbs
 
 actions.yaml: actions.js $(LALR_JSON)
 	@echo 'Updating $(abspath $@)...'
-	@deno run -A actions.js update $(LALR_JSON) $@ >$@.new
+	@deno run -A actions.js $(LALR_JSON) $@ >$@.new
 	@mv -f $@.new $@
 
 $(LALR_JSON):

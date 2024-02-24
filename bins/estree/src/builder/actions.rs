@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -282,7 +282,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
     // Finally -> FINALLY Block
     Some((Builder::finally_clause, "finally_clause")),
-    // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
@@ -362,9 +362,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
     Some((Builder::variable_declaration, "variable_declaration")),
     // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
-    // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
-    // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
     Some((
         Builder::anonymous_function_declaration,
         "anonymous_function_declaration",
@@ -643,6 +643,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
     Some((Builder::remove_comma, "remove_comma")),
     // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    // _FUNCTION_SIGNATURE_ -> (empty)
+    Some((Builder::nop, "nop")),
     // _SCOPE_ -> (empty)
     Some((Builder::nop, "nop")),
     // FunctionBody -> FunctionStatementList
@@ -831,7 +833,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
@@ -3277,7 +3279,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
     // Finally_Yield_Return -> FINALLY Block_Yield_Return
     Some((Builder::finally_clause, "finally_clause")),
-    // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
@@ -3410,7 +3412,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2098] = [
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
     // Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
     Some((Builder::finally_clause, "finally_clause")),
-    // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN LBRACE _SCOPE_ FunctionBody RBRACE
+    // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
