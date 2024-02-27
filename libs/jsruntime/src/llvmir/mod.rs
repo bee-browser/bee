@@ -5,8 +5,10 @@ use indexmap::IndexMap;
 use jsparser::Symbol;
 use jsparser::SymbolTable;
 
+use super::logger;
 use compiler::Compiler;
 
+// TODO: GcCell
 struct Scope {
     bindings: IndexMap<Symbol, Value>,
 }
@@ -27,13 +29,11 @@ enum Value {
     Function(String),
 }
 
-#[derive(Clone, Copy)]
-struct FuncId(usize);
-
+// TODO: Separate the implementation of the Execution Context specification type from `Runtime`.
 pub struct Runtime {
     peer: *mut bridge::Runtime,
     symbol_table: SymbolTable,
-    global_scope: Scope,
+    scope_stack: Vec<Scope>,
     next_func_id: usize,
 }
 
@@ -63,10 +63,12 @@ impl Runtime {
     }
 
     fn new() -> Self {
+        let mut scope_stack = Vec::with_capacity(32);
+        scope_stack.push(Scope::new()); // global scope
         Self {
             peer: unsafe { bridge::runtime_peer_new() },
             symbol_table: SymbolTable::with_builtin_symbols(),
-            global_scope: Scope::new(),
+            scope_stack,
             next_func_id: 1,
         }
     }
@@ -75,6 +77,113 @@ impl Runtime {
         let runtime = Self::new();
         unsafe { bridge::runtime_peer_register_host(runtime.peer, &host) }
         runtime
+    }
+
+    fn get(&self, symbol: Symbol) -> f64 {
+        for (i, scope) in self.scope_stack.iter().enumerate().rev() {
+            match scope.bindings.get(&symbol) {
+                Some(Value::Number(value)) => {
+                    logger::debug!(event = "get", ?symbol, value = *value, scope = i);
+                    return *value;
+                }
+                _ => (),
+            }
+        }
+        panic!();
+    }
+
+    fn set(&mut self, symbol: Symbol, value: f64) {
+        for (i, scope) in self.scope_stack.iter_mut().enumerate().rev() {
+            match scope.bindings.get_mut(&symbol) {
+                Some(v) => {
+                    // TODO: const
+                    logger::debug!(event = "set", ?symbol, value, scope = i);
+                    *v = Value::Number(value);
+                    return;
+                }
+                _ => (),
+            }
+        }
+        // TODO
+        logger::debug!(event = "set", ?symbol, value, scope = 0);
+        self.scope_stack[0]
+            .bindings
+            .insert(symbol, Value::Number(value));
+    }
+
+    fn set_function(&mut self, symbol: Symbol, name: String) {
+        self.scope_stack
+            .last_mut()
+            .unwrap()
+            .bindings
+            .insert(symbol, Value::Function(name));
+    }
+
+    fn declare(&mut self, symbol: Symbol, value: f64) {
+        logger::debug!(
+            event = "declare",
+            ?symbol,
+            value,
+            scope = self.scope_stack.len() - 1
+        );
+        self.scope_stack
+            .last_mut()
+            .unwrap()
+            .bindings
+            .insert(symbol, Value::Number(value));
+    }
+
+    fn set_undefined(&mut self, symbol: Symbol) {
+        logger::debug!(
+            event = "set_undefined",
+            ?symbol,
+            scope = self.scope_stack.len() - 1
+        );
+        self.scope_stack
+            .last_mut()
+            .unwrap()
+            .bindings
+            .insert(symbol, Value::Undefined);
+    }
+
+    fn call(&mut self, symbol: Symbol) -> f64 {
+        let scope_depth = self.scope_stack.len();
+        for (i, scope) in self.scope_stack.iter().enumerate().rev() {
+            match scope.bindings.get(&symbol) {
+                Some(Value::Function(name)) => {
+                    logger::debug!(event = "call", ?symbol, scope = i);
+                    let len = name.len();
+                    let name = name.as_ptr() as *const i8;
+                    let mut return_value = 0.0;
+                    unsafe {
+                        bridge::runtime_peer_call(
+                            self.peer,
+                            self as *const Runtime as usize,
+                            name,
+                            len,
+                            &mut return_value,
+                        );
+                    }
+                    // Remove scopes created in the function call from the stack
+                    // if those are remaining.
+                    debug_assert!(self.scope_stack.len() >= scope_depth);
+                    self.scope_stack.truncate(scope_depth);
+                    return return_value;
+                }
+                _ => (),
+            }
+        }
+        panic!();
+    }
+
+    fn push_scope(&mut self) {
+        logger::debug!(event = "push_scope", scope.top = self.scope_stack.len());
+        self.scope_stack.push(Scope::new());
+    }
+
+    fn pop_scope(&mut self) {
+        self.scope_stack.pop();
+        logger::debug!(event = "pop_scope", scope.top = self.scope_stack.len() - 1);
     }
 }
 
@@ -115,8 +224,11 @@ mod bridge {
                 print_str: Some(print_str),
                 runtime_get: Some(runtime_get),
                 runtime_set: Some(runtime_set),
+                runtime_declare: Some(runtime_declare),
                 runtime_set_undefined: Some(runtime_set_undefined),
                 runtime_call: Some(runtime_call),
+                runtime_push_scope: Some(runtime_push_scope),
+                runtime_pop_scope: Some(runtime_pop_scope),
             }
         }
     }
@@ -136,61 +248,43 @@ mod bridge {
     }
 
     unsafe extern "C" fn runtime_get(context: usize, symbol_id: u32) -> f64 {
-        use super::Symbol;
-        use super::Value;
-
-        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
-        let symbol = Symbol::from(symbol_id);
-
-        let value = runtime.global_scope.bindings.get(&symbol);
-        match value {
-            Some(Value::Number(value)) => *value,
-            _ => panic!(),
-        }
+        let runtime = (context as *const super::Runtime).as_ref().unwrap();
+        let symbol = super::Symbol::from(symbol_id);
+        runtime.get(symbol)
     }
 
     unsafe extern "C" fn runtime_set(context: usize, symbol_id: u32, value: f64) {
-        use super::Symbol;
-        use super::Value;
-
         let runtime = (context as *mut super::Runtime).as_mut().unwrap();
-        let symbol = Symbol::from(symbol_id);
+        let symbol = super::Symbol::from(symbol_id);
+        runtime.set(symbol, value);
+    }
 
-        runtime
-            .global_scope
-            .bindings
-            .insert(symbol, Value::Number(value));
+    unsafe extern "C" fn runtime_declare(context: usize, symbol_id: u32, value: f64) {
+        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
+        let symbol = super::Symbol::from(symbol_id);
+        runtime.declare(symbol, value);
     }
 
     unsafe extern "C" fn runtime_set_undefined(context: usize, symbol_id: u32) {
-        use super::Symbol;
-        use super::Value;
-
         let runtime = (context as *mut super::Runtime).as_mut().unwrap();
-        let symbol = Symbol::from(symbol_id);
-
-        runtime
-            .global_scope
-            .bindings
-            .insert(symbol, Value::Undefined);
+        let symbol = super::Symbol::from(symbol_id);
+        runtime.set_undefined(symbol);
     }
 
-    unsafe extern "C" fn runtime_call(userdata: usize, symbol_id: u32) -> f64 {
-        use super::Symbol;
-        use super::Value;
+    unsafe extern "C" fn runtime_call(context: usize, symbol_id: u32) -> f64 {
+        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
+        let symbol = super::Symbol::from(symbol_id);
+        runtime.call(symbol)
+    }
 
-        let runtime = (userdata as *const super::Runtime).as_ref().unwrap();
-        let symbol = Symbol::from(symbol_id);
+    unsafe extern "C" fn runtime_push_scope(context: usize) {
+        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
+        runtime.push_scope();
+    }
 
-        let value = runtime.global_scope.bindings.get(&symbol);
-        let (name, len) = match value {
-            Some(Value::Function(name)) => (name.as_ptr() as *const i8, name.len()),
-            _ => panic!(),
-        };
-
-        let mut return_value = 0.0;
-        runtime_peer_call(runtime.peer, name, len, &mut return_value);
-        return_value
+    unsafe extern "C" fn runtime_pop_scope(context: usize) {
+        let runtime = (context as *mut super::Runtime).as_mut().unwrap();
+        runtime.pop_scope();
     }
 }
 
@@ -466,6 +560,51 @@ mod tests {
 
         eval(
             "let a = 1; if (0) { a = 2; } else { a = 3; } a;",
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_block_statement() {
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, 1.);
+        }
+
+        eval(
+            "let a = 1; { let a = 2; } a;",
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_return_statement_in_block() {
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, 1.);
+        }
+
+        eval(
+            "a(); function a() { let a = 1; { return a; } }",
+            bridge::Host {
+                print_f64: Some(validate),
+                ..Default::default()
+            },
+        );
+    }
+
+    #[test]
+    fn test_eval_terminated_basic_block() {
+        unsafe extern "C" fn validate(value: f64) {
+            assert_eq!(value, 1.);
+        }
+
+        eval(
+            "a(); function a() { if (1) { return 1; } return 2; }",
             bridge::Host {
                 print_f64: Some(validate),
                 ..Default::default()

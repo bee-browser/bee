@@ -252,8 +252,8 @@
   action: undefined
 - rule: Block -> LBRACE RBRACE
   action: undefined
-- rule: Block -> LBRACE StatementList RBRACE
-  action: nop
+- rule: Block -> LBRACE _SCOPE_ StatementList RBRACE
+  action: handle_block
 - rule: VariableDeclarationList_In -> VariableDeclaration_In
   action: undefined
 - rule: >-
@@ -515,6 +515,8 @@
   action: undefined
 - rule: TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
   action: undefined
+- rule: _SCOPE_ -> (empty)
+  action: handle_scope
 - rule: VariableDeclaration_In -> BindingIdentifier
   action: undefined
 - rule: VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -667,8 +669,6 @@
   action: undefined
 - rule: _FUNCTION_SIGNATURE_ -> (empty)
   action: handle_function_signature
-- rule: _SCOPE_ -> (empty)
-  action: nop
 - rule: FunctionBody -> FunctionStatementList
   action: handle_function_body
 - rule: FormalParameters_Yield -> (empty)
@@ -930,7 +930,7 @@
   action: undefined
 - rule: Block_Await -> LBRACE RBRACE
   action: undefined
-- rule: Block_Await -> LBRACE StatementList_Await RBRACE
+- rule: Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
   action: undefined
 - rule: Expression_In_Await -> AssignmentExpression_In_Await
   action: undefined
@@ -2112,15 +2112,15 @@
 - rule: SingleNameBinding -> BindingIdentifier Initializer_In
   action: undefined
 - rule: Statement_Return -> BlockStatement_Return
-  action: undefined
+  action: nop
 - rule: Statement_Return -> VariableStatement
   action: undefined
 - rule: Statement_Return -> EmptyStatement
   action: undefined
 - rule: Statement_Return -> ExpressionStatement
-  action: undefined
+  action: nop
 - rule: Statement_Return -> IfStatement_Return
-  action: undefined
+  action: nop
 - rule: Statement_Return -> BreakableStatement_Return
   action: undefined
 - rule: Statement_Return -> ContinueStatement
@@ -2433,15 +2433,15 @@
 - rule: ExpressionBody_Await -> AssignmentExpression_Await
   action: undefined
 - rule: BlockStatement_Return -> Block_Return
-  action: undefined
+  action: handle_block_statement
 - rule: >-
     IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_
     Statement_Return ELSE _ELSE_BLOCK_ Statement_Return
-  action: undefined
+  action: handle_if_else_statement
 - rule: >-
     IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_
     Statement_Return (?![ELSE])
-  action: undefined
+  action: handle_if_statement
 - rule: BreakableStatement_Return -> IterationStatement_Return
   action: undefined
 - rule: BreakableStatement_Return -> SwitchStatement_Return
@@ -2752,8 +2752,8 @@
   action: undefined
 - rule: Block_Return -> LBRACE RBRACE
   action: undefined
-- rule: Block_Return -> LBRACE StatementList_Return RBRACE
-  action: undefined
+- rule: Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
+  action: handle_block
 - rule: IterationStatement_Return -> DoWhileStatement_Return
   action: undefined
 - rule: IterationStatement_Return -> WhileStatement_Return
@@ -3306,7 +3306,7 @@
   action: undefined
 - rule: Block_Yield_Return -> LBRACE RBRACE
   action: undefined
-- rule: Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE
+- rule: Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
   action: undefined
 - rule: VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
   action: undefined
@@ -3381,7 +3381,7 @@
   action: nop
 - rule: Block_Await_Return -> LBRACE RBRACE
   action: undefined
-- rule: Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE
+- rule: Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
   action: undefined
 - rule: IterationStatement_Await_Return -> DoWhileStatement_Await_Return
   action: undefined
@@ -3471,7 +3471,9 @@
   action: undefined
 - rule: Block_Yield_Await_Return -> LBRACE RBRACE
   action: undefined
-- rule: Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE
+- rule: >-
+    Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return
+    RBRACE
   action: undefined
 - rule: VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
   action: undefined

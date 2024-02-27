@@ -7443,6 +7443,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: StatementList
     - type: token
       data: RBRACE
@@ -7456,6 +7458,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: StatementList_Return
     - type: token
@@ -7471,6 +7475,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: StatementList_Await
     - type: token
       data: RBRACE
@@ -7484,6 +7490,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: StatementList_Await_Return
     - type: token
@@ -7499,6 +7507,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: StatementList_Yield
     - type: token
       data: RBRACE
@@ -7512,6 +7522,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: StatementList_Yield_Return
     - type: token
@@ -7527,6 +7539,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _SCOPE_
+    - type: non-terminal
       data: StatementList_Yield_Await
     - type: token
       data: RBRACE
@@ -7540,6 +7554,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _SCOPE_
     - type: non-terminal
       data: StatementList_Yield_Await_Return
     - type: token

@@ -40,6 +40,7 @@ class Compiler {
   void Ne();
   void Get();
   void Set();
+  void Declare();
   void SetUndefined();
   void Call(size_t argc);
   void ToBoolean();
@@ -49,6 +50,8 @@ class Compiler {
   void IfStatement();
   void StartFunction(const char* name, size_t len);
   void EndFunction();
+  void StartScope();
+  void EndScope();
   void Return(size_t n);
   void Print();
 
@@ -62,11 +65,15 @@ class Compiler {
       Value,
       Symbol,
       Block,
+      Function,
+      Index,
     } type;
     union {
       llvm::Value* value;
       llvm::Value* symbol;
       llvm::BasicBlock* block;
+      llvm::Function* function;
+      size_t index;
     } data;
   };
 
@@ -76,8 +83,11 @@ class Compiler {
   llvm::Function* CreatePrintF64Function();
   llvm::Function* CreateRuntimeGet();
   llvm::Function* CreateRuntimeSet();
+  llvm::Function* CreateRuntimeDeclare();
   llvm::Function* CreateRuntimeSetUndefined();
   llvm::Function* CreateRuntimeCall();
+  llvm::Function* CreateRuntimePushScope();
+  llvm::Function* CreateRuntimePopScope();
 
   inline void PushValue(llvm::Value* value) {
     stack_.push_back({Item::Value, value});
@@ -91,9 +101,19 @@ class Compiler {
     stack_.push_back({Item::Block, block});
   }
 
+  inline void PushFunction(llvm::Function* function) {
+    stack_.push_back({Item::Function, function});
+  }
+
+  inline void PushIndex(size_t index) {
+    // TODO: initializer list
+    stack_.push_back({Item::Index, nullptr});
+    stack_.back().data.index = index;
+  }
+
   inline llvm::Value* exec_context() const {
     assert(!stack_.empty());
-    const auto& item = stack_[0];
+    const auto& item = stack_[base_index_];
     assert(item.type == Item::Value);
     return item.data.value;
   }
@@ -134,9 +154,46 @@ class Compiler {
     return PopValue();
   }
 
+  inline llvm::Function* PopFunction() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::Function);
+    auto* function = item.data.function;
+    stack_.pop_back();
+    return function;
+  }
+
+  size_t PopIndex() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::Index);
+    auto index = item.data.index;
+    stack_.pop_back();
+    return index;
+  }
+
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
+  // function-related data
+  llvm::Function* function_ = nullptr;
+  size_t scope_depth_ = 0;
+  size_t base_index_ = 0;
+
+  void PushFunctionData() {
+    PushFunction(function_);
+    function_ = nullptr;
+    PushIndex(scope_depth_);
+    scope_depth_ = 0;
+    PushIndex(base_index_);
+    base_index_ = stack_.size();
+  }
+
+  void PopFunctionData() {
+    base_index_ = PopIndex();
+    scope_depth_ = PopIndex();
+    function_ = PopFunction();
+  }
+
   std::vector<Item> stack_;
-  std::unordered_map<size_t, llvm::Function*> funcs_;
 };

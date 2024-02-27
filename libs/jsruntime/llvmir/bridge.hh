@@ -18,7 +18,11 @@ void runtime_peer_delete(Runtime* self);
 void runtime_peer_register_host(Runtime* self, const Host* host);
 void runtime_peer_dump_module(Runtime* self);
 void runtime_peer_eval(Runtime* self, uintptr_t context);
-void runtime_peer_call(Runtime* self, const char* name, size_t name_len, double* return_value);
+void runtime_peer_call(Runtime* self,
+    uintptr_t context,
+    const char* name,
+    size_t name_len,
+    double* return_value);
 
 // Compilation
 
@@ -43,6 +47,7 @@ void compiler_peer_eq(Compiler* self);
 void compiler_peer_ne(Compiler* self);
 void compiler_peer_get(Compiler* self);
 void compiler_peer_set(Compiler* self);
+void compiler_peer_declare(Compiler* self);
 void compiler_peer_set_undefined(Compiler* self);
 void compiler_peer_call(Compiler* self, size_t argc);
 void compiler_peer_to_boolean(Compiler* self);
@@ -52,6 +57,8 @@ void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);
 void compiler_peer_start_function(Compiler* self, const char* name, size_t len);
 void compiler_peer_end_function(Compiler* self);
+void compiler_peer_start_scope(Compiler* self);
+void compiler_peer_end_scope(Compiler* self);
 void compiler_peer_return(Compiler* self, size_t n);
 void compiler_peer_print(Compiler* self);
 

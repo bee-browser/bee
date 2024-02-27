@@ -240,7 +240,7 @@
   action: nop
 - rule: Block -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block -> LBRACE StatementList RBRACE
+- rule: Block -> LBRACE _SCOPE_ StatementList RBRACE
   action: block_statement
 - rule: VariableDeclarationList_In -> VariableDeclaration_In
   action: create_list
@@ -485,6 +485,8 @@
   action: try_finally_statement
 - rule: TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
   action: try_catch_finally_statement
+- rule: _SCOPE_ -> (empty)
+  action: nop
 - rule: VariableDeclaration_In -> BindingIdentifier
   action: variable_declarator
 - rule: VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -604,8 +606,6 @@
 - rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
   action: append_to_csv_list
 - rule: _FUNCTION_SIGNATURE_ -> (empty)
-  action: nop
-- rule: _SCOPE_ -> (empty)
   action: nop
 - rule: FunctionBody -> FunctionStatementList
   action: nop
@@ -856,7 +856,7 @@
   action: optional_expression
 - rule: Block_Await -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Await -> LBRACE StatementList_Await RBRACE
+- rule: Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
   action: block_statement
 - rule: Expression_In_Await -> AssignmentExpression_In_Await
   action: nop
@@ -2529,7 +2529,7 @@
   action: binary_expression
 - rule: Block_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Return -> LBRACE StatementList_Return RBRACE
+- rule: Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
   action: block_statement
 - rule: IterationStatement_Return -> DoWhileStatement_Return
   action: nop
@@ -2990,7 +2990,7 @@
   action: optional_expression
 - rule: Block_Yield_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE
+- rule: Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
   action: block_statement
 - rule: VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
   action: create_list
@@ -3057,7 +3057,7 @@
   action: append_to_csv_list
 - rule: Block_Await_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE
+- rule: Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
   action: block_statement
 - rule: IterationStatement_Await_Return -> DoWhileStatement_Await_Return
   action: nop
@@ -3125,7 +3125,7 @@
   action: optional_expression
 - rule: Block_Yield_Await_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE
+- rule: Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return RBRACE
   action: block_statement
 - rule: VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
   action: create_list

@@ -172,6 +172,7 @@ class Transpiler {
           modifyConditionalExpression,
           expandOptionals,
           expandParameterizedRules,
+          modifyBlock,
           translateRules,
           processLookaheads,
           addLiterals,
@@ -820,6 +821,25 @@ function expandSuffixPatterns(patterns, combination) {
     }
   }
   return params.join('_');
+}
+
+function modifyBlock(rules) {
+  log.debug('Modifying Block...');
+
+  const blockRules = rules.filter((rule) => {
+    return rule.name === 'Block' || rule.name.startsWith('Block_');
+  });
+
+  let rule;
+
+  for (const rule of blockRules) {
+    assert(rule.values.length === 2);
+    rule.values[1] = rule
+      .values[1]
+      .replace('`{` Statement', '`{` _SCOPE_ Statement');
+  }
+
+  return rules;
 }
 
 function translateRules(rules, options) {

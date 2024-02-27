@@ -57,6 +57,9 @@ pub trait SemanticHandler<'s> {
     fn handle_start_const_declaration(&mut self) -> Result<(), Error>;
     fn handle_const_binding(&mut self) -> Result<(), Error>;
     fn handle_end_const_declaration(&mut self) -> Result<(), Error>;
+
+    fn handle_start_scope(&mut self) -> Result<(), Error>;
+    fn handle_end_scope(&mut self) -> Result<(), Error>;
 }
 
 pub struct Processor<'s, H> {
@@ -681,6 +684,14 @@ where
     fn handle_function_body(&mut self) -> Result<(), Error> {
         // TODO: early errors
         Ok(())
+    }
+
+    fn handle_scope(&mut self) -> Result<(), Error> {
+        self.handler.handle_start_scope()
+    }
+
+    fn handle_block(&mut self) -> Result<(), Error> {
+        self.handler.handle_end_scope()
     }
 
     fn handle_empty_list(&mut self) -> Result<(), Error> {
