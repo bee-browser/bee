@@ -150,6 +150,15 @@ void Compiler::Set() {
   builder_->CreateCall(set, {context, symbol, value});
 }
 
+void Compiler::Declare() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* value = PopValue();
+  auto* symbol = PopSymbol();
+  auto* declare = CreateRuntimeDeclare();
+  builder_->CreateCall(declare, {context, symbol, value});
+}
+
 void Compiler::SetUndefined() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
@@ -229,40 +238,54 @@ void Compiler::IfElseStatement() {
   auto* else_tail_block = builder_->GetInsertBlock();
   auto* func = else_tail_block->getParent();
 
-  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+  llvm::BasicBlock* block = nullptr;
 
-  builder_->CreateBr(block);
+  if (else_tail_block->getTerminator() != nullptr) {
+    // We should not append any instructions after a terminator instruction such as `ret`.
+  } else {
+    block = llvm::BasicBlock::Create(*context_, "bl", func);
+    builder_->CreateBr(block);
+  }
 
   auto* else_head_block = PopBlock();
   auto* then_tail_block = PopBlock();
 
-  builder_->SetInsertPoint(then_tail_block);
-  builder_->CreateBr(block);
+  if (then_tail_block->getTerminator() != nullptr) {
+    // We should not append any instructions after a terminator instruction such as `ret`.
+  } else {
+    if (block == nullptr) {
+      block = llvm::BasicBlock::Create(*context_, "bl", func);
+    }
+    builder_->SetInsertPoint(then_tail_block);
+    builder_->CreateBr(block);
+  }
 
   auto* then_head_block = PopBlock();
   auto* cond_block = PopBlock();
-
-  builder_->SetInsertPoint(cond_block);
   auto* cond_value = PopValue();
 
   builder_->SetInsertPoint(cond_block);
   builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
 
-  builder_->SetInsertPoint(block);
+  if (block != nullptr) {
+    builder_->SetInsertPoint(block);
+  }
 }
 
 void Compiler::IfStatement() {
-  auto* else_tail_block = builder_->GetInsertBlock();
-  auto* func = else_tail_block->getParent();
+  auto* then_tail_block = builder_->GetInsertBlock();
+  auto* func = then_tail_block->getParent();
 
   auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
 
-  builder_->CreateBr(block);
+  if (then_tail_block->getTerminator() != nullptr) {
+    // We should not append any instructions after a terminator instruction such as `ret`.
+  } else {
+    builder_->CreateBr(block);
+  }
 
   auto* then_head_block = PopBlock();
   auto* cond_block = PopBlock();
-
-  builder_->SetInsertPoint(cond_block);
   auto* cond_value = PopValue();
 
   builder_->SetInsertPoint(cond_block);
@@ -277,25 +300,55 @@ void Compiler::StartFunction(const char* name, size_t len) {
   assert(current_block != nullptr);
   PushBlock(current_block);
 
+  PushFunctionData();
+
   // Create a function.
-  auto* prototype = llvm::FunctionType::get(builder_->getDoubleTy(), {}, false);
+  auto* prototype =
+      llvm::FunctionType::get(builder_->getDoubleTy(), {builder_->getPtrTy()}, false);
   auto* func = llvm::Function::Create(
       prototype, llvm::Function::ExternalLinkage, llvm::StringRef(name, len), *module_);
   auto* block = llvm::BasicBlock::Create(*context_, "entry", func);
 
+  // TODO: arguments
+
   // Switch the insertion point.
   builder_->SetInsertPoint(block);
+
+  auto* exec_context = func->getArg(0);
+  // TODO: use a global variable to hold the execution context.
+  PushValue(exec_context);
+
+  function_ = func;
 }
 
 void Compiler::EndFunction() {
+  PopValue();  // exec_conext
+  PopFunctionData();
+
   llvm::BasicBlock* block = PopBlock();
   // Switch the insertion point.
   builder_->SetInsertPoint(block);
 }
 
+void Compiler::StartScope() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* push_scope = CreateRuntimePushScope();
+  builder_->CreateCall(push_scope, {context});
+  ++scope_depth_;
+}
+
+void Compiler::EndScope() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* pop_scope = CreateRuntimePopScope();
+  builder_->CreateCall(pop_scope, {context});
+  --scope_depth_;
+}
+
 void Compiler::Return(size_t n) {
   UNUSED(n);
-  llvm::Value* value = PopValue();
+  llvm::Value* value = Dereference();
   builder_->CreateRet(value);
 }
 
@@ -325,6 +378,12 @@ void Compiler::DumpStack() {
       case Item::Block:
         llvm::errs() << "block: " << item.data.block << "\n";
         break;
+      case Item::Function:
+        llvm::errs() << "function" << item.data.function << "\n";
+        break;
+      case Item::Index:
+        llvm::errs() << "index: " << item.data.index << "\n";
+        break;
     }
   }
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
@@ -346,23 +405,36 @@ llvm::Function* Compiler::CreateMainFunction() {
 }
 
 llvm::Function* Compiler::CreatePrintStrFunction() {
-  auto* prototype =
-      llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt8PtrTy()}, false);
-  return llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "print_str", module_.get());
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype =
+        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt8PtrTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "print_str", module_.get());
+  }
+  return func;
 }
 
 llvm::Function* Compiler::CreatePrintBoolFunction() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt1Ty()}, false);
-  return llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "print_bool", module_.get());
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype =
+        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt1Ty()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "print_bool", module_.get());
+  }
+  return func;
 }
 
 llvm::Function* Compiler::CreatePrintF64Function() {
-  auto* prototype =
-      llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getDoubleTy()}, false);
-  return llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "print_f64", module_.get());
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype =
+        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getDoubleTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "print_f64", module_.get());
+  }
+  return func;
 }
 
 llvm::Function* Compiler::CreateRuntimeGet() {
@@ -391,6 +463,17 @@ llvm::Function* Compiler::CreateRuntimeSet() {
   return func;
 }
 
+llvm::Function* Compiler::CreateRuntimeDeclare() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
+        {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_declare", module_.get());
+  }
+  return func;
+}
+
 llvm::Function* Compiler::CreateRuntimeSetUndefined() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
@@ -413,6 +496,28 @@ llvm::Function* Compiler::CreateRuntimeCall() {
         builder_->getDoubleTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_call", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimePushScope() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype =
+        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_push_scope", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimePopScope() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype =
+        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_pop_scope", module_.get());
   }
   return func;
 }

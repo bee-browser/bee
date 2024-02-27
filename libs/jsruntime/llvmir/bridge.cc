@@ -29,8 +29,12 @@ void runtime_peer_eval(Runtime* self, uintptr_t context) {
   self->Eval(context);
 }
 
-void runtime_peer_call(Runtime* self, const char* name, size_t name_len, double* return_value) {
-  self->Call(name, name_len, return_value);
+void runtime_peer_call(Runtime* self,
+    uintptr_t context,
+    const char* name,
+    size_t name_len,
+    double* return_value) {
+  self->Call(context, name, name_len, return_value);
 }
 
 Compiler* runtime_peer_start_compilation(Runtime* self) {
@@ -109,6 +113,10 @@ void compiler_peer_set(Compiler* self) {
   self->Set();
 }
 
+void compiler_peer_declare(Compiler* self) {
+  self->Declare();
+}
+
 void compiler_peer_set_undefined(Compiler* self) {
   self->SetUndefined();
 }
@@ -143,6 +151,14 @@ void compiler_peer_start_function(Compiler* self, const char* name, size_t len) 
 
 void compiler_peer_end_function(Compiler* self) {
   self->EndFunction();
+}
+
+void compiler_peer_start_scope(Compiler* self) {
+  self->StartScope();
+}
+
+void compiler_peer_end_scope(Compiler* self) {
+  self->EndScope();
 }
 
 void compiler_peer_return(Compiler* self, size_t n) {

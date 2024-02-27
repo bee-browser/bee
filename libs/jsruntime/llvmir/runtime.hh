@@ -24,7 +24,7 @@ class Runtime {
 
   void DumpModule();
   void Eval(uintptr_t context);
-  void Call(const char* name, size_t name_len, double* return_value);
+  void Call(uintptr_t context, const char* name, size_t name_len, double* return_value);
 
  private:
   std::unique_ptr<Evaluator> evaluator_ = nullptr;

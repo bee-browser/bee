@@ -10,6 +10,9 @@ static llvm::ExitOnError ExitOnErr;
 
 // static
 void Runtime::Initialize() {
+  // Uncomment if you want to enable LLVM_DEBUG().
+  // llvm::DebugFlag = true;
+
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
   llvm::InitializeNativeTargetAsmParser();
@@ -44,12 +47,24 @@ void Runtime::RegisterHost(const Host* host) {
       llvm::orc::ExecutorAddr::fromPtr(host->runtime_set),
       llvm::JITSymbolFlags::Exported,
   };
+  symbols[exec_session.intern("runtime_declare")] = {
+      llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare),
+      llvm::JITSymbolFlags::Exported,
+  };
   symbols[exec_session.intern("runtime_set_undefined")] = {
       llvm::orc::ExecutorAddr::fromPtr(host->runtime_set_undefined),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session.intern("runtime_call")] = {
       llvm::orc::ExecutorAddr::fromPtr(host->runtime_call),
+      llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session.intern("runtime_push_scope")] = {
+      llvm::orc::ExecutorAddr::fromPtr(host->runtime_push_scope),
+      llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session.intern("runtime_pop_scope")] = {
+      llvm::orc::ExecutorAddr::fromPtr(host->runtime_pop_scope),
       llvm::JITSymbolFlags::Exported,
   };
   ExitOnErr(evaluator_->main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
@@ -75,10 +90,10 @@ void Runtime::Eval(uintptr_t context) {
   ExitOnErr(tracker->remove());
 }
 
-void Runtime::Call(const char* name, size_t name_len, double* return_value) {
+void Runtime::Call(uintptr_t context, const char* name, size_t name_len, double* return_value) {
   auto sym = ExitOnErr(evaluator_->Lookup({name, name_len}));
-  double (*func)() = sym.getAddress().toPtr<double (*)()>();
-  *return_value = func();
+  double (*func)(uintptr_t) = sym.getAddress().toPtr<double (*)(uintptr_t)>();
+  *return_value = func(context);
 }
 
 Compiler* Runtime::StartCompilation() {

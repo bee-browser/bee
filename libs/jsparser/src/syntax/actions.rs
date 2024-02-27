@@ -253,8 +253,8 @@ where
         Action::Undefined,
         // Block -> LBRACE RBRACE
         Action::Undefined,
-        // Block -> LBRACE StatementList RBRACE
-        Action::Nop,
+        // Block -> LBRACE _SCOPE_ StatementList RBRACE
+        Action::Invoke(Self::handle_block, "handle_block"),
         // VariableDeclarationList_In -> VariableDeclaration_In
         Action::Undefined,
         // VariableDeclarationList_In -> VariableDeclarationList_In COMMA VariableDeclaration_In
@@ -481,6 +481,8 @@ where
         Action::Undefined,
         // TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
         Action::Undefined,
+        // _SCOPE_ -> (empty)
+        Action::Invoke(Self::handle_scope, "handle_scope"),
         // VariableDeclaration_In -> BindingIdentifier
         Action::Undefined,
         // VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -587,8 +589,6 @@ where
         Action::Undefined,
         // _FUNCTION_SIGNATURE_ -> (empty)
         Action::Invoke(Self::handle_function_signature, "handle_function_signature"),
-        // _SCOPE_ -> (empty)
-        Action::Nop,
         // FunctionBody -> FunctionStatementList
         Action::Invoke(Self::handle_function_body, "handle_function_body"),
         // FormalParameters_Yield -> (empty)
@@ -845,7 +845,7 @@ where
         Action::Undefined,
         // Block_Await -> LBRACE RBRACE
         Action::Undefined,
-        // Block_Await -> LBRACE StatementList_Await RBRACE
+        // Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
         Action::Undefined,
         // Expression_In_Await -> AssignmentExpression_In_Await
         Action::Undefined,
@@ -1911,15 +1911,15 @@ where
         // SingleNameBinding -> BindingIdentifier Initializer_In
         Action::Undefined,
         // Statement_Return -> BlockStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // Statement_Return -> VariableStatement
         Action::Undefined,
         // Statement_Return -> EmptyStatement
         Action::Undefined,
         // Statement_Return -> ExpressionStatement
-        Action::Undefined,
+        Action::Nop,
         // Statement_Return -> IfStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // Statement_Return -> BreakableStatement_Return
         Action::Undefined,
         // Statement_Return -> ContinueStatement
@@ -2178,11 +2178,11 @@ where
         // ExpressionBody_Await -> AssignmentExpression_Await
         Action::Undefined,
         // BlockStatement_Return -> Block_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_block_statement, "handle_block_statement"),
         // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return
-        Action::Undefined,
+        Action::Invoke(Self::handle_if_else_statement, "handle_if_else_statement"),
         // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
-        Action::Undefined,
+        Action::Invoke(Self::handle_if_statement, "handle_if_statement"),
         // BreakableStatement_Return -> IterationStatement_Return
         Action::Undefined,
         // BreakableStatement_Return -> SwitchStatement_Return
@@ -2461,8 +2461,8 @@ where
         Action::Undefined,
         // Block_Return -> LBRACE RBRACE
         Action::Undefined,
-        // Block_Return -> LBRACE StatementList_Return RBRACE
-        Action::Undefined,
+        // Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
+        Action::Invoke(Self::handle_block, "handle_block"),
         // IterationStatement_Return -> DoWhileStatement_Return
         Action::Undefined,
         // IterationStatement_Return -> WhileStatement_Return
@@ -2850,7 +2850,7 @@ where
         Action::Undefined,
         // Block_Yield_Return -> LBRACE RBRACE
         Action::Undefined,
-        // Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE
+        // Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
         Action::Undefined,
         // VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
         Action::Undefined,
@@ -2909,7 +2909,7 @@ where
         Action::Nop,
         // Block_Await_Return -> LBRACE RBRACE
         Action::Undefined,
-        // Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE
+        // Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
         Action::Undefined,
         // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
         Action::Undefined,
@@ -2976,7 +2976,7 @@ where
         Action::Undefined,
         // Block_Yield_Await_Return -> LBRACE RBRACE
         Action::Undefined,
-        // Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE
+        // Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return RBRACE
         Action::Undefined,
         // VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
         Action::Undefined,

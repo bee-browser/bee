@@ -246,7 +246,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::nop, "nop")),
     // Block -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block -> LBRACE StatementList RBRACE
+    // Block -> LBRACE _SCOPE_ StatementList RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In -> VariableDeclaration_In
     Some((Builder::create_list, "create_list")),
@@ -504,6 +504,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
     )),
+    // _SCOPE_ -> (empty)
+    Some((Builder::nop, "nop")),
     // VariableDeclaration_In -> BindingIdentifier
     Some((Builder::variable_declarator, "variable_declarator")),
     // VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -648,8 +650,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // _FUNCTION_SIGNATURE_ -> (empty)
-    Some((Builder::nop, "nop")),
-    // _SCOPE_ -> (empty)
     Some((Builder::nop, "nop")),
     // FunctionBody -> FunctionStatementList
     Some((Builder::nop, "nop")),
@@ -913,7 +913,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Await -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Await -> LBRACE StatementList_Await RBRACE
+    // Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
     Some((Builder::block_statement, "block_statement")),
     // Expression_In_Await -> AssignmentExpression_In_Await
     Some((Builder::nop, "nop")),
@@ -2763,7 +2763,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::binary_expression, "binary_expression")),
     // Block_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Return -> LBRACE StatementList_Return RBRACE
+    // Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // IterationStatement_Return -> DoWhileStatement_Return
     Some((Builder::nop, "nop")),
@@ -3245,7 +3245,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Yield_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE
+    // Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
     Some((Builder::create_list, "create_list")),
@@ -3310,7 +3310,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Block_Await_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE
+    // Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
     Some((Builder::nop, "nop")),
@@ -3380,7 +3380,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2099] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Yield_Await_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE
+    // Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
     Some((Builder::create_list, "create_list")),

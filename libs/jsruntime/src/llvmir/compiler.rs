@@ -7,19 +7,28 @@ use jsparser::SymbolTable;
 
 use super::bridge;
 use super::Runtime;
-use super::Value;
 
 use crate::logger;
 
 pub struct Compiler<'r> {
     runtime: &'r mut Runtime,
     peer: *mut bridge::Compiler,
+    scope_stack: Vec<ScopeState>,
+}
+
+#[derive(Default)]
+struct ScopeState {
+    returned: bool,
 }
 
 impl<'r> Compiler<'r> {
     pub fn new(runtime: &'r mut Runtime) -> Self {
         let peer = unsafe { bridge::runtime_peer_start_compilation(runtime.peer) };
-        Self { runtime, peer }
+        Self {
+            runtime,
+            peer,
+            scope_stack: vec![],
+        }
     }
 
     fn populate_module(&self) {
@@ -255,6 +264,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
     fn handle_return_statement(&mut self, n: usize) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_return_statement", n);
+        self.scope_stack.last_mut().unwrap().returned = true;
         unsafe {
             bridge::compiler_peer_return(self.peer, n);
         }
@@ -304,10 +314,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
             bridge::compiler_peer_start_function(self.peer, name, len);
         }
 
-        self.runtime
-            .global_scope
-            .bindings
-            .insert(symbol, Value::Function(name));
+        self.runtime.set_function(symbol, name);
 
         Ok(())
     }
@@ -333,7 +340,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
         if with_init {
             unsafe {
-                bridge::compiler_peer_set(self.peer);
+                bridge::compiler_peer_declare(self.peer);
             }
         } else {
             unsafe {
@@ -360,7 +367,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         logger::debug!(event = "handle_const_binding");
 
         unsafe {
-            bridge::compiler_peer_set(self.peer);
+            bridge::compiler_peer_declare(self.peer);
         }
 
         Ok(())
@@ -369,6 +376,27 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     #[inline(always)]
     fn handle_end_const_declaration(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_end_const_declaration");
+        Ok(())
+    }
+
+    fn handle_start_scope(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_start_scope");
+        self.scope_stack.push(Default::default());
+        unsafe {
+            bridge::compiler_peer_start_scope(self.peer);
+        }
+        Ok(())
+    }
+
+    fn handle_end_scope(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_end_scope");
+        if self.scope_stack.last().unwrap().returned {
+            // The scope will be removed from the stack in `llvmir::call()`.
+        } else {
+            unsafe {
+                bridge::compiler_peer_end_scope(self.peer);
+            }
+        }
         Ok(())
     }
 }

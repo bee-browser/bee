@@ -90,6 +90,8 @@ class Evaluator {
   }
 
   llvm::Expected<llvm::orc::ExecutorSymbolDef> Lookup(llvm::StringRef name) {
+    // Uncomment if you want to show the state of the exec_session_.
+    // exec_session_->dump(llvm::errs());
     return exec_session_->lookup({&main_jd_}, mangle_(name.str()));
   }
 
