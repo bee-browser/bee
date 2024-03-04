@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-flagset = "0.4.4"
+flagset = "0.4.5"
 htmltokenizer = { path = "../htmltokenizer" }
 logging = { path = "../logging" }
 phf = { version = "0.11.2", features = ["macros"] }
