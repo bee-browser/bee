@@ -22,7 +22,6 @@ class Runtime {
   void PopulateModule(Compiler* compiler);
   void EndCompilation(Compiler* compiler);
 
-  void DumpModule();
   void Eval(uintptr_t context);
   void Call(uintptr_t context, const char* name, size_t name_len, double* return_value);
 

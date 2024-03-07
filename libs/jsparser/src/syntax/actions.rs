@@ -296,7 +296,7 @@ where
         Action::Undefined,
         // Finally -> FINALLY Block
         Action::Undefined,
-        // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
+        // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::handle_function_declaration,
             "handle_function_declaration",
@@ -367,12 +367,12 @@ where
         Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
         // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
         Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
-        // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
+        // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::handle_function_declaration,
             "handle_function_declaration",
         ),
-        // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
+        // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Undefined,
         // GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -775,7 +775,7 @@ where
         Action::Undefined,
         // VariableDeclaration_In_Await -> BindingPattern_Await Initializer_In_Await
         Action::Undefined,
-        // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
+        // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::handle_function_declaration,
             "handle_function_declaration",
@@ -2884,7 +2884,7 @@ where
         Action::Undefined,
         // Finally_Yield_Return -> FINALLY Block_Yield_Return
         Action::Undefined,
-        // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
+        // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::handle_function_declaration,
             "handle_function_declaration",
@@ -3011,7 +3011,7 @@ where
         Action::Undefined,
         // Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
         Action::Undefined,
-        // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE _SCOPE_ FunctionBody RBRACE
+        // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::handle_function_declaration,
             "handle_function_declaration",

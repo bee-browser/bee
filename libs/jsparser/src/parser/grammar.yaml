@@ -15795,8 +15795,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15817,8 +15815,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15836,8 +15832,6 @@
       data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
-    - type: non-terminal
-      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token
@@ -15859,8 +15853,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15881,8 +15873,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15900,8 +15890,6 @@
       data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
-    - type: non-terminal
-      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token
@@ -15923,8 +15911,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15945,8 +15931,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -15964,8 +15948,6 @@
       data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
-    - type: non-terminal
-      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token
@@ -15987,8 +15969,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -16009,8 +15989,6 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
-    - type: non-terminal
       data: FunctionBody
     - type: token
       data: RBRACE
@@ -16028,8 +16006,6 @@
       data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
-    - type: non-terminal
-      data: _SCOPE_
     - type: non-terminal
       data: FunctionBody
     - type: token

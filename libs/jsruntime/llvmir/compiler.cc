@@ -1,14 +1,16 @@
 #include "compiler.hh"
+#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 
 #include <cassert>
 #include <ostream>
 
 #include "macros.hh"
+#include "module.hh"
 
-Compiler::Compiler(const llvm::DataLayout& data_layout) {
+Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
-  module_->setDataLayout(data_layout);
+  // TODO: module_->setDataLayout(data_layout);
   builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
 }
 
@@ -17,25 +19,30 @@ void Compiler::SetSourceFileName(const char* input) {
 }
 
 void Compiler::StartMain() {
-  auto* main_func = CreateMainFunction();
-  auto* entry = llvm::BasicBlock::Create(*context_, "entry", main_func);
-  builder_->SetInsertPoint(entry);
-  auto* exec_context = main_func->getArg(0);
+  function_ = CreateMainFunction();
+  prologue_ = llvm::BasicBlock::Create(*context_, "prologue", function_);
+  body_ = llvm::BasicBlock::Create(*context_, "body", function_);
+  builder_->SetInsertPoint(body_);
+  auto* exec_context = function_->getArg(0);
   // TODO: use a global variable to hold the execution context.
   PushValue(exec_context);
 }
 
 void Compiler::EndMain() {
-  builder_->CreateRet(builder_->getInt32(0));
+  auto* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(prologue_);
+  builder_->CreateBr(body_);
+  builder_->SetInsertPoint(backup);
+  builder_->CreateRetVoid();
+}
+
+Module* Compiler::TakeModule() {
+  llvm::orc::ThreadSafeModule mod(std::move(module_), std::move(context_));
+  return new Module(std::move(mod));
 }
 
 void Compiler::Number(double value) {
   auto* v = llvm::ConstantFP::get(*context_, llvm::APFloat(value));
-  PushValue(v);
-}
-
-void Compiler::String(const char* data, size_t size) {
-  auto* v = llvm::ConstantDataArray::getString(*context_, llvm::StringRef(data, size));
   PushValue(v);
 }
 
@@ -45,91 +52,140 @@ void Compiler::Symbol(uint32_t symbol_id) {
 }
 
 void Compiler::Add() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFAdd(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Sub() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFSub(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Mul() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFMul(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Div() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFDiv(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Rem() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFRem(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Lt() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOLT(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Gt() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOGT(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Lte() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOLE(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Gte() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOGE(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Eq() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOEQ(lhs, rhs);
   PushValue(v);
 }
 
 void Compiler::Ne() {
-  auto* rhs = Dereference();
+  Swap();
   auto* lhs = Dereference();
+  auto* rhs = Dereference();
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpONE(lhs, rhs);
   PushValue(v);
+}
+
+void Compiler::DeclareConst() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* value = PopValue();
+  auto* symbol = PopSymbol();
+  auto* declare = CreateRuntimeDeclareConst();
+  builder_->CreateCall(declare, {context, symbol, value});
+}
+
+void Compiler::DeclareVariable() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* value = PopValue();
+  auto* symbol = PopSymbol();
+  auto* declare = CreateRuntimeDeclareVariable();
+  builder_->CreateCall(declare, {context, symbol, value});
+}
+
+void Compiler::DeclareUndefined() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* symbol = PopSymbol();
+  auto* declare = CreateRuntimeDeclareUndefined();
+  builder_->CreateCall(declare, {context, symbol});
+}
+
+void Compiler::DeclareFunction(uint32_t symbol_id, const char* name) {
+  auto* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(prologue_);
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* symbol = builder_->getInt32(symbol_id);
+  auto* mangled = builder_->CreateGlobalString(name);
+  auto* declare = CreateRuntimeDeclareFunction();
+  builder_->CreateCall(declare, {context, symbol, mangled});
+  builder_->SetInsertPoint(backup);
 }
 
 void Compiler::Get() {
@@ -148,15 +204,6 @@ void Compiler::Set() {
   auto* symbol = PopSymbol();
   auto* set = CreateRuntimeSet();
   builder_->CreateCall(set, {context, symbol, value});
-}
-
-void Compiler::Declare() {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* value = PopValue();
-  auto* symbol = PopSymbol();
-  auto* declare = CreateRuntimeDeclare();
-  builder_->CreateCall(declare, {context, symbol, value});
 }
 
 void Compiler::SetUndefined() {
@@ -294,7 +341,7 @@ void Compiler::IfStatement() {
   builder_->SetInsertPoint(block);
 }
 
-void Compiler::StartFunction(const char* name, size_t len) {
+void Compiler::StartFunction(const char* name) {
   // Push the current block.
   auto* current_block = builder_->GetInsertBlock();
   assert(current_block != nullptr);
@@ -303,25 +350,27 @@ void Compiler::StartFunction(const char* name, size_t len) {
   PushFunctionData();
 
   // Create a function.
-  auto* prototype =
-      llvm::FunctionType::get(builder_->getDoubleTy(), {builder_->getPtrTy()}, false);
-  auto* func = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, llvm::StringRef(name, len), *module_);
-  auto* block = llvm::BasicBlock::Create(*context_, "entry", func);
+  auto* sig = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
+  function_ = llvm::Function::Create(sig, llvm::Function::ExternalLinkage, name, *module_);
+  prologue_ = llvm::BasicBlock::Create(*context_, "prologue", function_);
+  body_ = llvm::BasicBlock::Create(*context_, "body", function_);
 
   // TODO: arguments
 
   // Switch the insertion point.
-  builder_->SetInsertPoint(block);
+  builder_->SetInsertPoint(body_);
 
-  auto* exec_context = func->getArg(0);
+  auto* exec_context = function_->getArg(0);
   // TODO: use a global variable to hold the execution context.
   PushValue(exec_context);
-
-  function_ = func;
 }
 
 void Compiler::EndFunction() {
+  auto* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(prologue_);
+  builder_->CreateBr(body_);
+  builder_->SetInsertPoint(backup);
+
   PopValue();  // exec_conext
   PopFunctionData();
 
@@ -348,8 +397,12 @@ void Compiler::EndScope() {
 
 void Compiler::Return(size_t n) {
   UNUSED(n);
-  llvm::Value* value = Dereference();
-  builder_->CreateRet(value);
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* value = Dereference();
+  auto* ret = CreateRuntimeRet();
+  builder_->CreateCall(ret, {context, value});
+  builder_->CreateRetVoid();
 }
 
 void Compiler::Print() {
@@ -389,18 +442,8 @@ void Compiler::DumpStack() {
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
 }
 
-void Compiler::DumpModule() {
-  llvm::errs() << "<llvm-ir:module>\n";
-  module_->print(llvm::errs(), nullptr);
-  llvm::errs() << "</llvm-ir:module>\n";
-}
-
-llvm::orc::ThreadSafeModule Compiler::TakeModule() {
-  return llvm::orc::ThreadSafeModule(std::move(module_), std::move(context_));
-}
-
 llvm::Function* Compiler::CreateMainFunction() {
-  auto* prototype = llvm::FunctionType::get(builder_->getInt32Ty(), {builder_->getPtrTy()}, false);
+  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
   return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "main", module_.get());
 }
 
@@ -437,6 +480,49 @@ llvm::Function* Compiler::CreatePrintF64Function() {
   return func;
 }
 
+llvm::Function* Compiler::CreateRuntimeDeclareConst() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
+        {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_declare_const", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimeDeclareVariable() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
+        {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_declare_variable", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimeDeclareUndefined() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
+        {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_declare_undefined", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimeDeclareFunction() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt8PtrTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_declare_function", module_.get());
+  }
+  return func;
+}
+
 llvm::Function* Compiler::CreateRuntimeGet() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
@@ -463,17 +549,6 @@ llvm::Function* Compiler::CreateRuntimeSet() {
   return func;
 }
 
-llvm::Function* Compiler::CreateRuntimeDeclare() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-        {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
-    func = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_declare", module_.get());
-  }
-  return func;
-}
-
 llvm::Function* Compiler::CreateRuntimeSetUndefined() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
@@ -496,6 +571,17 @@ llvm::Function* Compiler::CreateRuntimeCall() {
         builder_->getDoubleTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_call", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimeRet() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(
+        builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getDoubleTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_ret", module_.get());
   }
   return func;
 }

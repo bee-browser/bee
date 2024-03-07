@@ -609,7 +609,7 @@ function modifyFunctionDeclaration(rules) {
   assert(rule !== undefined);
   for (let i = 0; i < rule.values.length; ++i) {
     const [head, tail] = rule.values[i].split('`{`');
-    rule.values[i] = `${head} _FUNCTION_SIGNATURE_ \`{\` _SCOPE_ ${tail}`;
+    rule.values[i] = `${head} _FUNCTION_SIGNATURE_ \`{\` ${tail}`;
   }
 
   return rules;

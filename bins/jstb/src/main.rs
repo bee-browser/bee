@@ -28,16 +28,16 @@ fn main() -> Result<()> {
     logging::init();
     Runtime::initialize();
     let cl = CommandLine::parse();
-    let mut runtime = Runtime::default();
+    let mut runtime = Runtime::new();
     match cl.command {
         Command::Eval(eval) => {
             let expr = match eval.expr {
                 Some(expr) => expr,
                 None => read_from_stdin()?,
             };
-            let _ = runtime.compile_script(&expr);
-            runtime.dump_module();
-            runtime.eval();
+            let module = runtime.compile_script(&expr).unwrap();
+            module.dump();
+            runtime.eval(module);
         }
     }
     Ok(())

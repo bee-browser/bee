@@ -2,59 +2,48 @@
 
 #include <cstdint>
 
+#include "llvm/Support/TargetSelect.h"
+
 #include "compiler.hh"
-#include "runtime.hh"
+#include "executor.hh"
+#include "module.hh"
 
-void runtime_peer_initialize() {
-  Runtime::Initialize();
+void llvmir_initialize() {
+  // Uncomment if you want to enable LLVM_DEBUG().
+  // llvm::DebugFlag = true;
+
+  llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
+  llvm::InitializeNativeTargetAsmParser();
 }
 
-Runtime* runtime_peer_new() {
-  return new Runtime();
+void module_peer_dump(Module* self) {
+  self->Dump();
 }
 
-void runtime_peer_delete(Runtime* self) {
+void module_peer_delete(Module* self) {
   delete self;
 }
 
-void runtime_peer_register_host(Runtime* self, const Host* host) {
-  self->RegisterHost(host);
+Compiler* compiler_peer_new() {
+  return new Compiler();
 }
 
-void runtime_peer_dump_module(Runtime* self) {
-  self->DumpModule();
+void compiler_peer_delete(Compiler* self) {
+  delete self;
 }
 
-void runtime_peer_eval(Runtime* self, uintptr_t context) {
-  self->Eval(context);
+void compiler_peer_start(Compiler* self) {
+  self->StartMain();
 }
 
-void runtime_peer_call(Runtime* self,
-    uintptr_t context,
-    const char* name,
-    size_t name_len,
-    double* return_value) {
-  self->Call(context, name, name_len, return_value);
-}
-
-Compiler* runtime_peer_start_compilation(Runtime* self) {
-  return self->StartCompilation();
-}
-
-void runtime_peer_populate_module(Runtime* self, Compiler* compiler) {
-  self->PopulateModule(compiler);
-}
-
-void runtime_peer_end_compilation(Runtime* self, Compiler* compiler) {
-  self->EndCompilation(compiler);
+Module* compiler_peer_end(Compiler* self) {
+  self->EndMain();
+  return self->TakeModule();
 }
 
 void compiler_peer_number(Compiler* self, double value) {
   self->Number(value);
-}
-
-void compiler_peer_string(Compiler* self, const char* data, size_t size) {
-  self->String(data, size);
 }
 
 void compiler_peer_symbol(Compiler* self, uint32_t symbol_id) {
@@ -105,16 +94,28 @@ void compiler_peer_ne(Compiler* self) {
   self->Ne();
 }
 
+void compiler_peer_declare_const(Compiler* self) {
+  self->DeclareConst();
+}
+
+void compiler_peer_declare_variable(Compiler* self) {
+  self->DeclareVariable();
+}
+
+void compiler_peer_declare_undefined(Compiler* self) {
+  self->DeclareUndefined();
+}
+
+void compiler_peer_declare_function(Compiler* self, uint32_t symbol, const char* name) {
+  self->DeclareFunction(symbol, name);
+}
+
 void compiler_peer_get(Compiler* self) {
   self->Get();
 }
 
 void compiler_peer_set(Compiler* self) {
   self->Set();
-}
-
-void compiler_peer_declare(Compiler* self) {
-  self->Declare();
 }
 
 void compiler_peer_set_undefined(Compiler* self) {
@@ -145,8 +146,8 @@ void compiler_peer_if_statement(Compiler* self) {
   self->IfStatement();
 }
 
-void compiler_peer_start_function(Compiler* self, const char* name, size_t len) {
-  self->StartFunction(name, len);
+void compiler_peer_start_function(Compiler* self, const char* name) {
+  self->StartFunction(name);
 }
 
 void compiler_peer_end_function(Compiler* self) {
@@ -167,4 +168,30 @@ void compiler_peer_return(Compiler* self, size_t n) {
 
 void compiler_peer_print(Compiler* self) {
   self->Print();
+}
+
+// executor
+
+Executor* executor_peer_new() {
+  return llvm::cantFail(Executor::Create());
+}
+
+void executor_peer_delete(Executor* self) {
+  delete self;
+}
+
+void executor_peer_register_host(Executor* self, const Host* host) {
+  self->RegisterHost(host);
+}
+
+void executor_peer_register_module(Executor *self, Module *mod) {
+  self->RegisterModule(mod);
+}
+
+MainFn executor_peer_get_main(Executor *self) {
+  return self->GetMain();
+}
+
+FuncFn executor_peer_get_func(Executor *self, const char* name) {
+  return self->GetFunc(name);
 }

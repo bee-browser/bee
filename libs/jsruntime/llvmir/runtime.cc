@@ -20,7 +20,7 @@ void Runtime::Initialize() {
 
 Runtime::Runtime() {
   evaluator_ = llvm::cantFail(Evaluator::Create());
-  compiler_ = std::make_unique<Compiler>(evaluator_->data_layout());
+  compiler_ = std::make_unique<Compiler>();
 }
 
 void Runtime::RegisterHost(const Host* host) {
@@ -72,10 +72,6 @@ void Runtime::RegisterHost(const Host* host) {
 
 void Runtime::SetSourceFileName(const char* input) {
   compiler_->SetSourceFileName(input);
-}
-
-void Runtime::DumpModule() {
-  compiler_->DumpModule();
 }
 
 void Runtime::Eval(uintptr_t context) {
