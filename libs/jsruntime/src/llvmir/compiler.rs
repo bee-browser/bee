@@ -1,3 +1,5 @@
+use std::ffi::CString;
+
 use jsparser::Identifier;
 use jsparser::NumericLiteral;
 use jsparser::SemanticHandler;
@@ -6,14 +8,15 @@ use jsparser::Symbol;
 use jsparser::SymbolTable;
 
 use super::bridge;
+use super::logger;
+use super::Module;
 use super::Runtime;
-
-use crate::logger;
 
 pub struct Compiler<'r> {
     runtime: &'r mut Runtime,
     peer: *mut bridge::Compiler,
     scope_stack: Vec<ScopeState>,
+    next_func_id: usize,
 }
 
 #[derive(Default)]
@@ -23,31 +26,32 @@ struct ScopeState {
 
 impl<'r> Compiler<'r> {
     pub fn new(runtime: &'r mut Runtime) -> Self {
-        let peer = unsafe { bridge::runtime_peer_start_compilation(runtime.peer) };
+        let peer = unsafe { bridge::compiler_peer_new() };
         Self {
             runtime,
             peer,
             scope_stack: vec![],
+            next_func_id: 1,
         }
     }
 
-    fn populate_module(&self) {
-        unsafe {
-            bridge::runtime_peer_populate_module(self.runtime.peer, self.peer);
-        }
+    fn next_func_name(&mut self) -> CString {
+        let id = self.next_func_id;
+        self.next_func_id += 1;
+        CString::new(format!("fn{id}")).unwrap()
     }
 }
 
 impl<'r> Drop for Compiler<'r> {
     fn drop(&mut self) {
         unsafe {
-            bridge::runtime_peer_end_compilation(self.runtime.peer, self.peer);
+            bridge::compiler_peer_delete(self.peer);
         }
     }
 }
 
 impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
-    type Artifact = ();
+    type Artifact = Module;
 
     fn symbol_table(&mut self) -> &SymbolTable {
         &self.runtime.symbol_table
@@ -59,15 +63,18 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
     fn start(&mut self) {
         logger::debug!(event = "start");
+        unsafe {
+            bridge::compiler_peer_start(self.peer);
+        }
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, jsparser::Error> {
         logger::debug!(event = "accept");
-        unsafe {
+        let peer = unsafe {
             bridge::compiler_peer_print(self.peer);
-        }
-        self.populate_module();
-        Ok(())
+            bridge::compiler_peer_end(self.peer)
+        };
+        Ok(Module { peer })
     }
 
     fn handle_numeric_literal(
@@ -83,11 +90,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
     fn handle_string_literal(&mut self, literal: StringLiteral<'s>) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_string_literal", literal.raw);
-        unsafe {
-            // TODO: use utf-16 string
-            let data = literal.raw.as_ptr() as *const i8;
-            bridge::compiler_peer_string(self.peer, data, literal.raw.len());
-        }
+        // TODO
         Ok(())
     }
 
@@ -306,21 +309,22 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     fn handle_function_signature(&mut self, symbol: Symbol) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_function_signature");
 
-        let name = self.runtime.next_func_name();
-
+        let name = self.next_func_name();
+        let name = name.as_c_str().as_ptr();
         unsafe {
-            let len = name.len();
-            let name = name.as_ptr() as *const i8;
-            bridge::compiler_peer_start_function(self.peer, name, len);
+            bridge::compiler_peer_declare_function(self.peer, symbol.id(), name);
+            bridge::compiler_peer_start_function(self.peer, name);
         }
 
-        self.runtime.set_function(symbol, name);
+        self.scope_stack.push(Default::default());
 
         Ok(())
     }
 
     fn handle_function_declaration(&mut self) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_function_declaration");
+
+        self.scope_stack.pop();
 
         unsafe {
             bridge::compiler_peer_end_function(self.peer);
@@ -340,11 +344,11 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
         if with_init {
             unsafe {
-                bridge::compiler_peer_declare(self.peer);
+                bridge::compiler_peer_declare_variable(self.peer);
             }
         } else {
             unsafe {
-                bridge::compiler_peer_set_undefined(self.peer);
+                bridge::compiler_peer_declare_undefined(self.peer);
             }
         }
 
@@ -367,7 +371,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         logger::debug!(event = "handle_const_binding");
 
         unsafe {
-            bridge::compiler_peer_declare(self.peer);
+            bridge::compiler_peer_declare_const(self.peer);
         }
 
         Ok(())

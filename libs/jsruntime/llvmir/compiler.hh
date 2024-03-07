@@ -8,24 +8,26 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #pragma GCC diagnostic pop
 
+struct Module;
+
 class Compiler {
  public:
-  explicit Compiler(const llvm::DataLayout& data_layout);
+  Compiler();
   ~Compiler() = default;
 
   void SetSourceFileName(const char* input);
 
   void StartMain();
   void EndMain();
+  Module* TakeModule();
+
   void Number(double value);
-  void String(const char* data, size_t size);
   void Symbol(uint32_t symbol_id);
   void Add();
   void Sub();
@@ -38,9 +40,12 @@ class Compiler {
   void Gte();
   void Eq();
   void Ne();
+  void DeclareConst();
+  void DeclareVariable();
+  void DeclareUndefined();
+  void DeclareFunction(uint32_t symbol_id, const char* name);
   void Get();
   void Set();
-  void Declare();
   void SetUndefined();
   void Call(size_t argc);
   void ToBoolean();
@@ -48,7 +53,7 @@ class Compiler {
   void ConditionalExpression();
   void IfElseStatement();
   void IfStatement();
-  void StartFunction(const char* name, size_t len);
+  void StartFunction(const char* name);
   void EndFunction();
   void StartScope();
   void EndScope();
@@ -56,8 +61,6 @@ class Compiler {
   void Print();
 
   void DumpStack();
-  void DumpModule();
-  llvm::orc::ThreadSafeModule TakeModule();
 
  private:
   struct Item {
@@ -81,11 +84,15 @@ class Compiler {
   llvm::Function* CreatePrintStrFunction();
   llvm::Function* CreatePrintBoolFunction();
   llvm::Function* CreatePrintF64Function();
+  llvm::Function* CreateRuntimeDeclareConst();
+  llvm::Function* CreateRuntimeDeclareVariable();
+  llvm::Function* CreateRuntimeDeclareUndefined();
+  llvm::Function* CreateRuntimeDeclareFunction();
   llvm::Function* CreateRuntimeGet();
   llvm::Function* CreateRuntimeSet();
-  llvm::Function* CreateRuntimeDeclare();
   llvm::Function* CreateRuntimeSetUndefined();
   llvm::Function* CreateRuntimeCall();
+  llvm::Function* CreateRuntimeRet();
   llvm::Function* CreateRuntimePushScope();
   llvm::Function* CreateRuntimePopScope();
 
@@ -116,6 +123,14 @@ class Compiler {
     const auto& item = stack_[base_index_];
     assert(item.type == Item::Value);
     return item.data.value;
+  }
+
+  void Swap() {
+    assert(stack_.size() >= 2);
+    auto i = stack_.size() - 1;
+    Item item = stack_[i];
+    stack_[i] = stack_[i - 1];
+    stack_[i - 1] = item;
   }
 
   inline llvm::Value* PopValue() {
@@ -177,12 +192,18 @@ class Compiler {
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
   // function-related data
   llvm::Function* function_ = nullptr;
+  llvm::BasicBlock* prologue_ = nullptr;
+  llvm::BasicBlock* body_ = nullptr;
   size_t scope_depth_ = 0;
   size_t base_index_ = 0;
 
   void PushFunctionData() {
     PushFunction(function_);
     function_ = nullptr;
+    PushBlock(prologue_);
+    prologue_ = nullptr;
+    PushBlock(body_);
+    body_ = nullptr;
     PushIndex(scope_depth_);
     scope_depth_ = 0;
     PushIndex(base_index_);
@@ -192,6 +213,8 @@ class Compiler {
   void PopFunctionData() {
     base_index_ = PopIndex();
     scope_depth_ = PopIndex();
+    body_ = PopBlock();
+    prologue_ = PopBlock();
     function_ = PopFunction();
   }
 

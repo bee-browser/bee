@@ -10,11 +10,11 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
     "llvmir/bridge.hh",
     "llvmir/compiler.cc",
     "llvmir/compiler.hh",
-    "llvmir/evaluator.hh",
+    "llvmir/executor.cc",
+    "llvmir/executor.hh",
     "llvmir/host.hh",
     "llvmir/macros.hh",
-    "llvmir/runtime.cc",
-    "llvmir/runtime.hh",
+    "llvmir/module.hh",
 ];
 
 fn main() {

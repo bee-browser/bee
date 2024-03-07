@@ -6,9 +6,9 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-indexmap = "2.2.3"
-jsparser = { path = "../../libs/jsparser", features = ["location"] }
-logging = { path = "../../libs/logging" }
+base = { path = "../base" }
+jsparser = { path = "../jsparser", features = ["location"] }
+logging = { path = "../logging" }
 
 [build-dependencies]
 bindgen = "0.69.4"
