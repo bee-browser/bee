@@ -178,6 +178,7 @@ impl<'s, H> Processor<'s, H> {
         self.queue.pop_front()
     }
 
+    #[allow(dead_code)]
     #[inline]
     fn split(&mut self, n: usize) -> VecDeque<Syntax<'s>> {
         debug_assert!(n > 0);

@@ -1,5 +1,3 @@
-use std::ffi::CString;
-
 use jsparser::Identifier;
 use jsparser::NumericLiteral;
 use jsparser::SemanticHandler;
@@ -16,7 +14,6 @@ pub struct Compiler<'r> {
     runtime: &'r mut Runtime,
     peer: *mut bridge::Compiler,
     scope_stack: Vec<ScopeState>,
-    next_func_id: usize,
 }
 
 #[derive(Default)]
@@ -31,14 +28,7 @@ impl<'r> Compiler<'r> {
             runtime,
             peer,
             scope_stack: vec![],
-            next_func_id: 1,
         }
-    }
-
-    fn next_func_name(&mut self) -> CString {
-        let id = self.next_func_id;
-        self.next_func_id += 1;
-        CString::new(format!("fn{id}")).unwrap()
     }
 }
 
