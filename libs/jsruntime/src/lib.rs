@@ -74,7 +74,9 @@ impl Runtime {
         self.executor.register_module(module);
         let args = vec![];
         let scope = self.world.global_scope_ref.clone();
-        self.fiber.call_stack.push(Call::new(FunctionId(0), args, scope));
+        self.fiber
+            .call_stack
+            .push(Call::new(FunctionId(0), args, scope));
         match self.executor.get_main() {
             Some(main) => unsafe {
                 main(self as *mut Self as *mut std::ffi::c_void);
@@ -163,30 +165,40 @@ impl Fiber {
 
     pub(crate) fn declare_const(&self, symbol: Symbol, value: f64) {
         let call = self.call_stack.last().unwrap();
-        call.lexical_scope.borrow_mut().create_immutable_binding(symbol, false);
+        call.lexical_scope
+            .borrow_mut()
+            .create_immutable_binding(symbol, false);
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.initialize_binding(Value::Number(value)).unwrap();
     }
 
     pub(crate) fn declare_variable(&self, symbol: Symbol, value: f64) {
         let call = self.call_stack.last().unwrap();
-        call.lexical_scope.borrow_mut().create_mutable_binding(symbol, true);
+        call.lexical_scope
+            .borrow_mut()
+            .create_mutable_binding(symbol, true);
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.initialize_binding(Value::Number(value)).unwrap();
     }
 
     pub(crate) fn declare_undefined(&self, symbol: Symbol) {
         let call = self.call_stack.last().unwrap();
-        call.lexical_scope.borrow_mut().create_mutable_binding(symbol, true);
+        call.lexical_scope
+            .borrow_mut()
+            .create_mutable_binding(symbol, true);
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.initialize_binding(Value::Undefined).unwrap();
     }
 
     pub(crate) fn declare_function(&self, symbol: Symbol, func_id: FunctionId) {
         let call = self.call_stack.last().unwrap();
-        call.lexical_scope.borrow_mut().create_mutable_binding(symbol, true);
+        call.lexical_scope
+            .borrow_mut()
+            .create_mutable_binding(symbol, true);
         let binding = call.resolve_binding(symbol, None).unwrap();
-        binding.initialize_binding(Value::Function(func_id)).unwrap();
+        binding
+            .initialize_binding(Value::Function(func_id))
+            .unwrap();
     }
 
     pub(crate) fn get_value(&self, symbol: Symbol) -> f64 {
@@ -202,7 +214,7 @@ impl Fiber {
         let call = self.call_stack.last().unwrap();
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.put_value(Value::Number(value)).unwrap(); // TODO: throw
-        // TODO: return rval
+                                                          // TODO: return rval
     }
 
     #[inline]
@@ -282,7 +294,6 @@ pub struct Call {
 
     // [[LexicalEnvironment]]
     lexical_scope: ScopeRef,
-
     // [[VariableEnvironment]]
 
     // [[PrivateEnvironment]]
@@ -520,11 +531,13 @@ impl Scope {
             }
             let outer = match scope_ref.borrow().outer() {
                 Some(scope_ref) => scope_ref,
-                None => return normal!(Binding {
-                    target: BindTarget::Unbound,
-                    symbol,
-                    strict,
-                }),
+                None => {
+                    return normal!(Binding {
+                        target: BindTarget::Unbound,
+                        symbol,
+                        strict,
+                    })
+                }
             };
             scope_ref = outer;
         }
@@ -826,7 +839,9 @@ impl Binding {
             }
             // TODO: BindTarget::Object
             BindTarget::Scope(ref scope) => {
-                scope.borrow_mut().set_mutable_binding(self.symbol, value, self.strict)
+                scope
+                    .borrow_mut()
+                    .set_mutable_binding(self.symbol, value, self.strict)
             }
         }
     }

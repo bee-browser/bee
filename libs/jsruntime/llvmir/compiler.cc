@@ -518,8 +518,8 @@ llvm::Function* Compiler::CreateRuntimeDeclareVariable() {
 llvm::Function* Compiler::CreateRuntimeDeclareUndefined() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-        {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
+    auto* prototype = llvm::FunctionType::get(
+        builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_undefined", module_.get());
   }
@@ -529,7 +529,8 @@ llvm::Function* Compiler::CreateRuntimeDeclareUndefined() {
 llvm::Function* Compiler::CreateRuntimeDeclareFunction() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt32Ty()}, false);
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
+        {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt32Ty()}, false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_function", module_.get());
   }
@@ -580,8 +581,8 @@ llvm::Function* Compiler::CreateRuntimeSetUndefined() {
 llvm::Function* Compiler::CreateRuntimePushArgs() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(
-        builder_->getVoidTy(), {builder_->getPtrTy()}, false);
+    auto* prototype =
+        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_push_args", module_.get());
   }

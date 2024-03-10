@@ -1,5 +1,5 @@
-mod compiler;
 pub mod bridge;
+mod compiler;
 mod executor;
 
 use jsparser::Symbol;

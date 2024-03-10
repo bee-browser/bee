@@ -46,7 +46,11 @@ pub trait SemanticHandler<'s> {
     fn handle_if_statement(&mut self) -> Result<(), Error>;
     fn handle_return_statement(&mut self, n: usize) -> Result<(), Error>;
     fn handle_statement(&mut self) -> Result<(), Error>;
-    fn handle_function_signature(&mut self, symbol: Symbol, formal_parameters: Vec<Symbol>) -> Result<(), Error>;
+    fn handle_function_signature(
+        &mut self,
+        symbol: Symbol,
+        formal_parameters: Vec<Symbol>,
+    ) -> Result<(), Error>;
     fn handle_function_declaration(&mut self) -> Result<(), Error>;
 
     fn handle_start_let_declaration(&mut self) -> Result<(), Error>;
@@ -754,7 +758,8 @@ where
             _ => unreachable!(),
         };
 
-        self.handler.handle_function_signature(identifier.symbol, formal_parameters)
+        self.handler
+            .handle_function_signature(identifier.symbol, formal_parameters)
     }
 
     fn handle_function_body(&mut self) -> Result<(), Error> {
