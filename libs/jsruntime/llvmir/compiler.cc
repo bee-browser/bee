@@ -464,7 +464,7 @@ llvm::Function* Compiler::CreatePrintStrFunction() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
     auto* prototype =
-        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt8PtrTy()}, false);
+        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "print_str", module_.get());
   }
