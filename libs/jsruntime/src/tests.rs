@@ -320,6 +320,36 @@ fn test_eval_terminated_basic_block() {
     );
 }
 
+#[test]
+fn test_eval_function_single_name_binding() {
+    unsafe extern "C" fn validate(value: f64) {
+        assert_eq!(value, 1.);
+    }
+
+    eval(
+        "a(1); function a(x) { return x; }",
+        llvmir::bridge::Host {
+            print_f64: Some(validate),
+            ..Default::default()
+        },
+    );
+}
+
+#[test]
+fn test_eval_fibonacci() {
+    unsafe extern "C" fn validate(value: f64) {
+        assert_eq!(value, 55.);
+    }
+
+    eval(
+        "fib(10); function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); }",
+        llvmir::bridge::Host {
+            print_f64: Some(validate),
+            ..Default::default()
+        },
+    );
+}
+
 fn eval<T: AsRef<str>>(source: T, host: llvmir::bridge::Host) {
     Runtime::initialize();
     let mut runtime = Runtime::with_host(host);

@@ -8,6 +8,7 @@ mod tests;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CStr;
+use std::ffi::CString;
 use std::rc::Rc;
 
 use base::delegate_all;
@@ -41,6 +42,7 @@ pub struct Runtime {
     symbol_table: SymbolTable,
     world: World,
     fiber: Fiber,
+    functions: Vec<Function>,
     executor: llvmir::Executor,
 }
 
@@ -54,6 +56,10 @@ impl Runtime {
             symbol_table: SymbolTable::with_builtin_symbols(),
             world: World::new(),
             fiber: Fiber::new(),
+            functions: vec![Function {
+                formal_parameters: vec![],
+                name: CString::new(format!("main")).unwrap(),
+            }],
             executor: llvmir::Executor::default(),
         }
     }
@@ -66,7 +72,9 @@ impl Runtime {
 
     pub fn eval(&mut self, module: Module) {
         self.executor.register_module(module);
-        self.fiber.call_stack.push(Call::new(self.world.global_scope_ref.clone()));
+        let args = vec![];
+        let scope = self.world.global_scope_ref.clone();
+        self.fiber.call_stack.push(Call::new(FunctionId(0), args, scope));
         match self.executor.get_main() {
             Some(main) => unsafe {
                 main(self as *mut Self as *mut std::ffi::c_void);
@@ -76,12 +84,47 @@ impl Runtime {
         self.fiber.call_stack.pop();
     }
 
+    fn create_function(&mut self, formal_parameters: Vec<Symbol>) -> (FunctionId, &CStr) {
+        let id = self.functions.len();
+        let name = CString::new(format!("fn{id}")).unwrap();
+        self.functions.push(Function {
+            formal_parameters,
+            name,
+        });
+        (FunctionId(id as u32), &self.functions.last().unwrap().name)
+    }
+
+    // ((OrdinaryCallEvaluateBody))
+    // ((EvaludateBody)) of Function.[[ECMAScriptCode]]
+    // ((EvaludateFunctionBody))
+    // ((FunctionDeclarationInstantiation))
+    fn ordinary_call_evaludate_body(&mut self) -> FunctionId {
+        let call = self.fiber.call_stack.last().unwrap();
+        // TODO: impl other parts
+        // Populate formal parameters into the function scope.
+        let func = &self.functions[call.func_id.0 as usize];
+        for (i, symbol) in func.formal_parameters.iter().cloned().enumerate() {
+            match call.args.get(i) {
+                Some(value) => {
+                    let mut scope = call.lexical_scope.borrow_mut();
+                    scope.create_mutable_binding(symbol, false);
+                    scope.initialize_binding(symbol, Value::Number(*value));
+                }
+                None => {
+                    // TODO: undefined or initial value
+                }
+            }
+        }
+        call.func_id
+    }
+
     #[cfg(test)]
     fn with_host(host: llvmir::bridge::Host) -> Self {
         Self {
             symbol_table: SymbolTable::with_builtin_symbols(),
             world: World::new(),
             fiber: Fiber::new(),
+            functions: vec![],
             executor: llvmir::Executor::with_host(host),
         }
     }
@@ -106,45 +149,47 @@ impl World {
 }
 
 pub struct Fiber {
+    args_stack: Vec<Vec<f64>>,
     call_stack: Vec<Call>,
 }
 
 impl Fiber {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
+            args_stack: vec![],
             call_stack: vec![],
         }
     }
 
-    pub fn declare_const(&self, symbol: Symbol, value: f64) {
+    pub(crate) fn declare_const(&self, symbol: Symbol, value: f64) {
         let call = self.call_stack.last().unwrap();
         call.lexical_scope.borrow_mut().create_immutable_binding(symbol, false);
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.initialize_binding(Value::Number(value)).unwrap();
     }
 
-    pub fn declare_variable(&self, symbol: Symbol, value: f64) {
+    pub(crate) fn declare_variable(&self, symbol: Symbol, value: f64) {
         let call = self.call_stack.last().unwrap();
         call.lexical_scope.borrow_mut().create_mutable_binding(symbol, true);
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.initialize_binding(Value::Number(value)).unwrap();
     }
 
-    pub fn declare_undefined(&self, symbol: Symbol) {
+    pub(crate) fn declare_undefined(&self, symbol: Symbol) {
         let call = self.call_stack.last().unwrap();
         call.lexical_scope.borrow_mut().create_mutable_binding(symbol, true);
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.initialize_binding(Value::Undefined).unwrap();
     }
 
-    pub fn declare_function(&self, symbol: Symbol, name: &'static CStr) {
+    pub(crate) fn declare_function(&self, symbol: Symbol, func_id: FunctionId) {
         let call = self.call_stack.last().unwrap();
         call.lexical_scope.borrow_mut().create_mutable_binding(symbol, true);
         let binding = call.resolve_binding(symbol, None).unwrap();
-        binding.initialize_binding(Value::Function(name)).unwrap();
+        binding.initialize_binding(Value::Function(func_id)).unwrap();
     }
 
-    pub fn get_value(&self, symbol: Symbol) -> f64 {
+    pub(crate) fn get_value(&self, symbol: Symbol) -> f64 {
         let call = self.call_stack.last().unwrap();
         let binding = call.resolve_binding(symbol, None).unwrap();
         match binding.get_value().unwrap() {
@@ -153,23 +198,44 @@ impl Fiber {
         }
     }
 
-    pub fn put_value(&self, symbol: Symbol, value: f64) {
+    pub(crate) fn put_value(&self, symbol: Symbol, value: f64) {
         let call = self.call_stack.last().unwrap();
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.put_value(Value::Number(value)).unwrap(); // TODO: throw
         // TODO: return rval
     }
 
-    pub fn call(&mut self, symbol: Symbol) -> &'static CStr {
+    #[inline]
+    pub(crate) fn push_args(&mut self) {
+        self.args_stack.push(vec![]);
+    }
+
+    #[inline]
+    pub(crate) fn push_arg(&mut self, arg: f64) {
+        self.args_stack.last_mut().unwrap().push(arg);
+    }
+
+    // The top-half of Function.[[Call]]
+    pub(crate) fn start_call(&mut self, symbol: Symbol) {
+        self.prepare_for_ordinary_call(symbol);
+        // TODO: constructor
+        // TODO: ((OrdinaryCallBindThis))
+    }
+
+    // ((PrepareForOrdinaryCall))
+    fn prepare_for_ordinary_call(&mut self, symbol: Symbol) {
         let call = self.call_stack.last().unwrap();
         let outer_scope = call.lexical_scope.clone();
         let binding = call.resolve_binding(symbol, None).unwrap();
         match binding.get_value().unwrap() {
-            Value::Function(name) => {
-                self.call_stack.push(Call::new(Scope::new_lexical_scope(outer_scope)));
-                name
+            Value::Function(func_id) => {
+                let args = self.args_stack.pop().unwrap();
+                let scope = Scope::new_lexical_scope(outer_scope);
+                // TODO: [[VariableEnvironment]]
+                // TODO: [[PrivateEnvironment]]
+                self.call_stack.push(Call::new(func_id, args, scope));
             }
-            _ => panic!(),
+            _ => unreachable!(),
         }
     }
 
@@ -179,11 +245,14 @@ impl Fiber {
         call.return_value = Some(value);
     }
 
+    // The bottom-half of Function.[[Call]]
     pub fn end_call(&mut self) -> f64 {
-        match self.call_stack.pop() {
-            Some(call) => call.return_value.unwrap(),
-            None => panic!(),
-        }
+        let call = match self.call_stack.pop() {
+            Some(call) => call,
+            None => unreachable!(),
+        };
+        // TODO: exception, undefined
+        call.return_value.unwrap()
     }
 
     pub fn push_scope(&mut self) {
@@ -198,20 +267,35 @@ impl Fiber {
     }
 }
 
-// Implements the `Execution Context` specification type.
+// Represents the `Execution Context` specification type.
 pub struct Call {
+    // [[CodeEvaluationState]]
+    args: Vec<f64>,
+    return_value: Option<f64>,
+
+    // [[Function]]
+    func_id: FunctionId,
+
+    // [[Realm]]
+
+    // [[ScriptOrModule]]
+
     // [[LexicalEnvironment]]
     lexical_scope: ScopeRef,
 
-    return_value: Option<f64>,
+    // [[VariableEnvironment]]
+
+    // [[PrivateEnvironment]]
 }
 
 // Implementation of abstract operations for the `Execution Context` specification type.
 impl Call {
-    fn new(lexical_scope: ScopeRef) -> Self {
+    fn new(func_id: FunctionId, args: Vec<f64>, lexical_scope: ScopeRef) -> Self {
         Self {
-            lexical_scope,
+            args,
             return_value: None,
+            func_id,
+            lexical_scope,
         }
     }
 
@@ -663,7 +747,25 @@ impl ValueHolder {
 pub enum Value {
     Undefined,
     Number(f64),
-    Function(&'static CStr),
+    Function(FunctionId),
+}
+
+#[derive(Clone, Copy, Debug)]
+struct FunctionId(u32);
+
+impl From<u32> for FunctionId {
+    fn from(value: u32) -> Self {
+        Self(value)
+    }
+}
+
+struct Function {
+    // [[FormalParameters]]
+    // TODO: Vec<BindingElement>
+    formal_parameters: Vec<Symbol>,
+
+    // [[ECMAScriptCode]]
+    name: CString,
 }
 
 /// Represents the `Completion Record` specification type.

@@ -106,8 +106,8 @@ void compiler_peer_declare_undefined(Compiler* self) {
   self->DeclareUndefined();
 }
 
-void compiler_peer_declare_function(Compiler* self, uint32_t symbol, const char* name) {
-  self->DeclareFunction(symbol, name);
+void compiler_peer_declare_function(Compiler* self, uint32_t symbol_id, uint32_t func_id) {
+  self->DeclareFunction(symbol_id, func_id);
 }
 
 void compiler_peer_get(Compiler* self) {
@@ -122,8 +122,16 @@ void compiler_peer_set_undefined(Compiler* self) {
   self->SetUndefined();
 }
 
-void compiler_peer_call(Compiler* self, size_t argc) {
-  self->Call(argc);
+void compiler_peer_push_args(Compiler *self) {
+  self->PushArgs();
+}
+
+void compiler_peer_push_arg(Compiler *self) {
+  self->PushArg();
+}
+
+void compiler_peer_call(Compiler* self) {
+  self->Call();
 }
 
 void compiler_peer_to_boolean(Compiler* self) {

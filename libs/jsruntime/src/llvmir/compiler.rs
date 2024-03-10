@@ -212,7 +212,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         logger::debug!(event = "handle_call_expression");
 
         unsafe {
-            bridge::compiler_peer_call(self.peer, 0);
+            bridge::compiler_peer_call(self.peer);
         }
 
         Ok(())
@@ -300,20 +300,15 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         Ok(())
     }
 
-    fn handle_formal_parameters(&mut self, argc: usize) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_formal_parameters", argc);
-        // TODO
-        Ok(())
-    }
-
-    fn handle_function_signature(&mut self, symbol: Symbol) -> Result<(), jsparser::Error> {
+    fn handle_function_signature(&mut self, symbol: Symbol, formal_parameters: Vec<Symbol>) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_function_signature");
 
-        let name = self.next_func_name();
-        let name = name.as_c_str().as_ptr();
+        let (func_id, func_name) = self.runtime.create_function(formal_parameters);
+        let name = func_name.as_ptr();
         unsafe {
-            bridge::compiler_peer_declare_function(self.peer, symbol.id(), name);
+            bridge::compiler_peer_declare_function(self.peer, symbol.id(), func_id.0);
             bridge::compiler_peer_start_function(self.peer, name);
+            // TODO: arguments
         }
 
         self.scope_stack.push(Default::default());
@@ -400,6 +395,25 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
             unsafe {
                 bridge::compiler_peer_end_scope(self.peer);
             }
+        }
+        Ok(())
+    }
+
+    fn handle_argument_list(&mut self, empty: bool) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_argument_list", empty);
+        unsafe {
+            bridge::compiler_peer_push_args(self.peer);
+            if !empty {
+                bridge::compiler_peer_push_arg(self.peer);
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_argument_list_item(&mut self) -> Result<(), jsparser::Error> {
+        logger::debug!(event = "handle_argument_list_item");
+        unsafe {
+            bridge::compiler_peer_push_arg(self.peer);
         }
         Ok(())
     }
