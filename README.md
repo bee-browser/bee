@@ -16,6 +16,8 @@ Install the following software:
 * [Rust]
 * [GNU Bash]
 * [GNU Make]
+* [CMake]
+* [Ninja]
 * [Deno]
 * [Nextest]
 * [jq]
@@ -24,16 +26,20 @@ Install the following software:
 Then:
 
 ```shell
-# Run tests
+# Run tests.
 make test
 
-# Make docs
+# Make docs.
 make doc
 
-# release build
+# Run once before building.
+# Run again if some of third-party packages have been updated.
+make vendor
+
+# release build.
 make release-build
 
-# List targets defined in the top-level Makefile
+# List targets defined in the top-level Makefile.
 make list
 ```
 
@@ -63,6 +69,8 @@ shall be dual licensed as above, without any additional terms or conditions.
 [Rust]: https://www.rust-lang.org/
 [GNU Bash]: https://www.gnu.org/software/bash/
 [GNU Make]: https://www.gnu.org/software/make/
+[CMake]: https://cmake.org/
+[Ninja]: https://ninja-build.org/
 [Deno]: https://deno.com/
 [Nextest]: https://github.com/nextest-rs/nextest
 [jq]: https://jqlang.github.io/jq/
