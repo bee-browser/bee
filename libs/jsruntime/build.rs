@@ -6,15 +6,15 @@ use duct::cmd;
 static LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
 
 static LLVMIR_SOURCE_FILES: &[&str] = &[
-    "llvmir/bridge.cc",
-    "llvmir/bridge.hh",
-    "llvmir/compiler.cc",
-    "llvmir/compiler.hh",
-    "llvmir/executor.cc",
-    "llvmir/executor.hh",
-    "llvmir/host.hh",
-    "llvmir/macros.hh",
-    "llvmir/module.hh",
+    "src/llvmir/bridge.cc",
+    "src/llvmir/bridge.hh",
+    "src/llvmir/compiler.cc",
+    "src/llvmir/compiler.hh",
+    "src/llvmir/executor.cc",
+    "src/llvmir/executor.hh",
+    "src/llvmir/host.hh",
+    "src/llvmir/macros.hh",
+    "src/llvmir/module.hh",
 ];
 
 fn main() {
@@ -27,7 +27,7 @@ fn main() {
         .write_to_file(output_file);
 
     // Generate bindings for Rust.
-    let input_file = "llvmir/bridge.hh";
+    let input_file = "src/llvmir/bridge.hh";
     let output_file = out_dir.join("bridge.rs");
     bindgen::Builder::default()
         .header(input_file)
