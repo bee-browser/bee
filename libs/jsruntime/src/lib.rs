@@ -58,7 +58,7 @@ impl Runtime {
             fiber: Fiber::new(),
             functions: vec![Function {
                 formal_parameters: vec![],
-                name: CString::new(format!("main")).unwrap(),
+                name: CString::new("main".to_string()).unwrap(),
             }],
             executor: llvmir::Executor::default(),
         }
@@ -626,10 +626,8 @@ impl LexicalScope {
                 }
                 if holder.mutable() {
                     holder.put_value(value);
-                } else {
-                    if strict {
-                        return throw!(); // TODO: TypeError
-                    }
+                } else if strict {
+                    return throw!(); // TODO: TypeError
                 }
                 normal!(())
             }
@@ -764,7 +762,7 @@ pub enum Value {
 }
 
 #[derive(Clone, Copy, Debug)]
-struct FunctionId(u32);
+pub struct FunctionId(u32);
 
 impl From<u32> for FunctionId {
     fn from(value: u32) -> Self {
