@@ -582,9 +582,9 @@ where
         // FormalParameters -> FunctionRestParameter
         Action::Undefined,
         // FormalParameters -> FormalParameterList
-        Action::Undefined,
+        Action::Nop,
         // FormalParameters -> FormalParameterList COMMA
-        Action::Undefined,
+        Action::Nop,
         // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
         Action::Undefined,
         // _FUNCTION_SIGNATURE_ -> (empty)
@@ -995,9 +995,15 @@ where
         // FunctionRestParameter -> BindingRestElement
         Action::Undefined,
         // FormalParameterList -> FormalParameter
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_formal_parameter_list_head,
+            "handle_formal_parameter_list_head",
+        ),
         // FormalParameterList -> FormalParameterList COMMA FormalParameter
-        Action::Undefined,
+        Action::Invoke(
+            Self::handle_formal_parameter_list_item,
+            "handle_formal_parameter_list_item",
+        ),
         // FunctionStatementList -> (empty)
         Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
         // FunctionStatementList -> StatementList_Return
@@ -1324,7 +1330,7 @@ where
         // BindingRestElement -> ELLIPSIS BindingPattern
         Action::Undefined,
         // FormalParameter -> BindingElement
-        Action::Undefined,
+        Action::Invoke(Self::handle_formal_parameter, "handle_formal_parameter"),
         // StatementList_Return -> StatementListItem_Return
         Action::Invoke(Self::handle_list_head, "handle_list_head"),
         // StatementList_Return -> StatementList_Return StatementListItem_Return
@@ -1564,11 +1570,11 @@ where
         // MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments -> LPAREN RPAREN
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(Self::handle_arguments_empty, "handle_arguments_empty"),
         // Arguments -> LPAREN ArgumentList RPAREN
-        Action::Undefined,
+        Action::Nop,
         // Arguments -> LPAREN ArgumentList COMMA RPAREN
-        Action::Undefined,
+        Action::Nop,
         // SuperCall -> SUPER Arguments
         Action::Undefined,
         // ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
@@ -1622,7 +1628,7 @@ where
         // LexicalBinding -> BindingPattern Initializer
         Action::Undefined,
         // BindingElement -> SingleNameBinding
-        Action::Undefined,
+        Action::Nop,
         // BindingElement -> BindingPattern
         Action::Undefined,
         // BindingElement -> BindingPattern Initializer_In
@@ -1885,11 +1891,11 @@ where
         // SuperProperty -> SUPER DOT KeywordOrIdentifierName
         Action::Undefined,
         // ArgumentList -> AssignmentExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::handle_argument_list_head, "handle_argument_list_head"),
         // ArgumentList -> ELLIPSIS AssignmentExpression_In
         Action::Undefined,
         // ArgumentList -> ArgumentList COMMA AssignmentExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::handle_argument_list_item, "handle_argument_list_item"),
         // ArgumentList -> ArgumentList COMMA ELLIPSIS AssignmentExpression_In
         Action::Undefined,
         // SubstitutionTemplate_Tagged -> TEMPLATE_HEAD Expression_In TemplateSpans_Tagged
@@ -1907,7 +1913,7 @@ where
         // AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
         Action::Undefined,
         // SingleNameBinding -> BindingIdentifier
-        Action::Undefined,
+        Action::Nop,
         // SingleNameBinding -> BindingIdentifier Initializer_In
         Action::Undefined,
         // Statement_Return -> BlockStatement_Return

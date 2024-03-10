@@ -176,15 +176,15 @@ void Compiler::DeclareUndefined() {
   builder_->CreateCall(declare, {context, symbol});
 }
 
-void Compiler::DeclareFunction(uint32_t symbol_id, const char* name) {
+void Compiler::DeclareFunction(uint32_t symbol_id, uint32_t func_id) {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(symbol_id);
-  auto* mangled = builder_->CreateGlobalString(name);
+  auto* func = builder_->getInt32(func_id);
   auto* declare = CreateRuntimeDeclareFunction();
-  builder_->CreateCall(declare, {context, symbol, mangled});
+  builder_->CreateCall(declare, {context, symbol, func});
   builder_->SetInsertPoint(backup);
 }
 
@@ -214,11 +214,24 @@ void Compiler::SetUndefined() {
   builder_->CreateCall(set, {context, symbol});
 }
 
-void Compiler::Call(size_t argc) {
-  UNUSED(argc);
+void Compiler::PushArgs() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  // TODO: argv
+  auto* push_args = CreateRuntimePushArgs();
+  builder_->CreateCall(push_args, {context});
+}
+
+void Compiler::PushArg() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* arg = Dereference();
+  auto* push_arg = CreateRuntimePushArg();
+  builder_->CreateCall(push_arg, {context, arg});
+}
+
+void Compiler::Call() {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
   auto* symbol = PopSymbol();
   auto* call = CreateRuntimeCall();
   auto* value = builder_->CreateCall(call, {context, symbol});
@@ -516,7 +529,7 @@ llvm::Function* Compiler::CreateRuntimeDeclareUndefined() {
 llvm::Function* Compiler::CreateRuntimeDeclareFunction() {
   static llvm::Function* func = nullptr;
   if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt8PtrTy()}, false);
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt32Ty()}, false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_function", module_.get());
   }
@@ -560,6 +573,28 @@ llvm::Function* Compiler::CreateRuntimeSetUndefined() {
         false);
     func = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_set_undefined", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimePushArgs() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(
+        builder_->getVoidTy(), {builder_->getPtrTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_push_args", module_.get());
+  }
+  return func;
+}
+
+llvm::Function* Compiler::CreateRuntimePushArg() {
+  static llvm::Function* func = nullptr;
+  if (func == nullptr) {
+    auto* prototype = llvm::FunctionType::get(
+        builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getDoubleTy()}, false);
+    func = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_push_arg", module_.get());
   }
   return func;
 }

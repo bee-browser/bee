@@ -43,11 +43,13 @@ class Compiler {
   void DeclareConst();
   void DeclareVariable();
   void DeclareUndefined();
-  void DeclareFunction(uint32_t symbol_id, const char* name);
+  void DeclareFunction(uint32_t symbol_id, uint32_t func_id);
   void Get();
   void Set();
   void SetUndefined();
-  void Call(size_t argc);
+  void PushArgs();
+  void PushArg();
+  void Call();
   void ToBoolean();
   void Block();
   void ConditionalExpression();
@@ -91,6 +93,8 @@ class Compiler {
   llvm::Function* CreateRuntimeGet();
   llvm::Function* CreateRuntimeSet();
   llvm::Function* CreateRuntimeSetUndefined();
+  llvm::Function* CreateRuntimePushArgs();
+  llvm::Function* CreateRuntimePushArg();
   llvm::Function* CreateRuntimeCall();
   llvm::Function* CreateRuntimeRet();
   llvm::Function* CreateRuntimePushScope();

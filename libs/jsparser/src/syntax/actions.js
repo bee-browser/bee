@@ -59,11 +59,17 @@ async function main(args, options) {
         if (entry.note) {
           actions[indexMap.get(entry.rule)].note = entry.note;
         }
+        if (entry.todo) {
+          actions[indexMap.get(entry.rule)].todo = entry.todo;
+        }
       } else {
         log.warn(`${entry.rule} was removed`);
         log.warn(`  action: ${entry.action}`);
         if (entry.note) {
           log.warn(`  note: ${entry.note}`);
+        }
+        if (entry.todo) {
+          log.warn(`  todo: ${entry.todo}`);
         }
       }
     }

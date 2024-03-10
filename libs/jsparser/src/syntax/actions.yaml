@@ -661,9 +661,11 @@
 - rule: FormalParameters -> FunctionRestParameter
   action: undefined
 - rule: FormalParameters -> FormalParameterList
-  action: undefined
+  action: nop
 - rule: FormalParameters -> FormalParameterList COMMA
-  action: undefined
+  action: nop
+  todo: |
+    trailing comma
 - rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
   action: undefined
 - rule: _FUNCTION_SIGNATURE_ -> (empty)
@@ -1059,9 +1061,9 @@
 - rule: FunctionRestParameter -> BindingRestElement
   action: undefined
 - rule: FormalParameterList -> FormalParameter
-  action: undefined
+  action: handle_formal_parameter_list_head
 - rule: FormalParameterList -> FormalParameterList COMMA FormalParameter
-  action: undefined
+  action: handle_formal_parameter_list_item
 - rule: FunctionStatementList -> (empty)
   action: handle_empty_list
 - rule: FunctionStatementList -> StatementList_Return
@@ -1459,7 +1461,7 @@
 - rule: BindingRestElement -> ELLIPSIS BindingPattern
   action: undefined
 - rule: FormalParameter -> BindingElement
-  action: undefined
+  action: handle_formal_parameter
 - rule: StatementList_Return -> StatementListItem_Return
   action: handle_list_head
 - rule: StatementList_Return -> StatementList_Return StatementListItem_Return
@@ -1715,11 +1717,11 @@
 - rule: MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
   action: undefined
 - rule: Arguments -> LPAREN RPAREN
-  action: handle_empty_list
+  action: handle_arguments_empty
 - rule: Arguments -> LPAREN ArgumentList RPAREN
-  action: undefined
+  action: nop
 - rule: Arguments -> LPAREN ArgumentList COMMA RPAREN
-  action: undefined
+  action: nop
 - rule: SuperCall -> SUPER Arguments
   action: undefined
 - rule: ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
@@ -1776,7 +1778,9 @@
 - rule: LexicalBinding -> BindingPattern Initializer
   action: undefined
 - rule: BindingElement -> SingleNameBinding
-  action: undefined
+  action: nop
+  todo: |
+    implement
 - rule: BindingElement -> BindingPattern
   action: undefined
 - rule: BindingElement -> BindingPattern Initializer_In
@@ -2082,11 +2086,11 @@
 - rule: SuperProperty -> SUPER DOT KeywordOrIdentifierName
   action: undefined
 - rule: ArgumentList -> AssignmentExpression_In
-  action: undefined
+  action: handle_argument_list_head
 - rule: ArgumentList -> ELLIPSIS AssignmentExpression_In
   action: undefined
 - rule: ArgumentList -> ArgumentList COMMA AssignmentExpression_In
-  action: undefined
+  action: handle_argument_list_item
 - rule: ArgumentList -> ArgumentList COMMA ELLIPSIS AssignmentExpression_In
   action: undefined
 - rule: >-
@@ -2106,7 +2110,9 @@
 - rule: AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
   action: undefined
 - rule: SingleNameBinding -> BindingIdentifier
-  action: undefined
+  action: nop
+  todo: |
+    implement
 - rule: SingleNameBinding -> BindingIdentifier Initializer_In
   action: undefined
 - rule: Statement_Return -> BlockStatement_Return

@@ -3,6 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
+use super::FunctionId;
 use super::Runtime;
 use super::Symbol;
 
@@ -21,6 +22,8 @@ impl Default for Host {
             runtime_get: Some(runtime_get),
             runtime_set: Some(runtime_set),
             runtime_set_undefined: Some(runtime_set_undefined),
+            runtime_push_args: Some(runtime_push_args),
+            runtime_push_arg: Some(runtime_push_arg),
             runtime_call: Some(runtime_call),
             runtime_ret: Some(runtime_ret),
             runtime_push_scope: Some(runtime_push_scope),
@@ -61,11 +64,11 @@ unsafe extern "C" fn runtime_declare_undefined(context: usize, symbol_id: u32) {
     runtime.declare_undefined(symbol);
 }
 
-unsafe extern "C" fn runtime_declare_function(context: usize, symbol_id: u32, name: *const std::ffi::c_char) {
+unsafe extern "C" fn runtime_declare_function(context: usize, symbol_id: u32, func_id: u32) {
     let runtime = (context as *mut Runtime).as_mut().unwrap();
     let symbol = Symbol::from(symbol_id);
-    let name = std::ffi::CStr::from_ptr(name);
-    runtime.declare_function(symbol, name);
+    let func_id = FunctionId::from(func_id);
+    runtime.declare_function(symbol, func_id);
 }
 
 unsafe extern "C" fn runtime_get(context: usize, symbol_id: u32) -> f64 {
@@ -84,6 +87,16 @@ unsafe extern "C" fn runtime_set_undefined(context: usize, symbol_id: u32) {
     let runtime = (context as *mut Runtime).as_mut().unwrap();
     let symbol = Symbol::from(symbol_id);
     runtime.set_undefined(symbol);
+}
+
+unsafe extern "C" fn runtime_push_args(context: usize) {
+    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    runtime.push_args();
+}
+
+unsafe extern "C" fn runtime_push_arg(context: usize, arg: f64) {
+    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    runtime.push_arg(arg);
 }
 
 unsafe extern "C" fn runtime_call(context: usize, symbol_id: u32) -> f64 {
