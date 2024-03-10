@@ -300,7 +300,11 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         Ok(())
     }
 
-    fn handle_function_signature(&mut self, symbol: Symbol, formal_parameters: Vec<Symbol>) -> Result<(), jsparser::Error> {
+    fn handle_function_signature(
+        &mut self,
+        symbol: Symbol,
+        formal_parameters: Vec<Symbol>,
+    ) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_function_signature");
 
         let (func_id, func_name) = self.runtime.create_function(formal_parameters);

@@ -122,11 +122,11 @@ void compiler_peer_set_undefined(Compiler* self) {
   self->SetUndefined();
 }
 
-void compiler_peer_push_args(Compiler *self) {
+void compiler_peer_push_args(Compiler* self) {
   self->PushArgs();
 }
 
-void compiler_peer_push_arg(Compiler *self) {
+void compiler_peer_push_arg(Compiler* self) {
   self->PushArg();
 }
 
@@ -192,14 +192,14 @@ void executor_peer_register_host(Executor* self, const Host* host) {
   self->RegisterHost(host);
 }
 
-void executor_peer_register_module(Executor *self, Module *mod) {
+void executor_peer_register_module(Executor* self, Module* mod) {
   self->RegisterModule(mod);
 }
 
-MainFn executor_peer_get_main(Executor *self) {
+MainFn executor_peer_get_main(Executor* self) {
   return self->GetMain();
 }
 
-FuncFn executor_peer_get_func(Executor *self, const char* name) {
+FuncFn executor_peer_get_func(Executor* self, const char* name) {
   return self->GetFunc(name);
 }
