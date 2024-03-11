@@ -1,6 +1,5 @@
 #include "executor.hh"
 
-#include <cstdint>
 #include <memory>
 
 #include "host.hh"
@@ -58,18 +57,6 @@ Executor::~Executor() {
 void Executor::RegisterHost(const Host* host) {
   // register built-in functions.
   llvm::orc::SymbolMap symbols;
-  symbols[exec_session().intern("print_bool")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->print_bool),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("print_f64")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->print_f64),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("print_str")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->print_str),
-      llvm::JITSymbolFlags::Exported,
-  };
   symbols[exec_session().intern("runtime_declare_const")] = {
       llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare_const),
       llvm::JITSymbolFlags::Exported,

@@ -174,10 +174,6 @@ void compiler_peer_return(Compiler* self, size_t n) {
   self->Return(n);
 }
 
-void compiler_peer_print(Compiler* self) {
-  self->Print();
-}
-
 // executor
 
 Executor* executor_peer_new() {

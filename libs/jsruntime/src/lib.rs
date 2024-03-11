@@ -56,12 +56,25 @@ impl Runtime {
             symbol_table: SymbolTable::with_builtin_symbols(),
             world: World::new(),
             fiber: Fiber::new(),
-            functions: vec![Function {
+            functions: vec![Function::Native(NativeFunction {
                 formal_parameters: vec![],
                 name: CString::new("main".to_string()).unwrap(),
-            }],
-            executor: llvmir::Executor::default(),
+            })],
+            executor: Default::default(),
         }
+    }
+
+    pub fn with_host_function(mut self, name: &str, func: fn(&[f64])) -> Self {
+        let symbol = self.symbol_table.intern(name.encode_utf16().collect());
+        let func_id = self.register_host_function(func);
+        {
+            let mut scope = self.world.global_scope_ref.borrow_mut();
+            scope.create_immutable_binding(symbol, false).unwrap();
+            scope
+                .initialize_binding(symbol, Value::Function(func_id))
+                .unwrap();
+        }
+        self
     }
 
     pub fn compile_script(&mut self, source: &str) -> Option<Module> {
@@ -81,19 +94,31 @@ impl Runtime {
             Some(main) => unsafe {
                 main(self as *mut Self as *mut std::ffi::c_void);
             },
-            None => panic!(),
+            None => unreachable!(),
         }
         self.fiber.call_stack.pop();
     }
 
-    fn create_function(&mut self, formal_parameters: Vec<Symbol>) -> (FunctionId, &CStr) {
+    fn create_native_function(&mut self, formal_parameters: Vec<Symbol>) -> (FunctionId, &CStr) {
         let id = self.functions.len();
+        debug_assert!(id <= u32::MAX as usize);
         let name = CString::new(format!("fn{id}")).unwrap();
-        self.functions.push(Function {
+        self.functions.push(Function::Native(NativeFunction {
             formal_parameters,
             name,
-        });
-        (FunctionId(id as u32), &self.functions.last().unwrap().name)
+        }));
+        let name = match self.functions.last().unwrap() {
+            Function::Native(func) => func.name.as_c_str(),
+            _ => unreachable!(),
+        };
+        (FunctionId(id as u32), name)
+    }
+
+    pub fn register_host_function(&mut self, func: fn(&[f64])) -> FunctionId {
+        let id = self.functions.len();
+        debug_assert!(id <= u32::MAX as usize);
+        self.functions.push(Function::Host(HostFunction { func }));
+        FunctionId(id as u32)
     }
 
     // ((OrdinaryCallEvaluateBody))
@@ -104,31 +129,27 @@ impl Runtime {
         let call = self.fiber.call_stack.last().unwrap();
         // TODO: impl other parts
         // Populate formal parameters into the function scope.
-        let func = &self.functions[call.func_id.0 as usize];
-        for (i, symbol) in func.formal_parameters.iter().cloned().enumerate() {
-            match call.args.get(i) {
-                Some(value) => {
-                    let mut scope = call.lexical_scope.borrow_mut();
-                    scope.create_mutable_binding(symbol, false);
-                    scope.initialize_binding(symbol, Value::Number(*value));
-                }
-                None => {
-                    // TODO: undefined or initial value
+        if let Function::Native(func) = &self.functions[call.func_id.0 as usize] {
+            for (i, symbol) in func.formal_parameters.iter().cloned().enumerate() {
+                match call.args.get(i) {
+                    Some(value) => {
+                        let mut scope = call.lexical_scope.borrow_mut();
+                        scope.create_mutable_binding(symbol, false);
+                        scope.initialize_binding(symbol, Value::Number(*value));
+                    }
+                    None => {
+                        // TODO: undefined or initial value
+                    }
                 }
             }
         }
         call.func_id
     }
+}
 
-    #[cfg(test)]
-    fn with_host(host: llvmir::bridge::Host) -> Self {
-        Self {
-            symbol_table: SymbolTable::with_builtin_symbols(),
-            world: World::new(),
-            fiber: Fiber::new(),
-            functions: vec![],
-            executor: llvmir::Executor::with_host(host),
-        }
+impl Default for Runtime {
+    fn default() -> Self {
+        Runtime::new()
     }
 }
 
@@ -264,7 +285,7 @@ impl Fiber {
             None => unreachable!(),
         };
         // TODO: exception, undefined
-        call.return_value.unwrap()
+        call.return_value.unwrap_or(0.)
     }
 
     pub fn push_scope(&mut self) {
@@ -770,13 +791,22 @@ impl From<u32> for FunctionId {
     }
 }
 
-struct Function {
+enum Function {
+    Native(NativeFunction),
+    Host(HostFunction),
+}
+
+struct NativeFunction {
     // [[FormalParameters]]
     // TODO: Vec<BindingElement>
     formal_parameters: Vec<Symbol>,
 
     // [[ECMAScriptCode]]
     name: CString,
+}
+
+struct HostFunction {
+    func: fn(args: &[f64]),
 }
 
 /// Represents the `Completion Record` specification type.

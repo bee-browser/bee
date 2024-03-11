@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     logging::init();
     Runtime::initialize();
     let cl = CommandLine::parse();
-    let mut runtime = Runtime::new();
+    let mut runtime = Runtime::new().with_host_function("print", print);
     match cl.command {
         Command::Eval(eval) => {
             let expr = match eval.expr {
@@ -47,4 +47,8 @@ fn read_from_stdin() -> Result<String> {
     let mut source = String::new();
     std::io::stdin().read_to_string(&mut source)?;
     Ok(source)
+}
+
+fn print(args: &[f64]) {
+    println!("{}", args[0]);
 }

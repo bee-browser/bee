@@ -1,4 +1,5 @@
 use super::logger;
+use super::Function;
 use super::FunctionId;
 use super::Runtime;
 use super::Symbol;
@@ -74,14 +75,23 @@ impl Runtime {
         self.fiber.start_call(symbol);
         // TODO: refactoring
         let func_id = self.ordinary_call_evaludate_body();
-        let name = &self.functions[func_id.0 as usize].name;
-        // ((Evaluation)) of FunctionStatementList
-        match self.executor.get_func(name) {
-            Some(func) => unsafe {
-                func(self as *mut Self as *mut std::ffi::c_void);
-            },
-            None => panic!(),
-        };
+        match &self.functions[func_id.0 as usize] {
+            Function::Native(func) => {
+                // ((Evaluation)) of FunctionStatementList
+                match self.executor.get_func(&func.name) {
+                    Some(func) => unsafe {
+                        func(self as *mut Self as *mut std::ffi::c_void);
+                    },
+                    None => panic!(),
+                };
+            }
+            // TODO
+            Function::Host(func) => {
+                let func = func.func;
+                let args = self.fiber.call_stack.last().unwrap().args.as_slice();
+                func(args);
+            }
+        }
         self.fiber.end_call()
     }
 
