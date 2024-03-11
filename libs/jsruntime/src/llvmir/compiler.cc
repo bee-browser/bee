@@ -418,18 +418,6 @@ void Compiler::Return(size_t n) {
   builder_->CreateRetVoid();
 }
 
-void Compiler::Print() {
-  llvm::Value* value = Dereference();
-  // TODO: function overloading
-  llvm::Function* print;
-  if (value->getType()->isDoubleTy()) {
-    print = CreatePrintF64Function();
-  } else {
-    print = CreatePrintBoolFunction();
-  }
-  builder_->CreateCall(print, {value});
-}
-
 void Compiler::DumpStack() {
   llvm::errs() << "<llvm-ir:compiler-stack>\n";
   for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {
@@ -458,39 +446,6 @@ void Compiler::DumpStack() {
 llvm::Function* Compiler::CreateMainFunction() {
   auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
   return llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "main", module_.get());
-}
-
-llvm::Function* Compiler::CreatePrintStrFunction() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype =
-        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
-    func = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "print_str", module_.get());
-  }
-  return func;
-}
-
-llvm::Function* Compiler::CreatePrintBoolFunction() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype =
-        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getInt1Ty()}, false);
-    func = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "print_bool", module_.get());
-  }
-  return func;
-}
-
-llvm::Function* Compiler::CreatePrintF64Function() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype =
-        llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getDoubleTy()}, false);
-    func = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "print_f64", module_.get());
-  }
-  return func;
 }
 
 llvm::Function* Compiler::CreateRuntimeDeclareConst() {

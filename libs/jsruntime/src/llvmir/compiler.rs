@@ -60,10 +60,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
 
     fn accept(&mut self) -> Result<Self::Artifact, jsparser::Error> {
         logger::debug!(event = "accept");
-        let peer = unsafe {
-            bridge::compiler_peer_print(self.peer);
-            bridge::compiler_peer_end(self.peer)
-        };
+        let peer = unsafe { bridge::compiler_peer_end(self.peer) };
         Ok(Module { peer })
     }
 
@@ -297,7 +294,7 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
     ) -> Result<(), jsparser::Error> {
         logger::debug!(event = "handle_function_signature");
 
-        let (func_id, func_name) = self.runtime.create_function(formal_parameters);
+        let (func_id, func_name) = self.runtime.create_native_function(formal_parameters);
         let name = func_name.as_ptr();
         unsafe {
             bridge::compiler_peer_declare_function(self.peer, symbol.id(), func_id.0);

@@ -60,7 +60,6 @@ class Compiler {
   void StartScope();
   void EndScope();
   void Return(size_t n);
-  void Print();
 
   void DumpStack();
 
@@ -83,9 +82,6 @@ class Compiler {
   };
 
   llvm::Function* CreateMainFunction();
-  llvm::Function* CreatePrintStrFunction();
-  llvm::Function* CreatePrintBoolFunction();
-  llvm::Function* CreatePrintF64Function();
   llvm::Function* CreateRuntimeDeclareConst();
   llvm::Function* CreateRuntimeDeclareVariable();
   llvm::Function* CreateRuntimeDeclareUndefined();

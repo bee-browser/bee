@@ -9,15 +9,12 @@ pub struct Executor {
 
 impl Executor {
     pub fn new() -> Self {
-        Self {
-            peer: unsafe { bridge::executor_peer_new() },
-        }
-    }
-
-    pub fn with_host(host: bridge::Host) -> Self {
-        let runtime = Self::new();
-        unsafe { bridge::executor_peer_register_host(runtime.peer, &host) }
-        runtime
+        let peer = unsafe {
+            let peer = bridge::executor_peer_new();
+            bridge::executor_peer_register_host(peer, &bridge::Host::default());
+            peer
+        };
+        Self { peer }
     }
 
     pub fn register_module(&self, module: Module) {
@@ -37,7 +34,7 @@ impl Executor {
 
 impl Default for Executor {
     fn default() -> Self {
-        Self::with_host(bridge::Host::default())
+        Self::new()
     }
 }
 
