@@ -59,6 +59,7 @@ impl Runtime {
             functions: vec![Function::Native(NativeFunction {
                 formal_parameters: vec![],
                 name: CString::new("main".to_string()).unwrap(),
+                func: None,
             })],
             executor: Default::default(),
         }
@@ -106,6 +107,7 @@ impl Runtime {
         self.functions.push(Function::Native(NativeFunction {
             formal_parameters,
             name,
+            func: None,
         }));
         let name = match self.functions.last().unwrap() {
             Function::Native(func) => func.name.as_c_str(),
@@ -803,6 +805,7 @@ struct NativeFunction {
 
     // [[ECMAScriptCode]]
     name: CString,
+    func: Option<unsafe extern "C" fn(runtime: *mut std::os::raw::c_void) -> f64>,
 }
 
 struct HostFunction {
