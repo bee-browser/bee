@@ -229,6 +229,10 @@ dependencies = [
 [[package]]
 name = "base"
 version = "0.0.0"
+dependencies = [
+ "criterion",
+ "criterion-cycles-per-byte",
+]
 
 [[package]]
 name = "bindgen"
@@ -461,6 +465,15 @@ dependencies = [
  "serde_json",
  "tinytemplate",
  "walkdir",
+]
+
+[[package]]
+name = "criterion-cycles-per-byte"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5281161544b8f2397e14942c2045efa3446470348121a65c37263f8e76c1e2ff"
+dependencies = [
+ "criterion",
 ]
 
 [[package]]
@@ -1033,6 +1046,7 @@ dependencies = [
  "bindgen",
  "cbindgen",
  "cc",
+ "criterion",
  "duct",
  "jsparser",
  "logging",

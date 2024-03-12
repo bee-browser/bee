@@ -5,7 +5,14 @@ edition = "2021"
 authors = ["BEE project contributors"]
 publish = false
 
-[dependencies]
+[dev-dependencies]
+criterion = "0.5.1"
+criterion-cycles-per-byte = "0.6.0"
 
 [lib]
 bench = false
+
+[[bench]]
+name = "base-bench"
+path = "benches/bench.rs"
+harness = false
