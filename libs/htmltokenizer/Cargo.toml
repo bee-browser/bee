@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 bytes = "1.5.0"
 logging = { path = "../logging" }
-thiserror = "1.0.57"
+thiserror = "1.0.58"
 
 [dev-dependencies]
 anyhow = "1.0.81"
