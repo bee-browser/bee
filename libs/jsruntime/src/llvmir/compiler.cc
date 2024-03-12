@@ -1,8 +1,6 @@
 #include "compiler.hh"
-#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 
 #include <cassert>
-#include <ostream>
 
 #include "macros.hh"
 #include "module.hh"
@@ -46,9 +44,8 @@ void Compiler::Number(double value) {
   PushValue(v);
 }
 
-void Compiler::Symbol(uint32_t symbol_id) {
-  auto* v = builder_->getInt32(symbol_id);
-  PushSymbol(v);
+void Compiler::Symbol(uint32_t symbol) {
+  PushSymbol(symbol);
 }
 
 void Compiler::Add() {
@@ -154,7 +151,7 @@ void Compiler::DeclareConst() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* value = PopValue();
-  auto* symbol = PopSymbol();
+  auto* symbol = builder_->getInt32(PopSymbol());
   auto* declare = CreateRuntimeDeclareConst();
   builder_->CreateCall(declare, {context, symbol, value});
 }
@@ -163,7 +160,7 @@ void Compiler::DeclareVariable() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* value = PopValue();
-  auto* symbol = PopSymbol();
+  auto* symbol = builder_->getInt32(PopSymbol());
   auto* declare = CreateRuntimeDeclareVariable();
   builder_->CreateCall(declare, {context, symbol, value});
 }
@@ -171,7 +168,7 @@ void Compiler::DeclareVariable() {
 void Compiler::DeclareUndefined() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  auto* symbol = PopSymbol();
+  auto* symbol = builder_->getInt32(PopSymbol());
   auto* declare = CreateRuntimeDeclareUndefined();
   builder_->CreateCall(declare, {context, symbol});
 }
@@ -191,7 +188,7 @@ void Compiler::DeclareFunction(uint32_t symbol_id, uint32_t func_id) {
 void Compiler::Get() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  auto* symbol = PopSymbol();
+  auto* symbol = builder_->getInt32(PopSymbol());
   auto* get = CreateRuntimeGet();
   auto* value = builder_->CreateCall(get, {context, symbol});
   PushValue(value);
@@ -201,7 +198,7 @@ void Compiler::Set() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* value = PopValue();
-  auto* symbol = PopSymbol();
+  auto* symbol = builder_->getInt32(PopSymbol());
   auto* set = CreateRuntimeSet();
   builder_->CreateCall(set, {context, symbol, value});
 }
@@ -209,7 +206,7 @@ void Compiler::Set() {
 void Compiler::SetUndefined() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  auto* symbol = PopSymbol();
+  auto* symbol = builder_->getInt32(PopSymbol());
   auto* set = CreateRuntimeSetUndefined();
   builder_->CreateCall(set, {context, symbol});
 }
@@ -232,7 +229,7 @@ void Compiler::PushArg() {
 void Compiler::Call() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  auto* symbol = PopSymbol();
+  auto* symbol = builder_->getInt32(PopSymbol());
   auto* call = CreateRuntimeCall();
   auto* value = builder_->CreateCall(call, {context, symbol});
   PushValue(value);
@@ -424,19 +421,19 @@ void Compiler::DumpStack() {
     const auto& item = *it;
     switch (item.type) {
       case Item::Value:
-        llvm::errs() << "value: " << item.data.value << "\n";
+        llvm::errs() << "value: " << item.value << "\n";
         break;
       case Item::Symbol:
-        llvm::errs() << "symbol: " << item.data.symbol << "\n";
+        llvm::errs() << "symbol: " << item.symbol << "\n";
         break;
       case Item::Block:
-        llvm::errs() << "block: " << item.data.block << "\n";
+        llvm::errs() << "block: " << item.block << "\n";
         break;
       case Item::Function:
-        llvm::errs() << "function" << item.data.function << "\n";
+        llvm::errs() << "function: " << item.function << "\n";
         break;
       case Item::Index:
-        llvm::errs() << "index: " << item.data.index << "\n";
+        llvm::errs() << "index: " << item.index << "\n";
         break;
     }
   }

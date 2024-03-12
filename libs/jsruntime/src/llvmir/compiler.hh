@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
 #pragma GCC diagnostic push
@@ -28,7 +27,7 @@ class Compiler {
   Module* TakeModule();
 
   void Number(double value);
-  void Symbol(uint32_t symbol_id);
+  void Symbol(uint32_t symbol);
   void Add();
   void Sub();
   void Mul();
@@ -43,7 +42,7 @@ class Compiler {
   void DeclareConst();
   void DeclareVariable();
   void DeclareUndefined();
-  void DeclareFunction(uint32_t symbol_id, uint32_t func_id);
+  void DeclareFunction(uint32_t symbol, uint32_t func_id);
   void Get();
   void Set();
   void SetUndefined();
@@ -74,11 +73,17 @@ class Compiler {
     } type;
     union {
       llvm::Value* value;
-      llvm::Value* symbol;
+      uint32_t symbol;
       llvm::BasicBlock* block;
       llvm::Function* function;
       size_t index;
-    } data;
+    };
+
+    explicit Item(llvm::Value* value) : type(Item::Value), value(value) {}
+    explicit Item(uint32_t symbol) : type(Item::Symbol), symbol(symbol) {}
+    explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
+    explicit Item(llvm::Function* function) : type(Item::Function), function(function) {}
+    explicit Item(size_t index) : type(Item::Index), index(index) {}
   };
 
   llvm::Function* CreateMainFunction();
@@ -97,32 +102,30 @@ class Compiler {
   llvm::Function* CreateRuntimePopScope();
 
   inline void PushValue(llvm::Value* value) {
-    stack_.push_back({Item::Value, value});
+    stack_.push_back(Item(value));
   }
 
-  inline void PushSymbol(llvm::Value* symbol) {
-    stack_.push_back({Item::Symbol, symbol});
+  inline void PushSymbol(uint32_t symbol) {
+    stack_.push_back(Item(symbol));
   }
 
   inline void PushBlock(llvm::BasicBlock* block) {
-    stack_.push_back({Item::Block, block});
+    stack_.push_back(Item(block));
   }
 
   inline void PushFunction(llvm::Function* function) {
-    stack_.push_back({Item::Function, function});
+    stack_.push_back(Item(function));
   }
 
   inline void PushIndex(size_t index) {
-    // TODO: initializer list
-    stack_.push_back({Item::Index, nullptr});
-    stack_.back().data.index = index;
+    stack_.push_back(Item(index));
   }
 
   inline llvm::Value* exec_context() const {
     assert(!stack_.empty());
     const auto& item = stack_[base_index_];
     assert(item.type == Item::Value);
-    return item.data.value;
+    return item.value;
   }
 
   void Swap() {
@@ -137,16 +140,16 @@ class Compiler {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     assert(item.type == Item::Value);
-    auto* value = item.data.value;
+    auto* value = item.value;
     stack_.pop_back();
     return value;
   }
 
-  inline llvm::Value* PopSymbol() {
+  inline uint32_t PopSymbol() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     assert(item.type == Item::Symbol);
-    auto* symbol = item.data.symbol;
+    auto symbol = item.symbol;
     stack_.pop_back();
     return symbol;
   }
@@ -155,7 +158,7 @@ class Compiler {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     assert(item.type == Item::Block);
-    auto* block = item.data.block;
+    auto* block = item.block;
     stack_.pop_back();
     return block;
   }
@@ -173,7 +176,7 @@ class Compiler {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     assert(item.type == Item::Function);
-    auto* function = item.data.function;
+    auto* function = item.function;
     stack_.pop_back();
     return function;
   }
@@ -182,7 +185,7 @@ class Compiler {
     assert(!stack_.empty());
     const auto& item = stack_.back();
     assert(item.type == Item::Index);
-    auto index = item.data.index;
+    auto index = item.index;
     stack_.pop_back();
     return index;
   }
