@@ -449,152 +449,127 @@ llvm::Function* Compiler::CreateMainFunction() {
 }
 
 llvm::Function* Compiler::CreateRuntimeDeclareConst() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_declare_const_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
         {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
-    func = llvm::Function::Create(
+    runtime_declare_const_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_const", module_.get());
   }
-  return func;
+  return runtime_declare_const_;
 }
 
 llvm::Function* Compiler::CreateRuntimeDeclareVariable() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_declare_variable_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
         {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
-    func = llvm::Function::Create(
+    runtime_declare_variable_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_variable", module_.get());
   }
-  return func;
+  return runtime_declare_variable_;
 }
 
 llvm::Function* Compiler::CreateRuntimeDeclareUndefined() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(
-        builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
-    func = llvm::Function::Create(
+  if (runtime_declare_undefined_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
+    runtime_declare_undefined_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_undefined", module_.get());
   }
-  return func;
+  return runtime_declare_undefined_;
 }
 
 llvm::Function* Compiler::CreateRuntimeDeclareFunction() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-        {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt32Ty()}, false);
-    func = llvm::Function::Create(
+  if (runtime_declare_function_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt32Ty()}, false);
+    runtime_declare_function_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_function", module_.get());
   }
-  return func;
+  return runtime_declare_function_;
 }
 
 llvm::Function* Compiler::CreateRuntimeGet() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_->getDoubleTy(),
-        {
-            builder_->getPtrTy(),
-            builder_->getInt32Ty(),
-        },
-        false);
-    func = llvm::Function::Create(
+  if (runtime_get_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getDoubleTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
+    runtime_get_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_get", module_.get());
   }
-  return func;
+  return runtime_get_;
 }
 
 llvm::Function* Compiler::CreateRuntimeSet() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_set_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
         {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
-    func = llvm::Function::Create(
+    runtime_set_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_set", module_.get());
   }
-  return func;
+  return runtime_set_;
 }
 
 llvm::Function* Compiler::CreateRuntimeSetUndefined() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-        {
-            builder_->getPtrTy(),
-            builder_->getInt32Ty(),
-        },
-        false);
-    func = llvm::Function::Create(
+  if (runtime_set_undefined_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
+    runtime_set_undefined_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_set_undefined", module_.get());
   }
-  return func;
+  return runtime_set_undefined_;
 }
 
 llvm::Function* Compiler::CreateRuntimePushArgs() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_set_push_args_ == nullptr) {
     auto* prototype =
         llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
-    func = llvm::Function::Create(
+    runtime_set_push_args_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_push_args", module_.get());
   }
-  return func;
+  return runtime_set_push_args_;
 }
 
 llvm::Function* Compiler::CreateRuntimePushArg() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_set_push_arg_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(
         builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getDoubleTy()}, false);
-    func = llvm::Function::Create(
+    runtime_set_push_arg_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_push_arg", module_.get());
   }
-  return func;
+  return runtime_set_push_arg_;
 }
 
 llvm::Function* Compiler::CreateRuntimeCall() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_call_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(
         builder_->getDoubleTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
-    func = llvm::Function::Create(
+    runtime_call_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_call", module_.get());
   }
-  return func;
+  return runtime_call_;
 }
 
 llvm::Function* Compiler::CreateRuntimeRet() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_ret_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(
         builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getDoubleTy()}, false);
-    func = llvm::Function::Create(
+    runtime_ret_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_ret", module_.get());
   }
-  return func;
+  return runtime_ret_;
 }
 
 llvm::Function* Compiler::CreateRuntimePushScope() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_push_scope_ == nullptr) {
     auto* prototype =
         llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
-    func = llvm::Function::Create(
+    runtime_push_scope_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_push_scope", module_.get());
   }
-  return func;
+  return runtime_push_scope_;
 }
 
 llvm::Function* Compiler::CreateRuntimePopScope() {
-  static llvm::Function* func = nullptr;
-  if (func == nullptr) {
+  if (runtime_pop_scope_ == nullptr) {
     auto* prototype =
         llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
-    func = llvm::Function::Create(
+    runtime_pop_scope_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_pop_scope", module_.get());
   }
-  return func;
+  return runtime_pop_scope_;
 }

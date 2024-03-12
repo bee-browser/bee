@@ -219,4 +219,19 @@ class Compiler {
   }
 
   std::vector<Item> stack_;
+
+  // caches for host functions.
+  llvm::Function* runtime_declare_const_ = nullptr;
+  llvm::Function* runtime_declare_variable_ = nullptr;
+  llvm::Function* runtime_declare_undefined_ = nullptr;
+  llvm::Function* runtime_declare_function_ = nullptr;
+  llvm::Function* runtime_get_ = nullptr;
+  llvm::Function* runtime_set_ = nullptr;
+  llvm::Function* runtime_set_undefined_ = nullptr;
+  llvm::Function* runtime_set_push_args_ = nullptr;
+  llvm::Function* runtime_set_push_arg_ = nullptr;
+  llvm::Function* runtime_call_ = nullptr;
+  llvm::Function* runtime_ret_ = nullptr;
+  llvm::Function* runtime_push_scope_ = nullptr;
+  llvm::Function* runtime_pop_scope_ = nullptr;
 };
