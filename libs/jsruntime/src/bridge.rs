@@ -75,15 +75,20 @@ impl Runtime {
         self.fiber.start_call(symbol);
         // TODO: refactoring
         let func_id = self.ordinary_call_evaludate_body();
-        match &self.functions[func_id.0 as usize] {
+        match &mut self.functions[func_id.0 as usize] {
             Function::Native(func) => {
                 // ((Evaluation)) of FunctionStatementList
-                match self.executor.get_func(&func.name) {
-                    Some(func) => unsafe {
-                        func(self as *mut Self as *mut std::ffi::c_void);
-                    },
-                    None => panic!(),
+                let func = match func.func {
+                    Some(func) => func,
+                    None => {
+                        let native_func = self.executor.get_func(&func.name).unwrap();
+                        func.func = Some(native_func);
+                        native_func
+                    }
                 };
+                unsafe {
+                    func(self as *mut Self as *mut std::ffi::c_void);
+                }
             }
             // TODO
             Function::Host(func) => {
