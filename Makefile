@@ -147,7 +147,7 @@ format-js:
 .PHONY: vendor
 vendor:
 	@$(MAKE) -s -C vendor clean
-	@$(MAKE) -s -C vendor build
+	@$(MAKE) -s -C vendor install
 
 .PHONY: $(BUILD_TARGETS)
 $(BUILD_TARGETS):

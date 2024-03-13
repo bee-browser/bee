@@ -1,4 +1,6 @@
 /target
+/vendor/.crates2.json
+/vendor/.crates.toml
 /vendor/bin
 /vendor/include
 /vendor/lib
