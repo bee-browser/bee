@@ -7,6 +7,10 @@ all:
 test:
 	cargo nextest run --all-features
 
+.PHONY: bench
+bench:
+	cargo bench
+
 .PHONY: uml
 uml: $(UMLS)
 

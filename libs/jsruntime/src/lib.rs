@@ -6,10 +6,11 @@ mod logger;
 mod tests;
 
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::rc::Rc;
+
+use hashbrown::HashMap;
 
 use base::delegate_all;
 use jsparser::Symbol;
