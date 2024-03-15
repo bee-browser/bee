@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.81"
 base = { path = "../../libs/base" }
-clap = { version = "4.5.2", features = ["derive", "env"] }
+clap = { version = "4.5.3", features = ["derive", "env"] }
 indexmap = { version = "2.2.5", features = ["serde"] }
 logging = { path = "../../libs/logging" }
 maplit = "1.0.2"
