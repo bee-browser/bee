@@ -15,4 +15,4 @@ maplit = "1.0.2"
 serde = { version = "1.0.197", features = ["derive", "rc"] }
 serde_json = "1.0.114"
 serde_yaml = "0.9.33"
-smallvec = "1.13.1"
+smallvec = "1.13.2"
