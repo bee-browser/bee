@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.81"
 async-stream = "0.3.5"
-axum = "0.7.4"
+axum = "0.7.5"
 bytes = "1.6.0"
 clap = { version = "4.5.3", features = ["derive"] }
 logging = { path = "../../libs/logging" }
