@@ -2,6 +2,8 @@ use jsparser::BinaryOperator;
 use jsparser::Error;
 use jsparser::Node;
 use jsparser::NodeHandler;
+use jsparser::Parser;
+use jsparser::Processor;
 use jsparser::SymbolTable;
 
 use super::bridge;
@@ -9,7 +11,15 @@ use super::logger;
 use super::Module;
 use super::Runtime;
 
-pub struct Compiler<'r> {
+impl Runtime {
+    pub fn compile_script(&mut self, source: &str) -> Option<Module> {
+        Parser::for_script(source, Processor::new(Compiler::new(self), false))
+            .parse()
+            .ok()
+    }
+}
+
+struct Compiler<'r> {
     runtime: &'r mut Runtime,
     peer: *mut bridge::Compiler,
     scope_stack: Vec<ScopeState>,

@@ -7,7 +7,6 @@ use jsparser::Symbol;
 use super::logger;
 use super::FunctionId;
 use super::Runtime;
-pub use compiler::Compiler;
 pub use executor::Executor;
 
 pub fn initialize() {

@@ -13,7 +13,6 @@ use std::rc::Rc;
 use hashbrown::HashMap;
 
 use base::delegate_all;
-use jsparser::Processor;
 use jsparser::Symbol;
 use jsparser::SymbolTable;
 
@@ -78,12 +77,6 @@ impl Runtime {
                 .unwrap();
         }
         self
-    }
-
-    pub fn compile_script(&mut self, source: &str) -> Option<Module> {
-        jsparser::Parser::for_script(source, Processor::new(llvmir::Compiler::new(self), false))
-            .parse()
-            .ok()
     }
 
     pub fn eval(&mut self, module: Module) {
