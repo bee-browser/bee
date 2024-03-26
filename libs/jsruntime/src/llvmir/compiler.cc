@@ -415,6 +415,12 @@ void Compiler::Return(size_t n) {
   builder_->CreateRetVoid();
 }
 
+void Compiler::Void() {
+  if (stack_.size() > 1 && stack_.back().type == Item::Value) {
+    PopValue();
+  }
+}
+
 void Compiler::DumpStack() {
   llvm::errs() << "<llvm-ir:compiler-stack>\n";
   for (auto it = stack_.rbegin(); it != stack_.rend(); ++it) {

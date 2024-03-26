@@ -1,7 +1,10 @@
 mod actions;
 mod logger;
 
-use std::collections::VecDeque;
+use std::ops::Range;
+
+use smallvec::smallvec;
+use smallvec::SmallVec;
 
 use super::Error;
 use super::Location;
@@ -12,185 +15,1581 @@ use super::SyntaxHandler;
 use super::Token;
 use super::TokenKind;
 
-pub trait SemanticHandler<'s> {
+pub trait NodeHandler<'s> {
     type Artifact;
-
-    fn symbol_table(&mut self) -> &SymbolTable;
-    fn symbol_table_mut(&mut self) -> &mut SymbolTable;
 
     fn start(&mut self);
     fn accept(&mut self) -> Result<Self::Artifact, Error>;
-    fn handle_numeric_literal(&mut self, literal: NumericLiteral<'s>) -> Result<(), Error>;
-    fn handle_string_literal(&mut self, literal: StringLiteral<'s>) -> Result<(), Error>;
-    fn handle_identifier(&mut self, identifier: Identifier<'s>) -> Result<(), Error>;
-    fn handle_addition_expression(&mut self) -> Result<(), Error>;
-    fn handle_subtraction_expression(&mut self) -> Result<(), Error>;
-    fn handle_multiplication_expression(&mut self) -> Result<(), Error>;
-    fn handle_division_expression(&mut self) -> Result<(), Error>;
-    fn handle_remainder_expression(&mut self) -> Result<(), Error>;
-    fn handle_lt_expression(&mut self) -> Result<(), Error>;
-    fn handle_gt_expression(&mut self) -> Result<(), Error>;
-    fn handle_lte_expression(&mut self) -> Result<(), Error>;
-    fn handle_gte_expression(&mut self) -> Result<(), Error>;
-    fn handle_eq_expression(&mut self) -> Result<(), Error>;
-    fn handle_ne_expression(&mut self) -> Result<(), Error>;
-    fn handle_strict_eq_expression(&mut self) -> Result<(), Error>;
-    fn handle_strict_ne_expression(&mut self) -> Result<(), Error>;
-    fn handle_call_expression(&mut self) -> Result<(), Error>;
-    fn handle_assignment_expression(&mut self) -> Result<(), Error>;
-    fn handle_then_block(&mut self) -> Result<(), Error>;
-    fn handle_else_block(&mut self) -> Result<(), Error>;
-    fn handle_conditional_expression(&mut self) -> Result<(), Error>;
-    fn handle_expression_statement(&mut self) -> Result<(), Error>;
-    fn handle_if_else_statement(&mut self) -> Result<(), Error>;
-    fn handle_if_statement(&mut self) -> Result<(), Error>;
-    fn handle_return_statement(&mut self, n: usize) -> Result<(), Error>;
-    fn handle_statement(&mut self) -> Result<(), Error>;
-    fn handle_function_signature(
-        &mut self,
-        symbol: Symbol,
-        formal_parameters: Vec<Symbol>,
-    ) -> Result<(), Error>;
-    fn handle_function_declaration(&mut self) -> Result<(), Error>;
-
-    fn handle_start_let_declaration(&mut self) -> Result<(), Error>;
-    fn handle_let_binding(&mut self, with_init: bool) -> Result<(), Error>;
-    fn handle_end_let_declaration(&mut self) -> Result<(), Error>;
-
-    fn handle_start_const_declaration(&mut self) -> Result<(), Error>;
-    fn handle_const_binding(&mut self) -> Result<(), Error>;
-    fn handle_end_const_declaration(&mut self) -> Result<(), Error>;
-
-    fn handle_start_scope(&mut self) -> Result<(), Error>;
-    fn handle_end_scope(&mut self) -> Result<(), Error>;
-
-    fn handle_argument_list(&mut self, empty: bool) -> Result<(), Error>;
-    fn handle_argument_list_item(&mut self) -> Result<(), Error>;
+    fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error>;
+    fn symbol_table_mut(&mut self) -> &mut SymbolTable;
 }
 
 pub struct Processor<'s, H> {
     handler: H,
     location: Location,
-    queue: VecDeque<Syntax<'s>>,
+    stack: Vec<Syntax>,
+    nodes: Vec<Node<'s>>,
+    tokens: Vec<Token<'s>>,
     strict_mode: bool,
     module: bool,
 }
 
 #[derive(Debug)]
-enum Syntax<'s> {
-    NumericLiteral(NumericLiteral<'s>),
-    StringLiteral(StringLiteral<'s>),
-    Identifier(Identifier<'s>),
+struct Syntax {
+    detail: Detail,
+    nodes_range: Range<usize>,
+    tokens_range: Range<usize>,
+}
+
+#[derive(Debug)]
+enum Detail {
+    Token(usize),
+    Literal,
+    Identifier(Symbol),
+    IdentifierReference(Symbol),
+    BindingIdentifier(Symbol),
+    LabelIdentifier(Symbol),
+    CpeaaplExpression,
+    CpeaaplFormalParameters,
+    CpeaaplEmpty,
+    CpeaaplRestParameter,
+    CpeaaplRestPattern,
+    CpeaaplFormalParametersWithRestParameter,
+    CpeaaplFormalParametersWithRestPattern,
+    Arguments,
+    ArgumentList,
+    Expression,
+    Initializer,
+    Block,
+    LexicalBinding(LexicalDeclarationSemantics),
+    BindingList(LexicalDeclarationSemantics),
+    LetDeclaration(SmallVec<[Symbol; 4]>),
+    ConstDeclaration(SmallVec<[Symbol; 4]>),
+    SingleNameBinding(Symbol, bool),
+    BindingElement(BindingElement),
+    Statement,
+    Declaration,
+    FormalParameters(SmallVec<[Symbol; 4]>),
+    StatementList,
+    CoverCallExpressionAndAsyncArrowHead,
+}
+
+#[derive(Debug)]
+struct LexicalDeclarationSemantics {
+    bound_names: SmallVec<[Symbol; 4]>,
+    nodes: SmallVec<[usize; 4]>,
+    has_initializer: bool,
+}
+
+#[derive(Debug)]
+struct BindingElement {
+    kind: BindingElementKind,
+    has_initializer: bool,
+}
+
+#[derive(Debug)]
+enum BindingElementKind {
+    SingleNameBinding(Symbol),
+}
+
+/// Represents a node in a stream of ordered nodes visited in a depth-first tree traversal on an
+/// AST for a JavaScript program.
+///
+/// A stack machine can reconstruct the AST of the Javascript program from the stream of the nodes.
+#[derive(Debug)]
+pub enum Node<'s> {
+    Null,
+    Boolean(bool),
+    Number(f64, &'s str),
+    String(Vec<u16>, &'s str),
+    IdentifierReference(Symbol),
+    BindingIdentifier(Symbol),
+    LabelIdentifier(Symbol),
+    ArgumentListHead(bool, bool),
+    ArgumentListItem(bool),
+    Arguments,
+    CallExpression,
+    UpdateExpression(UpdateOperator),
+    UnaryExpression(UnaryOperator),
+    BinaryExpression(BinaryOperator),
+    LogicalExpression(LogicalOperator),
+    ConditionalExpression,
+    AssignmentExpression(AssignmentOperator),
+    BlockStatement,
+    LexicalBinding,
+    LexicalBindingWithInitializer,
+    LexicalBindingForConst,
+    LetDeclaration(u32),
+    ConstDeclaration(u32),
+    BindingElement(bool),
+    EmptyStatement,
+    ExpressionStatement,
+    IfElseStatement,
+    IfStatement,
+    ReturnStatement(u32),
+    FormalParameter,
+    FormalParameters(u32),
+    FunctionSignature(Symbol, Vec<Symbol>),
+    FunctionDeclaration,
+    ThenBlock,
+    ElseBlock,
+    StartScope,
+    EndScope,
+}
+
+#[derive(Clone, Copy)]
+pub enum UpdateOperator {
+    PostfixIncrement,
+    PostfixDecrement,
+    PrefixIncrement,
+    PrefixDecrement,
+}
+
+impl std::fmt::Debug for UpdateOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::PostfixIncrement => "_++",
+            Self::PostfixDecrement => "_--",
+            Self::PrefixIncrement => "++_",
+            Self::PrefixDecrement => "--_",
+        })
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum UnaryOperator {
+    Delete,
+    Void,
+    Typeof,
+    Plus,
+    Negation,
+    BitwiseNot,
+    LogicalNot,
+}
+
+impl std::fmt::Debug for UnaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Delete => "delete",
+            Self::Void => "void",
+            Self::Typeof => "typeof",
+            Self::Plus => "+",
+            Self::Negation => "-",
+            Self::BitwiseNot => "~",
+            Self::LogicalNot => "!",
+        })
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum BinaryOperator {
+    Equality,
+    Inequality,
+    StrictEquality,
+    StrictInequality,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LeftShift,
+    RightShift,
+    UnsignedRightShift,
     Addition,
     Subtraction,
     Multiplication,
     Division,
     Remainder,
-    LessThan,
-    GreaterThan,
-    LessThanOrEqual,
-    GreaterThanOrEqual,
-    Equality,
-    Inequality,
-    StrictEquality,
-    StrictInequality,
+    BitwiseOr,
+    BitwiseXor,
+    BitwiseAnd,
+    In,
+    Instanceof,
+    Exponentiation,
+}
+
+impl std::fmt::Debug for BinaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Equality => "==",
+            Self::Inequality => "!=",
+            Self::StrictEquality => "===",
+            Self::StrictInequality => "!==",
+            Self::LessThan => "<",
+            Self::LessThanOrEqual => "<=",
+            Self::GreaterThan => ">",
+            Self::GreaterThanOrEqual => ">=",
+            Self::LeftShift => "<<",
+            Self::RightShift => ">>",
+            Self::UnsignedRightShift => ">>>",
+            Self::Addition => "+",
+            Self::Subtraction => "-",
+            Self::Multiplication => "*",
+            Self::Division => "/",
+            Self::Remainder => "%",
+            Self::BitwiseOr => "|",
+            Self::BitwiseXor => "^",
+            Self::BitwiseAnd => "&",
+            Self::In => "in",
+            Self::Instanceof => "instanceof",
+            Self::Exponentiation => "**",
+        })
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum LogicalOperator {
+    LogicalAnd,
+    LogicalOr,
+    Nullish,
+}
+
+impl std::fmt::Debug for LogicalOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::LogicalAnd => "&&",
+            Self::LogicalOr => "||",
+            Self::Nullish => "??",
+        })
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum AssignmentOperator {
     Assignment,
-    Cpeaapl,
-    CallExpressionOrAsyncArrowHead,
-    MaybeArrowFormalParameters,
-    MaybeArrowFormalParametersEmpty,
-    MaybeArrowFormalParametersRestParameter,
-    MaybeArrowFormalParametersRestPattern,
-    MaybeArrowFormalParametersWithRestParameter,
-    MaybeArrowFormalParametersWithRestPattern,
-    FormalParameters(Vec<Symbol>), // TODO: Vec<BindingElement>
-    LexicalBinding,
-    LexicalBindingWithInitializer,
-    EmptyList,
-    ArgumentList(bool),
-    ArgumentListItem,
-
-    // Internals
-    FormalParameter(Symbol), // TODO: BindingElement
+    MultiplicationAssignment,
+    DivisionAssignment,
+    RemainderAssignment,
+    AdditionAssignment,
+    SubtractionAssignment,
+    LeftShiftAssignment,
+    RightShiftAssignment,
+    UnsignedRightShiftAssignment,
+    BitwiseAndAssignment,
+    BitwiseXorAssignment,
+    BitwiseOrAssignment,
+    ExponentiationAssignment,
+    LogicalAndAssignment,
+    LogicalOrAssignment,
+    NullishCoalescingAssignment,
 }
 
-#[derive(Debug)]
-pub struct NumericLiteral<'s> {
-    pub value: f64,
-    pub raw: &'s str,
+impl std::fmt::Debug for AssignmentOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Assignment => "=",
+            Self::MultiplicationAssignment => "*=",
+            Self::DivisionAssignment => "/=",
+            Self::RemainderAssignment => "%=",
+            Self::AdditionAssignment => "+=",
+            Self::SubtractionAssignment => "-=",
+            Self::LeftShiftAssignment => "<<=",
+            Self::RightShiftAssignment => ">>=",
+            Self::UnsignedRightShiftAssignment => ">>>=",
+            Self::BitwiseAndAssignment => "&=",
+            Self::BitwiseXorAssignment => "^=",
+            Self::BitwiseOrAssignment => "|=",
+            Self::ExponentiationAssignment => "**=",
+            Self::LogicalAndAssignment => "&&=",
+            Self::LogicalOrAssignment => "||=",
+            Self::NullishCoalescingAssignment => "??=",
+        })
+    }
 }
 
-#[derive(Debug)]
-pub struct StringLiteral<'s> {
-    pub value: Vec<u16>,
-    pub raw: &'s str,
-}
-
-#[derive(Debug)]
-pub struct Identifier<'s> {
-    pub symbol: Symbol,
-    pub raw: &'s str,
-}
-
-impl<'s, H> Processor<'s, H> {
+impl<'s, H> Processor<'s, H>
+where
+    H: NodeHandler<'s>,
+{
     const INITIAL_STACK_CAPACITY: usize = 64;
+    const INITIAL_QUEUE_CAPACITY: usize = 128;
+    const INITIAL_TOKENS_CAPACITY: usize = 1024;
 
     pub fn new(handler: H, module: bool) -> Self {
         Self {
             handler,
             location: Default::default(),
-            queue: VecDeque::with_capacity(Self::INITIAL_STACK_CAPACITY),
+            stack: Vec::with_capacity(Self::INITIAL_STACK_CAPACITY),
+            nodes: Vec::with_capacity(Self::INITIAL_QUEUE_CAPACITY),
+            tokens: Vec::with_capacity(Self::INITIAL_TOKENS_CAPACITY),
             strict_mode: false,
             module,
         }
     }
 
-    #[inline]
-    fn last(&self) -> &Syntax<'s> {
-        self.queue.back().unwrap()
+    #[inline(always)]
+    fn top(&mut self) -> &Syntax {
+        let len = self.stack.len();
+        debug_assert!(len >= 1);
+        &self.stack[len - 1]
     }
 
-    #[inline]
-    fn last_mut(&mut self) -> &mut Syntax<'s> {
-        self.queue.back_mut().unwrap()
+    #[inline(always)]
+    fn top_mut(&mut self) -> &mut Syntax {
+        let len = self.stack.len();
+        debug_assert!(len >= 1);
+        &mut self.stack[len - 1]
     }
 
-    #[inline]
-    fn push(&mut self, syntax: Syntax<'s>) {
-        logger::debug!(event = "push", ?syntax);
-        self.queue.push_back(syntax);
+    #[inline(always)]
+    fn push(&mut self, syntax: Syntax) {
+        self.stack.push(syntax);
     }
 
-    #[inline]
-    fn pop(&mut self) -> Option<Syntax<'s>> {
-        self.queue.pop_back()
+    #[inline(always)]
+    fn pop(&mut self) -> Syntax {
+        self.stack.pop().unwrap()
     }
 
-    #[inline]
-    fn swap_pop(&mut self) -> Option<Syntax<'s>> {
-        debug_assert!(self.queue.len() > 1);
-        let i = self.queue.len() - 2;
-        self.queue.swap_remove_back(i)
-    }
-
-    #[inline]
-    fn fetch(&mut self) -> Option<Syntax<'s>> {
-        self.queue.pop_front()
-    }
-
-    #[allow(dead_code)]
-    #[inline]
-    fn split(&mut self, n: usize) -> VecDeque<Syntax<'s>> {
+    fn replace(&mut self, n: usize, detail: Detail) {
         debug_assert!(n > 0);
-        debug_assert!(self.queue.len() >= n);
-        let i = self.queue.len() - n;
-        self.queue.split_off(i)
+        let nodes_end = self.nodes.len();
+        let tokens_end = self.tokens.len();
+        self.stack.truncate(self.stack.len() - (n - 1));
+        let syntax = self.stack.last_mut().unwrap();
+        syntax.detail = detail;
+        syntax.nodes_range.end = nodes_end;
+        syntax.tokens_range.end = tokens_end;
+    }
+
+    #[inline(always)]
+    fn enqueue(&mut self, event: Node<'s>) -> usize {
+        let index = self.nodes.len();
+        self.nodes.push(event);
+        index
+    }
+
+    #[inline(always)]
+    fn make_symbol(&mut self, token_index: usize) -> Symbol {
+        let value = self.tokens[token_index].lexeme.encode_utf16().collect();
+        self.handler.symbol_table_mut().intern(value)
+    }
+}
+
+// Static Semantics
+
+impl<'s, H> Processor<'s, H>
+where
+    H: NodeHandler<'s>,
+{
+    // Commonly used actions.
+
+    // BindingIdentifier_Yield : yield
+    // BindingIdentifier_Yield_Await : yield
+    // BindingIdentifier_Await : await
+    // BindingIdentifier_Yield_Await : await
+    fn syntax_error(&mut self) -> Result<(), Error> {
+        Err(Error::SyntaxError)
+    }
+
+    // _THEN_BLOCK_
+    fn process_then_block(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ThenBlock);
+        Ok(())
+    }
+
+    // _ELSE_BLOCK_
+    fn process_else_block(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ElseBlock);
+        Ok(())
+    }
+
+    // _SCOPE_
+    fn process_scope(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::StartScope);
+        Ok(())
+    }
+
+    // _FUNCTION_SIGNATURE_
+    fn process_function_signature(&mut self) -> Result<(), Error> {
+        let formal_parameters = match self.stack[self.stack.len() - 2].detail {
+            Detail::FormalParameters(ref bound_names) => bound_names.clone().into_vec(),
+            _ => unreachable!(),
+        };
+        let func_name = match self.stack[self.stack.len() - 4].detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::FunctionSignature(func_name, formal_parameters));
+        Ok(())
+    }
+
+    // 13.1 Identifiers
+
+    // IdentifierReference : Identifier
+    // IdentifierReference_Yield : await
+    // IdentifierReference_Await : yield
+    fn process_identifier_reference(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::IdentifierReference(symbol));
+        self.replace(1, Detail::IdentifierReference(symbol));
+        Ok(())
+    }
+
+    // IdentifierReference : yield
+    fn process_identifier_reference_only_in_non_strict(&mut self) -> Result<(), Error> {
+        if self.strict_mode {
+            // 13.1.1 Static Semantics: Early Errors
+            Err(Error::SyntaxError)
+        } else {
+            self.process_identifier_reference()
+        }
+    }
+
+    // IdentifierReference : await
+    fn process_identifier_reference_only_in_script(&mut self) -> Result<(), Error> {
+        if self.module {
+            // 13.1.1 Static Semantics: Early Errors
+            Err(Error::SyntaxError)
+        } else {
+            self.process_identifier_reference()
+        }
+    }
+
+    // IdentifierReference_Await : Identifier
+    fn process_identifier_reference_except_for_await(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => self.process_identifier_reference(),
+        }
+    }
+
+    // IdentifierReference_Yield : Identifier
+    fn process_identifier_reference_except_for_yield(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::YIELD => Err(Error::SyntaxError),
+            _ => self.process_identifier_reference(),
+        }
+    }
+
+    // IdentifierReference_Yield_Await : Identifier
+    fn process_identifier_reference_except_for_yield_await(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => self.process_identifier_reference(),
+        }
+    }
+
+    // BindingIdentifier : yield
+    // BindingIdentifier : await
+    // BindingIdentifier_YIELD : await
+    // BindingIdentifier_AWAIT : yield
+    fn process_binding_identifier(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::BindingIdentifier(symbol));
+        self.replace(1, Detail::BindingIdentifier(symbol));
+        Ok(())
+    }
+
+    // BindingIdentifier : Identifier
+    fn process_binding_identifier_except_for_arguments_eval_in_strict(
+        &mut self,
+    ) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
+                Err(Error::SyntaxError)
+            }
+            _ => self.process_binding_identifier(),
+        }
+    }
+
+    // BindingIdentifier : yield
+    fn process_binding_identifier_only_in_non_strict(&mut self) -> Result<(), Error> {
+        if self.strict_mode {
+            // 13.1.1 Static Semantics: Early Errors
+            Err(Error::SyntaxError)
+        } else {
+            self.process_binding_identifier()
+        }
+    }
+
+    // BindingIdentifier : await
+    fn process_binding_identifier_only_in_script(&mut self) -> Result<(), Error> {
+        if self.module {
+            // 13.1.1 Static Semantics: Early Errors
+            Err(Error::SyntaxError)
+        } else {
+            self.process_binding_identifier()
+        }
+    }
+
+    // BindingIdentifier_Await : Identifier
+    fn process_binding_identifier_except_for_await(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => self.process_binding_identifier(),
+        }
+    }
+
+    // BindingIdentifier_Yield : Identifier
+    fn process_binding_identifier_except_for_yield(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::YIELD => Err(Error::SyntaxError),
+            _ => self.process_binding_identifier(),
+        }
+    }
+
+    // BindingIdentifier_Yield_Await : Identifier
+    fn process_binding_identifier_except_for_yield_await(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => self.process_binding_identifier(),
+        }
+    }
+
+    // LabelIdentifier : Identifier
+    // LabelIdentifier_Yield : await
+    // LabelIdentifier_Await : yield
+    fn process_label_identifier(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::LabelIdentifier(symbol));
+        self.replace(1, Detail::LabelIdentifier(symbol));
+        Ok(())
+    }
+
+    // LabelIdentifier : yield
+    fn process_label_identifier_only_in_non_strict(&mut self) -> Result<(), Error> {
+        if self.strict_mode {
+            // 13.1.1 Static Semantics: Early Errors
+            Err(Error::SyntaxError)
+        } else {
+            self.process_label_identifier()
+        }
+    }
+
+    // LabelIdentifier : await
+    fn process_label_identifier_only_in_script(&mut self) -> Result<(), Error> {
+        if self.module {
+            // 13.1.1 Static Semantics: Early Errors
+            Err(Error::SyntaxError)
+        } else {
+            self.process_label_identifier()
+        }
+    }
+
+    // LabelIdentifier_Await : Identifier
+    fn process_label_identifier_except_for_await(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => self.process_label_identifier(),
+        }
+    }
+
+    // LabelIdentifier_Yield : Identifier
+    fn process_label_identifier_except_for_yield(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::YIELD => Err(Error::SyntaxError),
+            _ => self.process_label_identifier(),
+        }
+    }
+
+    // LabelIdentifier_Yield_Await : Identifier
+    fn process_label_identifier_except_for_yield_await(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::Identifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            _ => self.process_label_identifier(),
+        }
+    }
+
+    // Identifier : IdentifierName but not ReservedWord
+    fn process_identifier(&mut self) -> Result<(), Error> {
+        self.pop(); // Token
+        let token_index = self.tokens.len() - 1;
+        let symbol = self.make_symbol(token_index);
+        match symbol {
+            // 13.1.1 Static Semantics: Early Errors
+            SymbolTable::IMPLEMENTS
+            | SymbolTable::LET
+            | SymbolTable::PACKAGE
+            | SymbolTable::PRIVATE
+            | SymbolTable::PROTECTED
+            | SymbolTable::PUBLIC
+            | SymbolTable::STATIC
+            | SymbolTable::YIELD
+                if self.strict_mode =>
+            {
+                Err(Error::SyntaxError)
+            }
+            SymbolTable::AWAIT if self.module => Err(Error::SyntaxError),
+            _ => {
+                let node_index = self.nodes.len();
+                self.push(Syntax {
+                    detail: Detail::Identifier(symbol),
+                    nodes_range: node_index..node_index,
+                    tokens_range: token_index..(token_index + 1),
+                });
+                Ok(())
+            }
+        }
+    }
+
+    // 13.2 Primary Expression
+
+    // PrimaryExpression[Yield, Await] : IdentifierReference[?Yield, ?Await]
+    fn process_primary_expression_identifier_reference(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::Expression;
+        Ok(())
+    }
+
+    // PrimaryExpression[Yield, Await] :
+    //   CoverParenthesizedExpressionAndArrowParameterList[?Yield, ?Await]
+    fn process_primary_expression_cpeaapl(&mut self) -> Result<(), Error> {
+        match self.top().detail {
+            // ParenthesizedExpression[Yield, Await] :
+            //   ( Expression[+In, ?Yield, ?Await] )
+            Detail::CpeaaplExpression => {
+                self.top_mut().detail = Detail::Expression;
+                Ok(())
+            }
+            Detail::CpeaaplFormalParameters
+            | Detail::CpeaaplEmpty
+            | Detail::CpeaaplRestParameter
+            | Detail::CpeaaplRestPattern
+            | Detail::CpeaaplFormalParametersWithRestParameter
+            | Detail::CpeaaplFormalParametersWithRestPattern => Err(Error::SyntaxError),
+            _ => unreachable!(),
+        }
+    }
+
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    //   ( Expression[+In, ?Yield, ?Await] )
+    fn process_cpeaapl_expression(&mut self) -> Result<(), Error> {
+        self.replace(3, Detail::CpeaaplExpression);
+        Ok(())
+    }
+
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    //   ( Expression[+In, ?Yield, ?Await] , )
+    fn process_cpeaapl_formal_parameters(&mut self) -> Result<(), Error> {
+        // TODO: supplemental syntax
+        self.replace(4, Detail::CpeaaplFormalParameters);
+        Ok(())
+    }
+
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] : ( )
+    fn process_cpeaapl_empty(&mut self) -> Result<(), Error> {
+        // TODO: supplemental syntax
+        self.replace(2, Detail::CpeaaplEmpty);
+        Ok(())
+    }
+
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    //   ( ... BindingIdentifier[?Yield, ?Await] )
+    fn process_cpeaapl_rest_parameter(&mut self) -> Result<(), Error> {
+        // TODO: supplemental syntax
+        self.replace(4, Detail::CpeaaplRestParameter);
+        Ok(())
+    }
+
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    //   ( ... BindingPattern[?Yield, ?Await] )
+    fn process_cpeaapl_rest_pattern(&mut self) -> Result<(), Error> {
+        // TODO: supplemental syntax
+        self.replace(4, Detail::CpeaaplRestPattern);
+        Ok(())
+    }
+
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    //   ( Expression[+In, ?Yield, ?Await] , ... BindingIdentifier[?Yield, ?Await] )
+    fn process_cpeaapl_formal_parameters_with_rest_parameter(&mut self) -> Result<(), Error> {
+        // TODO: supplemental syntax
+        self.replace(6, Detail::CpeaaplFormalParametersWithRestParameter);
+        Ok(())
+    }
+
+    // CoverParenthesizedExpressionAndArrowParameterList[Yield, Await] :
+    //   ( Expression[+In, ?Yield, ?Await] , ... BindingPattern[?Yield, ?Await] )
+    fn process_cpeaapl_formal_parameters_with_rest_pattern(&mut self) -> Result<(), Error> {
+        // TODO: supplemental syntax
+        self.replace(6, Detail::CpeaaplFormalParametersWithRestPattern);
+        Ok(())
+    }
+
+    // 13.2.3 Literals
+
+    fn process_literal(&mut self) -> Result<(), Error> {
+        self.pop(); // Token
+        let token_index = self.tokens.len() - 1;
+        let token = &self.tokens[token_index];
+        let node_index = match token.kind {
+            TokenKind::Null => self.enqueue(Node::Null),
+            TokenKind::True => self.enqueue(Node::Boolean(true)),
+            TokenKind::False => self.enqueue(Node::Boolean(false)),
+            TokenKind::NumericLiteral => {
+                // TODO: perform `NumericValue`
+                let value = token.lexeme.parse::<f64>().unwrap();
+                self.enqueue(Node::Number(value, token.lexeme))
+            }
+            TokenKind::StringLiteral => {
+                // TODO: perform `SV`
+                let value = token.lexeme.encode_utf16().collect();
+                self.enqueue(Node::String(value, token.lexeme))
+            }
+            _ => unreachable!(),
+        };
+        self.push(Syntax {
+            detail: Detail::Literal,
+            nodes_range: node_index..(node_index + 1),
+            tokens_range: token_index..(token_index + 1),
+        });
+        Ok(())
+    }
+
+    // 13.2.5 Object Initializer
+
+    // Initializer[In, Yield, Await] : = AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_initializer(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::Initializer);
+        Ok(())
+    }
+
+    // 13.3 Left-Hand-Side Expressions
+
+    // CallExpression[Yield, Await] : CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await]
+    fn process_call_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::CallExpression);
+        self.replace(1, Detail::Expression);
+        Ok(())
+    }
+
+    // Arguments[Yield, Await] : ( )
+    fn process_arguments_empty(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ArgumentListHead(true, false));
+        self.enqueue(Node::Arguments);
+        self.replace(2, Detail::Arguments);
+        Ok(())
+    }
+
+    // Arguments[Yield, Await] : ( ArgumentList[?Yield, ?Await] )
+    fn process_arguments(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Arguments);
+        self.replace(3, Detail::Arguments);
+        Ok(())
+    }
+
+    // Arguments[Yield, Await] : ( ArgumentList[?Yield, ?Await] , )
+    fn process_arguments_with_comma(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::Arguments);
+        self.replace(4, Detail::Arguments);
+        Ok(())
+    }
+
+    // ArgumentList[Yield, Await] : AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_argument_list_head(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ArgumentListHead(false, false));
+        self.replace(1, Detail::ArgumentList);
+        Ok(())
+    }
+
+    // ArgumentList[Yield, Await] :
+    //   ArgumentList[?Yield, ?Await] , AssignmentExpression[+In, ?Yield, ?Await]
+    fn process_argument_list_item(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ArgumentListItem(false));
+        self.replace(3, Detail::ArgumentList);
+        Ok(())
+    }
+
+    // 13.4 Update Expressions
+
+    fn process_update_expression(&mut self, op: UpdateOperator) -> Result<(), Error> {
+        self.enqueue(Node::UpdateExpression(op));
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // UpdateExpression[Yield, Await] :
+    //   LeftHandSideExpression[?Yield, ?Await] [no LineTerminator here] ++
+    fn process_postfix_increment(&mut self) -> Result<(), Error> {
+        // TODO: 13.4.1 Static Semantics: Early Errors
+        self.process_update_expression(UpdateOperator::PostfixIncrement)
+    }
+
+    // UpdateExpression[Yield, Await] :
+    //   LeftHandSideExpression[?Yield, ?Await] [no LineTerminator here] --
+    fn process_postfix_decrement(&mut self) -> Result<(), Error> {
+        // TODO: 13.4.1 Static Semantics: Early Errors
+        self.process_update_expression(UpdateOperator::PostfixDecrement)
+    }
+
+    // UpdateExpression[Yield, Await] :
+    //   ++ UnaryExpression[?Yield, ?Await]
+    fn process_prefix_increment(&mut self) -> Result<(), Error> {
+        // TODO: 13.4.1 Static Semantics: Early Errors
+        self.process_update_expression(UpdateOperator::PrefixIncrement)
+    }
+
+    // UpdateExpression[Yield, Await] :
+    //   -- UnaryExpression[?Yield, ?Await]
+    fn process_prefix_decrement(&mut self) -> Result<(), Error> {
+        // TODO: 13.4.1 Static Semantics: Early Errors
+        self.process_update_expression(UpdateOperator::PrefixDecrement)
+    }
+
+    // 13.5 Unary Operators
+
+    fn process_unary_expression(&mut self, op: UnaryOperator) -> Result<(), Error> {
+        self.enqueue(Node::UnaryExpression(op));
+        self.replace(2, Detail::Expression);
+        Ok(())
+    }
+
+    // UnaryExpression[Yield, Await] :
+    //   delete UnaryExpression[?Yield, ?Await]
+    fn process_delete(&mut self) -> Result<(), Error> {
+        // TODO: 13.5.1.1 Static Semantics: Early Errors
+        self.process_unary_expression(UnaryOperator::Delete)
+    }
+
+    // UnaryExpression[Yield, Await] :
+    //   void UnaryExpression[?Yield, ?Await]
+    fn process_void(&mut self) -> Result<(), Error> {
+        self.process_unary_expression(UnaryOperator::Void)
+    }
+
+    // UnaryExpression[Yield, Await] :
+    //   typeof UnaryExpression[?Yield, ?Await]
+    fn process_typeof(&mut self) -> Result<(), Error> {
+        self.process_unary_expression(UnaryOperator::Typeof)
+    }
+
+    // UnaryExpression[Yield, Await] :
+    //   + UnaryExpression[?Yield, ?Await]
+    fn process_unary_plus(&mut self) -> Result<(), Error> {
+        self.process_unary_expression(UnaryOperator::Plus)
+    }
+
+    // UnaryExpression[Yield, Await] :
+    //   - UnaryExpression[?Yield, ?Await]
+    fn process_unary_negation(&mut self) -> Result<(), Error> {
+        self.process_unary_expression(UnaryOperator::Negation)
+    }
+
+    // UnaryExpression[Yield, Await] :
+    //   ~ UnaryExpression[?Yield, ?Await]
+    fn process_bitwise_not(&mut self) -> Result<(), Error> {
+        self.process_unary_expression(UnaryOperator::BitwiseNot)
+    }
+
+    // UnaryExpression[Yield, Await] :
+    //   ! UnaryExpression[?Yield, ?Await]
+    fn process_logical_not(&mut self) -> Result<(), Error> {
+        self.process_unary_expression(UnaryOperator::LogicalNot)
+    }
+
+    // 13.6 Exponentiation Operator
+
+    #[inline(always)]
+    fn process_binary_expression(&mut self, op: BinaryOperator) -> Result<(), Error> {
+        self.enqueue(Node::BinaryExpression(op));
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // ExponentiationExpression[Yield, Await] :
+    //   UpdateExpression[?Yield, ?Await] ** ExponentiationExpression[?Yield, ?Await]
+    fn process_exponentiation(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Exponentiation)
+    }
+
+    // 13.7 Multiplicative Operators
+
+    // MultiplicativeExpression[Yield, Await] :
+    //   MultiplicativeExpression[?Yield, ?Await] * ExponentiationExpression[?Yield, ?Await]
+    fn process_multiplication(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Multiplication)
+    }
+
+    // MultiplicativeExpression[Yield, Await] :
+    //   MultiplicativeExpression[?Yield, ?Await] / ExponentiationExpression[?Yield, ?Await]
+    fn process_division(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Division)
+    }
+
+    // MultiplicativeExpression[Yield, Await] :
+    //   MultiplicativeExpression[?Yield, ?Await] % ExponentiationExpression[?Yield, ?Await]
+    fn process_remainder(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Remainder)
+    }
+
+    // 13.8 Additive Operators
+
+    // AdditiveExpression[Yield, Await] :
+    //   AdditiveExpression[?Yield, ?Await] + MultiplicativeExpression[?Yield, ?Await]
+    fn process_addition(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Addition)
+    }
+
+    // AdditiveExpression[Yield, Await] :
+    //   AdditiveExpression[?Yield, ?Await] + MultiplicativeExpression[?Yield, ?Await]
+    fn process_subtraction(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Subtraction)
+    }
+
+    // 13.9 Bitwise Shift Operators
+
+    // ShiftExpression[Yield, Await] :
+    //   ShiftExpression[?Yield, ?Await] << AdditiveExpression[?Yield, ?Await]
+    fn process_left_shift(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::LeftShift)
+    }
+
+    // ShiftExpression[Yield, Await] :
+    //   ShiftExpression[?Yield, ?Await] >> AdditiveExpression[?Yield, ?Await]
+    fn process_right_shift(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::RightShift)
+    }
+
+    // ShiftExpression[Yield, Await] :
+    //   ShiftExpression[?Yield, ?Await] >>> AdditiveExpression[?Yield, ?Await]
+    fn process_unsigned_right_shift(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::UnsignedRightShift)
+    }
+
+    // 13.10 Relational Operators
+
+    // RelationalExpression[In, Yield, Await] :
+    //   RelationalExpression[?In, ?Yield, ?Await] < ShiftExpression[?Yield, ?Await]
+    fn process_less_than(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::LessThan)
+    }
+
+    // RelationalExpression[In, Yield, Await] :
+    //   RelationalExpression[?In, ?Yield, ?Await] > ShiftExpression[?Yield, ?Await]
+    fn process_greater_than(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::GreaterThan)
+    }
+
+    // RelationalExpression[In, Yield, Await] :
+    //   RelationalExpression[?In, ?Yield, ?Await] <= ShiftExpression[?Yield, ?Await]
+    fn process_less_than_or_equal(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::LessThanOrEqual)
+    }
+
+    // RelationalExpression[In, Yield, Await] :
+    //   RelationalExpression[?In, ?Yield, ?Await] >= ShiftExpression[?Yield, ?Await]
+    fn process_greater_than_or_equal(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::GreaterThanOrEqual)
+    }
+
+    // RelationalExpression[In, Yield, Await] :
+    //   RelationalExpression[?In, ?Yield, ?Await] instanceof ShiftExpression[?Yield, ?Await]
+    fn process_instanceof(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Instanceof)
+    }
+
+    // RelationalExpression[In, Yield, Await] :
+    //   RelationalExpression[?In, ?Yield, ?Await] in ShiftExpression[?Yield, ?Await]
+    fn process_in(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::In)
+    }
+
+    // 13.11 Equality Operators
+
+    // EqualityExpression[In, Yield, Await] :
+    //   EqualityExpression[?In, ?Yield, ?Await] == RelationalExpression[?In, ?Yield, ?Await]
+    fn process_equality(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Equality)
+    }
+
+    // EqualityExpression[In, Yield, Await] :
+    //   EqualityExpression[?In, ?Yield, ?Await] != RelationalExpression[?In, ?Yield, ?Await]
+    fn process_inequality(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::Inequality)
+    }
+
+    // EqualityExpression[In, Yield, Await] :
+    //   EqualityExpression[?In, ?Yield, ?Await] === RelationalExpression[?In, ?Yield, ?Await]
+    fn process_strict_equality(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::StrictEquality)
+    }
+
+    // EqualityExpression[In, Yield, Await] :
+    //   EqualityExpression[?In, ?Yield, ?Await] !== RelationalExpression[?In, ?Yield, ?Await]
+    fn process_strict_inequality(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::StrictInequality)
+    }
+
+    // 13.12 Binary Bitwise Operators
+
+    // BitwiseANDExpression[In, Yield, Await] :
+    //   BitwiseANDExpression[?In, ?Yield, ?Await] & EqualityExpression[?In, ?Yield, ?Await]
+    fn process_bitwise_and(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::BitwiseAnd)
+    }
+
+    // BitwiseXORExpression[In, Yield, Await] :
+    //   BitwiseXORExpression[?In, ?Yield, ?Await] ^ BitwiseANDExpression[?In, ?Yield, ?Await]
+    fn process_bitwise_xor(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::BitwiseXor)
+    }
+
+    // BitwiseORExpression[In, Yield, Await] :
+    //   BitwiseORExpression[?In, ?Yield, ?Await] | BitwiseXORExpression[?In, ?Yield, ?Await]
+    fn process_bitwise_or(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::BitwiseOr)
+    }
+
+    // 13.13 Binary Logical Operators
+
+    #[inline(always)]
+    fn process_logical_expression(&mut self, op: LogicalOperator) -> Result<(), Error> {
+        self.enqueue(Node::LogicalExpression(op));
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // LogicalANDExpression[In, Yield, Await] :
+    //   LogicalANDExpression[?In, ?Yield, ?Await] && BitwiseORExpression[?In, ?Yield, ?Await]
+    fn process_logical_and(&mut self) -> Result<(), Error> {
+        self.process_logical_expression(LogicalOperator::LogicalAnd)
+    }
+
+    // LogicalORExpression[In, Yield, Await] :
+    //   LogicalORExpression[?In, ?Yield, ?Await] || LogicalANDExpression[?In, ?Yield, ?Await]
+    fn process_logical_or(&mut self) -> Result<(), Error> {
+        self.process_logical_expression(LogicalOperator::LogicalOr)
+    }
+
+    // CoalesceExpression[In, Yield, Await] :
+    //   CoalesceExpressionHead[?In, ?Yield, ?Await] ?? BitwiseORExpression[?In, ?Yield, ?Await]
+    fn process_nullish(&mut self) -> Result<(), Error> {
+        self.process_logical_expression(LogicalOperator::Nullish)
+    }
+
+    // 13.14 Conditional Operator ( ? : )
+
+    // ConditionalExpression[In, Yield, Await] :
+    //   ShortCircuitExpression[?In, ?Yield, ?Await] ? AssignmentExpression[+In, ?Yield, ?Await]
+    //     : AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_conditional_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ConditionalExpression);
+        self.replace(5, Detail::Expression);
+        Ok(())
+    }
+
+    // 13.15 Assignment Operators
+
+    fn process_assignment_expression(&mut self, op: AssignmentOperator) -> Result<(), Error> {
+        self.enqueue(Node::AssignmentExpression(op));
+        self.replace(3, Detail::Expression);
+        Ok(())
+    }
+
+    // AssignmentExpression[In, Yield, Await] :
+    //   LeftHandSideExpression[?Yield, ?Await] = AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_assignment(&mut self) -> Result<(), Error> {
+        // TODO: 13.15.1 Static Semantics: Early Errors
+        self.process_assignment_expression(AssignmentOperator::Assignment)
+    }
+
+    // AssignmentExpression[In, Yield, Await] :
+    //   LeftHandSideExpression[?Yield, ?Await] AssignmentOperator
+    //     AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_assignment_operator(&mut self) -> Result<(), Error> {
+        // TODO: 13.15.1 Static Semantics: Early Errors
+        let kind = match self.stack[self.stack.len() - 2].detail {
+            Detail::Token(index) => self.tokens[index].kind,
+            _ => unreachable!(),
+        };
+        self.process_assignment_expression(match kind {
+            TokenKind::MulAssign => AssignmentOperator::MultiplicationAssignment,
+            TokenKind::DivAssign => AssignmentOperator::DivisionAssignment,
+            TokenKind::ModAssign => AssignmentOperator::RemainderAssignment,
+            TokenKind::AddAssign => AssignmentOperator::AdditionAssignment,
+            TokenKind::SubAssign => AssignmentOperator::SubtractionAssignment,
+            TokenKind::ShlAssign => AssignmentOperator::LeftShiftAssignment,
+            TokenKind::SarAssign => AssignmentOperator::RightShiftAssignment,
+            TokenKind::ShrAssign => AssignmentOperator::UnsignedRightShiftAssignment,
+            TokenKind::BitAndAssign => AssignmentOperator::BitwiseAndAssignment,
+            TokenKind::BitXorAssign => AssignmentOperator::BitwiseXorAssignment,
+            TokenKind::BitOrAssign => AssignmentOperator::BitwiseOrAssignment,
+            TokenKind::ExpAssign => AssignmentOperator::ExponentiationAssignment,
+            _ => unreachable!(),
+        })
+    }
+
+    // AssignmentExpression[In, Yield, Await] :
+    //   LeftHandSideExpression[?Yield, ?Await] &&= AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_logical_and_assignment(&mut self) -> Result<(), Error> {
+        // TODO: 13.15.1 Static Semantics: Early Errors
+        self.process_assignment_expression(AssignmentOperator::LogicalAndAssignment)
+    }
+
+    // AssignmentExpression[In, Yield, Await] :
+    //   LeftHandSideExpression[?Yield, ?Await] ||= AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_logical_or_assignment(&mut self) -> Result<(), Error> {
+        // TODO: 13.15.1 Static Semantics: Early Errors
+        self.process_assignment_expression(AssignmentOperator::LogicalOrAssignment)
+    }
+
+    // AssignmentExpression[In, Yield, Await] :
+    //   LeftHandSideExpression[?Yield, ?Await] ??= AssignmentExpression[?In, ?Yield, ?Await]
+    fn process_nullish_coalescing_assignment(&mut self) -> Result<(), Error> {
+        // TODO: 13.15.1 Static Semantics: Early Errors
+        self.process_assignment_expression(AssignmentOperator::NullishCoalescingAssignment)
+    }
+
+    // 14 ECMAScript Language: Statements and Declarations
+
+    fn process_statement(&mut self) -> Result<(), Error> {
+        // TODO
+        Ok(())
+    }
+
+    fn process_declaration(&mut self) -> Result<(), Error> {
+        self.replace(1, Detail::Declaration);
+        Ok(())
+    }
+
+    fn process_hoistable_declaration(&mut self) -> Result<(), Error> {
+        // TODO
+        Ok(())
+    }
+
+    // 14.2 Block
+
+    // BlockStatement[Yield, Await, Return] : Block[?Yield, ?Await, ?Return]
+    fn process_block_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::BlockStatement);
+        self.replace(1, Detail::Statement);
+        Ok(())
+    }
+
+    // Block[Yield, Await, Return] : { }
+    fn process_empty_block(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::Block);
+        Ok(())
+    }
+
+    // Block[Yield, Await, Return] : { StatementList[?Yield, ?Await, ?Return] }
+    fn process_block(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::EndScope);
+        self.replace(3, Detail::Block);
+        Ok(())
+    }
+
+    // StatementList[Yield, Await, Return] : StatementListItem[?Yield, ?Await, ?Return]
+    fn process_statement_list_head(&mut self) -> Result<(), Error> {
+        self.top_mut().detail = Detail::StatementList;
+        Ok(())
+    }
+
+    // StatementList[Yield, Await, Return] :
+    //   StatementList[?Yield, ?Await, ?Return] StatementListItem[?Yield, ?Await, ?Return]
+    fn process_statement_list_item(&mut self) -> Result<(), Error> {
+        self.pop();
+        self.top_mut().nodes_range.end = self.nodes.len();
+        self.top_mut().tokens_range.end = self.tokens.len();
+        Ok(())
+    }
+
+    // 14.3.1 Let and Const Declarations
+
+    // LexicalDeclaration[In, Yield, Await] : let BindingList[?In, ?Yield, ?Await] ;
+    fn process_let_declaration(&mut self) -> Result<(), Error> {
+        let index = self.stack.len() - 2;
+        let bound_names = match self.stack[index].detail {
+            Detail::BindingList(ref mut list) => {
+                std::mem::replace(&mut list.bound_names, Default::default())
+            }
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::LetDeclaration(bound_names.len() as u32));
+        self.replace(3, Detail::LetDeclaration(bound_names));
+        Ok(())
+    }
+
+    // LexicalDeclaration[In, Yield, Await] : const BindingList[?In, ?Yield, ?Await] ;
+    fn process_const_declaration(&mut self) -> Result<(), Error> {
+        let index = self.stack.len() - 2;
+        let (bound_names, nodes, has_initializer) = match self.stack[index].detail {
+            Detail::BindingList(ref mut list) => {
+                let bound_names = std::mem::replace(&mut list.bound_names, Default::default());
+                let nodes = std::mem::replace(&mut list.nodes, Default::default());
+                (bound_names, nodes, list.has_initializer)
+            }
+            _ => unreachable!(),
+        };
+        // 14.3.1.1 Static Semantics: Early Errors
+        if !has_initializer {
+            return Err(Error::SyntaxError);
+        }
+        for node_index in nodes.into_iter() {
+            self.nodes[node_index] = Node::LexicalBindingForConst;
+        }
+        self.enqueue(Node::ConstDeclaration(bound_names.len() as u32));
+        self.replace(3, Detail::ConstDeclaration(bound_names));
+        Ok(())
+    }
+
+    // BindingList[In, Yield, Await] : LexicalBinding[?In, ?Yield, ?Await]
+    fn process_binding_list_head(&mut self) -> Result<(), Error> {
+        let mut syntax = self.pop();
+        syntax.detail = Detail::BindingList(match syntax.detail {
+            Detail::LexicalBinding(decl) => decl,
+            _ => unreachable!(),
+        });
+        self.push(syntax);
+        Ok(())
+    }
+
+    // BindingList[In, Yield, Await] :
+    //   BindingList[?In, ?Yield, ?Await] COMMA LexicalBinding[?In, ?Yield, ?Await]
+    fn process_binding_list_item(&mut self) -> Result<(), Error> {
+        let decl = match self.pop().detail {
+            Detail::LexicalBinding(decl) => decl,
+            _ => unreachable!(),
+        };
+        self.pop(); // Token(,)
+        match self.top_mut().detail {
+            Detail::BindingList(ref mut list) => {
+                for name in decl.bound_names.into_iter() {
+                    // 14.3.1.1 Static Semantics: Early Errors
+                    if list.bound_names.contains(&name) {
+                        return Err(Error::SyntaxError);
+                    }
+                    list.bound_names.push(name);
+                }
+                for node_index in decl.nodes.into_iter() {
+                    list.nodes.push(node_index);
+                }
+                if !decl.has_initializer {
+                    list.has_initializer = false;
+                }
+                Ok(())
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    // LexicalBinding[In, Yield, Await] : BindingIdentifier[?Yield, ?Await]
+    fn process_lexical_binding_identifier(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+
+        // 14.3.1.1 Static Semantics: Early Errors
+        if symbol == SymbolTable::LET {
+            return Err(Error::SyntaxError);
+        }
+
+        let node_index = self.enqueue(Node::LexicalBinding);
+        self.replace(
+            1,
+            Detail::LexicalBinding(LexicalDeclarationSemantics {
+                bound_names: smallvec![symbol],
+                nodes: smallvec![node_index],
+                has_initializer: false,
+            }),
+        );
+
+        Ok(())
+    }
+
+    // LexicalBinding[In, Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
+    fn process_lexical_binding_identifier_with_initializer(&mut self) -> Result<(), Error> {
+        let symbol = match self.stack[self.stack.len() - 2].detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+
+        // 14.3.1.1 Static Semantics: Early Errors
+        if symbol == SymbolTable::LET {
+            return Err(Error::SyntaxError);
+        }
+
+        let node_index = self.enqueue(Node::LexicalBindingWithInitializer);
+        self.replace(
+            2,
+            Detail::LexicalBinding(LexicalDeclarationSemantics {
+                bound_names: smallvec![symbol],
+                nodes: smallvec![node_index],
+                has_initializer: true,
+            }),
+        );
+
+        Ok(())
+    }
+
+    // 14.3.3 Destructuring Binding Patterns
+
+    // BindingElement[Yield, Await] : SingleNameBinding[?Yield, ?Await]
+    fn process_binding_element(&mut self) -> Result<(), Error> {
+        let (symbol, has_initializer) = match self.top().detail {
+            Detail::SingleNameBinding(symbol, has_initializer) => (symbol, has_initializer),
+            _ => unreachable!(),
+        };
+        self.replace(
+            1,
+            Detail::BindingElement(BindingElement {
+                kind: BindingElementKind::SingleNameBinding(symbol),
+                has_initializer,
+            }),
+        );
+        let index = self.nodes.len() - 1;
+        self.nodes[index] = Node::BindingElement(has_initializer);
+        Ok(())
+    }
+
+    // SingleNameBinding[Yield, Await] : BindingIdentifier[?Yield, ?Await]
+    fn process_single_name_binding(&mut self) -> Result<(), Error> {
+        let symbol = match self.top().detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.replace(1, Detail::SingleNameBinding(symbol, false));
+        Ok(())
+    }
+
+    // SingleNameBinding[Yield, Await] :
+    //   BindingIdentifier[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]
+    fn process_single_name_binding_with_initializer(&mut self) -> Result<(), Error> {
+        let symbol = match self.stack[self.stack.len() - 2].detail {
+            Detail::BindingIdentifier(symbol) => symbol,
+            _ => unreachable!(),
+        };
+        self.replace(2, Detail::SingleNameBinding(symbol, true));
+        Ok(())
+    }
+
+    // 14.4 Empty Statement
+
+    // EmptyStatement : ;
+    fn process_empty_statement(&mut self) -> Result<(), Error> {
+        //self.check_token(TokenKind::Semicolon);
+        let node_index = self.enqueue(Node::EmptyStatement);
+        let syntax = self.top_mut();
+        syntax.detail = Detail::Statement;
+        syntax.nodes_range = node_index..(node_index + 1);
+        Ok(())
+    }
+
+    // 14.5 Expression Statement
+
+    // ExpressionStatement[Yield, Await] :
+    //   [lookahead ∉ { {, function, async [no LineTerminator here] function, class, let [ }]
+    //   Expression[+In, ?Yield, ?Await] ;
+    fn process_expression_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ExpressionStatement);
+        self.replace(2, Detail::Statement);
+        Ok(())
+    }
+
+    // 14.6 The if Statement
+
+    // IfStatement[Yield, Await, Return] :
+    //   if ( Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
+    //   else Statement[?Yield, ?Await, ?Return]
+    fn process_if_else_statement(&mut self) -> Result<(), Error> {
+        // TODO: 14.6.1 Static Semantics: Early Errors
+        self.enqueue(Node::IfElseStatement);
+        self.replace(7, Detail::Statement);
+        Ok(())
+    }
+
+    // IfStatement[Yield, Await, Return] :
+    //   if ( Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
+    //   [lookahead ≠ else]
+    fn process_if_statement(&mut self) -> Result<(), Error> {
+        // TODO: 14.6.1 Static Semantics: Early Errors
+        self.enqueue(Node::IfStatement);
+        self.replace(5, Detail::Statement);
+        Ok(())
+    }
+
+    // 14.10 The return Statement
+
+    // ReturnStatement[Yield, Await] : return ;
+    fn process_return_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ReturnStatement(0));
+        self.replace(2, Detail::Statement);
+        Ok(())
+    }
+
+    // ReturnStatement[Yield, Await] : return [no LineTerminator here] Expression[+In, ?Yield, ?Await] ;
+    fn process_return_value_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ReturnStatement(1));
+        self.replace(3, Detail::Statement);
+        Ok(())
+    }
+
+    // 15.9 Async Arrow Function Definitions
+
+    // CoverCallExpressionAndAsyncArrowHead[Yield, Await] :
+    //   MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+    fn process_cover_call_expression_and_async_arrow_head(&mut self) -> Result<(), Error> {
+        self.replace(2, Detail::CoverCallExpressionAndAsyncArrowHead);
+        Ok(())
+    }
+
+    // 15.1 Parameter Lists
+
+    // FormalParameters[Yield, Await] : [empty]
+    fn process_formal_parameters_empty(&mut self) -> Result<(), Error> {
+        let node_index = self.enqueue(Node::FormalParameters(0));
+        let token_index = self.tokens.len();
+        self.push(Syntax {
+            detail: Detail::FormalParameters(smallvec![]),
+            nodes_range: node_index..(node_index + 1),
+            tokens_range: token_index..token_index,
+        });
+        Ok(())
+    }
+
+    // FormalParameters[Yield, Await] : FormalParameterList[?Yield, ?Await]
+    fn process_formal_parameters_list(&mut self) -> Result<(), Error> {
+        let n = match self.top().detail {
+            Detail::FormalParameters(ref bound_names) => bound_names.len(),
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::FormalParameters(n as u32));
+        Ok(())
+    }
+
+    // FormalParameters[Yield, Await] : FormalParameterList[?Yield, ?Await] ,
+    fn process_formal_parameters_list_with_comma(&mut self) -> Result<(), Error> {
+        self.pop();
+        let n = match self.top().detail {
+            Detail::FormalParameters(ref bound_names) => bound_names.len(),
+            _ => unreachable!(),
+        };
+        self.enqueue(Node::FormalParameters(n as u32));
+        Ok(())
+    }
+
+    // FormalParameterList[Yield, Await] :
+    //   FormalParameterList[?Yield, ?Await] , FormalParameter[?Yield, ?Await]
+    fn process_formal_parameter_list(&mut self) -> Result<(), Error> {
+        let bound_names = match self.pop().detail {
+            Detail::FormalParameters(bound_names) => bound_names,
+            _ => unreachable!(),
+        };
+        match self.top_mut().detail {
+            Detail::FormalParameters(ref mut dest) => {
+                for name in bound_names.into_iter() {
+                    if dest.contains(&name) {
+                        return Err(Error::SyntaxError);
+                    }
+                    dest.push(name);
+                }
+            }
+            _ => unreachable!(),
+        }
+        Ok(())
+    }
+
+    // FormalParameter[Yield, Await] : BindingElement[?Yield, ?Await]
+    fn process_formal_parameter(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FormalParameter);
+        let bound_names = match self.top().detail {
+            Detail::BindingElement(ref binding) => match binding.kind {
+                BindingElementKind::SingleNameBinding(symbol) => smallvec![symbol],
+            },
+            _ => unreachable!(),
+        };
+        self.replace(1, Detail::FormalParameters(bound_names));
+        Ok(())
+    }
+
+    // 15.2 Function Definitions
+
+    // FunctionDeclaration[Yield, Await, Default] :
+    //   function BindingIdentifier[?Yield, ?Await] ( FormalParameters[~Yield, ~Await] )
+    //   { FunctionBody[~Yield, ~Await] }
+    fn process_function_declaration(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FunctionDeclaration);
+        self.replace(8, Detail::Declaration);
+        Ok(())
+    }
+
+    // FunctionStatementList[Yield, Await] : [empty]
+    fn process_function_statement_list_empty(&mut self) -> Result<(), Error> {
+        let node_index = self.nodes.len();
+        let token_index = self.tokens.len();
+        // 15.2.1 Static Semantics: Early Errors
+        self.push(Syntax {
+            detail: Detail::StatementList,
+            nodes_range: node_index..node_index,
+            tokens_range: token_index..token_index,
+        });
+        Ok(())
+    }
+
+    // 16.1 Scripts
+
+    fn process_empty_script(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn process_script(&mut self) -> Result<(), Error> {
+        self.pop();
+        Ok(())
     }
 }
 
 impl<'s, H> SyntaxHandler<'s> for Processor<'s, H>
 where
-    H: SemanticHandler<'s>,
+    H: NodeHandler<'s>,
 {
     type Artifact = H::Artifact;
     type Error = Error;
@@ -202,6 +1601,8 @@ where
 
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
         logger::debug!(event = "accept");
+        let nodes = std::mem::replace(&mut self.nodes, Default::default());
+        self.handler.handle_nodes(nodes.into_iter())?;
         self.handler.accept()
     }
 
@@ -214,35 +1615,19 @@ where
             end = %token.compute_end(&self.location),
         );
 
-        match token.kind {
-            TokenKind::NumericLiteral => {
-                // TODO: perform `NumericValue`
-                let value = token.lexeme.parse::<f64>().unwrap();
-                self.push(Syntax::NumericLiteral(NumericLiteral {
-                    value,
-                    raw: token.lexeme,
-                }));
-            }
-            TokenKind::StringLiteral => {
-                // TODO: perform `SV`
-                let value = token.lexeme.encode_utf16().collect();
-                self.push(Syntax::StringLiteral(StringLiteral {
-                    value,
-                    raw: token.lexeme,
-                }));
-            }
-            TokenKind::IdentifierName => {
-                // TODO: perform `StringValue`
-                let value = token.lexeme.encode_utf16().collect();
-                let symbol_table = self.handler.symbol_table_mut();
-                let symbol = symbol_table.intern(value);
-                self.push(Syntax::Identifier(Identifier {
-                    symbol,
-                    raw: token.lexeme,
-                }));
-            }
-            _ => (),
-        }
+        let node_index = self.nodes.len();
+        let token_index = self.tokens.len();
+
+        // Tokens coming from the `parser` module are held until refinements of permissive
+        // production rules in a statement are processed.
+        self.tokens.push(token.clone());
+
+        self.push(Syntax {
+            detail: Detail::Token(token_index),
+            nodes_range: node_index..node_index,
+            tokens_range: token_index..(token_index + 1),
+        });
+
         Ok(())
     }
 
@@ -263,581 +1648,6 @@ where
     fn location(&mut self, location: &Location) {
         logger::debug!(event = "location", %location);
         self.location = location.clone();
-    }
-}
-
-impl<'s, H> Processor<'s, H>
-where
-    H: SemanticHandler<'s>,
-{
-    fn syntax_error(&mut self) -> Result<(), Error> {
-        Err(Error::SyntaxError)
-    }
-
-    // 13.1.1 Static Semantics: Early Errors
-    //
-    // TODO: improve performance
-    // introduce a symbol table to intern identifier strings.
-
-    fn syntax_error_in_module(&mut self) -> Result<(), Error> {
-        if self.module {
-            Err(Error::SyntaxError)
-        } else {
-            Ok(())
-        }
-    }
-
-    fn syntax_error_in_strict_mode(&mut self) -> Result<(), Error> {
-        if self.strict_mode {
-            Err(Error::SyntaxError)
-        } else {
-            Ok(())
-        }
-    }
-
-    fn syntax_error_if_string_value_is_keyword_in_strict_mode(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::IMPLEMENTS
-            | SymbolTable::LET
-            | SymbolTable::PACKAGE
-            | SymbolTable::PRIVATE
-            | SymbolTable::PROTECTED
-            | SymbolTable::PUBLIC
-            | SymbolTable::STATIC
-            | SymbolTable::YIELD
-                if self.strict_mode =>
-            {
-                Err(Error::SyntaxError)
-            }
-            _ => Ok(()),
-        }
-    }
-
-    fn syntax_error_if_await(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::AWAIT => Err(Error::SyntaxError),
-            _ => Ok(()),
-        }
-    }
-
-    fn syntax_error_if_yield(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::YIELD => Err(Error::SyntaxError),
-            _ => Ok(()),
-        }
-    }
-
-    fn syntax_error_if_yield_or_await(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
-            _ => Ok(()),
-        }
-    }
-
-    fn syntax_error_if_arguments_or_eval(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
-                Err(Error::SyntaxError)
-            }
-            _ => Ok(()),
-        }
-    }
-
-    fn syntax_error_if_arguments_or_eval_or_await(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
-                Err(Error::SyntaxError)
-            }
-            SymbolTable::AWAIT => Err(Error::SyntaxError),
-            _ => Ok(()),
-        }
-    }
-
-    fn syntax_error_if_arguments_or_eval_or_yield(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
-                Err(Error::SyntaxError)
-            }
-            SymbolTable::YIELD => Err(Error::SyntaxError),
-            _ => Ok(()),
-        }
-    }
-
-    fn syntax_error_if_arguments_or_eval_or_yield_or_await(&mut self) -> Result<(), Error> {
-        let identifier = match self.last() {
-            Syntax::Identifier(identifier) => identifier,
-            _ => unreachable!(),
-        };
-        match identifier.symbol {
-            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
-                Err(Error::SyntaxError)
-            }
-            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
-            _ => Ok(()),
-        }
-    }
-
-    fn handle_identifier_reference(&mut self) -> Result<(), Error> {
-        let identifier = match self.pop() {
-            Some(Syntax::Identifier(identifier)) => identifier,
-            _ => unreachable!(),
-        };
-        self.push(Syntax::Identifier(identifier));
-        Ok(())
-    }
-
-    fn handle_identifier_reference_except_for_await(&mut self) -> Result<(), Error> {
-        let identifier = match self.pop() {
-            Some(Syntax::Identifier(identifier)) => identifier,
-            _ => unreachable!(),
-        };
-        if matches!(identifier.symbol, SymbolTable::AWAIT) {
-            return Err(Error::SyntaxError);
-        }
-        self.push(Syntax::Identifier(identifier));
-        Ok(())
-    }
-
-    fn handle_identifier_reference_except_for_yield(&mut self) -> Result<(), Error> {
-        let identifier = match self.pop() {
-            Some(Syntax::Identifier(identifier)) => identifier,
-            _ => unreachable!(),
-        };
-        if matches!(identifier.symbol, SymbolTable::AWAIT) {
-            return Err(Error::SyntaxError);
-        }
-        self.push(Syntax::Identifier(identifier));
-        Ok(())
-    }
-
-    fn handle_identifier_reference_except_for_yield_await(&mut self) -> Result<(), Error> {
-        let identifier = match self.pop() {
-            Some(Syntax::Identifier(identifier)) => identifier,
-            _ => unreachable!(),
-        };
-        if matches!(identifier.symbol, SymbolTable::YIELD | SymbolTable::AWAIT) {
-            return Err(Error::SyntaxError);
-        }
-        self.push(Syntax::Identifier(identifier));
-        Ok(())
-    }
-
-    fn handle_await_as_identifier_reference_in_script(&mut self) -> Result<(), Error> {
-        if self.module {
-            return Err(Error::SyntaxError);
-        }
-        self.handle_await_as_identifier_reference()
-    }
-
-    fn handle_yield_as_identifier_reference_in_non_strict_code(&mut self) -> Result<(), Error> {
-        if self.strict_mode {
-            return Err(Error::SyntaxError);
-        }
-        self.handle_yield_as_identifier_reference()
-    }
-
-    fn handle_await_as_identifier_reference(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Identifier(Identifier {
-            symbol: SymbolTable::AWAIT,
-            raw: "await",
-        }));
-        Ok(())
-    }
-
-    fn handle_yield_as_identifier_reference(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Identifier(Identifier {
-            symbol: SymbolTable::YIELD,
-            raw: "yield",
-        }));
-        Ok(())
-    }
-
-    fn handle_addition_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Addition);
-        Ok(())
-    }
-
-    fn handle_subtraction_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Subtraction);
-        Ok(())
-    }
-
-    fn handle_multiplication_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Multiplication);
-        Ok(())
-    }
-
-    fn handle_division_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Division);
-        Ok(())
-    }
-
-    fn handle_remainder_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Remainder);
-        Ok(())
-    }
-
-    fn handle_lt_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::LessThan);
-        Ok(())
-    }
-
-    fn handle_gt_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::GreaterThan);
-        Ok(())
-    }
-
-    fn handle_lte_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::LessThanOrEqual);
-        Ok(())
-    }
-
-    fn handle_gte_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::GreaterThanOrEqual);
-        Ok(())
-    }
-
-    fn handle_eq_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Equality);
-        Ok(())
-    }
-
-    fn handle_ne_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Inequality);
-        Ok(())
-    }
-
-    fn handle_strict_eq_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::StrictEquality);
-        Ok(())
-    }
-
-    fn handle_strict_ne_expression(&mut self) -> Result<(), Error> {
-        self.push(Syntax::StrictInequality);
-        Ok(())
-    }
-
-    fn handle_cpeaapl(&mut self) -> Result<(), Error> {
-        self.push(Syntax::Cpeaapl);
-        Ok(())
-    }
-
-    fn handle_call_expression(&mut self) -> Result<(), Error> {
-        self.pop(); // removes the cover syntax
-        logger::debug!(?self.queue);
-        while let Some(syntax) = self.fetch() {
-            self.dispatch(syntax)?;
-        }
-        self.handler.handle_call_expression()
-    }
-
-    fn handle_call_expression_or_async_arrow_head(&mut self) -> Result<(), Error> {
-        self.push(Syntax::CallExpressionOrAsyncArrowHead);
-        Ok(())
-    }
-
-    fn handle_maybe_arrow_formal_parameters(&mut self) -> Result<(), Error> {
-        self.push(Syntax::MaybeArrowFormalParameters);
-        Ok(())
-    }
-
-    fn handle_maybe_arrow_formal_parameters_empty(&mut self) -> Result<(), Error> {
-        self.push(Syntax::MaybeArrowFormalParametersEmpty);
-        Ok(())
-    }
-
-    fn handle_maybe_arrow_formal_rest_parameter(&mut self) -> Result<(), Error> {
-        self.push(Syntax::MaybeArrowFormalParametersRestParameter);
-        Ok(())
-    }
-
-    fn handle_maybe_arrow_formal_rest_pattern(&mut self) -> Result<(), Error> {
-        self.push(Syntax::MaybeArrowFormalParametersRestPattern);
-        Ok(())
-    }
-
-    fn handle_maybe_arrow_formal_parameters_with_rest_parameter(&mut self) -> Result<(), Error> {
-        self.push(Syntax::MaybeArrowFormalParametersWithRestParameter);
-        Ok(())
-    }
-
-    fn handle_maybe_arrow_formal_parameters_with_rest_pattern(&mut self) -> Result<(), Error> {
-        self.push(Syntax::MaybeArrowFormalParametersWithRestPattern);
-        Ok(())
-    }
-
-    fn handle_group_expression(&mut self) -> Result<(), Error> {
-        debug_assert!(matches!(self.last(), Syntax::Cpeaapl));
-        self.pop();
-        self.flush()
-    }
-
-    fn handle_assignment_expression(&mut self) -> Result<(), Error> {
-        // TODO: EE
-        self.push(Syntax::Assignment);
-        Ok(())
-    }
-
-    fn handle_then_block(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_then_block()
-    }
-
-    fn handle_else_block(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_else_block()
-    }
-
-    fn handle_conditional_expression(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_conditional_expression()
-    }
-
-    fn handle_expression_statement(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_expression_statement()
-    }
-
-    fn handle_block_statement(&mut self) -> Result<(), Error> {
-        // TODO
-        Ok(())
-    }
-
-    fn handle_if_else_statement(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_if_else_statement()
-    }
-
-    fn handle_if_statement(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_if_statement()
-    }
-
-    fn handle_statement(&mut self) -> Result<(), Error> {
-        self.handler.handle_statement()
-    }
-
-    fn handle_return_statement_0(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_return_statement(0)
-    }
-
-    fn handle_return_statement_1(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_return_statement(1)
-    }
-
-    fn handle_let_declaration(&mut self) -> Result<(), Error> {
-        logger::debug!(?self.queue);
-        // TODO: Check uniqueness of identifiers
-        self.handler.handle_start_let_declaration()?;
-        while let Some(syntax) = self.fetch() {
-            match syntax {
-                Syntax::Identifier(identifier) => {
-                    if identifier.symbol == SymbolTable::LET {
-                        return Err(Error::SyntaxError);
-                    }
-                    self.handler.handle_identifier(identifier)?;
-                }
-                Syntax::LexicalBinding => self.handler.handle_let_binding(false)?,
-                Syntax::LexicalBindingWithInitializer => self.handler.handle_let_binding(true)?,
-                _ => self.dispatch(syntax)?,
-            }
-        }
-        self.handler.handle_end_let_declaration()
-    }
-
-    fn handle_const_declaration(&mut self) -> Result<(), Error> {
-        logger::debug!(?self.queue);
-        // TODO: Check uniqueness of identifiers
-        self.handler.handle_start_const_declaration()?;
-        while let Some(syntax) = self.fetch() {
-            match syntax {
-                Syntax::Identifier(identifier) => {
-                    if identifier.symbol == SymbolTable::LET {
-                        return Err(Error::SyntaxError);
-                    }
-                    self.handler.handle_identifier(identifier)?;
-                }
-                Syntax::LexicalBinding => return Err(Error::SyntaxError),
-                Syntax::LexicalBindingWithInitializer => self.handler.handle_const_binding()?,
-                _ => self.dispatch(syntax)?,
-            }
-        }
-        self.handler.handle_end_const_declaration()
-    }
-
-    fn handle_lexical_binding(&mut self) -> Result<(), Error> {
-        self.push(Syntax::LexicalBinding);
-        Ok(())
-    }
-
-    fn handle_lexical_binding_with_initializer(&mut self) -> Result<(), Error> {
-        self.push(Syntax::LexicalBindingWithInitializer);
-        Ok(())
-    }
-
-    fn handle_function_declaration(&mut self) -> Result<(), Error> {
-        self.flush()?;
-        self.handler.handle_function_declaration()
-    }
-
-    fn handle_formal_parameter(&mut self) -> Result<(), Error> {
-        // TODO: count items
-        let identifier = match self.pop() {
-            Some(Syntax::Identifier(identifier)) => identifier,
-            _ => unreachable!(),
-        };
-        self.push(Syntax::FormalParameter(identifier.symbol));
-        Ok(())
-    }
-
-    fn handle_formal_parameter_list_head(&mut self) -> Result<(), Error> {
-        let symbol = match self.pop() {
-            Some(Syntax::FormalParameter(symbol)) => symbol,
-            _ => unreachable!(),
-        };
-        self.push(Syntax::FormalParameters(vec![symbol]));
-        Ok(())
-    }
-
-    fn handle_formal_parameter_list_item(&mut self) -> Result<(), Error> {
-        let symbol = match self.swap_pop() {
-            Some(Syntax::FormalParameter(symbol)) => symbol,
-            _ => unreachable!(),
-        };
-        match self.last_mut() {
-            Syntax::FormalParameters(formal_parameters) => formal_parameters.push(symbol),
-            _ => unreachable!(),
-        }
-        Ok(())
-    }
-
-    fn handle_formal_parameters_empty(&mut self) -> Result<(), Error> {
-        self.push(Syntax::FormalParameters(vec![]));
-        Ok(())
-    }
-
-    fn handle_function_signature(&mut self) -> Result<(), Error> {
-        logger::debug!(?self.queue);
-
-        let formal_parameters = match self.pop() {
-            Some(Syntax::FormalParameters(formal_parameters)) => formal_parameters,
-            _ => unreachable!(),
-        };
-
-        let identifier = match self.pop() {
-            Some(Syntax::Identifier(identifier)) => identifier,
-            _ => unreachable!(),
-        };
-
-        self.handler
-            .handle_function_signature(identifier.symbol, formal_parameters)
-    }
-
-    fn handle_function_body(&mut self) -> Result<(), Error> {
-        // TODO: early errors
-        Ok(())
-    }
-
-    fn handle_scope(&mut self) -> Result<(), Error> {
-        self.handler.handle_start_scope()
-    }
-
-    fn handle_block(&mut self) -> Result<(), Error> {
-        self.handler.handle_end_scope()
-    }
-
-    fn handle_arguments_empty(&mut self) -> Result<(), Error> {
-        self.push(Syntax::ArgumentList(true));
-        Ok(())
-    }
-
-    fn handle_argument_list_head(&mut self) -> Result<(), Error> {
-        self.push(Syntax::ArgumentList(false));
-        Ok(())
-    }
-
-    fn handle_argument_list_item(&mut self) -> Result<(), Error> {
-        self.push(Syntax::ArgumentListItem);
-        Ok(())
-    }
-
-    fn handle_empty_list(&mut self) -> Result<(), Error> {
-        self.push(Syntax::EmptyList);
-        Ok(())
-    }
-
-    fn handle_list_head(&mut self) -> Result<(), Error> {
-        // TODO
-        Ok(())
-    }
-
-    fn handle_list_item(&mut self) -> Result<(), Error> {
-        // TODO
-        Ok(())
-    }
-
-    fn flush(&mut self) -> Result<(), Error> {
-        logger::debug!(?self.queue);
-        while let Some(syntax) = self.fetch() {
-            self.dispatch(syntax)?;
-        }
-        Ok(())
-    }
-
-    fn dispatch(&mut self, syntax: Syntax<'s>) -> Result<(), Error> {
-        match syntax {
-            Syntax::NumericLiteral(literal) => self.handler.handle_numeric_literal(literal),
-            Syntax::StringLiteral(literal) => self.handler.handle_string_literal(literal),
-            Syntax::Identifier(identifier) => self.handler.handle_identifier(identifier),
-            Syntax::Addition => self.handler.handle_addition_expression(),
-            Syntax::Subtraction => self.handler.handle_subtraction_expression(),
-            Syntax::Multiplication => self.handler.handle_multiplication_expression(),
-            Syntax::Division => self.handler.handle_division_expression(),
-            Syntax::Remainder => self.handler.handle_remainder_expression(),
-            Syntax::LessThan => self.handler.handle_lt_expression(),
-            Syntax::GreaterThan => self.handler.handle_gt_expression(),
-            Syntax::LessThanOrEqual => self.handler.handle_lte_expression(),
-            Syntax::GreaterThanOrEqual => self.handler.handle_gte_expression(),
-            Syntax::Equality => self.handler.handle_eq_expression(),
-            Syntax::Inequality => self.handler.handle_ne_expression(),
-            Syntax::StrictEquality => self.handler.handle_strict_eq_expression(),
-            Syntax::StrictInequality => self.handler.handle_strict_ne_expression(),
-            Syntax::Assignment => self.handler.handle_assignment_expression(),
-            Syntax::EmptyList => Ok(()),
-            Syntax::ArgumentList(empty) => self.handler.handle_argument_list(empty),
-            Syntax::ArgumentListItem => self.handler.handle_argument_list_item(),
-            _ => unreachable!("{syntax:?}"),
-        }
     }
 }
 

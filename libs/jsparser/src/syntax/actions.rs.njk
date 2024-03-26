@@ -4,12 +4,12 @@
 // template: {{ template }}
 
 use super::Action;
-use super::SemanticHandler;
+use super::NodeHandler;
 use super::Processor;
 
 impl<'s, H> Processor<'s, H>
 where
-    H: SemanticHandler<'s>,
+    H: NodeHandler<'s>,
 {
     /// A constant variable of a list of semantic actions.
     ///

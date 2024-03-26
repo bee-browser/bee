@@ -59,6 +59,7 @@ class Compiler {
   void StartScope();
   void EndScope();
   void Return(size_t n);
+  void Void();
 
   void DumpStack();
 

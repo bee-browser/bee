@@ -23,10 +23,13 @@ pub use parser::ProductionRule;
 pub use symbol::Symbol;
 pub use symbol::SymbolTable;
 
-pub use syntax::Identifier;
-pub use syntax::NumericLiteral;
-pub use syntax::SemanticHandler;
-pub use syntax::StringLiteral;
+pub use syntax::AssignmentOperator;
+pub use syntax::BinaryOperator;
+pub use syntax::Node;
+pub use syntax::NodeHandler;
+pub use syntax::Processor;
+pub use syntax::UnaryOperator;
+pub use syntax::UpdateOperator;
 
 /// Errors.
 #[derive(Debug, thiserror::Error)]
@@ -39,14 +42,14 @@ pub enum Error {
 
 pub fn for_script<'s, H>(src: &'s str, handler: H) -> Parser<'s, syntax::Processor<H>>
 where
-    H: SemanticHandler<'s>,
+    H: NodeHandler<'s>,
 {
     Parser::for_script(src, syntax::Processor::new(handler, false))
 }
 
 pub fn for_module<'s, H>(src: &'s str, handler: H) -> Parser<'s, syntax::Processor<H>>
 where
-    H: SemanticHandler<'s>,
+    H: NodeHandler<'s>,
 {
     Parser::for_module(src, syntax::Processor::new(handler, true))
 }

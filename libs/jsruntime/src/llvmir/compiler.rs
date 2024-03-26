@@ -1,8 +1,7 @@
-use jsparser::Identifier;
-use jsparser::NumericLiteral;
-use jsparser::SemanticHandler;
-use jsparser::StringLiteral;
-use jsparser::Symbol;
+use jsparser::BinaryOperator;
+use jsparser::Error;
+use jsparser::Node;
+use jsparser::NodeHandler;
 use jsparser::SymbolTable;
 
 use super::bridge;
@@ -40,16 +39,8 @@ impl<'r> Drop for Compiler<'r> {
     }
 }
 
-impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
+impl<'r, 's> NodeHandler<'s> for Compiler<'r> {
     type Artifact = Module;
-
-    fn symbol_table(&mut self) -> &SymbolTable {
-        &self.runtime.symbol_table
-    }
-
-    fn symbol_table_mut(&mut self) -> &mut SymbolTable {
-        &mut self.runtime.symbol_table
-    }
 
     fn start(&mut self) {
         logger::debug!(event = "start");
@@ -58,354 +49,232 @@ impl<'r, 's> SemanticHandler<'s> for Compiler<'r> {
         }
     }
 
-    fn accept(&mut self) -> Result<Self::Artifact, jsparser::Error> {
+    fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
         let peer = unsafe { bridge::compiler_peer_end(self.peer) };
         Ok(Module { peer })
     }
 
-    fn handle_numeric_literal(
-        &mut self,
-        literal: NumericLiteral<'s>,
-    ) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_numeric_literal", literal.value);
-        unsafe {
-            bridge::compiler_peer_number(self.peer, literal.value);
-        }
-        Ok(())
-    }
-
-    fn handle_string_literal(&mut self, literal: StringLiteral<'s>) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_string_literal", literal.raw);
-        // TODO
-        Ok(())
-    }
-
-    fn handle_identifier(&mut self, identifier: Identifier) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_identifier", identifier.raw);
-        unsafe {
-            bridge::compiler_peer_symbol(self.peer, identifier.symbol.id());
-        }
-        Ok(())
-    }
-
-    fn handle_addition_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_addition_expression");
-        unsafe {
-            bridge::compiler_peer_add(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_subtraction_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_subtraction_expression");
-        unsafe {
-            bridge::compiler_peer_sub(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_multiplication_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_multiplication_expression");
-        unsafe {
-            bridge::compiler_peer_mul(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_division_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_division_expression");
-        unsafe {
-            bridge::compiler_peer_div(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_remainder_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_remainder_expression");
-        unsafe {
-            bridge::compiler_peer_rem(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_lt_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_lt_expression");
-        unsafe {
-            bridge::compiler_peer_lt(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_gt_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_gt_expression");
-        unsafe {
-            bridge::compiler_peer_gt(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_lte_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_lte_expression");
-        unsafe {
-            bridge::compiler_peer_lte(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_gte_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_gte_expression");
-        unsafe {
-            bridge::compiler_peer_gte(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_eq_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_eq_expression");
-        unsafe {
-            bridge::compiler_peer_eq(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_ne_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_ne_expression");
-        unsafe {
-            bridge::compiler_peer_ne(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_strict_eq_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_strict_eq_expression");
-        // TODO: check type
-        unsafe {
-            bridge::compiler_peer_eq(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_strict_ne_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_strict_ne_expression");
-        // TODO: check type
-        unsafe {
-            bridge::compiler_peer_ne(self.peer);
-        }
-        Ok(())
-    }
-
-    fn handle_call_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_call_expression");
-
-        unsafe {
-            bridge::compiler_peer_call(self.peer);
-        }
-
-        Ok(())
-    }
-
-    fn handle_assignment_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_assignment_expression");
-
-        unsafe {
-            bridge::compiler_peer_set(self.peer);
-        }
-
-        Ok(())
-    }
-
-    fn handle_then_block(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_then_block");
-
-        unsafe {
-            bridge::compiler_peer_to_boolean(self.peer);
-            bridge::compiler_peer_block(self.peer);
-        }
-
-        Ok(())
-    }
-
-    fn handle_else_block(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_else_block");
-
-        unsafe {
-            bridge::compiler_peer_block(self.peer);
-        }
-
-        Ok(())
-    }
-
-    fn handle_conditional_expression(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_conditional_expression");
-
-        unsafe {
-            bridge::compiler_peer_conditional_expression(self.peer);
-        }
-
-        Ok(())
-    }
-
-    fn handle_expression_statement(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_expression_statement");
-        // TODO
-        Ok(())
-    }
-
-    fn handle_return_statement(&mut self, n: usize) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_return_statement", n);
-        self.scope_stack.last_mut().unwrap().returned = true;
-        unsafe {
-            bridge::compiler_peer_return(self.peer, n);
-        }
-        Ok(())
-    }
-
-    fn handle_if_else_statement(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_if_else_statement");
-
-        unsafe {
-            bridge::compiler_peer_if_else_statement(self.peer);
-        }
-
-        Ok(())
-    }
-
-    fn handle_if_statement(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_if_statement");
-
-        unsafe {
-            bridge::compiler_peer_if_statement(self.peer);
-        }
-
-        Ok(())
-    }
-
-    fn handle_statement(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_statement");
-        // TODO
-        Ok(())
-    }
-
-    fn handle_function_signature(
-        &mut self,
-        symbol: Symbol,
-        formal_parameters: Vec<Symbol>,
-    ) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_function_signature");
-
-        let (func_id, func_name) = self.runtime.create_native_function(formal_parameters);
-        let name = func_name.as_ptr();
-        unsafe {
-            bridge::compiler_peer_declare_function(self.peer, symbol.id(), func_id.0);
-            bridge::compiler_peer_start_function(self.peer, name);
-            // TODO: arguments
-        }
-
-        self.scope_stack.push(Default::default());
-
-        Ok(())
-    }
-
-    fn handle_function_declaration(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_function_declaration");
-
-        self.scope_stack.pop();
-
-        unsafe {
-            bridge::compiler_peer_end_function(self.peer);
-        }
-
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn handle_start_let_declaration(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_start_let_declaration");
-        Ok(())
-    }
-
-    fn handle_let_binding(&mut self, with_init: bool) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_let_binding");
-
-        if with_init {
-            unsafe {
-                bridge::compiler_peer_declare_variable(self.peer);
+    fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error> {
+        for node in nodes {
+            logger::debug!(event = "handle_nodes", ?node);
+            match node {
+                Node::Null => {
+                    // TODO
+                }
+                Node::Boolean(_value) => {
+                    // TODO
+                }
+                Node::Number(value, ..) => unsafe {
+                    bridge::compiler_peer_number(self.peer, value);
+                },
+                Node::String(_value, ..) => {
+                    // TODO
+                }
+                Node::IdentifierReference(symbol) => unsafe {
+                    bridge::compiler_peer_symbol(self.peer, symbol.id());
+                },
+                Node::BindingIdentifier(symbol) => unsafe {
+                    bridge::compiler_peer_symbol(self.peer, symbol.id());
+                },
+                Node::LabelIdentifier(_symbol) => {
+                    // TODO
+                }
+                Node::ArgumentListHead(empty, _spread) => unsafe {
+                    bridge::compiler_peer_push_args(self.peer);
+                    if !empty {
+                        bridge::compiler_peer_push_arg(self.peer);
+                    }
+                },
+                Node::ArgumentListItem(_spread) => unsafe {
+                    bridge::compiler_peer_push_arg(self.peer);
+                },
+                Node::Arguments => {
+                    // TODO
+                }
+                Node::CallExpression => unsafe {
+                    bridge::compiler_peer_call(self.peer);
+                },
+                Node::UpdateExpression(_op) => {
+                    // TODO
+                }
+                Node::UnaryExpression(_op) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::Equality) => unsafe {
+                    bridge::compiler_peer_eq(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::Inequality) => unsafe {
+                    bridge::compiler_peer_ne(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::StrictEquality) => {
+                    // TODO: check type
+                    unsafe {
+                        bridge::compiler_peer_eq(self.peer);
+                    }
+                }
+                Node::BinaryExpression(BinaryOperator::StrictInequality) => {
+                    // TODO: check type
+                    unsafe {
+                        bridge::compiler_peer_ne(self.peer);
+                    }
+                }
+                Node::BinaryExpression(BinaryOperator::LessThan) => unsafe {
+                    bridge::compiler_peer_lt(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::LessThanOrEqual) => unsafe {
+                    bridge::compiler_peer_lte(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::GreaterThan) => unsafe {
+                    bridge::compiler_peer_gt(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::GreaterThanOrEqual) => unsafe {
+                    bridge::compiler_peer_gte(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::LeftShift) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::RightShift) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::UnsignedRightShift) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::Addition) => unsafe {
+                    bridge::compiler_peer_add(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::Subtraction) => unsafe {
+                    bridge::compiler_peer_sub(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::Multiplication) => unsafe {
+                    bridge::compiler_peer_mul(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::Division) => unsafe {
+                    bridge::compiler_peer_div(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::Remainder) => unsafe {
+                    bridge::compiler_peer_rem(self.peer);
+                },
+                Node::BinaryExpression(BinaryOperator::BitwiseOr) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::BitwiseXor) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::BitwiseAnd) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::In) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::Instanceof) => {
+                    // TODO
+                }
+                Node::BinaryExpression(BinaryOperator::Exponentiation) => {
+                    // TODO
+                }
+                Node::LogicalExpression(_op) => {
+                    // TODO
+                }
+                Node::ConditionalExpression => unsafe {
+                    bridge::compiler_peer_conditional_expression(self.peer);
+                },
+                Node::AssignmentExpression(_op) => unsafe {
+                    bridge::compiler_peer_set(self.peer);
+                },
+                Node::BlockStatement => {
+                    // TODO
+                }
+                Node::LexicalBinding => unsafe {
+                    bridge::compiler_peer_declare_undefined(self.peer);
+                },
+                Node::LexicalBindingWithInitializer => unsafe {
+                    bridge::compiler_peer_declare_variable(self.peer);
+                },
+                Node::LexicalBindingForConst => unsafe {
+                    bridge::compiler_peer_declare_const(self.peer);
+                },
+                Node::LetDeclaration(_n) => {
+                    // TODO
+                }
+                Node::ConstDeclaration(_n) => {
+                    // TODO
+                }
+                Node::BindingElement(_has_initializer) => {
+                    // TODO
+                }
+                Node::EmptyStatement => {
+                    // TODO
+                }
+                Node::ExpressionStatement => unsafe {
+                    bridge::compiler_peer_void(self.peer);
+                },
+                Node::IfElseStatement => unsafe {
+                    bridge::compiler_peer_if_else_statement(self.peer);
+                },
+                Node::IfStatement => unsafe {
+                    bridge::compiler_peer_if_statement(self.peer);
+                },
+                Node::ReturnStatement(n) => {
+                    self.scope_stack.last_mut().unwrap().returned = true;
+                    unsafe {
+                        bridge::compiler_peer_return(self.peer, n as usize);
+                    }
+                }
+                Node::FormalParameter => {
+                    // TODO
+                }
+                Node::FormalParameters(_n) => {
+                    // TODO
+                }
+                Node::FunctionDeclaration => {
+                    self.scope_stack.pop();
+                    unsafe {
+                        bridge::compiler_peer_end_function(self.peer);
+                    }
+                }
+                Node::ThenBlock => unsafe {
+                    bridge::compiler_peer_to_boolean(self.peer);
+                    bridge::compiler_peer_block(self.peer);
+                },
+                Node::ElseBlock => unsafe {
+                    bridge::compiler_peer_block(self.peer);
+                },
+                Node::StartScope => {
+                    self.scope_stack.push(Default::default());
+                    unsafe {
+                        bridge::compiler_peer_start_scope(self.peer);
+                    }
+                }
+                Node::EndScope => {
+                    if self.scope_stack.last().unwrap().returned {
+                        // The scope will be removed from the stack in `llvmir::call()`.
+                    } else {
+                        unsafe {
+                            bridge::compiler_peer_end_scope(self.peer);
+                        }
+                    }
+                }
+                Node::FunctionSignature(symbol, formal_parameters) => {
+                    let (func_id, func_name) =
+                        self.runtime.create_native_function(formal_parameters);
+                    let name = func_name.as_ptr();
+                    unsafe {
+                        bridge::compiler_peer_declare_function(self.peer, symbol.id(), func_id.0);
+                        bridge::compiler_peer_start_function(self.peer, name);
+                        // TODO: arguments
+                    }
+                    self.scope_stack.push(Default::default());
+                }
             }
-        } else {
-            unsafe {
-                bridge::compiler_peer_declare_undefined(self.peer);
-            }
-        }
-
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn handle_end_let_declaration(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_end_let_declaration");
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn handle_start_const_declaration(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_start_const_declaration");
-        Ok(())
-    }
-
-    fn handle_const_binding(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_const_binding");
-
-        unsafe {
-            bridge::compiler_peer_declare_const(self.peer);
-        }
-
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn handle_end_const_declaration(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_end_const_declaration");
-        Ok(())
-    }
-
-    fn handle_start_scope(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_start_scope");
-        self.scope_stack.push(Default::default());
-        unsafe {
-            bridge::compiler_peer_start_scope(self.peer);
+            // unsafe {
+            //     bridge::compiler_peer_dump_stack(self.peer);
+            // }
         }
         Ok(())
     }
 
-    fn handle_end_scope(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_end_scope");
-        if self.scope_stack.last().unwrap().returned {
-            // The scope will be removed from the stack in `llvmir::call()`.
-        } else {
-            unsafe {
-                bridge::compiler_peer_end_scope(self.peer);
-            }
-        }
-        Ok(())
-    }
-
-    fn handle_argument_list(&mut self, empty: bool) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_argument_list", empty);
-        unsafe {
-            bridge::compiler_peer_push_args(self.peer);
-            if !empty {
-                bridge::compiler_peer_push_arg(self.peer);
-            }
-        }
-        Ok(())
-    }
-
-    fn handle_argument_list_item(&mut self) -> Result<(), jsparser::Error> {
-        logger::debug!(event = "handle_argument_list_item");
-        unsafe {
-            bridge::compiler_peer_push_arg(self.peer);
-        }
-        Ok(())
+    fn symbol_table_mut(&mut self) -> &mut SymbolTable {
+        &mut self.runtime.symbol_table
     }
 }
