@@ -4,12 +4,12 @@
 // template: libs/jsparser/src/syntax/actions.rs.njk
 
 use super::Action;
+use super::NodeHandler;
 use super::Processor;
-use super::SemanticHandler;
 
 impl<'s, H> Processor<'s, H>
 where
-    H: SemanticHandler<'s>,
+    H: NodeHandler<'s>,
 {
     /// A constant variable of a list of semantic actions.
     ///
@@ -20,26 +20,55 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2099] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2100] = [
         // Script -> (empty)
-        Action::Undefined,
+        Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
-        Action::Nop,
+        Action::Invoke(Self::process_script, "process_script"),
         // Module -> (empty)
         Action::Undefined,
         // Module -> ModuleBody
+        Action::Undefined,
+        // ArrowFormalParameters -> LPAREN UniqueFormalParameters RPAREN
         Action::Undefined,
         // ScriptBody -> StatementList
         Action::Nop,
         // ModuleBody -> ModuleItemList
         Action::Undefined,
+        // UniqueFormalParameters -> FormalParameters
+        Action::Nop,
         // StatementList -> StatementListItem
-        Action::Invoke(Self::handle_list_head, "handle_list_head"),
+        Action::Invoke(
+            Self::process_statement_list_head,
+            "process_statement_list_head",
+        ),
         // StatementList -> StatementList StatementListItem
-        Action::Invoke(Self::handle_list_item, "handle_list_item"),
+        Action::Invoke(
+            Self::process_statement_list_item,
+            "process_statement_list_item",
+        ),
         // ModuleItemList -> ModuleItem
         Action::Undefined,
         // ModuleItemList -> ModuleItemList ModuleItem
+        Action::Undefined,
+        // FormalParameters -> (empty)
+        Action::Invoke(
+            Self::process_formal_parameters_empty,
+            "process_formal_parameters_empty",
+        ),
+        // FormalParameters -> FunctionRestParameter
+        Action::Undefined,
+        // FormalParameters -> FormalParameterList
+        Action::Invoke(
+            Self::process_formal_parameters_list,
+            "process_formal_parameters_list",
+        ),
+        // FormalParameters -> FormalParameterList COMMA
+        Action::Invoke(
+            Self::process_formal_parameters_list_with_comma,
+            "process_formal_parameters_list_with_comma",
+        ),
+        // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
         Action::Undefined,
         // StatementListItem -> Statement
         Action::Nop,
@@ -51,16 +80,25 @@ where
         Action::Undefined,
         // ModuleItem -> StatementListItem_Await
         Action::Undefined,
-        // Statement -> BlockStatement
+        // FunctionRestParameter -> BindingRestElement
+        Action::Undefined,
+        // FormalParameterList -> FormalParameter
         Action::Nop,
+        // FormalParameterList -> FormalParameterList COMMA FormalParameter
+        Action::Invoke(
+            Self::process_formal_parameter_list,
+            "process_formal_parameter_list",
+        ),
+        // Statement -> BlockStatement
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> VariableStatement
         Action::Undefined,
         // Statement -> EmptyStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> ExpressionStatement
-        Action::Invoke(Self::handle_statement, "handle_statement"),
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> IfStatement
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> BreakableStatement
         Action::Undefined,
         // Statement -> ContinueStatement
@@ -78,11 +116,11 @@ where
         // Statement -> DebuggerStatement
         Action::Undefined,
         // Declaration -> HoistableDeclaration
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // Declaration -> ClassDeclaration
         Action::Undefined,
         // Declaration -> LexicalDeclaration_In
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // ImportDeclaration -> IMPORT ImportClause FromClause SEMICOLON
         Action::Undefined,
         // ImportDeclaration -> IMPORT ModuleSpecifier SEMICOLON
@@ -105,21 +143,27 @@ where
         Action::Nop,
         // StatementListItem_Await -> Declaration_Await
         Action::Nop,
+        // BindingRestElement -> ELLIPSIS BindingIdentifier
+        Action::Undefined,
+        // BindingRestElement -> ELLIPSIS BindingPattern
+        Action::Undefined,
+        // FormalParameter -> BindingElement
+        Action::Invoke(Self::process_formal_parameter, "process_formal_parameter"),
         // BlockStatement -> Block
-        Action::Invoke(Self::handle_block_statement, "handle_block_statement"),
+        Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
         Action::Undefined,
         // EmptyStatement -> SEMICOLON
-        Action::Undefined,
+        Action::Invoke(Self::process_empty_statement, "process_empty_statement"),
         // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
         Action::Invoke(
-            Self::handle_expression_statement,
-            "handle_expression_statement",
+            Self::process_expression_statement,
+            "process_expression_statement",
         ),
         // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement
-        Action::Invoke(Self::handle_if_else_statement, "handle_if_else_statement"),
+        Action::Invoke(Self::process_if_else_statement, "process_if_else_statement"),
         // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])
-        Action::Invoke(Self::handle_if_statement, "handle_if_statement"),
+        Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement -> IterationStatement
         Action::Undefined,
         // BreakableStatement -> SwitchStatement
@@ -147,7 +191,10 @@ where
         // DebuggerStatement -> DEBUGGER SEMICOLON
         Action::Undefined,
         // HoistableDeclaration -> FunctionDeclaration
-        Action::Nop,
+        Action::Invoke(
+            Self::process_hoistable_declaration,
+            "process_hoistable_declaration",
+        ),
         // HoistableDeclaration -> GeneratorDeclaration
         Action::Undefined,
         // HoistableDeclaration -> AsyncFunctionDeclaration
@@ -157,9 +204,9 @@ where
         // ClassDeclaration -> CLASS BindingIdentifier ClassTail
         Action::Undefined,
         // LexicalDeclaration_In -> LET BindingList_In SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // ImportClause -> ImportedDefaultBinding
         Action::Undefined,
         // ImportClause -> NameSpaceImport
@@ -189,13 +236,16 @@ where
         // VariableStatement_Await -> VAR VariableDeclarationList_In_Await SEMICOLON
         Action::Undefined,
         // Declaration_Await -> HoistableDeclaration_Await
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // Declaration_Await -> ClassDeclaration_Await
         Action::Undefined,
         // Declaration_Await -> LexicalDeclaration_In_Await
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // HoistableDeclaration_Await_Default -> FunctionDeclaration_Await_Default
-        Action::Nop,
+        Action::Invoke(
+            Self::process_hoistable_declaration,
+            "process_hoistable_declaration",
+        ),
         // HoistableDeclaration_Await_Default -> GeneratorDeclaration_Await_Default
         Action::Undefined,
         // HoistableDeclaration_Await_Default -> AsyncFunctionDeclaration_Await_Default
@@ -207,34 +257,43 @@ where
         // ClassDeclaration_Await_Default -> CLASS ClassTail_Await
         Action::Undefined,
         // AssignmentExpression_In_Await -> ConditionalExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // AssignmentExpression_In_Await -> ArrowFunction_In_Await
         Action::Undefined,
         // AssignmentExpression_In_Await -> AsyncArrowFunction_In_Await
         Action::Undefined,
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await ASSIGN AssignmentExpression_In_Await
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await AssignmentOperator AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await AND_ASSIGN AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await OR_ASSIGN AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // Statement_Await -> BlockStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> VariableStatement_Await
         Action::Undefined,
         // Statement_Await -> EmptyStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> ExpressionStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> IfStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> BreakableStatement_Await
         Action::Undefined,
         // Statement_Await -> ContinueStatement_Await
@@ -251,10 +310,35 @@ where
         Action::Undefined,
         // Statement_Await -> DebuggerStatement
         Action::Undefined,
-        // Block -> LBRACE RBRACE
+        // BindingIdentifier -> Identifier
+        Action::Invoke(
+            Self::process_binding_identifier_except_for_arguments_eval_in_strict,
+            "process_binding_identifier_except_for_arguments_eval_in_strict",
+        ),
+        // BindingIdentifier -> YIELD
+        Action::Invoke(
+            Self::process_binding_identifier_only_in_non_strict,
+            "process_binding_identifier_only_in_non_strict",
+        ),
+        // BindingIdentifier -> AWAIT
+        Action::Invoke(
+            Self::process_binding_identifier_only_in_script,
+            "process_binding_identifier_only_in_script",
+        ),
+        // BindingPattern -> ObjectBindingPattern
         Action::Undefined,
+        // BindingPattern -> ArrayBindingPattern
+        Action::Undefined,
+        // BindingElement -> SingleNameBinding
+        Action::Invoke(Self::process_binding_element, "process_binding_element"),
+        // BindingElement -> BindingPattern
+        Action::Undefined,
+        // BindingElement -> BindingPattern Initializer_In
+        Action::Undefined,
+        // Block -> LBRACE RBRACE
+        Action::Invoke(Self::process_empty_block, "process_empty_block"),
         // Block -> LBRACE _SCOPE_ StatementList RBRACE
-        Action::Invoke(Self::handle_block, "handle_block"),
+        Action::Invoke(Self::process_block, "process_block"),
         // VariableDeclarationList_In -> VariableDeclaration_In
         Action::Undefined,
         // VariableDeclarationList_In -> VariableDeclarationList_In COMMA VariableDeclaration_In
@@ -264,9 +348,9 @@ where
         // Expression_In -> Expression_In COMMA AssignmentExpression_In
         Action::Undefined,
         // _THEN_BLOCK_ -> (empty)
-        Action::Invoke(Self::handle_then_block, "handle_then_block"),
+        Action::Invoke(Self::process_then_block, "process_then_block"),
         // _ELSE_BLOCK_ -> (empty)
-        Action::Invoke(Self::handle_else_block, "handle_else_block"),
+        Action::Invoke(Self::process_else_block, "process_else_block"),
         // IterationStatement -> DoWhileStatement
         Action::Undefined,
         // IterationStatement -> WhileStatement
@@ -278,14 +362,17 @@ where
         // SwitchStatement -> SWITCH LPAREN Expression_In RPAREN CaseBlock
         Action::Undefined,
         // LabelIdentifier -> Identifier
-        Action::Nop,
+        Action::Invoke(Self::process_label_identifier, "process_label_identifier"),
         // LabelIdentifier -> YIELD
         Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
+            Self::process_label_identifier_only_in_non_strict,
+            "process_label_identifier_only_in_non_strict",
         ),
         // LabelIdentifier -> AWAIT
-        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
+        Action::Invoke(
+            Self::process_label_identifier_only_in_script,
+            "process_label_identifier_only_in_script",
+        ),
         // LabelledItem -> Statement
         Action::Undefined,
         // LabelledItem -> FunctionDeclaration
@@ -298,8 +385,8 @@ where
         Action::Undefined,
         // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
-            Self::handle_function_declaration,
-            "handle_function_declaration",
+            Self::process_function_declaration,
+            "process_function_declaration",
         ),
         // GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -307,18 +394,6 @@ where
         Action::Undefined,
         // AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
-        // BindingIdentifier -> Identifier
-        Action::Invoke(
-            Self::syntax_error_if_arguments_or_eval,
-            "syntax_error_if_arguments_or_eval",
-        ),
-        // BindingIdentifier -> YIELD
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // BindingIdentifier -> AWAIT
-        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
         // ClassTail -> LBRACE RBRACE
         Action::Undefined,
         // ClassTail -> ClassHeritage LBRACE RBRACE
@@ -328,9 +403,9 @@ where
         // ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
         Action::Undefined,
         // BindingList_In -> LexicalBinding_In
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_In -> BindingList_In COMMA LexicalBinding_In
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // ImportedDefaultBinding -> ImportedBinding
         Action::Undefined,
         // NameSpaceImport -> MUL AS ImportedBinding
@@ -354,7 +429,10 @@ where
         // VariableDeclarationList_In_Await -> VariableDeclarationList_In_Await COMMA VariableDeclaration_In_Await
         Action::Undefined,
         // HoistableDeclaration_Await -> FunctionDeclaration_Await
-        Action::Nop,
+        Action::Invoke(
+            Self::process_hoistable_declaration,
+            "process_hoistable_declaration",
+        ),
         // HoistableDeclaration_Await -> GeneratorDeclaration_Await
         Action::Undefined,
         // HoistableDeclaration_Await -> AsyncFunctionDeclaration_Await
@@ -364,13 +442,13 @@ where
         // ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
         Action::Undefined,
         // LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
-            Self::handle_function_declaration,
-            "handle_function_declaration",
+            Self::process_function_declaration,
+            "process_function_declaration",
         ),
         // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Undefined,
@@ -388,13 +466,13 @@ where
         Action::Undefined,
         // BindingIdentifier_Await -> Identifier
         Action::Invoke(
-            Self::syntax_error_if_arguments_or_eval_or_await,
-            "syntax_error_if_arguments_or_eval_or_await",
+            Self::process_binding_identifier_except_for_await,
+            "process_binding_identifier_except_for_await",
         ),
         // BindingIdentifier_Await -> YIELD
         Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
+            Self::process_binding_identifier,
+            "process_binding_identifier",
         ),
         // BindingIdentifier_Await -> AWAIT
         Action::Invoke(Self::syntax_error, "syntax_error"),
@@ -407,11 +485,11 @@ where
         // ClassTail_Await -> ClassHeritage_Await LBRACE ClassBody_Await RBRACE
         Action::Undefined,
         // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Await
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
         Action::Undefined,
@@ -420,43 +498,46 @@ where
         // AsyncArrowFunction_In_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
         Action::Undefined,
         // LeftHandSideExpression_Await -> NewExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // LeftHandSideExpression_Await -> CallExpression_Await
         Action::Nop,
         // LeftHandSideExpression_Await -> OptionalExpression_Await
         Action::Undefined,
         // AssignmentOperator -> MUL_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> DIV_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> MOD_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> ADD_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> SUB_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> SHL_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> SAR_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> SHR_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> BIT_AND_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> BIT_XOR_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> BIT_OR_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // AssignmentOperator -> EXP_ASSIGN
-        Action::Undefined,
+        Action::Nop,
         // BlockStatement_Await -> Block_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_expression_statement,
+            "process_expression_statement",
+        ),
         // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE _ELSE_BLOCK_ Statement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_if_else_statement, "process_if_else_statement"),
         // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])
-        Action::Undefined,
+        Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await -> IterationStatement_Await
         Action::Undefined,
         // BreakableStatement_Await -> SwitchStatement_Await
@@ -481,8 +562,50 @@ where
         Action::Undefined,
         // TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
         Action::Undefined,
+        // Identifier -> IdentifierNameButNotReservedWord
+        Action::Invoke(Self::process_identifier, "process_identifier"),
+        // ObjectBindingPattern -> LBRACE RBRACE
+        Action::Undefined,
+        // ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
+        Action::Undefined,
+        // ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
+        Action::Undefined,
+        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
+        Action::Undefined,
+        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK Elision RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
+        Action::Undefined,
+        // SingleNameBinding -> BindingIdentifier
+        Action::Invoke(
+            Self::process_single_name_binding,
+            "process_single_name_binding",
+        ),
+        // SingleNameBinding -> BindingIdentifier Initializer_In
+        Action::Invoke(
+            Self::process_single_name_binding_with_initializer,
+            "process_single_name_binding_with_initializer",
+        ),
+        // Initializer_In -> ASSIGN AssignmentExpression_In
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // _SCOPE_ -> (empty)
-        Action::Invoke(Self::handle_scope, "handle_scope"),
+        Action::Invoke(Self::process_scope, "process_scope"),
         // VariableDeclaration_In -> BindingIdentifier
         Action::Undefined,
         // VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -496,18 +619,27 @@ where
         // AssignmentExpression_In -> AsyncArrowFunction_In
         Action::Undefined,
         // AssignmentExpression_In -> LeftHandSideExpression ASSIGN AssignmentExpression_In
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression_In -> LeftHandSideExpression AssignmentOperator AssignmentExpression_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN AssignmentExpression_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN AssignmentExpression_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression_In
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
         Action::Undefined,
         // WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
@@ -568,70 +700,76 @@ where
         Action::Undefined,
         // CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE
         Action::Undefined,
-        // Identifier -> IdentifierNameButNotReservedWord
-        Action::Nop,
         // CatchParameter -> BindingIdentifier
         Action::Undefined,
         // CatchParameter -> BindingPattern
         Action::Undefined,
-        // FormalParameters -> (empty)
-        Action::Invoke(
-            Self::handle_formal_parameters_empty,
-            "handle_formal_parameters_empty",
-        ),
-        // FormalParameters -> FunctionRestParameter
-        Action::Undefined,
-        // FormalParameters -> FormalParameterList
-        Action::Nop,
-        // FormalParameters -> FormalParameterList COMMA
-        Action::Nop,
-        // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
-        Action::Undefined,
         // _FUNCTION_SIGNATURE_ -> (empty)
-        Action::Invoke(Self::handle_function_signature, "handle_function_signature"),
+        Action::Invoke(
+            Self::process_function_signature,
+            "process_function_signature",
+        ),
         // FunctionBody -> FunctionStatementList
-        Action::Invoke(Self::handle_function_body, "handle_function_body"),
+        Action::Nop,
         // FormalParameters_Yield -> (empty)
         Action::Invoke(
-            Self::handle_formal_parameters_empty,
-            "handle_formal_parameters_empty",
+            Self::process_formal_parameters_empty,
+            "process_formal_parameters_empty",
         ),
         // FormalParameters_Yield -> FunctionRestParameter_Yield
         Action::Undefined,
         // FormalParameters_Yield -> FormalParameterList_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameters_list,
+            "process_formal_parameters_list",
+        ),
         // FormalParameters_Yield -> FormalParameterList_Yield COMMA
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameters_list_with_comma,
+            "process_formal_parameters_list_with_comma",
+        ),
         // FormalParameters_Yield -> FormalParameterList_Yield COMMA FunctionRestParameter_Yield
         Action::Undefined,
         // GeneratorBody -> FunctionBody_Yield
         Action::Undefined,
         // FormalParameters_Await -> (empty)
         Action::Invoke(
-            Self::handle_formal_parameters_empty,
-            "handle_formal_parameters_empty",
+            Self::process_formal_parameters_empty,
+            "process_formal_parameters_empty",
         ),
         // FormalParameters_Await -> FunctionRestParameter_Await
         Action::Undefined,
         // FormalParameters_Await -> FormalParameterList_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameters_list,
+            "process_formal_parameters_list",
+        ),
         // FormalParameters_Await -> FormalParameterList_Await COMMA
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameters_list_with_comma,
+            "process_formal_parameters_list_with_comma",
+        ),
         // FormalParameters_Await -> FormalParameterList_Await COMMA FunctionRestParameter_Await
         Action::Undefined,
         // AsyncFunctionBody -> FunctionBody_Await
         Action::Undefined,
         // FormalParameters_Yield_Await -> (empty)
         Action::Invoke(
-            Self::handle_formal_parameters_empty,
-            "handle_formal_parameters_empty",
+            Self::process_formal_parameters_empty,
+            "process_formal_parameters_empty",
         ),
         // FormalParameters_Yield_Await -> FunctionRestParameter_Yield_Await
         Action::Undefined,
         // FormalParameters_Yield_Await -> FormalParameterList_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameters_list,
+            "process_formal_parameters_list",
+        ),
         // FormalParameters_Yield_Await -> FormalParameterList_Yield_Await COMMA
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameters_list_with_comma,
+            "process_formal_parameters_list_with_comma",
+        ),
         // FormalParameters_Yield_Await -> FormalParameterList_Yield_Await COMMA FunctionRestParameter_Yield_Await
         Action::Undefined,
         // AsyncGeneratorBody -> FunctionBody_Yield_Await
@@ -641,11 +779,14 @@ where
         // ClassBody -> ClassElementList
         Action::Undefined,
         // LexicalBinding_In -> BindingIdentifier
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding_In -> BindingIdentifier Initializer_In
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_In -> BindingPattern Initializer_In
         Action::Undefined,
@@ -777,8 +918,8 @@ where
         Action::Undefined,
         // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
-            Self::handle_function_declaration,
-            "handle_function_declaration",
+            Self::process_function_declaration,
+            "process_function_declaration",
         ),
         // GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -787,17 +928,17 @@ where
         // AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
         // BindingList_In_Await -> LexicalBinding_In_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_In_Await -> BindingList_In_Await COMMA LexicalBinding_In_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // ClassHeritage_Await -> EXTENDS LeftHandSideExpression_Await
         Action::Undefined,
         // ClassBody_Await -> ClassElementList_Await
         Action::Undefined,
         // ShortCircuitExpression_In_Await -> LogicalORExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // ShortCircuitExpression_In_Await -> CoalesceExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // ArrowParameters_Await -> BindingIdentifier_Await
         Action::Undefined,
         // ArrowParameters_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
@@ -814,15 +955,15 @@ where
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await
         Action::Invoke(
-            Self::handle_call_expression_or_async_arrow_head,
-            "handle_call_expression_or_async_arrow_head",
+            Self::process_cover_call_expression_and_async_arrow_head,
+            "process_cover_call_expression_and_async_arrow_head",
         ),
         // NewExpression_Await -> MemberExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // NewExpression_Await -> NEW NewExpression_Await
         Action::Undefined,
         // CallExpression_Await -> CoverCallExpressionAndAsyncArrowHead_Await
-        Action::Invoke(Self::handle_call_expression, "handle_call_expression"),
+        Action::Invoke(Self::process_call_expression, "process_call_expression"),
         // CallExpression_Await -> SuperCall_Await
         Action::Undefined,
         // CallExpression_Await -> ImportCall_Await
@@ -844,11 +985,11 @@ where
         // OptionalExpression_Await -> OptionalExpression_Await OptionalChain_Await
         Action::Undefined,
         // Block_Await -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_empty_block, "process_empty_block"),
         // Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_block, "process_block"),
         // Expression_In_Await -> AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // Expression_In_Await -> Expression_In_Await COMMA AssignmentExpression_In_Await
         Action::Undefined,
         // IterationStatement_Await -> DoWhileStatement_Await
@@ -862,12 +1003,12 @@ where
         // SwitchStatement_Await -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await
         Action::Undefined,
         // LabelIdentifier_Await -> Identifier
-        Action::Invoke(Self::syntax_error_if_await, "syntax_error_if_await"),
-        // LabelIdentifier_Await -> YIELD
         Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
+            Self::process_label_identifier_except_for_await,
+            "process_label_identifier_except_for_await",
         ),
+        // LabelIdentifier_Await -> YIELD
+        Action::Invoke(Self::process_label_identifier, "process_label_identifier"),
         // LabelledItem_Await -> Statement_Await
         Action::Undefined,
         // LabelledItem_Await -> FunctionDeclaration_Await
@@ -878,18 +1019,60 @@ where
         Action::Undefined,
         // Finally_Await -> FINALLY Block_Await
         Action::Undefined,
-        // Initializer_In -> ASSIGN AssignmentExpression_In
+        // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
         Action::Nop,
-        // BindingPattern -> ObjectBindingPattern
+        // IdentifierNameButNotReservedWord -> LET
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> STATIC
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> IMPLEMENTS
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> INTERFACE
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PACKAGE
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PRIVATE
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PROTECTED
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PUBLIC
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> AS
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> ASYNC
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> FROM
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> GET
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> META
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> OF
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> SET
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> TARGET
+        Action::Nop,
+        // BindingRestProperty -> ELLIPSIS BindingIdentifier
         Action::Undefined,
-        // BindingPattern -> ArrayBindingPattern
+        // BindingPropertyList -> BindingProperty
+        Action::Undefined,
+        // BindingPropertyList -> BindingPropertyList COMMA BindingProperty
+        Action::Undefined,
+        // Elision -> COMMA
+        Action::Undefined,
+        // Elision -> Elision COMMA
+        Action::Undefined,
+        // BindingElementList -> BindingElisionElement
+        Action::Undefined,
+        // BindingElementList -> BindingElementList COMMA BindingElisionElement
         Action::Undefined,
         // ConditionalExpression_In -> ShortCircuitExpression_In
         Action::Nop,
         // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
         Action::Undefined,
@@ -904,7 +1087,7 @@ where
         // LeftHandSideExpression -> OptionalExpression
         Action::Undefined,
         // Expression -> AssignmentExpression
-        Action::Undefined,
+        Action::Nop,
         // Expression -> Expression COMMA AssignmentExpression
         Action::Undefined,
         // VariableDeclarationList -> VariableDeclaration
@@ -912,9 +1095,9 @@ where
         // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
         Action::Undefined,
         // LexicalDeclaration -> LET BindingList SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration -> CONST BindingList SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // ForBinding -> BindingIdentifier
         Action::Undefined,
         // ForBinding -> BindingPattern
@@ -931,107 +1114,46 @@ where
         Action::Undefined,
         // DefaultClause -> DEFAULT COLON StatementList
         Action::Undefined,
-        // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
-        Action::Invoke(
-            Self::syntax_error_if_string_value_is_keyword_in_strict_mode,
-            "syntax_error_if_string_value_is_keyword_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> LET
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> STATIC
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> IMPLEMENTS
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> INTERFACE
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> PACKAGE
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> PRIVATE
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> PROTECTED
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> PUBLIC
-        Action::Invoke(
-            Self::syntax_error_in_strict_mode,
-            "syntax_error_in_strict_mode",
-        ),
-        // IdentifierNameButNotReservedWord -> AS
-        Action::Undefined,
-        // IdentifierNameButNotReservedWord -> ASYNC
-        Action::Undefined,
-        // IdentifierNameButNotReservedWord -> FROM
-        Action::Undefined,
-        // IdentifierNameButNotReservedWord -> GET
-        Action::Undefined,
-        // IdentifierNameButNotReservedWord -> META
-        Action::Undefined,
-        // IdentifierNameButNotReservedWord -> OF
-        Action::Undefined,
-        // IdentifierNameButNotReservedWord -> SET
-        Action::Undefined,
-        // IdentifierNameButNotReservedWord -> TARGET
-        Action::Undefined,
-        // FunctionRestParameter -> BindingRestElement
-        Action::Undefined,
-        // FormalParameterList -> FormalParameter
-        Action::Invoke(
-            Self::handle_formal_parameter_list_head,
-            "handle_formal_parameter_list_head",
-        ),
-        // FormalParameterList -> FormalParameterList COMMA FormalParameter
-        Action::Invoke(
-            Self::handle_formal_parameter_list_item,
-            "handle_formal_parameter_list_item",
-        ),
         // FunctionStatementList -> (empty)
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(
+            Self::process_function_statement_list_empty,
+            "process_function_statement_list_empty",
+        ),
         // FunctionStatementList -> StatementList_Return
         Action::Nop,
         // FunctionRestParameter_Yield -> BindingRestElement_Yield
         Action::Undefined,
         // FormalParameterList_Yield -> FormalParameter_Yield
-        Action::Undefined,
+        Action::Nop,
         // FormalParameterList_Yield -> FormalParameterList_Yield COMMA FormalParameter_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameter_list,
+            "process_formal_parameter_list",
+        ),
         // FunctionBody_Yield -> FunctionStatementList_Yield
-        Action::Invoke(Self::handle_function_body, "handle_function_body"),
+        Action::Nop,
         // FunctionRestParameter_Await -> BindingRestElement_Await
         Action::Undefined,
         // FormalParameterList_Await -> FormalParameter_Await
-        Action::Undefined,
+        Action::Nop,
         // FormalParameterList_Await -> FormalParameterList_Await COMMA FormalParameter_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameter_list,
+            "process_formal_parameter_list",
+        ),
         // FunctionBody_Await -> FunctionStatementList_Await
-        Action::Invoke(Self::handle_function_body, "handle_function_body"),
+        Action::Nop,
         // FunctionRestParameter_Yield_Await -> BindingRestElement_Yield_Await
         Action::Undefined,
         // FormalParameterList_Yield_Await -> FormalParameter_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // FormalParameterList_Yield_Await -> FormalParameterList_Yield_Await COMMA FormalParameter_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_formal_parameter_list,
+            "process_formal_parameter_list",
+        ),
         // FunctionBody_Yield_Await -> FunctionStatementList_Yield_Await
-        Action::Invoke(Self::handle_function_body, "handle_function_body"),
+        Action::Nop,
         // ClassElementList -> ClassElement
         Action::Undefined,
         // ClassElementList -> ClassElementList ClassElement
@@ -1041,17 +1163,20 @@ where
         // ImportSpecifier -> ModuleExportName AS ImportedBinding
         Action::Undefined,
         // Initializer_In_Await -> ASSIGN AssignmentExpression_In_Await
-        Action::Nop,
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // BindingPattern_Await -> ObjectBindingPattern_Await
         Action::Undefined,
         // BindingPattern_Await -> ArrayBindingPattern_Await
         Action::Undefined,
         // LexicalBinding_In_Await -> BindingIdentifier_Await
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding_In_Await -> BindingIdentifier_Await Initializer_In_Await
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_In_Await -> BindingPattern_Await Initializer_In_Await
         Action::Undefined,
@@ -1060,49 +1185,49 @@ where
         // ClassElementList_Await -> ClassElementList_Await ClassElement_Await
         Action::Undefined,
         // LogicalORExpression_In_Await -> LogicalANDExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR LogicalANDExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH BitwiseORExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await RPAREN
-        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
+        Action::Invoke(
+            Self::process_cpeaapl_expression,
+            "process_cpeaapl_expression",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters,
-            "handle_maybe_arrow_formal_parameters",
+            Self::process_cpeaapl_formal_parameters,
+            "process_cpeaapl_formal_parameters",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN RPAREN
-        Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_empty,
-            "handle_maybe_arrow_formal_parameters_empty",
-        ),
+        Action::Invoke(Self::process_cpeaapl_empty, "process_cpeaapl_empty"),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS BindingIdentifier_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_parameter,
-            "handle_maybe_arrow_formal_rest_parameter",
+            Self::process_cpeaapl_rest_parameter,
+            "process_cpeaapl_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS BindingPattern_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_pattern,
-            "handle_maybe_arrow_formal_rest_pattern",
+            Self::process_cpeaapl_rest_pattern,
+            "process_cpeaapl_rest_pattern",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA ELLIPSIS BindingIdentifier_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
-            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+            Self::process_cpeaapl_formal_parameters_with_rest_parameter,
+            "process_cpeaapl_formal_parameters_with_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await COMMA ELLIPSIS BindingPattern_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
-            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+            Self::process_cpeaapl_formal_parameters_with_rest_pattern,
+            "process_cpeaapl_formal_parameters_with_rest_pattern",
         ),
         // ExpressionBody_In -> AssignmentExpression_In
         Action::Undefined,
         // ExpressionBody_In_Await -> AssignmentExpression_In_Await
         Action::Undefined,
         // MemberExpression_Await -> PrimaryExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // MemberExpression_Await -> MemberExpression_Await LBRACK Expression_In_Await RBRACK
         Action::Undefined,
         // MemberExpression_Await -> MemberExpression_Await DOT KeywordOrIdentifierName
@@ -1118,11 +1243,14 @@ where
         // MemberExpression_Await -> MemberExpression_Await DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments_Await -> LPAREN RPAREN
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(Self::process_arguments_empty, "process_arguments_empty"),
         // Arguments_Await -> LPAREN ArgumentList_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::process_arguments, "process_arguments"),
         // Arguments_Await -> LPAREN ArgumentList_Await COMMA RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_arguments_with_comma,
+            "process_arguments_with_comma",
+        ),
         // SuperCall_Await -> SUPER Arguments_Await
         Action::Undefined,
         // ImportCall_Await -> IMPORT LPAREN AssignmentExpression_In_Await RPAREN
@@ -1152,9 +1280,9 @@ where
         // OptionalChain_Await -> OptionalChain_Await DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // StatementList_Await -> StatementListItem_Await
-        Action::Invoke(Self::handle_list_head, "handle_list_head"),
+        Action::Nop,
         // StatementList_Await -> StatementList_Await StatementListItem_Await
-        Action::Invoke(Self::handle_list_item, "handle_list_item"),
+        Action::Undefined,
         // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
         Action::Undefined,
         // WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
@@ -1225,53 +1353,33 @@ where
         Action::Undefined,
         // CatchParameter_Await -> BindingPattern_Await
         Action::Undefined,
-        // ObjectBindingPattern -> LBRACE RBRACE
+        // BindingProperty -> SingleNameBinding
         Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
+        // BindingProperty -> PropertyName COLON BindingElement
         Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
+        // BindingElisionElement -> BindingElement
         Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
-        Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK Elision RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
+        // BindingElisionElement -> Elision BindingElement
         Action::Undefined,
         // ShortCircuitExpression_In -> LogicalORExpression_In
         Action::Nop,
         // ShortCircuitExpression_In -> CoalesceExpression_In
-        Action::Undefined,
+        Action::Nop,
         // ArrowParameters -> BindingIdentifier
         Action::Undefined,
         // ArrowParameters -> CoverParenthesizedExpressionAndArrowParameterList
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments
         Action::Invoke(
-            Self::handle_call_expression_or_async_arrow_head,
-            "handle_call_expression_or_async_arrow_head",
+            Self::process_cover_call_expression_and_async_arrow_head,
+            "process_cover_call_expression_and_async_arrow_head",
         ),
         // NewExpression -> MemberExpression
         Action::Nop,
         // NewExpression -> NEW NewExpression
         Action::Undefined,
         // CallExpression -> CoverCallExpressionAndAsyncArrowHead
-        Action::Invoke(Self::handle_call_expression, "handle_call_expression"),
+        Action::Invoke(Self::process_call_expression, "process_call_expression"),
         // CallExpression -> SuperCall
         Action::Undefined,
         // CallExpression -> ImportCall
@@ -1293,24 +1401,33 @@ where
         // OptionalExpression -> OptionalExpression OptionalChain
         Action::Undefined,
         // AssignmentExpression -> ConditionalExpression
-        Action::Undefined,
+        Action::Nop,
         // AssignmentExpression -> ArrowFunction
         Action::Undefined,
         // AssignmentExpression -> AsyncArrowFunction
         Action::Undefined,
         // AssignmentExpression -> LeftHandSideExpression ASSIGN AssignmentExpression
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression -> LeftHandSideExpression AssignmentOperator AssignmentExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression -> LeftHandSideExpression AND_ASSIGN AssignmentExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression -> LeftHandSideExpression OR_ASSIGN AssignmentExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // VariableDeclaration -> BindingIdentifier
         Action::Undefined,
         // VariableDeclaration -> BindingIdentifier Initializer
@@ -1318,31 +1435,34 @@ where
         // VariableDeclaration -> BindingPattern Initializer
         Action::Undefined,
         // BindingList -> LexicalBinding
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList -> BindingList COMMA LexicalBinding
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // CaseClause -> CASE Expression_In COLON
         Action::Undefined,
         // CaseClause -> CASE Expression_In COLON StatementList
         Action::Undefined,
-        // BindingRestElement -> ELLIPSIS BindingIdentifier
-        Action::Undefined,
-        // BindingRestElement -> ELLIPSIS BindingPattern
-        Action::Undefined,
-        // FormalParameter -> BindingElement
-        Action::Invoke(Self::handle_formal_parameter, "handle_formal_parameter"),
         // StatementList_Return -> StatementListItem_Return
-        Action::Invoke(Self::handle_list_head, "handle_list_head"),
+        Action::Invoke(
+            Self::process_statement_list_head,
+            "process_statement_list_head",
+        ),
         // StatementList_Return -> StatementList_Return StatementListItem_Return
-        Action::Invoke(Self::handle_list_item, "handle_list_item"),
+        Action::Invoke(
+            Self::process_statement_list_item,
+            "process_statement_list_item",
+        ),
         // BindingRestElement_Yield -> ELLIPSIS BindingIdentifier_Yield
         Action::Undefined,
         // BindingRestElement_Yield -> ELLIPSIS BindingPattern_Yield
         Action::Undefined,
         // FormalParameter_Yield -> BindingElement_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_formal_parameter, "process_formal_parameter"),
         // FunctionStatementList_Yield -> (empty)
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(
+            Self::process_function_statement_list_empty,
+            "process_function_statement_list_empty",
+        ),
         // FunctionStatementList_Yield -> StatementList_Yield_Return
         Action::Nop,
         // BindingRestElement_Await -> ELLIPSIS BindingIdentifier_Await
@@ -1350,9 +1470,12 @@ where
         // BindingRestElement_Await -> ELLIPSIS BindingPattern_Await
         Action::Undefined,
         // FormalParameter_Await -> BindingElement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_formal_parameter, "process_formal_parameter"),
         // FunctionStatementList_Await -> (empty)
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(
+            Self::process_function_statement_list_empty,
+            "process_function_statement_list_empty",
+        ),
         // FunctionStatementList_Await -> StatementList_Await_Return
         Action::Nop,
         // BindingRestElement_Yield_Await -> ELLIPSIS BindingIdentifier_Yield_Await
@@ -1360,9 +1483,12 @@ where
         // BindingRestElement_Yield_Await -> ELLIPSIS BindingPattern_Yield_Await
         Action::Undefined,
         // FormalParameter_Yield_Await -> BindingElement_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_formal_parameter, "process_formal_parameter"),
         // FunctionStatementList_Yield_Await -> (empty)
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(
+            Self::process_function_statement_list_empty,
+            "process_function_statement_list_empty",
+        ),
         // FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return
         Action::Nop,
         // ClassElement -> MethodDefinition
@@ -1418,23 +1544,26 @@ where
         // ClassElement_Await -> SEMICOLON
         Action::Undefined,
         // LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND BitwiseORExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Await -> CoalesceExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead_In_Await -> BitwiseORExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_In_Await -> BitwiseXORExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_In_Await -> BitwiseORExpression_In_Await BIT_OR BitwiseXORExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // PrimaryExpression_Await -> THIS
         Action::Undefined,
         // PrimaryExpression_Await -> IdentifierReference_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_primary_expression_identifier_reference,
+            "process_primary_expression_identifier_reference",
+        ),
         // PrimaryExpression_Await -> Literal
-        Action::Undefined,
+        Action::Nop,
         // PrimaryExpression_Await -> ArrayLiteral_Await
         Action::Undefined,
         // PrimaryExpression_Await -> ObjectLiteral_Await
@@ -1454,7 +1583,10 @@ where
         // PrimaryExpression_Await -> TemplateLiteral_Await
         Action::Undefined,
         // PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await
-        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
+        Action::Invoke(
+            Self::process_primary_expression_cpeaapl,
+            "process_primary_expression_cpeaapl",
+        ),
         // SuperProperty_Await -> SUPER LBRACK Expression_In_Await RBRACK
         Action::Undefined,
         // SuperProperty_Await -> SUPER DOT KeywordOrIdentifierName
@@ -1464,17 +1596,23 @@ where
         // MetaProperty -> ImportMeta
         Action::Undefined,
         // ArgumentList_Await -> AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_argument_list_head,
+            "process_argument_list_head",
+        ),
         // ArgumentList_Await -> ELLIPSIS AssignmentExpression_In_Await
         Action::Undefined,
         // ArgumentList_Await -> ArgumentList_Await COMMA AssignmentExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_argument_list_item,
+            "process_argument_list_item",
+        ),
         // ArgumentList_Await -> ArgumentList_Await COMMA ELLIPSIS AssignmentExpression_In_Await
         Action::Undefined,
         // SubstitutionTemplate_Await_Tagged -> TEMPLATE_HEAD Expression_In_Await TemplateSpans_Await_Tagged
         Action::Undefined,
         // Expression_Await -> AssignmentExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // Expression_Await -> Expression_Await COMMA AssignmentExpression_Await
         Action::Undefined,
         // VariableDeclarationList_Await -> VariableDeclaration_Await
@@ -1482,9 +1620,9 @@ where
         // VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
         Action::Undefined,
         // LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // ForBinding_Await -> BindingIdentifier_Await
         Action::Undefined,
         // ForBinding_Await -> BindingPattern_Await
@@ -1501,57 +1639,47 @@ where
         Action::Undefined,
         // DefaultClause_Await -> DEFAULT COLON StatementList_Await
         Action::Undefined,
-        // BindingRestProperty -> ELLIPSIS BindingIdentifier
+        // PropertyName -> LiteralPropertyName
         Action::Undefined,
-        // BindingPropertyList -> BindingProperty
-        Action::Undefined,
-        // BindingPropertyList -> BindingPropertyList COMMA BindingProperty
-        Action::Undefined,
-        // Elision -> COMMA
-        Action::Undefined,
-        // Elision -> Elision COMMA
-        Action::Undefined,
-        // BindingElementList -> BindingElisionElement
-        Action::Undefined,
-        // BindingElementList -> BindingElementList COMMA BindingElisionElement
+        // PropertyName -> ComputedPropertyName
         Action::Undefined,
         // LogicalORExpression_In -> LogicalANDExpression_In
         Action::Nop,
         // LogicalORExpression_In -> LogicalORExpression_In OR LogicalANDExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN
-        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
+        Action::Invoke(
+            Self::process_cpeaapl_expression,
+            "process_cpeaapl_expression",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters,
-            "handle_maybe_arrow_formal_parameters",
+            Self::process_cpeaapl_formal_parameters,
+            "process_cpeaapl_formal_parameters",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN RPAREN
-        Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_empty,
-            "handle_maybe_arrow_formal_parameters_empty",
-        ),
+        Action::Invoke(Self::process_cpeaapl_empty, "process_cpeaapl_empty"),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingIdentifier RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_parameter,
-            "handle_maybe_arrow_formal_rest_parameter",
+            Self::process_cpeaapl_rest_parameter,
+            "process_cpeaapl_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingPattern RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_pattern,
-            "handle_maybe_arrow_formal_rest_pattern",
+            Self::process_cpeaapl_rest_pattern,
+            "process_cpeaapl_rest_pattern",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS BindingIdentifier RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
-            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+            Self::process_cpeaapl_formal_parameters_with_rest_parameter,
+            "process_cpeaapl_formal_parameters_with_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA ELLIPSIS BindingPattern RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
-            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+            Self::process_cpeaapl_formal_parameters_with_rest_pattern,
+            "process_cpeaapl_formal_parameters_with_rest_pattern",
         ),
         // MemberExpression -> PrimaryExpression
         Action::Nop,
@@ -1570,11 +1698,14 @@ where
         // MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments -> LPAREN RPAREN
-        Action::Invoke(Self::handle_arguments_empty, "handle_arguments_empty"),
+        Action::Invoke(Self::process_arguments_empty, "process_arguments_empty"),
         // Arguments -> LPAREN ArgumentList RPAREN
-        Action::Nop,
+        Action::Invoke(Self::process_arguments, "process_arguments"),
         // Arguments -> LPAREN ArgumentList COMMA RPAREN
-        Action::Nop,
+        Action::Invoke(
+            Self::process_arguments_with_comma,
+            "process_arguments_with_comma",
+        ),
         // SuperCall -> SUPER Arguments
         Action::Undefined,
         // ImportCall -> IMPORT LPAREN AssignmentExpression_In RPAREN
@@ -1607,8 +1738,8 @@ where
         Action::Nop,
         // ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
         Action::Undefined,
@@ -1617,21 +1748,18 @@ where
         // AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer -> ASSIGN AssignmentExpression
-        Action::Nop,
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // LexicalBinding -> BindingIdentifier
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding -> BindingIdentifier Initializer
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding -> BindingPattern Initializer
-        Action::Undefined,
-        // BindingElement -> SingleNameBinding
-        Action::Nop,
-        // BindingElement -> BindingPattern
-        Action::Undefined,
-        // BindingElement -> BindingPattern Initializer_In
         Action::Undefined,
         // StatementListItem_Return -> Statement_Return
         Action::Nop,
@@ -1639,41 +1767,56 @@ where
         Action::Nop,
         // BindingIdentifier_Yield -> Identifier
         Action::Invoke(
-            Self::syntax_error_if_arguments_or_eval_or_yield,
-            "syntax_error_if_arguments_or_eval_or_yield",
+            Self::process_binding_identifier_except_for_yield,
+            "process_binding_identifier_except_for_yield",
         ),
         // BindingIdentifier_Yield -> YIELD
         Action::Invoke(Self::syntax_error, "syntax_error"),
         // BindingIdentifier_Yield -> AWAIT
-        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
+        Action::Invoke(
+            Self::process_binding_identifier,
+            "process_binding_identifier",
+        ),
         // BindingPattern_Yield -> ObjectBindingPattern_Yield
         Action::Undefined,
         // BindingPattern_Yield -> ArrayBindingPattern_Yield
         Action::Undefined,
         // BindingElement_Yield -> SingleNameBinding_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_binding_element, "process_binding_element"),
         // BindingElement_Yield -> BindingPattern_Yield
         Action::Undefined,
         // BindingElement_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
         // StatementList_Yield_Return -> StatementListItem_Yield_Return
-        Action::Invoke(Self::handle_list_head, "handle_list_head"),
+        Action::Invoke(
+            Self::process_statement_list_head,
+            "process_statement_list_head",
+        ),
         // StatementList_Yield_Return -> StatementList_Yield_Return StatementListItem_Yield_Return
-        Action::Invoke(Self::handle_list_item, "handle_list_item"),
+        Action::Invoke(
+            Self::process_statement_list_item,
+            "process_statement_list_item",
+        ),
         // BindingElement_Await -> SingleNameBinding_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_binding_element, "process_binding_element"),
         // BindingElement_Await -> BindingPattern_Await
         Action::Undefined,
         // BindingElement_Await -> BindingPattern_Await Initializer_In_Await
         Action::Undefined,
         // StatementList_Await_Return -> StatementListItem_Await_Return
-        Action::Invoke(Self::handle_list_head, "handle_list_head"),
+        Action::Invoke(
+            Self::process_statement_list_head,
+            "process_statement_list_head",
+        ),
         // StatementList_Await_Return -> StatementList_Await_Return StatementListItem_Await_Return
-        Action::Invoke(Self::handle_list_item, "handle_list_item"),
+        Action::Invoke(
+            Self::process_statement_list_item,
+            "process_statement_list_item",
+        ),
         // BindingIdentifier_Yield_Await -> Identifier
         Action::Invoke(
-            Self::syntax_error_if_arguments_or_eval_or_yield_or_await,
-            "syntax_error_if_arguments_or_eval_or_yield_or_await",
+            Self::process_binding_identifier_except_for_yield_await,
+            "process_binding_identifier_except_for_yield_await",
         ),
         // BindingIdentifier_Yield_Await -> YIELD
         Action::Invoke(Self::syntax_error, "syntax_error"),
@@ -1684,15 +1827,21 @@ where
         // BindingPattern_Yield_Await -> ArrayBindingPattern_Yield_Await
         Action::Undefined,
         // BindingElement_Yield_Await -> SingleNameBinding_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_binding_element, "process_binding_element"),
         // BindingElement_Yield_Await -> BindingPattern_Yield_Await
         Action::Undefined,
         // BindingElement_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
         // StatementList_Yield_Await_Return -> StatementListItem_Yield_Await_Return
-        Action::Invoke(Self::handle_list_head, "handle_list_head"),
+        Action::Invoke(
+            Self::process_statement_list_head,
+            "process_statement_list_head",
+        ),
         // StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return StatementListItem_Yield_Await_Return
-        Action::Invoke(Self::handle_list_item, "handle_list_item"),
+        Action::Invoke(
+            Self::process_statement_list_item,
+            "process_statement_list_item",
+        ),
         // MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE
         Action::Undefined,
         // MethodDefinition -> GeneratorMethod
@@ -1738,27 +1887,27 @@ where
         // FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await
         Action::Undefined,
         // BitwiseXORExpression_In_Await -> BitwiseANDExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseXORExpression_In_Await -> BitwiseXORExpression_In_Await BIT_XOR BitwiseANDExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // IdentifierReference_Await -> Identifier
         Action::Invoke(
-            Self::handle_identifier_reference_except_for_await,
-            "handle_identifier_reference_except_for_await",
+            Self::process_identifier_reference_except_for_await,
+            "process_identifier_reference_except_for_await",
         ),
         // IdentifierReference_Await -> YIELD
         Action::Invoke(
-            Self::handle_yield_as_identifier_reference,
-            "handle_yield_as_identifier_reference",
+            Self::process_identifier_reference,
+            "process_identifier_reference",
         ),
         // Literal -> NullLiteral
-        Action::Undefined,
+        Action::Invoke(Self::process_literal, "process_literal"),
         // Literal -> BooleanLiteral
-        Action::Undefined,
+        Action::Invoke(Self::process_literal, "process_literal"),
         // Literal -> NUMERIC_LITERAL
-        Action::Nop,
+        Action::Invoke(Self::process_literal, "process_literal"),
         // Literal -> STRING_LITERAL
-        Action::Nop,
+        Action::Invoke(Self::process_literal, "process_literal"),
         // ArrayLiteral_Await -> LBRACK RBRACK
         Action::Undefined,
         // ArrayLiteral_Await -> LBRACK Elision RBRACK
@@ -1808,24 +1957,33 @@ where
         // TemplateSpans_Await_Tagged -> TemplateMiddleList_Await_Tagged TEMPLATE_TAIL
         Action::Undefined,
         // AssignmentExpression_Await -> ConditionalExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // AssignmentExpression_Await -> ArrowFunction_Await
         Action::Undefined,
         // AssignmentExpression_Await -> AsyncArrowFunction_Await
         Action::Undefined,
         // AssignmentExpression_Await -> LeftHandSideExpression_Await ASSIGN AssignmentExpression_Await
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression_Await -> LeftHandSideExpression_Await AssignmentOperator AssignmentExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression_Await -> LeftHandSideExpression_Await AND_ASSIGN AssignmentExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN AssignmentExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN AssignmentExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // VariableDeclaration_Await -> BindingIdentifier_Await
         Action::Undefined,
         // VariableDeclaration_Await -> BindingIdentifier_Await Initializer_Await
@@ -1833,37 +1991,40 @@ where
         // VariableDeclaration_Await -> BindingPattern_Await Initializer_Await
         Action::Undefined,
         // BindingList_Await -> LexicalBinding_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_Await -> BindingList_Await COMMA LexicalBinding_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // CaseClause_Await -> CASE Expression_In_Await COLON
         Action::Undefined,
         // CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
         Action::Undefined,
-        // BindingProperty -> SingleNameBinding
+        // LiteralPropertyName -> KeywordOrIdentifierName
         Action::Undefined,
-        // BindingProperty -> PropertyName COLON BindingElement
+        // LiteralPropertyName -> STRING_LITERAL
         Action::Undefined,
-        // BindingElisionElement -> BindingElement
+        // LiteralPropertyName -> NUMERIC_LITERAL
         Action::Undefined,
-        // BindingElisionElement -> Elision BindingElement
+        // ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
         Action::Undefined,
         // LogicalANDExpression_In -> BitwiseORExpression_In
         Action::Nop,
         // LogicalANDExpression_In -> LogicalANDExpression_In AND BitwiseORExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In -> CoalesceExpression_In
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead_In -> BitwiseORExpression_In
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_In -> BitwiseXORExpression_In
         Action::Nop,
         // BitwiseORExpression_In -> BitwiseORExpression_In BIT_OR BitwiseXORExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // PrimaryExpression -> THIS
         Action::Undefined,
         // PrimaryExpression -> IdentifierReference
-        Action::Nop,
+        Action::Invoke(
+            Self::process_primary_expression_identifier_reference,
+            "process_primary_expression_identifier_reference",
+        ),
         // PrimaryExpression -> Literal
         Action::Nop,
         // PrimaryExpression -> ArrayLiteral
@@ -1885,25 +2046,34 @@ where
         // PrimaryExpression -> TemplateLiteral
         Action::Undefined,
         // PrimaryExpression -> CoverParenthesizedExpressionAndArrowParameterList
-        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
+        Action::Invoke(
+            Self::process_primary_expression_cpeaapl,
+            "process_primary_expression_cpeaapl",
+        ),
         // SuperProperty -> SUPER LBRACK Expression_In RBRACK
         Action::Undefined,
         // SuperProperty -> SUPER DOT KeywordOrIdentifierName
         Action::Undefined,
         // ArgumentList -> AssignmentExpression_In
-        Action::Invoke(Self::handle_argument_list_head, "handle_argument_list_head"),
+        Action::Invoke(
+            Self::process_argument_list_head,
+            "process_argument_list_head",
+        ),
         // ArgumentList -> ELLIPSIS AssignmentExpression_In
         Action::Undefined,
         // ArgumentList -> ArgumentList COMMA AssignmentExpression_In
-        Action::Invoke(Self::handle_argument_list_item, "handle_argument_list_item"),
+        Action::Invoke(
+            Self::process_argument_list_item,
+            "process_argument_list_item",
+        ),
         // ArgumentList -> ArgumentList COMMA ELLIPSIS AssignmentExpression_In
         Action::Undefined,
         // SubstitutionTemplate_Tagged -> TEMPLATE_HEAD Expression_In TemplateSpans_Tagged
         Action::Undefined,
         // ShortCircuitExpression -> LogicalORExpression
-        Action::Undefined,
+        Action::Nop,
         // ShortCircuitExpression -> CoalesceExpression
-        Action::Undefined,
+        Action::Nop,
         // ConciseBody -> (?![LBRACE]) ExpressionBody
         Action::Undefined,
         // ConciseBody -> LBRACE FunctionBody RBRACE
@@ -1912,20 +2082,16 @@ where
         Action::Undefined,
         // AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
         Action::Undefined,
-        // SingleNameBinding -> BindingIdentifier
-        Action::Nop,
-        // SingleNameBinding -> BindingIdentifier Initializer_In
-        Action::Undefined,
         // Statement_Return -> BlockStatement_Return
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> VariableStatement
         Action::Undefined,
         // Statement_Return -> EmptyStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> ExpressionStatement
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> IfStatement_Return
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> BreakableStatement_Return
         Action::Undefined,
         // Statement_Return -> ContinueStatement
@@ -1933,7 +2099,7 @@ where
         // Statement_Return -> BreakStatement
         Action::Undefined,
         // Statement_Return -> ReturnStatement
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> WithStatement_Return
         Action::Undefined,
         // Statement_Return -> LabelledStatement_Return
@@ -1973,19 +2139,31 @@ where
         // ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision BindingRestElement_Yield RBRACK
         Action::Undefined,
         // SingleNameBinding_Yield -> BindingIdentifier_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_single_name_binding,
+            "process_single_name_binding",
+        ),
         // SingleNameBinding_Yield -> BindingIdentifier_Yield Initializer_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_single_name_binding_with_initializer,
+            "process_single_name_binding_with_initializer",
+        ),
         // Initializer_In_Yield -> ASSIGN AssignmentExpression_In_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // StatementListItem_Yield_Return -> Statement_Yield_Return
         Action::Nop,
         // StatementListItem_Yield_Return -> Declaration_Yield
         Action::Nop,
         // SingleNameBinding_Await -> BindingIdentifier_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_single_name_binding,
+            "process_single_name_binding",
+        ),
         // SingleNameBinding_Await -> BindingIdentifier_Await Initializer_In_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_single_name_binding_with_initializer,
+            "process_single_name_binding_with_initializer",
+        ),
         // StatementListItem_Await_Return -> Statement_Await_Return
         Action::Nop,
         // StatementListItem_Await_Return -> Declaration_Await
@@ -2019,11 +2197,17 @@ where
         // ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision BindingRestElement_Yield_Await RBRACK
         Action::Undefined,
         // SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_single_name_binding,
+            "process_single_name_binding",
+        ),
         // SingleNameBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_single_name_binding_with_initializer,
+            "process_single_name_binding_with_initializer",
+        ),
         // Initializer_In_Yield_Await -> ASSIGN AssignmentExpression_In_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // StatementListItem_Yield_Await_Return -> Statement_Yield_Await_Return
         Action::Nop,
         // StatementListItem_Yield_Await_Return -> Declaration_Yield_Await
@@ -2031,8 +2215,6 @@ where
         // ClassElementName -> PropertyName
         Action::Undefined,
         // ClassElementName -> PRIVATE_IDENTIFIER
-        Action::Undefined,
-        // UniqueFormalParameters -> FormalParameters
         Action::Undefined,
         // GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -2063,15 +2245,15 @@ where
         // AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
         // BitwiseANDExpression_In_Await -> EqualityExpression_In_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression_In_Await -> BitwiseANDExpression_In_Await BIT_AND EqualityExpression_In_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // NullLiteral -> NULL
-        Action::Undefined,
+        Action::Nop,
         // BooleanLiteral -> TRUE
-        Action::Undefined,
+        Action::Nop,
         // BooleanLiteral -> FALSE
-        Action::Undefined,
+        Action::Nop,
         // ElementList_Await -> AssignmentExpression_In_Await
         Action::Undefined,
         // ElementList_Await -> Elision AssignmentExpression_In_Await
@@ -2102,8 +2284,8 @@ where
         Action::Nop,
         // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
         Action::Undefined,
@@ -2112,38 +2294,37 @@ where
         // AsyncArrowFunction_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer_Await -> ASSIGN AssignmentExpression_Await
-        Action::Nop,
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // LexicalBinding_Await -> BindingIdentifier_Await
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding_Await -> BindingIdentifier_Await Initializer_Await
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_Await -> BindingPattern_Await Initializer_Await
-        Action::Undefined,
-        // PropertyName -> LiteralPropertyName
-        Action::Undefined,
-        // PropertyName -> ComputedPropertyName
         Action::Undefined,
         // BitwiseXORExpression_In -> BitwiseANDExpression_In
         Action::Nop,
         // BitwiseXORExpression_In -> BitwiseXORExpression_In BIT_XOR BitwiseANDExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // IdentifierReference -> Identifier
         Action::Invoke(
-            Self::handle_identifier_reference,
-            "handle_identifier_reference",
+            Self::process_identifier_reference,
+            "process_identifier_reference",
         ),
         // IdentifierReference -> YIELD
         Action::Invoke(
-            Self::handle_yield_as_identifier_reference_in_non_strict_code,
-            "handle_yield_as_identifier_reference_in_non_strict_code",
+            Self::process_identifier_reference_only_in_non_strict,
+            "process_identifier_reference_only_in_non_strict",
         ),
         // IdentifierReference -> AWAIT
         Action::Invoke(
-            Self::handle_await_as_identifier_reference_in_script,
-            "handle_await_as_identifier_reference_in_script",
+            Self::process_identifier_reference_only_in_script,
+            "process_identifier_reference_only_in_script",
         ),
         // ArrayLiteral -> LBRACK RBRACK
         Action::Undefined,
@@ -2174,29 +2355,32 @@ where
         // TemplateSpans_Tagged -> TemplateMiddleList_Tagged TEMPLATE_TAIL
         Action::Undefined,
         // LogicalORExpression -> LogicalANDExpression
-        Action::Undefined,
+        Action::Nop,
         // LogicalORExpression -> LogicalORExpression OR LogicalANDExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression -> CoalesceExpressionHead NULLISH BitwiseORExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // ExpressionBody -> AssignmentExpression
         Action::Undefined,
         // ExpressionBody_Await -> AssignmentExpression_Await
         Action::Undefined,
         // BlockStatement_Return -> Block_Return
-        Action::Invoke(Self::handle_block_statement, "handle_block_statement"),
+        Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return
-        Action::Invoke(Self::handle_if_else_statement, "handle_if_else_statement"),
+        Action::Invoke(Self::process_if_else_statement, "process_if_else_statement"),
         // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
-        Action::Invoke(Self::handle_if_statement, "handle_if_statement"),
+        Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Return -> IterationStatement_Return
         Action::Undefined,
         // BreakableStatement_Return -> SwitchStatement_Return
         Action::Undefined,
         // ReturnStatement -> RETURN SEMICOLON
-        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
+        Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON
-        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
+        Action::Invoke(
+            Self::process_return_value_statement,
+            "process_return_value_statement",
+        ),
         // WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return
         Action::Undefined,
         // LabelledStatement_Return -> LabelIdentifier COLON LabelledItem_Return
@@ -2218,7 +2402,7 @@ where
         // BindingElementList_Yield -> BindingElementList_Yield COMMA BindingElisionElement_Yield
         Action::Undefined,
         // AssignmentExpression_In_Yield -> ConditionalExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // AssignmentExpression_In_Yield -> YieldExpression_In
         Action::Undefined,
         // AssignmentExpression_In_Yield -> ArrowFunction_In_Yield
@@ -2226,28 +2410,37 @@ where
         // AssignmentExpression_In_Yield -> AsyncArrowFunction_In_Yield
         Action::Undefined,
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield ASSIGN AssignmentExpression_In_Yield
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AssignmentOperator AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // Statement_Yield_Return -> BlockStatement_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> VariableStatement_Yield
         Action::Undefined,
         // Statement_Yield_Return -> EmptyStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> ExpressionStatement_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> IfStatement_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> BreakableStatement_Yield_Return
         Action::Undefined,
         // Statement_Yield_Return -> ContinueStatement_Yield
@@ -2255,7 +2448,7 @@ where
         // Statement_Yield_Return -> BreakStatement_Yield
         Action::Undefined,
         // Statement_Yield_Return -> ReturnStatement_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> WithStatement_Yield_Return
         Action::Undefined,
         // Statement_Yield_Return -> LabelledStatement_Yield_Return
@@ -2267,21 +2460,21 @@ where
         // Statement_Yield_Return -> DebuggerStatement
         Action::Undefined,
         // Declaration_Yield -> HoistableDeclaration_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // Declaration_Yield -> ClassDeclaration_Yield
         Action::Undefined,
         // Declaration_Yield -> LexicalDeclaration_In_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // Statement_Await_Return -> BlockStatement_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> VariableStatement_Await
         Action::Undefined,
         // Statement_Await_Return -> EmptyStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> ExpressionStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> IfStatement_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> BreakableStatement_Await_Return
         Action::Undefined,
         // Statement_Await_Return -> ContinueStatement_Await
@@ -2289,7 +2482,7 @@ where
         // Statement_Await_Return -> BreakStatement_Await
         Action::Undefined,
         // Statement_Await_Return -> ReturnStatement_Await
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> WithStatement_Await_Return
         Action::Undefined,
         // Statement_Await_Return -> LabelledStatement_Await_Return
@@ -2311,7 +2504,7 @@ where
         // BindingElementList_Yield_Await -> BindingElementList_Yield_Await COMMA BindingElisionElement_Yield_Await
         Action::Undefined,
         // AssignmentExpression_In_Yield_Await -> ConditionalExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // AssignmentExpression_In_Yield_Await -> YieldExpression_In_Await
         Action::Undefined,
         // AssignmentExpression_In_Yield_Await -> ArrowFunction_In_Yield_Await
@@ -2319,28 +2512,37 @@ where
         // AssignmentExpression_In_Yield_Await -> AsyncArrowFunction_In_Yield_Await
         Action::Undefined,
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN AssignmentExpression_In_Yield_Await
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // Statement_Yield_Await_Return -> BlockStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> VariableStatement_Yield_Await
         Action::Undefined,
         // Statement_Yield_Await_Return -> EmptyStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> ExpressionStatement_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> IfStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> BreakableStatement_Yield_Await_Return
         Action::Undefined,
         // Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
@@ -2348,7 +2550,7 @@ where
         // Statement_Yield_Await_Return -> BreakStatement_Yield_Await
         Action::Undefined,
         // Statement_Yield_Await_Return -> ReturnStatement_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return
         Action::Undefined,
         // Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return
@@ -2360,17 +2562,17 @@ where
         // Statement_Yield_Await_Return -> DebuggerStatement
         Action::Undefined,
         // Declaration_Yield_Await -> HoistableDeclaration_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // Declaration_Yield_Await -> ClassDeclaration_Yield_Await
         Action::Undefined,
         // Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_declaration, "process_declaration"),
         // UniqueFormalParameters_Yield -> FormalParameters_Yield
-        Action::Undefined,
+        Action::Nop,
         // UniqueFormalParameters_Await -> FormalParameters_Await
-        Action::Undefined,
+        Action::Nop,
         // UniqueFormalParameters_Yield_Await -> FormalParameters_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ClassStaticBlockStatementList -> (empty)
         Action::Undefined,
         // ClassStaticBlockStatementList -> StatementList_Await
@@ -2382,19 +2584,13 @@ where
         // EqualityExpression_In_Await -> RelationalExpression_In_Await
         Action::Nop,
         // EqualityExpression_In_Await -> EqualityExpression_In_Await EQ RelationalExpression_In_Await
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression_In_Await -> EqualityExpression_In_Await NE RelationalExpression_In_Await
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression_In_Await -> EqualityExpression_In_Await EQ_STRICT RelationalExpression_In_Await
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression_In_Await -> EqualityExpression_In_Await NE_STRICT RelationalExpression_In_Await
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // SpreadElement_Await -> ELLIPSIS AssignmentExpression_In_Await
         Action::Undefined,
         // PropertyDefinition_Await -> IdentifierReference_Await
@@ -2412,21 +2608,13 @@ where
         // TemplateSpans_Await -> TemplateMiddleList_Await TEMPLATE_TAIL
         Action::Undefined,
         // ShortCircuitExpression_Await -> LogicalORExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // ShortCircuitExpression_Await -> CoalesceExpression_Await
-        Action::Undefined,
-        // LiteralPropertyName -> KeywordOrIdentifierName
-        Action::Undefined,
-        // LiteralPropertyName -> STRING_LITERAL
-        Action::Undefined,
-        // LiteralPropertyName -> NUMERIC_LITERAL
-        Action::Undefined,
-        // ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression_In -> EqualityExpression_In
         Action::Nop,
         // BitwiseANDExpression_In -> BitwiseANDExpression_In BIT_AND EqualityExpression_In
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // ElementList -> AssignmentExpression_In
         Action::Undefined,
         // ElementList -> Elision AssignmentExpression_In
@@ -2454,21 +2642,21 @@ where
         // TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TEMPLATE_MIDDLE Expression_In
         Action::Undefined,
         // LogicalANDExpression -> BitwiseORExpression
-        Action::Undefined,
+        Action::Nop,
         // LogicalANDExpression -> LogicalANDExpression AND BitwiseORExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead -> CoalesceExpression
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead -> BitwiseORExpression
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression -> BitwiseXORExpression
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression -> BitwiseORExpression BIT_OR BitwiseXORExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // Block_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_empty_block, "process_empty_block"),
         // Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
-        Action::Invoke(Self::handle_block, "handle_block"),
+        Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Return -> DoWhileStatement_Return
         Action::Undefined,
         // IterationStatement_Return -> WhileStatement_Return
@@ -2501,8 +2689,8 @@ where
         Action::Nop,
         // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // YieldExpression_In -> YIELD
         Action::Undefined,
@@ -2517,21 +2705,24 @@ where
         // AsyncArrowFunction_In_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
         Action::Undefined,
         // LeftHandSideExpression_Yield -> NewExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // LeftHandSideExpression_Yield -> CallExpression_Yield
         Action::Nop,
         // LeftHandSideExpression_Yield -> OptionalExpression_Yield
         Action::Undefined,
         // BlockStatement_Yield_Return -> Block_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMICOLON
         Action::Undefined,
         // ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_expression_statement,
+            "process_expression_statement",
+        ),
         // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_if_else_statement, "process_if_else_statement"),
         // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
-        Action::Undefined,
+        Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
         Action::Undefined,
         // BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
@@ -2545,9 +2736,12 @@ where
         // BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON
         Action::Undefined,
         // ReturnStatement_Yield -> RETURN SEMICOLON
-        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
+        Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON
-        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
+        Action::Invoke(
+            Self::process_return_value_statement,
+            "process_return_value_statement",
+        ),
         // WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
         Action::Undefined,
         // LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return
@@ -2561,7 +2755,10 @@ where
         // TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return Finally_Yield_Return
         Action::Undefined,
         // HoistableDeclaration_Yield -> FunctionDeclaration_Yield
-        Action::Nop,
+        Action::Invoke(
+            Self::process_hoistable_declaration,
+            "process_hoistable_declaration",
+        ),
         // HoistableDeclaration_Yield -> GeneratorDeclaration_Yield
         Action::Undefined,
         // HoistableDeclaration_Yield -> AsyncFunctionDeclaration_Yield
@@ -2571,23 +2768,26 @@ where
         // ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
         Action::Undefined,
         // LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // BlockStatement_Await_Return -> Block_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_if_else_statement, "process_if_else_statement"),
         // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
-        Action::Undefined,
+        Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await_Return -> IterationStatement_Await_Return
         Action::Undefined,
         // BreakableStatement_Await_Return -> SwitchStatement_Await_Return
         Action::Undefined,
         // ReturnStatement_Await -> RETURN SEMICOLON
-        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
+        Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await SEMICOLON
-        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
+        Action::Invoke(
+            Self::process_return_value_statement,
+            "process_return_value_statement",
+        ),
         // WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return
         Action::Undefined,
         // LabelledStatement_Await_Return -> LabelIdentifier_Await COLON LabelledItem_Await_Return
@@ -2610,8 +2810,8 @@ where
         Action::Nop,
         // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // YieldExpression_In_Await -> YIELD
         Action::Undefined,
@@ -2626,21 +2826,24 @@ where
         // AsyncArrowFunction_In_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In
         Action::Undefined,
         // LeftHandSideExpression_Yield_Await -> NewExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // LeftHandSideExpression_Yield_Await -> CallExpression_Yield_Await
         Action::Nop,
         // LeftHandSideExpression_Yield_Await -> OptionalExpression_Yield_Await
         Action::Undefined,
         // BlockStatement_Yield_Await_Return -> Block_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMICOLON
         Action::Undefined,
         // ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_expression_statement,
+            "process_expression_statement",
+        ),
         // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_if_else_statement, "process_if_else_statement"),
         // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
-        Action::Undefined,
+        Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
         Action::Undefined,
         // BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
@@ -2654,9 +2857,12 @@ where
         // BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON
         Action::Undefined,
         // ReturnStatement_Yield_Await -> RETURN SEMICOLON
-        Action::Invoke(Self::handle_return_statement_0, "handle_return_statement_0"),
+        Action::Invoke(Self::process_return_statement, "process_return_statement"),
         // ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON
-        Action::Invoke(Self::handle_return_statement_1, "handle_return_statement_1"),
+        Action::Invoke(
+            Self::process_return_value_statement,
+            "process_return_value_statement",
+        ),
         // WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
         Action::Undefined,
         // LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON LabelledItem_Yield_Await_Return
@@ -2670,7 +2876,10 @@ where
         // TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return Finally_Yield_Await_Return
         Action::Undefined,
         // HoistableDeclaration_Yield_Await -> FunctionDeclaration_Yield_Await
-        Action::Nop,
+        Action::Invoke(
+            Self::process_hoistable_declaration,
+            "process_hoistable_declaration",
+        ),
         // HoistableDeclaration_Yield_Await -> GeneratorDeclaration_Yield_Await
         Action::Undefined,
         // HoistableDeclaration_Yield_Await -> AsyncFunctionDeclaration_Yield_Await
@@ -2680,25 +2889,31 @@ where
         // ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
         Action::Undefined,
         // LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
         Action::Undefined,
         // RelationalExpression_In_Await -> ShiftExpression_Await
         Action::Nop,
         // RelationalExpression_In_Await -> RelationalExpression_In_Await LT ShiftExpression_Await
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await GT ShiftExpression_Await
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await LTE ShiftExpression_Await
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await GTE ShiftExpression_Await
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await INSTANCEOF ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // RelationalExpression_In_Await -> RelationalExpression_In_Await IN ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_in, "process_in"),
         // RelationalExpression_In_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Await
         Action::Undefined,
         // CoverInitializedName_Await -> IdentifierReference_Await Initializer_In_Await
@@ -2708,27 +2923,21 @@ where
         // TemplateMiddleList_Await -> TemplateMiddleList_Await TEMPLATE_MIDDLE Expression_In_Await
         Action::Undefined,
         // LogicalORExpression_Await -> LogicalANDExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalORExpression_Await -> LogicalORExpression_Await OR LogicalANDExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH BitwiseORExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // EqualityExpression_In -> RelationalExpression_In
         Action::Nop,
         // EqualityExpression_In -> EqualityExpression_In EQ RelationalExpression_In
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression_In -> EqualityExpression_In NE RelationalExpression_In
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression_In -> EqualityExpression_In EQ_STRICT RelationalExpression_In
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression_In -> EqualityExpression_In NE_STRICT RelationalExpression_In
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // SpreadElement -> ELLIPSIS AssignmentExpression_In
         Action::Undefined,
         // PropertyDefinition -> IdentifierReference
@@ -2746,9 +2955,9 @@ where
         // TemplateSpans -> TemplateMiddleList TEMPLATE_TAIL
         Action::Undefined,
         // BitwiseXORExpression -> BitwiseANDExpression
-        Action::Undefined,
+        Action::Nop,
         // BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON
         Action::Undefined,
         // WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
@@ -2814,9 +3023,9 @@ where
         // PropertyName_Yield -> ComputedPropertyName_Yield
         Action::Undefined,
         // ShortCircuitExpression_In_Yield -> LogicalORExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // ShortCircuitExpression_In_Yield -> CoalesceExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // ArrowParameters_Yield -> BindingIdentifier_Yield
         Action::Undefined,
         // ArrowParameters_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
@@ -2825,15 +3034,15 @@ where
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead_Yield -> MemberExpression_Yield Arguments_Yield
         Action::Invoke(
-            Self::handle_call_expression_or_async_arrow_head,
-            "handle_call_expression_or_async_arrow_head",
+            Self::process_cover_call_expression_and_async_arrow_head,
+            "process_cover_call_expression_and_async_arrow_head",
         ),
         // NewExpression_Yield -> MemberExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // NewExpression_Yield -> NEW NewExpression_Yield
         Action::Undefined,
         // CallExpression_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield
-        Action::Invoke(Self::handle_call_expression, "handle_call_expression"),
+        Action::Invoke(Self::process_call_expression, "process_call_expression"),
         // CallExpression_Yield -> SuperCall_Yield
         Action::Undefined,
         // CallExpression_Yield -> ImportCall_Yield
@@ -2855,15 +3064,15 @@ where
         // OptionalExpression_Yield -> OptionalExpression_Yield OptionalChain_Yield
         Action::Undefined,
         // Block_Yield_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_empty_block, "process_empty_block"),
         // Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_block, "process_block"),
         // VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
         Action::Undefined,
         // VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield COMMA VariableDeclaration_In_Yield
         Action::Undefined,
         // Expression_In_Yield -> AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // Expression_In_Yield -> Expression_In_Yield COMMA AssignmentExpression_In_Yield
         Action::Undefined,
         // IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
@@ -2877,9 +3086,12 @@ where
         // SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return
         Action::Undefined,
         // LabelIdentifier_Yield -> Identifier
-        Action::Invoke(Self::syntax_error_if_yield, "syntax_error_if_yield"),
+        Action::Invoke(
+            Self::process_label_identifier_except_for_yield,
+            "process_label_identifier_except_for_yield",
+        ),
         // LabelIdentifier_Yield -> AWAIT
-        Action::Invoke(Self::syntax_error_in_module, "syntax_error_in_module"),
+        Action::Invoke(Self::process_label_identifier, "process_label_identifier"),
         // LabelledItem_Yield_Return -> Statement_Yield_Return
         Action::Undefined,
         // LabelledItem_Yield_Return -> FunctionDeclaration_Yield
@@ -2892,8 +3104,8 @@ where
         Action::Undefined,
         // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
-            Self::handle_function_declaration,
-            "handle_function_declaration",
+            Self::process_function_declaration,
+            "process_function_declaration",
         ),
         // GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -2910,13 +3122,13 @@ where
         // ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield RBRACE
         Action::Undefined,
         // BindingList_In_Yield -> LexicalBinding_In_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_In_Yield -> BindingList_In_Yield COMMA LexicalBinding_In_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // Block_Await_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_empty_block, "process_empty_block"),
         // Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
         Action::Undefined,
         // IterationStatement_Await_Return -> WhileStatement_Await_Return
@@ -2942,24 +3154,24 @@ where
         // PropertyName_Yield_Await -> ComputedPropertyName_Yield_Await
         Action::Undefined,
         // ShortCircuitExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ShortCircuitExpression_In_Yield_Await -> CoalesceExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ArrowParameters_Yield_Await -> BindingIdentifier_Yield_Await
         Action::Undefined,
         // ArrowParameters_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
         Action::Undefined,
         // CoverCallExpressionAndAsyncArrowHead_Yield_Await -> MemberExpression_Yield_Await Arguments_Yield_Await
         Action::Invoke(
-            Self::handle_call_expression_or_async_arrow_head,
-            "handle_call_expression_or_async_arrow_head",
+            Self::process_cover_call_expression_and_async_arrow_head,
+            "process_cover_call_expression_and_async_arrow_head",
         ),
         // NewExpression_Yield_Await -> MemberExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // NewExpression_Yield_Await -> NEW NewExpression_Yield_Await
         Action::Undefined,
         // CallExpression_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_call_expression, "process_call_expression"),
         // CallExpression_Yield_Await -> SuperCall_Yield_Await
         Action::Undefined,
         // CallExpression_Yield_Await -> ImportCall_Yield_Await
@@ -2981,15 +3193,15 @@ where
         // OptionalExpression_Yield_Await -> OptionalExpression_Yield_Await OptionalChain_Yield_Await
         Action::Undefined,
         // Block_Yield_Await_Return -> LBRACE RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_empty_block, "process_empty_block"),
         // Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return RBRACE
-        Action::Undefined,
+        Action::Invoke(Self::process_block, "process_block"),
         // VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
         Action::Undefined,
         // VariableDeclarationList_In_Yield_Await -> VariableDeclarationList_In_Yield_Await COMMA VariableDeclaration_In_Yield_Await
         Action::Undefined,
         // Expression_In_Yield_Await -> AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // Expression_In_Yield_Await -> Expression_In_Yield_Await COMMA AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
@@ -3004,8 +3216,8 @@ where
         Action::Undefined,
         // LabelIdentifier_Yield_Await -> Identifier
         Action::Invoke(
-            Self::syntax_error_if_yield_or_await,
-            "syntax_error_if_yield_or_await",
+            Self::process_label_identifier_except_for_yield_await,
+            "process_label_identifier_except_for_yield_await",
         ),
         // LabelledItem_Yield_Await_Return -> Statement_Yield_Await_Return
         Action::Undefined,
@@ -3019,8 +3231,8 @@ where
         Action::Undefined,
         // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
-            Self::handle_function_declaration,
-            "handle_function_declaration",
+            Self::process_function_declaration,
+            "process_function_declaration",
         ),
         // GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -3037,43 +3249,52 @@ where
         // ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE ClassBody_Yield_Await RBRACE
         Action::Undefined,
         // BindingList_In_Yield_Await -> LexicalBinding_In_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_In_Yield_Await -> BindingList_In_Yield_Await COMMA LexicalBinding_In_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // ShiftExpression_Await -> AdditiveExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // ShiftExpression_Await -> ShiftExpression_Await SHL AdditiveExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression_Await -> ShiftExpression_Await SAR AdditiveExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_right_shift, "process_right_shift"),
         // ShiftExpression_Await -> ShiftExpression_Await SHR AdditiveExpression_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_unsigned_right_shift,
+            "process_unsigned_right_shift",
+        ),
         // LogicalANDExpression_Await -> BitwiseORExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalANDExpression_Await -> LogicalANDExpression_Await AND BitwiseORExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Await -> CoalesceExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead_Await -> BitwiseORExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_Await -> BitwiseXORExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_Await -> BitwiseORExpression_Await BIT_OR BitwiseXORExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // RelationalExpression_In -> ShiftExpression
         Action::Nop,
         // RelationalExpression_In -> RelationalExpression_In LT ShiftExpression
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression_In -> RelationalExpression_In GT ShiftExpression
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression_In -> RelationalExpression_In LTE ShiftExpression
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression_In -> RelationalExpression_In GTE ShiftExpression
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression_In -> RelationalExpression_In INSTANCEOF ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // RelationalExpression_In -> RelationalExpression_In IN ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_in, "process_in"),
         // RelationalExpression_In -> PRIVATE_IDENTIFIER IN ShiftExpression
         Action::Undefined,
         // CoverInitializedName -> IdentifierReference Initializer_In
@@ -3083,9 +3304,9 @@ where
         // TemplateMiddleList -> TemplateMiddleList TEMPLATE_MIDDLE Expression_In
         Action::Undefined,
         // BitwiseANDExpression -> EqualityExpression
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression -> BitwiseANDExpression BIT_AND EqualityExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // CaseClauses_Return -> CaseClause_Return
         Action::Undefined,
         // CaseClauses_Return -> CaseClauses_Return CaseClause_Return
@@ -3097,45 +3318,45 @@ where
         // ComputedPropertyName_Yield -> LBRACK AssignmentExpression_In_Yield RBRACK
         Action::Undefined,
         // LogicalORExpression_In_Yield -> LogicalANDExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR LogicalANDExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH BitwiseORExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN
-        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
+        Action::Invoke(
+            Self::process_cpeaapl_expression,
+            "process_cpeaapl_expression",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters,
-            "handle_maybe_arrow_formal_parameters",
+            Self::process_cpeaapl_formal_parameters,
+            "process_cpeaapl_formal_parameters",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN RPAREN
-        Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_empty,
-            "handle_maybe_arrow_formal_parameters_empty",
-        ),
+        Action::Invoke(Self::process_cpeaapl_empty, "process_cpeaapl_empty"),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingIdentifier_Yield RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_parameter,
-            "handle_maybe_arrow_formal_rest_parameter",
+            Self::process_cpeaapl_rest_parameter,
+            "process_cpeaapl_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingPattern_Yield RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_pattern,
-            "handle_maybe_arrow_formal_rest_pattern",
+            Self::process_cpeaapl_rest_pattern,
+            "process_cpeaapl_rest_pattern",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingIdentifier_Yield RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
-            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+            Self::process_cpeaapl_formal_parameters_with_rest_parameter,
+            "process_cpeaapl_formal_parameters_with_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingPattern_Yield RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
-            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+            Self::process_cpeaapl_formal_parameters_with_rest_pattern,
+            "process_cpeaapl_formal_parameters_with_rest_pattern",
         ),
         // MemberExpression_Yield -> PrimaryExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield RBRACK
         Action::Undefined,
         // MemberExpression_Yield -> MemberExpression_Yield DOT KeywordOrIdentifierName
@@ -3151,11 +3372,14 @@ where
         // MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments_Yield -> LPAREN RPAREN
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(Self::process_arguments_empty, "process_arguments_empty"),
         // Arguments_Yield -> LPAREN ArgumentList_Yield RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::process_arguments, "process_arguments"),
         // Arguments_Yield -> LPAREN ArgumentList_Yield COMMA RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_arguments_with_comma,
+            "process_arguments_with_comma",
+        ),
         // SuperCall_Yield -> SUPER Arguments_Yield
         Action::Undefined,
         // ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN
@@ -3259,11 +3483,14 @@ where
         // ClassBody_Yield -> ClassElementList_Yield
         Action::Undefined,
         // LexicalBinding_In_Yield -> BindingIdentifier_Yield
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding_In_Yield -> BindingIdentifier_Yield Initializer_In_Yield
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield
         Action::Undefined,
@@ -3336,45 +3563,45 @@ where
         // ComputedPropertyName_Yield_Await -> LBRACK AssignmentExpression_In_Yield_Await RBRACK
         Action::Undefined,
         // LogicalORExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR LogicalANDExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH BitwiseORExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await RPAREN
-        Action::Invoke(Self::handle_cpeaapl, "handle_cpeaapl"),
+        Action::Invoke(
+            Self::process_cpeaapl_expression,
+            "process_cpeaapl_expression",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters,
-            "handle_maybe_arrow_formal_parameters",
+            Self::process_cpeaapl_formal_parameters,
+            "process_cpeaapl_formal_parameters",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN RPAREN
-        Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_empty,
-            "handle_maybe_arrow_formal_parameters_empty",
-        ),
+        Action::Invoke(Self::process_cpeaapl_empty, "process_cpeaapl_empty"),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingIdentifier_Yield_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_parameter,
-            "handle_maybe_arrow_formal_rest_parameter",
+            Self::process_cpeaapl_rest_parameter,
+            "process_cpeaapl_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingPattern_Yield_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_rest_pattern,
-            "handle_maybe_arrow_formal_rest_pattern",
+            Self::process_cpeaapl_rest_pattern,
+            "process_cpeaapl_rest_pattern",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingIdentifier_Yield_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_parameter,
-            "handle_maybe_arrow_formal_parameters_with_rest_parameter",
+            Self::process_cpeaapl_formal_parameters_with_rest_parameter,
+            "process_cpeaapl_formal_parameters_with_rest_parameter",
         ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN
         Action::Invoke(
-            Self::handle_maybe_arrow_formal_parameters_with_rest_pattern,
-            "handle_maybe_arrow_formal_parameters_with_rest_pattern",
+            Self::process_cpeaapl_formal_parameters_with_rest_pattern,
+            "process_cpeaapl_formal_parameters_with_rest_pattern",
         ),
         // MemberExpression_Yield_Await -> PrimaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK Expression_In_Yield_Await RBRACK
         Action::Undefined,
         // MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT KeywordOrIdentifierName
@@ -3390,11 +3617,14 @@ where
         // MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PRIVATE_IDENTIFIER
         Action::Undefined,
         // Arguments_Yield_Await -> LPAREN RPAREN
-        Action::Invoke(Self::handle_empty_list, "handle_empty_list"),
+        Action::Invoke(Self::process_arguments_empty, "process_arguments_empty"),
         // Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await RPAREN
-        Action::Undefined,
+        Action::Invoke(Self::process_arguments, "process_arguments"),
         // Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await COMMA RPAREN
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_arguments_with_comma,
+            "process_arguments_with_comma",
+        ),
         // SuperCall_Yield_Await -> SUPER Arguments_Yield_Await
         Action::Undefined,
         // ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await RPAREN
@@ -3504,76 +3734,73 @@ where
         // ClassBody_Yield_Await -> ClassElementList_Yield_Await
         Action::Undefined,
         // LexicalBinding_In_Yield_Await -> BindingIdentifier_Yield_Await
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding_In_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
         // AdditiveExpression_Await -> MultiplicativeExpression_Await
         Action::Nop,
         // AdditiveExpression_Await -> AdditiveExpression_Await ADD MultiplicativeExpression_Await
-        Action::Invoke(
-            Self::handle_addition_expression,
-            "handle_addition_expression",
-        ),
+        Action::Invoke(Self::process_addition, "process_addition"),
         // AdditiveExpression_Await -> AdditiveExpression_Await SUB MultiplicativeExpression_Await
-        Action::Invoke(
-            Self::handle_subtraction_expression,
-            "handle_subtraction_expression",
-        ),
+        Action::Invoke(Self::process_subtraction, "process_subtraction"),
         // BitwiseXORExpression_Await -> BitwiseANDExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseXORExpression_Await -> BitwiseXORExpression_Await BIT_XOR BitwiseANDExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // ShiftExpression -> AdditiveExpression
         Action::Nop,
         // ShiftExpression -> ShiftExpression SHL AdditiveExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression -> ShiftExpression SAR AdditiveExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_right_shift, "process_right_shift"),
         // ShiftExpression -> ShiftExpression SHR AdditiveExpression
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_unsigned_right_shift,
+            "process_unsigned_right_shift",
+        ),
         // EqualityExpression -> RelationalExpression
         Action::Nop,
         // EqualityExpression -> EqualityExpression EQ RelationalExpression
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression -> EqualityExpression NE RelationalExpression
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression -> EqualityExpression EQ_STRICT RelationalExpression
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression -> EqualityExpression NE_STRICT RelationalExpression
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // CaseClause_Return -> CASE Expression_In COLON
         Action::Undefined,
         // CaseClause_Return -> CASE Expression_In COLON StatementList_Return
         Action::Undefined,
         // LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND BitwiseORExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Yield -> CoalesceExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead_In_Yield -> BitwiseORExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_In_Yield -> BitwiseXORExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_In_Yield -> BitwiseORExpression_In_Yield BIT_OR BitwiseXORExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // PrimaryExpression_Yield -> THIS
         Action::Undefined,
         // PrimaryExpression_Yield -> IdentifierReference_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_primary_expression_identifier_reference,
+            "process_primary_expression_identifier_reference",
+        ),
         // PrimaryExpression_Yield -> Literal
-        Action::Undefined,
+        Action::Nop,
         // PrimaryExpression_Yield -> ArrayLiteral_Yield
         Action::Undefined,
         // PrimaryExpression_Yield -> ObjectLiteral_Yield
@@ -3593,23 +3820,32 @@ where
         // PrimaryExpression_Yield -> TemplateLiteral_Yield
         Action::Undefined,
         // PrimaryExpression_Yield -> CoverParenthesizedExpressionAndArrowParameterList_Yield
-        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
+        Action::Invoke(
+            Self::process_primary_expression_cpeaapl,
+            "process_primary_expression_cpeaapl",
+        ),
         // SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK
         Action::Undefined,
         // SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName
         Action::Undefined,
         // ArgumentList_Yield -> AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_argument_list_head,
+            "process_argument_list_head",
+        ),
         // ArgumentList_Yield -> ELLIPSIS AssignmentExpression_In_Yield
         Action::Undefined,
         // ArgumentList_Yield -> ArgumentList_Yield COMMA AssignmentExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_argument_list_item,
+            "process_argument_list_item",
+        ),
         // ArgumentList_Yield -> ArgumentList_Yield COMMA ELLIPSIS AssignmentExpression_In_Yield
         Action::Undefined,
         // SubstitutionTemplate_Yield_Tagged -> TEMPLATE_HEAD Expression_In_Yield TemplateSpans_Yield_Tagged
         Action::Undefined,
         // Expression_Yield -> AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // Expression_Yield -> Expression_Yield COMMA AssignmentExpression_Yield
         Action::Undefined,
         // VariableDeclarationList_Yield -> VariableDeclaration_Yield
@@ -3617,9 +3853,9 @@ where
         // VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
         Action::Undefined,
         // LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // ForBinding_Yield -> BindingIdentifier_Yield
         Action::Undefined,
         // ForBinding_Yield -> BindingPattern_Yield
@@ -3649,23 +3885,26 @@ where
         // DefaultClause_Await_Return -> DEFAULT COLON StatementList_Await_Return
         Action::Undefined,
         // LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND BitwiseORExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Yield_Await -> CoalesceExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_In_Yield_Await -> BitwiseXORExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await BIT_OR BitwiseXORExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // PrimaryExpression_Yield_Await -> THIS
         Action::Undefined,
         // PrimaryExpression_Yield_Await -> IdentifierReference_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_primary_expression_identifier_reference,
+            "process_primary_expression_identifier_reference",
+        ),
         // PrimaryExpression_Yield_Await -> Literal
-        Action::Undefined,
+        Action::Nop,
         // PrimaryExpression_Yield_Await -> ArrayLiteral_Yield_Await
         Action::Undefined,
         // PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
@@ -3685,17 +3924,26 @@ where
         // PrimaryExpression_Yield_Await -> TemplateLiteral_Yield_Await
         Action::Undefined,
         // PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await
-        Action::Invoke(Self::handle_group_expression, "handle_group_expression"),
+        Action::Invoke(
+            Self::process_primary_expression_cpeaapl,
+            "process_primary_expression_cpeaapl",
+        ),
         // SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK
         Action::Undefined,
         // SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName
         Action::Undefined,
         // ArgumentList_Yield_Await -> AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_argument_list_head,
+            "process_argument_list_head",
+        ),
         // ArgumentList_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA AssignmentExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_argument_list_item,
+            "process_argument_list_item",
+        ),
         // ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA ELLIPSIS AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // SubstitutionTemplate_Yield_Await_Tagged -> TEMPLATE_HEAD Expression_In_Yield_Await TemplateSpans_Yield_Await_Tagged
@@ -3709,9 +3957,9 @@ where
         // VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await
         Action::Undefined,
         // LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
-        Action::Invoke(Self::handle_let_declaration, "handle_let_declaration"),
+        Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
-        Action::Invoke(Self::handle_const_declaration, "handle_const_declaration"),
+        Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
         // ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
         Action::Undefined,
         // ForBinding_Yield_Await -> BindingPattern_Yield_Await
@@ -3735,61 +3983,52 @@ where
         // MultiplicativeExpression_Await -> ExponentiationExpression_Await
         Action::Nop,
         // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL ExponentiationExpression_Await
-        Action::Invoke(
-            Self::handle_multiplication_expression,
-            "handle_multiplication_expression",
-        ),
+        Action::Invoke(Self::process_multiplication, "process_multiplication"),
         // MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV ExponentiationExpression_Await
-        Action::Invoke(
-            Self::handle_division_expression,
-            "handle_division_expression",
-        ),
+        Action::Invoke(Self::process_division, "process_division"),
         // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD ExponentiationExpression_Await
-        Action::Invoke(
-            Self::handle_remainder_expression,
-            "handle_remainder_expression",
-        ),
+        Action::Invoke(Self::process_remainder, "process_remainder"),
         // BitwiseANDExpression_Await -> EqualityExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression_Await -> BitwiseANDExpression_Await BIT_AND EqualityExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // AdditiveExpression -> MultiplicativeExpression
         Action::Nop,
         // AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression
-        Action::Invoke(
-            Self::handle_addition_expression,
-            "handle_addition_expression",
-        ),
+        Action::Invoke(Self::process_addition, "process_addition"),
         // AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression
-        Action::Invoke(
-            Self::handle_subtraction_expression,
-            "handle_subtraction_expression",
-        ),
+        Action::Invoke(Self::process_subtraction, "process_subtraction"),
         // RelationalExpression -> ShiftExpression
         Action::Nop,
         // RelationalExpression -> RelationalExpression LT ShiftExpression
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression -> RelationalExpression GT ShiftExpression
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression -> RelationalExpression LTE ShiftExpression
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression -> RelationalExpression GTE ShiftExpression
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression -> RelationalExpression INSTANCEOF ShiftExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // BitwiseXORExpression_In_Yield -> BitwiseANDExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseXORExpression_In_Yield -> BitwiseXORExpression_In_Yield BIT_XOR BitwiseANDExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // IdentifierReference_Yield -> Identifier
         Action::Invoke(
-            Self::handle_identifier_reference_except_for_yield,
-            "handle_identifier_reference_except_for_yield",
+            Self::process_identifier_reference_except_for_yield,
+            "process_identifier_reference_except_for_yield",
         ),
         // IdentifierReference_Yield -> AWAIT
         Action::Invoke(
-            Self::handle_await_as_identifier_reference,
-            "handle_await_as_identifier_reference",
+            Self::process_identifier_reference,
+            "process_identifier_reference",
         ),
         // ArrayLiteral_Yield -> LBRACK RBRACK
         Action::Undefined,
@@ -3820,7 +4059,7 @@ where
         // TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_TAIL
         Action::Undefined,
         // AssignmentExpression_Yield -> ConditionalExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // AssignmentExpression_Yield -> YieldExpression
         Action::Undefined,
         // AssignmentExpression_Yield -> ArrowFunction_Yield
@@ -3828,18 +4067,27 @@ where
         // AssignmentExpression_Yield -> AsyncArrowFunction_Yield
         Action::Undefined,
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield ASSIGN AssignmentExpression_Yield
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield AssignmentOperator AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN AssignmentExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // VariableDeclaration_Yield -> BindingIdentifier_Yield
         Action::Undefined,
         // VariableDeclaration_Yield -> BindingIdentifier_Yield Initializer_Yield
@@ -3847,9 +4095,9 @@ where
         // VariableDeclaration_Yield -> BindingPattern_Yield Initializer_Yield
         Action::Undefined,
         // BindingList_Yield -> LexicalBinding_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON
         Action::Undefined,
         // CaseClause_Yield_Return -> CASE Expression_In_Yield COLON StatementList_Yield_Return
@@ -3871,13 +4119,13 @@ where
         // CaseClause_Await_Return -> CASE Expression_In_Await COLON StatementList_Await_Return
         Action::Undefined,
         // BitwiseXORExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseXORExpression_In_Yield_Await -> BitwiseXORExpression_In_Yield_Await BIT_XOR BitwiseANDExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // IdentifierReference_Yield_Await -> Identifier
         Action::Invoke(
-            Self::handle_identifier_reference_except_for_yield_await,
-            "handle_identifier_reference_except_for_yield_await",
+            Self::process_identifier_reference_except_for_yield_await,
+            "process_identifier_reference_except_for_yield_await",
         ),
         // ArrayLiteral_Yield_Await -> LBRACK RBRACK
         Action::Undefined,
@@ -3908,7 +4156,7 @@ where
         // TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_TAIL
         Action::Undefined,
         // AssignmentExpression_Yield_Await -> ConditionalExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // AssignmentExpression_Yield_Await -> YieldExpression_Await
         Action::Undefined,
         // AssignmentExpression_Yield_Await -> ArrowFunction_Yield_Await
@@ -3916,18 +4164,27 @@ where
         // AssignmentExpression_Yield_Await -> AsyncArrowFunction_Yield_Await
         Action::Undefined,
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN AssignmentExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_assignment_expression,
-            "handle_assignment_expression",
-        ),
+        Action::Invoke(Self::process_assignment, "process_assignment"),
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator AssignmentExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_assignment_operator,
+            "process_assignment_operator",
+        ),
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN AssignmentExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_and_assignment,
+            "process_logical_and_assignment",
+        ),
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN AssignmentExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_logical_or_assignment,
+            "process_logical_or_assignment",
+        ),
         // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN AssignmentExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_nullish_coalescing_assignment,
+            "process_nullish_coalescing_assignment",
+        ),
         // VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await
         Action::Undefined,
         // VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await Initializer_Yield_Await
@@ -3935,9 +4192,9 @@ where
         // VariableDeclaration_Yield_Await -> BindingPattern_Yield_Await Initializer_Yield_Await
         Action::Undefined,
         // BindingList_Yield_Await -> LexicalBinding_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_head, "process_binding_list_head"),
         // BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON
         Action::Undefined,
         // CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON StatementList_Yield_Await_Return
@@ -3955,46 +4212,31 @@ where
         // ClassElement_Yield_Await -> SEMICOLON
         Action::Undefined,
         // ExponentiationExpression_Await -> UnaryExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_exponentiation, "process_exponentiation"),
         // EqualityExpression_Await -> RelationalExpression_Await
         Action::Nop,
         // EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression_Await -> EqualityExpression_Await NE RelationalExpression_Await
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression_Await -> EqualityExpression_Await EQ_STRICT RelationalExpression_Await
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression_Await -> EqualityExpression_Await NE_STRICT RelationalExpression_Await
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // MultiplicativeExpression -> ExponentiationExpression
         Action::Nop,
         // MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
-        Action::Invoke(
-            Self::handle_multiplication_expression,
-            "handle_multiplication_expression",
-        ),
+        Action::Invoke(Self::process_multiplication, "process_multiplication"),
         // MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
-        Action::Invoke(
-            Self::handle_division_expression,
-            "handle_division_expression",
-        ),
+        Action::Invoke(Self::process_division, "process_division"),
         // MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
-        Action::Invoke(
-            Self::handle_remainder_expression,
-            "handle_remainder_expression",
-        ),
+        Action::Invoke(Self::process_remainder, "process_remainder"),
         // BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression_In_Yield -> BitwiseANDExpression_In_Yield BIT_AND EqualityExpression_In_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // ElementList_Yield -> AssignmentExpression_In_Yield
         Action::Undefined,
         // ElementList_Yield -> Elision AssignmentExpression_In_Yield
@@ -4025,8 +4267,8 @@ where
         Action::Nop,
         // ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // YieldExpression -> YIELD
         Action::Undefined,
@@ -4041,13 +4283,16 @@ where
         // AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer_Yield -> ASSIGN AssignmentExpression_Yield
-        Action::Nop,
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // LexicalBinding_Yield -> BindingIdentifier_Yield
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding_Yield -> BindingIdentifier_Yield Initializer_Yield
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_Yield -> BindingPattern_Yield Initializer_Yield
         Action::Undefined,
@@ -4068,9 +4313,9 @@ where
         // FieldDefinition_Yield -> ClassElementName_Yield Initializer_In_Yield
         Action::Undefined,
         // BitwiseANDExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await BIT_AND EqualityExpression_In_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // ElementList_Yield_Await -> AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // ElementList_Yield_Await -> Elision AssignmentExpression_In_Yield_Await
@@ -4101,8 +4346,8 @@ where
         Action::Nop,
         // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await
         Action::Invoke(
-            Self::handle_conditional_expression,
-            "handle_conditional_expression",
+            Self::process_conditional_expression,
+            "process_conditional_expression",
         ),
         // YieldExpression_Await -> YIELD
         Action::Undefined,
@@ -4117,13 +4362,16 @@ where
         // AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody
         Action::Undefined,
         // Initializer_Yield_Await -> ASSIGN AssignmentExpression_Yield_Await
-        Action::Nop,
+        Action::Invoke(Self::process_initializer, "process_initializer"),
         // LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await
-        Action::Invoke(Self::handle_lexical_binding, "handle_lexical_binding"),
+        Action::Invoke(
+            Self::process_lexical_binding_identifier,
+            "process_lexical_binding_identifier",
+        ),
         // LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_Yield_Await
         Action::Invoke(
-            Self::handle_lexical_binding_with_initializer,
-            "handle_lexical_binding_with_initializer",
+            Self::process_lexical_binding_identifier_with_initializer,
+            "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_Yield_Await -> BindingPattern_Yield_Await Initializer_Yield_Await
         Action::Undefined,
@@ -4144,65 +4392,65 @@ where
         // FieldDefinition_Yield_Await -> ClassElementName_Yield_Await Initializer_In_Yield_Await
         Action::Undefined,
         // UnaryExpression_Await -> UpdateExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // UnaryExpression_Await -> DELETE UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_delete, "process_delete"),
         // UnaryExpression_Await -> VOID UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_void, "process_void"),
         // UnaryExpression_Await -> TYPEOF UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_typeof, "process_typeof"),
         // UnaryExpression_Await -> ADD UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression_Await -> SUB UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
         // UnaryExpression_Await -> BIT_NOT UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression_Await -> NOT UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_not, "process_logical_not"),
         // UnaryExpression_Await -> AwaitExpression
         Action::Undefined,
         // UpdateExpression_Await -> LeftHandSideExpression_Await
-        Action::Undefined,
+        Action::Nop,
         // UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) INC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_increment, "process_postfix_increment"),
         // UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) DEC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_decrement, "process_postfix_decrement"),
         // UpdateExpression_Await -> INC UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_increment, "process_prefix_increment"),
         // UpdateExpression_Await -> DEC UnaryExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_decrement, "process_prefix_decrement"),
         // RelationalExpression_Await -> ShiftExpression_Await
         Action::Nop,
         // RelationalExpression_Await -> RelationalExpression_Await LT ShiftExpression_Await
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression_Await -> RelationalExpression_Await GT ShiftExpression_Await
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression_Await -> RelationalExpression_Await LTE ShiftExpression_Await
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression_Await -> RelationalExpression_Await GTE ShiftExpression_Await
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression_Await -> RelationalExpression_Await INSTANCEOF ShiftExpression_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // ExponentiationExpression -> UnaryExpression
         Action::Nop,
         // ExponentiationExpression -> UpdateExpression EXP ExponentiationExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_exponentiation, "process_exponentiation"),
         // EqualityExpression_In_Yield -> RelationalExpression_In_Yield
         Action::Nop,
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ RelationalExpression_In_Yield
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE RelationalExpression_In_Yield
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ_STRICT RelationalExpression_In_Yield
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE_STRICT RelationalExpression_In_Yield
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield
         Action::Undefined,
         // PropertyDefinition_Yield -> IdentifierReference_Yield
@@ -4220,9 +4468,9 @@ where
         // TemplateSpans_Yield -> TemplateMiddleList_Yield TEMPLATE_TAIL
         Action::Undefined,
         // ShortCircuitExpression_Yield -> LogicalORExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // ShortCircuitExpression_Yield -> CoalesceExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // ClassElementName_Yield -> PropertyName_Yield
         Action::Undefined,
         // ClassElementName_Yield -> PRIVATE_IDENTIFIER
@@ -4236,19 +4484,13 @@ where
         // EqualityExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await
         Action::Nop,
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ RelationalExpression_In_Yield_Await
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE RelationalExpression_In_Yield_Await
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ_STRICT RelationalExpression_In_Yield_Await
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE_STRICT RelationalExpression_In_Yield_Await
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await
         Action::Undefined,
         // PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await
@@ -4266,9 +4508,9 @@ where
         // TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_TAIL
         Action::Undefined,
         // ShortCircuitExpression_Yield_Await -> LogicalORExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ShortCircuitExpression_Yield_Await -> CoalesceExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ClassElementName_Yield_Await -> PropertyName_Yield_Await
         Action::Undefined,
         // ClassElementName_Yield_Await -> PRIVATE_IDENTIFIER
@@ -4284,43 +4526,49 @@ where
         // UnaryExpression -> UpdateExpression
         Action::Nop,
         // UnaryExpression -> DELETE UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_delete, "process_delete"),
         // UnaryExpression -> VOID UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_void, "process_void"),
         // UnaryExpression -> TYPEOF UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_typeof, "process_typeof"),
         // UnaryExpression -> ADD UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression -> SUB UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
         // UnaryExpression -> BIT_NOT UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression -> NOT UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_not, "process_logical_not"),
         // UpdateExpression -> LeftHandSideExpression
         Action::Nop,
         // UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) INC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_increment, "process_postfix_increment"),
         // UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) DEC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_decrement, "process_postfix_decrement"),
         // UpdateExpression -> INC UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_increment, "process_prefix_increment"),
         // UpdateExpression -> DEC UnaryExpression
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_decrement, "process_prefix_decrement"),
         // RelationalExpression_In_Yield -> ShiftExpression_Yield
         Action::Nop,
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield LT ShiftExpression_Yield
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield GT ShiftExpression_Yield
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield LTE ShiftExpression_Yield
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield GTE ShiftExpression_Yield
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield INSTANCEOF ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // RelationalExpression_In_Yield -> RelationalExpression_In_Yield IN ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_in, "process_in"),
         // RelationalExpression_In_Yield -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield
         Action::Undefined,
         // CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield
@@ -4330,25 +4578,31 @@ where
         // TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE Expression_In_Yield
         Action::Undefined,
         // LogicalORExpression_Yield -> LogicalANDExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // LogicalORExpression_Yield -> LogicalORExpression_Yield OR LogicalANDExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
         Action::Nop,
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LT ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GT ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LTE ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GTE ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await INSTANCEOF ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await IN ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_in, "process_in"),
         // RelationalExpression_In_Yield_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield_Await
         Action::Undefined,
         // CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await
@@ -4358,243 +4612,219 @@ where
         // TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_MIDDLE Expression_In_Yield_Await
         Action::Undefined,
         // LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR LogicalANDExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_or, "process_logical_or"),
         // CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH BitwiseORExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_nullish, "process_nullish"),
         // ShiftExpression_Yield -> AdditiveExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // ShiftExpression_Yield -> ShiftExpression_Yield SHL AdditiveExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression_Yield -> ShiftExpression_Yield SAR AdditiveExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_right_shift, "process_right_shift"),
         // ShiftExpression_Yield -> ShiftExpression_Yield SHR AdditiveExpression_Yield
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_unsigned_right_shift,
+            "process_unsigned_right_shift",
+        ),
         // LogicalANDExpression_Yield -> BitwiseORExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND BitwiseORExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Yield -> CoalesceExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead_Yield -> BitwiseORExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_Yield -> BitwiseXORExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_Yield -> BitwiseORExpression_Yield BIT_OR BitwiseXORExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // ShiftExpression_Yield_Await -> AdditiveExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHL AdditiveExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SAR AdditiveExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_right_shift, "process_right_shift"),
         // ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHR AdditiveExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(
+            Self::process_unsigned_right_shift,
+            "process_unsigned_right_shift",
+        ),
         // LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND BitwiseORExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // CoalesceExpressionHead_Yield_Await -> BitwiseORExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await BIT_OR BitwiseXORExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // AdditiveExpression_Yield -> MultiplicativeExpression_Yield
         Action::Nop,
         // AdditiveExpression_Yield -> AdditiveExpression_Yield ADD MultiplicativeExpression_Yield
-        Action::Invoke(
-            Self::handle_addition_expression,
-            "handle_addition_expression",
-        ),
+        Action::Invoke(Self::process_addition, "process_addition"),
         // AdditiveExpression_Yield -> AdditiveExpression_Yield SUB MultiplicativeExpression_Yield
-        Action::Invoke(
-            Self::handle_subtraction_expression,
-            "handle_subtraction_expression",
-        ),
+        Action::Invoke(Self::process_subtraction, "process_subtraction"),
         // BitwiseXORExpression_Yield -> BitwiseANDExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseXORExpression_Yield -> BitwiseXORExpression_Yield BIT_XOR BitwiseANDExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // AdditiveExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
         Action::Nop,
         // AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await ADD MultiplicativeExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_addition_expression,
-            "handle_addition_expression",
-        ),
+        Action::Invoke(Self::process_addition, "process_addition"),
         // AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await SUB MultiplicativeExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_subtraction_expression,
-            "handle_subtraction_expression",
-        ),
+        Action::Invoke(Self::process_subtraction, "process_subtraction"),
         // BitwiseXORExpression_Yield_Await -> BitwiseANDExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseXORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await BIT_XOR BitwiseANDExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // MultiplicativeExpression_Yield -> ExponentiationExpression_Yield
         Action::Nop,
         // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL ExponentiationExpression_Yield
-        Action::Invoke(
-            Self::handle_multiplication_expression,
-            "handle_multiplication_expression",
-        ),
+        Action::Invoke(Self::process_multiplication, "process_multiplication"),
         // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV ExponentiationExpression_Yield
-        Action::Invoke(
-            Self::handle_division_expression,
-            "handle_division_expression",
-        ),
+        Action::Invoke(Self::process_division, "process_division"),
         // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD ExponentiationExpression_Yield
-        Action::Invoke(
-            Self::handle_remainder_expression,
-            "handle_remainder_expression",
-        ),
+        Action::Invoke(Self::process_remainder, "process_remainder"),
         // BitwiseANDExpression_Yield -> EqualityExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression_Yield -> BitwiseANDExpression_Yield BIT_AND EqualityExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // MultiplicativeExpression_Yield_Await -> ExponentiationExpression_Yield_Await
         Action::Nop,
         // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL ExponentiationExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_multiplication_expression,
-            "handle_multiplication_expression",
-        ),
+        Action::Invoke(Self::process_multiplication, "process_multiplication"),
         // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV ExponentiationExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_division_expression,
-            "handle_division_expression",
-        ),
+        Action::Invoke(Self::process_division, "process_division"),
         // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD ExponentiationExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_remainder_expression,
-            "handle_remainder_expression",
-        ),
+        Action::Invoke(Self::process_remainder, "process_remainder"),
         // BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // BitwiseANDExpression_Yield_Await -> BitwiseANDExpression_Yield_Await BIT_AND EqualityExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_and, "process_bitwise_and"),
         // ExponentiationExpression_Yield -> UnaryExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // ExponentiationExpression_Yield -> UpdateExpression_Yield EXP ExponentiationExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_exponentiation, "process_exponentiation"),
         // EqualityExpression_Yield -> RelationalExpression_Yield
         Action::Nop,
         // EqualityExpression_Yield -> EqualityExpression_Yield EQ RelationalExpression_Yield
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression_Yield -> EqualityExpression_Yield NE RelationalExpression_Yield
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression_Yield -> EqualityExpression_Yield EQ_STRICT RelationalExpression_Yield
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression_Yield -> EqualityExpression_Yield NE_STRICT RelationalExpression_Yield
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // ExponentiationExpression_Yield_Await -> UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // ExponentiationExpression_Yield_Await -> UpdateExpression_Yield_Await EXP ExponentiationExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_exponentiation, "process_exponentiation"),
         // EqualityExpression_Yield_Await -> RelationalExpression_Yield_Await
         Action::Nop,
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ RelationalExpression_Yield_Await
-        Action::Invoke(Self::handle_eq_expression, "handle_eq_expression"),
+        Action::Invoke(Self::process_equality, "process_equality"),
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE RelationalExpression_Yield_Await
-        Action::Invoke(Self::handle_ne_expression, "handle_ne_expression"),
+        Action::Invoke(Self::process_inequality, "process_inequality"),
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ_STRICT RelationalExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_strict_eq_expression,
-            "handle_strict_eq_expression",
-        ),
+        Action::Invoke(Self::process_strict_equality, "process_strict_equality"),
         // EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE_STRICT RelationalExpression_Yield_Await
-        Action::Invoke(
-            Self::handle_strict_ne_expression,
-            "handle_strict_ne_expression",
-        ),
+        Action::Invoke(Self::process_strict_inequality, "process_strict_inequality"),
         // UnaryExpression_Yield -> UpdateExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // UnaryExpression_Yield -> DELETE UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_delete, "process_delete"),
         // UnaryExpression_Yield -> VOID UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_void, "process_void"),
         // UnaryExpression_Yield -> TYPEOF UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_typeof, "process_typeof"),
         // UnaryExpression_Yield -> ADD UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression_Yield -> SUB UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
         // UnaryExpression_Yield -> BIT_NOT UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression_Yield -> NOT UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_not, "process_logical_not"),
         // UpdateExpression_Yield -> LeftHandSideExpression_Yield
-        Action::Undefined,
+        Action::Nop,
         // UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) INC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_increment, "process_postfix_increment"),
         // UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) DEC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_decrement, "process_postfix_decrement"),
         // UpdateExpression_Yield -> INC UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_increment, "process_prefix_increment"),
         // UpdateExpression_Yield -> DEC UnaryExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_decrement, "process_prefix_decrement"),
         // RelationalExpression_Yield -> ShiftExpression_Yield
         Action::Nop,
         // RelationalExpression_Yield -> RelationalExpression_Yield LT ShiftExpression_Yield
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression_Yield -> RelationalExpression_Yield GT ShiftExpression_Yield
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression_Yield -> RelationalExpression_Yield LTE ShiftExpression_Yield
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression_Yield -> RelationalExpression_Yield GTE ShiftExpression_Yield
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression_Yield -> RelationalExpression_Yield INSTANCEOF ShiftExpression_Yield
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // UnaryExpression_Yield_Await -> UpdateExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // UnaryExpression_Yield_Await -> DELETE UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_delete, "process_delete"),
         // UnaryExpression_Yield_Await -> VOID UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_void, "process_void"),
         // UnaryExpression_Yield_Await -> TYPEOF UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_typeof, "process_typeof"),
         // UnaryExpression_Yield_Await -> ADD UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression_Yield_Await -> SUB UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
         // UnaryExpression_Yield_Await -> BIT_NOT UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression_Yield_Await -> NOT UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_logical_not, "process_logical_not"),
         // UnaryExpression_Yield_Await -> AwaitExpression_Yield
         Action::Undefined,
         // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await
-        Action::Undefined,
+        Action::Nop,
         // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) INC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_increment, "process_postfix_increment"),
         // UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) DEC
-        Action::Undefined,
+        Action::Invoke(Self::process_postfix_decrement, "process_postfix_decrement"),
         // UpdateExpression_Yield_Await -> INC UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_increment, "process_prefix_increment"),
         // UpdateExpression_Yield_Await -> DEC UnaryExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_prefix_decrement, "process_prefix_decrement"),
         // RelationalExpression_Yield_Await -> ShiftExpression_Yield_Await
         Action::Nop,
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LT ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_lt_expression, "handle_lt_expression"),
+        Action::Invoke(Self::process_less_than, "process_less_than"),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GT ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_gt_expression, "handle_gt_expression"),
+        Action::Invoke(Self::process_greater_than, "process_greater_than"),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LTE ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_lte_expression, "handle_lte_expression"),
+        Action::Invoke(
+            Self::process_less_than_or_equal,
+            "process_less_than_or_equal",
+        ),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GTE ShiftExpression_Yield_Await
-        Action::Invoke(Self::handle_gte_expression, "handle_gte_expression"),
+        Action::Invoke(
+            Self::process_greater_than_or_equal,
+            "process_greater_than_or_equal",
+        ),
         // RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await INSTANCEOF ShiftExpression_Yield_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_instanceof, "process_instanceof"),
         // AwaitExpression_Yield -> AWAIT UnaryExpression_Yield_Await
         Action::Undefined,
     ];

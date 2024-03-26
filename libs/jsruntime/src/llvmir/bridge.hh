@@ -56,6 +56,8 @@ void compiler_peer_end_function(Compiler* self);
 void compiler_peer_start_scope(Compiler* self);
 void compiler_peer_end_scope(Compiler* self);
 void compiler_peer_return(Compiler* self, size_t n);
+void compiler_peer_void(Compiler* self);
+void compiler_peer_dump_stack(Compiler* self);
 
 // Execution
 

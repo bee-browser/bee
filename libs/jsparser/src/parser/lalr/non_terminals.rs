@@ -27,6 +27,7 @@ pub enum NonTerminal {
     ArrayLiteral_Await,
     ArrayLiteral_Yield,
     ArrayLiteral_Yield_Await,
+    ArrowFormalParameters,
     ArrowFunction,
     ArrowFunction_Await,
     ArrowFunction_In,

@@ -6,9 +6,13 @@
   action: empty_module
 - rule: Module -> ModuleBody
   action: module
+- rule: ArrowFormalParameters -> LPAREN UniqueFormalParameters RPAREN
+  action: null
 - rule: ScriptBody -> StatementList
   action: nop
 - rule: ModuleBody -> ModuleItemList
+  action: nop
+- rule: UniqueFormalParameters -> FormalParameters
   action: nop
 - rule: StatementList -> StatementListItem
   action: create_list
@@ -18,6 +22,16 @@
   action: create_list
 - rule: ModuleItemList -> ModuleItemList ModuleItem
   action: append_to_list
+- rule: FormalParameters -> (empty)
+  action: empty_list
+- rule: FormalParameters -> FunctionRestParameter
+  action: create_list
+- rule: FormalParameters -> FormalParameterList
+  action: nop
+- rule: FormalParameters -> FormalParameterList COMMA
+  action: remove_comma
+- rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
+  action: append_to_csv_list
 - rule: StatementListItem -> Statement
   action: nop
 - rule: StatementListItem -> Declaration
@@ -28,6 +42,12 @@
   action: nop
 - rule: ModuleItem -> StatementListItem_Await
   action: nop
+- rule: FunctionRestParameter -> BindingRestElement
+  action: nop
+- rule: FormalParameterList -> FormalParameter
+  action: create_list
+- rule: FormalParameterList -> FormalParameterList COMMA FormalParameter
+  action: append_to_csv_list
 - rule: Statement -> BlockStatement
   action: nop
 - rule: Statement -> VariableStatement
@@ -83,6 +103,12 @@
 - rule: StatementListItem_Await -> Statement_Await
   action: nop
 - rule: StatementListItem_Await -> Declaration_Await
+  action: nop
+- rule: BindingRestElement -> ELLIPSIS BindingIdentifier
+  action: rest_element
+- rule: BindingRestElement -> ELLIPSIS BindingPattern
+  action: rest_element
+- rule: FormalParameter -> BindingElement
   action: nop
 - rule: BlockStatement -> Block
   action: nop
@@ -238,6 +264,22 @@
   action: nop
 - rule: Statement_Await -> DebuggerStatement
   action: nop
+- rule: BindingIdentifier -> Identifier
+  action: nop
+- rule: BindingIdentifier -> YIELD
+  action: identifier
+- rule: BindingIdentifier -> AWAIT
+  action: identifier
+- rule: BindingPattern -> ObjectBindingPattern
+  action: nop
+- rule: BindingPattern -> ArrayBindingPattern
+  action: nop
+- rule: BindingElement -> SingleNameBinding
+  action: either_left
+- rule: BindingElement -> BindingPattern
+  action: nop
+- rule: BindingElement -> BindingPattern Initializer_In
+  action: assignment_pattern
 - rule: Block -> LBRACE RBRACE
   action: block_statement_empty
 - rule: Block -> LBRACE _SCOPE_ StatementList RBRACE
@@ -296,12 +338,6 @@
     AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier
     LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
   action: async_generator_declaration
-- rule: BindingIdentifier -> Identifier
-  action: nop
-- rule: BindingIdentifier -> YIELD
-  action: identifier
-- rule: BindingIdentifier -> AWAIT
-  action: identifier
 - rule: ClassTail -> LBRACE RBRACE
   action: empty_class_tail
 - rule: ClassTail -> ClassHeritage LBRACE RBRACE
@@ -485,6 +521,42 @@
   action: try_finally_statement
 - rule: TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
   action: try_catch_finally_statement
+- rule: Identifier -> IdentifierNameButNotReservedWord
+  action: identifier
+- rule: ObjectBindingPattern -> LBRACE RBRACE
+  action: object_pattern_empty
+- rule: ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
+  action: object_pattern_rest
+- rule: ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
+  action: object_pattern
+- rule: ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
+  action: object_pattern_comma
+- rule: ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
+  action: object_pattern_comma_rest
+- rule: ArrayBindingPattern -> LBRACK RBRACK
+  action: array_pattern_empty
+- rule: ArrayBindingPattern -> LBRACK Elision RBRACK
+  action: array_pattern
+- rule: ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
+  action: array_pattern_rest
+- rule: ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
+  action: array_pattern_elision_rest
+- rule: ArrayBindingPattern -> LBRACK BindingElementList RBRACK
+  action: array_pattern
+- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
+  action: array_pattern_comma
+- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
+  action: array_pattern_concat
+- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
+  action: array_pattern_comma_rest
+- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
+  action: array_pattern_concat_rest
+- rule: SingleNameBinding -> BindingIdentifier
+  action: single_name_binding
+- rule: SingleNameBinding -> BindingIdentifier Initializer_In
+  action: single_name_binding_init
+- rule: Initializer_In -> ASSIGN AssignmentExpression_In
+  action: initializer
 - rule: _SCOPE_ -> (empty)
   action: nop
 - rule: VariableDeclaration_In -> BindingIdentifier
@@ -589,22 +661,10 @@
   action: case_block_default_cases
 - rule: CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE
   action: case_block_cases_default_cases
-- rule: Identifier -> IdentifierNameButNotReservedWord
-  action: identifier
 - rule: CatchParameter -> BindingIdentifier
   action: nop
 - rule: CatchParameter -> BindingPattern
   action: nop
-- rule: FormalParameters -> (empty)
-  action: empty_list
-- rule: FormalParameters -> FunctionRestParameter
-  action: create_list
-- rule: FormalParameters -> FormalParameterList
-  action: nop
-- rule: FormalParameters -> FormalParameterList COMMA
-  action: remove_comma
-- rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
-  action: append_to_csv_list
 - rule: _FUNCTION_SIGNATURE_ -> (empty)
   action: nop
 - rule: FunctionBody -> FunctionStatementList
@@ -886,12 +946,54 @@
   action: catch_clause_no_param
 - rule: Finally_Await -> FINALLY Block_Await
   action: finally_clause
-- rule: Initializer_In -> ASSIGN AssignmentExpression_In
-  action: initializer
-- rule: BindingPattern -> ObjectBindingPattern
+- rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
   action: nop
-- rule: BindingPattern -> ArrayBindingPattern
+- rule: IdentifierNameButNotReservedWord -> LET
   action: nop
+- rule: IdentifierNameButNotReservedWord -> STATIC
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> IMPLEMENTS
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> INTERFACE
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PACKAGE
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PRIVATE
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PROTECTED
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PUBLIC
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> AS
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> ASYNC
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> FROM
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> GET
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> META
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> OF
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> SET
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> TARGET
+  action: nop
+- rule: BindingRestProperty -> ELLIPSIS BindingIdentifier
+  action: rest_element
+- rule: BindingPropertyList -> BindingProperty
+  action: create_list
+- rule: BindingPropertyList -> BindingPropertyList COMMA BindingProperty
+  action: append_to_csv_list
+- rule: Elision -> COMMA
+  action: elision
+- rule: Elision -> Elision COMMA
+  action: elision_append
+- rule: BindingElementList -> BindingElisionElement
+  action: nop
+- rule: BindingElementList -> BindingElementList COMMA BindingElisionElement
+  action: concat_csv_arrays
 - rule: ConditionalExpression_In -> ShortCircuitExpression_In
   action: nop
 - rule: >-
@@ -942,46 +1044,6 @@
   action: switch_case_default_no_consequent
 - rule: DefaultClause -> DEFAULT COLON StatementList
   action: switch_case_default
-- rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> LET
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> STATIC
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> IMPLEMENTS
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> INTERFACE
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PACKAGE
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PRIVATE
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PROTECTED
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PUBLIC
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> AS
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> ASYNC
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> FROM
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> GET
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> META
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> OF
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> SET
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> TARGET
-  action: nop
-- rule: FunctionRestParameter -> BindingRestElement
-  action: nop
-- rule: FormalParameterList -> FormalParameter
-  action: create_list
-- rule: FormalParameterList -> FormalParameterList COMMA FormalParameter
-  action: append_to_csv_list
 - rule: FunctionStatementList -> (empty)
   action: empty_list
 - rule: FunctionStatementList -> StatementList_Return
@@ -1242,34 +1304,14 @@
   action: nop
 - rule: CatchParameter_Await -> BindingPattern_Await
   action: nop
-- rule: ObjectBindingPattern -> LBRACE RBRACE
-  action: object_pattern_empty
-- rule: ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
-  action: object_pattern_rest
-- rule: ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
-  action: object_pattern
-- rule: ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
-  action: object_pattern_comma
-- rule: ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
-  action: object_pattern_comma_rest
-- rule: ArrayBindingPattern -> LBRACK RBRACK
-  action: array_pattern_empty
-- rule: ArrayBindingPattern -> LBRACK Elision RBRACK
-  action: array_pattern
-- rule: ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
-  action: array_pattern_rest
-- rule: ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
-  action: array_pattern_elision_rest
-- rule: ArrayBindingPattern -> LBRACK BindingElementList RBRACK
-  action: array_pattern
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
-  action: array_pattern_comma
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
-  action: array_pattern_concat
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
-  action: array_pattern_comma_rest
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
-  action: array_pattern_concat_rest
+- rule: BindingProperty -> SingleNameBinding
+  action: either_right
+- rule: BindingProperty -> PropertyName COLON BindingElement
+  action: property_value
+- rule: BindingElisionElement -> BindingElement
+  action: create_array
+- rule: BindingElisionElement -> Elision BindingElement
+  action: append_to_array
 - rule: ShortCircuitExpression_In -> LogicalORExpression_In
   action: nop
 - rule: ShortCircuitExpression_In -> CoalesceExpression_In
@@ -1336,12 +1378,6 @@
   action: switch_case_no_consequent
 - rule: CaseClause -> CASE Expression_In COLON StatementList
   action: switch_case
-- rule: BindingRestElement -> ELLIPSIS BindingIdentifier
-  action: rest_element
-- rule: BindingRestElement -> ELLIPSIS BindingPattern
-  action: rest_element
-- rule: FormalParameter -> BindingElement
-  action: nop
 - rule: StatementList_Return -> StatementListItem_Return
   action: create_list
 - rule: StatementList_Return -> StatementList_Return StatementListItem_Return
@@ -1522,20 +1558,10 @@
   action: switch_case_default_no_consequent
 - rule: DefaultClause_Await -> DEFAULT COLON StatementList_Await
   action: switch_case_default
-- rule: BindingRestProperty -> ELLIPSIS BindingIdentifier
-  action: rest_element
-- rule: BindingPropertyList -> BindingProperty
-  action: create_list
-- rule: BindingPropertyList -> BindingPropertyList COMMA BindingProperty
-  action: append_to_csv_list
-- rule: Elision -> COMMA
-  action: elision
-- rule: Elision -> Elision COMMA
-  action: elision_append
-- rule: BindingElementList -> BindingElisionElement
+- rule: PropertyName -> LiteralPropertyName
   action: nop
-- rule: BindingElementList -> BindingElementList COMMA BindingElisionElement
-  action: concat_csv_arrays
+- rule: PropertyName -> ComputedPropertyName
+  action: nop
 - rule: LogicalORExpression_In -> LogicalANDExpression_In
   action: nop
 - rule: LogicalORExpression_In -> LogicalORExpression_In OR LogicalANDExpression_In
@@ -1634,12 +1660,6 @@
   action: variable_declarator_init
 - rule: LexicalBinding -> BindingPattern Initializer
   action: variable_declarator_init
-- rule: BindingElement -> SingleNameBinding
-  action: either_left
-- rule: BindingElement -> BindingPattern
-  action: nop
-- rule: BindingElement -> BindingPattern Initializer_In
-  action: assignment_pattern
 - rule: StatementListItem_Return -> Statement_Return
   action: nop
 - rule: StatementListItem_Return -> Declaration
@@ -1865,14 +1885,14 @@
   action: switch_case_no_consequent
 - rule: CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
   action: switch_case
-- rule: BindingProperty -> SingleNameBinding
-  action: either_right
-- rule: BindingProperty -> PropertyName COLON BindingElement
-  action: property_value
-- rule: BindingElisionElement -> BindingElement
-  action: create_array
-- rule: BindingElisionElement -> Elision BindingElement
-  action: append_to_array
+- rule: LiteralPropertyName -> KeywordOrIdentifierName
+  action: nop
+- rule: LiteralPropertyName -> STRING_LITERAL
+  action: string_literal
+- rule: LiteralPropertyName -> NUMERIC_LITERAL
+  action: numeric_literal
+- rule: ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
+  action: computed_property_name
 - rule: LogicalANDExpression_In -> BitwiseORExpression_In
   action: nop
 - rule: LogicalANDExpression_In -> LogicalANDExpression_In AND BitwiseORExpression_In
@@ -1937,10 +1957,6 @@
   action: nop
 - rule: AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
   action: function_body_block
-- rule: SingleNameBinding -> BindingIdentifier
-  action: single_name_binding
-- rule: SingleNameBinding -> BindingIdentifier Initializer_In
-  action: single_name_binding_init
 - rule: Statement_Return -> BlockStatement_Return
   action: nop
 - rule: Statement_Return -> VariableStatement
@@ -2069,8 +2085,6 @@
   action: nop
 - rule: ClassElementName -> PRIVATE_IDENTIFIER
   action: class_element_name_private
-- rule: UniqueFormalParameters -> FormalParameters
-  action: nop
 - rule: >-
     GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield RPAREN LBRACE
     GeneratorBody RBRACE
@@ -2175,10 +2189,6 @@
   action: variable_declarator_init
 - rule: LexicalBinding_Await -> BindingPattern_Await Initializer_Await
   action: variable_declarator_init
-- rule: PropertyName -> LiteralPropertyName
-  action: nop
-- rule: PropertyName -> ComputedPropertyName
-  action: nop
 - rule: BitwiseXORExpression_In -> BitwiseANDExpression_In
   action: nop
 - rule: BitwiseXORExpression_In -> BitwiseXORExpression_In BIT_XOR BitwiseANDExpression_In
@@ -2477,14 +2487,6 @@
   action: nop
 - rule: ShortCircuitExpression_Await -> CoalesceExpression_Await
   action: nop
-- rule: LiteralPropertyName -> KeywordOrIdentifierName
-  action: nop
-- rule: LiteralPropertyName -> STRING_LITERAL
-  action: string_literal
-- rule: LiteralPropertyName -> NUMERIC_LITERAL
-  action: numeric_literal
-- rule: ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
-  action: computed_property_name
 - rule: BitwiseANDExpression_In -> EqualityExpression_In
   action: nop
 - rule: BitwiseANDExpression_In -> BitwiseANDExpression_In BIT_AND EqualityExpression_In

@@ -15,9 +15,9 @@ parser.  The generated Rust source files are placed in the `lalr` module inside 
 module.
 
 Supplemental syntax and static semantics defined in the ECMA-262 specification are not processed in
-the parser.  For example, the `CoverParenthesizedExpressionAndArrowParameterList` may produce an
-empty parenthesized expression `()` but it's not allowed in the `PrimaryExpression`.  This must be
-handled as a syntax error in the caller side.
+the this module.  For example, the `CoverParenthesizedExpressionAndArrowParameterList` may produce
+an empty parenthesized expression `()` but it's not allowed in the `PrimaryExpression`.  This must
+be handled as a syntax error in the caller side.  This is done in the `syntax` module.
 
 ## TODO
 

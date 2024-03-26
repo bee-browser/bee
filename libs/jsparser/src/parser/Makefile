@@ -15,6 +15,15 @@ CODEGEN_FILES := \
 
 CODEGEN_TARGETS := $(addprefix lalr/,$(CODEGEN_FILES))
 
+# The syntactic grammar in the ECMA-262 specification adopts *permissive* production rules in order
+# to avoid shift-shift/reduce conflicts.  There are some production rules that we have to parsing
+# it again with a correct production rule.  See the supplemental syntax for cover rules such as
+# `CoverParenthesizedExpressionAndArrowParameterList`.
+#
+# The following variable holds true goal symbols (Script and Module) and others which are used for
+# refinements of permissive production rules.
+GOAL_SYMBOLS := Script Module ArrowFormalParameters
+
 # targets
 
 .PHONY: all
@@ -36,7 +45,7 @@ lalr/%.rs: lalr/%.rs.hbs lalr.js $(CODEGEN_DIR)/lalr.json
 .PRECIOUS: $(CODEGEN_DIR)/lalr.json
 $(CODEGEN_DIR)/lalr.json: grammar.yaml | $(CODEGEN_DIR)
 	@echo 'Generating $(abspath $@)...'
-	@cargo run -rqp lalrgen -- -r $(CODEGEN_DIR) $< Script Module | jq '.' | \
+	@cargo run -rqp lalrgen -- -r $(CODEGEN_DIR) $< $(GOAL_SYMBOLS) | jq '.' | \
 	  deno run -q --allow-read=. --allow-write=$@ $(TOOLS_BIN)/update_file.js $@
 
 $(CODEGEN_DIR):
