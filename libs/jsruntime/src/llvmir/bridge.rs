@@ -30,25 +30,25 @@ impl Default for Host {
 }
 
 unsafe extern "C" fn runtime_declare_const(context: usize, symbol_id: u32, value: f64) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     runtime.declare_const(symbol, value);
 }
 
 unsafe extern "C" fn runtime_declare_variable(context: usize, symbol_id: u32, value: f64) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     runtime.declare_variable(symbol, value);
 }
 
 unsafe extern "C" fn runtime_declare_undefined(context: usize, symbol_id: u32) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     runtime.declare_undefined(symbol);
 }
 
 unsafe extern "C" fn runtime_declare_function(context: usize, symbol_id: u32, func_id: u32) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     let func_id = FunctionId::from(func_id);
     runtime.declare_function(symbol, func_id);
@@ -61,44 +61,44 @@ unsafe extern "C" fn runtime_get(context: usize, symbol_id: u32) -> f64 {
 }
 
 unsafe extern "C" fn runtime_set(context: usize, symbol_id: u32, value: f64) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     runtime.set(symbol, value);
 }
 
 unsafe extern "C" fn runtime_set_undefined(context: usize, symbol_id: u32) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     runtime.set_undefined(symbol);
 }
 
 unsafe extern "C" fn runtime_push_args(context: usize) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     runtime.push_args();
 }
 
 unsafe extern "C" fn runtime_push_arg(context: usize, arg: f64) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     runtime.push_arg(arg);
 }
 
 unsafe extern "C" fn runtime_call(context: usize, symbol_id: u32) -> f64 {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     runtime.call(symbol)
 }
 
 unsafe extern "C" fn runtime_ret(context: usize, value: f64) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     runtime.ret(value);
 }
 
 unsafe extern "C" fn runtime_push_scope(context: usize) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     runtime.push_scope();
 }
 
 unsafe extern "C" fn runtime_pop_scope(context: usize) {
-    let runtime = (context as *mut Runtime).as_mut().unwrap();
+    let runtime = &mut *(context as *mut Runtime);
     runtime.pop_scope();
 }
