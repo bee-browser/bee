@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'https://deno.land/std@0.216.0/path/mod.ts';
+import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
 import Handlebars from 'npm:handlebars@4.7.8';
 import { RESOURCES_DIR } from '../lib/consts.js';
 import { parseCommand, readAllText } from '../lib/cli.js';

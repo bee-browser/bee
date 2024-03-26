@@ -8,8 +8,8 @@ publish = false
 [dependencies]
 anyhow = "1.0.81"
 assert-json-diff = "2.0.2"
-clap = { version = "4.5.3", features = ["env", "derive", "wrap_help"] }
+clap = { version = "4.5.4", features = ["env", "derive", "wrap_help"] }
 jsparser = { path = "../../libs/jsparser", features = ["location"] }
 logging = { path = "../../libs/logging" }
 serde = { version = "1.0.197", features = ["derive", "rc"] }
-serde_json = { version = "1.0.114", features = ["preserve_order"] }
+serde_json = { version = "1.0.115", features = ["preserve_order"] }
