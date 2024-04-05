@@ -18,24 +18,18 @@ impl From<u32> for Symbol {
     }
 }
 
-pub struct SymbolTable {
+pub struct SymbolRegistry {
     symbols: IndexSet<Vec<u16>>,
 }
 
-impl SymbolTable {
+impl SymbolRegistry {
     // TODO: measure the number of symbols used in a typical JavaScript program.
     const INITIAL_CAPACITY: usize = 512;
 
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             symbols: IndexSet::with_capacity(Self::INITIAL_CAPACITY),
         }
-    }
-
-    pub fn with_builtin_symbols() -> Self {
-        let mut self_ = Self::new();
-        self_.register_builtin_symbols();
-        self_
     }
 
     // TODO: use more efficient memory management such as bump allocation and arena.
@@ -54,8 +48,10 @@ impl SymbolTable {
     }
 }
 
-impl Default for SymbolTable {
+impl Default for SymbolRegistry {
     fn default() -> Self {
-        Self::new()
+        let mut self_ = Self::new();
+        self_.register_builtin_symbols();
+        self_
     }
 }

@@ -4,9 +4,9 @@
 // template: libs/jsparser/src/symbol/builtins.rs.njk
 
 use super::Symbol;
-use super::SymbolTable;
+use super::SymbolRegistry;
 
-impl SymbolTable {
+impl SymbolRegistry {
     pub(crate) const ASYNC: Symbol = Symbol(0);
     pub(crate) const AWAIT: Symbol = Symbol(1);
     pub(crate) const ARGUMENTS: Symbol = Symbol(2);

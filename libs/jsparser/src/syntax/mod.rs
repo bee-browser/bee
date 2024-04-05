@@ -10,7 +10,7 @@ use super::Error;
 use super::Location;
 use super::ProductionRule;
 use super::Symbol;
-use super::SymbolTable;
+use super::SymbolRegistry;
 use super::SyntaxHandler;
 use super::Token;
 use super::TokenKind;
@@ -21,7 +21,7 @@ pub trait NodeHandler<'s> {
     fn start(&mut self);
     fn accept(&mut self) -> Result<Self::Artifact, Error>;
     fn handle_nodes(&mut self, nodes: impl Iterator<Item = Node<'s>>) -> Result<(), Error>;
-    fn symbol_table_mut(&mut self) -> &mut SymbolTable;
+    fn symbol_registry_mut(&mut self) -> &mut SymbolRegistry;
 }
 
 pub struct Processor<'s, H> {
@@ -361,7 +361,7 @@ where
     #[inline(always)]
     fn make_symbol(&mut self, token_index: usize) -> Symbol {
         let value = self.tokens[token_index].lexeme.encode_utf16().collect();
-        self.handler.symbol_table_mut().intern(value)
+        self.handler.symbol_registry_mut().intern(value)
     }
 }
 
@@ -456,7 +456,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            SymbolRegistry::AWAIT => Err(Error::SyntaxError),
             _ => self.process_identifier_reference(),
         }
     }
@@ -469,7 +469,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::YIELD => Err(Error::SyntaxError),
+            SymbolRegistry::YIELD => Err(Error::SyntaxError),
             _ => self.process_identifier_reference(),
         }
     }
@@ -482,7 +482,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            SymbolRegistry::YIELD | SymbolRegistry::AWAIT => Err(Error::SyntaxError),
             _ => self.process_identifier_reference(),
         }
     }
@@ -511,7 +511,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::ARGUMENTS | SymbolTable::EVAL if self.strict_mode => {
+            SymbolRegistry::ARGUMENTS | SymbolRegistry::EVAL if self.strict_mode => {
                 Err(Error::SyntaxError)
             }
             _ => self.process_binding_identifier(),
@@ -546,7 +546,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            SymbolRegistry::AWAIT => Err(Error::SyntaxError),
             _ => self.process_binding_identifier(),
         }
     }
@@ -559,7 +559,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::YIELD => Err(Error::SyntaxError),
+            SymbolRegistry::YIELD => Err(Error::SyntaxError),
             _ => self.process_binding_identifier(),
         }
     }
@@ -572,7 +572,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            SymbolRegistry::YIELD | SymbolRegistry::AWAIT => Err(Error::SyntaxError),
             _ => self.process_binding_identifier(),
         }
     }
@@ -618,7 +618,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::AWAIT => Err(Error::SyntaxError),
+            SymbolRegistry::AWAIT => Err(Error::SyntaxError),
             _ => self.process_label_identifier(),
         }
     }
@@ -631,7 +631,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::YIELD => Err(Error::SyntaxError),
+            SymbolRegistry::YIELD => Err(Error::SyntaxError),
             _ => self.process_label_identifier(),
         }
     }
@@ -644,7 +644,7 @@ where
         };
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::YIELD | SymbolTable::AWAIT => Err(Error::SyntaxError),
+            SymbolRegistry::YIELD | SymbolRegistry::AWAIT => Err(Error::SyntaxError),
             _ => self.process_label_identifier(),
         }
     }
@@ -656,19 +656,19 @@ where
         let symbol = self.make_symbol(token_index);
         match symbol {
             // 13.1.1 Static Semantics: Early Errors
-            SymbolTable::IMPLEMENTS
-            | SymbolTable::LET
-            | SymbolTable::PACKAGE
-            | SymbolTable::PRIVATE
-            | SymbolTable::PROTECTED
-            | SymbolTable::PUBLIC
-            | SymbolTable::STATIC
-            | SymbolTable::YIELD
+            SymbolRegistry::IMPLEMENTS
+            | SymbolRegistry::LET
+            | SymbolRegistry::PACKAGE
+            | SymbolRegistry::PRIVATE
+            | SymbolRegistry::PROTECTED
+            | SymbolRegistry::PUBLIC
+            | SymbolRegistry::STATIC
+            | SymbolRegistry::YIELD
                 if self.strict_mode =>
             {
                 Err(Error::SyntaxError)
             }
-            SymbolTable::AWAIT if self.module => Err(Error::SyntaxError),
+            SymbolRegistry::AWAIT if self.module => Err(Error::SyntaxError),
             _ => {
                 let node_index = self.nodes.len();
                 self.push(Syntax {
@@ -1328,7 +1328,7 @@ where
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
-        if symbol == SymbolTable::LET {
+        if symbol == SymbolRegistry::LET {
             return Err(Error::SyntaxError);
         }
 
@@ -1354,7 +1354,7 @@ where
         };
 
         // 14.3.1.1 Static Semantics: Early Errors
-        if symbol == SymbolTable::LET {
+        if symbol == SymbolRegistry::LET {
             return Err(Error::SyntaxError);
         }
 

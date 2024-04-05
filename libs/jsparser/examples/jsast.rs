@@ -10,7 +10,7 @@ use jsparser::Node;
 use jsparser::NodeHandler;
 use jsparser::Parser;
 use jsparser::Processor;
-use jsparser::SymbolTable;
+use jsparser::SymbolRegistry;
 
 /// Parse a JavaScript script.
 #[derive(clap::Parser)]
@@ -67,7 +67,7 @@ fn main() -> Result<()> {
 }
 
 #[derive(Default)]
-struct NullHandler(SymbolTable);
+struct NullHandler(SymbolRegistry);
 
 impl<'s> NodeHandler<'s> for NullHandler {
     type Artifact = ();
@@ -86,7 +86,7 @@ impl<'s> NodeHandler<'s> for NullHandler {
     }
 
     #[inline(always)]
-    fn symbol_table_mut(&mut self) -> &mut SymbolTable {
+    fn symbol_registry_mut(&mut self) -> &mut SymbolRegistry {
         &mut self.0
     }
 }

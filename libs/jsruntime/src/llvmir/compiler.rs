@@ -4,7 +4,7 @@ use jsparser::Node;
 use jsparser::NodeHandler;
 use jsparser::Parser;
 use jsparser::Processor;
-use jsparser::SymbolTable;
+use jsparser::SymbolRegistry;
 
 use super::bridge;
 use super::logger;
@@ -284,7 +284,7 @@ impl<'r, 's> NodeHandler<'s> for Compiler<'r> {
         Ok(())
     }
 
-    fn symbol_table_mut(&mut self) -> &mut SymbolTable {
-        &mut self.runtime.symbol_table
+    fn symbol_registry_mut(&mut self) -> &mut SymbolRegistry {
+        &mut self.runtime.symbol_registry
     }
 }

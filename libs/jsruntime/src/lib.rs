@@ -14,7 +14,7 @@ use hashbrown::HashMap;
 
 use base::delegate_all;
 use jsparser::Symbol;
-use jsparser::SymbolTable;
+use jsparser::SymbolRegistry;
 
 pub use llvmir::Module;
 
@@ -40,7 +40,7 @@ macro_rules! throw {
 }
 
 pub struct Runtime {
-    symbol_table: SymbolTable,
+    symbol_registry: SymbolRegistry,
     world: World,
     fiber: Fiber,
     functions: Vec<Function>,
@@ -54,7 +54,7 @@ impl Runtime {
 
     pub fn new() -> Self {
         Self {
-            symbol_table: SymbolTable::with_builtin_symbols(),
+            symbol_registry: Default::default(),
             world: World::new(),
             fiber: Fiber::new(),
             functions: vec![Function::Native(NativeFunction {
@@ -67,7 +67,7 @@ impl Runtime {
     }
 
     pub fn with_host_function(mut self, name: &str, func: fn(&[f64])) -> Self {
-        let symbol = self.symbol_table.intern(name.encode_utf16().collect());
+        let symbol = self.symbol_registry.intern(name.encode_utf16().collect());
         let func_id = self.register_host_function(func);
         {
             let mut scope = self.world.global_scope_ref.borrow_mut();

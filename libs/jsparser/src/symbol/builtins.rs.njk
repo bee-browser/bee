@@ -4,9 +4,9 @@
 // template: {{ template }}
 
 use super::Symbol;
-use super::SymbolTable;
+use super::SymbolRegistry;
 
-impl SymbolTable {
+impl SymbolRegistry {
     {%- for symbol in data %}
     pub(crate) const {{ symbol | upperCase }}: Symbol = Symbol({{ loop.index0 }});
     {%- endfor %}

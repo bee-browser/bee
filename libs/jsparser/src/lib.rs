@@ -21,7 +21,7 @@ pub use lexer::Location;
 pub use parser::ProductionRule;
 
 pub use symbol::Symbol;
-pub use symbol::SymbolTable;
+pub use symbol::SymbolRegistry;
 
 pub use syntax::AssignmentOperator;
 pub use syntax::BinaryOperator;
