@@ -16,7 +16,7 @@ thiserror = "1.0.58"
 unicode-id-start = "1.1.2"
 
 [dev-dependencies]
-anyhow = "1.0.81"
+anyhow = "1.0.82"
 assert_matches = "1.5.0"
 clap = { version = "4.5.4", features = ["env", "derive", "wrap_help"] }
 
