@@ -6,7 +6,7 @@ authors = ["BEE project contributors"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.81"
+anyhow = "1.0.82"
 base = { path = "../../libs/base" }
 clap = { version = "4.5.4", features = ["derive", "env"] }
 indexmap = { version = "2.2.6", features = ["serde"] }
