@@ -1248,9 +1248,7 @@ where
     fn process_let_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
         let bound_names = match self.stack[index].detail {
-            Detail::BindingList(ref mut list) => {
-                std::mem::replace(&mut list.bound_names, Default::default())
-            }
+            Detail::BindingList(ref mut list) => std::mem::take(&mut list.bound_names),
             _ => unreachable!(),
         };
         self.enqueue(Node::LetDeclaration(bound_names.len() as u32));
@@ -1263,7 +1261,7 @@ where
         let index = self.stack.len() - 2;
         let (bound_names, has_initializer) = match self.stack[index].detail {
             Detail::BindingList(ref mut list) => {
-                let bound_names = std::mem::replace(&mut list.bound_names, Default::default());
+                let bound_names = std::mem::take(&mut list.bound_names);
                 (bound_names, list.has_initializer)
             }
             _ => unreachable!(),
@@ -1594,7 +1592,7 @@ where
 
     fn accept(&mut self) -> Result<Self::Artifact, Self::Error> {
         logger::debug!(event = "accept");
-        let nodes = std::mem::replace(&mut self.nodes, Default::default());
+        let nodes = std::mem::take(&mut self.nodes);
         self.handler.handle_nodes(nodes.into_iter())?;
         self.handler.accept()
     }

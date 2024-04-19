@@ -272,7 +272,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         self.functions[context.func_id as usize].commands = context.commands;
         Ok(Program {
-            functions: std::mem::replace(&mut self.functions, Default::default()),
+            functions: std::mem::take(&mut self.functions),
         })
     }
 

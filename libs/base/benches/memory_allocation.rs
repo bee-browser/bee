@@ -17,7 +17,7 @@ impl Default for Data {
 fn box_new<M: Measurement + 'static>(c: &mut Criterion<M>) {
     c.bench_function("Box::new", |b| {
         b.iter(|| {
-            let d = Box::new(Data::default());
+            let d = Box::<Data>::default();
             black_box(d);
         })
     });
