@@ -2,10 +2,12 @@ mod builtins;
 
 use indexmap::IndexSet;
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Symbol(u32);
 
 impl Symbol {
+    pub const NONE: Symbol = Symbol(0);
+
     #[inline]
     pub fn id(&self) -> u32 {
         self.0
@@ -27,18 +29,30 @@ impl SymbolRegistry {
     const INITIAL_CAPACITY: usize = 512;
 
     fn new() -> Self {
-        Self {
-            symbols: IndexSet::with_capacity(Self::INITIAL_CAPACITY),
-        }
+        let mut symbols = IndexSet::with_capacity(Self::INITIAL_CAPACITY);
+        symbols.insert(vec![]);
+        debug_assert!(symbols.get_index(0).is_some());
+        Self { symbols }
     }
 
     // TODO: use more efficient memory management such as bump allocation and arena.
     pub fn intern(&mut self, code_units: Vec<u16>) -> Symbol {
-        // TODO: check overflow
-        Symbol(match self.symbols.get_index_of(&code_units) {
-            Some(index) => index as u32,
-            None => self.symbols.insert_full(code_units).0 as u32,
-        })
+        let i = match self.symbols.get_index_of(&code_units) {
+            Some(i) => i,
+            None => {
+                let (i, _) = self.symbols.insert_full(code_units);
+                debug_assert!(i <= u32::MAX as usize);
+                i
+            }
+        };
+        Symbol(i as u32)
+    }
+
+    pub fn lookup(&self, code_units: &[u16]) -> Symbol {
+        match self.symbols.get_index_of(code_units) {
+            Some(i) => Symbol(i as u32),
+            None => Symbol::NONE,
+        }
     }
 
     pub fn resolve(&self, symbol: Symbol) -> Option<&[u16]> {

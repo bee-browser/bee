@@ -337,8 +337,8 @@
 - rule: Finally -> FINALLY Block
   action: undefined
 - rule: >-
-    FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters
-    RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+    FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: process_function_declaration
 - rule: >-
     GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN
@@ -405,12 +405,13 @@
 - rule: LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
   action: process_const_declaration
 - rule: >-
-    FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN
-    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await
+    _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_
+    LBRACE FunctionBody RBRACE
   action: process_function_declaration
 - rule: >-
-    FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN
-    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: undefined
 - rule: >-
     GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await
@@ -732,6 +733,8 @@
   action: undefined
 - rule: CatchParameter -> BindingPattern
   action: undefined
+- rule: _FUNCTION_CONTEXT_ -> (empty)
+  action: process_function_context
 - rule: _FUNCTION_SIGNATURE_ -> (empty)
   action: process_function_signature
 - rule: FunctionBody -> FunctionStatementList
@@ -915,8 +918,9 @@
 - rule: VariableDeclaration_In_Await -> BindingPattern_Await Initializer_In_Await
   action: undefined
 - rule: >-
-    FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN
-    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await
+    _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_
+    LBRACE FunctionBody RBRACE
   action: process_function_declaration
 - rule: >-
     GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN
@@ -3349,8 +3353,9 @@
 - rule: Finally_Yield_Return -> FINALLY Block_Yield_Return
   action: undefined
 - rule: >-
-    FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN
-    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield
+    _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_
+    LBRACE FunctionBody RBRACE
   action: process_function_declaration
 - rule: >-
     GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN
@@ -3515,8 +3520,8 @@
   action: undefined
 - rule: >-
     FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await
-    LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody
-    RBRACE
+    _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_
+    LBRACE FunctionBody RBRACE
   action: process_function_declaration
 - rule: >-
     GeneratorDeclaration_Yield_Await -> FUNCTION MUL

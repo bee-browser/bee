@@ -65,10 +65,6 @@ void Executor::RegisterHost(const Host* host) {
       llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare_variable),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_declare_undefined")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare_undefined),
-      llvm::JITSymbolFlags::Exported,
-  };
   symbols[exec_session().intern("runtime_declare_function")] = {
       llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare_function),
       llvm::JITSymbolFlags::Exported,
@@ -79,10 +75,6 @@ void Executor::RegisterHost(const Host* host) {
   };
   symbols[exec_session().intern("runtime_set")] = {
       llvm::orc::ExecutorAddr::fromPtr(host->runtime_set),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_set_undefined")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_set_undefined),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_push_args")] = {

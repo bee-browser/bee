@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2100] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2101] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -383,7 +383,7 @@ where
         Action::Undefined,
         // Finally -> FINALLY Block
         Action::Undefined,
-        // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        // FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
             "process_function_declaration",
@@ -445,12 +445,12 @@ where
         Action::Invoke(Self::process_let_declaration, "process_let_declaration"),
         // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
         Action::Invoke(Self::process_const_declaration, "process_const_declaration"),
-        // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
             "process_function_declaration",
         ),
-        // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        // FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Undefined,
         // GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
@@ -704,6 +704,8 @@ where
         Action::Undefined,
         // CatchParameter -> BindingPattern
         Action::Undefined,
+        // _FUNCTION_CONTEXT_ -> (empty)
+        Action::Invoke(Self::process_function_context, "process_function_context"),
         // _FUNCTION_SIGNATURE_ -> (empty)
         Action::Invoke(
             Self::process_function_signature,
@@ -916,7 +918,7 @@ where
         Action::Undefined,
         // VariableDeclaration_In_Await -> BindingPattern_Await Initializer_In_Await
         Action::Undefined,
-        // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
             "process_function_declaration",
@@ -3102,7 +3104,7 @@ where
         Action::Undefined,
         // Finally_Yield_Return -> FINALLY Block_Yield_Return
         Action::Undefined,
-        // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
             "process_function_declaration",
@@ -3229,7 +3231,7 @@ where
         Action::Undefined,
         // Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
         Action::Undefined,
-        // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
         Action::Invoke(
             Self::process_function_declaration,
             "process_function_declaration",

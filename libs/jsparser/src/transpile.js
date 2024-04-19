@@ -584,6 +584,7 @@ function addActions(rules) {
   log.debug('Adding production rules for semantic actions...');
 
   const ACTIONS = [
+    '_FUNCTION_CONTEXT_',
     '_FUNCTION_SIGNATURE_',
     '_ELSE_BLOCK_',
     '_THEN_BLOCK_',
@@ -608,8 +609,14 @@ function modifyFunctionDeclaration(rules) {
   rule = rules.find((rule) => rule.name === 'FunctionDeclaration[Yield, Await, Default]');
   assert(rule !== undefined);
   for (let i = 0; i < rule.values.length; ++i) {
-    const [head, tail] = rule.values[i].split('`{`');
-    rule.values[i] = `${head} _FUNCTION_SIGNATURE_ \`{\` ${tail}`;
+    {
+      const [head, tail] = rule.values[i].split('`(`');
+      rule.values[i] = `${head} _FUNCTION_CONTEXT_ \`(\` ${tail}`;
+    }
+    {
+      const [head, tail] = rule.values[i].split('`{`');
+      rule.values[i] = `${head} _FUNCTION_SIGNATURE_ \`{\` ${tail}`;
+    }
   }
 
   return rules;

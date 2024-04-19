@@ -1,7 +1,7 @@
 mod lexer;
 mod parser;
 mod symbol;
-mod syntax;
+pub mod syntax;
 
 /// A JavaScript parser.
 pub use parser::Parser;

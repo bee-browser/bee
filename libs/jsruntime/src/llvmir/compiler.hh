@@ -41,11 +41,9 @@ class Compiler {
   void Ne();
   void DeclareConst();
   void DeclareVariable();
-  void DeclareUndefined();
   void DeclareFunction(uint32_t symbol, uint32_t func_id);
   void Get();
   void Set();
-  void SetUndefined();
   void PushArgs();
   void PushArg();
   void Call();
@@ -90,11 +88,9 @@ class Compiler {
   llvm::Function* CreateMainFunction();
   llvm::Function* CreateRuntimeDeclareConst();
   llvm::Function* CreateRuntimeDeclareVariable();
-  llvm::Function* CreateRuntimeDeclareUndefined();
   llvm::Function* CreateRuntimeDeclareFunction();
   llvm::Function* CreateRuntimeGet();
   llvm::Function* CreateRuntimeSet();
-  llvm::Function* CreateRuntimeSetUndefined();
   llvm::Function* CreateRuntimePushArgs();
   llvm::Function* CreateRuntimePushArg();
   llvm::Function* CreateRuntimeCall();
@@ -227,11 +223,9 @@ class Compiler {
   // caches for host functions.
   llvm::Function* runtime_declare_const_ = nullptr;
   llvm::Function* runtime_declare_variable_ = nullptr;
-  llvm::Function* runtime_declare_undefined_ = nullptr;
   llvm::Function* runtime_declare_function_ = nullptr;
   llvm::Function* runtime_get_ = nullptr;
   llvm::Function* runtime_set_ = nullptr;
-  llvm::Function* runtime_set_undefined_ = nullptr;
   llvm::Function* runtime_set_push_args_ = nullptr;
   llvm::Function* runtime_set_push_arg_ = nullptr;
   llvm::Function* runtime_call_ = nullptr;

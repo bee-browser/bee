@@ -102,10 +102,6 @@ void compiler_peer_declare_variable(Compiler* self) {
   self->DeclareVariable();
 }
 
-void compiler_peer_declare_undefined(Compiler* self) {
-  self->DeclareUndefined();
-}
-
 void compiler_peer_declare_function(Compiler* self, uint32_t symbol_id, uint32_t func_id) {
   self->DeclareFunction(symbol_id, func_id);
 }
@@ -116,10 +112,6 @@ void compiler_peer_get(Compiler* self) {
 
 void compiler_peer_set(Compiler* self) {
   self->Set();
-}
-
-void compiler_peer_set_undefined(Compiler* self) {
-  self->SetUndefined();
 }
 
 void compiler_peer_push_args(Compiler* self) {

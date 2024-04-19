@@ -7,19 +7,19 @@ use super::Symbol;
 use super::SymbolRegistry;
 
 impl SymbolRegistry {
-    pub(crate) const ASYNC: Symbol = Symbol(0);
-    pub(crate) const AWAIT: Symbol = Symbol(1);
-    pub(crate) const ARGUMENTS: Symbol = Symbol(2);
-    pub(crate) const EVAL: Symbol = Symbol(3);
-    pub(crate) const IMPLEMENTS: Symbol = Symbol(4);
-    pub(crate) const INTERFACE: Symbol = Symbol(5);
-    pub(crate) const LET: Symbol = Symbol(6);
-    pub(crate) const PACKAGE: Symbol = Symbol(7);
-    pub(crate) const PRIVATE: Symbol = Symbol(8);
-    pub(crate) const PROTECTED: Symbol = Symbol(9);
-    pub(crate) const PUBLIC: Symbol = Symbol(10);
-    pub(crate) const STATIC: Symbol = Symbol(11);
-    pub(crate) const YIELD: Symbol = Symbol(12);
+    pub(crate) const ASYNC: Symbol = Symbol(1);
+    pub(crate) const AWAIT: Symbol = Symbol(2);
+    pub(crate) const ARGUMENTS: Symbol = Symbol(3);
+    pub(crate) const EVAL: Symbol = Symbol(4);
+    pub(crate) const IMPLEMENTS: Symbol = Symbol(5);
+    pub(crate) const INTERFACE: Symbol = Symbol(6);
+    pub(crate) const LET: Symbol = Symbol(7);
+    pub(crate) const PACKAGE: Symbol = Symbol(8);
+    pub(crate) const PRIVATE: Symbol = Symbol(9);
+    pub(crate) const PROTECTED: Symbol = Symbol(10);
+    pub(crate) const PUBLIC: Symbol = Symbol(11);
+    pub(crate) const STATIC: Symbol = Symbol(12);
+    pub(crate) const YIELD: Symbol = Symbol(13);
 
     pub(super) fn register_builtin_symbols(&mut self) {
         self.register_builtin_symbol(Self::ASYNC, "async");

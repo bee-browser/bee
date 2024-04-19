@@ -15784,6 +15784,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15804,6 +15806,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15822,6 +15826,8 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15842,6 +15848,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15862,6 +15870,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15880,6 +15890,8 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15900,6 +15912,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15920,6 +15934,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15938,6 +15954,8 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15958,6 +15976,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15978,6 +15998,8 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -15996,6 +16018,8 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -18920,6 +18944,9 @@
       data: AS
     - type: non-terminal
       data: ModuleExportName
+- name: _FUNCTION_CONTEXT_
+  production:
+    - type: empty
 - name: _FUNCTION_SIGNATURE_
   production:
     - type: empty

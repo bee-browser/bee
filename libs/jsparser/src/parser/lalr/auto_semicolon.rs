@@ -208,108 +208,108 @@ pub static DISALLOWED: Set<u16> = phf_set! {
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     3285u16,
-    // State(3347)
+    // State(3348)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
-    3347u16,
-    // State(3379)
+    3348u16,
+    // State(3380)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
-    3379u16,
-    // State(3475)
+    3380u16,
+    // State(3477)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3475u16,
-    // State(3558)
+    3477u16,
+    // State(3560)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3558u16,
-    // State(3580)
+    3560u16,
+    // State(3582)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3580u16,
-    // State(3591)
+    3582u16,
+    // State(3593)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3591u16,
-    // State(3697)
+    3593u16,
+    // State(3700)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3697u16,
-    // State(3719)
+    3700u16,
+    // State(3722)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3719u16,
-    // State(3730)
+    3722u16,
+    // State(3733)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3730u16,
-    // State(3775)
+    3733u16,
+    // State(3778)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3775u16,
-    // State(3781)
+    3778u16,
+    // State(3784)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3781u16,
-    // State(3795)
+    3784u16,
+    // State(3798)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3795u16,
-    // State(3808)
+    3798u16,
+    // State(3811)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3808u16,
-    // State(3872)
+    3811u16,
+    // State(3876)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3872u16,
-    // State(3878)
+    3876u16,
+    // State(3882)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3878u16,
-    // State(3892)
+    3882u16,
+    // State(3896)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3892u16,
-    // State(3905)
+    3896u16,
+    // State(3909)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    3905u16,
-    // State(3949)
+    3909u16,
+    // State(3953)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3949u16,
-    // State(3953)
+    3953u16,
+    // State(3957)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    3953u16,
-    // State(4002)
+    3957u16,
+    // State(4006)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    4002u16,
-    // State(4006)
+    4006u16,
+    // State(4010)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    4006u16,
-    // State(4042)
+    4010u16,
+    // State(4046)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
-    4042u16,
-    // State(4085)
+    4046u16,
+    // State(4089)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
-    4085u16,
+    4089u16,
 };
 
 pub static DO_WHITES: Set<u16> = phf_set! {
@@ -325,10 +325,10 @@ pub static DO_WHITES: Set<u16> = phf_set! {
     // State(3017)
     //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
     3017u16,
-    // State(3934)
+    // State(3938)
     //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . SEMICOLON]*
-    3934u16,
-    // State(3984)
+    3938u16,
+    // State(3988)
     //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . SEMICOLON]*
-    3984u16,
+    3988u16,
 };

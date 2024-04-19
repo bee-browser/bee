@@ -1,6 +1,7 @@
 mod bridge;
 mod llvmir;
 mod logger;
+mod semantics;
 
 #[cfg(test)]
 mod tests;
@@ -76,6 +77,7 @@ impl Runtime {
                 .initialize_binding(symbol, Value::Function(func_id))
                 .unwrap();
         }
+        logger::debug!(event = "with_host_function", name, ?symbol, ?func_id);
         self
     }
 
@@ -197,15 +199,6 @@ impl Fiber {
             .create_mutable_binding(symbol, true);
         let binding = call.resolve_binding(symbol, None).unwrap();
         binding.initialize_binding(Value::Number(value)).unwrap();
-    }
-
-    pub(crate) fn declare_undefined(&self, symbol: Symbol) {
-        let call = self.call_stack.last().unwrap();
-        call.lexical_scope
-            .borrow_mut()
-            .create_mutable_binding(symbol, true);
-        let binding = call.resolve_binding(symbol, None).unwrap();
-        binding.initialize_binding(Value::Undefined).unwrap();
     }
 
     pub(crate) fn declare_function(&self, symbol: Symbol, func_id: FunctionId) {
@@ -341,13 +334,14 @@ impl Call {
 }
 
 // TODO: Should re-implement using GcCellRef
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ScopeRef(Rc<RefCell<Scope>>);
 
 delegate_all! { ScopeRef => Rc<RefCell<Scope>> }
 
 /// Represents the `Environment Record` abstract specification type.
 // TODO: Should re-implement using GcCell
+#[derive(Debug)]
 pub enum Scope {
     Lexical(LexicalScope),
     Object(ObjectScope),
@@ -575,7 +569,7 @@ impl Scope {
 }
 
 /// Represents the `Declarative Environment Record` specification type.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct LexicalScope {
     outer: Option<ScopeRef>,
     bindings: HashMap<Symbol, ValueHolder>,
@@ -680,7 +674,7 @@ impl LexicalScope {
 }
 
 /// Represents the `Object Environment Record` specification type.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ObjectScope {
     outer: Option<ScopeRef>,
 }
@@ -699,6 +693,7 @@ impl ObjectScope {
 }
 
 /// Represents the `Global Environment Record` specification type.
+#[derive(Debug)]
 pub struct GlobalScope {
     // [[ObjectRecord]]
     object_scope: ObjectScope,
@@ -808,6 +803,7 @@ struct HostFunction {
 }
 
 /// Represents the `Completion Record` specification type.
+#[derive(Debug)]
 pub enum Completion<T> {
     Normal(T),
     //Break,
@@ -826,6 +822,7 @@ impl<T> Completion<T> {
 }
 
 /// Represents the `Reference Record` specification type.
+#[derive(Debug)]
 pub struct Binding {
     // [[Base]]
     target: BindTarget,
@@ -836,6 +833,7 @@ pub struct Binding {
     // TODO: [[ThisValue]]
 }
 
+#[derive(Debug)]
 pub enum BindTarget {
     Unbound,
     // TODO: Object,

@@ -18,12 +18,6 @@ impl Runtime {
     }
 
     #[inline(always)]
-    pub(crate) fn declare_undefined(&mut self, symbol: Symbol) {
-        logger::debug!(event = "declare_undefined", ?symbol);
-        self.fiber.declare_undefined(symbol);
-    }
-
-    #[inline(always)]
     pub(crate) fn declare_function(&mut self, symbol: Symbol, func_id: FunctionId) {
         logger::debug!(event = "declare_function", ?symbol, ?func_id);
         self.fiber.declare_function(symbol, func_id);
@@ -39,22 +33,6 @@ impl Runtime {
     pub(crate) fn set(&mut self, symbol: Symbol, value: f64) {
         logger::debug!(event = "set", ?symbol, value);
         self.fiber.put_value(symbol, value);
-    }
-
-    #[inline(always)]
-    pub(crate) fn set_undefined(&mut self, symbol: Symbol) {
-        /*
-        logger::debug!(
-            event = "set_undefined",
-            ?symbol,
-            scope = self.scope_stack.len() - 1
-        );
-        self.scope_stack
-            .last_mut()
-            .unwrap()
-            .bindings
-            .insert(symbol, Value::Undefined);
-        */
     }
 
     #[inline(always)]

@@ -165,14 +165,6 @@ void Compiler::DeclareVariable() {
   builder_->CreateCall(declare, {context, symbol, value});
 }
 
-void Compiler::DeclareUndefined() {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(PopSymbol());
-  auto* declare = CreateRuntimeDeclareUndefined();
-  builder_->CreateCall(declare, {context, symbol});
-}
-
 void Compiler::DeclareFunction(uint32_t symbol_id, uint32_t func_id) {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
@@ -201,14 +193,6 @@ void Compiler::Set() {
   auto* symbol = builder_->getInt32(PopSymbol());
   auto* set = CreateRuntimeSet();
   builder_->CreateCall(set, {context, symbol, value});
-}
-
-void Compiler::SetUndefined() {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(PopSymbol());
-  auto* set = CreateRuntimeSetUndefined();
-  builder_->CreateCall(set, {context, symbol});
 }
 
 void Compiler::PushArgs() {
@@ -471,16 +455,6 @@ llvm::Function* Compiler::CreateRuntimeDeclareVariable() {
   return runtime_declare_variable_;
 }
 
-llvm::Function* Compiler::CreateRuntimeDeclareUndefined() {
-  if (runtime_declare_undefined_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(
-        builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
-    runtime_declare_undefined_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_declare_undefined", module_.get());
-  }
-  return runtime_declare_undefined_;
-}
-
 llvm::Function* Compiler::CreateRuntimeDeclareFunction() {
   if (runtime_declare_function_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
@@ -509,16 +483,6 @@ llvm::Function* Compiler::CreateRuntimeSet() {
         prototype, llvm::Function::ExternalLinkage, "runtime_set", module_.get());
   }
   return runtime_set_;
-}
-
-llvm::Function* Compiler::CreateRuntimeSetUndefined() {
-  if (runtime_set_undefined_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(
-        builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt32Ty()}, false);
-    runtime_set_undefined_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_set_undefined", module_.get());
-  }
-  return runtime_set_undefined_;
 }
 
 llvm::Function* Compiler::CreateRuntimePushArgs() {

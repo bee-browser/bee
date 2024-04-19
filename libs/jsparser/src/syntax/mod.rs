@@ -77,7 +77,6 @@ enum Detail {
 #[derive(Debug)]
 struct LexicalDeclarationSemantics {
     bound_names: SmallVec<[Symbol; 4]>,
-    nodes: SmallVec<[usize; 4]>,
     has_initializer: bool,
 }
 
@@ -116,9 +115,7 @@ pub enum Node<'s> {
     ConditionalExpression,
     AssignmentExpression(AssignmentOperator),
     BlockStatement,
-    LexicalBinding,
-    LexicalBindingWithInitializer,
-    LexicalBindingForConst,
+    LexicalBinding(bool),
     LetDeclaration(u32),
     ConstDeclaration(u32),
     BindingElement(bool),
@@ -129,7 +126,8 @@ pub enum Node<'s> {
     ReturnStatement(u32),
     FormalParameter,
     FormalParameters(u32),
-    FunctionSignature(Symbol, Vec<Symbol>),
+    FunctionContext,
+    FunctionSignature(Symbol),
     FunctionDeclaration,
     ThenBlock,
     ElseBlock,
@@ -399,17 +397,19 @@ where
         Ok(())
     }
 
+    // _FUNCTION_CONTEXT_
+    fn process_function_context(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FunctionContext);
+        Ok(())
+    }
+
     // _FUNCTION_SIGNATURE_
     fn process_function_signature(&mut self) -> Result<(), Error> {
-        let formal_parameters = match self.stack[self.stack.len() - 2].detail {
-            Detail::FormalParameters(ref bound_names) => bound_names.clone().into_vec(),
-            _ => unreachable!(),
-        };
         let func_name = match self.stack[self.stack.len() - 4].detail {
             Detail::BindingIdentifier(symbol) => symbol,
             _ => unreachable!(),
         };
-        self.enqueue(Node::FunctionSignature(func_name, formal_parameters));
+        self.enqueue(Node::FunctionSignature(func_name));
         Ok(())
     }
 
@@ -1117,7 +1117,8 @@ where
     // 13.14 Conditional Operator ( ? : )
 
     // ConditionalExpression[In, Yield, Await] :
-    //   ShortCircuitExpression[?In, ?Yield, ?Await] ? AssignmentExpression[+In, ?Yield, ?Await]
+    //   ShortCircuitExpression[?In, ?Yield, ?Await]
+    //     ? AssignmentExpression[+In, ?Yield, ?Await]
     //     : AssignmentExpression[?In, ?Yield, ?Await]
     fn process_conditional_expression(&mut self) -> Result<(), Error> {
         self.enqueue(Node::ConditionalExpression);
@@ -1260,20 +1261,16 @@ where
     // LexicalDeclaration[In, Yield, Await] : const BindingList[?In, ?Yield, ?Await] ;
     fn process_const_declaration(&mut self) -> Result<(), Error> {
         let index = self.stack.len() - 2;
-        let (bound_names, nodes, has_initializer) = match self.stack[index].detail {
+        let (bound_names, has_initializer) = match self.stack[index].detail {
             Detail::BindingList(ref mut list) => {
                 let bound_names = std::mem::replace(&mut list.bound_names, Default::default());
-                let nodes = std::mem::replace(&mut list.nodes, Default::default());
-                (bound_names, nodes, list.has_initializer)
+                (bound_names, list.has_initializer)
             }
             _ => unreachable!(),
         };
         // 14.3.1.1 Static Semantics: Early Errors
         if !has_initializer {
             return Err(Error::SyntaxError);
-        }
-        for node_index in nodes.into_iter() {
-            self.nodes[node_index] = Node::LexicalBindingForConst;
         }
         self.enqueue(Node::ConstDeclaration(bound_names.len() as u32));
         self.replace(3, Detail::ConstDeclaration(bound_names));
@@ -1308,9 +1305,6 @@ where
                     }
                     list.bound_names.push(name);
                 }
-                for node_index in decl.nodes.into_iter() {
-                    list.nodes.push(node_index);
-                }
                 if !decl.has_initializer {
                     list.has_initializer = false;
                 }
@@ -1332,13 +1326,13 @@ where
             return Err(Error::SyntaxError);
         }
 
-        let node_index = self.enqueue(Node::LexicalBinding);
+        const HAS_INITIALIZER: bool = false;
+        self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));
         self.replace(
             1,
             Detail::LexicalBinding(LexicalDeclarationSemantics {
                 bound_names: smallvec![symbol],
-                nodes: smallvec![node_index],
-                has_initializer: false,
+                has_initializer: HAS_INITIALIZER,
             }),
         );
 
@@ -1358,13 +1352,13 @@ where
             return Err(Error::SyntaxError);
         }
 
-        let node_index = self.enqueue(Node::LexicalBindingWithInitializer);
+        const HAS_INITIALIZER: bool = true;
+        self.enqueue(Node::LexicalBinding(HAS_INITIALIZER));
         self.replace(
             2,
             Detail::LexicalBinding(LexicalDeclarationSemantics {
                 bound_names: smallvec![symbol],
-                nodes: smallvec![node_index],
-                has_initializer: true,
+                has_initializer: HAS_INITIALIZER,
             }),
         );
 
@@ -1386,8 +1380,7 @@ where
                 has_initializer,
             }),
         );
-        let index = self.nodes.len() - 1;
-        self.nodes[index] = Node::BindingElement(has_initializer);
+        self.enqueue(Node::BindingElement(has_initializer));
         Ok(())
     }
 

@@ -14,11 +14,9 @@ impl Default for Host {
         Self {
             runtime_declare_const: Some(runtime_declare_const),
             runtime_declare_variable: Some(runtime_declare_variable),
-            runtime_declare_undefined: Some(runtime_declare_undefined),
             runtime_declare_function: Some(runtime_declare_function),
             runtime_get: Some(runtime_get),
             runtime_set: Some(runtime_set),
-            runtime_set_undefined: Some(runtime_set_undefined),
             runtime_push_args: Some(runtime_push_args),
             runtime_push_arg: Some(runtime_push_arg),
             runtime_call: Some(runtime_call),
@@ -41,12 +39,6 @@ unsafe extern "C" fn runtime_declare_variable(context: usize, symbol_id: u32, va
     runtime.declare_variable(symbol, value);
 }
 
-unsafe extern "C" fn runtime_declare_undefined(context: usize, symbol_id: u32) {
-    let runtime = &mut *(context as *mut Runtime);
-    let symbol = Symbol::from(symbol_id);
-    runtime.declare_undefined(symbol);
-}
-
 unsafe extern "C" fn runtime_declare_function(context: usize, symbol_id: u32, func_id: u32) {
     let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
@@ -64,12 +56,6 @@ unsafe extern "C" fn runtime_set(context: usize, symbol_id: u32, value: f64) {
     let runtime = &mut *(context as *mut Runtime);
     let symbol = Symbol::from(symbol_id);
     runtime.set(symbol, value);
-}
-
-unsafe extern "C" fn runtime_set_undefined(context: usize, symbol_id: u32) {
-    let runtime = &mut *(context as *mut Runtime);
-    let symbol = Symbol::from(symbol_id);
-    runtime.set_undefined(symbol);
 }
 
 unsafe extern "C" fn runtime_push_args(context: usize) {
