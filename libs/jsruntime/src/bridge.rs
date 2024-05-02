@@ -86,15 +86,15 @@ impl Runtime {
     }
 
     #[inline(always)]
-    pub(crate) fn push_scope(&mut self, n: u16) {
-        debug!(event = "push_scope", n);
-        self.fiber.push_scope(n);
+    pub(crate) fn allocate_bindings(&mut self, n: u16) {
+        debug!(event = "allocate_bingings", n);
+        self.fiber.allocate_bindings(n);
     }
 
     #[inline(always)]
-    pub(crate) fn pop_scope(&mut self, n: u16) {
-        debug!(event = "pop_scope");
-        self.fiber.pop_scope(n);
+    pub(crate) fn release_bindings(&mut self, n: u16) {
+        debug!(event = "release_bindings");
+        self.fiber.release_bindings(n);
     }
 
     #[inline(always)]

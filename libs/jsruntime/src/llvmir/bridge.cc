@@ -154,20 +154,14 @@ void compiler_peer_end_function(Compiler* self) {
   self->EndFunction();
 }
 
-void compiler_peer_start_function_scope(Compiler* self, uint16_t n) {
-  self->StartFunctionScope(n);
+void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue) {
+  assert(n > 0);
+  self->AllocateBindings(n, prologue);
 }
 
-void compiler_peer_end_function_scope(Compiler* self, uint16_t n) {
-  self->EndFunctionScope(n);
-}
-
-void compiler_peer_start_block_scope(Compiler* self, uint16_t n) {
-  self->StartBlockScope(n);
-}
-
-void compiler_peer_end_block_scope(Compiler* self, uint16_t n) {
-  self->EndBlockScope(n);
+void compiler_peer_release_bindings(Compiler* self, uint16_t n) {
+  assert(n > 0);
+  self->ReleaseBindings(n);
 }
 
 void compiler_peer_return(Compiler* self, size_t n) {

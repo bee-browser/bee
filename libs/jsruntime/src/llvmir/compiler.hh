@@ -55,10 +55,8 @@ class Compiler {
   void IfStatement();
   void StartFunction(const char* name);
   void EndFunction();
-  void StartFunctionScope(uint16_t n);
-  void EndFunctionScope(uint16_t n);
-  void StartBlockScope(uint16_t n);
-  void EndBlockScope(uint16_t n);
+  void AllocateBindings(uint16_t n, bool prologue);
+  void ReleaseBindings(uint16_t n);
   void Return(size_t n);
   void Void();
 
@@ -120,11 +118,11 @@ class Compiler {
 
   void DeclareValueType();
   void DeclareRuntimeDeclareConst();
-  void CreateRuntimeDeclareConst(const struct LocalRef& ref, llvm::Value* value);
+  void CreateCallRuntimeDeclareConst(const struct LocalRef& ref, llvm::Value* value);
   void DeclareRuntimeDeclareVariable();
-  void CreateRuntimeDeclareVariable(const struct LocalRef& ref, llvm::Value* value);
+  void CreateCallRuntimeDeclareVariable(const struct LocalRef& ref, llvm::Value* value);
   void DeclareRuntimeDeclareFunction();
-  void CreateRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value);
+  void CreateCallRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value);
   void DeclareRuntimeGetArgument();
   void DeclareRuntimeGetLocal();
   void DeclareRuntimePutArgument();
@@ -132,12 +130,14 @@ class Compiler {
   void DeclareRuntimePushArg();
   void DeclareRuntimeCall();
   void DeclareRuntimeRet();
-  void DeclareRuntimePushScope();
-  void DeclareRuntimePopScope();
+  void DeclareRuntimeAllocateBindings();
+  void CreateCallRuntimeAllocateBindings(uint16_t n);
+  void DeclareRuntimeReleaseBindings();
+  void CreateCallRuntimeReleaseBindings(uint16_t n);
   void DeclareRuntimeInspectNumber();
-  void CreateRuntimeInspectNumber(llvm::Value* value);
+  void CreateCallRuntimeInspectNumber(llvm::Value* value);
   void DeclareRuntimeInspectAny();
-  void CreateRuntimeInspectAny(llvm::Value* value);
+  void CreateCallRuntimeInspectAny(llvm::Value* value);
 
   inline void PushUndefined() {
     stack_.push_back(Item(Item::Undefined));
@@ -297,8 +297,8 @@ class Compiler {
   llvm::Function* runtime_push_arg_ = nullptr;
   llvm::Function* runtime_call_ = nullptr;
   llvm::Function* runtime_ret_ = nullptr;
-  llvm::Function* runtime_push_scope_ = nullptr;
-  llvm::Function* runtime_pop_scope_ = nullptr;
+  llvm::Function* runtime_allocate_bindings_ = nullptr;
+  llvm::Function* runtime_release_bindings_ = nullptr;
   llvm::Function* runtime_inspect_number_ = nullptr;
   llvm::Function* runtime_inspect_any_ = nullptr;
 };

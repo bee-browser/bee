@@ -40,20 +40,12 @@ impl Runtime {
 
 struct Compiler {
     peer: *mut bridge::Compiler,
-    scope_stack: Vec<ScopeState>,
-}
-
-#[derive(Default)]
-struct ScopeState {
-    binding_base_index: u16,
-    num_bindings: u16,
 }
 
 impl Compiler {
     pub fn new() -> Self {
         Self {
             peer: unsafe { bridge::compiler_peer_new() },
-            scope_stack: vec![],
         }
     }
 
@@ -135,51 +127,19 @@ impl Compiler {
             CompileCommand::Call(_nargs) => unsafe {
                 bridge::compiler_peer_call(self.peer);
             },
-            CompileCommand::StartFunctionScope(n) => {
-                // TODO: remove code clone
-                let binding_base_index = match self.scope_stack.last() {
-                    Some(scope) => scope.binding_base_index + scope.num_bindings,
-                    None => 0,
-                };
-                debug_assert!(binding_base_index < u16::MAX - *n);
-                self.scope_stack.push(ScopeState {
-                    binding_base_index,
-                    num_bindings: *n,
-                });
+            CompileCommand::AllocateBindings(n, prologue) => {
+                debug_assert!(*n > 0);
                 unsafe {
-                    bridge::compiler_peer_start_function_scope(self.peer, *n);
+                    bridge::compiler_peer_allocate_bindings(self.peer, *n, *prologue);
                 }
             }
-            CompileCommand::EndFunctionScope(n) => {
+            CompileCommand::ReleaseBindings(n) => {
+                debug_assert!(*n > 0);
                 unsafe {
                     // `runtime_pop_scope()` call will not be added if the basic block already has
                     // a terminator instruction.
-                    bridge::compiler_peer_end_function_scope(self.peer, *n);
+                    bridge::compiler_peer_release_bindings(self.peer, *n);
                 }
-                self.scope_stack.pop();
-            }
-            CompileCommand::StartBlockScope(n) => {
-                // TODO: remove code clone
-                let binding_base_index = match self.scope_stack.last() {
-                    Some(scope) => scope.binding_base_index + scope.num_bindings,
-                    None => 0,
-                };
-                debug_assert!(binding_base_index < u16::MAX - *n);
-                self.scope_stack.push(ScopeState {
-                    binding_base_index,
-                    num_bindings: *n,
-                });
-                unsafe {
-                    bridge::compiler_peer_start_block_scope(self.peer, *n);
-                }
-            }
-            CompileCommand::EndBlockScope(n) => {
-                unsafe {
-                    // `runtime_pop_scope()` call will not be added if the basic block already has
-                    // a terminator instruction.
-                    bridge::compiler_peer_end_block_scope(self.peer, *n);
-                }
-                self.scope_stack.pop();
             }
             CompileCommand::PostfixIncrement => {
                 // TODO

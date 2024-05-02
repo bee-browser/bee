@@ -20,8 +20,8 @@ impl Default for Runtime {
             push_arg: Some(runtime_push_arg),
             call: Some(runtime_call),
             ret: Some(runtime_ret),
-            push_scope: Some(runtime_push_scope),
-            pop_scope: Some(runtime_pop_scope),
+            allocate_bindings: Some(runtime_allocate_bindings),
+            release_bindings: Some(runtime_release_bindings),
             inspect_number: Some(runtime_inspect_number),
             inspect_any: Some(runtime_inspect_any),
         }
@@ -120,14 +120,14 @@ unsafe extern "C" fn runtime_ret(context: usize, value: f64) {
     runtime.ret(value);
 }
 
-unsafe extern "C" fn runtime_push_scope(context: usize, n: u16) {
+unsafe extern "C" fn runtime_allocate_bindings(context: usize, n: u16) {
     let runtime = into_runtime!(context);
-    runtime.push_scope(n);
+    runtime.allocate_bindings(n);
 }
 
-unsafe extern "C" fn runtime_pop_scope(context: usize, n: u16) {
+unsafe extern "C" fn runtime_release_bindings(context: usize, n: u16) {
     let runtime = into_runtime!(context);
-    runtime.pop_scope(n);
+    runtime.release_bindings(n);
 }
 
 unsafe extern "C" fn runtime_inspect_number(context: usize, value: f64) {

@@ -159,13 +159,15 @@ impl Fiber {
         call.return_value.unwrap_or(0.)
     }
 
-    pub fn push_scope(&mut self, n: u16) {
+    pub fn allocate_bindings(&mut self, n: u16) {
+        debug_assert!(n > 0);
         let new_len = self.binding_stack.len() + n as usize;
         self.binding_stack.resize_with(new_len, Default::default);
         self.call_stack.last_mut().unwrap().local_end = new_len;
     }
 
-    pub fn pop_scope(&mut self, n: u16) {
+    pub fn release_bindings(&mut self, n: u16) {
+        debug_assert!(n > 0);
         let new_len = self.binding_stack.len() - n as usize;
         self.binding_stack.truncate(new_len);
         self.call_stack.last_mut().unwrap().local_end = new_len;

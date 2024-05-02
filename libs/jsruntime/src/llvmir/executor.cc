@@ -97,12 +97,12 @@ void Executor::RegisterRuntime(const Runtime* runtime) {
       llvm::orc::ExecutorAddr::fromPtr(runtime->ret),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_push_scope")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->push_scope),
+  symbols[exec_session().intern("runtime_allocate_bindings")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->allocate_bindings),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_pop_scope")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->pop_scope),
+  symbols[exec_session().intern("runtime_release_bindings")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->release_bindings),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_inspect_number")] = {

@@ -4,8 +4,8 @@
 #include <cassert>
 #include <cstdint>
 
+#include "macros.hh"
 #include "module.hh"
-#include "runtime.hh"
 
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
@@ -30,8 +30,8 @@ void Compiler::DeclareTypes() {
   DeclareRuntimePushArg();
   DeclareRuntimeCall();
   DeclareRuntimeRet();
-  DeclareRuntimePushScope();
-  DeclareRuntimePopScope();
+  DeclareRuntimeAllocateBindings();
+  DeclareRuntimeReleaseBindings();
   DeclareRuntimeInspectNumber();
   DeclareRuntimeInspectAny();
 }
@@ -161,13 +161,13 @@ void Compiler::Ne() {
 void Compiler::DeclareConst() {
   auto* value = PopValue();
   auto ref = PopLocalRef();
-  CreateRuntimeDeclareConst(ref, value);
+  CreateCallRuntimeDeclareConst(ref, value);
 }
 
 void Compiler::DeclareVariable() {
   auto* value = PopValue();
   auto ref = PopLocalRef();
-  CreateRuntimeDeclareVariable(ref, value);
+  CreateCallRuntimeDeclareVariable(ref, value);
 }
 
 void Compiler::DeclareFunction() {
@@ -175,7 +175,7 @@ void Compiler::DeclareFunction() {
   builder_->SetInsertPoint(prologue_);
   auto* func = PopValue();
   auto ref = PopLocalRef();
-  CreateRuntimeDeclareFunction(ref, func);
+  CreateCallRuntimeDeclareFunction(ref, func);
   builder_->SetInsertPoint(backup);
 }
 
@@ -417,37 +417,19 @@ void Compiler::EndFunction() {
   argument_cache_.clear();
 }
 
-void Compiler::StartFunctionScope(uint16_t n) {
+void Compiler::AllocateBindings(uint16_t n, bool prologue) {
   auto* backup = builder_->GetInsertBlock();
-  builder_->SetInsertPoint(prologue_);
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  builder_->CreateCall(runtime_push_scope_, {context, builder_->getInt16(n)});
+  if (prologue) {
+    builder_->SetInsertPoint(prologue_);
+  }
+  CreateCallRuntimeAllocateBindings(n);
   ++scope_depth_;
   builder_->SetInsertPoint(backup);
 }
 
-void Compiler::EndFunctionScope(uint16_t n) {
+void Compiler::ReleaseBindings(uint16_t n) {
   if (builder_->GetInsertBlock()->getTerminator() == nullptr) {
-    // TODO: use a global variable to hold the execution context.
-    auto* context = exec_context();
-    builder_->CreateCall(runtime_pop_scope_, {context, builder_->getInt16(n)});
-  }
-  --scope_depth_;
-}
-
-void Compiler::StartBlockScope(uint16_t n) {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  builder_->CreateCall(runtime_push_scope_, {context, builder_->getInt16(n)});
-  ++scope_depth_;
-}
-
-void Compiler::EndBlockScope(uint16_t n) {
-  if (builder_->GetInsertBlock()->getTerminator() == nullptr) {
-    // TODO: use a global variable to hold the execution context.
-    auto* context = exec_context();
-    builder_->CreateCall(runtime_pop_scope_, {context, builder_->getInt16(n)});
+    CreateCallRuntimeReleaseBindings(n);
   }
   --scope_depth_;
 }
@@ -523,7 +505,7 @@ void Compiler::DeclareRuntimeDeclareConst() {
       prototype, llvm::Function::ExternalLinkage, "runtime_declare_const", module_.get());
 }
 
-void Compiler::CreateRuntimeDeclareConst(const struct LocalRef& ref, llvm::Value* value) {
+void Compiler::CreateCallRuntimeDeclareConst(const struct LocalRef& ref, llvm::Value* value) {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
@@ -539,7 +521,7 @@ void Compiler::DeclareRuntimeDeclareVariable() {
       prototype, llvm::Function::ExternalLinkage, "runtime_declare_variable", module_.get());
 }
 
-void Compiler::CreateRuntimeDeclareVariable(const struct LocalRef& ref, llvm::Value* value) {
+void Compiler::CreateCallRuntimeDeclareVariable(const struct LocalRef& ref, llvm::Value* value) {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
@@ -555,7 +537,7 @@ void Compiler::DeclareRuntimeDeclareFunction() {
       prototype, llvm::Function::ExternalLinkage, "runtime_declare_function", module_.get());
 }
 
-void Compiler::CreateRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value) {
+void Compiler::CreateCallRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value) {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
@@ -621,18 +603,30 @@ void Compiler::DeclareRuntimeRet() {
       prototype, llvm::Function::ExternalLinkage, "runtime_ret", module_.get());
 }
 
-void Compiler::DeclareRuntimePushScope() {
+void Compiler::DeclareRuntimeAllocateBindings() {
   auto* prototype = llvm::FunctionType::get(
       builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt16Ty()}, false);
-  runtime_push_scope_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_push_scope", module_.get());
+  runtime_allocate_bindings_ = llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, "runtime_allocate_bindings", module_.get());
 }
 
-void Compiler::DeclareRuntimePopScope() {
+void Compiler::CreateCallRuntimeAllocateBindings(uint16_t n) {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  builder_->CreateCall(runtime_allocate_bindings_, {context, builder_->getInt16(n)});
+}
+
+void Compiler::DeclareRuntimeReleaseBindings() {
   auto* prototype = llvm::FunctionType::get(
       builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt16Ty()}, false);
-  runtime_pop_scope_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_pop_scope", module_.get());
+  runtime_release_bindings_ = llvm::Function::Create(
+      prototype, llvm::Function::ExternalLinkage, "runtime_release_bindings", module_.get());
+}
+
+void Compiler::CreateCallRuntimeReleaseBindings(uint16_t n) {
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  builder_->CreateCall(runtime_release_bindings_, {context, builder_->getInt16(n)});
 }
 
 void Compiler::DeclareRuntimeInspectNumber() {
@@ -642,7 +636,7 @@ void Compiler::DeclareRuntimeInspectNumber() {
       prototype, llvm::Function::ExternalLinkage, "runtime_inspect_number", module_.get());
 }
 
-void Compiler::CreateRuntimeInspectNumber(llvm::Value* value) {
+void Compiler::CreateCallRuntimeInspectNumber(llvm::Value* value) {
   // TODO: static dispatch
   auto* context = exec_context();
   builder_->CreateCall(runtime_inspect_number_, {context, value});
@@ -655,7 +649,7 @@ void Compiler::DeclareRuntimeInspectAny() {
       prototype, llvm::Function::ExternalLinkage, "runtime_inspect_any", module_.get());
 }
 
-void Compiler::CreateRuntimeInspectAny(llvm::Value* value) {
+void Compiler::CreateCallRuntimeInspectAny(llvm::Value* value) {
   // TODO: static dispatch
   auto* context = exec_context();
   builder_->CreateCall(runtime_inspect_any_, {context, value});

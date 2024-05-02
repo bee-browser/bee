@@ -54,8 +54,8 @@ struct Runtime {
   void (*push_arg)(uintptr_t context, double arg);
   double (*call)(uintptr_t context, const Value* value);
   void (*ret)(uintptr_t context, double value);
-  void (*push_scope)(uintptr_t context, uint16_t n);
-  void (*pop_scope)(uintptr_t context, uint16_t n);
+  void (*allocate_bindings)(uintptr_t context, uint16_t n);
+  void (*release_bindings)(uintptr_t context, uint16_t n);
   void (*inspect_number)(uintptr_t context, double value);
   void (*inspect_any)(uintptr_t context, const Value* value);
 };

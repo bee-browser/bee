@@ -503,12 +503,9 @@ impl FunctionContext {
         assert!(scope.num_bindings + scope.max_child_bindings <= ScopeManager::MAX_LOCAL_BINDINGS);
 
         let n = scope.num_bindings as u16;
-        if function_scope {
-            self.commands.push(CompileCommand::EndFunctionScope(n));
-            self.commands[scope.command_base_index] = CompileCommand::StartFunctionScope(n);
-        } else {
-            self.commands.push(CompileCommand::EndBlockScope(n));
-            self.commands[scope.command_base_index] = CompileCommand::StartBlockScope(n);
+        if n > 0 {
+            self.commands[scope.command_base_index] = CompileCommand::AllocateBindings(n, function_scope);
+            self.commands.push(CompileCommand::ReleaseBindings(n));
         }
 
         let n = scope.num_bindings + scope.max_child_bindings;
@@ -543,10 +540,8 @@ pub enum CompileCommand {
     Arguments(u16),
     Argument(u16),
     Call(u16),
-    StartFunctionScope(u16),
-    EndFunctionScope(u16),
-    StartBlockScope(u16),
-    EndBlockScope(u16),
+    AllocateBindings(u16, bool),
+    ReleaseBindings(u16),
 
     // update operators
     PostfixIncrement,
@@ -770,7 +765,7 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(4),
-                    CompileCommand::StartFunctionScope(4),
+                    CompileCommand::AllocateBindings(4, true),
                     CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
@@ -783,7 +778,7 @@ mod tests {
                     CompileCommand::Reference(symbol!(reg, "d"), local!(3)),
                     CompileCommand::Number(4.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::EndFunctionScope(4),
+                    CompileCommand::ReleaseBindings(4),
                     CompileCommand::Return(0),
                 ]
             );
@@ -797,24 +792,24 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(3),
-                    CompileCommand::StartFunctionScope(1),
+                    CompileCommand::AllocateBindings(1, true),
                     CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::StartBlockScope(1),
+                    CompileCommand::AllocateBindings(1, false),
                     CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::EndBlockScope(1),
-                    CompileCommand::StartBlockScope(2),
+                    CompileCommand::ReleaseBindings(1),
+                    CompileCommand::AllocateBindings(2, false),
                     CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
                     CompileCommand::Reference(symbol!(reg, "b"), local!(2)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::EndBlockScope(2),
-                    CompileCommand::EndFunctionScope(1),
+                    CompileCommand::ReleaseBindings(2),
+                    CompileCommand::ReleaseBindings(1),
                     CompileCommand::Return(0),
                 ]
             );
