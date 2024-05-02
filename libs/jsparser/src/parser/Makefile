@@ -22,7 +22,7 @@ CODEGEN_TARGETS := $(addprefix lalr/,$(CODEGEN_FILES))
 #
 # The following variable holds true goal symbols (Script and Module) and others which are used for
 # refinements of permissive production rules.
-GOAL_SYMBOLS := Script Module ArrowFormalParameters
+GOAL_SYMBOLS := Script Module #ArrowFormalParameters
 
 # targets
 

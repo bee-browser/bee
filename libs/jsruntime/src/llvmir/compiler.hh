@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #pragma GCC diagnostic push
@@ -21,13 +22,13 @@ class Compiler {
   ~Compiler() = default;
 
   void SetSourceFileName(const char* input);
-
-  void StartMain();
-  void EndMain();
+  void DeclareTypes();
   Module* TakeModule();
 
   void Number(double value);
-  void Symbol(uint32_t symbol);
+  void Function(uint32_t func_id);
+  void ArgumentRef(uint32_t symbol, uint16_t index);
+  void LocalRef(uint32_t symbol, uint16_t stack, uint16_t index);
   void Add();
   void Sub();
   void Mul();
@@ -41,10 +42,10 @@ class Compiler {
   void Ne();
   void DeclareConst();
   void DeclareVariable();
-  void DeclareFunction(uint32_t symbol, uint32_t func_id);
-  void Get();
+  void DeclareFunction();
+  void GetArgument();
+  void GetLocal();
   void Set();
-  void PushArgs();
   void PushArg();
   void Call();
   void ToBoolean();
@@ -54,74 +55,130 @@ class Compiler {
   void IfStatement();
   void StartFunction(const char* name);
   void EndFunction();
-  void StartScope();
-  void EndScope();
+  void StartFunctionScope(uint16_t n);
+  void EndFunctionScope(uint16_t n);
+  void StartBlockScope(uint16_t n);
+  void EndBlockScope(uint16_t n);
   void Return(size_t n);
   void Void();
 
   void DumpStack();
 
  private:
+  struct ArgumentRef {
+    uint32_t symbol;
+    uint16_t index;
+    ArgumentRef(uint32_t symbol, uint16_t index) : symbol(symbol), index(index) {}
+  };
+
+  struct LocalRef {
+    uint32_t symbol;
+    uint16_t stack;
+    uint16_t index;
+    LocalRef(uint32_t symbol, uint16_t stack, uint16_t index)
+        : symbol(symbol), stack(stack), index(index) {}
+  };
+
   struct Item {
     enum Type {
-      Value,
-      Symbol,
-      Block,
+      Undefined,
+      Boolean,
+      Number,
       Function,
-      Index,
+      Any,  // undefined, boolean, number or object.
+      ArgumentRef,
+      LocalRef,
+      Block,
+      ExecContext,
     } type;
     union {
       llvm::Value* value;
-      uint32_t symbol;
+      struct ArgumentRef argument_ref;
+      struct LocalRef local_ref;
       llvm::BasicBlock* block;
-      llvm::Function* function;
-      size_t index;
     };
 
-    explicit Item(llvm::Value* value) : type(Item::Value), value(value) {}
-    explicit Item(uint32_t symbol) : type(Item::Symbol), symbol(symbol) {}
+    explicit Item(Type type) : type(type), value(nullptr) {}
+    Item(Type type, llvm::Value* value) : type(type), value(value) {}
+    Item(uint32_t symbol, uint16_t index) : type(Item::ArgumentRef), argument_ref(symbol, index) {}
+    Item(uint32_t symbol, uint16_t stack, uint16_t index)
+        : type(Item::LocalRef), local_ref(symbol, stack, index) {}
     explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
-    explicit Item(llvm::Function* function) : type(Item::Function), function(function) {}
-    explicit Item(size_t index) : type(Item::Index), index(index) {}
+
+    inline bool IsValue() const {
+      switch (type) {
+        case Item::Boolean:
+        case Item::Number:
+        case Item::Function:
+        case Item::Any:
+          return true;
+        default:
+          return false;
+      }
+    }
   };
 
-  llvm::Function* CreateMainFunction();
-  llvm::Function* CreateRuntimeDeclareConst();
-  llvm::Function* CreateRuntimeDeclareVariable();
-  llvm::Function* CreateRuntimeDeclareFunction();
-  llvm::Function* CreateRuntimeGet();
-  llvm::Function* CreateRuntimeSet();
-  llvm::Function* CreateRuntimePushArgs();
-  llvm::Function* CreateRuntimePushArg();
-  llvm::Function* CreateRuntimeCall();
-  llvm::Function* CreateRuntimeRet();
-  llvm::Function* CreateRuntimePushScope();
-  llvm::Function* CreateRuntimePopScope();
+  void DeclareValueType();
+  void DeclareRuntimeDeclareConst();
+  void CreateRuntimeDeclareConst(const struct LocalRef& ref, llvm::Value* value);
+  void DeclareRuntimeDeclareVariable();
+  void CreateRuntimeDeclareVariable(const struct LocalRef& ref, llvm::Value* value);
+  void DeclareRuntimeDeclareFunction();
+  void CreateRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value);
+  void DeclareRuntimeGetArgument();
+  void DeclareRuntimeGetLocal();
+  void DeclareRuntimePutArgument();
+  void DeclareRuntimePutLocal();
+  void DeclareRuntimePushArg();
+  void DeclareRuntimeCall();
+  void DeclareRuntimeRet();
+  void DeclareRuntimePushScope();
+  void DeclareRuntimePopScope();
+  void DeclareRuntimeInspectNumber();
+  void CreateRuntimeInspectNumber(llvm::Value* value);
+  void DeclareRuntimeInspectAny();
+  void CreateRuntimeInspectAny(llvm::Value* value);
 
-  inline void PushValue(llvm::Value* value) {
-    stack_.push_back(Item(value));
+  inline void PushUndefined() {
+    stack_.push_back(Item(Item::Undefined));
   }
 
-  inline void PushSymbol(uint32_t symbol) {
-    stack_.push_back(Item(symbol));
+  inline void PushBoolean(llvm::Value* value) {
+    stack_.push_back(Item(Item::Boolean, value));
+  }
+
+  inline void PushNumber(llvm::Value* value) {
+    stack_.push_back(Item(Item::Number, value));
+  }
+
+  inline void PushFunction(llvm::Value* value) {
+    stack_.push_back(Item(Item::Function, value));
+  }
+
+  inline void PushAny(llvm::Value* value) {
+    stack_.push_back(Item(Item::Any, value));
+  }
+
+  inline void PushArgumentRef(uint32_t symbol, uint16_t index) {
+    stack_.push_back(Item(symbol, index));
+  }
+
+  inline void PushLocalRef(uint32_t symbol, uint16_t stack, uint16_t index) {
+    stack_.push_back(Item(symbol, stack, index));
   }
 
   inline void PushBlock(llvm::BasicBlock* block) {
     stack_.push_back(Item(block));
   }
 
-  inline void PushFunction(llvm::Function* function) {
-    stack_.push_back(Item(function));
-  }
-
-  inline void PushIndex(size_t index) {
-    stack_.push_back(Item(index));
+  inline void PushExecContext(llvm::Value* exec_context) {
+    stack_.push_back(Item(Item::ExecContext, exec_context));
   }
 
   inline llvm::Value* exec_context() const {
     assert(!stack_.empty());
     const auto& item = stack_[base_index_];
-    assert(item.type == Item::Value);
+    assert(item.type == Item::ExecContext);
     return item.value;
   }
 
@@ -133,22 +190,38 @@ class Compiler {
     stack_[i - 1] = item;
   }
 
+  inline Item PopItem() {
+    assert(!stack_.empty());
+    Item item = stack_.back();
+    stack_.pop_back();
+    return item;
+  }
+
   inline llvm::Value* PopValue() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
-    assert(item.type == Item::Value);
+    assert(item.IsValue());
     auto* value = item.value;
     stack_.pop_back();
     return value;
   }
 
-  inline uint32_t PopSymbol() {
+  inline struct ArgumentRef PopArgumentRef() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
-    assert(item.type == Item::Symbol);
-    auto symbol = item.symbol;
+    assert(item.type == Item::ArgumentRef);
+    auto argument_ref = item.argument_ref;
     stack_.pop_back();
-    return symbol;
+    return argument_ref;
+  }
+
+  inline struct LocalRef PopLocalRef() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::LocalRef);
+    auto local_ref = item.local_ref;
+    stack_.pop_back();
+    return local_ref;
   }
 
   inline llvm::BasicBlock* PopBlock() {
@@ -160,31 +233,41 @@ class Compiler {
     return block;
   }
 
-  inline llvm::Value* Dereference() {
+  inline Item Dereference() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
-    if (item.type == Item::Symbol) {
-      Get();
+    switch (item.type) {
+      case Item::Boolean:
+      case Item::Number:
+      case Item::Function:
+      case Item::Any:
+        // nothing to do.
+        break;
+      case Item::ArgumentRef:
+        GetArgument();
+        break;
+      case Item::LocalRef:
+        GetLocal();
+        break;
+      default:
+        // never reach here
+        assert(false);
+        break;
     }
-    return PopValue();
+    return PopItem();
   }
 
-  inline llvm::Function* PopFunction() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Function);
-    auto* function = item.function;
-    stack_.pop_back();
-    return function;
-  }
-
-  size_t PopIndex() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::Index);
-    auto index = item.index;
-    stack_.pop_back();
-    return index;
+  inline llvm::Value* ToNumber(Item item) {
+    switch (item.type) {
+      case Item::Number:
+        return item.value;
+      case Item::Any:
+        return builder_->CreateLoad(
+            builder_->getDoubleTy(), builder_->CreateStructGEP(value_type_, item.value, 1));
+      default:
+        assert(false);
+        return nullptr;
+    }
   }
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
@@ -197,39 +280,25 @@ class Compiler {
   size_t scope_depth_ = 0;
   size_t base_index_ = 0;
 
-  void PushFunctionData() {
-    PushFunction(function_);
-    function_ = nullptr;
-    PushBlock(prologue_);
-    prologue_ = nullptr;
-    PushBlock(body_);
-    body_ = nullptr;
-    PushIndex(scope_depth_);
-    scope_depth_ = 0;
-    PushIndex(base_index_);
-    base_index_ = stack_.size();
-  }
-
-  void PopFunctionData() {
-    base_index_ = PopIndex();
-    scope_depth_ = PopIndex();
-    body_ = PopBlock();
-    prologue_ = PopBlock();
-    function_ = PopFunction();
-  }
-
   std::vector<Item> stack_;
 
-  // caches for host functions.
+  // TODO: data flow analysis
+  std::unordered_map<uint16_t, llvm::Value*> argument_cache_;
+
+  // runtime types and functions
+  llvm::StructType* value_type_ = nullptr;
   llvm::Function* runtime_declare_const_ = nullptr;
   llvm::Function* runtime_declare_variable_ = nullptr;
   llvm::Function* runtime_declare_function_ = nullptr;
-  llvm::Function* runtime_get_ = nullptr;
-  llvm::Function* runtime_set_ = nullptr;
-  llvm::Function* runtime_set_push_args_ = nullptr;
-  llvm::Function* runtime_set_push_arg_ = nullptr;
+  llvm::Function* runtime_get_argument_ = nullptr;
+  llvm::Function* runtime_get_local_ = nullptr;
+  llvm::Function* runtime_put_argument_ = nullptr;
+  llvm::Function* runtime_put_local_ = nullptr;
+  llvm::Function* runtime_push_arg_ = nullptr;
   llvm::Function* runtime_call_ = nullptr;
   llvm::Function* runtime_ret_ = nullptr;
   llvm::Function* runtime_push_scope_ = nullptr;
   llvm::Function* runtime_pop_scope_ = nullptr;
+  llvm::Function* runtime_inspect_number_ = nullptr;
+  llvm::Function* runtime_inspect_any_ = nullptr;
 };

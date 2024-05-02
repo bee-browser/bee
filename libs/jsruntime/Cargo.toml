@@ -7,13 +7,13 @@ publish = false
 
 [dependencies]
 base = { path = "../base" }
+bitflags = "2.5.0"
 hashbrown = "0.14.3"
 jsparser = { path = "../jsparser", features = ["location"] }
 logging = { path = "../logging" }
 
 [build-dependencies]
 bindgen = "0.69.4"
-cbindgen = { version = "0.26.0", default-features = false }
 cc = { version = "1.0.94", features = ["parallel"] }
 duct = "0.13.7"
 

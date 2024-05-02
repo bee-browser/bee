@@ -4,6 +4,7 @@ use anyhow::Result;
 use clap::Parser as _;
 
 use jsruntime::Runtime;
+use jsruntime::Value;
 
 #[derive(clap::Parser)]
 struct CommandLine {
@@ -19,6 +20,10 @@ enum Command {
 
 #[derive(clap::Args)]
 struct Eval {
+    /// Print LLVM-IR.
+    #[arg(short, long)]
+    debug: bool,
+
     /// The expression to evaluate.
     #[arg()]
     expr: Option<String>,
@@ -36,7 +41,9 @@ fn main() -> Result<()> {
                 None => read_from_stdin()?,
             };
             let module = runtime.compile_script(&expr).unwrap();
-            module.dump();
+            if eval.debug {
+                module.dump();
+            }
             runtime.eval(module);
         }
     }
@@ -49,6 +56,6 @@ fn read_from_stdin() -> Result<String> {
     Ok(source)
 }
 
-fn print(args: &[f64]) {
-    println!("{}", args[0]);
+fn print(args: &[Value]) {
+    println!("{:?}", args[0]);
 }

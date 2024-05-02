@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -16,13 +16,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::empty_module, "empty_module")),
     // Module -> ModuleBody
     Some((Builder::module, "module")),
-    // ArrowFormalParameters -> LPAREN UniqueFormalParameters RPAREN
-    None,
     // ScriptBody -> StatementList
     Some((Builder::nop, "nop")),
     // ModuleBody -> ModuleItemList
-    Some((Builder::nop, "nop")),
-    // UniqueFormalParameters -> FormalParameters
     Some((Builder::nop, "nop")),
     // StatementList -> StatementListItem
     Some((Builder::create_list, "create_list")),
@@ -32,16 +28,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::create_list, "create_list")),
     // ModuleItemList -> ModuleItemList ModuleItem
     Some((Builder::append_to_list, "append_to_list")),
-    // FormalParameters -> (empty)
-    Some((Builder::empty_list, "empty_list")),
-    // FormalParameters -> FunctionRestParameter
-    Some((Builder::create_list, "create_list")),
-    // FormalParameters -> FormalParameterList
-    Some((Builder::nop, "nop")),
-    // FormalParameters -> FormalParameterList COMMA
-    Some((Builder::remove_comma, "remove_comma")),
-    // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
-    Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // StatementListItem -> Statement
     Some((Builder::nop, "nop")),
     // StatementListItem -> Declaration
@@ -52,12 +38,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::nop, "nop")),
     // ModuleItem -> StatementListItem_Await
     Some((Builder::nop, "nop")),
-    // FunctionRestParameter -> BindingRestElement
-    Some((Builder::nop, "nop")),
-    // FormalParameterList -> FormalParameter
-    Some((Builder::create_list, "create_list")),
-    // FormalParameterList -> FormalParameterList COMMA FormalParameter
-    Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Statement -> BlockStatement
     Some((Builder::nop, "nop")),
     // Statement -> VariableStatement
@@ -111,12 +91,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     // StatementListItem_Await -> Statement_Await
     Some((Builder::nop, "nop")),
     // StatementListItem_Await -> Declaration_Await
-    Some((Builder::nop, "nop")),
-    // BindingRestElement -> ELLIPSIS BindingIdentifier
-    Some((Builder::rest_element, "rest_element")),
-    // BindingRestElement -> ELLIPSIS BindingPattern
-    Some((Builder::rest_element, "rest_element")),
-    // FormalParameter -> BindingElement
     Some((Builder::nop, "nop")),
     // BlockStatement -> Block
     Some((Builder::nop, "nop")),
@@ -270,25 +244,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::nop, "nop")),
     // Statement_Await -> DebuggerStatement
     Some((Builder::nop, "nop")),
-    // BindingIdentifier -> Identifier
-    Some((Builder::nop, "nop")),
-    // BindingIdentifier -> YIELD
-    Some((Builder::identifier, "identifier")),
-    // BindingIdentifier -> AWAIT
-    Some((Builder::identifier, "identifier")),
-    // BindingPattern -> ObjectBindingPattern
-    Some((Builder::nop, "nop")),
-    // BindingPattern -> ArrayBindingPattern
-    Some((Builder::nop, "nop")),
-    // BindingElement -> SingleNameBinding
-    Some((Builder::either_left, "either_left")),
-    // BindingElement -> BindingPattern
-    Some((Builder::nop, "nop")),
-    // BindingElement -> BindingPattern Initializer_In
-    Some((Builder::assignment_pattern, "assignment_pattern")),
     // Block -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block -> LBRACE _SCOPE_ StatementList RBRACE
+    // Block -> LBRACE _BLOCK_SCOPE_ StatementList RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In -> VariableDeclaration_In
     Some((Builder::create_list, "create_list")),
@@ -342,6 +300,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
         Builder::async_generator_declaration,
         "async_generator_declaration",
     )),
+    // BindingIdentifier -> Identifier
+    Some((Builder::nop, "nop")),
+    // BindingIdentifier -> YIELD
+    Some((Builder::identifier, "identifier")),
+    // BindingIdentifier -> AWAIT
+    Some((Builder::identifier, "identifier")),
     // ClassTail -> LBRACE RBRACE
     Some((Builder::empty_class_tail, "empty_class_tail")),
     // ClassTail -> ClassHeritage LBRACE RBRACE
@@ -540,58 +504,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
     )),
-    // Identifier -> IdentifierNameButNotReservedWord
-    Some((Builder::identifier, "identifier")),
-    // ObjectBindingPattern -> LBRACE RBRACE
-    Some((Builder::object_pattern_empty, "object_pattern_empty")),
-    // ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
-    Some((Builder::object_pattern_rest, "object_pattern_rest")),
-    // ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
-    Some((Builder::object_pattern, "object_pattern")),
-    // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
-    Some((Builder::object_pattern_comma, "object_pattern_comma")),
-    // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
-    Some((
-        Builder::object_pattern_comma_rest,
-        "object_pattern_comma_rest",
-    )),
-    // ArrayBindingPattern -> LBRACK RBRACK
-    Some((Builder::array_pattern_empty, "array_pattern_empty")),
-    // ArrayBindingPattern -> LBRACK Elision RBRACK
-    Some((Builder::array_pattern, "array_pattern")),
-    // ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
-    Some((Builder::array_pattern_rest, "array_pattern_rest")),
-    // ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
-    Some((
-        Builder::array_pattern_elision_rest,
-        "array_pattern_elision_rest",
-    )),
-    // ArrayBindingPattern -> LBRACK BindingElementList RBRACK
-    Some((Builder::array_pattern, "array_pattern")),
-    // ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
-    Some((Builder::array_pattern_comma, "array_pattern_comma")),
-    // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
-    Some((Builder::array_pattern_concat, "array_pattern_concat")),
-    // ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
-    Some((
-        Builder::array_pattern_comma_rest,
-        "array_pattern_comma_rest",
-    )),
-    // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
-    Some((
-        Builder::array_pattern_concat_rest,
-        "array_pattern_concat_rest",
-    )),
-    // SingleNameBinding -> BindingIdentifier
-    Some((Builder::single_name_binding, "single_name_binding")),
-    // SingleNameBinding -> BindingIdentifier Initializer_In
-    Some((
-        Builder::single_name_binding_init,
-        "single_name_binding_init",
-    )),
-    // Initializer_In -> ASSIGN AssignmentExpression_In
-    Some((Builder::initializer, "initializer")),
-    // _SCOPE_ -> (empty)
+    // _BLOCK_SCOPE_ -> (empty)
     Some((Builder::nop, "nop")),
     // VariableDeclaration_In -> BindingIdentifier
     Some((Builder::variable_declarator, "variable_declarator")),
@@ -720,12 +633,24 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
         Builder::case_block_cases_default_cases,
         "case_block_cases_default_cases",
     )),
+    // Identifier -> IdentifierNameButNotReservedWord
+    Some((Builder::identifier, "identifier")),
     // CatchParameter -> BindingIdentifier
     Some((Builder::nop, "nop")),
     // CatchParameter -> BindingPattern
     Some((Builder::nop, "nop")),
     // _FUNCTION_CONTEXT_ -> (empty)
     Some((Builder::nop, "nop")),
+    // FormalParameters -> (empty)
+    Some((Builder::empty_list, "empty_list")),
+    // FormalParameters -> FunctionRestParameter
+    Some((Builder::create_list, "create_list")),
+    // FormalParameters -> FormalParameterList
+    Some((Builder::nop, "nop")),
+    // FormalParameters -> FormalParameterList COMMA
+    Some((Builder::remove_comma, "remove_comma")),
+    // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
+    Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // _FUNCTION_SIGNATURE_ -> (empty)
     Some((Builder::nop, "nop")),
     // FunctionBody -> FunctionStatementList
@@ -990,7 +915,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Await -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
+    // Block_Await -> LBRACE _BLOCK_SCOPE_ StatementList_Await RBRACE
     Some((Builder::block_statement, "block_statement")),
     // Expression_In_Await -> AssignmentExpression_In_Await
     Some((Builder::nop, "nop")),
@@ -1020,54 +945,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
     // Finally_Await -> FINALLY Block_Await
     Some((Builder::finally_clause, "finally_clause")),
-    // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
+    // Initializer_In -> ASSIGN AssignmentExpression_In
+    Some((Builder::initializer, "initializer")),
+    // BindingPattern -> ObjectBindingPattern
     Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> LET
+    // BindingPattern -> ArrayBindingPattern
     Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> STATIC
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> IMPLEMENTS
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> INTERFACE
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> PACKAGE
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> PRIVATE
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> PROTECTED
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> PUBLIC
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> AS
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> ASYNC
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> FROM
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> GET
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> META
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> OF
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> SET
-    Some((Builder::nop, "nop")),
-    // IdentifierNameButNotReservedWord -> TARGET
-    Some((Builder::nop, "nop")),
-    // BindingRestProperty -> ELLIPSIS BindingIdentifier
-    Some((Builder::rest_element, "rest_element")),
-    // BindingPropertyList -> BindingProperty
-    Some((Builder::create_list, "create_list")),
-    // BindingPropertyList -> BindingPropertyList COMMA BindingProperty
-    Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // Elision -> COMMA
-    Some((Builder::elision, "elision")),
-    // Elision -> Elision COMMA
-    Some((Builder::elision_append, "elision_append")),
-    // BindingElementList -> BindingElisionElement
-    Some((Builder::nop, "nop")),
-    // BindingElementList -> BindingElementList COMMA BindingElisionElement
-    Some((Builder::concat_csv_arrays, "concat_csv_arrays")),
     // ConditionalExpression_In -> ShortCircuitExpression_In
     Some((Builder::nop, "nop")),
     // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
@@ -1124,6 +1007,46 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // DefaultClause -> DEFAULT COLON StatementList
     Some((Builder::switch_case_default, "switch_case_default")),
+    // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> LET
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> STATIC
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> IMPLEMENTS
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> INTERFACE
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> PACKAGE
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> PRIVATE
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> PROTECTED
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> PUBLIC
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> AS
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> ASYNC
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> FROM
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> GET
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> META
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> OF
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> SET
+    Some((Builder::nop, "nop")),
+    // IdentifierNameButNotReservedWord -> TARGET
+    Some((Builder::nop, "nop")),
+    // FunctionRestParameter -> BindingRestElement
+    Some((Builder::nop, "nop")),
+    // FormalParameterList -> FormalParameter
+    Some((Builder::create_list, "create_list")),
+    // FormalParameterList -> FormalParameterList COMMA FormalParameter
+    Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // FunctionStatementList -> (empty)
     Some((Builder::empty_list, "empty_list")),
     // FunctionStatementList -> StatementList_Return
@@ -1414,14 +1337,46 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::nop, "nop")),
     // CatchParameter_Await -> BindingPattern_Await
     Some((Builder::nop, "nop")),
-    // BindingProperty -> SingleNameBinding
-    Some((Builder::either_right, "either_right")),
-    // BindingProperty -> PropertyName COLON BindingElement
-    Some((Builder::property_value, "property_value")),
-    // BindingElisionElement -> BindingElement
-    Some((Builder::create_array, "create_array")),
-    // BindingElisionElement -> Elision BindingElement
-    Some((Builder::append_to_array, "append_to_array")),
+    // ObjectBindingPattern -> LBRACE RBRACE
+    Some((Builder::object_pattern_empty, "object_pattern_empty")),
+    // ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
+    Some((Builder::object_pattern_rest, "object_pattern_rest")),
+    // ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
+    Some((Builder::object_pattern, "object_pattern")),
+    // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
+    Some((Builder::object_pattern_comma, "object_pattern_comma")),
+    // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
+    Some((
+        Builder::object_pattern_comma_rest,
+        "object_pattern_comma_rest",
+    )),
+    // ArrayBindingPattern -> LBRACK RBRACK
+    Some((Builder::array_pattern_empty, "array_pattern_empty")),
+    // ArrayBindingPattern -> LBRACK Elision RBRACK
+    Some((Builder::array_pattern, "array_pattern")),
+    // ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
+    Some((Builder::array_pattern_rest, "array_pattern_rest")),
+    // ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
+    Some((
+        Builder::array_pattern_elision_rest,
+        "array_pattern_elision_rest",
+    )),
+    // ArrayBindingPattern -> LBRACK BindingElementList RBRACK
+    Some((Builder::array_pattern, "array_pattern")),
+    // ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
+    Some((Builder::array_pattern_comma, "array_pattern_comma")),
+    // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
+    Some((Builder::array_pattern_concat, "array_pattern_concat")),
+    // ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
+    Some((
+        Builder::array_pattern_comma_rest,
+        "array_pattern_comma_rest",
+    )),
+    // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
+    Some((
+        Builder::array_pattern_concat_rest,
+        "array_pattern_concat_rest",
+    )),
     // ShortCircuitExpression_In -> LogicalORExpression_In
     Some((Builder::nop, "nop")),
     // ShortCircuitExpression_In -> CoalesceExpression_In
@@ -1503,6 +1458,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // CaseClause -> CASE Expression_In COLON StatementList
     Some((Builder::switch_case, "switch_case")),
+    // BindingRestElement -> ELLIPSIS BindingIdentifier
+    Some((Builder::rest_element, "rest_element")),
+    // BindingRestElement -> ELLIPSIS BindingPattern
+    Some((Builder::rest_element, "rest_element")),
+    // FormalParameter -> BindingElement
+    Some((Builder::nop, "nop")),
     // StatementList_Return -> StatementListItem_Return
     Some((Builder::create_list, "create_list")),
     // StatementList_Return -> StatementList_Return StatementListItem_Return
@@ -1712,10 +1673,20 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // DefaultClause_Await -> DEFAULT COLON StatementList_Await
     Some((Builder::switch_case_default, "switch_case_default")),
-    // PropertyName -> LiteralPropertyName
+    // BindingRestProperty -> ELLIPSIS BindingIdentifier
+    Some((Builder::rest_element, "rest_element")),
+    // BindingPropertyList -> BindingProperty
+    Some((Builder::create_list, "create_list")),
+    // BindingPropertyList -> BindingPropertyList COMMA BindingProperty
+    Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    // Elision -> COMMA
+    Some((Builder::elision, "elision")),
+    // Elision -> Elision COMMA
+    Some((Builder::elision_append, "elision_append")),
+    // BindingElementList -> BindingElisionElement
     Some((Builder::nop, "nop")),
-    // PropertyName -> ComputedPropertyName
-    Some((Builder::nop, "nop")),
+    // BindingElementList -> BindingElementList COMMA BindingElisionElement
+    Some((Builder::concat_csv_arrays, "concat_csv_arrays")),
     // LogicalORExpression_In -> LogicalANDExpression_In
     Some((Builder::nop, "nop")),
     // LogicalORExpression_In -> LogicalORExpression_In OR LogicalANDExpression_In
@@ -1855,6 +1826,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
+    // BindingElement -> SingleNameBinding
+    Some((Builder::either_left, "either_left")),
+    // BindingElement -> BindingPattern
+    Some((Builder::nop, "nop")),
+    // BindingElement -> BindingPattern Initializer_In
+    Some((Builder::assignment_pattern, "assignment_pattern")),
     // StatementListItem_Return -> Statement_Return
     Some((Builder::nop, "nop")),
     // StatementListItem_Return -> Declaration
@@ -2089,14 +2066,14 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
     Some((Builder::switch_case, "switch_case")),
-    // LiteralPropertyName -> KeywordOrIdentifierName
-    Some((Builder::nop, "nop")),
-    // LiteralPropertyName -> STRING_LITERAL
-    Some((Builder::string_literal, "string_literal")),
-    // LiteralPropertyName -> NUMERIC_LITERAL
-    Some((Builder::numeric_literal, "numeric_literal")),
-    // ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
-    Some((Builder::computed_property_name, "computed_property_name")),
+    // BindingProperty -> SingleNameBinding
+    Some((Builder::either_right, "either_right")),
+    // BindingProperty -> PropertyName COLON BindingElement
+    Some((Builder::property_value, "property_value")),
+    // BindingElisionElement -> BindingElement
+    Some((Builder::create_array, "create_array")),
+    // BindingElisionElement -> Elision BindingElement
+    Some((Builder::append_to_array, "append_to_array")),
     // LogicalANDExpression_In -> BitwiseORExpression_In
     Some((Builder::nop, "nop")),
     // LogicalANDExpression_In -> LogicalANDExpression_In AND BitwiseORExpression_In
@@ -2167,6 +2144,13 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::nop, "nop")),
     // AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
     Some((Builder::function_body_block, "function_body_block")),
+    // SingleNameBinding -> BindingIdentifier
+    Some((Builder::single_name_binding, "single_name_binding")),
+    // SingleNameBinding -> BindingIdentifier Initializer_In
+    Some((
+        Builder::single_name_binding_init,
+        "single_name_binding_init",
+    )),
     // Statement_Return -> BlockStatement_Return
     Some((Builder::nop, "nop")),
     // Statement_Return -> VariableStatement
@@ -2319,6 +2303,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
         Builder::class_element_name_private,
         "class_element_name_private",
     )),
+    // UniqueFormalParameters -> FormalParameters
+    Some((Builder::nop, "nop")),
     // GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((
         Builder::method_definition_generator,
@@ -2434,6 +2420,10 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
+    // PropertyName -> LiteralPropertyName
+    Some((Builder::nop, "nop")),
+    // PropertyName -> ComputedPropertyName
+    Some((Builder::nop, "nop")),
     // BitwiseXORExpression_In -> BitwiseANDExpression_In
     Some((Builder::nop, "nop")),
     // BitwiseXORExpression_In -> BitwiseXORExpression_In BIT_XOR BitwiseANDExpression_In
@@ -2720,6 +2710,14 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::nop, "nop")),
     // ShortCircuitExpression_Await -> CoalesceExpression_Await
     Some((Builder::nop, "nop")),
+    // LiteralPropertyName -> KeywordOrIdentifierName
+    Some((Builder::nop, "nop")),
+    // LiteralPropertyName -> STRING_LITERAL
+    Some((Builder::string_literal, "string_literal")),
+    // LiteralPropertyName -> NUMERIC_LITERAL
+    Some((Builder::numeric_literal, "numeric_literal")),
+    // ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
+    Some((Builder::computed_property_name, "computed_property_name")),
     // BitwiseANDExpression_In -> EqualityExpression_In
     Some((Builder::nop, "nop")),
     // BitwiseANDExpression_In -> BitwiseANDExpression_In BIT_AND EqualityExpression_In
@@ -2767,7 +2765,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::binary_expression, "binary_expression")),
     // Block_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
+    // Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // IterationStatement_Return -> DoWhileStatement_Return
     Some((Builder::nop, "nop")),
@@ -3249,7 +3247,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Yield_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
+    // Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
     Some((Builder::create_list, "create_list")),
@@ -3314,7 +3312,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Block_Await_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
+    // Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
     Some((Builder::nop, "nop")),
@@ -3384,7 +3382,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Yield_Await_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return RBRACE
+    // Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Await_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
     Some((Builder::create_list, "create_list")),

@@ -1,3 +1,5 @@
+mod scope;
+
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
 use jsparser::syntax::LogicalOperator;
@@ -10,6 +12,12 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use super::logger;
+use super::FunctionRegistry;
+
+use scope::BindingKind;
+use scope::ScopeKind;
+use scope::ScopeManager;
+use scope::ScopeRef;
 
 pub struct Program {
     pub functions: Vec<FunctionRecipe>,
@@ -23,24 +31,36 @@ pub struct FunctionRecipe {
 
 pub struct Analyzer<'r> {
     symbol_registry: &'r mut SymbolRegistry,
+    function_registry: &'r FunctionRegistry,
     context_stack: Vec<FunctionContext>,
     functions: Vec<FunctionRecipe>,
+    scope_manager: ScopeManager,
+    references: Vec<Reference>,
 }
 
 impl<'r> Analyzer<'r> {
-    pub fn new(symbol_registry: &'r mut SymbolRegistry) -> Self {
+    pub fn new(
+        symbol_registry: &'r mut SymbolRegistry,
+        function_registry: &'r FunctionRegistry,
+    ) -> Self {
         Self {
             symbol_registry,
-            context_stack: vec![Default::default()],
+            function_registry,
+            context_stack: vec![FunctionContext {
+                in_body: true,
+                ..Default::default()
+            }],
             functions: vec![FunctionRecipe {
                 symbol: 0.into(),
                 formal_parameters: vec![],
                 commands: vec![],
             }],
+            scope_manager: Default::default(),
+            references: vec![],
         }
     }
 
-    fn handle_node<'s>(&mut self, node: Node<'s>) {
+    fn handle_node(&mut self, node: Node<'_>) {
         logger::debug!(event = "handle_node", ?node);
         match node {
             Node::Null => self.handle_null(),
@@ -49,9 +69,7 @@ impl<'r> Analyzer<'r> {
             Node::String(value, ..) => self.handle_string(value),
             Node::IdentifierReference(symbol) => self.handle_identifier_reference(symbol),
             Node::BindingIdentifier(symbol) => self.handle_binding_identifier(symbol),
-            Node::LabelIdentifier(_symbol) => {
-                // TODO
-            }
+            Node::LabelIdentifier(symbol) => self.handle_label_identifier(symbol),
             Node::ArgumentListHead(empty, spread) => self.handle_argument_list_head(empty, spread),
             Node::ArgumentListItem(spread) => self.handle_argument_list_item(spread),
             Node::Arguments => (),
@@ -64,7 +82,7 @@ impl<'r> Analyzer<'r> {
             Node::AssignmentExpression(op) => self.handle_operator(op),
             Node::BlockStatement => (),
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
-            Node::LetDeclaration(_n) => (),
+            Node::LetDeclaration(n) => self.handle_let_declaration(n),
             Node::ConstDeclaration(n) => self.handle_const_declaration(n),
             Node::BindingElement(init) => self.handle_binding_element(init),
             Node::EmptyStatement => (),
@@ -77,8 +95,8 @@ impl<'r> Analyzer<'r> {
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
-            Node::StartScope => self.handle_start_scope(),
-            Node::EndScope => self.handle_end_scope(),
+            Node::StartBlockScope => self.handle_start_block_scope(),
+            Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
             Node::FunctionSignature(symbol) => self.handle_function_signature(symbol),
         }
@@ -101,11 +119,42 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
-        self.context_stack.last_mut().unwrap().put_reference(symbol);
+        let context = self.context_stack.last_mut().unwrap();
+        // The locator will be updated later.
+        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::None));
+        self.references.push(Reference {
+            symbol,
+            func_id: context.func_id,
+            scope_ref: self.scope_manager.current(),
+            command_index,
+        });
     }
 
     fn handle_binding_identifier(&mut self, symbol: Symbol) {
-        self.context_stack.last_mut().unwrap().put_binding(symbol);
+        let context = self.context_stack.last_mut().unwrap();
+        if context.in_body {
+            // The locator will be updated later.
+            let command_index =
+                context.put_command(CompileCommand::Reference(symbol, Locator::None));
+            self.scope_manager.add_binding(symbol, BindingKind::Mutable);
+            self.references.push(Reference {
+                func_id: context.func_id,
+                scope_ref: self.scope_manager.current(),
+                command_index,
+                symbol,
+            })
+        } else {
+            // TODO: the compilation should fail if the following condition is unmet.
+            assert!(context.formal_parameters.len() < u16::MAX as usize);
+            let i = context.formal_parameters.len() as u16;
+            context.formal_parameters.push(symbol);
+            self.scope_manager
+                .add_binding(symbol, BindingKind::FormalParameter(i));
+        }
+    }
+
+    fn handle_label_identifier(&mut self, _symbol: Symbol) {
+        // TODO
     }
 
     fn handle_argument_list_head(&mut self, empty: bool, spread: bool) {
@@ -144,21 +193,26 @@ impl<'r> Analyzer<'r> {
         self.context_stack
             .last_mut()
             .unwrap()
-            .put_mutable_binding(init);
+            .put_lexical_binding(init);
+    }
+
+    fn handle_let_declaration(&mut self, n: u32) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_mutable_bindings(n);
     }
 
     fn handle_const_declaration(&mut self, n: u32) {
+        self.scope_manager.set_immutable(n);
         self.context_stack
             .last_mut()
             .unwrap()
-            .into_immutable_bindings(n);
+            .process_immutable_bindings(n);
     }
 
-    fn handle_binding_element(&mut self, init: bool) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .put_binding_element(init);
+    fn handle_binding_element(&mut self, _init: bool) {
+        // TODO
     }
 
     fn handle_expression_statement(&mut self) {
@@ -190,10 +244,7 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_formal_parameter(&mut self) {
-        self.context_stack
-            .last_mut()
-            .unwrap()
-            .into_formal_parameter();
+        // TODO
     }
 
     fn handle_formal_parameters(&mut self, _n: u32) {
@@ -201,11 +252,19 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_function_declaration(&mut self) {
+        self.scope_manager.pop();
+
         let mut context = self.context_stack.pop().unwrap();
         context.end_scope(true);
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        self.functions[context.func_id as usize].commands = context.commands;
+        let func_id = context.func_id;
+        self.functions[func_id as usize].commands = context.commands;
+
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_function_declaration(func_id);
     }
 
     fn handle_then_block(&mut self) {
@@ -221,18 +280,23 @@ impl<'r> Analyzer<'r> {
             .put_command(CompileCommand::Else);
     }
 
-    fn handle_start_scope(&mut self) {
+    fn handle_start_block_scope(&mut self) {
         self.context_stack.last_mut().unwrap().start_scope();
+        self.scope_manager.push(ScopeKind::Block);
     }
 
-    fn handle_end_scope(&mut self) {
+    fn handle_end_block_scope(&mut self) {
+        self.scope_manager.pop();
         self.context_stack.last_mut().unwrap().end_scope(false);
     }
 
     fn handle_function_context(&mut self) {
+        // TODO: the compilation should fail if the following condition is unmet.
+        assert!(self.functions.len() < u32::MAX as usize);
         let func_id = self.functions.len() as u32;
         let mut context = FunctionContext {
             func_id,
+            commands: vec![CompileCommand::Nop],
             ..Default::default()
         };
         context.start_scope();
@@ -240,15 +304,26 @@ impl<'r> Analyzer<'r> {
         self.functions.push(FunctionRecipe {
             symbol: 0.into(),
             formal_parameters: vec![],
-            commands: vec![CompileCommand::Nop],
+            commands: vec![],
         });
+        self.scope_manager.push(ScopeKind::Function);
     }
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
-        let context = self.context_stack.last().unwrap();
+        let context = self.context_stack.last_mut().unwrap();
         let func_id = context.func_id as usize;
         self.functions[func_id].symbol = symbol;
         self.functions[func_id].formal_parameters = context.formal_parameters.clone();
+        context.in_body = true;
+    }
+
+    fn resolve_locators(&mut self) {
+        for reference in self.references.iter() {
+            let locator = self.scope_manager.compute_locator(reference);
+            logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
+            self.functions[reference.func_id as usize].commands[reference.command_index] =
+                CompileCommand::Reference(reference.symbol, locator);
+        }
     }
 }
 
@@ -258,19 +333,39 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
     fn start(&mut self) {
         logger::debug!(event = "start");
         let context = self.context_stack.last_mut().unwrap();
-        // Push `Nop` as a placeholder.
-        // It will be replaced with `Bindings` in `accept()`.
+        // Push `Nop` as a placeholder.  It will be replaced in `accept()`.
         context.commands.push(CompileCommand::Nop);
         context.start_scope();
+        self.scope_manager.push(ScopeKind::Function);
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
         let mut context = self.context_stack.pop().unwrap();
+        for (func_id, host_func) in self.function_registry.enumerate_host_function() {
+            let code_units: Vec<u16> = host_func.name.to_str().unwrap().encode_utf16().collect();
+            let symbol = self.symbol_registry.intern(code_units);
+            // The locator will be updated later.
+            let command_index =
+                context.put_command(CompileCommand::Reference(symbol, Locator::None));
+            context.process_function_declaration(func_id.into());
+            self.scope_manager
+                .add_binding(symbol, BindingKind::Immutable);
+            self.references.push(Reference {
+                symbol,
+                func_id: context.func_id,
+                scope_ref: self.scope_manager.current(),
+                command_index,
+            });
+        }
+        self.scope_manager.pop();
+        //self.scope_manager.dump(ScopeRef(1));
         context.end_scope(true);
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
+        context.commands.push(CompileCommand::Return(0));
         self.functions[context.func_id as usize].commands = context.commands;
+        self.resolve_locators();
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
         })
@@ -290,14 +385,14 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
 
 #[derive(Default)]
 struct FunctionContext {
-    func_id: u32,
     commands: Vec<CompileCommand>,
-    bindings: Vec<(Symbol, usize)>,
-    references: Vec<Reference>,
+    pending_lexical_bindings: Vec<usize>,
     formal_parameters: Vec<Symbol>,
     scope_stack: Vec<Scope>,
     nargs_stack: Vec<(usize, u16)>,
     max_bindings: usize,
+    func_id: u32,
+    in_body: bool,
 }
 
 impl FunctionContext {
@@ -328,33 +423,6 @@ impl FunctionContext {
         // TODO: type inference
     }
 
-    fn put_reference(&mut self, symbol: Symbol) {
-        // The location may be updated later.
-        let command_index = self.put_command(CompileCommand::Reference(symbol, Locator::Global));
-        self.references.push(Reference {
-            command_index,
-            symbol,
-            stack_offset: 0,
-        });
-    }
-
-    fn put_binding(&mut self, symbol: Symbol) {
-        // The location may be updated later.
-        let command_index = self.put_command(CompileCommand::Reference(symbol, Locator::Global));
-        self.references.push(Reference {
-            command_index,
-            symbol,
-            stack_offset: 0,
-        });
-        // The index of the command will be set later.
-        self.bindings.push((symbol, 0));
-    }
-
-    fn into_formal_parameter(&mut self) {
-        let (symbol, _) = self.bindings.pop().unwrap();
-        self.formal_parameters.push(symbol);
-    }
-
     fn put_arguments(&mut self, empty: bool, _spread: bool) {
         // TODO: spread
         let index = self.put_command(CompileCommand::Nop);
@@ -380,135 +448,81 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Call(nargs));
     }
 
-    fn put_mutable_binding(&mut self, init: bool) {
-        let binding = self.bindings.last_mut().unwrap();
+    fn put_lexical_binding(&mut self, init: bool) {
         if !init {
             // Set undefined as the initial value.
             self.commands.push(CompileCommand::Undefined);
         }
-        binding.1 = self.commands.len();
-        // The offset will be set later.
-        self.commands.push(CompileCommand::MutableBinding);
+        // The command will be set later.
+        let command_index = self.put_command(CompileCommand::Nop);
+        self.pending_lexical_bindings.push(command_index);
         // TODO: type info
     }
 
-    fn into_immutable_bindings(&mut self, n: u32) {
-        let n = n as usize;
-        debug_assert!(self.bindings.len() >= n);
-        let i = self.bindings.len() - n;
-        for (_, index) in self.bindings[i..].iter().cloned() {
-            debug_assert!(matches!(
-                self.commands[index],
-                CompileCommand::MutableBinding
-            ));
-            self.commands[index] = CompileCommand::ImmutableBinding;
+    fn process_mutable_bindings(&mut self, n: u32) {
+        debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
+        for i in self.pending_lexical_bindings.iter().cloned() {
+            debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
+            self.commands[i] = CompileCommand::MutableBinding;
         }
+        self.scope_stack.last_mut().unwrap().num_bindings += self.pending_lexical_bindings.len();
+        self.pending_lexical_bindings.clear();
     }
 
-    fn put_binding_element(&mut self, init: bool) {
-        if init {
-            // TODO
-        } else {
-            debug_assert!(matches!(
-                self.commands.last(),
-                Some(CompileCommand::Reference(..))
-            ));
-            self.commands.pop();
+    fn process_immutable_bindings(&mut self, n: u32) {
+        debug_assert_eq!(n as usize, self.pending_lexical_bindings.len());
+        for i in self.pending_lexical_bindings.iter().cloned() {
+            debug_assert!(matches!(self.commands[i], CompileCommand::Nop));
+            self.commands[i] = CompileCommand::ImmutableBinding;
         }
+        self.scope_stack.last_mut().unwrap().num_bindings += self.pending_lexical_bindings.len();
+        self.pending_lexical_bindings.clear();
+    }
+
+    fn process_function_declaration(&mut self, func_id: u32) {
+        self.commands.push(CompileCommand::Function(func_id));
+        self.commands.push(CompileCommand::DeclareFunction);
+        self.scope_stack.last_mut().unwrap().num_bindings += 1;
     }
 
     fn start_scope(&mut self) {
-        let index = self.commands.len();
-        // Push `Nop` as a placeholder.
-        // It will be replaced with `ResetBindings` in `end_scope()`.
-        self.commands.push(CompileCommand::Nop);
+        // Push `Nop` as a placeholder.  It will be replaced in `end_scope()`.
+        let index = self.put_command(CompileCommand::Nop);
         self.scope_stack.push(Scope {
             command_base_index: index,
-            binding_base_index: self.bindings.len(),
-            reference_base_index: self.references.len(),
+            num_bindings: 0,
+            max_child_bindings: 0,
         });
     }
 
-    fn end_scope(&mut self, last: bool) {
+    fn end_scope(&mut self, function_scope: bool) {
         let scope = self.scope_stack.pop().unwrap();
-        let bindings = &mut self.bindings[scope.binding_base_index..];
 
-        let num_bindings = bindings.len() as u16;
-        self.commands.push(CompileCommand::EndScope(num_bindings));
-        self.commands[scope.command_base_index] = CompileCommand::StartScope(num_bindings);
+        // TODO: the compilation should fail if the following conditions are unmet.
+        assert!(scope.num_bindings <= ScopeManager::MAX_LOCAL_BINDINGS);
+        assert!(scope.num_bindings + scope.max_child_bindings <= ScopeManager::MAX_LOCAL_BINDINGS);
 
-        // Sort the list by symbol for binary search.
-        bindings.sort_unstable_by_key(|(symbol, _)| *symbol);
-
-        // Set the offset field of each reference.
-        let references = &mut self.references[scope.reference_base_index..];
-        let mut i = 0;
-        for j in 0..references.len() {
-            let reference = &references[j];
-            match bindings.binary_search_by_key(&reference.symbol, |(symbol, _)| *symbol) {
-                Ok(offset) => {
-                    let offset = offset as u16;
-                    match self.commands[reference.command_index] {
-                        CompileCommand::Reference(symbol, ref mut locator) => {
-                            debug_assert_eq!(symbol, reference.symbol);
-                            *locator = Locator::Local(reference.stack_offset, offset);
-                        }
-                        _ => unreachable!(),
-                    }
-                }
-                Err(_) => {
-                    references.swap(i, j);
-                    references[i].stack_offset += 1;
-                    i += 1;
-                }
-            }
+        let n = scope.num_bindings as u16;
+        if function_scope {
+            self.commands.push(CompileCommand::EndFunctionScope(n));
+            self.commands[scope.command_base_index] = CompileCommand::StartFunctionScope(n);
+        } else {
+            self.commands.push(CompileCommand::EndBlockScope(n));
+            self.commands[scope.command_base_index] = CompileCommand::StartBlockScope(n);
         }
 
-        if last {
-            let n = i;
-            i = 0;
-            for j in 0..n {
-                let reference = &references[j];
-                match self
-                    .formal_parameters
-                    .iter()
-                    .position(|ref symbol| reference.symbol.eq(symbol))
-                {
-                    Some(index) => {
-                        let index = index as u16;
-                        match self.commands[reference.command_index] {
-                            CompileCommand::Reference(symbol, ref mut locator) => {
-                                debug_assert_eq!(symbol, reference.symbol);
-                                *locator = Locator::Argument(index);
-                            }
-                            _ => unreachable!(),
-                        }
-                    }
-                    None => {
-                        references.swap(i, j);
-                        i += 1;
-                    }
-                }
-            }
+        let n = scope.num_bindings + scope.max_child_bindings;
+        match self.scope_stack.last_mut() {
+            Some(scope) => scope.max_child_bindings = scope.max_child_bindings.max(n),
+            None => self.max_bindings = n,
         }
-
-        self.max_bindings = self.max_bindings.max(self.bindings.len());
-
-        self.bindings.truncate(scope.binding_base_index);
-        self.references.truncate(scope.reference_base_index + i);
     }
-}
-
-struct Reference {
-    command_index: usize,
-    symbol: Symbol,
-    stack_offset: u16,
 }
 
 struct Scope {
     command_base_index: usize,
-    binding_base_index: usize,
-    reference_base_index: usize,
+    num_bindings: usize,
+    max_child_bindings: usize,
 }
 
 #[derive(Debug, PartialEq)]
@@ -519,16 +533,20 @@ pub enum CompileCommand {
     Boolean(bool),
     Number(f64),
     String(Vec<u16>),
+    Function(u32),
 
     Reference(Symbol, Locator),
     Bindings(u16),
     MutableBinding,
     ImmutableBinding,
+    DeclareFunction,
     Arguments(u16),
     Argument(u16),
     Call(u16),
-    StartScope(u16),
-    EndScope(u16),
+    StartFunctionScope(u16),
+    EndFunctionScope(u16),
+    StartBlockScope(u16),
+    EndBlockScope(u16),
 
     // update operators
     PostfixIncrement,
@@ -694,9 +712,33 @@ impl From<AssignmentOperator> for CompileCommand {
 
 #[derive(Debug, PartialEq)]
 pub enum Locator {
-    Global,
-    Argument(u16),
+    None,
+    Argument(u16, u16),
     Local(u16, u16),
+}
+
+impl Locator {
+    const MAX_LOCAL_FUNC_OFFSET: u16 = 127;
+
+    #[inline(always)]
+    fn argument(func: u16, index: u16) -> Self {
+        debug_assert!(func <= Self::MAX_LOCAL_FUNC_OFFSET);
+        Self::Argument(func, index)
+    }
+
+    #[inline(always)]
+    fn local(func: u16, index: u16) -> Self {
+        debug_assert!(func <= Self::MAX_LOCAL_FUNC_OFFSET);
+        Self::Local(func, index)
+    }
+}
+
+#[derive(Debug)]
+struct Reference {
+    symbol: Symbol,
+    func_id: u32,
+    scope_ref: ScopeRef,
+    command_index: usize,
 }
 
 #[cfg(test)]
@@ -712,15 +754,12 @@ mod tests {
         };
     }
 
-    macro_rules! locator {
-        (g) => {
-            Locator::Global
+    macro_rules! local {
+        ($index:expr) => {
+            local!(0, $index)
         };
-        (argument: $index:expr) => {
-            Locator::Argument($index)
-        };
-        (local: $stack:expr, $offset:expr) => {
-            Locator::Local($stack, $offset)
+        ($func:expr, $index:expr) => {
+            Locator::local($func, $index)
         };
     }
 
@@ -731,20 +770,21 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(4),
-                    CompileCommand::StartScope(4),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0, 0)),
+                    CompileCommand::StartFunctionScope(4),
+                    CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 0, 1)),
+                    CompileCommand::Reference(symbol!(reg, "b"), local!(1)),
                     CompileCommand::Number(2.0),
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "c"), locator!(local: 0, 2)),
+                    CompileCommand::Reference(symbol!(reg, "c"), local!(2)),
                     CompileCommand::Number(3.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "d"), locator!(local: 0, 3)),
+                    CompileCommand::Reference(symbol!(reg, "d"), local!(3)),
                     CompileCommand::Number(4.0),
                     CompileCommand::ImmutableBinding,
-                    CompileCommand::EndScope(4),
+                    CompileCommand::EndFunctionScope(4),
+                    CompileCommand::Return(0),
                 ]
             );
         });
@@ -757,24 +797,25 @@ mod tests {
                 program.functions[0].commands,
                 [
                     CompileCommand::Bindings(3),
-                    CompileCommand::StartScope(1),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0, 0)),
+                    CompileCommand::StartFunctionScope(1),
+                    CompileCommand::Reference(symbol!(reg, "a"), local!(0)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::StartScope(1),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0, 0)),
+                    CompileCommand::StartBlockScope(1),
+                    CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::EndScope(1),
-                    CompileCommand::StartScope(2),
-                    CompileCommand::Reference(symbol!(reg, "a"), locator!(local: 0, 0)),
+                    CompileCommand::EndBlockScope(1),
+                    CompileCommand::StartBlockScope(2),
+                    CompileCommand::Reference(symbol!(reg, "a"), local!(1)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::Reference(symbol!(reg, "b"), locator!(local: 0, 1)),
+                    CompileCommand::Reference(symbol!(reg, "b"), local!(2)),
                     CompileCommand::Undefined,
                     CompileCommand::MutableBinding,
-                    CompileCommand::EndScope(2),
-                    CompileCommand::EndScope(1),
+                    CompileCommand::EndBlockScope(2),
+                    CompileCommand::EndFunctionScope(1),
+                    CompileCommand::Return(0),
                 ]
             );
         });
@@ -782,9 +823,13 @@ mod tests {
 
     fn test(regc: &str, validate: fn(symbol_registry: &SymbolRegistry, program: &Program)) {
         let mut symbol_registry = Default::default();
+        let function_registry = FunctionRegistry::new();
         let result = Parser::for_script(
             regc,
-            Processor::new(Analyzer::new(&mut symbol_registry), false),
+            Processor::new(
+                Analyzer::new(&mut symbol_registry, &function_registry),
+                false,
+            ),
         )
         .parse();
         assert!(result.is_ok());

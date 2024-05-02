@@ -32,7 +32,7 @@ Description:
   perform the specifed command for a performance measurement.
 
 Example:
-  $PROGNAME cargo flamegraph --bin=jstb --profile=profiling -- eval >/dev/null
+  $PROGNAME -- cargo flamegraph --bin=jstb --profile=profiling -- eval >/dev/null
 EOF
   exit 0
 }

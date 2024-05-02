@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2101] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2100] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -29,14 +29,10 @@ where
         Action::Undefined,
         // Module -> ModuleBody
         Action::Undefined,
-        // ArrowFormalParameters -> LPAREN UniqueFormalParameters RPAREN
-        Action::Undefined,
         // ScriptBody -> StatementList
         Action::Nop,
         // ModuleBody -> ModuleItemList
         Action::Undefined,
-        // UniqueFormalParameters -> FormalParameters
-        Action::Nop,
         // StatementList -> StatementListItem
         Action::Invoke(
             Self::process_statement_list_head,
@@ -51,25 +47,6 @@ where
         Action::Undefined,
         // ModuleItemList -> ModuleItemList ModuleItem
         Action::Undefined,
-        // FormalParameters -> (empty)
-        Action::Invoke(
-            Self::process_formal_parameters_empty,
-            "process_formal_parameters_empty",
-        ),
-        // FormalParameters -> FunctionRestParameter
-        Action::Undefined,
-        // FormalParameters -> FormalParameterList
-        Action::Invoke(
-            Self::process_formal_parameters_list,
-            "process_formal_parameters_list",
-        ),
-        // FormalParameters -> FormalParameterList COMMA
-        Action::Invoke(
-            Self::process_formal_parameters_list_with_comma,
-            "process_formal_parameters_list_with_comma",
-        ),
-        // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
-        Action::Undefined,
         // StatementListItem -> Statement
         Action::Nop,
         // StatementListItem -> Declaration
@@ -80,15 +57,6 @@ where
         Action::Undefined,
         // ModuleItem -> StatementListItem_Await
         Action::Undefined,
-        // FunctionRestParameter -> BindingRestElement
-        Action::Undefined,
-        // FormalParameterList -> FormalParameter
-        Action::Nop,
-        // FormalParameterList -> FormalParameterList COMMA FormalParameter
-        Action::Invoke(
-            Self::process_formal_parameter_list,
-            "process_formal_parameter_list",
-        ),
         // Statement -> BlockStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> VariableStatement
@@ -143,12 +111,6 @@ where
         Action::Nop,
         // StatementListItem_Await -> Declaration_Await
         Action::Nop,
-        // BindingRestElement -> ELLIPSIS BindingIdentifier
-        Action::Undefined,
-        // BindingRestElement -> ELLIPSIS BindingPattern
-        Action::Undefined,
-        // FormalParameter -> BindingElement
-        Action::Invoke(Self::process_formal_parameter, "process_formal_parameter"),
         // BlockStatement -> Block
         Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
@@ -310,34 +272,9 @@ where
         Action::Undefined,
         // Statement_Await -> DebuggerStatement
         Action::Undefined,
-        // BindingIdentifier -> Identifier
-        Action::Invoke(
-            Self::process_binding_identifier_except_for_arguments_eval_in_strict,
-            "process_binding_identifier_except_for_arguments_eval_in_strict",
-        ),
-        // BindingIdentifier -> YIELD
-        Action::Invoke(
-            Self::process_binding_identifier_only_in_non_strict,
-            "process_binding_identifier_only_in_non_strict",
-        ),
-        // BindingIdentifier -> AWAIT
-        Action::Invoke(
-            Self::process_binding_identifier_only_in_script,
-            "process_binding_identifier_only_in_script",
-        ),
-        // BindingPattern -> ObjectBindingPattern
-        Action::Undefined,
-        // BindingPattern -> ArrayBindingPattern
-        Action::Undefined,
-        // BindingElement -> SingleNameBinding
-        Action::Invoke(Self::process_binding_element, "process_binding_element"),
-        // BindingElement -> BindingPattern
-        Action::Undefined,
-        // BindingElement -> BindingPattern Initializer_In
-        Action::Undefined,
         // Block -> LBRACE RBRACE
         Action::Invoke(Self::process_empty_block, "process_empty_block"),
-        // Block -> LBRACE _SCOPE_ StatementList RBRACE
+        // Block -> LBRACE _BLOCK_SCOPE_ StatementList RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // VariableDeclarationList_In -> VariableDeclaration_In
         Action::Undefined,
@@ -394,6 +331,21 @@ where
         Action::Undefined,
         // AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE
         Action::Undefined,
+        // BindingIdentifier -> Identifier
+        Action::Invoke(
+            Self::process_binding_identifier_except_for_arguments_eval_in_strict,
+            "process_binding_identifier_except_for_arguments_eval_in_strict",
+        ),
+        // BindingIdentifier -> YIELD
+        Action::Invoke(
+            Self::process_binding_identifier_only_in_non_strict,
+            "process_binding_identifier_only_in_non_strict",
+        ),
+        // BindingIdentifier -> AWAIT
+        Action::Invoke(
+            Self::process_binding_identifier_only_in_script,
+            "process_binding_identifier_only_in_script",
+        ),
         // ClassTail -> LBRACE RBRACE
         Action::Undefined,
         // ClassTail -> ClassHeritage LBRACE RBRACE
@@ -562,50 +514,8 @@ where
         Action::Undefined,
         // TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
         Action::Undefined,
-        // Identifier -> IdentifierNameButNotReservedWord
-        Action::Invoke(Self::process_identifier, "process_identifier"),
-        // ObjectBindingPattern -> LBRACE RBRACE
-        Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
-        Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
-        Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
-        Action::Undefined,
-        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK Elision RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
-        Action::Undefined,
-        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
-        Action::Undefined,
-        // SingleNameBinding -> BindingIdentifier
-        Action::Invoke(
-            Self::process_single_name_binding,
-            "process_single_name_binding",
-        ),
-        // SingleNameBinding -> BindingIdentifier Initializer_In
-        Action::Invoke(
-            Self::process_single_name_binding_with_initializer,
-            "process_single_name_binding_with_initializer",
-        ),
-        // Initializer_In -> ASSIGN AssignmentExpression_In
-        Action::Invoke(Self::process_initializer, "process_initializer"),
-        // _SCOPE_ -> (empty)
-        Action::Invoke(Self::process_scope, "process_scope"),
+        // _BLOCK_SCOPE_ -> (empty)
+        Action::Invoke(Self::process_block_scope, "process_block_scope"),
         // VariableDeclaration_In -> BindingIdentifier
         Action::Undefined,
         // VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -700,12 +610,33 @@ where
         Action::Undefined,
         // CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE
         Action::Undefined,
+        // Identifier -> IdentifierNameButNotReservedWord
+        Action::Invoke(Self::process_identifier, "process_identifier"),
         // CatchParameter -> BindingIdentifier
         Action::Undefined,
         // CatchParameter -> BindingPattern
         Action::Undefined,
         // _FUNCTION_CONTEXT_ -> (empty)
         Action::Invoke(Self::process_function_context, "process_function_context"),
+        // FormalParameters -> (empty)
+        Action::Invoke(
+            Self::process_formal_parameters_empty,
+            "process_formal_parameters_empty",
+        ),
+        // FormalParameters -> FunctionRestParameter
+        Action::Undefined,
+        // FormalParameters -> FormalParameterList
+        Action::Invoke(
+            Self::process_formal_parameters_list,
+            "process_formal_parameters_list",
+        ),
+        // FormalParameters -> FormalParameterList COMMA
+        Action::Invoke(
+            Self::process_formal_parameters_list_with_comma,
+            "process_formal_parameters_list_with_comma",
+        ),
+        // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
+        Action::Undefined,
         // _FUNCTION_SIGNATURE_ -> (empty)
         Action::Invoke(
             Self::process_function_signature,
@@ -988,7 +919,7 @@ where
         Action::Undefined,
         // Block_Await -> LBRACE RBRACE
         Action::Invoke(Self::process_empty_block, "process_empty_block"),
-        // Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
+        // Block_Await -> LBRACE _BLOCK_SCOPE_ StatementList_Await RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // Expression_In_Await -> AssignmentExpression_In_Await
         Action::Nop,
@@ -1021,53 +952,11 @@ where
         Action::Undefined,
         // Finally_Await -> FINALLY Block_Await
         Action::Undefined,
-        // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> LET
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> STATIC
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> IMPLEMENTS
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> INTERFACE
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> PACKAGE
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> PRIVATE
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> PROTECTED
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> PUBLIC
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> AS
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> ASYNC
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> FROM
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> GET
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> META
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> OF
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> SET
-        Action::Nop,
-        // IdentifierNameButNotReservedWord -> TARGET
-        Action::Nop,
-        // BindingRestProperty -> ELLIPSIS BindingIdentifier
+        // Initializer_In -> ASSIGN AssignmentExpression_In
+        Action::Invoke(Self::process_initializer, "process_initializer"),
+        // BindingPattern -> ObjectBindingPattern
         Action::Undefined,
-        // BindingPropertyList -> BindingProperty
-        Action::Undefined,
-        // BindingPropertyList -> BindingPropertyList COMMA BindingProperty
-        Action::Undefined,
-        // Elision -> COMMA
-        Action::Undefined,
-        // Elision -> Elision COMMA
-        Action::Undefined,
-        // BindingElementList -> BindingElisionElement
-        Action::Undefined,
-        // BindingElementList -> BindingElementList COMMA BindingElisionElement
+        // BindingPattern -> ArrayBindingPattern
         Action::Undefined,
         // ConditionalExpression_In -> ShortCircuitExpression_In
         Action::Nop,
@@ -1116,6 +1005,49 @@ where
         Action::Undefined,
         // DefaultClause -> DEFAULT COLON StatementList
         Action::Undefined,
+        // IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> LET
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> STATIC
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> IMPLEMENTS
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> INTERFACE
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PACKAGE
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PRIVATE
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PROTECTED
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> PUBLIC
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> AS
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> ASYNC
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> FROM
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> GET
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> META
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> OF
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> SET
+        Action::Nop,
+        // IdentifierNameButNotReservedWord -> TARGET
+        Action::Nop,
+        // FunctionRestParameter -> BindingRestElement
+        Action::Undefined,
+        // FormalParameterList -> FormalParameter
+        Action::Nop,
+        // FormalParameterList -> FormalParameterList COMMA FormalParameter
+        Action::Invoke(
+            Self::process_formal_parameter_list,
+            "process_formal_parameter_list",
+        ),
         // FunctionStatementList -> (empty)
         Action::Invoke(
             Self::process_function_statement_list_empty,
@@ -1355,13 +1287,33 @@ where
         Action::Undefined,
         // CatchParameter_Await -> BindingPattern_Await
         Action::Undefined,
-        // BindingProperty -> SingleNameBinding
+        // ObjectBindingPattern -> LBRACE RBRACE
         Action::Undefined,
-        // BindingProperty -> PropertyName COLON BindingElement
+        // ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
         Action::Undefined,
-        // BindingElisionElement -> BindingElement
+        // ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
         Action::Undefined,
-        // BindingElisionElement -> Elision BindingElement
+        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
+        Action::Undefined,
+        // ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty RBRACE
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK Elision RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement RBRACK
+        Action::Undefined,
+        // ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK
         Action::Undefined,
         // ShortCircuitExpression_In -> LogicalORExpression_In
         Action::Nop,
@@ -1444,6 +1396,12 @@ where
         Action::Undefined,
         // CaseClause -> CASE Expression_In COLON StatementList
         Action::Undefined,
+        // BindingRestElement -> ELLIPSIS BindingIdentifier
+        Action::Undefined,
+        // BindingRestElement -> ELLIPSIS BindingPattern
+        Action::Undefined,
+        // FormalParameter -> BindingElement
+        Action::Invoke(Self::process_formal_parameter, "process_formal_parameter"),
         // StatementList_Return -> StatementListItem_Return
         Action::Invoke(
             Self::process_statement_list_head,
@@ -1641,9 +1599,19 @@ where
         Action::Undefined,
         // DefaultClause_Await -> DEFAULT COLON StatementList_Await
         Action::Undefined,
-        // PropertyName -> LiteralPropertyName
+        // BindingRestProperty -> ELLIPSIS BindingIdentifier
         Action::Undefined,
-        // PropertyName -> ComputedPropertyName
+        // BindingPropertyList -> BindingProperty
+        Action::Undefined,
+        // BindingPropertyList -> BindingPropertyList COMMA BindingProperty
+        Action::Undefined,
+        // Elision -> COMMA
+        Action::Undefined,
+        // Elision -> Elision COMMA
+        Action::Undefined,
+        // BindingElementList -> BindingElisionElement
+        Action::Undefined,
+        // BindingElementList -> BindingElementList COMMA BindingElisionElement
         Action::Undefined,
         // LogicalORExpression_In -> LogicalANDExpression_In
         Action::Nop,
@@ -1762,6 +1730,12 @@ where
             "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding -> BindingPattern Initializer
+        Action::Undefined,
+        // BindingElement -> SingleNameBinding
+        Action::Invoke(Self::process_binding_element, "process_binding_element"),
+        // BindingElement -> BindingPattern
+        Action::Undefined,
+        // BindingElement -> BindingPattern Initializer_In
         Action::Undefined,
         // StatementListItem_Return -> Statement_Return
         Action::Nop,
@@ -2000,13 +1974,13 @@ where
         Action::Undefined,
         // CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
         Action::Undefined,
-        // LiteralPropertyName -> KeywordOrIdentifierName
+        // BindingProperty -> SingleNameBinding
         Action::Undefined,
-        // LiteralPropertyName -> STRING_LITERAL
+        // BindingProperty -> PropertyName COLON BindingElement
         Action::Undefined,
-        // LiteralPropertyName -> NUMERIC_LITERAL
+        // BindingElisionElement -> BindingElement
         Action::Undefined,
-        // ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
+        // BindingElisionElement -> Elision BindingElement
         Action::Undefined,
         // LogicalANDExpression_In -> BitwiseORExpression_In
         Action::Nop,
@@ -2084,6 +2058,16 @@ where
         Action::Undefined,
         // AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
         Action::Undefined,
+        // SingleNameBinding -> BindingIdentifier
+        Action::Invoke(
+            Self::process_single_name_binding,
+            "process_single_name_binding",
+        ),
+        // SingleNameBinding -> BindingIdentifier Initializer_In
+        Action::Invoke(
+            Self::process_single_name_binding_with_initializer,
+            "process_single_name_binding_with_initializer",
+        ),
         // Statement_Return -> BlockStatement_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> VariableStatement
@@ -2218,6 +2202,8 @@ where
         Action::Undefined,
         // ClassElementName -> PRIVATE_IDENTIFIER
         Action::Undefined,
+        // UniqueFormalParameters -> FormalParameters
+        Action::Nop,
         // GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
         Action::Undefined,
         // AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE
@@ -2308,6 +2294,10 @@ where
             "process_lexical_binding_identifier_with_initializer",
         ),
         // LexicalBinding_Await -> BindingPattern_Await Initializer_Await
+        Action::Undefined,
+        // PropertyName -> LiteralPropertyName
+        Action::Undefined,
+        // PropertyName -> ComputedPropertyName
         Action::Undefined,
         // BitwiseXORExpression_In -> BitwiseANDExpression_In
         Action::Nop,
@@ -2613,6 +2603,14 @@ where
         Action::Nop,
         // ShortCircuitExpression_Await -> CoalesceExpression_Await
         Action::Nop,
+        // LiteralPropertyName -> KeywordOrIdentifierName
+        Action::Undefined,
+        // LiteralPropertyName -> STRING_LITERAL
+        Action::Undefined,
+        // LiteralPropertyName -> NUMERIC_LITERAL
+        Action::Undefined,
+        // ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
+        Action::Undefined,
         // BitwiseANDExpression_In -> EqualityExpression_In
         Action::Nop,
         // BitwiseANDExpression_In -> BitwiseANDExpression_In BIT_AND EqualityExpression_In
@@ -2657,7 +2655,7 @@ where
         Action::Invoke(Self::process_bitwise_or, "process_bitwise_or"),
         // Block_Return -> LBRACE RBRACE
         Action::Invoke(Self::process_empty_block, "process_empty_block"),
-        // Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
+        // Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Return -> DoWhileStatement_Return
         Action::Undefined,
@@ -3067,7 +3065,7 @@ where
         Action::Undefined,
         // Block_Yield_Return -> LBRACE RBRACE
         Action::Invoke(Self::process_empty_block, "process_empty_block"),
-        // Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
+        // Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
         Action::Undefined,
@@ -3129,7 +3127,7 @@ where
         Action::Invoke(Self::process_binding_list_item, "process_binding_list_item"),
         // Block_Await_Return -> LBRACE RBRACE
         Action::Invoke(Self::process_empty_block, "process_empty_block"),
-        // Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
+        // Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
         Action::Undefined,
@@ -3196,7 +3194,7 @@ where
         Action::Undefined,
         // Block_Yield_Await_Return -> LBRACE RBRACE
         Action::Invoke(Self::process_empty_block, "process_empty_block"),
-        // Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return RBRACE
+        // Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Await_Return RBRACE
         Action::Invoke(Self::process_block, "process_block"),
         // VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
         Action::Undefined,

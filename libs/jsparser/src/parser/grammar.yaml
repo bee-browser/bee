@@ -7443,7 +7443,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList
     - type: token
@@ -7459,7 +7459,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Return
     - type: token
@@ -7475,7 +7475,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Await
     - type: token
@@ -7491,7 +7491,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Await_Return
     - type: token
@@ -7507,7 +7507,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Yield
     - type: token
@@ -7523,7 +7523,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Yield_Return
     - type: token
@@ -7539,7 +7539,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Yield_Await
     - type: token
@@ -7555,7 +7555,7 @@
     - type: token
       data: LBRACE
     - type: non-terminal
-      data: _SCOPE_
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Yield_Await_Return
     - type: token
@@ -18956,7 +18956,7 @@
 - name: _THEN_BLOCK_
   production:
     - type: empty
-- name: _SCOPE_
+- name: _BLOCK_SCOPE_
   production:
     - type: empty
 - name: NullLiteral

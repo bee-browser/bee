@@ -27,7 +27,6 @@ pub enum NonTerminal {
     ArrayLiteral_Await,
     ArrayLiteral_Yield,
     ArrayLiteral_Yield_Await,
-    ArrowFormalParameters,
     ArrowFunction,
     ArrowFunction_Await,
     ArrowFunction_In,
@@ -731,9 +730,9 @@ pub enum NonTerminal {
     YieldExpression_Await,
     YieldExpression_In,
     YieldExpression_In_Await,
+    _BLOCK_SCOPE_,
     _ELSE_BLOCK_,
     _FUNCTION_CONTEXT_,
     _FUNCTION_SIGNATURE_,
-    _SCOPE_,
     _THEN_BLOCK_,
 }

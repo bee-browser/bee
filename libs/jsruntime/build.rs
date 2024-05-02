@@ -12,19 +12,13 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
     "src/llvmir/compiler.hh",
     "src/llvmir/executor.cc",
     "src/llvmir/executor.hh",
-    "src/llvmir/host.hh",
     "src/llvmir/macros.hh",
     "src/llvmir/module.hh",
+    "src/llvmir/runtime.hh",
 ];
 
 fn main() {
     let out_dir = PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
-
-    // Generate bindings for C++.
-    let output_file = out_dir.join("bindings.hh");
-    cbindgen::generate(env!("CARGO_MANIFEST_DIR"))
-        .expect("Unable to generate bindings for C++")
-        .write_to_file(output_file);
 
     // Generate bindings for Rust.
     let input_file = "src/llvmir/bridge.hh";

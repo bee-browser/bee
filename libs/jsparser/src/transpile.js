@@ -588,7 +588,7 @@ function addActions(rules) {
     '_FUNCTION_SIGNATURE_',
     '_ELSE_BLOCK_',
     '_THEN_BLOCK_',
-    '_SCOPE_',
+    '_BLOCK_SCOPE_',
   ];
 
   for (const action of ACTIONS) {
@@ -843,7 +843,7 @@ function modifyBlock(rules) {
     assert(rule.values.length === 2);
     rule.values[1] = rule
       .values[1]
-      .replace('`{` Statement', '`{` _SCOPE_ Statement');
+      .replace('`{` Statement', '`{` _BLOCK_SCOPE_ Statement');
   }
 
   return rules;

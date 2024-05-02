@@ -6,6 +6,7 @@
 
 #include "compiler.hh"
 #include "executor.hh"
+#include "macros.hh"
 #include "module.hh"
 
 void llvmir_initialize() {
@@ -34,11 +35,10 @@ void compiler_peer_delete(Compiler* self) {
 }
 
 void compiler_peer_start(Compiler* self) {
-  self->StartMain();
+  self->DeclareTypes();
 }
 
 Module* compiler_peer_end(Compiler* self) {
-  self->EndMain();
   return self->TakeModule();
 }
 
@@ -46,8 +46,16 @@ void compiler_peer_number(Compiler* self, double value) {
   self->Number(value);
 }
 
-void compiler_peer_symbol(Compiler* self, uint32_t symbol_id) {
-  self->Symbol(symbol_id);
+void compiler_peer_function(Compiler* self, uint32_t func_id) {
+  self->Function(func_id);
+}
+
+void compiler_peer_argument_ref(Compiler* self, uint32_t symbol, uint16_t index) {
+  self->ArgumentRef(symbol, index);
+}
+
+void compiler_peer_local_ref(Compiler* self, uint32_t symbol, uint16_t stack, uint16_t index) {
+  self->LocalRef(symbol, stack, index);
 }
 
 void compiler_peer_add(Compiler* self) {
@@ -102,20 +110,12 @@ void compiler_peer_declare_variable(Compiler* self) {
   self->DeclareVariable();
 }
 
-void compiler_peer_declare_function(Compiler* self, uint32_t symbol_id, uint32_t func_id) {
-  self->DeclareFunction(symbol_id, func_id);
-}
-
-void compiler_peer_get(Compiler* self) {
-  self->Get();
+void compiler_peer_declare_function(Compiler* self) {
+  self->DeclareFunction();
 }
 
 void compiler_peer_set(Compiler* self) {
   self->Set();
-}
-
-void compiler_peer_push_args(Compiler* self) {
-  self->PushArgs();
 }
 
 void compiler_peer_push_arg(Compiler* self) {
@@ -154,12 +154,20 @@ void compiler_peer_end_function(Compiler* self) {
   self->EndFunction();
 }
 
-void compiler_peer_start_scope(Compiler* self) {
-  self->StartScope();
+void compiler_peer_start_function_scope(Compiler* self, uint16_t n) {
+  self->StartFunctionScope(n);
 }
 
-void compiler_peer_end_scope(Compiler* self) {
-  self->EndScope();
+void compiler_peer_end_function_scope(Compiler* self, uint16_t n) {
+  self->EndFunctionScope(n);
+}
+
+void compiler_peer_start_block_scope(Compiler* self, uint16_t n) {
+  self->StartBlockScope(n);
+}
+
+void compiler_peer_end_block_scope(Compiler* self, uint16_t n) {
+  self->EndBlockScope(n);
 }
 
 void compiler_peer_return(Compiler* self, size_t n) {
@@ -184,16 +192,12 @@ void executor_peer_delete(Executor* self) {
   delete self;
 }
 
-void executor_peer_register_host(Executor* self, const Host* host) {
-  self->RegisterHost(host);
+void executor_peer_register_runtime(Executor* self, const Runtime* runtime) {
+  self->RegisterRuntime(runtime);
 }
 
 void executor_peer_register_module(Executor* self, Module* mod) {
   self->RegisterModule(mod);
-}
-
-MainFn executor_peer_get_main(Executor* self) {
-  return self->GetMain();
 }
 
 FuncFn executor_peer_get_func(Executor* self, const char* name) {

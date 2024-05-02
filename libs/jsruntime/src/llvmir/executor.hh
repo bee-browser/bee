@@ -22,10 +22,9 @@
 #include "llvm/IR/LLVMContext.h"
 #pragma GCC diagnostic pop
 
-class Host;
-struct Module;
-typedef void (*MainFn)(void*);
 typedef double (*FuncFn)(void*);
+struct Module;
+class Runtime;
 
 class Executor {
  public:
@@ -37,9 +36,8 @@ class Executor {
 
   ~Executor();
 
-  void RegisterHost(const Host* host);
+  void RegisterRuntime(const Runtime* runtime);
   void RegisterModule(Module* mod);
-  MainFn GetMain();
   FuncFn GetFunc(const char* name);
 
   llvm::orc::ExecutionSession& exec_session() {

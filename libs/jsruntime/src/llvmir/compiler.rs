@@ -13,21 +13,21 @@ use super::Runtime;
 
 use crate::semantics::Analyzer;
 use crate::semantics::CompileCommand;
+use crate::semantics::Locator;
 
 impl Runtime {
     pub fn compile_script(&mut self, source: &str) -> Option<Module> {
-        let analyzer = Analyzer::new(&mut self.symbol_registry);
+        let analyzer = Analyzer::new(&mut self.symbol_registry, &self.function_registry);
         let processor = Processor::new(analyzer, false);
         let program = Parser::for_script(source, processor).parse().ok()?;
+        // TODO: Deferring the compilation until it's actually called improves the performance.
+        // Because the program may contain unused functions.
         let mut compiler = Compiler::new();
         compiler.start_compile();
-        // main
-        for command in program.functions[0].commands.iter() {
-            compiler.process_command(command);
-        }
-        // functions
-        for func in &program.functions[1..] {
-            let (func_id, func_name) = self.create_native_function(func.formal_parameters.clone());
+        for func in program.functions.iter() {
+            let (func_id, func_name) = self
+                .function_registry
+                .create_native_function(func.formal_parameters.clone());
             compiler.start_function(func.symbol, func_id, func_name);
             for command in func.commands.iter() {
                 compiler.process_command(command);
@@ -45,14 +45,14 @@ struct Compiler {
 
 #[derive(Default)]
 struct ScopeState {
-    returned: bool,
+    binding_base_index: u16,
+    num_bindings: u16,
 }
 
 impl Compiler {
     pub fn new() -> Self {
-        let peer = unsafe { bridge::compiler_peer_new() };
         Self {
-            peer,
+            peer: unsafe { bridge::compiler_peer_new() },
             scope_stack: vec![],
         }
     }
@@ -71,11 +71,9 @@ impl Compiler {
     }
 
     fn start_function(&self, symbol: Symbol, func_id: FunctionId, func_name: &CStr) {
-        logger::debug!(event = "start_function", ?func_id, ?func_name);
-        let name = func_name.as_ptr();
+        logger::debug!(event = "start_function", ?symbol, ?func_id, ?func_name);
         unsafe {
-            bridge::compiler_peer_declare_function(self.peer, symbol.id(), func_id.0);
-            bridge::compiler_peer_start_function(self.peer, name);
+            bridge::compiler_peer_start_function(self.peer, func_name.as_ptr());
         }
     }
 
@@ -106,9 +104,17 @@ impl Compiler {
             CompileCommand::String(_value) => {
                 // TODO
             }
-            CompileCommand::Reference(symbol, _locator) => unsafe {
-                // TODO: use the locator
-                bridge::compiler_peer_symbol(self.peer, symbol.id());
+            CompileCommand::Function(func_id) => unsafe {
+                bridge::compiler_peer_function(self.peer, *func_id);
+            },
+            CompileCommand::Reference(symbol, locator) => match *locator {
+                Locator::None => panic!(),
+                Locator::Argument(_nest, index) => unsafe {
+                    bridge::compiler_peer_argument_ref(self.peer, symbol.id(), index);
+                },
+                Locator::Local(nest, index) => unsafe {
+                    bridge::compiler_peer_local_ref(self.peer, symbol.id(), nest, index);
+                },
             },
             CompileCommand::Bindings(_n) => {
                 // TODO
@@ -119,29 +125,61 @@ impl Compiler {
             CompileCommand::ImmutableBinding => unsafe {
                 bridge::compiler_peer_declare_const(self.peer);
             },
-            CompileCommand::Arguments(_nargs) => unsafe {
-                bridge::compiler_peer_push_args(self.peer);
+            CompileCommand::DeclareFunction => unsafe {
+                bridge::compiler_peer_declare_function(self.peer);
             },
+            CompileCommand::Arguments(_nargs) => (),
             CompileCommand::Argument(_index) => unsafe {
                 bridge::compiler_peer_push_arg(self.peer);
             },
             CompileCommand::Call(_nargs) => unsafe {
                 bridge::compiler_peer_call(self.peer);
             },
-            CompileCommand::StartScope(_n) => {
-                self.scope_stack.push(Default::default());
+            CompileCommand::StartFunctionScope(n) => {
+                // TODO: remove code clone
+                let binding_base_index = match self.scope_stack.last() {
+                    Some(scope) => scope.binding_base_index + scope.num_bindings,
+                    None => 0,
+                };
+                debug_assert!(binding_base_index < u16::MAX - *n);
+                self.scope_stack.push(ScopeState {
+                    binding_base_index,
+                    num_bindings: *n,
+                });
                 unsafe {
-                    bridge::compiler_peer_start_scope(self.peer);
+                    bridge::compiler_peer_start_function_scope(self.peer, *n);
                 }
             }
-            CompileCommand::EndScope(_n) => {
-                if self.scope_stack.last().unwrap().returned {
-                    // The scope will be removed from the stack in `llvmir::call()`.
-                } else {
-                    unsafe {
-                        bridge::compiler_peer_end_scope(self.peer);
-                    }
+            CompileCommand::EndFunctionScope(n) => {
+                unsafe {
+                    // `runtime_pop_scope()` call will not be added if the basic block already has
+                    // a terminator instruction.
+                    bridge::compiler_peer_end_function_scope(self.peer, *n);
                 }
+                self.scope_stack.pop();
+            }
+            CompileCommand::StartBlockScope(n) => {
+                // TODO: remove code clone
+                let binding_base_index = match self.scope_stack.last() {
+                    Some(scope) => scope.binding_base_index + scope.num_bindings,
+                    None => 0,
+                };
+                debug_assert!(binding_base_index < u16::MAX - *n);
+                self.scope_stack.push(ScopeState {
+                    binding_base_index,
+                    num_bindings: *n,
+                });
+                unsafe {
+                    bridge::compiler_peer_start_block_scope(self.peer, *n);
+                }
+            }
+            CompileCommand::EndBlockScope(n) => {
+                unsafe {
+                    // `runtime_pop_scope()` call will not be added if the basic block already has
+                    // a terminator instruction.
+                    bridge::compiler_peer_end_block_scope(self.peer, *n);
+                }
+                self.scope_stack.pop();
             }
             CompileCommand::PostfixIncrement => {
                 // TODO
@@ -318,18 +356,14 @@ impl Compiler {
                 bridge::compiler_peer_conditional_expression(self.peer);
             },
             CompileCommand::IfElseStatement => unsafe {
-                bridge::compiler_peer_dump_stack(self.peer);
                 bridge::compiler_peer_if_else_statement(self.peer);
             },
             CompileCommand::IfStatement => unsafe {
                 bridge::compiler_peer_if_statement(self.peer);
             },
-            CompileCommand::Return(n) => {
-                self.scope_stack.last_mut().unwrap().returned = true;
-                unsafe {
-                    bridge::compiler_peer_return(self.peer, *n as usize);
-                }
-            }
+            CompileCommand::Return(n) => unsafe {
+                bridge::compiler_peer_return(self.peer, *n as usize);
+            },
             CompileCommand::Discard => unsafe {
                 bridge::compiler_peer_void(self.peer);
             },

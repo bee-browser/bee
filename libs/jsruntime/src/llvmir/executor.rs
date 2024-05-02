@@ -11,7 +11,7 @@ impl Executor {
     pub fn new() -> Self {
         let peer = unsafe {
             let peer = bridge::executor_peer_new();
-            bridge::executor_peer_register_host(peer, &bridge::Host::default());
+            bridge::executor_peer_register_runtime(peer, &bridge::Runtime::default());
             peer
         };
         Self { peer }
@@ -21,10 +21,6 @@ impl Executor {
         unsafe {
             bridge::executor_peer_register_module(self.peer, module.peer);
         }
-    }
-
-    pub fn get_main(&self) -> bridge::MainFn {
-        unsafe { bridge::executor_peer_get_main(self.peer) }
     }
 
     pub fn get_func(&self, name: &CStr) -> bridge::FuncFn {

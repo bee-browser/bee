@@ -8,7 +8,6 @@ use super::State;
 pub enum GoalSymbol {
     Script,
     Module,
-    ArrowFormalParameters,
 }
 
 impl GoalSymbol {
@@ -17,7 +16,6 @@ impl GoalSymbol {
         match self {
             Self::Script => State(0),
             Self::Module => State(1),
-            Self::ArrowFormalParameters => State(2),
         }
     }
 }

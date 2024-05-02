@@ -8,14 +8,10 @@
   action: undefined
 - rule: Module -> ModuleBody
   action: undefined
-- rule: ArrowFormalParameters -> LPAREN UniqueFormalParameters RPAREN
-  action: undefined
 - rule: ScriptBody -> StatementList
   action: nop
 - rule: ModuleBody -> ModuleItemList
   action: undefined
-- rule: UniqueFormalParameters -> FormalParameters
-  action: nop
 - rule: StatementList -> StatementListItem
   action: process_statement_list_head
 - rule: StatementList -> StatementList StatementListItem
@@ -23,16 +19,6 @@
 - rule: ModuleItemList -> ModuleItem
   action: undefined
 - rule: ModuleItemList -> ModuleItemList ModuleItem
-  action: undefined
-- rule: FormalParameters -> (empty)
-  action: process_formal_parameters_empty
-- rule: FormalParameters -> FunctionRestParameter
-  action: undefined
-- rule: FormalParameters -> FormalParameterList
-  action: process_formal_parameters_list
-- rule: FormalParameters -> FormalParameterList COMMA
-  action: process_formal_parameters_list_with_comma
-- rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
   action: undefined
 - rule: StatementListItem -> Statement
   action: nop
@@ -44,12 +30,6 @@
   action: undefined
 - rule: ModuleItem -> StatementListItem_Await
   action: undefined
-- rule: FunctionRestParameter -> BindingRestElement
-  action: undefined
-- rule: FormalParameterList -> FormalParameter
-  action: nop
-- rule: FormalParameterList -> FormalParameterList COMMA FormalParameter
-  action: process_formal_parameter_list
 - rule: Statement -> BlockStatement
   action: process_statement
 - rule: Statement -> VariableStatement
@@ -106,12 +86,6 @@
   action: nop
 - rule: StatementListItem_Await -> Declaration_Await
   action: nop
-- rule: BindingRestElement -> ELLIPSIS BindingIdentifier
-  action: undefined
-- rule: BindingRestElement -> ELLIPSIS BindingPattern
-  action: undefined
-- rule: FormalParameter -> BindingElement
-  action: process_formal_parameter
 - rule: BlockStatement -> Block
   action: process_block_statement
 - rule: VariableStatement -> VAR VariableDeclarationList_In SEMICOLON
@@ -276,25 +250,9 @@
   action: undefined
 - rule: Statement_Await -> DebuggerStatement
   action: undefined
-- rule: BindingIdentifier -> Identifier
-  action: process_binding_identifier_except_for_arguments_eval_in_strict
-- rule: BindingIdentifier -> YIELD
-  action: process_binding_identifier_only_in_non_strict
-- rule: BindingIdentifier -> AWAIT
-  action: process_binding_identifier_only_in_script
-- rule: BindingPattern -> ObjectBindingPattern
-  action: undefined
-- rule: BindingPattern -> ArrayBindingPattern
-  action: undefined
-- rule: BindingElement -> SingleNameBinding
-  action: process_binding_element
-- rule: BindingElement -> BindingPattern
-  action: undefined
-- rule: BindingElement -> BindingPattern Initializer_In
-  action: undefined
 - rule: Block -> LBRACE RBRACE
   action: process_empty_block
-- rule: Block -> LBRACE _SCOPE_ StatementList RBRACE
+- rule: Block -> LBRACE _BLOCK_SCOPE_ StatementList RBRACE
   action: process_block
 - rule: VariableDeclarationList_In -> VariableDeclaration_In
   action: undefined
@@ -354,6 +312,12 @@
     BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE
     AsyncGeneratorBody RBRACE
   action: undefined
+- rule: BindingIdentifier -> Identifier
+  action: process_binding_identifier_except_for_arguments_eval_in_strict
+- rule: BindingIdentifier -> YIELD
+  action: process_binding_identifier_only_in_non_strict
+- rule: BindingIdentifier -> AWAIT
+  action: process_binding_identifier_only_in_script
 - rule: ClassTail -> LBRACE RBRACE
   action: undefined
 - rule: ClassTail -> ClassHeritage LBRACE RBRACE
@@ -551,50 +515,8 @@
   action: undefined
 - rule: TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
   action: undefined
-- rule: Identifier -> IdentifierNameButNotReservedWord
-  action: process_identifier
-- rule: ObjectBindingPattern -> LBRACE RBRACE
-  action: undefined
-- rule: ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
-  action: undefined
-- rule: ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
-  action: undefined
-- rule: ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
-  action: undefined
-- rule: >-
-    ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty
-    RBRACE
-  action: undefined
-- rule: ArrayBindingPattern -> LBRACK RBRACK
-  action: undefined
-- rule: ArrayBindingPattern -> LBRACK Elision RBRACK
-  action: undefined
-- rule: ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
-  action: undefined
-- rule: ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
-  action: undefined
-- rule: ArrayBindingPattern -> LBRACK BindingElementList RBRACK
-  action: undefined
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
-  action: undefined
-- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
-  action: undefined
-- rule: >-
-    ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement
-    RBRACK
-  action: undefined
-- rule: >-
-    ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision
-    BindingRestElement RBRACK
-  action: undefined
-- rule: SingleNameBinding -> BindingIdentifier
-  action: process_single_name_binding
-- rule: SingleNameBinding -> BindingIdentifier Initializer_In
-  action: process_single_name_binding_with_initializer
-- rule: Initializer_In -> ASSIGN AssignmentExpression_In
-  action: process_initializer
-- rule: _SCOPE_ -> (empty)
-  action: process_scope
+- rule: _BLOCK_SCOPE_ -> (empty)
+  action: process_block_scope
 - rule: VariableDeclaration_In -> BindingIdentifier
   action: undefined
 - rule: VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -729,12 +651,24 @@
   action: undefined
 - rule: CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE
   action: undefined
+- rule: Identifier -> IdentifierNameButNotReservedWord
+  action: process_identifier
 - rule: CatchParameter -> BindingIdentifier
   action: undefined
 - rule: CatchParameter -> BindingPattern
   action: undefined
 - rule: _FUNCTION_CONTEXT_ -> (empty)
   action: process_function_context
+- rule: FormalParameters -> (empty)
+  action: process_formal_parameters_empty
+- rule: FormalParameters -> FunctionRestParameter
+  action: undefined
+- rule: FormalParameters -> FormalParameterList
+  action: process_formal_parameters_list
+- rule: FormalParameters -> FormalParameterList COMMA
+  action: process_formal_parameters_list_with_comma
+- rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
+  action: undefined
 - rule: _FUNCTION_SIGNATURE_ -> (empty)
   action: process_function_signature
 - rule: FunctionBody -> FunctionStatementList
@@ -998,7 +932,7 @@
   action: undefined
 - rule: Block_Await -> LBRACE RBRACE
   action: process_empty_block
-- rule: Block_Await -> LBRACE _SCOPE_ StatementList_Await RBRACE
+- rule: Block_Await -> LBRACE _BLOCK_SCOPE_ StatementList_Await RBRACE
   action: process_block
 - rule: Expression_In_Await -> AssignmentExpression_In_Await
   action: nop
@@ -1032,53 +966,11 @@
   action: undefined
 - rule: Finally_Await -> FINALLY Block_Await
   action: undefined
-- rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> LET
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> STATIC
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> IMPLEMENTS
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> INTERFACE
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PACKAGE
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PRIVATE
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PROTECTED
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> PUBLIC
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> AS
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> ASYNC
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> FROM
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> GET
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> META
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> OF
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> SET
-  action: nop
-- rule: IdentifierNameButNotReservedWord -> TARGET
-  action: nop
-- rule: BindingRestProperty -> ELLIPSIS BindingIdentifier
+- rule: Initializer_In -> ASSIGN AssignmentExpression_In
+  action: process_initializer
+- rule: BindingPattern -> ObjectBindingPattern
   action: undefined
-- rule: BindingPropertyList -> BindingProperty
-  action: undefined
-- rule: BindingPropertyList -> BindingPropertyList COMMA BindingProperty
-  action: undefined
-- rule: Elision -> COMMA
-  action: undefined
-- rule: Elision -> Elision COMMA
-  action: undefined
-- rule: BindingElementList -> BindingElisionElement
-  action: undefined
-- rule: BindingElementList -> BindingElementList COMMA BindingElisionElement
+- rule: BindingPattern -> ArrayBindingPattern
   action: undefined
 - rule: ConditionalExpression_In -> ShortCircuitExpression_In
   action: nop
@@ -1134,6 +1026,46 @@
   action: undefined
 - rule: DefaultClause -> DEFAULT COLON StatementList
   action: undefined
+- rule: IdentifierNameButNotReservedWord -> IDENTIFIER_NAME
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> LET
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> STATIC
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> IMPLEMENTS
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> INTERFACE
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PACKAGE
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PRIVATE
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PROTECTED
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> PUBLIC
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> AS
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> ASYNC
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> FROM
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> GET
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> META
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> OF
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> SET
+  action: nop
+- rule: IdentifierNameButNotReservedWord -> TARGET
+  action: nop
+- rule: FunctionRestParameter -> BindingRestElement
+  action: undefined
+- rule: FormalParameterList -> FormalParameter
+  action: nop
+- rule: FormalParameterList -> FormalParameterList COMMA FormalParameter
+  action: process_formal_parameter_list
 - rule: FunctionStatementList -> (empty)
   action: process_function_statement_list_empty
 - rule: FunctionStatementList -> StatementList_Return
@@ -1418,13 +1350,39 @@
   action: undefined
 - rule: CatchParameter_Await -> BindingPattern_Await
   action: undefined
-- rule: BindingProperty -> SingleNameBinding
+- rule: ObjectBindingPattern -> LBRACE RBRACE
   action: undefined
-- rule: BindingProperty -> PropertyName COLON BindingElement
+- rule: ObjectBindingPattern -> LBRACE BindingRestProperty RBRACE
   action: undefined
-- rule: BindingElisionElement -> BindingElement
+- rule: ObjectBindingPattern -> LBRACE BindingPropertyList RBRACE
   action: undefined
-- rule: BindingElisionElement -> Elision BindingElement
+- rule: ObjectBindingPattern -> LBRACE BindingPropertyList COMMA RBRACE
+  action: undefined
+- rule: >-
+    ObjectBindingPattern -> LBRACE BindingPropertyList COMMA BindingRestProperty
+    RBRACE
+  action: undefined
+- rule: ArrayBindingPattern -> LBRACK RBRACK
+  action: undefined
+- rule: ArrayBindingPattern -> LBRACK Elision RBRACK
+  action: undefined
+- rule: ArrayBindingPattern -> LBRACK BindingRestElement RBRACK
+  action: undefined
+- rule: ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK
+  action: undefined
+- rule: ArrayBindingPattern -> LBRACK BindingElementList RBRACK
+  action: undefined
+- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA RBRACK
+  action: undefined
+- rule: ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision RBRACK
+  action: undefined
+- rule: >-
+    ArrayBindingPattern -> LBRACK BindingElementList COMMA BindingRestElement
+    RBRACK
+  action: undefined
+- rule: >-
+    ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision
+    BindingRestElement RBRACK
   action: undefined
 - rule: ShortCircuitExpression_In -> LogicalORExpression_In
   action: nop
@@ -1500,6 +1458,12 @@
   action: undefined
 - rule: CaseClause -> CASE Expression_In COLON StatementList
   action: undefined
+- rule: BindingRestElement -> ELLIPSIS BindingIdentifier
+  action: undefined
+- rule: BindingRestElement -> ELLIPSIS BindingPattern
+  action: undefined
+- rule: FormalParameter -> BindingElement
+  action: process_formal_parameter
 - rule: StatementList_Return -> StatementListItem_Return
   action: process_statement_list_head
 - rule: StatementList_Return -> StatementList_Return StatementListItem_Return
@@ -1690,9 +1654,19 @@
   action: undefined
 - rule: DefaultClause_Await -> DEFAULT COLON StatementList_Await
   action: undefined
-- rule: PropertyName -> LiteralPropertyName
+- rule: BindingRestProperty -> ELLIPSIS BindingIdentifier
   action: undefined
-- rule: PropertyName -> ComputedPropertyName
+- rule: BindingPropertyList -> BindingProperty
+  action: undefined
+- rule: BindingPropertyList -> BindingPropertyList COMMA BindingProperty
+  action: undefined
+- rule: Elision -> COMMA
+  action: undefined
+- rule: Elision -> Elision COMMA
+  action: undefined
+- rule: BindingElementList -> BindingElisionElement
+  action: undefined
+- rule: BindingElementList -> BindingElementList COMMA BindingElisionElement
   action: undefined
 - rule: LogicalORExpression_In -> LogicalANDExpression_In
   action: nop
@@ -1804,6 +1778,12 @@
 - rule: LexicalBinding -> BindingIdentifier Initializer
   action: process_lexical_binding_identifier_with_initializer
 - rule: LexicalBinding -> BindingPattern Initializer
+  action: undefined
+- rule: BindingElement -> SingleNameBinding
+  action: process_binding_element
+- rule: BindingElement -> BindingPattern
+  action: undefined
+- rule: BindingElement -> BindingPattern Initializer_In
   action: undefined
 - rule: StatementListItem_Return -> Statement_Return
   action: nop
@@ -2051,13 +2031,13 @@
   action: undefined
 - rule: CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await
   action: undefined
-- rule: LiteralPropertyName -> KeywordOrIdentifierName
+- rule: BindingProperty -> SingleNameBinding
   action: undefined
-- rule: LiteralPropertyName -> STRING_LITERAL
+- rule: BindingProperty -> PropertyName COLON BindingElement
   action: undefined
-- rule: LiteralPropertyName -> NUMERIC_LITERAL
+- rule: BindingElisionElement -> BindingElement
   action: undefined
-- rule: ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
+- rule: BindingElisionElement -> Elision BindingElement
   action: undefined
 - rule: LogicalANDExpression_In -> BitwiseORExpression_In
   action: nop
@@ -2129,6 +2109,10 @@
   action: undefined
 - rule: AsyncConciseBody -> LBRACE AsyncFunctionBody RBRACE
   action: undefined
+- rule: SingleNameBinding -> BindingIdentifier
+  action: process_single_name_binding
+- rule: SingleNameBinding -> BindingIdentifier Initializer_In
+  action: process_single_name_binding_with_initializer
 - rule: Statement_Return -> BlockStatement_Return
   action: process_statement
 - rule: Statement_Return -> VariableStatement
@@ -2277,6 +2261,8 @@
   action: undefined
 - rule: ClassElementName -> PRIVATE_IDENTIFIER
   action: undefined
+- rule: UniqueFormalParameters -> FormalParameters
+  action: nop
 - rule: >-
     GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield
     RPAREN LBRACE GeneratorBody RBRACE
@@ -2393,6 +2379,10 @@
 - rule: LexicalBinding_Await -> BindingIdentifier_Await Initializer_Await
   action: process_lexical_binding_identifier_with_initializer
 - rule: LexicalBinding_Await -> BindingPattern_Await Initializer_Await
+  action: undefined
+- rule: PropertyName -> LiteralPropertyName
+  action: undefined
+- rule: PropertyName -> ComputedPropertyName
   action: undefined
 - rule: BitwiseXORExpression_In -> BitwiseANDExpression_In
   action: nop
@@ -2708,6 +2698,14 @@
   action: nop
 - rule: ShortCircuitExpression_Await -> CoalesceExpression_Await
   action: nop
+- rule: LiteralPropertyName -> KeywordOrIdentifierName
+  action: undefined
+- rule: LiteralPropertyName -> STRING_LITERAL
+  action: undefined
+- rule: LiteralPropertyName -> NUMERIC_LITERAL
+  action: undefined
+- rule: ComputedPropertyName -> LBRACK AssignmentExpression_In RBRACK
+  action: undefined
 - rule: BitwiseANDExpression_In -> EqualityExpression_In
   action: nop
 - rule: >-
@@ -2756,7 +2754,7 @@
   action: process_bitwise_or
 - rule: Block_Return -> LBRACE RBRACE
   action: process_empty_block
-- rule: Block_Return -> LBRACE _SCOPE_ StatementList_Return RBRACE
+- rule: Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
   action: process_block
 - rule: IterationStatement_Return -> DoWhileStatement_Return
   action: undefined
@@ -3310,7 +3308,7 @@
   action: undefined
 - rule: Block_Yield_Return -> LBRACE RBRACE
   action: process_empty_block
-- rule: Block_Yield_Return -> LBRACE _SCOPE_ StatementList_Yield_Return RBRACE
+- rule: Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return RBRACE
   action: process_block
 - rule: VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
   action: undefined
@@ -3385,7 +3383,7 @@
   action: process_binding_list_item
 - rule: Block_Await_Return -> LBRACE RBRACE
   action: process_empty_block
-- rule: Block_Await_Return -> LBRACE _SCOPE_ StatementList_Await_Return RBRACE
+- rule: Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
   action: process_block
 - rule: IterationStatement_Await_Return -> DoWhileStatement_Await_Return
   action: undefined
@@ -3476,8 +3474,8 @@
 - rule: Block_Yield_Await_Return -> LBRACE RBRACE
   action: process_empty_block
 - rule: >-
-    Block_Yield_Await_Return -> LBRACE _SCOPE_ StatementList_Yield_Await_Return
-    RBRACE
+    Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_
+    StatementList_Yield_Await_Return RBRACE
   action: process_block
 - rule: VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
   action: undefined

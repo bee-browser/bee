@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "host.hh"
 #include "module.hh"
+#include "runtime.hh"
 
 static llvm::ExitOnError ExitOnErr;
 
@@ -54,51 +54,63 @@ Executor::~Executor() {
   }
 }
 
-void Executor::RegisterHost(const Host* host) {
-  // register built-in functions.
+void Executor::RegisterRuntime(const Runtime* runtime) {
+  // register runtime functions.
   llvm::orc::SymbolMap symbols;
   symbols[exec_session().intern("runtime_declare_const")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare_const),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->declare_const),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_declare_variable")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare_variable),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->declare_variable),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_declare_function")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_declare_function),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->declare_function),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_get")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_get),
+  symbols[exec_session().intern("runtime_get_argument")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->get_argument),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_set")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_set),
+  symbols[exec_session().intern("runtime_get_local")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->get_local),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_push_args")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_push_args),
+  symbols[exec_session().intern("runtime_put_argument")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->put_argument),
+      llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session().intern("runtime_put_local")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->put_local),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_push_arg")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_push_arg),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->push_arg),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_call")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_call),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->call),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_ret")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_ret),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->ret),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_push_scope")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_push_scope),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->push_scope),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_pop_scope")] = {
-      llvm::orc::ExecutorAddr::fromPtr(host->runtime_pop_scope),
+      llvm::orc::ExecutorAddr::fromPtr(runtime->pop_scope),
+      llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session().intern("runtime_inspect_number")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->inspect_number),
+      llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session().intern("runtime_inspect_any")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->inspect_any),
       llvm::JITSymbolFlags::Exported,
   };
   ExitOnErr(main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
@@ -106,11 +118,6 @@ void Executor::RegisterHost(const Host* host) {
 
 void Executor::RegisterModule(Module* mod) {
   ExitOnErr(compile_layer_.add(tracker_, std::move(mod->mod)));
-}
-
-MainFn Executor::GetMain() {
-  auto sym = ExitOnErr(Lookup("main"));
-  return sym.getAddress().toPtr<void (*)(void*)>();
 }
 
 FuncFn Executor::GetFunc(const char* name) {

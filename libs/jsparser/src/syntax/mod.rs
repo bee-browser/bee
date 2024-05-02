@@ -46,9 +46,9 @@ enum Detail {
     Token(usize),
     Literal,
     Identifier(Symbol),
-    IdentifierReference(Symbol),
+    IdentifierReference(#[allow(unused)] Symbol), // TODO: SS
     BindingIdentifier(Symbol),
-    LabelIdentifier(Symbol),
+    LabelIdentifier(#[allow(unused)] Symbol), // TODO: SS
     CpeaaplExpression,
     CpeaaplFormalParameters,
     CpeaaplEmpty,
@@ -63,8 +63,8 @@ enum Detail {
     Block,
     LexicalBinding(LexicalDeclarationSemantics),
     BindingList(LexicalDeclarationSemantics),
-    LetDeclaration(SmallVec<[Symbol; 4]>),
-    ConstDeclaration(SmallVec<[Symbol; 4]>),
+    LetDeclaration(#[allow(unused)] SmallVec<[Symbol; 4]>), // TODO: SS
+    ConstDeclaration(#[allow(unused)] SmallVec<[Symbol; 4]>), // TODO: SS
     SingleNameBinding(Symbol, bool),
     BindingElement(BindingElement),
     Statement,
@@ -83,6 +83,7 @@ struct LexicalDeclarationSemantics {
 #[derive(Debug)]
 struct BindingElement {
     kind: BindingElementKind,
+    #[allow(unused)] // TODO: array/object patterns
     has_initializer: bool,
 }
 
@@ -131,8 +132,8 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ThenBlock,
     ElseBlock,
-    StartScope,
-    EndScope,
+    StartBlockScope,
+    EndBlockScope,
 }
 
 #[derive(Clone, Copy)]
@@ -391,9 +392,9 @@ where
         Ok(())
     }
 
-    // _SCOPE_
-    fn process_scope(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::StartScope);
+    // _BLOCK_SCOPE_
+    fn process_block_scope(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::StartBlockScope);
         Ok(())
     }
 
@@ -1222,7 +1223,7 @@ where
 
     // Block[Yield, Await, Return] : { StatementList[?Yield, ?Await, ?Return] }
     fn process_block(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::EndScope);
+        self.enqueue(Node::EndBlockScope);
         self.replace(3, Detail::Block);
         Ok(())
     }
@@ -1515,6 +1516,7 @@ where
             Detail::FormalParameters(bound_names) => bound_names,
             _ => unreachable!(),
         };
+        self.pop();
         match self.top_mut().detail {
             Detail::FormalParameters(ref mut dest) => {
                 for name in bound_names.into_iter() {

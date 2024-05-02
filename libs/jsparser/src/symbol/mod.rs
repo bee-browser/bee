@@ -14,6 +14,12 @@ impl Symbol {
     }
 }
 
+impl Default for Symbol {
+    fn default() -> Self {
+        Self::NONE
+    }
+}
+
 impl From<u32> for Symbol {
     fn from(value: u32) -> Self {
         Self(value)
