@@ -39,7 +39,7 @@ impl Fiber {
         }
     }
 
-    pub(crate) fn declare_const(&mut self, symbol: Symbol, index: u16, value: f64) {
+    pub(crate) fn declare_const(&mut self, symbol: Symbol, index: u16, value: Value) {
         let call = self.call_stack.last().unwrap();
         let i = call.local_base + index as usize;
         let binding = &mut self.binding_stack[i];
@@ -47,10 +47,10 @@ impl Fiber {
         debug_assert!(!binding.flags.contains(BindingFlags::INITIALIZED));
         binding.flags = BindingFlags::INITIALIZED;
         binding.symbol = symbol;
-        binding.value = Value::Number(value);
+        binding.value = value;
     }
 
-    pub(crate) fn declare_variable(&mut self, symbol: Symbol, index: u16, value: f64) {
+    pub(crate) fn declare_variable(&mut self, symbol: Symbol, index: u16, value: Value) {
         let call = self.call_stack.last().unwrap();
         let i = call.local_base + index as usize;
         let binding = &mut self.binding_stack[i];
@@ -58,7 +58,7 @@ impl Fiber {
         debug_assert!(!binding.flags.contains(BindingFlags::INITIALIZED));
         binding.flags = BindingFlags::INITIALIZED | BindingFlags::MUTABLE | BindingFlags::DELETABLE;
         binding.symbol = symbol;
-        binding.value = Value::Number(value);
+        binding.value = value;
     }
 
     pub(crate) fn declare_function(&mut self, symbol: Symbol, index: u16, func_id: FunctionId) {
@@ -98,29 +98,29 @@ impl Fiber {
         binding.value.clone()
     }
 
-    pub(crate) fn put_argument(&mut self, _symbol: Symbol, index: u16, value: f64) {
+    pub(crate) fn put_argument(&mut self, _symbol: Symbol, index: u16, value: Value) {
         let i = self.call_stack.last_mut().unwrap().arguments_base + index as usize;
-        self.binding_stack[i].value = Value::Number(value);
+        self.binding_stack[i].value = value;
         // TODO: return rval
     }
 
-    pub(crate) fn put_local(&mut self, symbol: Symbol, stack: u16, index: u16, value: f64) {
+    pub(crate) fn put_local(&mut self, symbol: Symbol, stack: u16, index: u16, value: Value) {
         let stack_index = self.call_stack.len() - 1 - stack as usize;
         let call = &mut self.call_stack[stack_index];
         let binding_index = call.local_base + index as usize;
         let binding = &mut self.binding_stack[binding_index];
         debug_assert!(binding.flags.contains(BindingFlags::INITIALIZED));
         debug_assert_eq!(binding.symbol, symbol);
-        binding.value = Value::Number(value);
+        binding.value = value;
         // TODO: return rval
     }
 
     #[inline]
-    pub(crate) fn push_arg(&mut self, arg: f64) {
+    pub(crate) fn push_arg(&mut self, arg: Value) {
         self.binding_stack.push(Binding {
             flags: BindingFlags::INITIALIZED | BindingFlags::MUTABLE,
             symbol: Symbol::NONE, // TODO
-            value: Value::Number(arg),
+            value: arg,
         });
     }
 
@@ -144,19 +144,19 @@ impl Fiber {
             .push(Call::new(func, self.binding_stack.len(), local_end));
     }
 
-    pub fn ret(&mut self, value: f64) {
+    pub fn return_value(&mut self, value: Value) {
         let call = self.call_stack.last_mut().unwrap();
-        debug_assert!(call.return_value.is_none());
-        call.return_value = Some(value);
+        debug_assert!(matches!(call.return_value, Value::Undefined));
+        call.return_value = value;
     }
 
     // The bottom-half of Function.[[Call]]
-    pub fn end_call(&mut self) -> f64 {
+    pub fn end_call(&mut self) -> Value {
         let call = self.call_stack.pop().unwrap();
-        // Drop arguments.
+        // Drop arguments and local bindings.
         self.binding_stack.truncate(call.arguments_base);
-        // TODO: exception, undefined
-        call.return_value.unwrap_or(0.)
+        // TODO: exception
+        call.return_value
     }
 
     pub fn allocate_bindings(&mut self, n: u16) {
@@ -179,7 +179,7 @@ impl Fiber {
 pub struct Call {
     // [[CodeEvaluationState]]
     arguments_base: usize,
-    return_value: Option<f64>,
+    return_value: Value,
 
     // [[Function]]
     func: Function,
@@ -200,7 +200,7 @@ impl Call {
     fn new(func: Function, local_base: usize, arguments_base: usize) -> Self {
         Self {
             arguments_base,
-            return_value: None,
+            return_value: Value::Undefined,
             func,
             local_base,
             local_end: local_base,

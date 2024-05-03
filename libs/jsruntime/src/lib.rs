@@ -100,8 +100,15 @@ impl Default for Runtime {
 pub enum Value {
     #[default]
     Undefined,
+    Boolean(bool),
     Number(f64),
     Function(Function),
+}
+
+impl From<bool> for Value {
+    fn from(value: bool) -> Self {
+        Self::Boolean(value)
+    }
 }
 
 impl From<f64> for Value {

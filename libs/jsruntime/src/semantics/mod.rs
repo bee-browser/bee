@@ -504,7 +504,8 @@ impl FunctionContext {
 
         let n = scope.num_bindings as u16;
         if n > 0 {
-            self.commands[scope.command_base_index] = CompileCommand::AllocateBindings(n, function_scope);
+            self.commands[scope.command_base_index] =
+                CompileCommand::AllocateBindings(n, function_scope);
             self.commands.push(CompileCommand::ReleaseBindings(n));
         }
 

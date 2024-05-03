@@ -11,10 +11,13 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
     "src/llvmir/compiler.cc",
     "src/llvmir/compiler.hh",
     "src/llvmir/executor.cc",
+    "src/llvmir/executor.codegen.cc",
     "src/llvmir/executor.hh",
     "src/llvmir/macros.hh",
     "src/llvmir/module.hh",
     "src/llvmir/runtime.hh",
+    "src/llvmir/type_holder.hh",
+    "src/llvmir/type_holder.cc",
 ];
 
 fn main() {
@@ -33,14 +36,11 @@ fn main() {
 
     // Build LLVM-IR glue.
     let llvm_config = LlvmConfig::new();
+    let cc_files = LLVMIR_SOURCE_FILES
+        .iter()
+        .filter(|src| src.ends_with(".cc"));
     let mut build = cc::Build::default();
-    let mut build = build.files(
-        LLVMIR_SOURCE_FILES
-            .iter()
-            .filter(|src| src.ends_with(".cc")),
-    );
-    build = build.cpp(true);
-    build = build.include(&out_dir);
+    let mut build = build.cpp(true).files(cc_files).include(&out_dir);
     for flag in llvm_config.cxxflags().iter() {
         build = build.flag(flag);
     }

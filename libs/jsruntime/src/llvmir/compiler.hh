@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -14,6 +15,9 @@
 #include "llvm/IR/Module.h"
 #pragma GCC diagnostic pop
 
+#include "type_holder.hh"
+
+class TypeHolder;
 struct Module;
 
 class Compiler {
@@ -22,7 +26,6 @@ class Compiler {
   ~Compiler() = default;
 
   void SetSourceFileName(const char* input);
-  void DeclareTypes();
   Module* TakeModule();
 
   void Number(double value);
@@ -40,13 +43,13 @@ class Compiler {
   void Gte();
   void Eq();
   void Ne();
-  void DeclareConst();
-  void DeclareVariable();
+  void DeclareImmutable();
+  void DeclareMutable();
   void DeclareFunction();
   void GetArgument();
   void GetLocal();
   void Set();
-  void PushArg();
+  void PushArgument();
   void Call();
   void ToBoolean();
   void Block();
@@ -116,28 +119,14 @@ class Compiler {
     }
   };
 
-  void DeclareValueType();
-  void DeclareRuntimeDeclareConst();
-  void CreateCallRuntimeDeclareConst(const struct LocalRef& ref, llvm::Value* value);
-  void DeclareRuntimeDeclareVariable();
-  void CreateCallRuntimeDeclareVariable(const struct LocalRef& ref, llvm::Value* value);
-  void DeclareRuntimeDeclareFunction();
+  void CreateCallRuntimeDeclareImmutable(const struct LocalRef& ref, llvm::Value* value);
+  void CreateCallRuntimeDeclareMutable(const struct LocalRef& ref, llvm::Value* value);
   void CreateCallRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value);
-  void DeclareRuntimeGetArgument();
-  void DeclareRuntimeGetLocal();
-  void DeclareRuntimePutArgument();
-  void DeclareRuntimePutLocal();
-  void DeclareRuntimePushArg();
-  void DeclareRuntimeCall();
-  void DeclareRuntimeRet();
-  void DeclareRuntimeAllocateBindings();
+  void CreateCallRuntimeReturnValue(llvm::Value* value);
   void CreateCallRuntimeAllocateBindings(uint16_t n);
-  void DeclareRuntimeReleaseBindings();
   void CreateCallRuntimeReleaseBindings(uint16_t n);
-  void DeclareRuntimeInspectNumber();
   void CreateCallRuntimeInspectNumber(llvm::Value* value);
-  void DeclareRuntimeInspectAny();
-  void CreateCallRuntimeInspectAny(llvm::Value* value);
+  void CreateCallRuntimeInspect(llvm::Value* value);
 
   inline void PushUndefined() {
     stack_.push_back(Item(Item::Undefined));
@@ -233,46 +222,14 @@ class Compiler {
     return block;
   }
 
-  inline Item Dereference() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    switch (item.type) {
-      case Item::Boolean:
-      case Item::Number:
-      case Item::Function:
-      case Item::Any:
-        // nothing to do.
-        break;
-      case Item::ArgumentRef:
-        GetArgument();
-        break;
-      case Item::LocalRef:
-        GetLocal();
-        break;
-      default:
-        // never reach here
-        assert(false);
-        break;
-    }
-    return PopItem();
-  }
-
-  inline llvm::Value* ToNumber(Item item) {
-    switch (item.type) {
-      case Item::Number:
-        return item.value;
-      case Item::Any:
-        return builder_->CreateLoad(
-            builder_->getDoubleTy(), builder_->CreateStructGEP(value_type_, item.value, 1));
-      default:
-        assert(false);
-        return nullptr;
-    }
-  }
+  Item Dereference();
+  llvm::Value* ToNumber(const Item& item);
+  llvm::Value* ToAny(const Item& item);
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;
+  std::unique_ptr<TypeHolder> types_ = nullptr;
   // function-related data
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* prologue_ = nullptr;
@@ -284,21 +241,4 @@ class Compiler {
 
   // TODO: data flow analysis
   std::unordered_map<uint16_t, llvm::Value*> argument_cache_;
-
-  // runtime types and functions
-  llvm::StructType* value_type_ = nullptr;
-  llvm::Function* runtime_declare_const_ = nullptr;
-  llvm::Function* runtime_declare_variable_ = nullptr;
-  llvm::Function* runtime_declare_function_ = nullptr;
-  llvm::Function* runtime_get_argument_ = nullptr;
-  llvm::Function* runtime_get_local_ = nullptr;
-  llvm::Function* runtime_put_argument_ = nullptr;
-  llvm::Function* runtime_put_local_ = nullptr;
-  llvm::Function* runtime_push_arg_ = nullptr;
-  llvm::Function* runtime_call_ = nullptr;
-  llvm::Function* runtime_ret_ = nullptr;
-  llvm::Function* runtime_allocate_bindings_ = nullptr;
-  llvm::Function* runtime_release_bindings_ = nullptr;
-  llvm::Function* runtime_inspect_number_ = nullptr;
-  llvm::Function* runtime_inspect_any_ = nullptr;
 };

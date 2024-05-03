@@ -112,17 +112,17 @@ impl Compiler {
                 // TODO
             }
             CompileCommand::MutableBinding => unsafe {
-                bridge::compiler_peer_declare_variable(self.peer);
+                bridge::compiler_peer_declare_mutable(self.peer);
             },
             CompileCommand::ImmutableBinding => unsafe {
-                bridge::compiler_peer_declare_const(self.peer);
+                bridge::compiler_peer_declare_immutable(self.peer);
             },
             CompileCommand::DeclareFunction => unsafe {
                 bridge::compiler_peer_declare_function(self.peer);
             },
             CompileCommand::Arguments(_nargs) => (),
             CompileCommand::Argument(_index) => unsafe {
-                bridge::compiler_peer_push_arg(self.peer);
+                bridge::compiler_peer_push_argument(self.peer);
             },
             CompileCommand::Call(_nargs) => unsafe {
                 bridge::compiler_peer_call(self.peer);

@@ -19,14 +19,14 @@ macro_rules! debug {
 
 impl Runtime {
     #[inline(always)]
-    pub(crate) fn declare_const(&mut self, symbol: Symbol, index: u16, value: f64) {
-        debug!(event = "declare_const", ?symbol, index, value);
+    pub(crate) fn declare_immutable(&mut self, symbol: Symbol, index: u16, value: Value) {
+        debug!(event = "declare_immutable", ?symbol, index, ?value);
         self.fiber.declare_const(symbol, index, value);
     }
 
     #[inline(always)]
-    pub(crate) fn declare_variable(&mut self, symbol: Symbol, index: u16, value: f64) {
-        debug!(event = "declare_variable", ?symbol, index, value);
+    pub(crate) fn declare_mutable(&mut self, symbol: Symbol, index: u16, value: Value) {
+        debug!(event = "declare_mutable", ?symbol, index, ?value);
         self.fiber.declare_variable(symbol, index, value);
     }
 
@@ -37,37 +37,37 @@ impl Runtime {
     }
 
     #[inline(always)]
-    pub(crate) fn get_argument(&self, symbol: Symbol, index: u16) -> Value {
-        debug!(event = "get_argument", ?symbol, index);
-        self.fiber.get_argument(symbol, index)
-    }
-
-    #[inline(always)]
     pub(crate) fn get_local(&self, symbol: Symbol, stack: u16, index: u16) -> Value {
         debug!(event = "get_local", ?symbol, stack, index);
         self.fiber.get_local(symbol, stack, index)
     }
 
     #[inline(always)]
-    pub(crate) fn put_argument(&mut self, symbol: Symbol, index: u16, value: f64) {
-        debug!(event = "set_argument", ?symbol, index, value);
-        self.fiber.put_argument(symbol, index, value);
-    }
-
-    #[inline(always)]
-    pub(crate) fn put_local(&mut self, symbol: Symbol, stack: u16, index: u16, value: f64) {
-        debug!(event = "set_local", ?symbol, stack, index, value);
+    pub(crate) fn put_local(&mut self, symbol: Symbol, stack: u16, index: u16, value: Value) {
+        debug!(event = "set_local", ?symbol, stack, index, ?value);
         self.fiber.put_local(symbol, stack, index, value);
     }
 
     #[inline(always)]
-    pub(crate) fn push_arg(&mut self, arg: f64) {
-        debug!(event = "push_arg", arg);
-        self.fiber.push_arg(arg);
+    pub(crate) fn push_argument(&mut self, value: Value) {
+        debug!(event = "push_argument", ?value);
+        self.fiber.push_arg(value);
     }
 
     #[inline(always)]
-    pub(crate) fn call(&mut self, value: Value) -> f64 {
+    pub(crate) fn get_argument(&self, symbol: Symbol, index: u16) -> Value {
+        debug!(event = "get_argument", ?symbol, index);
+        self.fiber.get_argument(symbol, index)
+    }
+
+    #[inline(always)]
+    pub(crate) fn put_argument(&mut self, symbol: Symbol, index: u16, value: Value) {
+        debug!(event = "put_argument", ?symbol, index, ?value);
+        self.fiber.put_argument(symbol, index, value);
+    }
+
+    #[inline(always)]
+    pub(crate) fn call(&mut self, value: Value) -> Value {
         debug!(event = "call", ?value);
         let func = match value {
             Value::Function(func) => func,
@@ -80,9 +80,9 @@ impl Runtime {
     }
 
     #[inline(always)]
-    pub(crate) fn ret(&mut self, value: f64) {
-        debug!(event = "ret", value);
-        self.fiber.ret(value);
+    pub(crate) fn return_value(&mut self, value: Value) {
+        debug!(event = "return_value", ?value);
+        self.fiber.return_value(value);
     }
 
     #[inline(always)]
@@ -98,12 +98,7 @@ impl Runtime {
     }
 
     #[inline(always)]
-    pub(crate) fn inspect_number(&self, value: f64) {
-        logger::debug!(event = "inspect_number", value);
-    }
-
-    #[inline(always)]
-    pub(crate) fn inspect_any(&self, value: Value) {
-        logger::debug!(event = "inspect_any", ?value);
+    pub(crate) fn inspect(&self, value: Value) {
+        logger::debug!(event = "inspect", ?value);
     }
 }

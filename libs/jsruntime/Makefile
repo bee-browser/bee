@@ -7,6 +7,10 @@ all:
 test:
 	cargo nextest run --all-features
 
+.PHONY: codegen
+codegen:
+	@$(MAKE) -s -C src/llvmir codegen
+
 .PHONY: bench
 bench:
 	cargo bench

@@ -17,6 +17,7 @@ CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
+  libs/jsruntime \
   libs/layout \
   bins/estree \
 )

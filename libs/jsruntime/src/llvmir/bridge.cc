@@ -35,7 +35,7 @@ void compiler_peer_delete(Compiler* self) {
 }
 
 void compiler_peer_start(Compiler* self) {
-  self->DeclareTypes();
+  UNUSED(self);
 }
 
 Module* compiler_peer_end(Compiler* self) {
@@ -102,12 +102,12 @@ void compiler_peer_ne(Compiler* self) {
   self->Ne();
 }
 
-void compiler_peer_declare_const(Compiler* self) {
-  self->DeclareConst();
+void compiler_peer_declare_immutable(Compiler* self) {
+  self->DeclareImmutable();
 }
 
-void compiler_peer_declare_variable(Compiler* self) {
-  self->DeclareVariable();
+void compiler_peer_declare_mutable(Compiler* self) {
+  self->DeclareMutable();
 }
 
 void compiler_peer_declare_function(Compiler* self) {
@@ -118,8 +118,8 @@ void compiler_peer_set(Compiler* self) {
   self->Set();
 }
 
-void compiler_peer_push_arg(Compiler* self) {
-  self->PushArg();
+void compiler_peer_push_argument(Compiler* self) {
+  self->PushArgument();
 }
 
 void compiler_peer_call(Compiler* self) {

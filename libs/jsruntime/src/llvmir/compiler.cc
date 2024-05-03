@@ -1,39 +1,19 @@
 #include "compiler.hh"
-#include <llvm/IR/DerivedTypes.h>
-
-#include <cassert>
-#include <cstdint>
 
 #include "macros.hh"
 #include "module.hh"
+#include "runtime.hh"
 
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
   // TODO: module_->setDataLayout(data_layout);
   builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
+  types_ = std::make_unique<TypeHolder>(*context_, *module_, *builder_);
 }
 
 void Compiler::SetSourceFileName(const char* input) {
   module_->setSourceFileName(input);
-}
-
-void Compiler::DeclareTypes() {
-  DeclareValueType();
-  DeclareRuntimeDeclareConst();
-  DeclareRuntimeDeclareVariable();
-  DeclareRuntimeDeclareFunction();
-  DeclareRuntimeGetArgument();
-  DeclareRuntimeGetLocal();
-  DeclareRuntimePutArgument();
-  DeclareRuntimePutLocal();
-  DeclareRuntimePushArg();
-  DeclareRuntimeCall();
-  DeclareRuntimeRet();
-  DeclareRuntimeAllocateBindings();
-  DeclareRuntimeReleaseBindings();
-  DeclareRuntimeInspectNumber();
-  DeclareRuntimeInspectAny();
 }
 
 Module* Compiler::TakeModule() {
@@ -158,16 +138,52 @@ void Compiler::Ne() {
   PushBoolean(v);
 }
 
-void Compiler::DeclareConst() {
-  auto* value = PopValue();
+void Compiler::DeclareImmutable() {
+  auto item = PopItem();
   auto ref = PopLocalRef();
-  CreateCallRuntimeDeclareConst(ref, value);
+  llvm::Function* call;
+  switch (item.type) {
+    case Item::Any:
+      call = types_->CreateRuntimeDeclareImmutable();
+      break;
+    case Item::Number:
+      call = types_->CreateRuntimeDeclareImmutableNumber();
+      break;
+    default:
+      assert(false);
+      call = nullptr;
+      break;
+  }
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* symbol = builder_->getInt32(ref.symbol);
+  assert(ref.stack == 0);
+  auto* index = builder_->getInt16(ref.index);
+  builder_->CreateCall(call, {context, symbol, index, item.value});
 }
 
-void Compiler::DeclareVariable() {
-  auto* value = PopValue();
+void Compiler::DeclareMutable() {
+  auto item = PopItem();
   auto ref = PopLocalRef();
-  CreateCallRuntimeDeclareVariable(ref, value);
+  llvm::Function* call;
+  switch (item.type) {
+    case Item::Any:
+      call = types_->CreateRuntimeDeclareMutable();
+      break;
+    case Item::Number:
+      call = types_->CreateRuntimeDeclareMutableNumber();
+      break;
+    default:
+      assert(false);
+      call = nullptr;
+      break;
+  }
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* symbol = builder_->getInt32(ref.symbol);
+  assert(ref.stack == 0);
+  auto* index = builder_->getInt16(ref.index);
+  builder_->CreateCall(call, {context, symbol, index, item.value});
 }
 
 void Compiler::DeclareFunction() {
@@ -175,7 +191,13 @@ void Compiler::DeclareFunction() {
   builder_->SetInsertPoint(prologue_);
   auto* func = PopValue();
   auto ref = PopLocalRef();
-  CreateCallRuntimeDeclareFunction(ref, func);
+  auto* call = types_->CreateRuntimeDeclareFunction();
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* symbol = builder_->getInt32(ref.symbol);
+  assert(ref.stack == 0);
+  auto* index = builder_->getInt16(ref.index);
+  builder_->CreateCall(call, {context, symbol, index, func});
   builder_->SetInsertPoint(backup);
 }
 
@@ -184,17 +206,18 @@ void Compiler::GetArgument() {
   auto cache = argument_cache_.find(argument_ref.index);
   if (cache != argument_cache_.end()) {
     PushAny(cache->second);
-  } else {
-    // TODO: use a global variable to hold the execution context.
-    auto* context = exec_context();
-    auto* symbol = builder_->getInt32(argument_ref.symbol);
-    auto* index = builder_->getInt16(argument_ref.index);
-    auto* value = builder_->CreateAlloca(value_type_);
-    auto* ret = builder_->CreateCall(runtime_get_argument_, {context, symbol, index, value});
-    UNUSED(ret);
-    PushAny(value);
-    argument_cache_[argument_ref.index] = value;
+    return;
   }
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* symbol = builder_->getInt32(argument_ref.symbol);
+  auto* index = builder_->getInt16(argument_ref.index);
+  auto* value = builder_->CreateAlloca(types_->CreateValueType());
+  auto* ret =
+      builder_->CreateCall(types_->CreateRuntimeGetArgument(), {context, symbol, index, value});
+  UNUSED(ret);
+  PushAny(value);
+  argument_cache_[argument_ref.index] = value;
 }
 
 void Compiler::GetLocal() {
@@ -204,44 +227,82 @@ void Compiler::GetLocal() {
   auto* symbol = builder_->getInt32(local_ref.symbol);
   auto* stack = builder_->getInt16(local_ref.stack);
   auto* index = builder_->getInt16(local_ref.index);
-  auto* value = builder_->CreateAlloca(value_type_);
-  auto* ret = builder_->CreateCall(runtime_get_local_, {context, symbol, stack, index, value});
+  auto* value = builder_->CreateAlloca(types_->CreateValueType());
+  auto* ret = builder_->CreateCall(
+      types_->CreateRuntimeGetLocal(), {context, symbol, stack, index, value});
   UNUSED(ret);
   PushAny(value);
   // TODO: caching the value may improve the performance
 }
 
 void Compiler::Set() {
+  auto item = PopItem();
+  auto ref = PopItem();
+  llvm::Function* call;
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  auto* value = PopValue();
-  auto item = PopItem();
-  switch (item.type) {
+  switch (ref.type) {
     case Item::ArgumentRef: {
-      auto* symbol = builder_->getInt32(item.argument_ref.symbol);
-      auto* index = builder_->getInt16(item.argument_ref.index);
-      builder_->CreateCall(runtime_put_argument_, {context, symbol, index, value});
-      argument_cache_[item.argument_ref.index] = value;
+      switch (item.type) {
+        case Item::Any:
+          call = types_->CreateRuntimePutArgument();
+          break;
+        case Item::Number:
+          call = types_->CreateRuntimePutArgumentNumber();
+          break;
+        default:
+          assert(false);
+          call = nullptr;
+          break;
+      }
+      auto* symbol = builder_->getInt32(ref.argument_ref.symbol);
+      auto* index = builder_->getInt16(ref.argument_ref.index);
+      builder_->CreateCall(call, {context, symbol, index, item.value});
+      argument_cache_[ref.argument_ref.index] = item.value;
     } break;
     case Item::LocalRef: {
-      auto* symbol = builder_->getInt32(item.local_ref.symbol);
-      auto* stack = builder_->getInt16(item.local_ref.stack);
-      auto* index = builder_->getInt16(item.local_ref.index);
-      builder_->CreateCall(runtime_put_local_, {context, symbol, stack, index, value});
+      switch (item.type) {
+        case Item::Any:
+          call = types_->CreateRuntimePutLocal();
+          break;
+        case Item::Number:
+          call = types_->CreateRuntimePutLocalNumber();
+          break;
+        default:
+          assert(false);
+          call = nullptr;
+          break;
+      }
+      auto* symbol = builder_->getInt32(ref.local_ref.symbol);
+      auto* stack = builder_->getInt16(ref.local_ref.stack);
+      auto* index = builder_->getInt16(ref.local_ref.index);
+      builder_->CreateCall(call, {context, symbol, stack, index, item.value});
     } break;
     default:
       assert(false);
       break;
   }
-  PushAny(value);
+  stack_.push_back(item);
 }
 
-void Compiler::PushArg() {
+void Compiler::PushArgument() {
+  auto item = Dereference();
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  auto arg = Dereference();
-  assert(arg.IsValue());
-  builder_->CreateCall(runtime_push_arg_, {context, arg.value});
+  llvm::Function* call;
+  switch (item.type) {
+    case Item::Any:
+      call = types_->CreateRuntimePushArgument();
+      break;
+    case Item::Number:
+      call = types_->CreateRuntimePushArgumentNumber();
+      break;
+    default:
+      assert(false);
+      call = nullptr;
+      break;
+  }
+  builder_->CreateCall(call, {context, item.value});
 }
 
 void Compiler::Call() {
@@ -250,8 +311,9 @@ void Compiler::Call() {
   auto func = Dereference();
   assert(func.type == Item::Any);
   // TODO: check value type
-  auto* value = builder_->CreateCall(runtime_call_, {context, func.value});
-  PushNumber(value);  // TODO: any value
+  auto* value = builder_->CreateAlloca(types_->CreateValueType());
+  builder_->CreateCall(types_->CreateRuntimeCall(), {context, func.value, value});
+  PushAny(value);
 }
 
 void Compiler::ToBoolean() {
@@ -437,12 +499,23 @@ void Compiler::ReleaseBindings(uint16_t n) {
 void Compiler::Return(size_t n) {
   if (n > 0) {
     assert(n == 1);
+    auto item = Dereference();
+    llvm::Function* call;
+    switch (item.type) {
+      case Item::Any:
+        call = types_->CreateRuntimeReturnValue();
+        break;
+      case Item::Number:
+        call = types_->CreateRuntimeReturnNumber();
+        break;
+      default:
+        assert(false);
+        call = nullptr;
+        break;
+    }
     // TODO: use a global variable to hold the execution context.
     auto* context = exec_context();
-    auto item = Dereference();
-    assert(item.IsValue());
-    auto* value = ToNumber(item);  // TODO
-    builder_->CreateCall(runtime_ret_, {context, value});
+    builder_->CreateCall(call, {context, item.value});
   }
   builder_->CreateRetVoid();
 }
@@ -493,164 +566,82 @@ void Compiler::DumpStack() {
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
 }
 
-void Compiler::DeclareValueType() {
-  value_type_ = llvm::StructType::create(*context_, "Value");
-  value_type_->setBody({builder_->getInt64Ty(), builder_->getInt64Ty()});
-}
-
-void Compiler::DeclareRuntimeDeclareConst() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
-  runtime_declare_const_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_declare_const", module_.get());
-}
-
-void Compiler::CreateCallRuntimeDeclareConst(const struct LocalRef& ref, llvm::Value* value) {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  assert(ref.stack == 0);
-  auto* index = builder_->getInt16(ref.index);
-  builder_->CreateCall(runtime_declare_const_, {context, symbol, index, value});
-}
-
-void Compiler::DeclareRuntimeDeclareVariable() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getDoubleTy()}, false);
-  runtime_declare_variable_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_declare_variable", module_.get());
-}
-
-void Compiler::CreateCallRuntimeDeclareVariable(const struct LocalRef& ref, llvm::Value* value) {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  assert(ref.stack == 0);
-  auto* index = builder_->getInt16(ref.index);
-  builder_->CreateCall(runtime_declare_variable_, {context, symbol, index, value});
-}
-
-void Compiler::DeclareRuntimeDeclareFunction() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt32Ty()}, false);
-  runtime_declare_function_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_declare_function", module_.get());
-}
-
-void Compiler::CreateCallRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value) {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  assert(ref.stack == 0);
-  auto* index = builder_->getInt16(ref.index);
-  builder_->CreateCall(runtime_declare_function_, {context, symbol, index, value});
-}
-
-void Compiler::DeclareRuntimeGetArgument() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt16Ty(), builder_->getPtrTy()},
-      false);
-  runtime_get_argument_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_get_argument", module_.get());
-}
-
-void Compiler::DeclareRuntimeGetLocal() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt16Ty(),
-          builder_->getInt16Ty(), builder_->getPtrTy()},
-      false);
-  runtime_get_local_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_get_local", module_.get());
-}
-
-void Compiler::DeclareRuntimePutArgument() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt16Ty(),
-          builder_->getDoubleTy()},
-      false);
-  runtime_put_argument_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_put_argument", module_.get());
-}
-
-void Compiler::DeclareRuntimePutLocal() {
-  auto* prototype = llvm::FunctionType::get(builder_->getVoidTy(),
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getInt16Ty(),
-          builder_->getInt16Ty(), builder_->getDoubleTy()},
-      false);
-  runtime_put_local_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_put_local", module_.get());
-}
-
-void Compiler::DeclareRuntimePushArg() {
-  auto* prototype = llvm::FunctionType::get(
-      builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getDoubleTy()}, false);
-  runtime_push_arg_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_push_arg", module_.get());
-}
-
-void Compiler::DeclareRuntimeCall() {
-  auto* value_ptr = llvm::PointerType::get(value_type_, 0);
-  auto* prototype =
-      llvm::FunctionType::get(builder_->getDoubleTy(), {builder_->getPtrTy(), value_ptr}, false);
-  runtime_call_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_call", module_.get());
-}
-
-void Compiler::DeclareRuntimeRet() {
-  auto* prototype = llvm::FunctionType::get(
-      builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getDoubleTy()}, false);
-  runtime_ret_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_ret", module_.get());
-}
-
-void Compiler::DeclareRuntimeAllocateBindings() {
-  auto* prototype = llvm::FunctionType::get(
-      builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt16Ty()}, false);
-  runtime_allocate_bindings_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_allocate_bindings", module_.get());
-}
-
 void Compiler::CreateCallRuntimeAllocateBindings(uint16_t n) {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  builder_->CreateCall(runtime_allocate_bindings_, {context, builder_->getInt16(n)});
-}
-
-void Compiler::DeclareRuntimeReleaseBindings() {
-  auto* prototype = llvm::FunctionType::get(
-      builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getInt16Ty()}, false);
-  runtime_release_bindings_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_release_bindings", module_.get());
+  builder_->CreateCall(types_->CreateRuntimeAllocateBindings(), {context, builder_->getInt16(n)});
 }
 
 void Compiler::CreateCallRuntimeReleaseBindings(uint16_t n) {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  builder_->CreateCall(runtime_release_bindings_, {context, builder_->getInt16(n)});
-}
-
-void Compiler::DeclareRuntimeInspectNumber() {
-  auto* prototype = llvm::FunctionType::get(
-      builder_->getVoidTy(), {builder_->getPtrTy(), builder_->getDoubleTy()}, false);
-  runtime_inspect_number_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_inspect_number", module_.get());
+  builder_->CreateCall(types_->CreateRuntimeReleaseBindings(), {context, builder_->getInt16(n)});
 }
 
 void Compiler::CreateCallRuntimeInspectNumber(llvm::Value* value) {
   // TODO: static dispatch
   auto* context = exec_context();
-  builder_->CreateCall(runtime_inspect_number_, {context, value});
+  builder_->CreateCall(types_->CreateRuntimeInspectNumber(), {context, value});
 }
 
-void Compiler::DeclareRuntimeInspectAny() {
-  auto* prototype =
-      llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy(), value_type_}, false);
-  runtime_inspect_any_ = llvm::Function::Create(
-      prototype, llvm::Function::ExternalLinkage, "runtime_inspect_any", module_.get());
-}
-
-void Compiler::CreateCallRuntimeInspectAny(llvm::Value* value) {
+void Compiler::CreateCallRuntimeInspect(llvm::Value* value) {
   // TODO: static dispatch
   auto* context = exec_context();
-  builder_->CreateCall(runtime_inspect_any_, {context, value});
+  builder_->CreateCall(types_->CreateRuntimeInspect(), {context, value});
+}
+
+Compiler::Item Compiler::Dereference() {
+  assert(!stack_.empty());
+  const auto& item = stack_.back();
+  switch (item.type) {
+    case Item::Boolean:
+    case Item::Number:
+    case Item::Function:
+    case Item::Any:
+      // nothing to do.
+      break;
+    case Item::ArgumentRef:
+      GetArgument();
+      break;
+    case Item::LocalRef:
+      GetLocal();
+      break;
+    default:
+      // never reach here
+      assert(false);
+      break;
+  }
+  return PopItem();
+}
+
+llvm::Value* Compiler::ToNumber(const Compiler::Item& item) {
+  switch (item.type) {
+    case Item::Number:
+      return item.value;
+    case Item::Any:
+      return builder_->CreateLoad(builder_->getDoubleTy(),
+          builder_->CreateStructGEP(types_->CreateValueType(), item.value, 1));
+    default:
+      assert(false);
+      return nullptr;
+  }
+}
+
+llvm::Value* Compiler::ToAny(const Compiler::Item& item) {
+  switch (item.type) {
+    case Item::Number: {
+      auto* value_type = types_->CreateValueType();
+      auto* value = builder_->CreateAlloca(value_type);
+      auto* kind_ptr = builder_->CreateStructGEP(value_type, value, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
+      auto* holder_ptr = builder_->CreateStructGEP(value_type, value, 1);
+      builder_->CreateStore(item.value, holder_ptr);
+      return value;
+    }
+    case Item::Any:
+      return item.value;
+    default:
+      assert(false);
+      return nullptr;
+  }
 }
