@@ -313,7 +313,9 @@ impl<'r> Analyzer<'r> {
         let context = self.context_stack.last_mut().unwrap();
         let func_id = context.func_id as usize;
         self.functions[func_id].symbol = symbol;
-        self.functions[func_id].formal_parameters = context.formal_parameters.clone();
+        self.functions[func_id]
+            .formal_parameters
+            .clone_from(&context.formal_parameters);
         context.in_body = true;
     }
 
