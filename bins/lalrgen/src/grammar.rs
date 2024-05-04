@@ -146,7 +146,7 @@ impl Grammar {
                     _ => None,
                 })
                 .for_each(|non_terminal| {
-                    if self.non_terminals.get(non_terminal).is_none() {
+                    if !self.non_terminals.contains_key(non_terminal) {
                         logger::error!("{non_terminal} is not defined");
                         valid = false;
                     }

@@ -64,10 +64,10 @@ pub trait DomTreeBuilder {
     /// Moves all child nodes of a node to a new parent node.
     fn move_child_nodes(&mut self, node: Self::NodeId, new_parent: Self::NodeId);
 
-    ///
+    /// Ends building the DOM tree.
     fn end(&mut self);
 
-    ///
+    /// Prints the DOM tree for debugging.
     fn print_tree(&self);
 }
 
