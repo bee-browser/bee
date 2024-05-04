@@ -1,5 +1,6 @@
 use super::logger;
 use super::FunctionId;
+use super::Locator;
 use super::Runtime;
 use super::Symbol;
 use super::Value;
@@ -19,51 +20,44 @@ macro_rules! debug {
 
 impl Runtime {
     #[inline(always)]
-    pub(crate) fn declare_immutable(&mut self, symbol: Symbol, index: u16, value: Value) {
-        debug!(event = "declare_immutable", ?symbol, index, ?value);
-        self.fiber.declare_const(symbol, index, value);
+    pub(crate) fn declare_immutable(&mut self, symbol: Symbol, locator: Locator, value: Value) {
+        debug!(event = "declare_immutable", ?symbol, ?locator, ?value);
+        self.fiber.declare_immutable(symbol, locator, value);
     }
 
     #[inline(always)]
-    pub(crate) fn declare_mutable(&mut self, symbol: Symbol, index: u16, value: Value) {
-        debug!(event = "declare_mutable", ?symbol, index, ?value);
-        self.fiber.declare_variable(symbol, index, value);
+    pub(crate) fn declare_mutable(&mut self, symbol: Symbol, locator: Locator, value: Value) {
+        debug!(event = "declare_mutable", ?symbol, ?locator, ?value);
+        self.fiber.declare_mutable(symbol, locator, value);
     }
 
     #[inline(always)]
-    pub(crate) fn declare_function(&mut self, symbol: Symbol, index: u16, func_id: FunctionId) {
-        debug!(event = "declare_function", ?symbol, index, ?func_id);
-        self.fiber.declare_function(symbol, index, func_id);
+    pub(crate) fn declare_function(
+        &mut self,
+        symbol: Symbol,
+        locator: Locator,
+        func_id: FunctionId,
+    ) {
+        debug!(event = "declare_function", ?symbol, ?locator, ?func_id);
+        self.fiber.declare_function(symbol, locator, func_id);
     }
 
     #[inline(always)]
-    pub(crate) fn get_local(&self, symbol: Symbol, stack: u16, index: u16) -> Value {
-        debug!(event = "get_local", ?symbol, stack, index);
-        self.fiber.get_local(symbol, stack, index)
+    pub(crate) fn get_binding(&self, symbol: Symbol, locator: Locator) -> Value {
+        debug!(event = "get_binding", ?symbol, ?locator);
+        self.fiber.get_binding(symbol, locator)
     }
 
     #[inline(always)]
-    pub(crate) fn put_local(&mut self, symbol: Symbol, stack: u16, index: u16, value: Value) {
-        debug!(event = "set_local", ?symbol, stack, index, ?value);
-        self.fiber.put_local(symbol, stack, index, value);
+    pub(crate) fn put_binding(&mut self, symbol: Symbol, locator: Locator, value: Value) {
+        debug!(event = "put_binding", ?symbol, ?locator, ?value);
+        self.fiber.put_binding(symbol, locator, value);
     }
 
     #[inline(always)]
     pub(crate) fn push_argument(&mut self, value: Value) {
         debug!(event = "push_argument", ?value);
-        self.fiber.push_arg(value);
-    }
-
-    #[inline(always)]
-    pub(crate) fn get_argument(&self, symbol: Symbol, index: u16) -> Value {
-        debug!(event = "get_argument", ?symbol, index);
-        self.fiber.get_argument(symbol, index)
-    }
-
-    #[inline(always)]
-    pub(crate) fn put_argument(&mut self, symbol: Symbol, index: u16, value: Value) {
-        debug!(event = "put_argument", ?symbol, index, ?value);
-        self.fiber.put_argument(symbol, index, value);
+        self.fiber.push_argument(value);
     }
 
     #[inline(always)]

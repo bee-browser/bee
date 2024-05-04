@@ -47,32 +47,32 @@ void Executor::RegisterRuntime(const Runtime* runtime) {
       llvm::orc::ExecutorAddr::fromPtr(runtime->declare_function),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_get_local")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->get_local),
+  symbols[exec_session().intern("runtime_get_binding")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->get_binding),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_get_local_boolean")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->get_local_boolean),
+  symbols[exec_session().intern("runtime_get_binding_boolean")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->get_binding_boolean),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_get_local_number")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->get_local_number),
+  symbols[exec_session().intern("runtime_get_binding_number")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->get_binding_number),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_put_local")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_local),
+  symbols[exec_session().intern("runtime_put_binding")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->put_binding),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_put_local_undefined")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_local_undefined),
+  symbols[exec_session().intern("runtime_put_binding_undefined")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->put_binding_undefined),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_put_local_boolean")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_local_boolean),
+  symbols[exec_session().intern("runtime_put_binding_boolean")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->put_binding_boolean),
       llvm::JITSymbolFlags::Exported,
   };
-  symbols[exec_session().intern("runtime_put_local_number")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_local_number),
+  symbols[exec_session().intern("runtime_put_binding_number")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->put_binding_number),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_push_argument")] = {
@@ -89,34 +89,6 @@ void Executor::RegisterRuntime(const Runtime* runtime) {
   };
   symbols[exec_session().intern("runtime_push_argument_number")] = {
       llvm::orc::ExecutorAddr::fromPtr(runtime->push_argument_number),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_get_argument")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->get_argument),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_get_argument_boolean")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->get_argument_boolean),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_get_argument_number")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->get_argument_number),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_put_argument")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_argument),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_put_argument_undefined")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_argument_undefined),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_put_argument_boolean")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_argument_boolean),
-      llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("runtime_put_argument_number")] = {
-      llvm::orc::ExecutorAddr::fromPtr(runtime->put_argument_number),
       llvm::JITSymbolFlags::Exported,
   };
   symbols[exec_session().intern("runtime_call")] = {

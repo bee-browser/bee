@@ -16,7 +16,7 @@ llvm::StructType* TypeHolder::CreateValueType() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareImmutable() {
   if (runtime_declare_immutable_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getPtrTy()},
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(), builder_.getPtrTy()},
         false);
     runtime_declare_immutable_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_immutable", module_);
@@ -27,7 +27,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareImmutable() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareImmutableUndefined() {
   if (runtime_declare_immutable_undefined_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty()}, false);
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty()}, false);
     runtime_declare_immutable_undefined_ = llvm::Function::Create(prototype,
         llvm::Function::ExternalLinkage, "runtime_declare_immutable_undefined", module_);
   }
@@ -37,7 +37,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareImmutableUndefined() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareImmutableBoolean() {
   if (runtime_declare_immutable_boolean_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getInt1Ty()},
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(), builder_.getInt1Ty()},
         false);
     runtime_declare_immutable_boolean_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_immutable_boolean", module_);
@@ -48,7 +48,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareImmutableBoolean() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareImmutableNumber() {
   if (runtime_declare_immutable_number_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(),
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(),
             builder_.getDoubleTy()},
         false);
     runtime_declare_immutable_number_ = llvm::Function::Create(
@@ -60,7 +60,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareImmutableNumber() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareMutable() {
   if (runtime_declare_mutable_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getPtrTy()},
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(), builder_.getPtrTy()},
         false);
     runtime_declare_mutable_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_mutable", module_);
@@ -71,7 +71,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareMutable() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareMutableUndefined() {
   if (runtime_declare_mutable_undefined_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty()}, false);
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty()}, false);
     runtime_declare_mutable_undefined_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_mutable_undefined", module_);
   }
@@ -81,7 +81,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareMutableUndefined() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareMutableBoolean() {
   if (runtime_declare_mutable_boolean_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getInt1Ty()},
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(), builder_.getInt1Ty()},
         false);
     runtime_declare_mutable_boolean_ = llvm::Function::Create(
         prototype, llvm::Function::ExternalLinkage, "runtime_declare_mutable_boolean", module_);
@@ -92,7 +92,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareMutableBoolean() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareMutableNumber() {
   if (runtime_declare_mutable_number_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(),
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(),
             builder_.getDoubleTy()},
         false);
     runtime_declare_mutable_number_ = llvm::Function::Create(
@@ -104,7 +104,7 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareMutableNumber() {
 llvm::Function* TypeHolder::CreateRuntimeDeclareFunction() {
   if (runtime_declare_function_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(),
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(),
             builder_.getInt32Ty()},
         false);
     runtime_declare_function_ = llvm::Function::Create(
@@ -113,88 +113,79 @@ llvm::Function* TypeHolder::CreateRuntimeDeclareFunction() {
   return runtime_declare_function_;
 }
 
-llvm::Function* TypeHolder::CreateRuntimeGetLocal() {
-  if (runtime_get_local_ == nullptr) {
+llvm::Function* TypeHolder::CreateRuntimeGetBinding() {
+  if (runtime_get_binding_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getInt16Ty(),
-            builder_.getPtrTy()},
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(), builder_.getPtrTy()},
         false);
-    runtime_get_local_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_get_local", module_);
+    runtime_get_binding_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_get_binding", module_);
   }
-  return runtime_get_local_;
+  return runtime_get_binding_;
 }
 
-llvm::Function* TypeHolder::CreateRuntimeGetLocalBoolean() {
-  if (runtime_get_local_boolean_ == nullptr) {
+llvm::Function* TypeHolder::CreateRuntimeGetBindingBoolean() {
+  if (runtime_get_binding_boolean_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getInt1Ty(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(),
-            builder_.getInt16Ty()},
-        false);
-    runtime_get_local_boolean_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_get_local_boolean", module_);
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty()}, false);
+    runtime_get_binding_boolean_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_get_binding_boolean", module_);
   }
-  return runtime_get_local_boolean_;
+  return runtime_get_binding_boolean_;
 }
 
-llvm::Function* TypeHolder::CreateRuntimeGetLocalNumber() {
-  if (runtime_get_local_number_ == nullptr) {
+llvm::Function* TypeHolder::CreateRuntimeGetBindingNumber() {
+  if (runtime_get_binding_number_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getDoubleTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(),
-            builder_.getInt16Ty()},
-        false);
-    runtime_get_local_number_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_get_local_number", module_);
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty()}, false);
+    runtime_get_binding_number_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_get_binding_number", module_);
   }
-  return runtime_get_local_number_;
+  return runtime_get_binding_number_;
 }
 
-llvm::Function* TypeHolder::CreateRuntimePutLocal() {
-  if (runtime_put_local_ == nullptr) {
+llvm::Function* TypeHolder::CreateRuntimePutBinding() {
+  if (runtime_put_binding_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getInt16Ty(),
-            builder_.getPtrTy()},
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(), builder_.getPtrTy()},
         false);
-    runtime_put_local_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_local", module_);
+    runtime_put_binding_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_put_binding", module_);
   }
-  return runtime_put_local_;
+  return runtime_put_binding_;
 }
 
-llvm::Function* TypeHolder::CreateRuntimePutLocalUndefined() {
-  if (runtime_put_local_undefined_ == nullptr) {
+llvm::Function* TypeHolder::CreateRuntimePutBindingUndefined() {
+  if (runtime_put_binding_undefined_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(),
-            builder_.getInt16Ty()},
-        false);
-    runtime_put_local_undefined_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_local_undefined", module_);
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty()}, false);
+    runtime_put_binding_undefined_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_put_binding_undefined", module_);
   }
-  return runtime_put_local_undefined_;
+  return runtime_put_binding_undefined_;
 }
 
-llvm::Function* TypeHolder::CreateRuntimePutLocalBoolean() {
-  if (runtime_put_local_boolean_ == nullptr) {
+llvm::Function* TypeHolder::CreateRuntimePutBindingBoolean() {
+  if (runtime_put_binding_boolean_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getInt16Ty(),
-            builder_.getInt1Ty()},
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(), builder_.getInt1Ty()},
         false);
-    runtime_put_local_boolean_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_local_boolean", module_);
+    runtime_put_binding_boolean_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_put_binding_boolean", module_);
   }
-  return runtime_put_local_boolean_;
+  return runtime_put_binding_boolean_;
 }
 
-llvm::Function* TypeHolder::CreateRuntimePutLocalNumber() {
-  if (runtime_put_local_number_ == nullptr) {
+llvm::Function* TypeHolder::CreateRuntimePutBindingNumber() {
+  if (runtime_put_binding_number_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getInt16Ty(),
+        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt32Ty(),
             builder_.getDoubleTy()},
         false);
-    runtime_put_local_number_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_local_number", module_);
+    runtime_put_binding_number_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_put_binding_number", module_);
   }
-  return runtime_put_local_number_;
+  return runtime_put_binding_number_;
 }
 
 llvm::Function* TypeHolder::CreateRuntimePushArgument() {
@@ -234,81 +225,6 @@ llvm::Function* TypeHolder::CreateRuntimePushArgumentNumber() {
         prototype, llvm::Function::ExternalLinkage, "runtime_push_argument_number", module_);
   }
   return runtime_push_argument_number_;
-}
-
-llvm::Function* TypeHolder::CreateRuntimeGetArgument() {
-  if (runtime_get_argument_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getPtrTy()},
-        false);
-    runtime_get_argument_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_get_argument", module_);
-  }
-  return runtime_get_argument_;
-}
-
-llvm::Function* TypeHolder::CreateRuntimeGetArgumentBoolean() {
-  if (runtime_get_argument_boolean_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_.getInt1Ty(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty()}, false);
-    runtime_get_argument_boolean_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_get_argument_boolean", module_);
-  }
-  return runtime_get_argument_boolean_;
-}
-
-llvm::Function* TypeHolder::CreateRuntimeGetArgumentNumber() {
-  if (runtime_get_argument_number_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_.getDoubleTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty()}, false);
-    runtime_get_argument_number_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_get_argument_number", module_);
-  }
-  return runtime_get_argument_number_;
-}
-
-llvm::Function* TypeHolder::CreateRuntimePutArgument() {
-  if (runtime_put_argument_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getPtrTy()},
-        false);
-    runtime_put_argument_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_argument", module_);
-  }
-  return runtime_put_argument_;
-}
-
-llvm::Function* TypeHolder::CreateRuntimePutArgumentUndefined() {
-  if (runtime_put_argument_undefined_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty()}, false);
-    runtime_put_argument_undefined_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_argument_undefined", module_);
-  }
-  return runtime_put_argument_undefined_;
-}
-
-llvm::Function* TypeHolder::CreateRuntimePutArgumentBoolean() {
-  if (runtime_put_argument_boolean_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(), builder_.getInt1Ty()},
-        false);
-    runtime_put_argument_boolean_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_argument_boolean", module_);
-  }
-  return runtime_put_argument_boolean_;
-}
-
-llvm::Function* TypeHolder::CreateRuntimePutArgumentNumber() {
-  if (runtime_put_argument_number_ == nullptr) {
-    auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),
-        {builder_.getVoidTy(), builder_.getInt32Ty(), builder_.getInt16Ty(),
-            builder_.getDoubleTy()},
-        false);
-    runtime_put_argument_number_ = llvm::Function::Create(
-        prototype, llvm::Function::ExternalLinkage, "runtime_put_argument_number", module_);
-  }
-  return runtime_put_argument_number_;
 }
 
 llvm::Function* TypeHolder::CreateRuntimeCall() {

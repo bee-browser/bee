@@ -50,12 +50,8 @@ void compiler_peer_function(Compiler* self, uint32_t func_id) {
   self->Function(func_id);
 }
 
-void compiler_peer_argument_ref(Compiler* self, uint32_t symbol, uint16_t index) {
-  self->ArgumentRef(symbol, index);
-}
-
-void compiler_peer_local_ref(Compiler* self, uint32_t symbol, uint16_t stack, uint16_t index) {
-  self->LocalRef(symbol, stack, index);
+void compiler_peer_reference(Compiler* self, uint32_t symbol, uint32_t locator) {
+  self->Reference(symbol, locator);
 }
 
 void compiler_peer_add(Compiler* self) {

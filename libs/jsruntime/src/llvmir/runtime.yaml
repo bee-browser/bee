@@ -1,136 +1,122 @@
 functions:
   - name: declare_immutable
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: '&Value'
   - name: declare_immutable_undefined
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
   - name: declare_immutable_boolean
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: bool
   - name: declare_immutable_number
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: f64
   - name: declare_mutable
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: '&Value'
   - name: declare_mutable_undefined
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
   - name: declare_mutable_boolean
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: bool
   - name: declare_mutable_number
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: f64
   - name: declare_function
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: func_id
         type: u32
-  - name: get_local
+  - name: get_binding
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: stack
-        type: u16
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: '&mut Value'
-  - name: get_local_boolean
+  - name: get_binding_boolean
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: stack
-        type: u16
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
     ret: bool
-  - name: get_local_number
+  - name: get_binding_number
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: stack
-        type: u16
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
     ret: f64
-  - name: put_local
+  - name: put_binding
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: stack
-        type: u16
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: '&Value'
-  - name: put_local_undefined
+  - name: put_binding_undefined
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: stack
-        type: u16
-      - name: index
-        type: u16
-  - name: put_local_boolean
+      - name: locator
+        type: u32
+  - name: put_binding_boolean
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: stack
-        type: u16
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: bool
-  - name: put_local_number
+  - name: put_binding_number
     args:
-      - name: symbol_id
+      - name: symbol
         type: u32
-      - name: stack
-        type: u16
-      - name: index
-        type: u16
+      - name: locator
+        type: u32
       - name: value
         type: f64
   - name: push_argument
@@ -145,58 +131,6 @@ functions:
         type: bool
   - name: push_argument_number
     args:
-      - name: value
-        type: f64
-  - name: get_argument
-    args:
-      - name: symbol_id
-        type: u32
-      - name: index
-        type: u16
-      - name: value
-        type: '&mut Value'
-  - name: get_argument_boolean
-    args:
-      - name: symbol_id
-        type: u32
-      - name: index
-        type: u16
-    ret: bool
-  - name: get_argument_number
-    args:
-      - name: symbol_id
-        type: u32
-      - name: index
-        type: u16
-    ret: f64
-  - name: put_argument
-    args:
-      - name: symbol_id
-        type: u32
-      - name: index
-        type: u16
-      - name: value
-        type: '&Value'
-  - name: put_argument_undefined
-    args:
-      - name: symbol_id
-        type: u32
-      - name: index
-        type: u16
-  - name: put_argument_boolean
-    args:
-      - name: symbol_id
-        type: u32
-      - name: index
-        type: u16
-      - name: value
-        type: bool
-  - name: put_argument_number
-    args:
-      - name: symbol_id
-        type: u32
-      - name: index
-        type: u16
       - name: value
         type: f64
   - name: call

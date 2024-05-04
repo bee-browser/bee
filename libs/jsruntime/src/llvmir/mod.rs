@@ -2,8 +2,6 @@ pub mod bridge;
 mod compiler;
 mod executor;
 
-use jsparser::Symbol;
-
 use super::logger;
 use super::FunctionId;
 use super::Runtime;

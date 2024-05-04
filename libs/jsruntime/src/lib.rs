@@ -14,6 +14,8 @@ use jsparser::SymbolRegistry;
 use fiber::Fiber;
 use function::FunctionId;
 use function::FunctionRegistry;
+use semantics::Locator;
+
 pub use llvmir::Module;
 
 pub struct Runtime {
@@ -84,7 +86,9 @@ impl Runtime {
             let func = self.function_registry.get_host(func.id.value());
             let callable = func.func;
             // TODO
-            let args = &[self.fiber.get_argument(Symbol::NONE, 0)];
+            let args = &[self
+                .fiber
+                .get_binding(Symbol::NONE, Locator::argument(0, 0))];
             callable(args);
         }
     }

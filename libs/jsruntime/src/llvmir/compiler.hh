@@ -30,8 +30,7 @@ class Compiler {
 
   void Number(double value);
   void Function(uint32_t func_id);
-  void ArgumentRef(uint32_t symbol, uint16_t index);
-  void LocalRef(uint32_t symbol, uint16_t stack, uint16_t index);
+  void Reference(uint32_t symbol, uint32_t locator);
   void Add();
   void Sub();
   void Mul();
@@ -46,8 +45,7 @@ class Compiler {
   void DeclareImmutable();
   void DeclareMutable();
   void DeclareFunction();
-  void GetArgument();
-  void GetLocal();
+  void GetReference();
   void Set();
   void PushArgument();
   void Call();
@@ -66,18 +64,10 @@ class Compiler {
   void DumpStack();
 
  private:
-  struct ArgumentRef {
+  struct Reference {
     uint32_t symbol;
-    uint16_t index;
-    ArgumentRef(uint32_t symbol, uint16_t index) : symbol(symbol), index(index) {}
-  };
-
-  struct LocalRef {
-    uint32_t symbol;
-    uint16_t stack;
-    uint16_t index;
-    LocalRef(uint32_t symbol, uint16_t stack, uint16_t index)
-        : symbol(symbol), stack(stack), index(index) {}
+    uint32_t locator;
+    Reference(uint32_t symbol, uint32_t locator) : symbol(symbol), locator(locator) {}
   };
 
   struct Item {
@@ -87,23 +77,19 @@ class Compiler {
       Number,
       Function,
       Any,  // undefined, boolean, number or object.
-      ArgumentRef,
-      LocalRef,
+      Reference,
       Block,
       ExecContext,
     } type;
     union {
       llvm::Value* value;
-      struct ArgumentRef argument_ref;
-      struct LocalRef local_ref;
+      struct Reference reference;
       llvm::BasicBlock* block;
     };
 
     explicit Item(Type type) : type(type), value(nullptr) {}
     Item(Type type, llvm::Value* value) : type(type), value(value) {}
-    Item(uint32_t symbol, uint16_t index) : type(Item::ArgumentRef), argument_ref(symbol, index) {}
-    Item(uint32_t symbol, uint16_t stack, uint16_t index)
-        : type(Item::LocalRef), local_ref(symbol, stack, index) {}
+    Item(uint32_t symbol, uint32_t locator) : type(Item::Reference), reference(symbol, locator) {}
     explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
 
     inline bool IsValue() const {
@@ -148,12 +134,8 @@ class Compiler {
     stack_.push_back(Item(Item::Any, value));
   }
 
-  inline void PushArgumentRef(uint32_t symbol, uint16_t index) {
-    stack_.push_back(Item(symbol, index));
-  }
-
-  inline void PushLocalRef(uint32_t symbol, uint16_t stack, uint16_t index) {
-    stack_.push_back(Item(symbol, stack, index));
+  inline void PushReference(uint32_t symbol, uint32_t locator) {
+    stack_.push_back(Item(symbol, locator));
   }
 
   inline void PushBlock(llvm::BasicBlock* block) {
@@ -195,22 +177,13 @@ class Compiler {
     return value;
   }
 
-  inline struct ArgumentRef PopArgumentRef() {
+  inline struct Reference PopReference() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
-    assert(item.type == Item::ArgumentRef);
-    auto argument_ref = item.argument_ref;
+    assert(item.type == Item::Reference);
+    auto reference = item.reference;
     stack_.pop_back();
-    return argument_ref;
-  }
-
-  inline struct LocalRef PopLocalRef() {
-    assert(!stack_.empty());
-    const auto& item = stack_.back();
-    assert(item.type == Item::LocalRef);
-    auto local_ref = item.local_ref;
-    stack_.pop_back();
-    return local_ref;
+    return reference;
   }
 
   inline llvm::BasicBlock* PopBlock() {
@@ -240,5 +213,6 @@ class Compiler {
   std::vector<Item> stack_;
 
   // TODO: data flow analysis
-  std::unordered_map<uint16_t, llvm::Value*> argument_cache_;
+  // TODO: caching the value type (any, number, etc.) improves the performance.
+  std::unordered_map<uint32_t, llvm::Value*> reference_cache_;
 };

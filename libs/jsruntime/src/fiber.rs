@@ -4,6 +4,7 @@ use jsparser::Symbol;
 
 use crate::function::FunctionId;
 use crate::Function;
+use crate::Locator;
 use crate::Value;
 
 pub struct Fiber {
@@ -39,9 +40,11 @@ impl Fiber {
         }
     }
 
-    pub(crate) fn declare_const(&mut self, symbol: Symbol, index: u16, value: Value) {
+    pub(crate) fn declare_immutable(&mut self, symbol: Symbol, locator: Locator, value: Value) {
+        debug_assert!(locator.is_local());
+        debug_assert_eq!(locator.offset(), 0);
         let call = self.call_stack.last().unwrap();
-        let i = call.local_base + index as usize;
+        let i = call.local_base + locator.index() as usize;
         let binding = &mut self.binding_stack[i];
         // ((CreateImmutableBinding))
         debug_assert!(!binding.flags.contains(BindingFlags::INITIALIZED));
@@ -50,9 +53,11 @@ impl Fiber {
         binding.value = value;
     }
 
-    pub(crate) fn declare_variable(&mut self, symbol: Symbol, index: u16, value: Value) {
+    pub(crate) fn declare_mutable(&mut self, symbol: Symbol, locator: Locator, value: Value) {
+        debug_assert!(locator.is_local());
+        debug_assert_eq!(locator.offset(), 0);
         let call = self.call_stack.last().unwrap();
-        let i = call.local_base + index as usize;
+        let i = call.local_base + locator.index() as usize;
         let binding = &mut self.binding_stack[i];
         // ((CreateMutableBinding))
         debug_assert!(!binding.flags.contains(BindingFlags::INITIALIZED));
@@ -61,12 +66,19 @@ impl Fiber {
         binding.value = value;
     }
 
-    pub(crate) fn declare_function(&mut self, symbol: Symbol, index: u16, func_id: FunctionId) {
+    pub(crate) fn declare_function(
+        &mut self,
+        symbol: Symbol,
+        locator: Locator,
+        func_id: FunctionId,
+    ) {
+        debug_assert!(locator.is_local());
+        debug_assert_eq!(locator.offset(), 0);
         let lexical_scope_index = self.call_stack.len() - 1;
         // TODO: should throw a runtime error if the following condition is unmet.
         assert!(lexical_scope_index <= u32::MAX as usize);
         let call = &self.call_stack[lexical_scope_index];
-        let i = call.local_base + index as usize;
+        let i = call.local_base + locator.index() as usize;
         let binding = &mut self.binding_stack[i];
         // ((CreateMutableBinding))
         debug_assert!(!binding.flags.contains(BindingFlags::INITIALIZED));
@@ -78,49 +90,51 @@ impl Fiber {
         });
     }
 
-    pub(crate) fn get_argument(&self, _symbol: Symbol, index: u16) -> Value {
-        let i = self.call_stack.last().unwrap().arguments_base + index as usize;
-        let binding = &self.binding_stack[i];
-        debug_assert!(binding.flags.contains(BindingFlags::INITIALIZED));
-        //debug_assert_eq!(binding.symbol, symbol);
-        binding.value.clone()
-    }
-
-    pub(crate) fn get_local(&self, symbol: Symbol, stack: u16, index: u16) -> Value {
+    pub(crate) fn get_binding(&self, symbol: Symbol, locator: Locator) -> Value {
         let mut call = self.call_stack.last().unwrap();
-        for _ in 0..stack {
+        for _ in 0..locator.offset() {
             call = &self.call_stack[call.func.lexical_scope_index as usize];
         }
-        let binding_index = call.local_base + index as usize;
-        let binding = &self.binding_stack[binding_index];
+        let base = if locator.is_argument() {
+            call.arguments_base
+        } else {
+            debug_assert!(locator.is_local());
+            call.local_base
+        };
+        let binding = &self.binding_stack[base + locator.index() as usize];
         debug_assert!(binding.flags.contains(BindingFlags::INITIALIZED));
-        debug_assert_eq!(binding.symbol, symbol);
+        if locator.is_local() {
+            debug_assert_eq!(binding.symbol, symbol);
+        }
         binding.value.clone()
     }
 
-    pub(crate) fn put_argument(&mut self, _symbol: Symbol, index: u16, value: Value) {
-        let i = self.call_stack.last_mut().unwrap().arguments_base + index as usize;
-        self.binding_stack[i].value = value;
-        // TODO: return rval
-    }
-
-    pub(crate) fn put_local(&mut self, symbol: Symbol, stack: u16, index: u16, value: Value) {
-        let stack_index = self.call_stack.len() - 1 - stack as usize;
-        let call = &mut self.call_stack[stack_index];
-        let binding_index = call.local_base + index as usize;
-        let binding = &mut self.binding_stack[binding_index];
+    pub(crate) fn put_binding(&mut self, symbol: Symbol, locator: Locator, value: Value) {
+        let mut call = self.call_stack.last().unwrap();
+        for _ in 0..locator.offset() {
+            call = &self.call_stack[call.func.lexical_scope_index as usize];
+        }
+        let base = if locator.is_argument() {
+            call.arguments_base
+        } else {
+            debug_assert!(locator.is_local());
+            call.local_base
+        };
+        let binding = &mut self.binding_stack[base + locator.index() as usize];
         debug_assert!(binding.flags.contains(BindingFlags::INITIALIZED));
-        debug_assert_eq!(binding.symbol, symbol);
+        if locator.is_local() {
+            debug_assert_eq!(binding.symbol, symbol);
+        }
         binding.value = value;
         // TODO: return rval
     }
 
     #[inline]
-    pub(crate) fn push_arg(&mut self, arg: Value) {
+    pub(crate) fn push_argument(&mut self, value: Value) {
         self.binding_stack.push(Binding {
             flags: BindingFlags::INITIALIZED | BindingFlags::MUTABLE,
             symbol: Symbol::NONE, // TODO
-            value: arg,
+            value,
         });
     }
 

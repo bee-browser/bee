@@ -3,8 +3,6 @@
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 
-use super::Symbol;
-
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
 
 impl Default for Runtime {
@@ -19,24 +17,17 @@ impl Default for Runtime {
             declare_mutable_boolean: Some(runtime_declare_mutable_boolean),
             declare_mutable_number: Some(runtime_declare_mutable_number),
             declare_function: Some(runtime_declare_function),
-            get_local: Some(runtime_get_local),
-            get_local_boolean: Some(runtime_get_local_boolean),
-            get_local_number: Some(runtime_get_local_number),
-            put_local: Some(runtime_put_local),
-            put_local_undefined: Some(runtime_put_local_undefined),
-            put_local_boolean: Some(runtime_put_local_boolean),
-            put_local_number: Some(runtime_put_local_number),
+            get_binding: Some(runtime_get_binding),
+            get_binding_boolean: Some(runtime_get_binding_boolean),
+            get_binding_number: Some(runtime_get_binding_number),
+            put_binding: Some(runtime_put_binding),
+            put_binding_undefined: Some(runtime_put_binding_undefined),
+            put_binding_boolean: Some(runtime_put_binding_boolean),
+            put_binding_number: Some(runtime_put_binding_number),
             push_argument: Some(runtime_push_argument),
             push_argument_undefined: Some(runtime_push_argument_undefined),
             push_argument_boolean: Some(runtime_push_argument_boolean),
             push_argument_number: Some(runtime_push_argument_number),
-            get_argument: Some(runtime_get_argument),
-            get_argument_boolean: Some(runtime_get_argument_boolean),
-            get_argument_number: Some(runtime_get_argument_number),
-            put_argument: Some(runtime_put_argument),
-            put_argument_undefined: Some(runtime_put_argument_undefined),
-            put_argument_boolean: Some(runtime_put_argument_boolean),
-            put_argument_number: Some(runtime_put_argument_number),
             call: Some(runtime_call),
             return_value: Some(runtime_return_value),
             return_boolean: Some(runtime_return_boolean),
@@ -58,187 +49,157 @@ macro_rules! into_runtime {
 
 unsafe extern "C" fn runtime_declare_immutable(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: *const Value,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
     // TODO: transmute the value
-    runtime.declare_immutable(symbol, index, crate::Value::load(value));
+    runtime.declare_immutable(symbol.into(), locator.into(), crate::Value::load(value));
 }
 
 unsafe extern "C" fn runtime_declare_immutable_undefined(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.declare_immutable(symbol, index, crate::Value::Undefined);
+    runtime.declare_immutable(symbol.into(), locator.into(), crate::Value::Undefined);
 }
 
 unsafe extern "C" fn runtime_declare_immutable_boolean(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: bool,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.declare_immutable(symbol, index, crate::Value::Boolean(value));
+    runtime.declare_immutable(symbol.into(), locator.into(), crate::Value::Boolean(value));
 }
 
 unsafe extern "C" fn runtime_declare_immutable_number(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: f64,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.declare_immutable(symbol, index, crate::Value::Number(value));
+    runtime.declare_immutable(symbol.into(), locator.into(), crate::Value::Number(value));
 }
 
 unsafe extern "C" fn runtime_declare_mutable(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: *const Value,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
     // TODO: transmute
-    runtime.declare_mutable(symbol, index, crate::Value::load(value));
+    runtime.declare_mutable(symbol.into(), locator.into(), crate::Value::load(value));
 }
 
-unsafe extern "C" fn runtime_declare_mutable_undefined(context: usize, symbol_id: u32, index: u16) {
+unsafe extern "C" fn runtime_declare_mutable_undefined(context: usize, symbol: u32, locator: u32) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.declare_mutable(symbol, index, crate::Value::Undefined);
+    runtime.declare_mutable(symbol.into(), locator.into(), crate::Value::Undefined);
 }
 
 unsafe extern "C" fn runtime_declare_mutable_boolean(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: bool,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.declare_mutable(symbol, index, crate::Value::Boolean(value));
+    runtime.declare_mutable(symbol.into(), locator.into(), crate::Value::Boolean(value));
 }
 
 unsafe extern "C" fn runtime_declare_mutable_number(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: f64,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.declare_mutable(symbol, index, crate::Value::Number(value));
+    runtime.declare_mutable(symbol.into(), locator.into(), crate::Value::Number(value));
 }
 
 unsafe extern "C" fn runtime_declare_function(
     context: usize,
-    symbol_id: u32,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     func_id: u32,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    let func_id = crate::FunctionId::from(func_id);
-    runtime.declare_function(symbol, index, func_id);
+    runtime.declare_function(symbol.into(), locator.into(), func_id.into());
 }
 
-unsafe extern "C" fn runtime_get_local(
+unsafe extern "C" fn runtime_get_binding(
     context: usize,
-    symbol_id: u32,
-    stack: u16,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: *mut Value,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
     // TODO: transmute
-    runtime.get_local(symbol, stack, index).store(value);
+    runtime
+        .get_binding(symbol.into(), locator.into())
+        .store(value);
 }
 
-unsafe extern "C" fn runtime_get_local_boolean(
+unsafe extern "C" fn runtime_get_binding_boolean(
     context: usize,
-    symbol_id: u32,
-    stack: u16,
-    index: u16,
+    symbol: u32,
+    locator: u32,
 ) -> bool {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    match runtime.get_local(symbol, stack, index) {
+    match runtime.get_binding(symbol.into(), locator.into()) {
         crate::Value::Boolean(value) => value,
         _ => panic!(),
     }
 }
 
-unsafe extern "C" fn runtime_get_local_number(
-    context: usize,
-    symbol_id: u32,
-    stack: u16,
-    index: u16,
-) -> f64 {
+unsafe extern "C" fn runtime_get_binding_number(context: usize, symbol: u32, locator: u32) -> f64 {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    match runtime.get_local(symbol, stack, index) {
+    match runtime.get_binding(symbol.into(), locator.into()) {
         crate::Value::Number(value) => value,
         _ => panic!(),
     }
 }
 
-unsafe extern "C" fn runtime_put_local(
+unsafe extern "C" fn runtime_put_binding(
     context: usize,
-    symbol_id: u32,
-    stack: u16,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: *const Value,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
     // TODO: transmute
-    runtime.put_local(symbol, stack, index, crate::Value::load(value));
+    runtime.put_binding(symbol.into(), locator.into(), crate::Value::load(value));
 }
 
-unsafe extern "C" fn runtime_put_local_undefined(
-    context: usize,
-    symbol_id: u32,
-    stack: u16,
-    index: u16,
-) {
+unsafe extern "C" fn runtime_put_binding_undefined(context: usize, symbol: u32, locator: u32) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.put_local(symbol, stack, index, crate::Value::Undefined);
+    runtime.put_binding(symbol.into(), locator.into(), crate::Value::Undefined);
 }
 
-unsafe extern "C" fn runtime_put_local_boolean(
+unsafe extern "C" fn runtime_put_binding_boolean(
     context: usize,
-    symbol_id: u32,
-    stack: u16,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: bool,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.put_local(symbol, stack, index, crate::Value::Boolean(value));
+    runtime.put_binding(symbol.into(), locator.into(), crate::Value::Boolean(value));
 }
 
-unsafe extern "C" fn runtime_put_local_number(
+unsafe extern "C" fn runtime_put_binding_number(
     context: usize,
-    symbol_id: u32,
-    stack: u16,
-    index: u16,
+    symbol: u32,
+    locator: u32,
     value: f64,
 ) {
     let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.put_local(symbol, stack, index, crate::Value::Number(value));
+    runtime.put_binding(symbol.into(), locator.into(), crate::Value::Number(value));
 }
 
 unsafe extern "C" fn runtime_push_argument(context: usize, value: *const Value) {
@@ -260,84 +221,6 @@ unsafe extern "C" fn runtime_push_argument_boolean(context: usize, value: bool) 
 unsafe extern "C" fn runtime_push_argument_number(context: usize, value: f64) {
     let runtime = into_runtime!(context);
     runtime.push_argument(crate::Value::Number(value));
-}
-
-unsafe extern "C" fn runtime_get_argument(
-    context: usize,
-    symbol_id: u32,
-    index: u16,
-    value: *mut Value,
-) {
-    let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    // TODO: transmute
-    runtime.get_argument(symbol, index).store(value);
-}
-
-unsafe extern "C" fn runtime_get_argument_boolean(
-    context: usize,
-    symbol_id: u32,
-    index: u16,
-) -> bool {
-    let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    match runtime.get_argument(symbol, index) {
-        crate::Value::Boolean(value) => value,
-        _ => panic!(),
-    }
-}
-
-unsafe extern "C" fn runtime_get_argument_number(
-    context: usize,
-    symbol_id: u32,
-    index: u16,
-) -> f64 {
-    let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    match runtime.get_argument(symbol, index) {
-        crate::Value::Number(value) => value,
-        _ => panic!(),
-    }
-}
-
-unsafe extern "C" fn runtime_put_argument(
-    context: usize,
-    symbol_id: u32,
-    index: u16,
-    value: *const Value,
-) {
-    let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    // TODO: transmute
-    runtime.put_argument(symbol, index, crate::Value::load(value));
-}
-
-unsafe extern "C" fn runtime_put_argument_undefined(context: usize, symbol_id: u32, index: u16) {
-    let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.put_argument(symbol, index, crate::Value::Undefined);
-}
-
-unsafe extern "C" fn runtime_put_argument_boolean(
-    context: usize,
-    symbol_id: u32,
-    index: u16,
-    value: bool,
-) {
-    let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.put_argument(symbol, index, crate::Value::Boolean(value));
-}
-
-unsafe extern "C" fn runtime_put_argument_number(
-    context: usize,
-    symbol_id: u32,
-    index: u16,
-    value: f64,
-) {
-    let runtime = into_runtime!(context);
-    let symbol = Symbol::from(symbol_id);
-    runtime.put_argument(symbol, index, crate::Value::Number(value));
 }
 
 unsafe extern "C" fn runtime_call(context: usize, value: *const Value, result: *mut Value) {

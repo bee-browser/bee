@@ -121,7 +121,7 @@ impl<'r> Analyzer<'r> {
     fn handle_identifier_reference(&mut self, symbol: Symbol) {
         let context = self.context_stack.last_mut().unwrap();
         // The locator will be updated later.
-        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::None));
+        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         self.references.push(Reference {
             symbol,
             func_id: context.func_id,
@@ -135,7 +135,7 @@ impl<'r> Analyzer<'r> {
         if context.in_body {
             // The locator will be updated later.
             let command_index =
-                context.put_command(CompileCommand::Reference(symbol, Locator::None));
+                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
             self.scope_manager.add_binding(symbol, BindingKind::Mutable);
             self.references.push(Reference {
                 func_id: context.func_id,
@@ -146,7 +146,7 @@ impl<'r> Analyzer<'r> {
         } else {
             // TODO: the compilation should fail if the following condition is unmet.
             assert!(context.formal_parameters.len() < u16::MAX as usize);
-            let i = context.formal_parameters.len() as u16;
+            let i = context.formal_parameters.len();
             context.formal_parameters.push(symbol);
             self.scope_manager
                 .add_binding(symbol, BindingKind::FormalParameter(i));
@@ -349,7 +349,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
             let symbol = self.symbol_registry.intern(code_units);
             // The locator will be updated later.
             let command_index =
-                context.put_command(CompileCommand::Reference(symbol, Locator::None));
+                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
             context.process_function_declaration(func_id.into());
             self.scope_manager
                 .add_binding(symbol, BindingKind::Immutable);
@@ -708,26 +708,94 @@ impl From<AssignmentOperator> for CompileCommand {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Locator {
-    None,
-    Argument(u16, u16),
-    Local(u16, u16),
-}
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub struct Locator(u32);
 
 impl Locator {
-    const MAX_LOCAL_FUNC_OFFSET: u16 = 127;
+    pub const NONE: Self = Self(0);
+
+    const ARGUMENT_BIT: u32 = 0x00010000;
+    const LOCAL_BIT: u32 = 0x00020000;
+
+    const MAX_OFFSET: usize = u8::MAX as usize;
+    const MAX_INDEX: usize = u16::MAX as usize;
 
     #[inline(always)]
-    fn argument(func: u16, index: u16) -> Self {
-        debug_assert!(func <= Self::MAX_LOCAL_FUNC_OFFSET);
-        Self::Argument(func, index)
+    pub fn is_argument(&self) -> bool {
+        (self.0 & Self::ARGUMENT_BIT) != 0
     }
 
     #[inline(always)]
-    fn local(func: u16, index: u16) -> Self {
-        debug_assert!(func <= Self::MAX_LOCAL_FUNC_OFFSET);
-        Self::Local(func, index)
+    pub fn is_local(&self) -> bool {
+        (self.0 & Self::LOCAL_BIT) != 0
+    }
+
+    #[inline(always)]
+    pub fn offset(&self) -> u8 {
+        (self.0 >> 24) as u8
+    }
+
+    #[inline(always)]
+    pub fn index(&self) -> u16 {
+        (self.0 & 0x0000FFFF) as u16
+    }
+
+    #[inline(always)]
+    pub fn value(&self) -> u32 {
+        self.0
+    }
+
+    pub const fn argument(offset: usize, index: usize) -> Self {
+        Self::new(Self::ARGUMENT_BIT, offset, index)
+    }
+
+    pub fn checked_argument(offset: usize, index: usize) -> Option<Self> {
+        Self::checked_new(Self::ARGUMENT_BIT, offset, index)
+    }
+
+    #[allow(dead_code)]
+    pub const fn local(offset: usize, index: usize) -> Self {
+        Self::new(Self::LOCAL_BIT, offset, index)
+    }
+
+    pub fn checked_local(offset: usize, index: usize) -> Option<Self> {
+        Self::checked_new(Self::LOCAL_BIT, offset, index)
+    }
+
+    const fn new(flags: u32, offset: usize, index: usize) -> Self {
+        Self(flags | (offset as u32) << 24 | index as u32)
+    }
+
+    fn checked_new(flags: u32, offset: usize, index: usize) -> Option<Self> {
+        if offset > Self::MAX_OFFSET {
+            logger::error!(err = "too large offset", offset);
+            return None;
+        }
+        if index > Self::MAX_INDEX {
+            logger::error!(err = "too large index", index);
+            return None;
+        }
+        Some(Self::new(flags, offset, index))
+    }
+}
+
+impl From<u32> for Locator {
+    fn from(value: u32) -> Self {
+        Self(value)
+    }
+}
+
+impl std::fmt::Debug for Locator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let offset = self.offset();
+        let index = self.index();
+        if self.is_argument() {
+            write!(f, "Locator::Argument({offset}, {index})")
+        } else if self.is_local() {
+            write!(f, "Locator::Local({offset}, {index})")
+        } else {
+            write!(f, "Locator::None")
+        }
     }
 }
 
@@ -745,6 +813,11 @@ mod tests {
     use jsparser::Processor;
 
     use super::*;
+
+    #[test]
+    fn test_locator_size() {
+        assert_eq!(std::mem::size_of::<Locator>(), 4);
+    }
 
     macro_rules! symbol {
         ($symbol_registry:expr, $name:literal) => {

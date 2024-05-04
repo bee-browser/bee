@@ -31,12 +31,8 @@ void Compiler::Function(uint32_t func_id) {
   PushFunction(value);
 }
 
-void Compiler::ArgumentRef(uint32_t symbol, uint16_t index) {
-  PushArgumentRef(symbol, index);
-}
-
-void Compiler::LocalRef(uint32_t symbol, uint16_t stack, uint16_t index) {
-  PushLocalRef(symbol, stack, index);
+void Compiler::Reference(uint32_t symbol, uint32_t locator) {
+  PushReference(symbol, locator);
 }
 
 void Compiler::Add() {
@@ -140,7 +136,7 @@ void Compiler::Ne() {
 
 void Compiler::DeclareImmutable() {
   auto item = PopItem();
-  auto ref = PopLocalRef();
+  auto ref = PopReference();
   llvm::Function* call;
   switch (item.type) {
     case Item::Any:
@@ -157,14 +153,13 @@ void Compiler::DeclareImmutable() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
-  assert(ref.stack == 0);
-  auto* index = builder_->getInt16(ref.index);
-  builder_->CreateCall(call, {context, symbol, index, item.value});
+  auto* locator = builder_->getInt32(ref.locator);
+  builder_->CreateCall(call, {context, symbol, locator, item.value});
 }
 
 void Compiler::DeclareMutable() {
   auto item = PopItem();
-  auto ref = PopLocalRef();
+  auto ref = PopReference();
   llvm::Function* call;
   switch (item.type) {
     case Item::Any:
@@ -181,107 +176,65 @@ void Compiler::DeclareMutable() {
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
-  assert(ref.stack == 0);
-  auto* index = builder_->getInt16(ref.index);
-  builder_->CreateCall(call, {context, symbol, index, item.value});
+  auto* locator = builder_->getInt32(ref.locator);
+  builder_->CreateCall(call, {context, symbol, locator, item.value});
 }
 
 void Compiler::DeclareFunction() {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
   auto* func = PopValue();
-  auto ref = PopLocalRef();
+  auto ref = PopReference();
   auto* call = types_->CreateRuntimeDeclareFunction();
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
-  assert(ref.stack == 0);
-  auto* index = builder_->getInt16(ref.index);
-  builder_->CreateCall(call, {context, symbol, index, func});
+  auto* locator = builder_->getInt32(ref.locator);
+  builder_->CreateCall(call, {context, symbol, locator, func});
   builder_->SetInsertPoint(backup);
 }
 
-void Compiler::GetArgument() {
-  auto argument_ref = PopArgumentRef();
-  auto cache = argument_cache_.find(argument_ref.index);
-  if (cache != argument_cache_.end()) {
+void Compiler::GetReference() {
+  auto ref = PopReference();
+  auto cache = reference_cache_.find(ref.locator);
+  if (cache != reference_cache_.end()) {
     PushAny(cache->second);
     return;
   }
   // TODO: use a global variable to hold the execution context.
   auto* context = exec_context();
-  auto* symbol = builder_->getInt32(argument_ref.symbol);
-  auto* index = builder_->getInt16(argument_ref.index);
+  auto* symbol = builder_->getInt32(ref.symbol);
+  auto* locator = builder_->getInt32(ref.locator);
   auto* value = builder_->CreateAlloca(types_->CreateValueType());
   auto* ret =
-      builder_->CreateCall(types_->CreateRuntimeGetArgument(), {context, symbol, index, value});
+      builder_->CreateCall(types_->CreateRuntimeGetBinding(), {context, symbol, locator, value});
   UNUSED(ret);
   PushAny(value);
-  argument_cache_[argument_ref.index] = value;
-}
-
-void Compiler::GetLocal() {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto local_ref = PopLocalRef();
-  auto* symbol = builder_->getInt32(local_ref.symbol);
-  auto* stack = builder_->getInt16(local_ref.stack);
-  auto* index = builder_->getInt16(local_ref.index);
-  auto* value = builder_->CreateAlloca(types_->CreateValueType());
-  auto* ret = builder_->CreateCall(
-      types_->CreateRuntimeGetLocal(), {context, symbol, stack, index, value});
-  UNUSED(ret);
-  PushAny(value);
-  // TODO: caching the value may improve the performance
+  reference_cache_[ref.locator] = value;
 }
 
 void Compiler::Set() {
   auto item = PopItem();
-  auto ref = PopItem();
+  auto ref = PopReference();
   llvm::Function* call;
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  switch (ref.type) {
-    case Item::ArgumentRef: {
-      switch (item.type) {
-        case Item::Any:
-          call = types_->CreateRuntimePutArgument();
-          break;
-        case Item::Number:
-          call = types_->CreateRuntimePutArgumentNumber();
-          break;
-        default:
-          assert(false);
-          call = nullptr;
-          break;
-      }
-      auto* symbol = builder_->getInt32(ref.argument_ref.symbol);
-      auto* index = builder_->getInt16(ref.argument_ref.index);
-      builder_->CreateCall(call, {context, symbol, index, item.value});
-      argument_cache_[ref.argument_ref.index] = item.value;
-    } break;
-    case Item::LocalRef: {
-      switch (item.type) {
-        case Item::Any:
-          call = types_->CreateRuntimePutLocal();
-          break;
-        case Item::Number:
-          call = types_->CreateRuntimePutLocalNumber();
-          break;
-        default:
-          assert(false);
-          call = nullptr;
-          break;
-      }
-      auto* symbol = builder_->getInt32(ref.local_ref.symbol);
-      auto* stack = builder_->getInt16(ref.local_ref.stack);
-      auto* index = builder_->getInt16(ref.local_ref.index);
-      builder_->CreateCall(call, {context, symbol, stack, index, item.value});
-    } break;
+  switch (item.type) {
+    case Item::Any:
+      call = types_->CreateRuntimePutBinding();
+      break;
+    case Item::Number:
+      call = types_->CreateRuntimePutBindingNumber();
+      break;
     default:
       assert(false);
+      call = nullptr;
       break;
   }
+  // TODO: use a global variable to hold the execution context.
+  auto* context = exec_context();
+  auto* symbol = builder_->getInt32(ref.symbol);
+  auto* locator = builder_->getInt32(ref.locator);
+  builder_->CreateCall(call, {context, symbol, locator, item.value});
+  reference_cache_[ref.locator] = ToAny(item);
   stack_.push_back(item);
 }
 
@@ -476,7 +429,7 @@ void Compiler::EndFunction() {
 
   PopItem();  // exec_conext
 
-  argument_cache_.clear();
+  reference_cache_.clear();
 }
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {
@@ -546,14 +499,9 @@ void Compiler::DumpStack() {
       case Item::Any:
         llvm::errs() << "any: " << item.value << "\n";
         break;
-      case Item::ArgumentRef:
-        llvm::errs() << "argument-ref: " << item.argument_ref.symbol << "("
-                     << item.argument_ref.index << ")"
-                     << "\n";
-        break;
-      case Item::LocalRef:
-        llvm::errs() << "local-ref: " << item.local_ref.symbol << "(" << item.local_ref.stack
-                     << ":" << item.local_ref.index << ")"
+      case Item::Reference:
+        llvm::errs() << "reference: " << item.reference.symbol << "(" << item.reference.locator
+                     << ")"
                      << "\n";
         break;
       case Item::Block:
@@ -600,11 +548,8 @@ Compiler::Item Compiler::Dereference() {
     case Item::Any:
       // nothing to do.
       break;
-    case Item::ArgumentRef:
-      GetArgument();
-      break;
-    case Item::LocalRef:
-      GetLocal();
+    case Item::Reference:
+      GetReference();
       break;
     default:
       // never reach here

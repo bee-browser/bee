@@ -41,65 +41,37 @@ static_assert(sizeof(Value) == sizeof(uint64_t) * 2);
 
 struct Runtime {
   void (*declare_immutable)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t index,
+      uint32_t symbol,
+      uint32_t locator,
       const Value* value);
-  void (*declare_immutable_undefined)(uintptr_t context, uint32_t symbol_id, uint16_t index);
+  void (*declare_immutable_undefined)(uintptr_t context, uint32_t symbol, uint32_t locator);
   void (*declare_immutable_boolean)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t index,
+      uint32_t symbol,
+      uint32_t locator,
       bool value);
   void (*declare_immutable_number)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t index,
+      uint32_t symbol,
+      uint32_t locator,
       double value);
   void (
-      *declare_mutable)(uintptr_t context, uint32_t symbol_id, uint16_t index, const Value* value);
-  void (*declare_mutable_undefined)(uintptr_t context, uint32_t symbol_id, uint16_t index);
+      *declare_mutable)(uintptr_t context, uint32_t symbol, uint32_t locator, const Value* value);
+  void (*declare_mutable_undefined)(uintptr_t context, uint32_t symbol, uint32_t locator);
   void (
-      *declare_mutable_boolean)(uintptr_t context, uint32_t symbol_id, uint16_t index, bool value);
-  void (*declare_mutable_number)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t index,
-      double value);
+      *declare_mutable_boolean)(uintptr_t context, uint32_t symbol, uint32_t locator, bool value);
   void (
-      *declare_function)(uintptr_t context, uint32_t symbol_id, uint16_t index, uint32_t func_id);
-  void (*get_local)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t stack,
-      uint16_t index,
-      Value* value);
-  bool (*get_local_boolean)(uintptr_t context, uint32_t symbol_id, uint16_t stack, uint16_t index);
-  double (
-      *get_local_number)(uintptr_t context, uint32_t symbol_id, uint16_t stack, uint16_t index);
-  void (*put_local)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t stack,
-      uint16_t index,
-      const Value* value);
-  void (
-      *put_local_undefined)(uintptr_t context, uint32_t symbol_id, uint16_t stack, uint16_t index);
-  void (*put_local_boolean)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t stack,
-      uint16_t index,
-      bool value);
-  void (*put_local_number)(uintptr_t context,
-      uint32_t symbol_id,
-      uint16_t stack,
-      uint16_t index,
-      double value);
+      *declare_mutable_number)(uintptr_t context, uint32_t symbol, uint32_t locator, double value);
+  void (*declare_function)(uintptr_t context, uint32_t symbol, uint32_t locator, uint32_t func_id);
+  void (*get_binding)(uintptr_t context, uint32_t symbol, uint32_t locator, Value* value);
+  bool (*get_binding_boolean)(uintptr_t context, uint32_t symbol, uint32_t locator);
+  double (*get_binding_number)(uintptr_t context, uint32_t symbol, uint32_t locator);
+  void (*put_binding)(uintptr_t context, uint32_t symbol, uint32_t locator, const Value* value);
+  void (*put_binding_undefined)(uintptr_t context, uint32_t symbol, uint32_t locator);
+  void (*put_binding_boolean)(uintptr_t context, uint32_t symbol, uint32_t locator, bool value);
+  void (*put_binding_number)(uintptr_t context, uint32_t symbol, uint32_t locator, double value);
   void (*push_argument)(uintptr_t context, const Value* value);
   void (*push_argument_undefined)(uintptr_t context);
   void (*push_argument_boolean)(uintptr_t context, bool value);
   void (*push_argument_number)(uintptr_t context, double value);
-  void (*get_argument)(uintptr_t context, uint32_t symbol_id, uint16_t index, Value* value);
-  bool (*get_argument_boolean)(uintptr_t context, uint32_t symbol_id, uint16_t index);
-  double (*get_argument_number)(uintptr_t context, uint32_t symbol_id, uint16_t index);
-  void (*put_argument)(uintptr_t context, uint32_t symbol_id, uint16_t index, const Value* value);
-  void (*put_argument_undefined)(uintptr_t context, uint32_t symbol_id, uint16_t index);
-  void (*put_argument_boolean)(uintptr_t context, uint32_t symbol_id, uint16_t index, bool value);
-  void (*put_argument_number)(uintptr_t context, uint32_t symbol_id, uint16_t index, double value);
   void (*call)(uintptr_t context, const Value* func, Value* result);
   void (*return_value)(uintptr_t context, const Value* value);
   void (*return_boolean)(uintptr_t context, bool value);

@@ -99,14 +99,9 @@ impl Compiler {
             CompileCommand::Function(func_id) => unsafe {
                 bridge::compiler_peer_function(self.peer, *func_id);
             },
-            CompileCommand::Reference(symbol, locator) => match *locator {
-                Locator::None => panic!(),
-                Locator::Argument(_nest, index) => unsafe {
-                    bridge::compiler_peer_argument_ref(self.peer, symbol.id(), index);
-                },
-                Locator::Local(nest, index) => unsafe {
-                    bridge::compiler_peer_local_ref(self.peer, symbol.id(), nest, index);
-                },
+            CompileCommand::Reference(symbol, locator) => unsafe {
+                assert_ne!(*locator, Locator::NONE);
+                bridge::compiler_peer_reference(self.peer, symbol.id(), locator.value());
             },
             CompileCommand::Bindings(_n) => {
                 // TODO

@@ -17,7 +17,6 @@ pub struct ScopeManager {
 
 impl ScopeManager {
     pub const MAX_LOCAL_BINDINGS: usize = 0x1000;
-    const MAX_LOCAL_INDEX: usize = 0x0FFF;
 
     #[inline(always)]
     pub fn current(&self) -> ScopeRef {
@@ -64,7 +63,7 @@ impl ScopeManager {
 
     pub fn compute_locator(&self, reference: &Reference) -> Locator {
         let symbol = reference.symbol;
-        let mut func_offset = 0;
+        let mut offset = 0;
         let mut scope_ref = reference.scope_ref;
         loop {
             let scope = &self.scopes[scope_ref.0];
@@ -74,13 +73,13 @@ impl ScopeManager {
             {
                 Ok(index) => match scope.bindings[index].kind {
                     BindingKind::FormalParameter(index) => {
-                        return Locator::argument(func_offset, index);
+                        // TODO: the compilation should fail if `None` is returned.
+                        return Locator::checked_argument(offset, index).unwrap();
                     }
                     _ => {
                         let base = self.compute_offset(scope_ref);
-                        // TODO: the compilation should fail if the following condition is unmet.
-                        assert!(base + index <= Self::MAX_LOCAL_INDEX);
-                        return Locator::local(func_offset, (base + index) as u16);
+                        // TODO: the compilation should fail if `None` is returned.
+                        return Locator::checked_local(offset, base + index).unwrap();
                     }
                 },
                 Err(_) => {
@@ -89,7 +88,7 @@ impl ScopeManager {
                         panic!("{reference:?}");
                     }
                     if matches!(scope.kind, ScopeKind::Function) {
-                        func_offset += 1;
+                        offset += 1;
                     }
                 }
             }
@@ -188,7 +187,7 @@ impl std::fmt::Display for Binding {
 
 #[derive(Debug)]
 pub enum BindingKind {
-    FormalParameter(u16),
+    FormalParameter(usize),
     Mutable,
     Immutable,
 }
