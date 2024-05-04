@@ -3423,11 +3423,11 @@ impl std::ops::Deref for RawString {
     }
 }
 
-impl std::string::ToString for RawString {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for RawString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Static(s) => s.to_string(),
-            Self::Dynamic(ref s) => s.clone(),
+            Self::Static(s) => write!(f, "{s}"),
+            Self::Dynamic(ref s) => write!(f, "{s}"),
         }
     }
 }
