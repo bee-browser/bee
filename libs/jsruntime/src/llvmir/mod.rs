@@ -20,9 +20,9 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn dump(&self) {
+    pub fn print(&self, stderr: bool) {
         unsafe {
-            bridge::module_peer_dump(self.peer);
+            bridge::module_peer_print(self.peer, stderr);
         }
     }
 }

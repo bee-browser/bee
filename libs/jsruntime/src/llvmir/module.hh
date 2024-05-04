@@ -9,10 +9,12 @@ struct Module {
   Module(llvm::orc::ThreadSafeModule&& mod) : mod(std::move(mod)) {}
   ~Module() = default;
 
-  void Dump() const {
-    llvm::errs() << "<llvm-ir:module>\n";
-    mod.getModuleUnlocked()->print(llvm::errs(), nullptr);
-    llvm::errs() << "</llvm-ir:module>\n";
+  void Print(bool stderr) const {
+    if (stderr) {
+      mod.getModuleUnlocked()->print(llvm::errs(), nullptr);
+    } else {
+      mod.getModuleUnlocked()->print(llvm::outs(), nullptr);
+    }
   }
 
   llvm::orc::ThreadSafeModule mod;

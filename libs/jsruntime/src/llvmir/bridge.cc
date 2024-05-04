@@ -18,8 +18,8 @@ void llvmir_initialize() {
   llvm::InitializeNativeTargetAsmParser();
 }
 
-void module_peer_dump(Module* self) {
-  self->Dump();
+void module_peer_print(Module* self, bool stderr) {
+  self->Print(stderr);
 }
 
 void module_peer_delete(Module* self) {

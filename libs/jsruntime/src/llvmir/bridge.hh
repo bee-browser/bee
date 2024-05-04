@@ -13,7 +13,7 @@ void llvmir_initialize();
 // Module
 
 struct Module;
-void module_peer_dump(Module* self);
+void module_peer_print(Module* self, bool stderr);
 void module_peer_delete(Module* self);
 
 // Compilation

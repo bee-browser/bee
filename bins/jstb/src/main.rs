@@ -12,21 +12,30 @@ struct CommandLine {
     command: Command,
 }
 
+/// A testbed for the jsruntime module.
 #[derive(clap::Subcommand)]
 enum Command {
-    /// Evaluate an expression and print the result.
-    Eval(Eval),
+    /// Runs a JavaScript program.
+    Run(Run),
 }
 
 #[derive(clap::Args)]
-struct Eval {
-    /// Print LLVM-IR.
-    #[arg(short, long)]
-    debug: bool,
+struct Run {
+    /// Prints the compiled module (LLVM-IR) to STDOUT.
+    ///
+    /// lli cannot interpret the module directly.  Because it includes unresolved symbols for the
+    /// runtime function calls.  At this point, there is no command-line option to output anything
+    /// containing the runtime functions which can link to the module.
+    ///
+    /// The module will never be evaluated when this flag is specified.
+    #[arg(long)]
+    print_module: bool,
 
-    /// The expression to evaluate.
+    /// The source text of the JavaScript program to run.
+    ///
+    /// Reads the source text from STDIN if this argument is not specified.
     #[arg()]
-    expr: Option<String>,
+    source: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -35,16 +44,17 @@ fn main() -> Result<()> {
     let cl = CommandLine::parse();
     let mut runtime = Runtime::new().with_host_function("print", print);
     match cl.command {
-        Command::Eval(eval) => {
-            let expr = match eval.expr {
-                Some(expr) => expr,
+        Command::Run(run) => {
+            let source = match run.source {
+                Some(source) => source,
                 None => read_from_stdin()?,
             };
-            let module = runtime.compile_script(&expr).unwrap();
-            if eval.debug {
-                module.dump();
+            let module = runtime.compile_script(&source).unwrap();
+            if run.print_module {
+                module.print(false); // to STDOUT
+            } else {
+                runtime.eval(module);
             }
-            runtime.eval(module);
         }
     }
     Ok(())
