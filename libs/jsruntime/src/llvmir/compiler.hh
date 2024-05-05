@@ -217,10 +217,6 @@ class Compiler {
 
   std::vector<Item> stack_;
 
-  // TODO: data flow analysis
-  // TODO: caching the value type (any, number, etc.) improves the performance.
-  std::unordered_map<uint32_t, llvm::Value*> reference_cache_;
-
   // for optimization
   std::unique_ptr<llvm::FunctionPassManager> fpm_;
   std::unique_ptr<llvm::LoopAnalysisManager> lam_;
@@ -229,4 +225,9 @@ class Compiler {
   std::unique_ptr<llvm::ModuleAnalysisManager> mam_;
   std::unique_ptr<llvm::PassInstrumentationCallbacks> pic_;
   std::unique_ptr<llvm::StandardInstrumentations> si_;
+
+  // TODO: At this point, we use a cache in order to remove redundant runtime function calls to
+  // retrieve values of lexical bindings.  But it should be replaced with a LLVM-IR pass to do
+  // that.
+  std::unordered_map<uint32_t, llvm::Value*> reference_cache_;
 };
