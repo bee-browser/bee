@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "llvm/Support/TargetSelect.h"
+#include <llvm/Support/TargetSelect.h>
 
 #include "compiler.hh"
 #include "executor.hh"
@@ -194,6 +194,6 @@ const char* executor_peer_get_data_layout(const Executor* self) {
   return self->data_layout().getStringRepresentation().c_str();
 }
 
-FuncFn executor_peer_get_func(Executor* self, const char* name) {
+FuncPtr executor_peer_get_func(Executor* self, const char* name) {
   return self->GetFunc(name);
 }

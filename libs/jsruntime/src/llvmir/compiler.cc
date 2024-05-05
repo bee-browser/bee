@@ -1,5 +1,20 @@
 #include "compiler.hh"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <llvm/Analysis/CGSCCPassManager.h>
+#include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/IR/PassInstrumentation.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/Passes/StandardInstrumentations.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/Scalar/GVN.h>
+#include <llvm/Transforms/Scalar/Reassociate.h>
+#include <llvm/Transforms/Scalar/SimplifyCFG.h>
+#pragma GCC diagnostic pop
+
 #include "macros.hh"
 #include "module.hh"
 #include "runtime.hh"
@@ -10,6 +25,26 @@ Compiler::Compiler(const char* data_layout) {
   module_->setDataLayout(data_layout);
   builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
   types_ = std::make_unique<TypeHolder>(*context_, *module_, *builder_);
+
+  // Took from toy.cpp in the Kaleidoscope tutorial.
+  fpm_ = std::make_unique<llvm::FunctionPassManager>();
+  lam_ = std::make_unique<llvm::LoopAnalysisManager>();
+  fam_ = std::make_unique<llvm::FunctionAnalysisManager>();
+  cgam_ = std::make_unique<llvm::CGSCCAnalysisManager>();
+  mam_ = std::make_unique<llvm::ModuleAnalysisManager>();
+  pic_ = std::make_unique<llvm::PassInstrumentationCallbacks>();
+  si_ = std::make_unique<llvm::StandardInstrumentations>(*context_, true);  // with debug logs
+  si_->registerCallbacks(*pic_, mam_.get());
+
+  fpm_->addPass(llvm::InstCombinePass());
+  fpm_->addPass(llvm::ReassociatePass());
+  fpm_->addPass(llvm::GVNPass());
+  fpm_->addPass(llvm::SimplifyCFGPass());
+
+  llvm::PassBuilder pb;
+  pb.registerModuleAnalyses(*mam_);
+  pb.registerFunctionAnalyses(*fam_);
+  pb.crossRegisterProxies(*lam_, *fam_, *cgam_, *mam_);
 }
 
 void Compiler::SetSourceFileName(const char* input) {
@@ -421,15 +456,19 @@ void Compiler::StartFunction(const char* name) {
   PushExecContext(exec_context);
 }
 
-void Compiler::EndFunction() {
+void Compiler::EndFunction(bool optimize) {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
   builder_->CreateBr(body_);
   builder_->SetInsertPoint(backup);
 
   PopItem();  // exec_conext
-
   reference_cache_.clear();
+
+  llvm::verifyFunction(*function_);
+  if (optimize) {
+    fpm_->run(*function_, *fam_);
+  }
 }
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {

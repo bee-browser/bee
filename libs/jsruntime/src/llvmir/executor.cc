@@ -57,9 +57,9 @@ void Executor::RegisterModule(Module* mod) {
   ExitOnErr(compile_layer_.add(tracker_, std::move(mod->mod)));
 }
 
-FuncFn Executor::GetFunc(const char* name) {
+FuncPtr Executor::GetFunc(const char* name) {
   auto sym = ExitOnErr(Lookup(name));
-  return sym.getAddress().toPtr<double (*)(void*)>();
+  return sym.getAddress().toPtr<FuncPtr>();
 }
 
 llvm::Expected<llvm::orc::ExecutorSymbolDef> Executor::Lookup(llvm::StringRef name) {

@@ -59,12 +59,12 @@ void compiler_peer_dump_stack(Compiler* self);
 // Execution
 
 class Executor;
-typedef double (*FuncFn)(void*);
+typedef void (*FuncPtr)(void*);
 Executor* executor_peer_new();
 void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);
 void executor_peer_register_module(Executor* self, Module* mod);
 const char* executor_peer_get_data_layout(const Executor* self);
-FuncFn executor_peer_get_func(Executor* self, const char* name);
+FuncPtr executor_peer_get_func(Executor* self, const char* name);
 
 END_C_LINKAGE

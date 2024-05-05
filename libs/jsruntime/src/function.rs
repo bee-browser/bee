@@ -120,7 +120,7 @@ pub struct NativeFunction {
 
     // [[ECMAScriptCode]]
     pub name: CString,
-    pub func: Option<unsafe extern "C" fn(runtime: *mut std::os::raw::c_void) -> f64>,
+    pub func: crate::llvmir::bridge::FuncPtr,
 }
 
 pub struct HostFunction {

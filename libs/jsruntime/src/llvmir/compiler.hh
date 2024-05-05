@@ -9,10 +9,15 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
+#include <llvm/Analysis/CGSCCPassManager.h>
+#include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/IR/DataLayout.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/PassInstrumentation.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Passes/StandardInstrumentations.h>
 #pragma GCC diagnostic pop
 
 #include "type_holder.hh"
@@ -55,7 +60,7 @@ class Compiler {
   void IfElseStatement();
   void IfStatement();
   void StartFunction(const char* name);
-  void EndFunction();
+  void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
   void Return(size_t n);
@@ -215,4 +220,13 @@ class Compiler {
   // TODO: data flow analysis
   // TODO: caching the value type (any, number, etc.) improves the performance.
   std::unordered_map<uint32_t, llvm::Value*> reference_cache_;
+
+  // for optimization
+  std::unique_ptr<llvm::FunctionPassManager> fpm_;
+  std::unique_ptr<llvm::LoopAnalysisManager> lam_;
+  std::unique_ptr<llvm::FunctionAnalysisManager> fam_;
+  std::unique_ptr<llvm::CGSCCAnalysisManager> cgam_;
+  std::unique_ptr<llvm::ModuleAnalysisManager> mam_;
+  std::unique_ptr<llvm::PassInstrumentationCallbacks> pic_;
+  std::unique_ptr<llvm::StandardInstrumentations> si_;
 };
