@@ -19,8 +19,10 @@ void module_peer_delete(Module* self);
 // Compilation
 
 class Compiler;
-Compiler* compiler_peer_new(const char* data_layout);
+Compiler* compiler_peer_new();
 void compiler_peer_delete(Compiler* self);
+void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
+void compiler_peer_set_target_triple(Compiler* self, const char* triple);
 void compiler_peer_start(Compiler* self);
 Module* compiler_peer_end(Compiler* self);
 void compiler_peer_number(Compiler* self, double value);
@@ -65,6 +67,7 @@ void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);
 void executor_peer_register_module(Executor* self, Module* mod);
 const char* executor_peer_get_data_layout(const Executor* self);
+const char* executor_peer_get_target_triple(const Executor* self);
 FuncPtr executor_peer_get_func(Executor* self, const char* name);
 
 END_C_LINKAGE

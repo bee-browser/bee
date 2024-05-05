@@ -15,8 +15,7 @@ llvm::Expected<Executor*> Executor::Create() {
 
   auto exec_session = std::make_unique<llvm::orc::ExecutionSession>(std::move(*epc));
 
-  llvm::orc::JITTargetMachineBuilder jtmb(
-      exec_session->getExecutorProcessControl().getTargetTriple());
+  llvm::orc::JITTargetMachineBuilder jtmb(exec_session->getTargetTriple());
 
   auto data_layout = jtmb.getDefaultDataLayoutForTarget();
   if (!data_layout) {

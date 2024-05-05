@@ -49,6 +49,10 @@ class Executor {
     return data_layout_;
   }
 
+  const llvm::Triple& target_triple() const {
+    return exec_session_->getTargetTriple();
+  }
+
   llvm::orc::JITDylib& main_jd() {
     return main_jd_;
   }

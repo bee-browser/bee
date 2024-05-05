@@ -19,10 +19,9 @@
 #include "module.hh"
 #include "runtime.hh"
 
-Compiler::Compiler(const char* data_layout) {
+Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
-  module_->setDataLayout(data_layout);
   builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
   types_ = std::make_unique<TypeHolder>(*context_, *module_, *builder_);
 
@@ -45,6 +44,14 @@ Compiler::Compiler(const char* data_layout) {
   pb.registerModuleAnalyses(*mam_);
   pb.registerFunctionAnalyses(*fam_);
   pb.crossRegisterProxies(*lam_, *fam_, *cgam_, *mam_);
+}
+
+void Compiler::SetDataLayout(const char* data_layout) {
+  module_->setDataLayout(data_layout);
+}
+
+void Compiler::SetTargetTriple(const char* triple) {
+  module_->setTargetTriple(triple);
 }
 
 void Compiler::SetSourceFileName(const char* input) {

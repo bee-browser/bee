@@ -20,10 +20,11 @@ impl Runtime {
         let analyzer = Analyzer::new(&mut self.symbol_registry, &self.function_registry);
         let processor = Processor::new(analyzer, false);
         let program = Parser::for_script(source, processor).parse().ok()?;
-        let data_layout = self.executor.get_data_layout();
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new(data_layout);
+        let mut compiler = Compiler::new();
+        compiler.set_data_layout(self.executor.get_data_layout());
+        compiler.set_target_triple(self.executor.get_target_triple());
         compiler.start_compile();
         for func in program.functions.iter() {
             let (func_id, func_name) = self
@@ -44,9 +45,23 @@ struct Compiler {
 }
 
 impl Compiler {
-    pub fn new(data_layout: &CStr) -> Self {
+    pub fn new() -> Self {
         Self {
-            peer: unsafe { bridge::compiler_peer_new(data_layout.as_ptr()) },
+            peer: unsafe { bridge::compiler_peer_new() },
+        }
+    }
+
+    fn set_data_layout(&self, data_layout: &CStr) {
+        logger::debug!(event = "set_data_layout", ?data_layout);
+        unsafe {
+            bridge::compiler_peer_set_data_layout(self.peer, data_layout.as_ptr());
+        }
+    }
+
+    fn set_target_triple(&self, triple: &CStr) {
+        logger::debug!(event = "set_target_triple", ?triple);
+        unsafe {
+            bridge::compiler_peer_set_target_triple(self.peer, triple.as_ptr());
         }
     }
 

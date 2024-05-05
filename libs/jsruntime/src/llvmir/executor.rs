@@ -27,6 +27,10 @@ impl Executor {
         unsafe { CStr::from_ptr(bridge::executor_peer_get_data_layout(self.peer)) }
     }
 
+    pub fn get_target_triple(&self) -> &CStr {
+        unsafe { CStr::from_ptr(bridge::executor_peer_get_target_triple(self.peer)) }
+    }
+
     pub fn get_func(&self, name: &CStr) -> bridge::FuncPtr {
         unsafe { bridge::executor_peer_get_func(self.peer, name.as_ptr()) }
     }

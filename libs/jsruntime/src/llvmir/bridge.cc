@@ -26,12 +26,20 @@ void module_peer_delete(Module* self) {
   delete self;
 }
 
-Compiler* compiler_peer_new(const char* data_layout) {
-  return new Compiler(data_layout);
+Compiler* compiler_peer_new() {
+  return new Compiler();
 }
 
 void compiler_peer_delete(Compiler* self) {
   delete self;
+}
+
+void compiler_peer_set_data_layout(Compiler* self, const char* data_layout) {
+  self->SetDataLayout(data_layout);
+}
+
+void compiler_peer_set_target_triple(Compiler* self, const char* triple) {
+  self->SetTargetTriple(triple);
 }
 
 void compiler_peer_start(Compiler* self) {
@@ -192,6 +200,10 @@ void executor_peer_register_module(Executor* self, Module* mod) {
 
 const char* executor_peer_get_data_layout(const Executor* self) {
   return self->data_layout().getStringRepresentation().c_str();
+}
+
+const char* executor_peer_get_target_triple(const Executor* self) {
+  return self->target_triple().getTriple().c_str();
 }
 
 FuncPtr executor_peer_get_func(Executor* self, const char* name) {

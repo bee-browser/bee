@@ -27,9 +27,11 @@ struct Module;
 
 class Compiler {
  public:
-  explicit Compiler(const char* data_layout);
+  Compiler();
   ~Compiler() = default;
 
+  void SetDataLayout(const char* data_layout);
+  void SetTargetTriple(const char* triple);
   void SetSourceFileName(const char* input);
   Module* TakeModule();
 
