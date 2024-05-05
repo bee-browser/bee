@@ -63,7 +63,7 @@ FuncFn Executor::GetFunc(const char* name) {
 }
 
 llvm::Expected<llvm::orc::ExecutorSymbolDef> Executor::Lookup(llvm::StringRef name) {
-  // Uncomment if you want to show the state of the exec_session_.
+  // Uncomment if you want to see the state of the exec_session_.
   // exec_session_->dump(llvm::errs());
   return exec_session_->lookup({&main_jd_}, mangle_(name.str()));
 }

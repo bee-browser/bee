@@ -22,7 +22,7 @@ struct Module;
 
 class Compiler {
  public:
-  Compiler();
+  explicit Compiler(const char* data_layout);
   ~Compiler() = default;
 
   void SetSourceFileName(const char* input);

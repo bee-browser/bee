@@ -4,10 +4,10 @@
 #include "module.hh"
 #include "runtime.hh"
 
-Compiler::Compiler() {
+Compiler::Compiler(const char* data_layout) {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
-  // TODO: module_->setDataLayout(data_layout);
+  module_->setDataLayout(data_layout);
   builder_ = std::make_unique<llvm::IRBuilder<>>(*context_);
   types_ = std::make_unique<TypeHolder>(*context_, *module_, *builder_);
 }

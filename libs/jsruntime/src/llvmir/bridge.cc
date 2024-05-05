@@ -26,8 +26,8 @@ void module_peer_delete(Module* self) {
   delete self;
 }
 
-Compiler* compiler_peer_new() {
-  return new Compiler();
+Compiler* compiler_peer_new(const char* data_layout) {
+  return new Compiler(data_layout);
 }
 
 void compiler_peer_delete(Compiler* self) {
@@ -188,6 +188,10 @@ void executor_peer_register_runtime(Executor* self, const Runtime* runtime) {
 
 void executor_peer_register_module(Executor* self, Module* mod) {
   self->RegisterModule(mod);
+}
+
+const char* executor_peer_get_data_layout(const Executor* self) {
+  return self->data_layout().getStringRepresentation().c_str();
 }
 
 FuncFn executor_peer_get_func(Executor* self, const char* name) {
