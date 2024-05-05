@@ -15,19 +15,14 @@ enum ValueKind : uint64_t {
   Undefined = 0,
   Boolean = 1,
   Number = 2,
-  Function = 3,
-};
-
-struct Function {
-  uint32_t id;
-  uint32_t lexical_call_index;
+  Closure = 3,
 };
 
 union ValueHolder {
   bool boolean;
   double number;
-  struct Function function;
-  uint64_t opaque;
+  uint64_t closure;
+  uintptr_t opaque;
 };
 
 struct Value {

@@ -48,12 +48,11 @@ impl Runtime {
 
     pub fn eval(&mut self, module: Module) {
         self.executor.register_module(module);
-        let func = Function {
-            id: FunctionId::native(0),
-            lexical_scope_index: 0,
-        };
-        self.fiber.start_call(func);
-        let func = self.function_registry.get_native_mut(func.id.value());
+        let closure = Closure::new(FunctionId::native(0), 0);
+        self.fiber.start_call(closure);
+        let func = self
+            .function_registry
+            .get_native_mut(closure.func_id().value());
         match self.executor.get_func(&func.name) {
             Some(main) => unsafe {
                 main(self as *mut Self as *mut std::ffi::c_void);
@@ -67,9 +66,11 @@ impl Runtime {
     // ((EvaludateBody)) of Function.[[ECMAScriptCode]]
     // ((EvaludateFunctionBody))
     // ((FunctionDeclarationInstantiation))
-    fn ordinary_call_evaludate_body(&mut self, func: Function) {
-        if func.id.is_native() {
-            let func = self.function_registry.get_native_mut(func.id.value());
+    fn ordinary_call_evaludate_body(&mut self, closure: Closure) {
+        if closure.func_id().is_native() {
+            let func = self
+                .function_registry
+                .get_native_mut(closure.func_id().value());
             // ((Evaluation)) of FunctionStatementList
             let callable = match func.func {
                 Some(callable) => callable,
@@ -83,7 +84,7 @@ impl Runtime {
                 callable(self as *mut Self as *mut std::ffi::c_void);
             }
         } else {
-            let func = self.function_registry.get_host(func.id.value());
+            let func = self.function_registry.get_host(closure.func_id().value());
             let callable = func.func;
             // TODO
             let args = &[self
@@ -106,7 +107,7 @@ pub enum Value {
     Undefined,
     Boolean(bool),
     Number(f64),
-    Function(Function),
+    Closure(Closure),
 }
 
 impl From<bool> for Value {
@@ -122,9 +123,51 @@ impl From<f64> for Value {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Function {
-    pub id: FunctionId,
+pub struct Closure {
+    func_id: FunctionId,
 
-    // The index of `Call` in `Fiber::call_stack`, in which the function was created.
-    pub lexical_scope_index: u32,
+    // The index of a `Call` in `Fiber::call_stack`, where the function was defined.
+    call_index: u32,
+}
+
+impl Closure {
+    pub fn new(func_id: FunctionId, call_index: usize) -> Self {
+        Self {
+            func_id,
+            call_index: call_index as u32,
+        }
+    }
+
+    pub fn checked_new(func_id: FunctionId, call_index: usize) -> Option<Self> {
+        if call_index > u32::MAX as usize {
+            logger::error!(err = "too large", call_index);
+            return None;
+        }
+        Some(Self::new(func_id, call_index))
+    }
+
+    #[inline(always)]
+    pub fn func_id(&self) -> FunctionId {
+        self.func_id
+    }
+
+    #[inline(always)]
+    pub fn call_index(&self) -> usize {
+        self.call_index as usize
+    }
+}
+
+impl From<u64> for Closure {
+    fn from(value: u64) -> Self {
+        Self {
+            func_id: (value as u32).into(),
+            call_index: ((value >> 32) as u32),
+        }
+    }
+}
+
+impl From<Closure> for u64 {
+    fn from(value: Closure) -> Self {
+        u32::from(value.func_id()) as u64 | (value.call_index as u64) << 32
+    }
 }

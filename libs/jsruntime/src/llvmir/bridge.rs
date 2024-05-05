@@ -279,10 +279,7 @@ impl crate::Value {
             ValueKind_Undefined => Self::Undefined,
             ValueKind_Boolean => Self::Boolean(value.holder.boolean),
             ValueKind_Number => Self::Number(value.holder.number),
-            ValueKind_Function => Self::Function(crate::Function {
-                id: value.holder.function.id.into(),
-                lexical_scope_index: value.holder.function.lexical_call_index,
-            }),
+            ValueKind_Closure => Self::Closure(value.holder.closure.into()),
             _ => unreachable!(),
         }
     }
@@ -302,13 +299,10 @@ impl crate::Value {
                 kind: ValueKind_Number,
                 holder: ValueHolder { number },
             },
-            crate::Value::Function(func) => Value {
-                kind: ValueKind_Function,
+            crate::Value::Closure(closure) => Value {
+                kind: ValueKind_Closure,
                 holder: ValueHolder {
-                    function: Function {
-                        id: func.id.into(),
-                        lexical_call_index: func.lexical_scope_index,
-                    },
+                    closure: closure.into(),
                 },
             },
         })

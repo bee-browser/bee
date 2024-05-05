@@ -768,11 +768,11 @@ impl Locator {
 
     fn checked_new(flags: u32, offset: usize, index: usize) -> Option<Self> {
         if offset > Self::MAX_OFFSET {
-            logger::error!(err = "too large offset", offset);
+            logger::error!(err = "too large", offset);
             return None;
         }
         if index > Self::MAX_INDEX {
-            logger::error!(err = "too large index", index);
+            logger::error!(err = "too large", index);
             return None;
         }
         Some(Self::new(flags, offset, index))

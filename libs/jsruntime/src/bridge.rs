@@ -63,13 +63,13 @@ impl Runtime {
     #[inline(always)]
     pub(crate) fn call(&mut self, value: Value) -> Value {
         debug!(event = "call", ?value);
-        let func = match value {
-            Value::Function(func) => func,
+        let closure = match value {
+            Value::Closure(closure) => closure,
             _ => panic!(), // TODO: throw!()
         };
         // TODO: refactoring
-        self.fiber.start_call(func);
-        self.ordinary_call_evaludate_body(func);
+        self.fiber.start_call(closure);
+        self.ordinary_call_evaludate_body(closure);
         self.fiber.end_call()
     }
 

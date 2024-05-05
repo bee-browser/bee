@@ -3,7 +3,7 @@ use bitflags::bitflags;
 use jsparser::Symbol;
 
 use crate::function::FunctionId;
-use crate::Function;
+use crate::Closure;
 use crate::Locator;
 use crate::Value;
 
@@ -74,26 +74,22 @@ impl Fiber {
     ) {
         debug_assert!(locator.is_local());
         debug_assert_eq!(locator.offset(), 0);
-        let lexical_scope_index = self.call_stack.len() - 1;
-        // TODO: should throw a runtime error if the following condition is unmet.
-        assert!(lexical_scope_index <= u32::MAX as usize);
-        let call = &self.call_stack[lexical_scope_index];
+        let call_index = self.call_stack.len() - 1;
+        let call = &self.call_stack[call_index];
         let i = call.local_base + locator.index() as usize;
         let binding = &mut self.binding_stack[i];
         // ((CreateMutableBinding))
         debug_assert!(!binding.flags.contains(BindingFlags::INITIALIZED));
         binding.flags = BindingFlags::INITIALIZED | BindingFlags::MUTABLE | BindingFlags::DELETABLE;
         binding.symbol = symbol;
-        binding.value = Value::Function(Function {
-            id: func_id,
-            lexical_scope_index: lexical_scope_index as u32,
-        });
+        // TODO: should throw a runtime error if the following check fails.
+        binding.value = Value::Closure(Closure::checked_new(func_id, call_index).unwrap());
     }
 
     pub(crate) fn get_binding(&self, symbol: Symbol, locator: Locator) -> Value {
         let mut call = self.call_stack.last().unwrap();
         for _ in 0..locator.offset() {
-            call = &self.call_stack[call.func.lexical_scope_index as usize];
+            call = &self.call_stack[call.closure.call_index()];
         }
         let base = if locator.is_argument() {
             call.arguments_base
@@ -112,7 +108,7 @@ impl Fiber {
     pub(crate) fn put_binding(&mut self, symbol: Symbol, locator: Locator, value: Value) {
         let mut call = self.call_stack.last().unwrap();
         for _ in 0..locator.offset() {
-            call = &self.call_stack[call.func.lexical_scope_index as usize];
+            call = &self.call_stack[call.closure.call_index()];
         }
         let base = if locator.is_argument() {
             call.arguments_base
@@ -139,14 +135,14 @@ impl Fiber {
     }
 
     // The top-half of Function.[[Call]]
-    pub(crate) fn start_call(&mut self, func: Function) {
-        self.prepare_for_ordinary_call(func);
+    pub(crate) fn start_call(&mut self, closure: Closure) {
+        self.prepare_for_ordinary_call(closure);
         // TODO: constructor
         // TODO: ((OrdinaryCallBindThis))
     }
 
     // ((PrepareForOrdinaryCall))
-    fn prepare_for_ordinary_call(&mut self, func: Function) {
+    fn prepare_for_ordinary_call(&mut self, closure: Closure) {
         let local_end = self
             .call_stack
             .last()
@@ -155,7 +151,7 @@ impl Fiber {
         // TODO: [[VariableEnvironment]]
         // TODO: [[PrivateEnvironment]]
         self.call_stack
-            .push(Call::new(func, self.binding_stack.len(), local_end));
+            .push(Call::new(closure, self.binding_stack.len(), local_end));
     }
 
     pub fn return_value(&mut self, value: Value) {
@@ -196,7 +192,7 @@ pub struct Call {
     return_value: Value,
 
     // [[Function]]
-    func: Function,
+    closure: Closure,
 
     // [[Realm]]
 
@@ -211,11 +207,11 @@ pub struct Call {
 
 // Implementation of abstract operations for the `Execution Context` specification type.
 impl Call {
-    fn new(func: Function, local_base: usize, arguments_base: usize) -> Self {
+    fn new(closure: Closure, local_base: usize, arguments_base: usize) -> Self {
         Self {
             arguments_base,
             return_value: Value::Undefined,
-            func,
+            closure,
             local_base,
             local_end: local_base,
         }
