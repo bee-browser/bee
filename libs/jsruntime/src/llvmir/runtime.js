@@ -53,7 +53,7 @@ function makeCFunc(func) {
 }
 
 function makeLLVMIRArgs(func) {
-  let args = [undefined].concat(func.args.map((arg) => arg.type)).map(makeLLVMIRType).join(', ');
+  let args = ['opaque'].concat(func.args.map((arg) => arg.type)).map(makeLLVMIRType).join(', ');
   return `{${args}}`;
 }
 

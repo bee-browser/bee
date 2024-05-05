@@ -12,7 +12,7 @@ CODEGEN_TARGETS := \
 .PHONY: codegen
 codegen: $(CODEGEN_TARGETS)
 
-%:: runtime.yaml %.njk $(TOOLS_BIN)/nunjucks.js $(TOOLS_BIN)/update_file.js
+%:: runtime.yaml %.njk runtime.js $(TOOLS_BIN)/nunjucks.js $(TOOLS_BIN)/update_file.js
 	@echo 'Generating $(abspath $@)...'
 	@deno run -q --allow-read=. runtime.js $< | \
 	  deno run -q --allow-read=. $(TOOLS_BIN)/nunjucks.js $@.njk | \
