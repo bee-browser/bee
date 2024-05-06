@@ -6,7 +6,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-num-traits = "0.2.18"
+num-traits = "0.2.19"
 serde = { version = "1.0.200", features = ["derive"], optional = true }
 
 [dev-dependencies]
