@@ -7,21 +7,26 @@ use super::Symbol;
 use super::SymbolRegistry;
 
 impl SymbolRegistry {
-    pub(crate) const ASYNC: Symbol = Symbol(1);
-    pub(crate) const AWAIT: Symbol = Symbol(2);
-    pub(crate) const ARGUMENTS: Symbol = Symbol(3);
-    pub(crate) const EVAL: Symbol = Symbol(4);
-    pub(crate) const IMPLEMENTS: Symbol = Symbol(5);
-    pub(crate) const INTERFACE: Symbol = Symbol(6);
-    pub(crate) const LET: Symbol = Symbol(7);
-    pub(crate) const PACKAGE: Symbol = Symbol(8);
-    pub(crate) const PRIVATE: Symbol = Symbol(9);
-    pub(crate) const PROTECTED: Symbol = Symbol(10);
-    pub(crate) const PUBLIC: Symbol = Symbol(11);
-    pub(crate) const STATIC: Symbol = Symbol(12);
-    pub(crate) const YIELD: Symbol = Symbol(13);
+    pub const INFINITY: Symbol = Symbol(1);
+    pub const NAN: Symbol = Symbol(2);
+    pub const ASYNC: Symbol = Symbol(3);
+    pub const AWAIT: Symbol = Symbol(4);
+    pub const ARGUMENTS: Symbol = Symbol(5);
+    pub const EVAL: Symbol = Symbol(6);
+    pub const IMPLEMENTS: Symbol = Symbol(7);
+    pub const INTERFACE: Symbol = Symbol(8);
+    pub const LET: Symbol = Symbol(9);
+    pub const PACKAGE: Symbol = Symbol(10);
+    pub const PRIVATE: Symbol = Symbol(11);
+    pub const PROTECTED: Symbol = Symbol(12);
+    pub const PUBLIC: Symbol = Symbol(13);
+    pub const STATIC: Symbol = Symbol(14);
+    pub const UNDEFINED: Symbol = Symbol(15);
+    pub const YIELD: Symbol = Symbol(16);
 
     pub(super) fn register_builtin_symbols(&mut self) {
+        self.register_builtin_symbol(Self::INFINITY, "Infinity");
+        self.register_builtin_symbol(Self::NAN, "NaN");
         self.register_builtin_symbol(Self::ASYNC, "async");
         self.register_builtin_symbol(Self::AWAIT, "await");
         self.register_builtin_symbol(Self::ARGUMENTS, "arguments");
@@ -34,6 +39,7 @@ impl SymbolRegistry {
         self.register_builtin_symbol(Self::PROTECTED, "protected");
         self.register_builtin_symbol(Self::PUBLIC, "public");
         self.register_builtin_symbol(Self::STATIC, "static");
+        self.register_builtin_symbol(Self::UNDEFINED, "undefined");
         self.register_builtin_symbol(Self::YIELD, "yield");
     }
 

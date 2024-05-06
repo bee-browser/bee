@@ -13,6 +13,7 @@
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Scalar/Reassociate.h>
 #include <llvm/Transforms/Scalar/SimplifyCFG.h>
+#include <llvm/Transforms/Utils/Mem2Reg.h>
 #pragma GCC diagnostic pop
 
 #include "macros.hh"
@@ -35,6 +36,7 @@ Compiler::Compiler() {
   si_ = std::make_unique<llvm::StandardInstrumentations>(*context_, true);  // with debug logs
   si_->registerCallbacks(*pic_, mam_.get());
 
+  fpm_->addPass(llvm::PromotePass());
   fpm_->addPass(llvm::InstCombinePass());
   fpm_->addPass(llvm::ReassociatePass());
   fpm_->addPass(llvm::GVNPass());
@@ -59,18 +61,31 @@ void Compiler::SetSourceFileName(const char* input) {
 }
 
 Module* Compiler::TakeModule() {
+  if (llvm::verifyModule(*module_, &llvm::errs())) {
+    llvm::errs() << "<broken-module>\n";
+    module_->print(llvm::errs(), nullptr);
+    llvm::errs() << "</broken-module>\n";
+    std::abort();
+  }
+
   llvm::orc::ThreadSafeModule mod(std::move(module_), std::move(context_));
   return new Module(std::move(mod));
 }
 
-void Compiler::Number(double number) {
-  auto* value = llvm::ConstantFP::get(*context_, llvm::APFloat(number));
-  PushNumber(value);
+void Compiler::Undefined() {
+  PushUndefined();
+}
+
+void Compiler::Boolean(bool value) {
+  PushBoolean(llvm::ConstantInt::getBool(*context_, value));
+}
+
+void Compiler::Number(double value) {
+  PushNumber(llvm::ConstantFP::get(*context_, llvm::APFloat(value)));
 }
 
 void Compiler::Function(uint32_t func_id) {
-  auto* value = builder_->getInt32(func_id);
-  PushFunction(value);
+  PushFunction(builder_->getInt32(func_id));
 }
 
 void Compiler::Reference(uint32_t symbol, uint32_t locator) {
@@ -79,8 +94,8 @@ void Compiler::Reference(uint32_t symbol, uint32_t locator) {
 
 void Compiler::Add() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFAdd(lhs, rhs);
   PushNumber(v);
@@ -88,8 +103,8 @@ void Compiler::Add() {
 
 void Compiler::Sub() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFSub(lhs, rhs);
   PushNumber(v);
@@ -97,8 +112,8 @@ void Compiler::Sub() {
 
 void Compiler::Mul() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFMul(lhs, rhs);
   PushNumber(v);
@@ -106,8 +121,8 @@ void Compiler::Mul() {
 
 void Compiler::Div() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFDiv(lhs, rhs);
   PushNumber(v);
@@ -115,8 +130,8 @@ void Compiler::Div() {
 
 void Compiler::Rem() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFRem(lhs, rhs);
   PushNumber(v);
@@ -124,8 +139,8 @@ void Compiler::Rem() {
 
 void Compiler::Lt() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOLT(lhs, rhs);
   PushBoolean(v);
@@ -133,8 +148,8 @@ void Compiler::Lt() {
 
 void Compiler::Gt() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOGT(lhs, rhs);
   PushBoolean(v);
@@ -142,8 +157,8 @@ void Compiler::Gt() {
 
 void Compiler::Lte() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOLE(lhs, rhs);
   PushBoolean(v);
@@ -151,8 +166,8 @@ void Compiler::Lte() {
 
 void Compiler::Gte() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOGE(lhs, rhs);
   PushBoolean(v);
@@ -160,8 +175,8 @@ void Compiler::Gte() {
 
 void Compiler::Eq() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOEQ(lhs, rhs);
   PushBoolean(v);
@@ -169,8 +184,8 @@ void Compiler::Eq() {
 
 void Compiler::Ne() {
   Swap();
-  auto* lhs = ToNumber(Dereference());
-  auto* rhs = ToNumber(Dereference());
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpONE(lhs, rhs);
   PushBoolean(v);
@@ -181,12 +196,18 @@ void Compiler::DeclareImmutable() {
   auto ref = PopReference();
   llvm::Function* call;
   switch (item.type) {
-    case Item::Any:
-      call = types_->CreateRuntimeDeclareImmutable();
+    case Item::Undefined:
+      call = types_->CreateRuntimeDeclareImmutableUndefined();
+      break;
+    case Item::Boolean:
+      call = types_->CreateRuntimeDeclareImmutableBoolean();
       break;
     case Item::Number:
       call = types_->CreateRuntimeDeclareImmutableNumber();
       break;
+    case Item::Any:
+      call = types_->CreateRuntimeDeclareImmutable();
+      break;
     default:
       assert(false);
       call = nullptr;
@@ -196,20 +217,30 @@ void Compiler::DeclareImmutable() {
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
   auto* locator = builder_->getInt32(ref.locator);
-  builder_->CreateCall(call, {context, symbol, locator, item.value});
+  if (item.type == Item::Undefined) {
+    builder_->CreateCall(call, {context, symbol, locator});
+  } else {
+    builder_->CreateCall(call, {context, symbol, locator, item.value});
+  }
 }
 
 void Compiler::DeclareMutable() {
-  auto item = PopItem();
+  auto item = Dereference();
   auto ref = PopReference();
   llvm::Function* call;
   switch (item.type) {
-    case Item::Any:
-      call = types_->CreateRuntimeDeclareMutable();
+    case Item::Undefined:
+      call = types_->CreateRuntimeDeclareMutableUndefined();
+      break;
+    case Item::Boolean:
+      call = types_->CreateRuntimeDeclareMutableBoolean();
       break;
     case Item::Number:
       call = types_->CreateRuntimeDeclareMutableNumber();
       break;
+    case Item::Any:
+      call = types_->CreateRuntimeDeclareMutable();
+      break;
     default:
       assert(false);
       call = nullptr;
@@ -219,7 +250,11 @@ void Compiler::DeclareMutable() {
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
   auto* locator = builder_->getInt32(ref.locator);
-  builder_->CreateCall(call, {context, symbol, locator, item.value});
+  if (item.type == Item::Undefined) {
+    builder_->CreateCall(call, {context, symbol, locator});
+  } else {
+    builder_->CreateCall(call, {context, symbol, locator, item.value});
+  }
 }
 
 void Compiler::DeclareFunction() {
@@ -236,35 +271,22 @@ void Compiler::DeclareFunction() {
   builder_->SetInsertPoint(backup);
 }
 
-void Compiler::GetReference() {
-  auto ref = PopReference();
-  auto cache = reference_cache_.find(ref.locator);
-  if (cache != reference_cache_.end()) {
-    PushAny(cache->second);
-    return;
-  }
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  auto* locator = builder_->getInt32(ref.locator);
-  auto* value = builder_->CreateAlloca(types_->CreateValueType());
-  auto* ret =
-      builder_->CreateCall(types_->CreateRuntimeGetBinding(), {context, symbol, locator, value});
-  UNUSED(ret);
-  PushAny(value);
-  reference_cache_[ref.locator] = value;
-}
-
 void Compiler::Set() {
   auto item = PopItem();
   auto ref = PopReference();
   llvm::Function* call;
   switch (item.type) {
-    case Item::Any:
-      call = types_->CreateRuntimePutBinding();
+    case Item::Undefined:
+      call = types_->CreateRuntimePutBindingUndefined();
+      break;
+    case Item::Boolean:
+      call = types_->CreateRuntimePutBindingBoolean();
       break;
     case Item::Number:
       call = types_->CreateRuntimePutBindingNumber();
+      break;
+    case Item::Any:
+      call = types_->CreateRuntimePutBinding();
       break;
     default:
       assert(false);
@@ -275,8 +297,11 @@ void Compiler::Set() {
   auto* context = exec_context();
   auto* symbol = builder_->getInt32(ref.symbol);
   auto* locator = builder_->getInt32(ref.locator);
-  builder_->CreateCall(call, {context, symbol, locator, item.value});
-  reference_cache_[ref.locator] = ToAny(item);
+  if (item.type == Item::Undefined) {
+    builder_->CreateCall(call, {context, symbol, locator});
+  } else {
+    builder_->CreateCall(call, {context, symbol, locator, item.value});
+  }
   stack_.push_back(item);
 }
 
@@ -286,18 +311,28 @@ void Compiler::PushArgument() {
   auto* context = exec_context();
   llvm::Function* call;
   switch (item.type) {
-    case Item::Any:
-      call = types_->CreateRuntimePushArgument();
+    case Item::Undefined:
+      call = types_->CreateRuntimePushArgumentUndefined();
+      break;
+    case Item::Boolean:
+      call = types_->CreateRuntimePushArgumentBoolean();
       break;
     case Item::Number:
       call = types_->CreateRuntimePushArgumentNumber();
+      break;
+    case Item::Any:
+      call = types_->CreateRuntimePushArgument();
       break;
     default:
       assert(false);
       call = nullptr;
       break;
   }
-  builder_->CreateCall(call, {context, item.value});
+  if (item.type == Item::Undefined) {
+    builder_->CreateCall(call, {context});
+  } else {
+    builder_->CreateCall(call, {context, item.value});
+  }
 }
 
 void Compiler::Call() {
@@ -312,8 +347,7 @@ void Compiler::Call() {
 }
 
 void Compiler::ToBoolean() {
-  auto item = Dereference();
-  assert(item.IsValue());
+  const auto item = Dereference();
   llvm::Value* value;
   switch (item.type) {
     case Item::Undefined:
@@ -323,12 +357,18 @@ void Compiler::ToBoolean() {
       value = item.value;
       break;
     case Item::Number:
-      value = builder_->CreateFCmpONE(
-          item.value, llvm::ConstantFP::get(*context_, llvm::APFloat(0.0)));
+      value =
+          builder_->CreateFCmpUNE(item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
       break;
+    case Item::Any: {
+      auto* call = types_->CreateToBoolean();
+      value = builder_->CreateCall(call, {item.value});
+      break;
+    }
     default:
       // TODO
       assert(false);
+      value = nullptr;
       break;
   }
   PushBoolean(value);
@@ -353,37 +393,81 @@ void Compiler::ConditionalExpression() {
   auto* else_tail_block = builder_->GetInsertBlock();
   auto* func = else_tail_block->getParent();
 
-  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
-
   auto else_item = Dereference();
-  assert(else_item.type == Item::Number);  // TODO
-  auto* else_value = else_item.value;
-  builder_->CreateBr(block);
 
   auto* else_head_block = PopBlock();
   auto* then_tail_block = PopBlock();
 
   builder_->SetInsertPoint(then_tail_block);
   auto then_item = Dereference();
-  assert(then_item.type == Item::Number);  // TODO
-  auto* then_value = then_item.value;
-  builder_->CreateBr(block);
 
   auto* then_head_block = PopBlock();
   auto* cond_block = PopBlock();
 
   builder_->SetInsertPoint(cond_block);
   auto* cond_value = PopValue();
-
-  builder_->SetInsertPoint(cond_block);
   builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
 
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+
+  if (then_item.type == else_item.type) {
+    builder_->SetInsertPoint(then_tail_block);
+    builder_->CreateBr(block);
+
+    builder_->SetInsertPoint(else_tail_block);
+    builder_->CreateBr(block);
+
+    builder_->SetInsertPoint(block);
+
+    // In this case, we can use the value of each item as is.
+    switch (then_item.type) {
+      case Item::Undefined:
+        PushUndefined();
+        return;
+      case Item::Boolean: {
+        auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(else_item.value, else_tail_block);
+        PushBoolean(phi);
+        return;
+      }
+      case Item::Number: {
+        auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2);
+        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(else_item.value, else_tail_block);
+        PushNumber(phi);
+        return;
+      }
+      case Item::Any: {
+        auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
+        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(else_item.value, else_tail_block);
+        PushAny(phi);
+        return;
+      }
+      default:
+        // TODO
+        assert(false);
+        PushUndefined();
+        return;
+    }
+  }
+
+  // We have to convert the value before the branch in each block.
+
+  builder_->SetInsertPoint(then_tail_block);
+  auto* then_value = ToAny(then_item);
+  builder_->CreateBr(block);
+
+  builder_->SetInsertPoint(else_tail_block);
+  auto* else_value = ToAny(else_item);
+  builder_->CreateBr(block);
+
   builder_->SetInsertPoint(block);
-  auto* phi = builder_->CreatePHI(llvm::Type::getDoubleTy(*context_), 2);  // TODO
+  auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
   phi->addIncoming(then_value, then_tail_block);
   phi->addIncoming(else_value, else_tail_block);
-
-  PushNumber(phi);  // TODO
+  PushAny(phi);
 }
 
 void Compiler::IfElseStatement() {
@@ -470,9 +554,14 @@ void Compiler::EndFunction(bool optimize) {
   builder_->SetInsertPoint(backup);
 
   PopItem();  // exec_conext
-  reference_cache_.clear();
 
-  llvm::verifyFunction(*function_);
+  if (llvm::verifyFunction(*function_, &llvm::errs())) {
+    llvm::errs() << "<broken-function>\n";
+    function_->print(llvm::errs());
+    llvm::errs() << "</broken-function>\n";
+    std::abort();
+  }
+
   if (optimize) {
     fpm_->run(*function_, *fam_);
   }
@@ -501,20 +590,28 @@ void Compiler::Return(size_t n) {
     auto item = Dereference();
     llvm::Function* call;
     switch (item.type) {
-      case Item::Any:
-        call = types_->CreateRuntimeReturnValue();
+      case Item::Undefined:
+        call = nullptr;
+        break;
+      case Item::Boolean:
+        call = types_->CreateRuntimeReturnBoolean();
         break;
       case Item::Number:
         call = types_->CreateRuntimeReturnNumber();
+        break;
+      case Item::Any:
+        call = types_->CreateRuntimeReturnValue();
         break;
       default:
         assert(false);
         call = nullptr;
         break;
     }
-    // TODO: use a global variable to hold the execution context.
-    auto* context = exec_context();
-    builder_->CreateCall(call, {context, item.value});
+    if (call != nullptr) {
+      // TODO: use a global variable to hold the execution context.
+      auto* context = exec_context();
+      builder_->CreateCall(call, {context, item.value});
+    }
   }
   builder_->CreateRetVoid();
 }
@@ -585,53 +682,76 @@ void Compiler::CreateCallRuntimeInspect(llvm::Value* value) {
 }
 
 Compiler::Item Compiler::Dereference() {
-  assert(!stack_.empty());
-  const auto& item = stack_.back();
+  const auto item = PopItem();
   switch (item.type) {
+    case Item::Undefined:
     case Item::Boolean:
     case Item::Number:
     case Item::Function:
     case Item::Any:
-      // nothing to do.
-      break;
-    case Item::Reference:
-      GetReference();
-      break;
+      return item;
+    case Item::Reference: {
+      // TODO: use a global variable to hold the execution context.
+      auto* context = exec_context();
+      auto* symbol = builder_->getInt32(item.reference.symbol);
+      auto* locator = builder_->getInt32(item.reference.locator);
+      auto* value = builder_->CreateAlloca(types_->CreateValueType());
+      auto* ret = builder_->CreateCall(
+          types_->CreateRuntimeGetBinding(), {context, symbol, locator, value});
+      UNUSED(ret);
+      return Item(Item::Any, value);
+    }
     default:
       // never reach here
       assert(false);
-      break;
+      return Item(Item::Undefined);
   }
-  return PopItem();
 }
 
-llvm::Value* Compiler::ToNumber(const Compiler::Item& item) {
+llvm::Value* Compiler::ToNumeric(const Item& item) {
   switch (item.type) {
+    case Item::Undefined:
+      return llvm::ConstantFP::getNaN(builder_->getDoubleTy());
+    case Item::Boolean:
+      return builder_->CreateUIToFP(item.value, builder_->getDoubleTy());
     case Item::Number:
       return item.value;
-    case Item::Any:
-      return builder_->CreateLoad(builder_->getDoubleTy(),
-          builder_->CreateStructGEP(types_->CreateValueType(), item.value, 1));
+    case Item::Any: {
+      auto* call = types_->CreateToNumeric();
+      return builder_->CreateCall(call, {item.value});
+    }
     default:
       assert(false);
       return nullptr;
   }
 }
 
-llvm::Value* Compiler::ToAny(const Compiler::Item& item) {
+llvm::Value* Compiler::ToAny(const Item& item) {
+  if (item.type == Item::Any) {
+    return item.value;
+  }
+
+  auto* value = builder_->CreateAlloca(types_->CreateValueType());
+  auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 0);
+  llvm::Value* holder_ptr;
   switch (item.type) {
-    case Item::Number: {
-      auto* value_type = types_->CreateValueType();
-      auto* value = builder_->CreateAlloca(value_type);
-      auto* kind_ptr = builder_->CreateStructGEP(value_type, value, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
-      auto* holder_ptr = builder_->CreateStructGEP(value_type, value, 1);
+    case Item::Undefined:
+      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
+      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
+      builder_->CreateStore(builder_->getInt64(0), holder_ptr);
+      return value;
+    case Item::Boolean:
+      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
+      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
       builder_->CreateStore(item.value, holder_ptr);
       return value;
-    }
-    case Item::Any:
-      return item.value;
+    case Item::Number:
+      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
+      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
+      builder_->CreateStore(item.value, holder_ptr);
+      return value;
     default:
+      // TODO
       assert(false);
       return nullptr;
   }

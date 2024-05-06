@@ -35,6 +35,8 @@ class Compiler {
   void SetSourceFileName(const char* input);
   Module* TakeModule();
 
+  void Undefined();
+  void Boolean(bool value);
   void Number(double value);
   void Function(uint32_t func_id);
   void Reference(uint32_t symbol, uint32_t locator);
@@ -52,7 +54,6 @@ class Compiler {
   void DeclareImmutable();
   void DeclareMutable();
   void DeclareFunction();
-  void GetReference();
   void Set();
   void PushArgument();
   void Call();
@@ -203,7 +204,7 @@ class Compiler {
   }
 
   Item Dereference();
-  llvm::Value* ToNumber(const Item& item);
+  llvm::Value* ToNumeric(const Item& item);
   llvm::Value* ToAny(const Item& item);
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
@@ -227,9 +228,4 @@ class Compiler {
   std::unique_ptr<llvm::ModuleAnalysisManager> mam_;
   std::unique_ptr<llvm::PassInstrumentationCallbacks> pic_;
   std::unique_ptr<llvm::StandardInstrumentations> si_;
-
-  // TODO: At this point, we use a cache in order to remove redundant runtime function calls to
-  // retrieve values of lexical bindings.  But it should be replaced with a LLVM-IR pass to do
-  // that.
-  std::unordered_map<uint32_t, llvm::Value*> reference_cache_;
 };

@@ -359,8 +359,8 @@ where
 
     #[inline(always)]
     fn make_symbol(&mut self, token_index: usize) -> Symbol {
-        let value = self.tokens[token_index].lexeme.encode_utf16().collect();
-        self.handler.symbol_registry_mut().intern(value)
+        let lexeme = self.tokens[token_index].lexeme;
+        self.handler.symbol_registry_mut().intern_str(lexeme)
     }
 }
 

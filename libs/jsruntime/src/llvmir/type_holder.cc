@@ -13,6 +13,25 @@ llvm::StructType* TypeHolder::CreateValueType() {
   return value_type_;
 }
 
+llvm::Function* TypeHolder::CreateToBoolean() {
+  if (to_boolean_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_.getInt1Ty(), {builder_.getPtrTy()}, false);
+    to_boolean_ =
+        llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "to_boolean", module_);
+  }
+  return to_boolean_;
+}
+
+llvm::Function* TypeHolder::CreateToNumeric() {
+  if (to_numeric_ == nullptr) {
+    auto* prototype =
+        llvm::FunctionType::get(builder_.getDoubleTy(), {builder_.getPtrTy()}, false);
+    to_numeric_ =
+        llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, "to_numeric", module_);
+  }
+  return to_numeric_;
+}
+
 llvm::Function* TypeHolder::CreateRuntimeDeclareImmutable() {
   if (runtime_declare_immutable_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getVoidTy(),

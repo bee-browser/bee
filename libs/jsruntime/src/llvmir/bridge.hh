@@ -25,6 +25,8 @@ void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
 void compiler_peer_start(Compiler* self);
 Module* compiler_peer_end(Compiler* self);
+void compiler_peer_undefined(Compiler* self);
+void compiler_peer_boolean(Compiler* self, bool value);
 void compiler_peer_number(Compiler* self, double value);
 void compiler_peer_function(Compiler* self, uint32_t func_id);
 void compiler_peer_reference(Compiler* self, uint32_t symbol, uint32_t locator);

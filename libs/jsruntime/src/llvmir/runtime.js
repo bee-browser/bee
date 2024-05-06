@@ -98,7 +98,7 @@ function makeCType(type) {
     case undefined:
       return 'void';
     default:
-      log.error(`unsupported type: ${func.return_type}`);
+      log.error(`unsupported type: ${type}`);
       return;
   }
 }

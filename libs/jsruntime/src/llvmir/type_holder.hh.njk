@@ -17,6 +17,8 @@ class TypeHolder {
   TypeHolder(llvm::LLVMContext& context, llvm::Module& module, llvm::IRBuilder<>& builder) : context_(context), module_(module), builder_(builder) {}
 
   llvm::StructType* CreateValueType();
+  llvm::Function* CreateToBoolean();
+  llvm::Function* CreateToNumeric();
   {%- for function in data.functions %}
   llvm::Function* CreateRuntime{{ function.name | pascalCase }}();
   {%- endfor %}
@@ -26,6 +28,8 @@ class TypeHolder {
   llvm::Module& module_;
   llvm::IRBuilder<>& builder_;
   llvm::StructType* value_type_ = nullptr;
+  llvm::Function* to_boolean_ = nullptr;
+  llvm::Function* to_numeric_ = nullptr;
   {%- for function in data.functions %}
   llvm::Function* runtime_{{ function.name }}_ = nullptr;
   {%- endfor %}

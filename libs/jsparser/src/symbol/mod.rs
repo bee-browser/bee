@@ -1,5 +1,7 @@
 mod builtins;
 
+use std::ffi::CStr;
+
 use indexmap::IndexSet;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -39,6 +41,15 @@ impl SymbolRegistry {
         symbols.insert(vec![]);
         debug_assert!(symbols.get_index(0).is_some());
         Self { symbols }
+    }
+
+    pub fn intern_cstr<T: AsRef<CStr>>(&mut self, s: T) -> Symbol {
+        self.intern_str(s.as_ref().to_str().unwrap())
+    }
+
+    pub fn intern_str<T: AsRef<str>>(&mut self, s: T) -> Symbol {
+        let code_units: Vec<u16> = s.as_ref().encode_utf16().collect();
+        self.intern(code_units)
     }
 
     // TODO: use more efficient memory management such as bump allocation and arena.

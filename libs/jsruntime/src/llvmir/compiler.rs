@@ -17,7 +17,8 @@ use crate::semantics::Locator;
 
 impl Runtime {
     pub fn compile_script(&mut self, source: &str) -> Option<Module> {
-        let analyzer = Analyzer::new(&mut self.symbol_registry, &self.function_registry);
+        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &self.function_registry);
+        analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, false);
         let program = Parser::for_script(source, processor).parse().ok()?;
         // TODO: Deferring the compilation until it's actually called improves the performance.
@@ -97,15 +98,14 @@ impl Compiler {
         match command {
             CompileCommand::Nop => (),
             CompileCommand::Undefined => unsafe {
-                // TODO
-                bridge::compiler_peer_number(self.peer, 0.0);
+                bridge::compiler_peer_undefined(self.peer);
             },
             CompileCommand::Null => {
                 // TODO
             }
-            CompileCommand::Boolean(_value) => {
-                // TODO
-            }
+            CompileCommand::Boolean(value) => unsafe {
+                bridge::compiler_peer_boolean(self.peer, *value);
+            },
             CompileCommand::Number(value) => unsafe {
                 bridge::compiler_peer_number(self.peer, *value);
             },

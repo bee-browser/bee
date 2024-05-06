@@ -50,6 +50,14 @@ Module* compiler_peer_end(Compiler* self) {
   return self->TakeModule();
 }
 
+void compiler_peer_undefined(Compiler* self) {
+  self->Undefined();
+}
+
+void compiler_peer_boolean(Compiler* self, bool value) {
+  self->Boolean(value);
+}
+
 void compiler_peer_number(Compiler* self, double value) {
   self->Number(value);
 }

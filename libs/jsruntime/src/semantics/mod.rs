@@ -36,6 +36,7 @@ pub struct Analyzer<'r> {
     functions: Vec<FunctionRecipe>,
     scope_manager: ScopeManager,
     references: Vec<Reference>,
+    use_global_bindings: bool,
 }
 
 impl<'r> Analyzer<'r> {
@@ -57,7 +58,12 @@ impl<'r> Analyzer<'r> {
             }],
             scope_manager: Default::default(),
             references: vec![],
+            use_global_bindings: false,
         }
+    }
+
+    pub fn use_global_bindings(&mut self) {
+        self.use_global_bindings = true;
     }
 
     fn handle_node(&mut self, node: Node<'_>) {
@@ -319,6 +325,79 @@ impl<'r> Analyzer<'r> {
         context.in_body = true;
     }
 
+    // TODO: global object
+    fn put_global_bindings(&mut self) {
+        let context = self.context_stack.last_mut().unwrap();
+
+        // Register `undefined`.
+        let symbol = SymbolRegistry::UNDEFINED;
+        // The locator will be computed in `resolve_locators()`.
+        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        context.put_lexical_binding(false);
+        context.process_immutable_bindings(1);
+        self.scope_manager
+            .add_binding(symbol, BindingKind::Immutable);
+        self.references.push(Reference {
+            symbol,
+            func_id: context.func_id,
+            scope_ref: self.scope_manager.current(),
+            command_index,
+        });
+
+        // Register `Infinity`.
+        let symbol = SymbolRegistry::INFINITY;
+        // The locator will be computed in `resolve_locators()`.
+        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        context.put_number(f64::INFINITY);
+        context.put_lexical_binding(true);
+        context.process_immutable_bindings(1);
+        self.scope_manager
+            .add_binding(symbol, BindingKind::Immutable);
+        self.references.push(Reference {
+            symbol,
+            func_id: context.func_id,
+            scope_ref: self.scope_manager.current(),
+            command_index,
+        });
+
+        // Register `NaN`.
+        let symbol = SymbolRegistry::NAN;
+        // The locator will be computed in `resolve_locators()`.
+        let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+        context.put_number(f64::NAN);
+        context.put_lexical_binding(true);
+        context.process_immutable_bindings(1);
+        self.scope_manager
+            .add_binding(symbol, BindingKind::Immutable);
+        self.references.push(Reference {
+            symbol,
+            func_id: context.func_id,
+            scope_ref: self.scope_manager.current(),
+            command_index,
+        });
+    }
+
+    // TODO: global object
+    fn register_host_functions(&mut self) {
+        let context = self.context_stack.last_mut().unwrap();
+
+        for (func_id, host_func) in self.function_registry.enumerate_host_function() {
+            let symbol = self.symbol_registry.intern_cstr(&host_func.name);
+            // The locator will be computed in `resolve_locators()`.
+            let command_index =
+                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
+            context.process_function_declaration(func_id.into());
+            self.scope_manager
+                .add_binding(symbol, BindingKind::Immutable);
+            self.references.push(Reference {
+                symbol,
+                func_id: context.func_id,
+                scope_ref: self.scope_manager.current(),
+                command_index,
+            });
+        }
+    }
+
     fn resolve_locators(&mut self) {
         for reference in self.references.iter() {
             let locator = self.scope_manager.compute_locator(reference);
@@ -335,34 +414,27 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
     fn start(&mut self) {
         logger::debug!(event = "start");
         let context = self.context_stack.last_mut().unwrap();
-        // Push `Nop` as a placeholder.  It will be replaced in `accept()`.
+        // Push `Nop` as a placeholder.
+        // It will be replaced with `Bindings(n)` in `accept()`.
         context.commands.push(CompileCommand::Nop);
         context.start_scope();
         self.scope_manager.push(ScopeKind::Function);
+
+        if self.use_global_bindings {
+            self.put_global_bindings();
+        }
+
+        self.register_host_functions();
     }
 
     fn accept(&mut self) -> Result<Self::Artifact, Error> {
         logger::debug!(event = "accept");
         let mut context = self.context_stack.pop().unwrap();
-        for (func_id, host_func) in self.function_registry.enumerate_host_function() {
-            let code_units: Vec<u16> = host_func.name.to_str().unwrap().encode_utf16().collect();
-            let symbol = self.symbol_registry.intern(code_units);
-            // The locator will be updated later.
-            let command_index =
-                context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-            context.process_function_declaration(func_id.into());
-            self.scope_manager
-                .add_binding(symbol, BindingKind::Immutable);
-            self.references.push(Reference {
-                symbol,
-                func_id: context.func_id,
-                scope_ref: self.scope_manager.current(),
-                command_index,
-            });
-        }
+
         self.scope_manager.pop();
         //self.scope_manager.dump(ScopeRef(1));
         context.end_scope(true);
+
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         context.commands.push(CompileCommand::Return(0));
@@ -488,7 +560,8 @@ impl FunctionContext {
     }
 
     fn start_scope(&mut self) {
-        // Push `Nop` as a placeholder.  It will be replaced in `end_scope()`.
+        // Push `Nop` as a placeholder.
+        // It will be replaced with `AllocateBindings(n)` in `end_scope()`.
         let index = self.put_command(CompileCommand::Nop);
         self.scope_stack.push(Scope {
             command_base_index: index,

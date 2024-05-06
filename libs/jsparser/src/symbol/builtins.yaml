@@ -1,3 +1,5 @@
+- Infinity
+- NaN
 - async
 - await
 - arguments
@@ -10,4 +12,5 @@
 - protected
 - public
 - static
+- undefined
 - yield

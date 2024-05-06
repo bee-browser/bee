@@ -40,7 +40,7 @@ impl Runtime {
     }
 
     pub fn with_host_function(mut self, name: &str, func: fn(&[Value])) -> Self {
-        let symbol = self.symbol_registry.intern(name.encode_utf16().collect());
+        let symbol = self.symbol_registry.intern_str(name);
         let func_id = self.function_registry.register_host_function(name, func);
         logger::debug!(event = "with_host_function", name, ?symbol, ?func_id);
         self
