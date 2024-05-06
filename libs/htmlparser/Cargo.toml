@@ -14,7 +14,7 @@ thiserror = "1.0.59"
 unicase = "2.7.0"
 
 [dev-dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0.83"
 criterion = "0.5.1"
 itertools = "0.12.1"
 toydom = { path = "../toydom" }
