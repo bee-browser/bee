@@ -30,9 +30,9 @@ struct Value {
   ValueHolder holder;
 };
 
-static_assert(sizeof(ValueKind) == sizeof(uint64_t));
-static_assert(sizeof(ValueHolder) == sizeof(uint64_t));
-static_assert(sizeof(Value) == sizeof(uint64_t) * 2);
+static_assert(sizeof(ValueKind) == sizeof(uint64_t), "size mismatched");
+static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
+static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
 struct Runtime {
   {%- for function in data.functions %}
