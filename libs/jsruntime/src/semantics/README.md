@@ -11,4 +11,4 @@ The `semantics` module reads a sequence of the flattened AST and performs:
 Some of the above correspond to the content of the semantic analysis phase described in
 [Modern Compiler Implementation in ML].
 
-[Modern Compiler Implementation in ML](https://www.cambridge.org/core/books/modern-compiler-implementation-in-ml/C2A59C37468AA8AAD0ADDCE080E3CB5D)
+[Modern Compiler Implementation in ML]: https://www.cambridge.org/core/books/modern-compiler-implementation-in-ml/C2A59C37468AA8AAD0ADDCE080E3CB5D
