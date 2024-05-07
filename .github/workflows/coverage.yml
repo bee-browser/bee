@@ -14,9 +14,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install ninja-build
-        run: |
-          sudo apt-get install -y ninja-build
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: denoland/setup-deno@v1
@@ -25,18 +22,9 @@ jobs:
       # TODO: Caching dependencies
       - uses: taiki-e/install-action@nextest
       - uses: taiki-e/install-action@cargo-llvm-cov
-      - uses: actions/cache@v4
-        id: vendor-cache
-        with:
-          path: |
-            vendor/bin
-            vendor/include
-            vendor/lib
-            vendor/share
-          key: ${{ runner.os }}-${{ hashFiles('vendor/Makefile', 'vendor/src/llvm/llvm-project/llvm/CMakeLists.txt') }}
-      - name: Build vendor
-        if: steps.vendor-cache.outputs.cache-hit != 'true'
-        run: make vendor
+      - name: Install LLVM
+        run: |
+          sh tools/bin/ga_install_llvm.sh
       - name: Generate code coverage
         run: |
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json' TEST262_ARGS=''
