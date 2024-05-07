@@ -49,7 +49,7 @@ jobs:
       - uses: taiki-e/install-action@nextest
       - name: Install LLVM
         run: |
-          sh tools/bin/ga_install_llvm.sh
+          sh -x tools/bin/github_actions_install_llvm.sh
       - name: Check
         run: make check
       - name: Build

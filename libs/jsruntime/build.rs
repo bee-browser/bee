@@ -48,22 +48,24 @@ fn main() {
 
     // Rebuild when any of LLVMIR_SOURCE_FILES change.
     for src in LLVMIR_SOURCE_FILES {
-        println!("cargo:rerun-if-changed={src}");
+        println!("cargo::rerun-if-changed={src}");
     }
 
     // Link against LLVM.
-    println!("cargo:rustc-link-search=native={}", llvm_config.libdir());
+    println!("cargo::rustc-link-search=native={}", llvm_config.libdir());
     for lib in llvm_config.libs(LLVM_COMPONENTS).iter() {
-        println!("cargo:rustc-link-lib=static={}", lib);
+        println!("cargo::rustc-link-lib=static={}", lib);
     }
     for lib in llvm_config.system_libs(LLVM_COMPONENTS).iter() {
-        println!("cargo:rustc-link-lib={}", lib);
+        println!("cargo::rustc-link-lib={}", lib);
     }
 }
 
 struct LlvmConfig(PathBuf);
 
 impl LlvmConfig {
+    const LINK_TYPE: &'static str = "--link-static";
+
     fn new() -> Self {
         let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
         let proj_dir = crate_dir.join("..").join("..").canonicalize().unwrap();
@@ -72,22 +74,22 @@ impl LlvmConfig {
     }
 
     fn libdir(&self) -> String {
-        cmd!(&self.0, "--libdir").read().unwrap()
+        cmd!(&self.0, Self::LINK_TYPE, "--libdir").read().unwrap()
     }
 
     fn libs(&self, components: &[&str]) -> Vec<String> {
-        let mut args = vec!["--libs"];
+        let mut args = vec![Self::LINK_TYPE, "--libs"];
         args.extend(components);
-        self.vec(&args)
+        self.list_libs(&args)
     }
 
     fn system_libs(&self, components: &[&str]) -> Vec<String> {
-        let mut args = vec!["--system-libs"];
+        let mut args = vec![Self::LINK_TYPE, "--system-libs"];
         args.extend(components);
-        self.vec(&args)
+        self.list_libs(&args)
     }
 
-    fn vec(&self, args: &[&str]) -> Vec<String> {
+    fn list_libs(&self, args: &[&str]) -> Vec<String> {
         cmd(&self.0, args)
             .read()
             .unwrap()
@@ -97,7 +99,7 @@ impl LlvmConfig {
     }
 
     fn cxxflags(&self) -> Vec<String> {
-        cmd!(&self.0, "--cxxflags")
+        cmd!(&self.0, Self::LINK_TYPE, "--cxxflags")
             .read()
             .unwrap()
             .split_ascii_whitespace()
