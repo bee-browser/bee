@@ -6,6 +6,8 @@
 
 * Multi-Tier compilation
   * Tier-1: in-memory, non-optimized naive instructions for a stack machine
+    * The instructions are only used for generating LLVM IR at this point
+    * We may build an interpreter to perform the instructions directly for quick start-up
   * Tier-2: tier-1 instructions will be translated into in-memory LLVM IR
 * LLVM ORC JIT
   * Tier-2 LLVM IR will be compiled into machine instructions of the target architecture
