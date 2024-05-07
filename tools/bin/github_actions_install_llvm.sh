@@ -17,6 +17,6 @@ vendor/bin/llvm-config --build-mode
 vendor/bin/llvm-config --host-target
 vendor/bin/llvm-config --targets-built
 vendor/bin/llvm-config $LINK_TYPE --cxxflags
-vendor/bin/llvm-config --libdirs
+vendor/bin/llvm-config $LINK_TYPE --libdir
 vendor/bin/llvm-config $LINK_TYPE --libs $COMPONENTS
 vendor/bin/llvm-config $LINK_TYPE --system-libs $COMPONENTS
