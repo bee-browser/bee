@@ -64,14 +64,21 @@ test262:
 	-sh bins/estree/scripts/test262_parser_tests.sh $(ARGS)
 	-sh bins/estree/scripts/test262.sh $(ARGS)
 
-# DO NOT REMOVE '-'.
-# Continue the execution in order to generate the report even if a command fails.
 .PHONY: coverage
 coverage: LLVM_COV_ARGS ?= --html
-coverage: TEST262_ARGS ?= --progress
 coverage:
 	cargo llvm-cov clean --workspace
-	-cargo llvm-cov nextest --no-report --all-features
+	cargo llvm-cov nextest --no-report --all-features
+	cargo llvm-cov report $(LLVM_COV_ARGS)
+
+# `make test262` fails in GitHub Actions due to "No space left on device".
+# See https://github.com/bee-browser/bee/actions/runs/8984804708.
+.PHONY: coverage-with-test262
+coverage-with-test262: LLVM_COV_ARGS ?= --html
+coverage-with-test262: TEST262_ARGS ?= --progress
+coverage-with-test262:
+	cargo llvm-cov clean --workspace
+	cargo llvm-cov nextest --no-report --all-features
 	-$(MAKE) test262 ARGS='--mode=coverage $(TEST262_ARGS)'
 	cargo llvm-cov report $(LLVM_COV_ARGS)
 
