@@ -5,7 +5,7 @@ chmod +x llvm.sh
 sudo ./llvm.sh 18
 
 # Install packages needed for LLVM to work.
-sudo apt-get install -y zstd
+sudo apt-get install -y libtinfo6 libxml2 zlib1g libzstd1
 
 # //libs/jsruntime/build.sh uses //vendor/bin/llvm-config.
 mkdir -p vendor/bin
