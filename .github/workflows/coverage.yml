@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
+      # Remove packages in order to avoid "No space left on device" error in `make coverage`.
+      - uses: jlumbroso/free-disk-space@main
       - uses: actions/checkout@v4
         with:
           submodules: recursive
