@@ -74,7 +74,7 @@ impl LlvmConfig {
     }
 
     fn libdir(&self) -> String {
-        cmd!(&self.0, Self::LINK_TYPE, "--libdir").read().unwrap()
+        cmd!(&self.0, "--libdir").read().unwrap()
     }
 
     fn libs(&self, components: &[&str]) -> Vec<String> {
