@@ -12,7 +12,7 @@ jobs:
     continue-on-error: true
     steps:
       # Remove packages in order to avoid "No space left on device" error in `make coverage`.
-      - uses: jlumbroso/free-disk-space@main
+      - uses: jlumbroso/free-disk-space@v1.3.1
       - uses: actions/checkout@v4
         with:
           submodules: recursive
