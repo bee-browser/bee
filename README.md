@@ -26,15 +26,15 @@ Install the following software:
 Then:
 
 ```shell
+# Run once before building.
+# Run again if some of third-party packages have been updated.
+make vendor
+
 # Run tests.
 make test
 
 # Make docs.
 make doc
-
-# Run once before building.
-# Run again if some of third-party packages have been updated.
-make vendor
 
 # release build.
 make release-build
