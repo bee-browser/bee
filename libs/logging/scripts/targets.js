@@ -10,7 +10,7 @@ import { PROJ_DIR } from '../../../tools/lib/consts.js';
 
 const PROGNAME = path.basename(path.fromFileUrl(import.meta.url));
 
-const DOC =`
+const DOC = `
 Usage:
   ${PROGNAME} [options]
   ${PROGNAME} -h | --help
@@ -32,7 +32,12 @@ for await (const entry of fs.walk(PROJ_DIR, { match: patterns })) {
     targets.push({
       name: target,
       symbol: target.split('::').slice(1).map((s) => s.toUpperCase()).join('_'),
-      loggerPath: path.join(path.dirname(entry.path), 'src', ...target.split('::').slice(2), 'logger.rs'),
+      loggerPath: path.join(
+        path.dirname(entry.path),
+        'src',
+        ...target.split('::').slice(2),
+        'logger.rs',
+      ),
     });
   }
 }

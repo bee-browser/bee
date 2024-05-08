@@ -9,11 +9,11 @@ export class LayoutBuilder {
   }
 
   build() {
-    const children = [this.build_(this.document_.root)]
+    const children = [this.build_(this.document_.root)];
     this.instructions_.push({
       type: 'layout.create_element',
       data: {
-        id: 0,  // must be 0
+        id: 0, // must be 0
         style: {
           display: {
             outside: 'block',
@@ -21,14 +21,14 @@ export class LayoutBuilder {
           },
           positioning: 'absolute',
           box_model: {
-            width: { scale: LayoutBuilder.toNumber_(1), },
-            height: { scale: LayoutBuilder.toNumber_(1), },
+            width: { scale: LayoutBuilder.toNumber_(1) },
+            height: { scale: LayoutBuilder.toNumber_(1) },
           },
           layer: {
-            z_index: { index: 0, },
+            z_index: { index: 0 },
           },
         },
-        label: "element-0 viewport",
+        label: 'element-0 viewport',
         children: children.filter((id) => id !== null),
       },
     });
@@ -46,14 +46,14 @@ export class LayoutBuilder {
 
   build_(node) {
     switch (node.type) {
-    case 'dom.element':
-      return this.buildElement_(node);
-    case 'dom.pseudo_element':
-      return this.buildPseudoElement_(node);
-    case 'dom.text':
-      return this.buildText_(node);
-    default:
-      throw new Error(`Unsupported node type: ${node.type}`);
+      case 'dom.element':
+        return this.buildElement_(node);
+      case 'dom.pseudo_element':
+        return this.buildPseudoElement_(node);
+      case 'dom.text':
+        return this.buildText_(node);
+      default:
+        throw new Error(`Unsupported node type: ${node.type}`);
     }
   }
 
@@ -126,40 +126,40 @@ export class LayoutBuilder {
     const display = style['display'];
 
     switch (display) {
-    case 'none':
-      return { outside: 'none', inside: 'none' };
-    case 'flex':
-      return { outside: 'block', inside: 'flex' };
-    case 'inline-flex':
-      return { outside: 'inline', inside: 'flex' };
-    case 'table':
-      return { outside: 'block', inside: 'table' };
-    case 'table-caption':
-      return { outside: 'table_caption', inside: 'flow_root' };
-    case 'table-header-group':
-      return { outside: 'table_header_group', inside: 'table_row_group' };
-    case 'table-footer-group':
-      return { outside: 'table_footer_group', inside: 'table_row_group' };
-    case 'table-row-group':
-      return { outside: 'table_row_group', inside: 'table_row_group' };
-    case 'table-row':
-      return { outside: 'table_row', inside: 'table_row' };
-    case 'table-column-group':
-      return { outside: 'table_column_group', inside: 'flow_column_group' };
-    case 'table-column':
-      return { outside: 'table_column', inside: 'none' };
-    case 'table-cell':
-      return { outside: 'table_cell', inside: 'flow_root' };
-    case 'list-item':
-      return { outside: 'block', inside: 'flow' };  // TODO: marker + block
-    case 'inline-block':
-      return { outside: 'inline', inside: 'flow_root' };
-    case 'inline-table':
-      return { outside: 'inline', inside: 'table' };
-    case 'inline-grid':
-      return { outside: 'inline', inside: 'grid' };
-    case 'contents':
-      return { outside: 'none', inside: 'none' };  // TODO
+      case 'none':
+        return { outside: 'none', inside: 'none' };
+      case 'flex':
+        return { outside: 'block', inside: 'flex' };
+      case 'inline-flex':
+        return { outside: 'inline', inside: 'flex' };
+      case 'table':
+        return { outside: 'block', inside: 'table' };
+      case 'table-caption':
+        return { outside: 'table_caption', inside: 'flow_root' };
+      case 'table-header-group':
+        return { outside: 'table_header_group', inside: 'table_row_group' };
+      case 'table-footer-group':
+        return { outside: 'table_footer_group', inside: 'table_row_group' };
+      case 'table-row-group':
+        return { outside: 'table_row_group', inside: 'table_row_group' };
+      case 'table-row':
+        return { outside: 'table_row', inside: 'table_row' };
+      case 'table-column-group':
+        return { outside: 'table_column_group', inside: 'flow_column_group' };
+      case 'table-column':
+        return { outside: 'table_column', inside: 'none' };
+      case 'table-cell':
+        return { outside: 'table_cell', inside: 'flow_root' };
+      case 'list-item':
+        return { outside: 'block', inside: 'flow' }; // TODO: marker + block
+      case 'inline-block':
+        return { outside: 'inline', inside: 'flow_root' };
+      case 'inline-table':
+        return { outside: 'inline', inside: 'table' };
+      case 'inline-grid':
+        return { outside: 'inline', inside: 'grid' };
+      case 'contents':
+        return { outside: 'none', inside: 'none' }; // TODO
     }
 
     const components = display.split(' ');
@@ -213,7 +213,7 @@ export class LayoutBuilder {
   buildBackgroundStyle_(style) {
     return {
       color: LayoutBuilder.buildColorValue_(style['background-color']),
-      images: [],  // TODO
+      images: [], // TODO
     };
   }
 
@@ -236,7 +236,7 @@ export class LayoutBuilder {
   }
 
   buildContentStyle_(style) {
-    const id = style['-bee-content-asset-id']
+    const id = style['-bee-content-asset-id'];
     if (id === undefined) {
       return undefined;
     }
@@ -328,7 +328,7 @@ export class LayoutBuilder {
         Math.round(parseFloat(RegExp.$4) * 255),
       ];
     }
-    return [0, 0, 0, 0];  // transparent, black
+    return [0, 0, 0, 0]; // transparent, black
   }
 
   static buildIntegerValue_(str) {
@@ -339,7 +339,7 @@ export class LayoutBuilder {
     return LayoutBuilder.toNumber_(parseFloat(str));
   }
 
-  static toNumber_(n) {  // f32
+  static toNumber_(n) { // f32
     return n;
   }
 }

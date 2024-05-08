@@ -33,10 +33,14 @@ export default class DebugConsole extends Widget {
     this.tabBar_.on('select', (tab) => tab.content.show());
     this.tabBar_.on('deselect', (tab) => tab.content.hide());
     this.tabBar_.appendTab({
-      id: 'logs', label: 'Logs', content: this.logListView_
+      id: 'logs',
+      label: 'Logs',
+      content: this.logListView_,
     });
     this.tabBar_.appendTab({
-      id: 'layout', label: 'Layout', content: this.layoutView_
+      id: 'layout',
+      label: 'Layout',
+      content: this.layoutView_,
     });
 
     boxView.on('select', this.selectObject.bind(this));
@@ -49,15 +53,23 @@ export default class DebugConsole extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { 'id': 'debug-console', 'class': 'grid'},
-        this.navBar_.render(),
-        this.boxView_.render(),
-        h('div', { 'id': 'multi-view-container' },
-          this.tabBar_.render(),
-          h('div', { 'id': 'multi-view-content' },
-            this.logListView_.render(),
-            this.layoutView_.render())));
+    this.elem_ = h(
+      'div',
+      { 'id': 'debug-console', 'class': 'grid' },
+      this.navBar_.render(),
+      this.boxView_.render(),
+      h(
+        'div',
+        { 'id': 'multi-view-container' },
+        this.tabBar_.render(),
+        h(
+          'div',
+          { 'id': 'multi-view-content' },
+          this.logListView_.render(),
+          this.layoutView_.render(),
+        ),
+      ),
+    );
     this.logListView_.hide();
     this.layoutView_.hide();
     this.tabBar_.selectedTab.content.show();
@@ -81,7 +93,8 @@ export default class DebugConsole extends Widget {
         this.emit('message', msg);
       } catch (e) {
         console.error(
-          `failed to parse a JSON message: ${event.data}: ${e.message}`);
+          `failed to parse a JSON message: ${event.data}: ${e.message}`,
+        );
       }
     });
   }
@@ -110,7 +123,7 @@ export default class DebugConsole extends Widget {
     let data = { uri };
     if (this.remoteSurface_) {
       data.remotes = {
-        pusher: ['-c', 'demo']
+        pusher: ['-c', 'demo'],
       };
     }
     this.ws_.send(JSON.stringify({ type: 'navigation.go', data }));

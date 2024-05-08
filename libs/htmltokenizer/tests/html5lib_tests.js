@@ -1,7 +1,7 @@
 'use strict';
 
 import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
-import { pascalCase } from "https://deno.land/x/case/mod.ts";
+import { pascalCase } from 'https://deno.land/x/case/mod.ts';
 
 const testFile = Deno.args[0];
 const name = path.basename(testFile, '.test');
@@ -43,43 +43,43 @@ for (let testIndex = 0; testIndex < original.tests.length; ++testIndex) {
   // Normalize output data.
   test.output = test.output.map((output) => {
     switch (output[0]) {
-    case 'StartTag':
-      return {
-        StartTag: {
-          name: output[1],
-          attrs: output[2],
-          self_closing: !!output[3],
-        }
-      };
-    case 'EndTag':
-      return {
-        EndTag: {
-          name: output[1],
-        }
-      };
-    case 'Character':
-      return {
-        Character: {
-          data: output[1],
-        }
-      };
-    case 'Comment':
-      return {
-        Comment: {
-          data: output[1],
-        }
-      };
-    case 'DOCTYPE':
-      return {
-        Doctype: {
-          name: output[1],
-          public_id: output[2],
-          system_id: output[3],
-          force_quirks: !output[4],
-        }
-      };
-    default:
-      throw new Error(`unknown output: ${output[0]}`);
+      case 'StartTag':
+        return {
+          StartTag: {
+            name: output[1],
+            attrs: output[2],
+            self_closing: !!output[3],
+          },
+        };
+      case 'EndTag':
+        return {
+          EndTag: {
+            name: output[1],
+          },
+        };
+      case 'Character':
+        return {
+          Character: {
+            data: output[1],
+          },
+        };
+      case 'Comment':
+        return {
+          Comment: {
+            data: output[1],
+          },
+        };
+      case 'DOCTYPE':
+        return {
+          Doctype: {
+            name: output[1],
+            public_id: output[2],
+            system_id: output[3],
+            force_quirks: !output[4],
+          },
+        };
+      default:
+        throw new Error(`unknown output: ${output[0]}`);
     }
   });
 
@@ -99,28 +99,28 @@ for (let testIndex = 0; testIndex < original.tests.length; ++testIndex) {
 
   if (name === 'test3') {
     switch (testIndex) {
-    case 67:
-    case 139:
-    case 160:
-    case 228:
-    case 248:
-    case 268:
-    case 399:
-    case 474:
-    case 542:
-    case 613:
-    case 701:
-    case 706:
-    case 804:
-    case 875:
-    case 941:
-    case 1010:
-    case 1098:
-    case 1103:
-    case 1589:
-      // '\uDBC0\uDC00' should be treat as a single character.
-      test.errors.at(-1).location.column -= 1;
-      break;
+      case 67:
+      case 139:
+      case 160:
+      case 228:
+      case 248:
+      case 268:
+      case 399:
+      case 474:
+      case 542:
+      case 613:
+      case 701:
+      case 706:
+      case 804:
+      case 875:
+      case 941:
+      case 1010:
+      case 1098:
+      case 1103:
+      case 1589:
+        // '\uDBC0\uDC00' should be treat as a single character.
+        test.errors.at(-1).location.column -= 1;
+        break;
     }
   }
   if (name === 'unicodeCharsProblematic') {

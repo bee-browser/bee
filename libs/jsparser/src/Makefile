@@ -25,6 +25,8 @@ all: codegen
 codegen: $(CODEGEN_TARGETS)
 	@$(MAKE) -s -C lexer codegen
 	@$(MAKE) -s -C parser codegen
+	@$(MAKE) -s -C symbol codegen
+	@$(MAKE) -s -C syntax codegen
 
 # Usually, we define targets in descending order in the dependency tree order.  However, we define
 # targets here in the reverse order in order to explain the code generation steps.

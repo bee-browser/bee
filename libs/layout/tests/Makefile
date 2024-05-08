@@ -50,7 +50,8 @@ html/index.json: $(LAYOUT_TEST_SRC_FILES)
 
 html/tests.js: $(LAYOUT_TEST_JSON_FILES) $(LAYOUT_TEST_HTML_FILES)
 	@echo 'Generating $(abspath $@)...'
-	@echo 'const TESTS = [' >$@
+	@echo '// deno-fmt-ignore-file' >$@
+	@echo 'const TESTS = [' >>$@
 	@for file in $(LAYOUT_TEST_JSON_FILES); do cat $$file >>$@; echo ',' >>$@; done
 	@echo '];' >>$@
 

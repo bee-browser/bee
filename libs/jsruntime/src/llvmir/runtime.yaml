@@ -1,0 +1,173 @@
+functions:
+  - name: declare_immutable
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: '&Value'
+  - name: declare_immutable_undefined
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+  - name: declare_immutable_boolean
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: bool
+  - name: declare_immutable_number
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: f64
+  - name: declare_mutable
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: '&Value'
+  - name: declare_mutable_undefined
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+  - name: declare_mutable_boolean
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: bool
+  - name: declare_mutable_number
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: f64
+  - name: declare_function
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: func_id
+        type: u32
+  - name: get_binding
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: '&mut Value'
+  - name: get_binding_boolean
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+    ret: bool
+  - name: get_binding_number
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+    ret: f64
+  - name: put_binding
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: '&Value'
+  - name: put_binding_undefined
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+  - name: put_binding_boolean
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: bool
+  - name: put_binding_number
+    args:
+      - name: symbol
+        type: u32
+      - name: locator
+        type: u32
+      - name: value
+        type: f64
+  - name: push_argument
+    args:
+      - name: value
+        type: '&Value'
+  - name: push_argument_undefined
+    args: []
+  - name: push_argument_boolean
+    args:
+      - name: value
+        type: bool
+  - name: push_argument_number
+    args:
+      - name: value
+        type: f64
+  - name: call
+    args:
+      - name: func
+        type: '&Value'
+      - name: result
+        type: '&mut Value'
+  - name: return_value
+    args:
+      - name: value
+        type: '&Value'
+  - name: return_boolean
+    args:
+      - name: value
+        type: bool
+  - name: return_number
+    args:
+      - name: value
+        type: f64
+  - name: allocate_bindings
+    args:
+      - name: 'n'
+        type: u16
+  - name: release_bindings
+    args:
+      - name: 'n'
+        type: u16
+  - name: inspect
+    args:
+      - name: value
+        type: '&Value'
+  - name: inspect_boolean
+    args:
+      - name: value
+        type: bool
+  - name: inspect_number
+    args:
+      - name: value
+        type: f64

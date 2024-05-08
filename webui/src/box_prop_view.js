@@ -1,6 +1,6 @@
 'use strict';
 
-import { h, t, formatBeeRect } from './helper.js';
+import { formatBeeRect, h, t } from './helper.js';
 import Widget from './widget.js';
 import TabBar from './tab_bar.js';
 
@@ -12,7 +12,9 @@ export default class BoxPropView extends Widget {
 
     this.tabBar_ = new TabBar();
     this.tabBar_.appendTab({
-      id: 'rects', label: 'Rects', content: this.rectsView_
+      id: 'rects',
+      label: 'Rects',
+      content: this.rectsView_,
     });
   }
 
@@ -23,10 +25,12 @@ export default class BoxPropView extends Widget {
   // Widget
 
   render() {
-    this.elem_ =
-      h('div', { 'id': 'box-prop-view' },
-        this.tabBar_.render(),
-        this.rectsView_.render());
+    this.elem_ = h(
+      'div',
+      { 'id': 'box-prop-view' },
+      this.tabBar_.render(),
+      this.rectsView_.render(),
+    );
     this.tabBar_.selectedTab.content.show();
     return this.elem_;
   }
@@ -60,7 +64,8 @@ class BoxRectsPropView extends Widget {
     for (const type of ['margin', 'border', 'padding', 'content']) {
       if (`${type}Rect` in rects) {
         table.appendChild(
-          renderProp_(`${type}-rect`, formatBeeRect(rects[`${type}Rect`])));
+          renderProp_(`${type}-rect`, formatBeeRect(rects[`${type}Rect`])),
+        );
       }
     }
     this.elem_.appendChild(table);
@@ -68,7 +73,10 @@ class BoxRectsPropView extends Widget {
 }
 
 function renderProp_(name, value) {
-  return h('tr', { class: 'print-prop' },
-           h('td', { class: 'print-prop-name' }, t(name)),
-           h('td', { class: 'print-prop-value' }, t(value)));
+  return h(
+    'tr',
+    { class: 'print-prop' },
+    h('td', { class: 'print-prop-name' }, t(name)),
+    h('td', { class: 'print-prop-value' }, t(value)),
+  );
 }
