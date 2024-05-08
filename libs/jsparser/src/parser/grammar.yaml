@@ -3436,8 +3436,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression
+- name: MultiplicativeExpression
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression
+- name: MultiplicativeExpression
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression
 - name: MultiplicativeExpression_Await
@@ -3448,8 +3464,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression_Await
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression_Await
+- name: MultiplicativeExpression_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Await
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression_Await
+- name: MultiplicativeExpression_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Await
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression_Await
 - name: MultiplicativeExpression_Yield
@@ -3460,8 +3492,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression_Yield
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression_Yield
+- name: MultiplicativeExpression_Yield
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression_Yield
+- name: MultiplicativeExpression_Yield
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression_Yield
 - name: MultiplicativeExpression_Yield_Await
@@ -3472,8 +3520,24 @@
   production:
     - type: non-terminal
       data: MultiplicativeExpression_Yield_Await
+    - type: token
+      data: MUL
     - type: non-terminal
-      data: MultiplicativeOperator
+      data: ExponentiationExpression_Yield_Await
+- name: MultiplicativeExpression_Yield_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield_Await
+    - type: token
+      data: DIV
+    - type: non-terminal
+      data: ExponentiationExpression_Yield_Await
+- name: MultiplicativeExpression_Yield_Await
+  production:
+    - type: non-terminal
+      data: MultiplicativeExpression_Yield_Await
+    - type: token
+      data: MOD
     - type: non-terminal
       data: ExponentiationExpression_Yield_Await
 - name: MultiplicativeOperator
@@ -5067,9 +5131,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression
 - name: ConditionalExpression_Await
@@ -5083,9 +5151,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_Await
 - name: ConditionalExpression_Yield
@@ -5099,9 +5171,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_Yield
 - name: ConditionalExpression_Yield_Await
@@ -5115,9 +5191,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_Yield_Await
 - name: ConditionalExpression_In
@@ -5131,9 +5211,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In
 - name: ConditionalExpression_In_Await
@@ -5147,9 +5231,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Await
 - name: ConditionalExpression_In_Yield
@@ -5163,9 +5251,13 @@
     - type: token
       data: CONDITIONAL
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Yield
 - name: ConditionalExpression_In_Yield_Await
@@ -5178,10 +5270,14 @@
       data: ShortCircuitExpression_In_Yield_Await
     - type: token
       data: CONDITIONAL
+    - type: non-terminal
+      data: _THEN_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
     - type: token
       data: COLON
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
 - name: AssignmentExpression
@@ -7347,6 +7443,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _BLOCK_SCOPE_
+    - type: non-terminal
       data: StatementList
     - type: token
       data: RBRACE
@@ -7360,6 +7458,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Return
     - type: token
@@ -7375,6 +7475,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _BLOCK_SCOPE_
+    - type: non-terminal
       data: StatementList_Await
     - type: token
       data: RBRACE
@@ -7388,6 +7490,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Await_Return
     - type: token
@@ -7403,6 +7507,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _BLOCK_SCOPE_
+    - type: non-terminal
       data: StatementList_Yield
     - type: token
       data: RBRACE
@@ -7416,6 +7522,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Yield_Return
     - type: token
@@ -7431,6 +7539,8 @@
     - type: token
       data: LBRACE
     - type: non-terminal
+      data: _BLOCK_SCOPE_
+    - type: non-terminal
       data: StatementList_Yield_Await
     - type: token
       data: RBRACE
@@ -7444,6 +7554,8 @@
   production:
     - type: token
       data: LBRACE
+    - type: non-terminal
+      data: _BLOCK_SCOPE_
     - type: non-terminal
       data: StatementList_Yield_Await_Return
     - type: token
@@ -7594,64 +7706,128 @@
       data: Declaration_Yield_Await
 - name: LexicalDeclaration
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_Await
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_Yield
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_Yield
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_Yield
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_Yield
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_Yield_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_Yield_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_Yield_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_Yield_Await
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In_Await
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In_Yield
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In_Yield
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In_Yield
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In_Yield
     - type: token
       data: SEMICOLON
 - name: LexicalDeclaration_In_Yield_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: BindingList_In_Yield_Await
+    - type: token
+      data: SEMICOLON
+- name: LexicalDeclaration_In_Yield_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: BindingList_In_Yield_Await
     - type: token
@@ -9143,9 +9319,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement
 - name: IfStatement
@@ -9159,6 +9339,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement
     - type: lookahead
       data:
@@ -9176,9 +9358,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Return
 - name: IfStatement_Return
@@ -9192,6 +9378,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Return
     - type: lookahead
       data:
@@ -9209,9 +9397,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Await
 - name: IfStatement_Await
@@ -9225,6 +9417,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await
     - type: lookahead
       data:
@@ -9242,9 +9436,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Await_Return
 - name: IfStatement_Await_Return
@@ -9258,6 +9456,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Await_Return
     - type: lookahead
       data:
@@ -9275,9 +9475,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield
 - name: IfStatement_Yield
@@ -9291,6 +9495,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield
     - type: lookahead
       data:
@@ -9308,9 +9514,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Return
 - name: IfStatement_Yield_Return
@@ -9324,6 +9534,8 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Return
     - type: lookahead
       data:
@@ -9341,9 +9553,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Await
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await
 - name: IfStatement_Yield_Await
@@ -9356,6 +9572,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _THEN_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await
     - type: lookahead
@@ -9374,9 +9592,13 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _THEN_BLOCK_
+    - type: non-terminal
       data: Statement_Yield_Await_Return
     - type: token
       data: ELSE
+    - type: non-terminal
+      data: _ELSE_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await_Return
 - name: IfStatement_Yield_Await_Return
@@ -9389,6 +9611,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _THEN_BLOCK_
     - type: non-terminal
       data: Statement_Yield_Await_Return
     - type: lookahead
@@ -13522,26 +13746,50 @@
       data: Statement_Yield_Await_Return
 - name: ForDeclaration
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding
+- name: ForDeclaration
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding
 - name: ForDeclaration_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding_Await
+- name: ForDeclaration_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding_Await
 - name: ForDeclaration_Yield
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding_Yield
+- name: ForDeclaration_Yield
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding_Yield
 - name: ForDeclaration_Yield_Await
   production:
+    - type: token
+      data: LET
     - type: non-terminal
-      data: LetOrConst
+      data: ForBinding_Yield_Await
+- name: ForDeclaration_Yield_Await
+  production:
+    - type: token
+      data: CONST
     - type: non-terminal
       data: ForBinding_Yield_Await
 - name: ForBinding
@@ -15536,12 +15784,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15554,12 +15806,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15570,12 +15826,16 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15588,12 +15848,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15606,12 +15870,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15622,12 +15890,16 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15640,12 +15912,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15658,12 +15934,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15674,12 +15954,16 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15692,12 +15976,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15710,12 +15998,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier_Yield_Await
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -15726,12 +16018,16 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -18648,6 +18944,21 @@
       data: AS
     - type: non-terminal
       data: ModuleExportName
+- name: _FUNCTION_CONTEXT_
+  production:
+    - type: empty
+- name: _FUNCTION_SIGNATURE_
+  production:
+    - type: empty
+- name: _ELSE_BLOCK_
+  production:
+    - type: empty
+- name: _THEN_BLOCK_
+  production:
+    - type: empty
+- name: _BLOCK_SCOPE_
+  production:
+    - type: empty
 - name: NullLiteral
   production:
     - type: token

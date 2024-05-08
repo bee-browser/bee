@@ -23,41 +23,49 @@ pub const JSPARSER_LEXER: Target = Target(4);
 /// The target ID for `bee::jsparser::parser`.
 pub const JSPARSER_PARSER: Target = Target(5);
 
+/// The target ID for `bee::jsparser::syntax`.
+pub const JSPARSER_SYNTAX: Target = Target(6);
+
 /// The target ID for `bee::htmlparser`.
-pub const HTMLPARSER: Target = Target(6);
+pub const HTMLPARSER: Target = Target(7);
 
 /// The target ID for `bee::toydom`.
-pub const TOYDOM: Target = Target(7);
+pub const TOYDOM: Target = Target(8);
 
 /// The target ID for `bee::htmltokenizer`.
-pub const HTMLTOKENIZER: Target = Target(8);
+pub const HTMLTOKENIZER: Target = Target(9);
 
 /// The target ID for `bee::layout`.
-pub const LAYOUT: Target = Target(9);
+pub const LAYOUT: Target = Target(10);
+
+/// The target ID for `bee::jsruntime`.
+pub const JSRUNTIME: Target = Target(11);
 
 /// The target ID for `bee::tests`.
-pub const TESTS: Target = Target(10);
+pub const TESTS: Target = Target(12);
 
 // Use `const fn len()` instead of `const LEN` in order to avoid conflicts between target symbols.
 // The `len` package might be created in the future.
 #[inline(always)]
 pub const fn len() -> usize {
-    11
+    13
 }
 
 #[inline(always)]
 pub const fn name(id: usize) -> &'static str {
-    const NAMES: [&str; 11] = [
+    const NAMES: [&str; 13] = [
         "bee::logview",
         "bee::dfagen",
         "bee::lalrgen",
         "bee::estree",
         "bee::jsparser::lexer",
         "bee::jsparser::parser",
+        "bee::jsparser::syntax",
         "bee::htmlparser",
         "bee::toydom",
         "bee::htmltokenizer",
         "bee::layout",
+        "bee::jsruntime",
         "bee::tests",
     ];
     NAMES[id]
@@ -104,6 +112,12 @@ mod tests {
     }
 
     #[test]
+    fn test_jsparser_syntax() {
+        const NAME: &str = JSPARSER_SYNTAX.name();
+        assert_eq!(NAME, "bee::jsparser::syntax");
+    }
+
+    #[test]
     fn test_htmlparser() {
         const NAME: &str = HTMLPARSER.name();
         assert_eq!(NAME, "bee::htmlparser");
@@ -125,6 +139,12 @@ mod tests {
     fn test_layout() {
         const NAME: &str = LAYOUT.name();
         assert_eq!(NAME, "bee::layout");
+    }
+
+    #[test]
+    fn test_jsruntime() {
+        const NAME: &str = JSRUNTIME.name();
+        assert_eq!(NAME, "bee::jsruntime");
     }
 
     #[test]

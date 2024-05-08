@@ -1,7 +1,7 @@
 'use strict';
 
 import { assert } from 'https://deno.land/std@0.220.1/testing/asserts.ts';
-import * as path from "https://deno.land/std@0.220.1/path/mod.ts";
+import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
@@ -9,7 +9,8 @@ const baseDir = new URL('.', import.meta.url).pathname;
 
 const spec = JSON.parse(await readAllText(Deno.stdin));
 const tokens = JSON.parse(
-  await Deno.readTextFile(path.join(baseDir, '..', 'lexer', 'tokens.json')));
+  await Deno.readTextFile(path.join(baseDir, '..', 'lexer', 'tokens.json')),
+);
 
 const tokenIndexMap = {};
 for (let i = 0; i < tokens.length; ++i) {
@@ -67,18 +68,18 @@ for (let i = 0; i < spec.states.length; ++i) {
 
   for (const action of state.actions) {
     switch (action[0]) {
-    case 'REGULAR_EXPRESSION_LITERAL':
-      permitRegularExpressionLiteral = true;
-      break;
-    case 'TEMPLATE_MIDDLE':
-      permitTemplateMiddle = true;
-      break;
-    case 'TEMPLATE_TAIL':
-      permitTemplateTail = true;
-      break;
-    case 'LINE_TERMINATOR_SEQUENCE':
-      ignoreLineTerminatorSequence = false;
-      break;
+      case 'REGULAR_EXPRESSION_LITERAL':
+        permitRegularExpressionLiteral = true;
+        break;
+      case 'TEMPLATE_MIDDLE':
+        permitTemplateMiddle = true;
+        break;
+      case 'TEMPLATE_TAIL':
+        permitTemplateTail = true;
+        break;
+      case 'LINE_TERMINATOR_SEQUENCE':
+        ignoreLineTerminatorSequence = false;
+        break;
     }
 
     action[0] = {
@@ -86,34 +87,34 @@ for (let i = 0; i < spec.states.length; ++i) {
       label: action[0],
     };
     switch (action[1].type) {
-    case 'Accept':
-      action[1] = 'Action::Accept';
-      break;
-    case 'Shift':
-      {
-        const nextId = action[1].data.next_id;
-        if (action[0].label === 'SEMICOLON') {
-          const nextState = spec.states[nextId];
-          nextState.isAutoSemicolonDisallowed = isAutoSemicolonDisallowed(nextState);
+      case 'Accept':
+        action[1] = 'Action::Accept';
+        break;
+      case 'Shift':
+        {
+          const nextId = action[1].data.next_id;
+          if (action[0].label === 'SEMICOLON') {
+            const nextState = spec.states[nextId];
+            nextState.isAutoSemicolonDisallowed = isAutoSemicolonDisallowed(nextState);
+          }
+          action[1] = `Action::Shift(State(${nextId}))`;
         }
-        action[1] = `Action::Shift(State(${nextId}))`;
-      }
-      break;
-    case 'Reduce':
-      {
-        const nonTerminal = action[1].data.non_terminal;
-        const numPops = action[1].data.num_pops;
-        const rule = action[1].data.rule;
-        action[1] = `Action::Reduce(NonTerminal::${nonTerminal}, ${numPops}, ` +
-          `ProductionRule(${spec.production_rules.indexOf(rule)}))`;
-      }
-      break;
-    case 'Replace':
-      {
-        const nextId = action[1].data.next_id;
-        action[1] = `Action::Replace(State(${nextId}))`;
-      }
-      break;
+        break;
+      case 'Reduce':
+        {
+          const nonTerminal = action[1].data.non_terminal;
+          const numPops = action[1].data.num_pops;
+          const rule = action[1].data.rule;
+          action[1] = `Action::Reduce(NonTerminal::${nonTerminal}, ${numPops}, ` +
+            `ProductionRule(${spec.production_rules.indexOf(rule)}))`;
+        }
+        break;
+      case 'Replace':
+        {
+          const nextId = action[1].data.next_id;
+          action[1] = `Action::Replace(State(${nextId}))`;
+        }
+        break;
     }
   }
 

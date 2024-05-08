@@ -1,7 +1,7 @@
 'use strict';
 
-import { assertNotEquals, unreachable } from "https://deno.land/std@0.220.1/assert/mod.ts";
-import { JsonParseStream } from "https://deno.land/std@0.220.1/json/mod.ts";
+import { assertNotEquals, unreachable } from 'https://deno.land/std@0.220.1/assert/mod.ts';
+import { JsonParseStream } from 'https://deno.land/std@0.220.1/json/mod.ts';
 import { TextLineStream } from 'https://deno.land/std@0.220.1/streams/mod.ts';
 
 import * as acorn from 'npm:acorn@8.11.3';
@@ -26,51 +26,51 @@ export class Acorn {
 // We assume that there is no objects representing primitive types.
 function refine(obj) {
   switch (typeof obj) {
-  case 'boolean':
-    return obj;
-  case 'number':
-    if (isNaN(obj)) {
-      return { type: 'NaN' };
-    }
-    if (obj === Infinity) {
-      return { type: 'Infinity' };
-    }
-    // `-Infinity` is represented with UnaryExpression('-', Infinity) in ESTree.
-    assertNotEquals(obj, -Infinity);
-    return obj;
-  case 'bigint':
-    return { type: 'BigInt' };
-  case 'string':
-    return obj;
-  default:
-    if (obj === null) {
-      return null;
-    }
-    if (Array.isArray(obj)) {
-      return obj.map(refine);
-    }
-    if (obj instanceof RegExp) {
-      return { type: 'RegExp' };
-    }
-    let refined = {};
-    for (const [key, value] of Object.entries(obj)) {
-      refined[key] = refine(value);
-    }
-    return refined;
+    case 'boolean':
+      return obj;
+    case 'number':
+      if (isNaN(obj)) {
+        return { type: 'NaN' };
+      }
+      if (obj === Infinity) {
+        return { type: 'Infinity' };
+      }
+      // `-Infinity` is represented with UnaryExpression('-', Infinity) in ESTree.
+      assertNotEquals(obj, -Infinity);
+      return obj;
+    case 'bigint':
+      return { type: 'BigInt' };
+    case 'string':
+      return obj;
+    default:
+      if (obj === null) {
+        return null;
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(refine);
+      }
+      if (obj instanceof RegExp) {
+        return { type: 'RegExp' };
+      }
+      let refined = {};
+      for (const [key, value] of Object.entries(obj)) {
+        refined[key] = refine(value);
+      }
+      return refined;
   }
 }
 
 export class ESTree {
   static buildArgs(options, estreeArgs) {
     switch (options.mode) {
-    case 'release':
-      return ['run', '-r', '-q', '-p', 'estree', '--', ...estreeArgs];
-    case 'debug':
-      return ['run', '-q', '-p', 'estree', '--', ...estreeArgs];
-    case 'coverage':
-      return ['llvm-cov', 'run', '-q', '-p', 'estree', '--no-report', '--', ...estreeArgs];
-    default:
-      return unreachable();
+      case 'release':
+        return ['run', '-r', '-q', '-p', 'estree', '--', ...estreeArgs];
+      case 'debug':
+        return ['run', '-q', '-p', 'estree', '--', ...estreeArgs];
+      case 'coverage':
+        return ['llvm-cov', 'run', '-q', '-p', 'estree', '--no-report', '--', ...estreeArgs];
+      default:
+        return unreachable();
     }
   }
 
@@ -150,12 +150,12 @@ export function showDiffs(diffs, indent = '') {
   }
   function showDiff(path, diff) {
     switch (diff.kind) {
-    case 'A':
-      showDiff([...path, diff.index], diff.item);
-      break;
-    default:
-      doShowDiff(path, diff.lhs, diff.rhs);
-      break;
+      case 'A':
+        showDiff([...path, diff.index], diff.item);
+        break;
+      default:
+        doShowDiff(path, diff.lhs, diff.rhs);
+        break;
     }
   }
   for (const diff of diffs) {

@@ -94,9 +94,11 @@
     ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE,
     LET LBRACK]) Expression_In SEMICOLON
   action: expression_statement
-- rule: IfStatement -> IF LPAREN Expression_In RPAREN Statement ELSE Statement
+- rule: >-
+    IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_
+    Statement
   action: if_else_statement
-- rule: 'IfStatement -> IF LPAREN Expression_In RPAREN Statement (?![ELSE])'
+- rule: 'IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])'
   action: if_statement
 - rule: BreakableStatement -> IterationStatement
   action: nop
@@ -134,7 +136,9 @@
   action: nop
 - rule: ClassDeclaration -> CLASS BindingIdentifier ClassTail
   action: class_declaration
-- rule: LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
+- rule: LexicalDeclaration_In -> LET BindingList_In SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
   action: variable_declaration
 - rule: ImportClause -> ImportedDefaultBinding
   action: create_list
@@ -236,7 +240,7 @@
   action: nop
 - rule: Block -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block -> LBRACE StatementList RBRACE
+- rule: Block -> LBRACE _BLOCK_SCOPE_ StatementList RBRACE
   action: block_statement
 - rule: VariableDeclarationList_In -> VariableDeclaration_In
   action: create_list
@@ -246,6 +250,10 @@
   action: nop
 - rule: Expression_In -> Expression_In COMMA AssignmentExpression_In
   action: sequence_expression
+- rule: _THEN_BLOCK_ -> (empty)
+  action: nop
+- rule: _ELSE_BLOCK_ -> (empty)
+  action: nop
 - rule: IterationStatement -> DoWhileStatement
   action: nop
 - rule: IterationStatement -> WhileStatement
@@ -273,8 +281,8 @@
 - rule: Finally -> FINALLY Block
   action: finally_clause
 - rule: >-
-    FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE
-    FunctionBody RBRACE
+    FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters
+    RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_declaration
 - rule: >-
     GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN
@@ -302,10 +310,6 @@
   action: class_tail_no_super_class
 - rule: ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
   action: class_tail
-- rule: LetOrConst -> LET
-  action: nop
-- rule: LetOrConst -> CONST
-  action: nop
 - rule: BindingList_In -> LexicalBinding_In
   action: create_list
 - rule: BindingList_In -> BindingList_In COMMA LexicalBinding_In
@@ -344,15 +348,17 @@
   action: nop
 - rule: ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
   action: class_declaration
-- rule: LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
+- rule: LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
   action: variable_declaration
 - rule: >-
-    FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters
-    RPAREN LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_declaration
 - rule: >-
-    FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN LBRACE
-    FunctionBody RBRACE
+    FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: anonymous_function_declaration
 - rule: >-
     GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN
@@ -396,8 +402,8 @@
 - rule: ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
   action: nop
 - rule: >-
-    ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL
-    AssignmentExpression_In_Await COLON AssignmentExpression_In_Await
+    ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Await
   action: conditional_expression
 - rule: >-
     ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW
@@ -447,9 +453,13 @@
     ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION,
     LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
   action: expression_statement
-- rule: IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await ELSE Statement_Await
+- rule: >-
+    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE
+    _ELSE_BLOCK_ Statement_Await
   action: if_else_statement
-- rule: 'IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await (?![ELSE])'
+- rule: >-
+    IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await
+    (?![ELSE])
   action: if_statement
 - rule: BreakableStatement_Await -> IterationStatement_Await
   action: nop
@@ -475,6 +485,8 @@
   action: try_finally_statement
 - rule: TryStatement_Await -> TRY Block_Await Catch_Await Finally_Await
   action: try_catch_finally_statement
+- rule: _BLOCK_SCOPE_ -> (empty)
+  action: nop
 - rule: VariableDeclaration_In -> BindingIdentifier
   action: variable_declarator
 - rule: VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -583,6 +595,8 @@
   action: nop
 - rule: CatchParameter -> BindingPattern
   action: nop
+- rule: _FUNCTION_CONTEXT_ -> (empty)
+  action: nop
 - rule: FormalParameters -> (empty)
   action: empty_list
 - rule: FormalParameters -> FunctionRestParameter
@@ -593,6 +607,8 @@
   action: remove_comma
 - rule: FormalParameters -> FormalParameterList COMMA FunctionRestParameter
   action: append_to_csv_list
+- rule: _FUNCTION_SIGNATURE_ -> (empty)
+  action: nop
 - rule: FunctionBody -> FunctionStatementList
   action: nop
 - rule: FormalParameters_Yield -> (empty)
@@ -770,8 +786,8 @@
 - rule: VariableDeclaration_In_Await -> BindingPattern_Await Initializer_In_Await
   action: variable_declarator_init
 - rule: >-
-    FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN
-    LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_declaration
 - rule: >-
     GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN
@@ -842,7 +858,7 @@
   action: optional_expression
 - rule: Block_Await -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Await -> LBRACE StatementList_Await RBRACE
+- rule: Block_Await -> LBRACE _BLOCK_SCOPE_ StatementList_Await RBRACE
   action: block_statement
 - rule: Expression_In_Await -> AssignmentExpression_In_Await
   action: nop
@@ -881,8 +897,8 @@
 - rule: ConditionalExpression_In -> ShortCircuitExpression_In
   action: nop
 - rule: >-
-    ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON
-    AssignmentExpression_In
+    ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
   action: conditional_expression
 - rule: ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
   action: arrow_function_expression
@@ -908,13 +924,17 @@
   action: create_list
 - rule: VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
   action: append_to_csv_list
-- rule: LexicalDeclaration -> LetOrConst BindingList SEMICOLON
+- rule: LexicalDeclaration -> LET BindingList SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration -> CONST BindingList SEMICOLON
   action: variable_declaration
 - rule: ForBinding -> BindingIdentifier
   action: for_binding
 - rule: ForBinding -> BindingPattern
   action: for_binding
-- rule: ForDeclaration -> LetOrConst ForBinding
+- rule: ForDeclaration -> LET ForBinding
+  action: for_declaration
+- rule: ForDeclaration -> CONST ForBinding
   action: for_declaration
 - rule: CaseClauses -> CaseClause
   action: create_list
@@ -1484,13 +1504,17 @@
   action: create_list
 - rule: VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
   action: append_to_csv_list
-- rule: LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
+- rule: LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Await -> BindingIdentifier_Await
   action: for_binding
 - rule: ForBinding_Await -> BindingPattern_Await
   action: for_binding
-- rule: ForDeclaration_Await -> LetOrConst ForBinding_Await
+- rule: ForDeclaration_Await -> LET ForBinding_Await
+  action: for_declaration
+- rule: ForDeclaration_Await -> CONST ForBinding_Await
   action: for_declaration
 - rule: CaseClauses_Await -> CaseClause_Await
   action: create_list
@@ -1591,8 +1615,8 @@
 - rule: ConditionalExpression -> ShortCircuitExpression
   action: nop
 - rule: >-
-    ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON
-    AssignmentExpression
+    ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
   action: conditional_expression
 - rule: ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
   action: arrow_function_expression
@@ -2132,8 +2156,8 @@
 - rule: ConditionalExpression_Await -> ShortCircuitExpression_Await
   action: nop
 - rule: >-
-    ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL
-    AssignmentExpression_In_Await COLON AssignmentExpression_Await
+    ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await
   action: conditional_expression
 - rule: ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
   action: arrow_function_expression
@@ -2207,9 +2231,11 @@
   action: nop
 - rule: BlockStatement_Return -> Block_Return
   action: nop
-- rule: IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return ELSE Statement_Return
+- rule: >-
+    IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE
+    _ELSE_BLOCK_ Statement_Return
   action: if_else_statement
-- rule: 'IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return (?![ELSE])'
+- rule: 'IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])'
   action: if_statement
 - rule: BreakableStatement_Return -> IterationStatement_Return
   action: nop
@@ -2505,7 +2531,7 @@
   action: binary_expression
 - rule: Block_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Return -> LBRACE StatementList_Return RBRACE
+- rule: Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
   action: block_statement
 - rule: IterationStatement_Return -> DoWhileStatement_Return
   action: nop
@@ -2538,8 +2564,8 @@
 - rule: ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
   action: nop
 - rule: >-
-    ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL
-    AssignmentExpression_In_Yield COLON AssignmentExpression_In_Yield
+    ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield
   action: conditional_expression
 - rule: YieldExpression_In -> YIELD
   action: yield_expression_no_argument
@@ -2574,12 +2600,12 @@
     LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
   action: expression_statement
 - rule: >-
-    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return ELSE
-    Statement_Yield_Return
+    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_
+    Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return
   action: if_else_statement
 - rule: >-
-    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
-    (?![ELSE])
+    IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_
+    Statement_Yield_Return (?![ELSE])
   action: if_statement
 - rule: BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
   action: nop
@@ -2619,17 +2645,19 @@
   action: nop
 - rule: ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
   action: class_declaration
-- rule: LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
+- rule: LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
   action: variable_declaration
 - rule: BlockStatement_Await_Return -> Block_Await_Return
   action: nop
 - rule: >-
-    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE
-    Statement_Await_Return
+    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_
+    Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return
   action: if_else_statement
 - rule: >-
-    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return
-    (?![ELSE])
+    IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_
+    Statement_Await_Return (?![ELSE])
   action: if_statement
 - rule: BreakableStatement_Await_Return -> IterationStatement_Await_Return
   action: nop
@@ -2661,7 +2689,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL
-    AssignmentExpression_In_Yield_Await COLON AssignmentExpression_In_Yield_Await
+    _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_
+    AssignmentExpression_In_Yield_Await
   action: conditional_expression
 - rule: YieldExpression_In_Await -> YIELD
   action: yield_expression_no_argument
@@ -2700,11 +2729,11 @@
     FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
   action: expression_statement
 - rule: >-
-    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN
-    Statement_Yield_Await_Return ELSE Statement_Yield_Await_Return
+    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_
+    Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return
   action: if_else_statement
 - rule: >-
-    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN
+    IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_
     Statement_Yield_Await_Return (?![ELSE])
   action: if_statement
 - rule: BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
@@ -2759,7 +2788,9 @@
   action: nop
 - rule: ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
   action: class_declaration
-- rule: LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON
+- rule: LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON
   action: variable_declaration
 - rule: ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
   action: computed_property_name
@@ -2961,7 +2992,7 @@
   action: optional_expression
 - rule: Block_Yield_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE
+- rule: Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return RBRACE
   action: block_statement
 - rule: VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
   action: create_list
@@ -2998,8 +3029,8 @@
 - rule: Finally_Yield_Return -> FINALLY Block_Yield_Return
   action: finally_clause
 - rule: >-
-    FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN
-    LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_declaration
 - rule: >-
     GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN
@@ -3028,7 +3059,7 @@
   action: append_to_csv_list
 - rule: Block_Await_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE
+- rule: Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
   action: block_statement
 - rule: IterationStatement_Await_Return -> DoWhileStatement_Await_Return
   action: nop
@@ -3096,7 +3127,7 @@
   action: optional_expression
 - rule: Block_Yield_Await_Return -> LBRACE RBRACE
   action: block_statement_empty
-- rule: Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE
+- rule: Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Await_Return RBRACE
   action: block_statement
 - rule: VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
   action: create_list
@@ -3137,8 +3168,8 @@
 - rule: Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
   action: finally_clause
 - rule: >-
-    FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN
-    FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_
+    LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_declaration
 - rule: >-
     GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN
@@ -3891,13 +3922,17 @@
   action: create_list
 - rule: VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
   action: append_to_csv_list
-- rule: LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
+- rule: LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Yield -> BindingIdentifier_Yield
   action: for_binding
 - rule: ForBinding_Yield -> BindingPattern_Yield
   action: for_binding
-- rule: ForDeclaration_Yield -> LetOrConst ForBinding_Yield
+- rule: ForDeclaration_Yield -> LET ForBinding_Yield
+  action: for_declaration
+- rule: ForDeclaration_Yield -> CONST ForBinding_Yield
   action: for_declaration
 - rule: CaseClauses_Yield_Return -> CaseClause_Yield_Return
   action: create_list
@@ -3989,13 +4024,17 @@
     VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA
     VariableDeclaration_Yield_Await
   action: append_to_csv_list
-- rule: LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
+- rule: LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
+  action: variable_declaration
+- rule: LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
   action: variable_declaration
 - rule: ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
   action: for_binding
 - rule: ForBinding_Yield_Await -> BindingPattern_Yield_Await
   action: for_binding
-- rule: ForDeclaration_Yield_Await -> LetOrConst ForBinding_Yield_Await
+- rule: ForDeclaration_Yield_Await -> LET ForBinding_Yield_Await
+  action: for_declaration
+- rule: ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
   action: for_declaration
 - rule: CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
   action: create_list
@@ -4012,7 +4051,15 @@
 - rule: MultiplicativeExpression_Await -> ExponentiationExpression_Await
   action: nop
 - rule: >-
-    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MultiplicativeOperator
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL
+    ExponentiationExpression_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV
+    ExponentiationExpression_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD
     ExponentiationExpression_Await
   action: binary_expression
 - rule: BitwiseANDExpression_Await -> EqualityExpression_Await
@@ -4225,12 +4272,6 @@
   action: nop
 - rule: ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
   action: binary_expression
-- rule: MultiplicativeOperator -> MUL
-  action: nop
-- rule: MultiplicativeOperator -> DIV
-  action: nop
-- rule: MultiplicativeOperator -> MOD
-  action: nop
 - rule: EqualityExpression_Await -> RelationalExpression_Await
   action: nop
 - rule: EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
@@ -4243,9 +4284,11 @@
   action: binary_expression
 - rule: MultiplicativeExpression -> ExponentiationExpression
   action: nop
-- rule: >-
-    MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator
-    ExponentiationExpression
+- rule: MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
+  action: binary_expression
+- rule: MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
+  action: binary_expression
+- rule: MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
   action: binary_expression
 - rule: BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
   action: nop
@@ -4284,8 +4327,8 @@
 - rule: ConditionalExpression_Yield -> ShortCircuitExpression_Yield
   action: nop
 - rule: >-
-    ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL
-    AssignmentExpression_In_Yield COLON AssignmentExpression_Yield
+    ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_
+    AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield
   action: conditional_expression
 - rule: YieldExpression -> YIELD
   action: yield_expression_no_argument
@@ -4375,7 +4418,8 @@
   action: nop
 - rule: >-
     ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL
-    AssignmentExpression_In_Yield_Await COLON AssignmentExpression_Yield_Await
+    _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_
+    AssignmentExpression_Yield_Await
   action: conditional_expression
 - rule: YieldExpression_Await -> YIELD
   action: yield_expression_no_argument
@@ -4751,7 +4795,15 @@
 - rule: MultiplicativeExpression_Yield -> ExponentiationExpression_Yield
   action: nop
 - rule: >-
-    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MultiplicativeOperator
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL
+    ExponentiationExpression_Yield
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV
+    ExponentiationExpression_Yield
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD
     ExponentiationExpression_Yield
   action: binary_expression
 - rule: BitwiseANDExpression_Yield -> EqualityExpression_Yield
@@ -4761,8 +4813,16 @@
 - rule: MultiplicativeExpression_Yield_Await -> ExponentiationExpression_Yield_Await
   action: nop
 - rule: >-
-    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await
-    MultiplicativeOperator ExponentiationExpression_Yield_Await
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL
+    ExponentiationExpression_Yield_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV
+    ExponentiationExpression_Yield_Await
+  action: binary_expression
+- rule: >-
+    MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD
+    ExponentiationExpression_Yield_Await
   action: binary_expression
 - rule: BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await
   action: nop

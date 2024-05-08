@@ -10,16 +10,27 @@ export default class LogListView extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { 'class': 'log-list-view' },
-        h('table', { 'class': 'log-list-table' },
-          h('thead', { 'class': 'log-list-header' },
-            h('tr', {},
-              h('th', {}, t('Timestamp')),
-              h('th', {}, t('Target')),
-              h('th', {}, t('Level')),
-              h('th', {}, t('Fields')))),
-          h('tbody', { 'class': 'log-list-body' })));
+    this.elem_ = h(
+      'div',
+      { 'class': 'log-list-view' },
+      h(
+        'table',
+        { 'class': 'log-list-table' },
+        h(
+          'thead',
+          { 'class': 'log-list-header' },
+          h(
+            'tr',
+            {},
+            h('th', {}, t('Timestamp')),
+            h('th', {}, t('Target')),
+            h('th', {}, t('Level')),
+            h('th', {}, t('Fields')),
+          ),
+        ),
+        h('tbody', { 'class': 'log-list-body' }),
+      ),
+    );
     this.logListBody_ = this.elem_.querySelector('.log-list-body');
     for (const view of this.views_) {
       this.logListBody_.appendChild(view.render());

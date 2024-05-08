@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -100,9 +100,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::empty_statement, "empty_statement")),
     // ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement -> IF LPAREN Expression_In RPAREN Statement ELSE Statement
+    // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement -> IF LPAREN Expression_In RPAREN Statement (?![ELSE])
+    // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement -> IterationStatement
     Some((Builder::nop, "nop")),
@@ -146,7 +146,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration -> CLASS BindingIdentifier ClassTail
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In -> LetOrConst BindingList_In SEMICOLON
+    // LexicalDeclaration_In -> LET BindingList_In SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_In -> CONST BindingList_In SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ImportClause -> ImportedDefaultBinding
     Some((Builder::create_list, "create_list")),
@@ -244,7 +246,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // Block -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block -> LBRACE StatementList RBRACE
+    // Block -> LBRACE _BLOCK_SCOPE_ StatementList RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In -> VariableDeclaration_In
     Some((Builder::create_list, "create_list")),
@@ -254,6 +256,10 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // Expression_In -> Expression_In COMMA AssignmentExpression_In
     Some((Builder::sequence_expression, "sequence_expression")),
+    // _THEN_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
+    // _ELSE_BLOCK_ -> (empty)
+    Some((Builder::nop, "nop")),
     // IterationStatement -> DoWhileStatement
     Some((Builder::nop, "nop")),
     // IterationStatement -> WhileStatement
@@ -280,7 +286,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
     // Finally -> FINALLY Block
     Some((Builder::finally_clause, "finally_clause")),
-    // FunctionDeclaration -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
@@ -311,10 +317,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     )),
     // ClassTail -> ClassHeritage LBRACE ClassBody RBRACE
     Some((Builder::class_tail, "class_tail")),
-    // LetOrConst -> LET
-    Some((Builder::nop, "nop")),
-    // LetOrConst -> CONST
-    Some((Builder::nop, "nop")),
     // BindingList_In -> LexicalBinding_In
     Some((Builder::create_list, "create_list")),
     // BindingList_In -> BindingList_In COMMA LexicalBinding_In
@@ -360,11 +362,13 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Await -> LetOrConst BindingList_In_Await SEMICOLON
+    // LexicalDeclaration_In_Await -> LET BindingList_In_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
-    // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
-    // FunctionDeclaration_Await_Default -> FUNCTION LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((
         Builder::anonymous_function_declaration,
         "anonymous_function_declaration",
@@ -415,7 +419,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::class_tail, "class_tail")),
     // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_In_Await
+    // ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
@@ -466,9 +470,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await ELSE Statement_Await
+    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE _ELSE_BLOCK_ Statement_Await
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN Statement_Await (?![ELSE])
+    // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Await -> IterationStatement_Await
     Some((Builder::nop, "nop")),
@@ -500,6 +504,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
         Builder::try_catch_finally_statement,
         "try_catch_finally_statement",
     )),
+    // _BLOCK_SCOPE_ -> (empty)
+    Some((Builder::nop, "nop")),
     // VariableDeclaration_In -> BindingIdentifier
     Some((Builder::variable_declarator, "variable_declarator")),
     // VariableDeclaration_In -> BindingIdentifier Initializer_In
@@ -633,6 +639,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // CatchParameter -> BindingPattern
     Some((Builder::nop, "nop")),
+    // _FUNCTION_CONTEXT_ -> (empty)
+    Some((Builder::nop, "nop")),
     // FormalParameters -> (empty)
     Some((Builder::empty_list, "empty_list")),
     // FormalParameters -> FunctionRestParameter
@@ -643,6 +651,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::remove_comma, "remove_comma")),
     // FormalParameters -> FormalParameterList COMMA FunctionRestParameter
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
+    // _FUNCTION_SIGNATURE_ -> (empty)
+    Some((Builder::nop, "nop")),
     // FunctionBody -> FunctionStatementList
     Some((Builder::nop, "nop")),
     // FormalParameters_Yield -> (empty)
@@ -829,7 +839,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
         Builder::variable_declarator_init,
         "variable_declarator_init",
     )),
-    // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
@@ -905,7 +915,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Await -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Await -> LBRACE StatementList_Await RBRACE
+    // Block_Await -> LBRACE _BLOCK_SCOPE_ StatementList_Await RBRACE
     Some((Builder::block_statement, "block_statement")),
     // Expression_In_Await -> AssignmentExpression_In_Await
     Some((Builder::nop, "nop")),
@@ -943,7 +953,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ConditionalExpression_In -> ShortCircuitExpression_In
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL AssignmentExpression_In COLON AssignmentExpression_In
+    // ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In
     Some((
@@ -974,13 +984,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList -> VariableDeclarationList COMMA VariableDeclaration
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration -> LetOrConst BindingList SEMICOLON
+    // LexicalDeclaration -> LET BindingList SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration -> CONST BindingList SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding -> BindingIdentifier
     Some((Builder::for_binding, "for_binding")),
     // ForBinding -> BindingPattern
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration -> LetOrConst ForBinding
+    // ForDeclaration -> LET ForBinding
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration -> CONST ForBinding
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses -> CaseClause
     Some((Builder::create_list, "create_list")),
@@ -1636,13 +1650,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Await -> VariableDeclarationList_Await COMMA VariableDeclaration_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Await -> LetOrConst BindingList_Await SEMICOLON
+    // LexicalDeclaration_Await -> LET BindingList_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_Await -> CONST BindingList_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Await -> BindingIdentifier_Await
     Some((Builder::for_binding, "for_binding")),
     // ForBinding_Await -> BindingPattern_Await
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration_Await -> LetOrConst ForBinding_Await
+    // ForDeclaration_Await -> LET ForBinding_Await
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration_Await -> CONST ForBinding_Await
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Await -> CaseClause_Await
     Some((Builder::create_list, "create_list")),
@@ -1777,7 +1795,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     )),
     // ConditionalExpression -> ShortCircuitExpression
     Some((Builder::nop, "nop")),
-    // ConditionalExpression -> ShortCircuitExpression CONDITIONAL AssignmentExpression_In COLON AssignmentExpression
+    // ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
@@ -2371,7 +2389,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     )),
     // ConditionalExpression_Await -> ShortCircuitExpression_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL AssignmentExpression_In_Await COLON AssignmentExpression_Await
+    // ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // ArrowFunction_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody
     Some((
@@ -2465,9 +2483,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // BlockStatement_Return -> Block_Return
     Some((Builder::nop, "nop")),
-    // IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return ELSE Statement_Return
+    // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Return -> IF LPAREN Expression_In RPAREN Statement_Return (?![ELSE])
+    // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Return -> IterationStatement_Return
     Some((Builder::nop, "nop")),
@@ -2747,7 +2765,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::binary_expression, "binary_expression")),
     // Block_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Return -> LBRACE StatementList_Return RBRACE
+    // Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // IterationStatement_Return -> DoWhileStatement_Return
     Some((Builder::nop, "nop")),
@@ -2779,7 +2797,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::append_to_array, "append_to_array")),
     // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL AssignmentExpression_In_Yield COLON AssignmentExpression_In_Yield
+    // ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression_In -> YIELD
     Some((
@@ -2820,9 +2838,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::variable_declaration, "variable_declaration")),
     // ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return ELSE Statement_Yield_Return
+    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN Statement_Yield_Return (?![ELSE])
+    // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
     Some((Builder::nop, "nop")),
@@ -2871,13 +2889,15 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Yield -> LetOrConst BindingList_In_Yield SEMICOLON
+    // LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // BlockStatement_Await_Return -> Block_Await_Return
     Some((Builder::nop, "nop")),
-    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return ELSE Statement_Await_Return
+    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN Statement_Await_Return (?![ELSE])
+    // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Await_Return -> IterationStatement_Await_Return
     Some((Builder::nop, "nop")),
@@ -2913,7 +2933,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::append_to_array, "append_to_array")),
     // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON AssignmentExpression_In_Yield_Await
+    // ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression_In_Await -> YIELD
     Some((
@@ -2954,9 +2974,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::variable_declaration, "variable_declaration")),
     // ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON
     Some((Builder::expression_statement, "expression_statement")),
-    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return ELSE Statement_Yield_Await_Return
+    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return
     Some((Builder::if_else_statement, "if_else_statement")),
-    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return (?![ELSE])
+    // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
     Some((Builder::if_statement, "if_statement")),
     // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
     Some((Builder::nop, "nop")),
@@ -3005,7 +3025,9 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await
     Some((Builder::class_declaration, "class_declaration")),
-    // LexicalDeclaration_In_Yield_Await -> LetOrConst BindingList_In_Yield_Await SEMICOLON
+    // LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ComputedPropertyName_Await -> LBRACK AssignmentExpression_In_Await RBRACK
     Some((Builder::computed_property_name, "computed_property_name")),
@@ -3225,7 +3247,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Yield_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Yield_Return -> LBRACE StatementList_Yield_Return RBRACE
+    // Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield
     Some((Builder::create_list, "create_list")),
@@ -3259,7 +3281,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
     // Finally_Yield_Return -> FINALLY Block_Yield_Return
     Some((Builder::finally_clause, "finally_clause")),
-    // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
@@ -3290,7 +3312,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
     // Block_Await_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Await_Return -> LBRACE StatementList_Await_Return RBRACE
+    // Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
     Some((Builder::nop, "nop")),
@@ -3360,7 +3382,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::optional_expression, "optional_expression")),
     // Block_Yield_Await_Return -> LBRACE RBRACE
     Some((Builder::block_statement_empty, "block_statement_empty")),
-    // Block_Yield_Await_Return -> LBRACE StatementList_Yield_Await_Return RBRACE
+    // Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Await_Return RBRACE
     Some((Builder::block_statement, "block_statement")),
     // VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await
     Some((Builder::create_list, "create_list")),
@@ -3392,7 +3414,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::catch_clause_no_param, "catch_clause_no_param")),
     // Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return
     Some((Builder::finally_clause, "finally_clause")),
-    // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((Builder::function_declaration, "function_declaration")),
     // GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE
     Some((Builder::generator_declaration, "generator_declaration")),
@@ -4180,13 +4202,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Yield -> LetOrConst BindingList_Yield SEMICOLON
+    // LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Yield -> BindingIdentifier_Yield
     Some((Builder::for_binding, "for_binding")),
     // ForBinding_Yield -> BindingPattern_Yield
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration_Yield -> LetOrConst ForBinding_Yield
+    // ForDeclaration_Yield -> LET ForBinding_Yield
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration_Yield -> CONST ForBinding_Yield
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Yield_Return -> CaseClause_Yield_Return
     Some((Builder::create_list, "create_list")),
@@ -4283,13 +4309,17 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::create_list, "create_list")),
     // VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await
     Some((Builder::append_to_csv_list, "append_to_csv_list")),
-    // LexicalDeclaration_Yield_Await -> LetOrConst BindingList_Yield_Await SEMICOLON
+    // LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON
+    Some((Builder::variable_declaration, "variable_declaration")),
+    // LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON
     Some((Builder::variable_declaration, "variable_declaration")),
     // ForBinding_Yield_Await -> BindingIdentifier_Yield_Await
     Some((Builder::for_binding, "for_binding")),
     // ForBinding_Yield_Await -> BindingPattern_Yield_Await
     Some((Builder::for_binding, "for_binding")),
-    // ForDeclaration_Yield_Await -> LetOrConst ForBinding_Yield_Await
+    // ForDeclaration_Yield_Await -> LET ForBinding_Yield_Await
+    Some((Builder::for_declaration, "for_declaration")),
+    // ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await
     Some((Builder::for_declaration, "for_declaration")),
     // CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return
     Some((Builder::create_list, "create_list")),
@@ -4311,7 +4341,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     )),
     // MultiplicativeExpression_Await -> ExponentiationExpression_Await
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MultiplicativeOperator ExponentiationExpression_Await
+    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL ExponentiationExpression_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV ExponentiationExpression_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD ExponentiationExpression_Await
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_Await -> EqualityExpression_Await
     Some((Builder::nop, "nop")),
@@ -4558,12 +4592,6 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::nop, "nop")),
     // ExponentiationExpression_Await -> UpdateExpression_Await EXP ExponentiationExpression_Await
     Some((Builder::binary_expression, "binary_expression")),
-    // MultiplicativeOperator -> MUL
-    Some((Builder::nop, "nop")),
-    // MultiplicativeOperator -> DIV
-    Some((Builder::nop, "nop")),
-    // MultiplicativeOperator -> MOD
-    Some((Builder::nop, "nop")),
     // EqualityExpression_Await -> RelationalExpression_Await
     Some((Builder::nop, "nop")),
     // EqualityExpression_Await -> EqualityExpression_Await EQ RelationalExpression_Await
@@ -4576,7 +4604,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::binary_expression, "binary_expression")),
     // MultiplicativeExpression -> ExponentiationExpression
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression -> MultiplicativeExpression MultiplicativeOperator ExponentiationExpression
+    // MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_In_Yield -> EqualityExpression_In_Yield
     Some((Builder::nop, "nop")),
@@ -4613,7 +4645,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     )),
     // ConditionalExpression_Yield -> ShortCircuitExpression_Yield
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL AssignmentExpression_In_Yield COLON AssignmentExpression_Yield
+    // ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression -> YIELD
     Some((
@@ -4710,7 +4742,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     )),
     // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await
     Some((Builder::nop, "nop")),
-    // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL AssignmentExpression_In_Yield_Await COLON AssignmentExpression_Yield_Await
+    // ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await
     Some((Builder::conditional_expression, "conditional_expression")),
     // YieldExpression_Await -> YIELD
     Some((
@@ -5102,7 +5134,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::binary_expression, "binary_expression")),
     // MultiplicativeExpression_Yield -> ExponentiationExpression_Yield
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MultiplicativeOperator ExponentiationExpression_Yield
+    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL ExponentiationExpression_Yield
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV ExponentiationExpression_Yield
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD ExponentiationExpression_Yield
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_Yield -> EqualityExpression_Yield
     Some((Builder::nop, "nop")),
@@ -5110,7 +5146,11 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2080] = [
     Some((Builder::binary_expression, "binary_expression")),
     // MultiplicativeExpression_Yield_Await -> ExponentiationExpression_Yield_Await
     Some((Builder::nop, "nop")),
-    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MultiplicativeOperator ExponentiationExpression_Yield_Await
+    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL ExponentiationExpression_Yield_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV ExponentiationExpression_Yield_Await
+    Some((Builder::binary_expression, "binary_expression")),
+    // MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD ExponentiationExpression_Yield_Await
     Some((Builder::binary_expression, "binary_expression")),
     // BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await
     Some((Builder::nop, "nop")),

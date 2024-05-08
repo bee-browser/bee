@@ -66,7 +66,7 @@ fn main() -> Result<()> {
 
 struct NullHandler;
 
-impl SyntaxHandler for NullHandler {
+impl SyntaxHandler<'_> for NullHandler {
     type Artifact = ();
     type Error = std::convert::Infallible;
     fn start(&mut self) {}

@@ -1,0 +1,25 @@
+[package]
+name = "jsruntime"
+version = "0.0.0"
+edition = "2021"
+authors = ["BEE project contributors"]
+publish = false
+
+[dependencies]
+base = { path = "../base" }
+bitflags = "2.5.0"
+jsparser = { path = "../jsparser", features = ["location"] }
+logging = { path = "../logging" }
+
+[build-dependencies]
+bindgen = "0.69.4"
+cc = { version = "1.0.96", features = ["parallel"] }
+duct = "0.13.7"
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "jsruntime-bench"
+path = "benches/bench.rs"
+harness = false

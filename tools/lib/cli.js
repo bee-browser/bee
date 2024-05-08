@@ -1,3 +1,4 @@
+import { readAll } from 'https://deno.land/std@0.220.1/io/read_all.ts';
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { default as docopt } from 'https://deno.land/x/docopt@v1.0.7/mod.ts';
 
@@ -16,7 +17,7 @@ export async function parseCommand({ doc, conv, init }) {
         cmds.push(name);
       }
     }
-    return { cmds, options, args, };
+    return { cmds, options, args };
   } catch (err) {
     console.error(err.message);
     // FIXME
@@ -38,5 +39,5 @@ export async function runCommand(cmd) {
 
 export async function readAllText(reader) {
   const decoder = new TextDecoder('utf-8');
-  return decoder.decode(await Deno.readAll(reader));
+  return decoder.decode(await readAll(reader));
 }

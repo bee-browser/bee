@@ -17,6 +17,7 @@ CODEGEN_TARGETS = $(addprefix codegen-,\
   libs/htmltokenizer \
   libs/htmlparser \
   libs/jsparser \
+  libs/jsruntime \
   libs/layout \
   bins/estree \
 )
@@ -32,17 +33,28 @@ list:
 	  grep -E -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 .PHONY: check
-check:
+check: check-rust check-cxx check-js
+
+.PHONY: check-rust
+check-rust:
 	cargo fmt --all --check
 	cargo check --workspace --all-targets --all-features
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
 
+.PHONY: check-cxx
+# TODO
+check-cxx:
+
+.PHONY: check-js
+# TODO
+check-js:
+
 .PHONY: build
-build: format $(BUILD_TARGETS)
+build: $(BUILD_TARGETS)
 	cargo build
 
 .PHONY: test
-test: format
+test:
 	cargo nextest run --all-features
 
 # TODO: remove '-' once we've fixed all failures.
@@ -53,7 +65,7 @@ test262:
 	-sh bins/estree/scripts/test262.sh $(ARGS)
 
 # DO NOT REMOVE '-'.
-# Continue the execution in order to generate the report even if a command fails.
+# Continue the execution in order to generate the report even if test commands fail.
 .PHONY: coverage
 coverage: LLVM_COV_ARGS ?= --html
 coverage: TEST262_ARGS ?= --progress
@@ -69,6 +81,12 @@ bench:
 
 .PHONY: clean
 clean: $(CLEAN_TARGETS)
+	cargo clean --profile=dev
+	cargo clean --profile=profiling
+	cargo clean --profile=release
+
+.PHONY: clean-all
+clean-all: $(CLEAN_TARGETS)
 	cargo clean
 
 .PHONY: release-build
@@ -105,21 +123,41 @@ update-devcontainer:
 	@sh .devcontainer/update-dockerfile-env.sh -c
 
 .PHONY: doc
-doc: format
+doc:
 	cargo doc --workspace --all-features
 
 .PHONY: format
-format:
-	cargo fmt --all
+format: format-rust format-cxx format-js
+
+.PHONY: format-rust
+format-rust:
+	@echo 'Formatting *.rs...'
+	@cargo fmt --all
+
+.PHONY: format-cxx
+format-cxx:
+	@echo 'Formatting *.[cc|hh]...'
+	@find . -name '*.cc' -o -name '*.hh' | grep -v './target/' | grep -v './vendor/' | \
+	  xargs clang-format -i
+
+.PHONY: format-js
+format-js:
+	@echo 'Formatting *.js...'
+	@deno fmt -q 2>/dev/null
+
+.PHONY: vendor
+vendor:
+	@$(MAKE) -s -C vendor clean
+	@$(MAKE) -s -C vendor install
 
 .PHONY: $(BUILD_TARGETS)
 $(BUILD_TARGETS):
-	@make -s -C $(subst build-,,$@) build
+	@$(MAKE) -s -C $(subst build-,,$@) build
 
 .PHONY: $(CODEGEN_TARGETS)
 $(CODEGEN_TARGETS):
-	@make -s -C $(subst codegen-,,$@) codegen
+	@$(MAKE) -s -C $(subst codegen-,,$@) codegen
 
 .PHONY: $(CLEAN_TARGETS)
 $(CLEAN_TARGETS):
-	@make -s -C $(subst clean-,,$@) clean
+	@$(MAKE) -s -C $(subst clean-,,$@) clean

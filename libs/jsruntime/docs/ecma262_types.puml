@@ -1,0 +1,49 @@
+@startuml
+
+struct Agent <<spectype>>
+struct Realm <<spectype>>
+struct ExecutionContext <<spectype>>
+abstract Environment <<spectype>>
+struct DeclerativeEnvironment <<spectype>>
+struct FunctionEnvironment <<spectype>>
+struct ModuleEnvironment <<spectype>>
+struct ObjectEnvironment <<spectype>>
+struct GlobalEnvironment <<spectype>>
+struct PrivateEnvironment <<spectype>>
+struct Script <<spectype>>
+
+struct Object <<langtype>>
+struct Function <<langtype>>
+
+Agent "1" *-- "*" ExecutionContext
+
+Realm o-- Object : GlobalObject
+Realm o-- GlobalEnvironment : GlobalEnv
+
+ExecutionContext o-- "0..1" Function
+ExecutionContext o-- Realm
+ExecutionContext o-- Script
+ExecutionContext o-- Environment : LexicalEnvironment
+ExecutionContext o-- Environment : VariableEnvironment
+ExecutionContext o-- PrivateEnvironment : PrivateEnvironment
+
+Environment <|.. DeclerativeEnvironment
+DeclerativeEnvironment <|-- FunctionEnvironment
+DeclerativeEnvironment <|-- ModuleEnvironment
+Environment <|.. ObjectEnvironment
+Environment <|.. GlobalEnvironment
+
+Environment o-- Environment : OuterEnv
+
+ObjectEnvironment o-- Object : BindingObject
+
+GlobalEnvironment o-- ObjectEnvironment : ObjectRecord
+GlobalEnvironment o-- Object : GlobalThisValue
+GlobalEnvironment o-- DeclerativeEnvironment : DeclarativeRecord
+GlobalEnvironment o-- StringList : VarNames
+
+Script o-- Realm : Realm
+
+Object <|-- Function
+
+@enduml

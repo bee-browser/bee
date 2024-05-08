@@ -2705,7 +2705,7 @@ impl Builder {
     }
 }
 
-impl SyntaxHandler for Builder {
+impl SyntaxHandler<'_> for Builder {
     type Artifact = NodeRef;
     type Error = String;
 

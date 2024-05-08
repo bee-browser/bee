@@ -11,12 +11,9 @@ export default class TreeView extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { class: 'tree-view' },
-        h('div', { class: 'tree-node-container' }));
+    this.elem_ = h('div', { class: 'tree-view' }, h('div', { class: 'tree-node-container' }));
 
-    this.containerElem_ =
-      this.elem_.querySelector('.tree-node-container');
+    this.containerElem_ = this.elem_.querySelector('.tree-node-container');
 
     return this.elem_;
   }
@@ -61,7 +58,7 @@ export default class TreeView extends Widget {
       return;
     }
     while (this.selections_.length > 0) {
-      const selected =  this.selections_.pop();
+      const selected = this.selections_.pop();
       selected.deselect();
     }
   }

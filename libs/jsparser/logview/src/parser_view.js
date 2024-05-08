@@ -8,9 +8,7 @@ export default class ParserView extends Widget {
   }
 
   render() {
-    this.elem_ =
-      h('div', { id: 'parser-view' },
-        this.stackView_.render());
+    this.elem_ = h('div', { id: 'parser-view' }, this.stackView_.render());
     return this.elem_;
   }
 
@@ -21,26 +19,26 @@ export default class ParserView extends Widget {
 
   feed(data) {
     switch (data.opcode) {
-    case 'push-state':
-      this.stackView_.pushState(data['state.id'], data['state.label']);
-      break;
-    case 'pop-state':
-      this.stackView_.popStates(data.num_states);
-      break;
-    case 'push-block-context':
-      break;
-    case 'pop-block-context':
-      break;
-    case 'push-block':
-      break;
-    case 'pop-block':
-      break;
-    case 'accept':
-      break;
-    case 'shift':
-      break;
-    case 'reduce':
-      break;
+      case 'push-state':
+        this.stackView_.pushState(data['state.id'], data['state.label']);
+        break;
+      case 'pop-state':
+        this.stackView_.popStates(data.num_states);
+        break;
+      case 'push-block-context':
+        break;
+      case 'pop-block-context':
+        break;
+      case 'push-block':
+        break;
+      case 'pop-block':
+        break;
+      case 'accept':
+        break;
+      case 'shift':
+        break;
+      case 'reduce':
+        break;
     }
   }
 }
@@ -92,9 +90,12 @@ class StateView extends Widget {
     for (const item of this.items_) {
       items.appendChild(h('div', { class: 'parser-state-item' }, t(item)));
     }
-    this.elem_ = h('div', { class: 'parser-state' },
-                   h('div', { class: 'parser-state-id' }, t(this.id_)),
-                   items);
+    this.elem_ = h(
+      'div',
+      { class: 'parser-state' },
+      h('div', { class: 'parser-state-id' }, t(this.id_)),
+      items,
+    );
     return this.elem_;
   }
 }
