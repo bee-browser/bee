@@ -1,7 +1,7 @@
 'use strict';
 
-import { assert } from 'https://deno.land/std@0.220.1/testing/asserts.ts';
-import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
+import { assert } from 'https://deno.land/std@0.224.0/testing/asserts.ts';
+import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { readAllText } from '../../../../tools/lib/cli.js';
 
