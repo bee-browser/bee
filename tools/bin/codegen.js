@@ -1,7 +1,7 @@
 'use strict';
 
-import * as fs from 'https://deno.land/std@0.220.1/fs/mod.ts';
-import * as path from 'https://deno.land/std@0.220.1/path/mod.ts';
+import * as fs from 'https://deno.land/std@0.224.0/fs/mod.ts';
+import * as path from 'https://deno.land/std@0.224.0/path/mod.ts';
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import Handlebars from 'npm:handlebars@4.7.8';
 import { parseCommand, readAllText } from '../lib/cli.js';

@@ -1,4 +1,4 @@
-import { readAll } from 'https://deno.land/std@0.220.1/io/read_all.ts';
+import { readAll } from 'https://deno.land/std@0.224.0/io/read_all.ts';
 import * as changeCase from 'https://deno.land/x/case@2.2.0/mod.ts';
 import { default as docopt } from 'https://deno.land/x/docopt@v1.0.7/mod.ts';
 
