@@ -3,56 +3,8 @@
 // This file was automagically generated with:
 // template: {{ template }}
 
-#pragma once
-
-#include <cstdint>
-
-#include "macros.hh"
-
-BEGIN_C_LINKAGE
-
-struct Locator {
-  uint8_t offset;
-  uint8_t flags;
-  uint16_t index;
-};
-
-static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
-
-enum ValueKind : uint64_t {
-  Undefined,
-  Boolean,
-  Number,
-  Closure,
-};
-
-union ValueHolder {
-  bool boolean;
-  double number;
-  uint64_t closure;
-  uintptr_t opaque;
-};
-
-struct Value {
-  ValueKind kind;
-  ValueHolder holder;
-};
-
-struct Binding {
-  uint32_t flags;
-  uint32_t symbol;
-  Value value;
-};
-
-static_assert(sizeof(ValueKind) == sizeof(uint64_t), "size mismatched");
-static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
-static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
-static_assert(sizeof(Binding) == sizeof(uint64_t) * 3, "size mismatched");
-
-struct Runtime {
+typedef struct {
   {%- for function in data.functions %}
   {{ function.c_type }};
   {%- endfor %}
-};
-
-END_C_LINKAGE
+} Runtime;

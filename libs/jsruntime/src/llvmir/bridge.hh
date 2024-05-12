@@ -4,9 +4,54 @@
 #include <cstdint>
 
 #include "macros.hh"
-#include "runtime.hh"
 
 BEGIN_C_LINKAGE
+
+typedef struct {
+  uint8_t offset;
+  uint8_t flags;
+  uint16_t index;
+} Locator;
+
+static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
+
+enum ValueKind {
+  Undefined,
+  Boolean,
+  Number,
+  Closure,
+};
+
+typedef union {
+  uintptr_t opaque;
+  bool boolean;
+  double number;
+  void* closure;
+} ValueHolder;
+
+static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
+
+typedef struct {
+  ValueKind kind;
+  ValueHolder holder;
+} Value;
+
+static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
+
+struct Binding {
+  uint32_t flags;
+  uint32_t symbol;
+  Value value;
+};
+
+#define BINDING_INITIALIZED 0x01
+#define BINDING_DELETABLE 0x02
+#define BINDING_MUTABLE 0x04
+#define BINDING_STRICT 0x08
+
+static_assert(sizeof(Binding) == sizeof(uint64_t) * 3, "size mismatched");
+
+#include "runtime.hh"
 
 void llvmir_initialize();
 

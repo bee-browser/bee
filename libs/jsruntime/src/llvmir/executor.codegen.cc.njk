@@ -9,41 +9,7 @@
 #include <cstring>
 #include <limits>
 
-#include "runtime.hh"
-
 static llvm::ExitOnError ExitOnErr;
-
-extern "C" bool to_boolean(const Value* value) {
-  switch (value->kind) {
-    case ValueKind::Undefined:
-      return false;
-    case ValueKind::Boolean:
-      return value->holder.boolean;
-    case ValueKind::Number:
-      if (value->holder.number == 0.0) {
-        return false;
-      }
-      if (std::isnan(value->holder.number)) {
-        return false;
-      }
-      return true;
-    default:
-      return false;
-  }
-}
-
-extern "C" double to_numeric(const Value* value) {
-  switch (value->kind) {
-    case ValueKind::Undefined:
-      return std::numeric_limits<double>::quiet_NaN();
-    case ValueKind::Boolean:
-      return value->holder.boolean ? 1.0 : 0.0;
-    case ValueKind::Number:
-      return value->holder.number;
-    default:
-      return std::numeric_limits<double>::quiet_NaN();
-  }
-}
 
 void Executor::RegisterRuntime(const Runtime* runtime) {
   llvm::orc::SymbolMap symbols;
@@ -53,14 +19,6 @@ void Executor::RegisterRuntime(const Runtime* runtime) {
   };
   symbols[exec_session().intern("memset")] = {
     llvm::orc::ExecutorAddr::fromPtr(std::memset),
-    llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("to_boolean")] = {
-    llvm::orc::ExecutorAddr::fromPtr(to_boolean),
-    llvm::JITSymbolFlags::Exported,
-  };
-  symbols[exec_session().intern("to_numeric")] = {
-    llvm::orc::ExecutorAddr::fromPtr(to_numeric),
     llvm::JITSymbolFlags::Exported,
   };
   {%- for function in data.functions %}

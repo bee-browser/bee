@@ -20,7 +20,7 @@
 #include <llvm/Passes/StandardInstrumentations.h>
 #pragma GCC diagnostic pop
 
-#include "runtime.hh"
+#include "bridge.hh"
 #include "type_holder.hh"
 
 class TypeHolder;
@@ -119,15 +119,6 @@ class Compiler {
       }
     }
   };
-
-  void CreateCallRuntimeDeclareImmutable(const struct LocalRef& ref, llvm::Value* value);
-  void CreateCallRuntimeDeclareMutable(const struct LocalRef& ref, llvm::Value* value);
-  void CreateCallRuntimeDeclareFunction(const struct LocalRef& ref, llvm::Value* value);
-  void CreateCallRuntimeReturnValue(llvm::Value* value);
-  void CreateCallRuntimeAllocateBindings(uint16_t n);
-  void CreateCallRuntimeReleaseBindings(uint16_t n);
-  void CreateCallRuntimeInspectNumber(llvm::Value* value);
-  void CreateCallRuntimeInspect(llvm::Value* value);
 
   inline void PushUndefined() {
     stack_.push_back(Item(Item::Undefined));

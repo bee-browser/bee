@@ -25,7 +25,6 @@
 #include "bridge.hh"
 
 struct Module;
-class Runtime;
 
 class Executor {
  public:

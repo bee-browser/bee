@@ -240,6 +240,8 @@ void Compiler::Bindings(uint16_t n) {
 }
 
 void Compiler::DeclareImmutable() {
+  static constexpr uint32_t FLAGS = BINDING_INITIALIZED;
+
   auto item = PopItem();
   auto ref = PopReference();
 
@@ -247,7 +249,7 @@ void Compiler::DeclareImmutable() {
   auto* binding =
       builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
   auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
-  builder_->CreateStore(builder_->getInt32(1), flags_ptr);  // TODO
+  builder_->CreateStore(builder_->getInt32(FLAGS), flags_ptr);
   auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
   builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
   auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
@@ -284,6 +286,8 @@ void Compiler::DeclareImmutable() {
 }
 
 void Compiler::DeclareMutable() {
+  static constexpr uint32_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+
   auto item = Dereference();
   auto ref = PopReference();
 
@@ -291,7 +295,7 @@ void Compiler::DeclareMutable() {
   auto* binding =
       builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
   auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
-  builder_->CreateStore(builder_->getInt32(1), flags_ptr);  // TODO
+  builder_->CreateStore(builder_->getInt32(FLAGS), flags_ptr);
   auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
   builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
   auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
@@ -328,6 +332,8 @@ void Compiler::DeclareMutable() {
 }
 
 void Compiler::DeclareFunction() {
+  static constexpr uint32_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
 
@@ -338,7 +344,7 @@ void Compiler::DeclareFunction() {
   auto* binding =
       builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
   auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
-  builder_->CreateStore(builder_->getInt32(1), flags_ptr);  // TODO
+  builder_->CreateStore(builder_->getInt32(FLAGS), flags_ptr);
   auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
   builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
   auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
@@ -490,8 +496,8 @@ void Compiler::ToBoolean() {
           builder_->CreateFCmpUNE(item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
       break;
     case Item::Any: {
-      auto* call = types_->CreateToBoolean();
-      value = builder_->CreateCall(call, {item.value});
+      auto* call = types_->CreateRuntimeToBoolean();
+      value = builder_->CreateCall(call, {exec_context_, item.value});
       break;
     }
     default:
@@ -797,24 +803,6 @@ void Compiler::DumpStack() {
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
 }
 
-void Compiler::CreateCallRuntimeAllocateBindings(uint16_t n) {
-  builder_->CreateCall(
-      types_->CreateRuntimeAllocateBindings(), {exec_context_, builder_->getInt16(n)});
-}
-
-void Compiler::CreateCallRuntimeReleaseBindings(uint16_t n) {
-  builder_->CreateCall(
-      types_->CreateRuntimeReleaseBindings(), {exec_context_, builder_->getInt16(n)});
-}
-
-void Compiler::CreateCallRuntimeInspectNumber(llvm::Value* value) {
-  builder_->CreateCall(types_->CreateRuntimeInspectNumber(), {exec_context_, value});
-}
-
-void Compiler::CreateCallRuntimeInspect(llvm::Value* value) {
-  builder_->CreateCall(types_->CreateRuntimeInspect(), {exec_context_, value});
-}
-
 Compiler::Item Compiler::Dereference(llvm::Value** scope) {
   const auto item = PopItem();
   switch (item.type) {
@@ -871,8 +859,8 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
     case Item::Number:
       return item.value;
     case Item::Any: {
-      auto* call = types_->CreateToNumeric();
-      return builder_->CreateCall(call, {item.value});
+      auto* call = types_->CreateRuntimeToNumeric();
+      return builder_->CreateCall(call, {exec_context_, item.value});
     }
     default:
       assert(false);

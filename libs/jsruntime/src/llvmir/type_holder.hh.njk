@@ -18,8 +18,6 @@ class TypeHolder {
 
   llvm::StructType* CreateValueType();
   llvm::StructType* CreateBindingType();
-  llvm::Function* CreateToBoolean();
-  llvm::Function* CreateToNumeric();
   {%- for function in data.functions %}
   llvm::Function* CreateRuntime{{ function.name | pascalCase }}();
   {%- endfor %}
@@ -30,8 +28,6 @@ class TypeHolder {
   llvm::IRBuilder<>& builder_;
   llvm::StructType* value_type_ = nullptr;
   llvm::StructType* binding_type_ = nullptr;
-  llvm::Function* to_boolean_ = nullptr;
-  llvm::Function* to_numeric_ = nullptr;
   {%- for function in data.functions %}
   llvm::Function* runtime_{{ function.name }}_ = nullptr;
   {%- endfor %}
