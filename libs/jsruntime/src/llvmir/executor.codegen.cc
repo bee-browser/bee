@@ -6,6 +6,7 @@
 #include "executor.hh"
 
 #include <cmath>
+#include <cstring>
 #include <limits>
 
 #include "runtime.hh"
@@ -46,6 +47,14 @@ extern "C" double to_numeric(const Value* value) {
 
 void Executor::RegisterRuntime(const Runtime* runtime) {
   llvm::orc::SymbolMap symbols;
+  symbols[exec_session().intern("memcpy")] = {
+      llvm::orc::ExecutorAddr::fromPtr(std::memcpy),
+      llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session().intern("memset")] = {
+      llvm::orc::ExecutorAddr::fromPtr(std::memset),
+      llvm::JITSymbolFlags::Exported,
+  };
   symbols[exec_session().intern("to_boolean")] = {
       llvm::orc::ExecutorAddr::fromPtr(to_boolean),
       llvm::JITSymbolFlags::Exported,

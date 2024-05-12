@@ -272,15 +272,41 @@ unsafe extern "C" fn runtime_inspect_number(context: usize, value: f64) {
 }
 
 impl crate::Value {
+    #[allow(clippy::missing_safety_doc)]
     #[inline(always)]
-    unsafe fn load(value: *const Value) -> Self {
+    pub unsafe fn load(value: *const Value) -> Self {
         let value = &*value;
         match value.kind {
             ValueKind_Undefined => Self::Undefined,
             ValueKind_Boolean => Self::Boolean(value.holder.boolean),
             ValueKind_Number => Self::Number(value.holder.number),
             ValueKind_Closure => Self::Closure(value.holder.closure.into()),
-            _ => unreachable!(),
+            _ => unreachable!("{}", value.kind),
+        }
+    }
+
+    #[allow(clippy::missing_safety_doc)]
+    #[inline(always)]
+    pub unsafe fn save(self) -> Value {
+        match self {
+            crate::Value::Undefined => Value {
+                kind: ValueKind_Undefined,
+                holder: ValueHolder { opaque: 0 },
+            },
+            crate::Value::Boolean(boolean) => Value {
+                kind: ValueKind_Boolean,
+                holder: ValueHolder { boolean },
+            },
+            crate::Value::Number(number) => Value {
+                kind: ValueKind_Number,
+                holder: ValueHolder { number },
+            },
+            crate::Value::Closure(closure) => Value {
+                kind: ValueKind_Closure,
+                holder: ValueHolder {
+                    closure: closure.into(),
+                },
+            },
         }
     }
 

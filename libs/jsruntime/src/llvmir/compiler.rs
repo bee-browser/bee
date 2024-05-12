@@ -7,31 +7,30 @@ use jsparser::Symbol;
 
 use super::bridge;
 use super::logger;
-use super::FunctionId;
 use super::Module;
 use super::Runtime;
 
+use crate::function::FunctionId;
+use crate::function::FunctionRegistry;
 use crate::semantics::Analyzer;
 use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
 
 impl Runtime {
     pub fn compile_script(&mut self, source: &str) -> Option<Module> {
-        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &self.function_registry);
+        let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
         analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, false);
         let program = Parser::for_script(source, processor).parse().ok()?;
         // TODO: Deferring the compilation until it's actually called improves the performance.
         // Because the program may contain unused functions.
-        let mut compiler = Compiler::new();
+        let mut compiler = Compiler::new(&self.function_registry);
+        compiler.start_compile();
         compiler.set_data_layout(self.executor.get_data_layout());
         compiler.set_target_triple(self.executor.get_target_triple());
-        compiler.start_compile();
+        compiler.set_runtime(self);
         for func in program.functions.iter() {
-            let (func_id, func_name) = self
-                .function_registry
-                .create_native_function(func.formal_parameters.clone());
-            compiler.start_function(func.symbol, func_id, func_name);
+            compiler.start_function(func.symbol, func.id);
             for command in func.commands.iter() {
                 compiler.process_command(command);
             }
@@ -41,28 +40,16 @@ impl Runtime {
     }
 }
 
-struct Compiler {
+struct Compiler<'a> {
     peer: *mut bridge::Compiler,
+    function_registry: &'a FunctionRegistry,
 }
 
-impl Compiler {
-    pub fn new() -> Self {
+impl<'a> Compiler<'a> {
+    pub fn new(function_registry: &'a FunctionRegistry) -> Self {
         Self {
             peer: unsafe { bridge::compiler_peer_new() },
-        }
-    }
-
-    fn set_data_layout(&self, data_layout: &CStr) {
-        logger::debug!(event = "set_data_layout", ?data_layout);
-        unsafe {
-            bridge::compiler_peer_set_data_layout(self.peer, data_layout.as_ptr());
-        }
-    }
-
-    fn set_target_triple(&self, triple: &CStr) {
-        logger::debug!(event = "set_target_triple", ?triple);
-        unsafe {
-            bridge::compiler_peer_set_target_triple(self.peer, triple.as_ptr());
+            function_registry,
         }
     }
 
@@ -79,10 +66,33 @@ impl Compiler {
         Ok(Module { peer })
     }
 
-    fn start_function(&self, symbol: Symbol, func_id: FunctionId, func_name: &CStr) {
-        logger::debug!(event = "start_function", ?symbol, ?func_id, ?func_name);
+    fn set_data_layout(&self, data_layout: &CStr) {
+        logger::debug!(event = "set_data_layout", ?data_layout);
         unsafe {
-            bridge::compiler_peer_start_function(self.peer, func_name.as_ptr());
+            bridge::compiler_peer_set_data_layout(self.peer, data_layout.as_ptr());
+        }
+    }
+
+    fn set_target_triple(&self, triple: &CStr) {
+        logger::debug!(event = "set_target_triple", ?triple);
+        unsafe {
+            bridge::compiler_peer_set_target_triple(self.peer, triple.as_ptr());
+        }
+    }
+
+    fn set_runtime(&self, runtime: &Runtime) {
+        let runtime = runtime as *const Runtime as usize;
+        logger::debug!(event = "set_runtime", ?runtime);
+        unsafe {
+            bridge::compiler_peer_set_runtime(self.peer, runtime);
+        }
+    }
+
+    fn start_function(&self, symbol: Symbol, func_id: FunctionId) {
+        logger::debug!(event = "start_function", ?symbol, ?func_id);
+        let native = self.function_registry.get_native(func_id.value());
+        unsafe {
+            bridge::compiler_peer_start_function(self.peer, native.name.as_ptr());
         }
     }
 
@@ -112,16 +122,31 @@ impl Compiler {
             CompileCommand::String(_value) => {
                 // TODO
             }
-            CompileCommand::Function(func_id) => unsafe {
-                bridge::compiler_peer_function(self.peer, *func_id);
-            },
+            CompileCommand::Function(func_id) => {
+                let name = if func_id.is_native() {
+                    &self.function_registry.get_native(func_id.value()).name
+                } else {
+                    &self.function_registry.get_host(func_id.value()).name
+                };
+                unsafe {
+                    bridge::compiler_peer_function(self.peer, (*func_id).into(), name.as_ptr());
+                }
+            }
             CompileCommand::Reference(symbol, locator) => unsafe {
                 assert_ne!(*locator, Locator::NONE);
-                bridge::compiler_peer_reference(self.peer, symbol.id(), locator.value());
+                bridge::compiler_peer_reference(
+                    self.peer,
+                    symbol.id(),
+                    bridge::Locator {
+                        offset: locator.offset(),
+                        flags: locator.flags(),
+                        index: locator.index(),
+                    },
+                );
             },
-            CompileCommand::Bindings(_n) => {
-                // TODO
-            }
+            CompileCommand::Bindings(n) => unsafe {
+                bridge::compiler_peer_bindings(self.peer, *n);
+            },
             CompileCommand::MutableBinding => unsafe {
                 bridge::compiler_peer_declare_mutable(self.peer);
             },
@@ -131,12 +156,16 @@ impl Compiler {
             CompileCommand::DeclareFunction => unsafe {
                 bridge::compiler_peer_declare_function(self.peer);
             },
-            CompileCommand::Arguments(_nargs) => (),
-            CompileCommand::Argument(_index) => unsafe {
-                bridge::compiler_peer_push_argument(self.peer);
+            CompileCommand::Arguments(nargs) => unsafe {
+                if *nargs > 0 {
+                    bridge::compiler_peer_arguments(self.peer, *nargs);
+                }
             },
-            CompileCommand::Call(_nargs) => unsafe {
-                bridge::compiler_peer_call(self.peer);
+            CompileCommand::Argument(index) => unsafe {
+                bridge::compiler_peer_argument(self.peer, *index);
+            },
+            CompileCommand::Call(nargs) => unsafe {
+                bridge::compiler_peer_call(self.peer, *nargs);
             },
             CompileCommand::AllocateBindings(n, prologue) => {
                 debug_assert!(*n > 0);
@@ -342,7 +371,7 @@ impl Compiler {
     }
 }
 
-impl Drop for Compiler {
+impl<'a> Drop for Compiler<'a> {
     fn drop(&mut self) {
         unsafe {
             bridge::compiler_peer_delete(self.peer);

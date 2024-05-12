@@ -18,6 +18,7 @@ class TypeHolder {
       : context_(context), module_(module), builder_(builder) {}
 
   llvm::StructType* CreateValueType();
+  llvm::StructType* CreateBindingType();
   llvm::Function* CreateToBoolean();
   llvm::Function* CreateToNumeric();
   llvm::Function* CreateRuntimeDeclareImmutable();
@@ -55,6 +56,7 @@ class TypeHolder {
   llvm::Module& module_;
   llvm::IRBuilder<>& builder_;
   llvm::StructType* value_type_ = nullptr;
+  llvm::StructType* binding_type_ = nullptr;
   llvm::Function* to_boolean_ = nullptr;
   llvm::Function* to_numeric_ = nullptr;
   llvm::Function* runtime_declare_immutable_ = nullptr;

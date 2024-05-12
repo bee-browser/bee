@@ -11,11 +11,19 @@
 
 BEGIN_C_LINKAGE
 
+struct Locator {
+  uint8_t offset;
+  uint8_t flags;
+  uint16_t index;
+};
+
+static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
+
 enum ValueKind : uint64_t {
-  Undefined = 0,
-  Boolean = 1,
-  Number = 2,
-  Closure = 3,
+  Undefined,
+  Boolean,
+  Number,
+  Closure,
 };
 
 union ValueHolder {
@@ -30,9 +38,16 @@ struct Value {
   ValueHolder holder;
 };
 
+struct Binding {
+  uint32_t flags;
+  uint32_t symbol;
+  Value value;
+};
+
 static_assert(sizeof(ValueKind) == sizeof(uint64_t), "size mismatched");
 static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
+static_assert(sizeof(Binding) == sizeof(uint64_t) * 3, "size mismatched");
 
 struct Runtime {
   void (*declare_immutable)(uintptr_t context,

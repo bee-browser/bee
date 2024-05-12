@@ -12,6 +12,7 @@ use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
 use super::logger;
+use super::FunctionId;
 use super::FunctionRegistry;
 
 use scope::BindingKind;
@@ -25,13 +26,13 @@ pub struct Program {
 
 pub struct FunctionRecipe {
     pub symbol: Symbol,
-    pub formal_parameters: Vec<Symbol>,
+    pub id: FunctionId,
     pub commands: Vec<CompileCommand>,
 }
 
 pub struct Analyzer<'r> {
     symbol_registry: &'r mut SymbolRegistry,
-    function_registry: &'r FunctionRegistry,
+    function_registry: &'r mut FunctionRegistry,
     context_stack: Vec<FunctionContext>,
     functions: Vec<FunctionRecipe>,
     scope_manager: ScopeManager,
@@ -42,8 +43,9 @@ pub struct Analyzer<'r> {
 impl<'r> Analyzer<'r> {
     pub fn new(
         symbol_registry: &'r mut SymbolRegistry,
-        function_registry: &'r FunctionRegistry,
+        function_registry: &'r mut FunctionRegistry,
     ) -> Self {
+        let id = function_registry.create_native_function(vec![]);
         Self {
             symbol_registry,
             function_registry,
@@ -52,8 +54,8 @@ impl<'r> Analyzer<'r> {
                 ..Default::default()
             }],
             functions: vec![FunctionRecipe {
-                symbol: 0.into(),
-                formal_parameters: vec![],
+                symbol: Symbol::NONE,
+                id,
                 commands: vec![],
             }],
             scope_manager: Default::default(),
@@ -130,7 +132,7 @@ impl<'r> Analyzer<'r> {
         let command_index = context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
         self.references.push(Reference {
             symbol,
-            func_id: context.func_id,
+            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
             command_index,
         });
@@ -144,7 +146,7 @@ impl<'r> Analyzer<'r> {
                 context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
             self.scope_manager.add_binding(symbol, BindingKind::Mutable);
             self.references.push(Reference {
-                func_id: context.func_id,
+                func_index: context.func_index,
                 scope_ref: self.scope_manager.current(),
                 command_index,
                 symbol,
@@ -264,13 +266,13 @@ impl<'r> Analyzer<'r> {
         context.end_scope(true);
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
-        let func_id = context.func_id;
-        self.functions[func_id as usize].commands = context.commands;
+        let func_index = context.func_index as usize;
+        self.functions[func_index].commands = context.commands;
 
         self.context_stack
             .last_mut()
             .unwrap()
-            .process_function_declaration(func_id);
+            .process_function_declaration(self.functions[func_index].id);
     }
 
     fn handle_then_block(&mut self) {
@@ -299,17 +301,18 @@ impl<'r> Analyzer<'r> {
     fn handle_function_context(&mut self) {
         // TODO: the compilation should fail if the following condition is unmet.
         assert!(self.functions.len() < u32::MAX as usize);
-        let func_id = self.functions.len() as u32;
+        let func_index = self.functions.len() as u32;
         let mut context = FunctionContext {
-            func_id,
+            func_index,
             commands: vec![CompileCommand::Nop],
             ..Default::default()
         };
         context.start_scope();
         self.context_stack.push(context);
+        // Push a placeholder data which will be filled later.
         self.functions.push(FunctionRecipe {
-            symbol: 0.into(),
-            formal_parameters: vec![],
+            symbol: Symbol::NONE,
+            id: FunctionId::native(0),
             commands: vec![],
         });
         self.scope_manager.push(ScopeKind::Function);
@@ -317,11 +320,12 @@ impl<'r> Analyzer<'r> {
 
     fn handle_function_signature(&mut self, symbol: Symbol) {
         let context = self.context_stack.last_mut().unwrap();
-        let func_id = context.func_id as usize;
-        self.functions[func_id].symbol = symbol;
-        self.functions[func_id]
-            .formal_parameters
-            .clone_from(&context.formal_parameters);
+        let id = self
+            .function_registry
+            .create_native_function(context.formal_parameters.clone());
+        let i = context.func_index as usize;
+        self.functions[i].symbol = symbol;
+        self.functions[i].id = id;
         context.in_body = true;
     }
 
@@ -339,7 +343,7 @@ impl<'r> Analyzer<'r> {
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            func_id: context.func_id,
+            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
             command_index,
         });
@@ -355,7 +359,7 @@ impl<'r> Analyzer<'r> {
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            func_id: context.func_id,
+            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
             command_index,
         });
@@ -371,7 +375,7 @@ impl<'r> Analyzer<'r> {
             .add_binding(symbol, BindingKind::Immutable);
         self.references.push(Reference {
             symbol,
-            func_id: context.func_id,
+            func_index: context.func_index,
             scope_ref: self.scope_manager.current(),
             command_index,
         });
@@ -386,12 +390,12 @@ impl<'r> Analyzer<'r> {
             // The locator will be computed in `resolve_locators()`.
             let command_index =
                 context.put_command(CompileCommand::Reference(symbol, Locator::NONE));
-            context.process_function_declaration(func_id.into());
+            context.process_function_declaration(func_id);
             self.scope_manager
                 .add_binding(symbol, BindingKind::Immutable);
             self.references.push(Reference {
                 symbol,
-                func_id: context.func_id,
+                func_index: context.func_index,
                 scope_ref: self.scope_manager.current(),
                 command_index,
             });
@@ -402,7 +406,7 @@ impl<'r> Analyzer<'r> {
         for reference in self.references.iter() {
             let locator = self.scope_manager.compute_locator(reference);
             logger::debug!(event = "resolve-locator", ?reference.symbol, ?locator);
-            self.functions[reference.func_id as usize].commands[reference.command_index] =
+            self.functions[reference.func_index as usize].commands[reference.command_index] =
                 CompileCommand::Reference(reference.symbol, locator);
         }
     }
@@ -438,7 +442,7 @@ impl<'r, 's> NodeHandler<'s> for Analyzer<'r> {
         // TODO: remaining references must be handled as var bindings w/ undefined value.
         context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
         context.commands.push(CompileCommand::Return(0));
-        self.functions[context.func_id as usize].commands = context.commands;
+        self.functions[context.func_index as usize].commands = context.commands;
         self.resolve_locators();
         Ok(Program {
             functions: std::mem::take(&mut self.functions),
@@ -465,7 +469,7 @@ struct FunctionContext {
     scope_stack: Vec<Scope>,
     nargs_stack: Vec<(usize, u16)>,
     max_bindings: usize,
-    func_id: u32,
+    func_index: u32,
     in_body: bool,
 }
 
@@ -553,7 +557,7 @@ impl FunctionContext {
         self.pending_lexical_bindings.clear();
     }
 
-    fn process_function_declaration(&mut self, func_id: u32) {
+    fn process_function_declaration(&mut self, func_id: FunctionId) {
         self.commands.push(CompileCommand::Function(func_id));
         self.commands.push(CompileCommand::DeclareFunction);
         self.scope_stack.last_mut().unwrap().num_bindings += 1;
@@ -606,7 +610,7 @@ pub enum CompileCommand {
     Boolean(bool),
     Number(f64),
     String(Vec<u16>),
-    Function(u32),
+    Function(FunctionId),
 
     Reference(Symbol, Locator),
     Bindings(u16),
@@ -809,17 +813,13 @@ impl Locator {
     }
 
     #[inline(always)]
-    pub fn index(&self) -> u16 {
-        (self.0 & 0x0000FFFF) as u16
+    pub fn flags(&self) -> u8 {
+        ((self.0 >> 16) & 0x000000FF) as u8
     }
 
     #[inline(always)]
-    pub fn value(&self) -> u32 {
-        self.0
-    }
-
-    pub const fn argument(offset: usize, index: usize) -> Self {
-        Self::new(Self::ARGUMENT_BIT, offset, index)
+    pub fn index(&self) -> u16 {
+        (self.0 & 0x0000FFFF) as u16
     }
 
     pub fn checked_argument(offset: usize, index: usize) -> Option<Self> {
@@ -875,7 +875,7 @@ impl std::fmt::Debug for Locator {
 #[derive(Debug)]
 struct Reference {
     symbol: Symbol,
-    func_id: u32,
+    func_index: u32,
     scope_ref: ScopeRef,
     command_index: usize,
 }
@@ -967,11 +967,11 @@ mod tests {
 
     fn test(regc: &str, validate: fn(symbol_registry: &SymbolRegistry, program: &Program)) {
         let mut symbol_registry = Default::default();
-        let function_registry = FunctionRegistry::new();
+        let mut function_registry = FunctionRegistry::new();
         let result = Parser::for_script(
             regc,
             Processor::new(
-                Analyzer::new(&mut symbol_registry, &function_registry),
+                Analyzer::new(&mut symbol_registry, &mut function_registry),
                 false,
             ),
         )

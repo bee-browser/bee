@@ -20,6 +20,7 @@
 #include <llvm/Passes/StandardInstrumentations.h>
 #pragma GCC diagnostic pop
 
+#include "runtime.hh"
 #include "type_holder.hh"
 
 class TypeHolder;
@@ -30,16 +31,18 @@ class Compiler {
   Compiler();
   ~Compiler() = default;
 
+  Module* TakeModule();
+
+  void SetSourceFileName(const char* input);
   void SetDataLayout(const char* data_layout);
   void SetTargetTriple(const char* triple);
-  void SetSourceFileName(const char* input);
-  Module* TakeModule();
+  void SetRuntime(uintptr_t runtime);
 
   void Undefined();
   void Boolean(bool value);
   void Number(double value);
-  void Function(uint32_t func_id);
-  void Reference(uint32_t symbol, uint32_t locator);
+  void Function(uint32_t func_id, const char* name);
+  void Reference(uint32_t symbol, Locator locator);
   void Add();
   void Sub();
   void Mul();
@@ -51,12 +54,14 @@ class Compiler {
   void Gte();
   void Eq();
   void Ne();
+  void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
   void DeclareFunction();
   void Set();
-  void PushArgument();
-  void Call();
+  void Arguments(uint16_t argc);
+  void Argument(uint16_t index);
+  void Call(uint16_t argc);
   void ToBoolean();
   void Block();
   void ConditionalExpression();
@@ -74,8 +79,8 @@ class Compiler {
  private:
   struct Reference {
     uint32_t symbol;
-    uint32_t locator;
-    Reference(uint32_t symbol, uint32_t locator) : symbol(symbol), locator(locator) {}
+    Locator locator;
+    Reference(uint32_t symbol, Locator locator) : symbol(symbol), locator(locator) {}
   };
 
   struct Item {
@@ -86,18 +91,20 @@ class Compiler {
       Function,
       Any,  // undefined, boolean, number or object.
       Reference,
+      Argv,
       Block,
-      ExecContext,
     } type;
     union {
       llvm::Value* value;
+      llvm::Function* func;
       struct Reference reference;
       llvm::BasicBlock* block;
     };
 
     explicit Item(Type type) : type(type), value(nullptr) {}
+    explicit Item(llvm::Function* func) : type(Item::Function), func(func) {}
     Item(Type type, llvm::Value* value) : type(type), value(value) {}
-    Item(uint32_t symbol, uint32_t locator) : type(Item::Reference), reference(symbol, locator) {}
+    Item(uint32_t symbol, Locator locator) : type(Item::Reference), reference(symbol, locator) {}
     explicit Item(llvm::BasicBlock* block) : type(Item::Block), block(block) {}
 
     inline bool IsValue() const {
@@ -134,31 +141,24 @@ class Compiler {
     stack_.push_back(Item(Item::Number, value));
   }
 
-  inline void PushFunction(llvm::Value* value) {
-    stack_.push_back(Item(Item::Function, value));
+  inline void PushFunction(llvm::Function* func) {
+    stack_.push_back(Item(Item::Function, func));
   }
 
   inline void PushAny(llvm::Value* value) {
     stack_.push_back(Item(Item::Any, value));
   }
 
-  inline void PushReference(uint32_t symbol, uint32_t locator) {
+  inline void PushReference(uint32_t symbol, Locator locator) {
     stack_.push_back(Item(symbol, locator));
+  }
+
+  inline void PushArgv(llvm::Value* value) {
+    stack_.push_back(Item(Item::Argv, value));
   }
 
   inline void PushBlock(llvm::BasicBlock* block) {
     stack_.push_back(Item(block));
-  }
-
-  inline void PushExecContext(llvm::Value* exec_context) {
-    stack_.push_back(Item(Item::ExecContext, exec_context));
-  }
-
-  inline llvm::Value* exec_context() const {
-    assert(!stack_.empty());
-    const auto& item = stack_[base_index_];
-    assert(item.type == Item::ExecContext);
-    return item.value;
   }
 
   void Swap() {
@@ -185,6 +185,15 @@ class Compiler {
     return value;
   }
 
+  inline llvm::Function* PopFunction() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::Function);
+    auto* func = item.func;
+    stack_.pop_back();
+    return func;
+  }
+
   inline struct Reference PopReference() {
     assert(!stack_.empty());
     const auto& item = stack_.back();
@@ -192,6 +201,15 @@ class Compiler {
     auto reference = item.reference;
     stack_.pop_back();
     return reference;
+  }
+
+  inline llvm::Value* PopArgv() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::Argv);
+    auto* argv = item.value;
+    stack_.pop_back();
+    return argv;
   }
 
   inline llvm::BasicBlock* PopBlock() {
@@ -203,7 +221,7 @@ class Compiler {
     return block;
   }
 
-  Item Dereference();
+  Item Dereference(llvm::Value** scope = nullptr);
   llvm::Value* ToNumeric(const Item& item);
   llvm::Value* ToAny(const Item& item);
 
@@ -215,10 +233,19 @@ class Compiler {
   llvm::Function* function_ = nullptr;
   llvm::BasicBlock* prologue_ = nullptr;
   llvm::BasicBlock* body_ = nullptr;
+  llvm::Value* exec_context_ = nullptr;
+  llvm::Value* outer_scope_ = nullptr;
+  llvm::Value* argc_ = nullptr;
+  llvm::Value* argv_ = nullptr;
+  llvm::Type* bindings_type_ = nullptr;
+  llvm::StructType* function_scope_type_ = nullptr;
+  llvm::Value* function_scope_ = nullptr;
+  llvm::Value* bindings_ = nullptr;
   size_t scope_depth_ = 0;
   size_t base_index_ = 0;
 
   std::vector<Item> stack_;
+  std::unordered_map<std::string, llvm::Function*> functions_;
 
   // for optimization
   std::unique_ptr<llvm::FunctionPassManager> fpm_;

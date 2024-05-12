@@ -1,14 +1,18 @@
 #include "compiler.hh"
 
+#include <cstdint>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <llvm/Analysis/CGSCCPassManager.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/PassInstrumentation.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
+#include <llvm/Support/Alignment.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Scalar/Reassociate.h>
@@ -16,9 +20,7 @@
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #pragma GCC diagnostic pop
 
-#include "macros.hh"
 #include "module.hh"
-#include "runtime.hh"
 
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
@@ -48,18 +50,6 @@ Compiler::Compiler() {
   pb.crossRegisterProxies(*lam_, *fam_, *cgam_, *mam_);
 }
 
-void Compiler::SetDataLayout(const char* data_layout) {
-  module_->setDataLayout(data_layout);
-}
-
-void Compiler::SetTargetTriple(const char* triple) {
-  module_->setTargetTriple(triple);
-}
-
-void Compiler::SetSourceFileName(const char* input) {
-  module_->setSourceFileName(input);
-}
-
 Module* Compiler::TakeModule() {
   if (llvm::verifyModule(*module_, &llvm::errs())) {
     llvm::errs() << "<broken-module>\n";
@@ -70,6 +60,22 @@ Module* Compiler::TakeModule() {
 
   llvm::orc::ThreadSafeModule mod(std::move(module_), std::move(context_));
   return new Module(std::move(mod));
+}
+
+void Compiler::SetSourceFileName(const char* input) {
+  module_->setSourceFileName(input);
+}
+
+void Compiler::SetDataLayout(const char* data_layout) {
+  module_->setDataLayout(data_layout);
+}
+
+void Compiler::SetTargetTriple(const char* triple) {
+  module_->setTargetTriple(triple);
+}
+
+void Compiler::SetRuntime(uintptr_t runtime) {
+  UNUSED(runtime);
 }
 
 void Compiler::Undefined() {
@@ -84,11 +90,33 @@ void Compiler::Number(double value) {
   PushNumber(llvm::ConstantFP::get(*context_, llvm::APFloat(value)));
 }
 
-void Compiler::Function(uint32_t func_id) {
-  PushFunction(builder_->getInt32(func_id));
+void Compiler::Function(uint32_t func_id, const char* name) {
+  UNUSED(func_id);
+  const auto& found = functions_.find(name);
+  if (found != functions_.end()) {
+    PushFunction(found->second);
+    return;
+  }
+  auto* prototype = llvm::FunctionType::get(
+      // no value returned
+      types_->CreateValueType(),
+      {
+          // runtime (pointer to the runtime)
+          builder_->getPtrTy(),
+          // outer (pointer to the outer function scope)
+          builder_->getPtrTy(),
+          // argc
+          builder_->getInt32Ty(),
+          // argv (pointer to a list of bindings)
+          builder_->getPtrTy(),
+      },
+      false);
+  auto* func = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
+  functions_[name] = func;
+  PushFunction(func);
 }
 
-void Compiler::Reference(uint32_t symbol, uint32_t locator) {
+void Compiler::Reference(uint32_t symbol, Locator locator) {
   PushReference(symbol, locator);
 }
 
@@ -191,158 +219,259 @@ void Compiler::Ne() {
   PushBoolean(v);
 }
 
+void Compiler::Bindings(uint16_t n) {
+  auto* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(prologue_);
+  bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
+  function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
+  function_scope_type_->setBody(
+      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getPtrTy(), bindings_type_});
+  function_scope_ = builder_->CreateAlloca(function_scope_type_, nullptr);
+  auto* outer_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 0);
+  builder_->CreateStore(outer_scope_, outer_ptr);
+  auto* argc_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 1);
+  builder_->CreateStore(argc_, argc_ptr);
+  auto* argv_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 2);
+  builder_->CreateStore(argv_, argv_ptr);
+  bindings_ = builder_->CreateStructGEP(function_scope_type_, function_scope_, 3);
+  builder_->CreateMemSet(bindings_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
+      llvm::MaybeAlign());
+  builder_->SetInsertPoint(backup);
+}
+
 void Compiler::DeclareImmutable() {
   auto item = PopItem();
   auto ref = PopReference();
-  llvm::Function* call;
+
+  assert(ref.locator.offset == 0);
+  auto* binding =
+      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
+  auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
+  builder_->CreateStore(builder_->getInt32(1), flags_ptr);  // TODO
+  auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
+  builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
+  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
+
   switch (item.type) {
-    case Item::Undefined:
-      call = types_->CreateRuntimeDeclareImmutableUndefined();
+    case Item::Undefined: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
+      // Do not touch the holder.  It contains garbage.
       break;
-    case Item::Boolean:
-      call = types_->CreateRuntimeDeclareImmutableBoolean();
+    }
+    case Item::Boolean: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
+      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
-    case Item::Number:
-      call = types_->CreateRuntimeDeclareImmutableNumber();
+    }
+    case Item::Number: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
+      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
+    }
     case Item::Any:
-      call = types_->CreateRuntimeDeclareImmutable();
+      builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
+          builder_->getInt32(sizeof(ValueHolder)));
       break;
     default:
       assert(false);
-      call = nullptr;
       break;
-  }
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  auto* locator = builder_->getInt32(ref.locator);
-  if (item.type == Item::Undefined) {
-    builder_->CreateCall(call, {context, symbol, locator});
-  } else {
-    builder_->CreateCall(call, {context, symbol, locator, item.value});
   }
 }
 
 void Compiler::DeclareMutable() {
   auto item = Dereference();
   auto ref = PopReference();
-  llvm::Function* call;
+
+  assert(ref.locator.offset == 0);
+  auto* binding =
+      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
+  auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
+  builder_->CreateStore(builder_->getInt32(1), flags_ptr);  // TODO
+  auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
+  builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
+  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
+
   switch (item.type) {
-    case Item::Undefined:
-      call = types_->CreateRuntimeDeclareMutableUndefined();
+    case Item::Undefined: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
+      // Do not touch the holder.  It contains garbage.
       break;
-    case Item::Boolean:
-      call = types_->CreateRuntimeDeclareMutableBoolean();
+    }
+    case Item::Boolean: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
+      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
-    case Item::Number:
-      call = types_->CreateRuntimeDeclareMutableNumber();
+    }
+    case Item::Number: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
+      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
+    }
     case Item::Any:
-      call = types_->CreateRuntimeDeclareMutable();
+      builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
+          builder_->getInt32(sizeof(ValueHolder)));
       break;
     default:
       assert(false);
-      call = nullptr;
       break;
-  }
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  auto* locator = builder_->getInt32(ref.locator);
-  if (item.type == Item::Undefined) {
-    builder_->CreateCall(call, {context, symbol, locator});
-  } else {
-    builder_->CreateCall(call, {context, symbol, locator, item.value});
   }
 }
 
 void Compiler::DeclareFunction() {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
-  auto* func = PopValue();
+
+  auto* func = PopFunction();
   auto ref = PopReference();
-  auto* call = types_->CreateRuntimeDeclareFunction();
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  auto* locator = builder_->getInt32(ref.locator);
-  builder_->CreateCall(call, {context, symbol, locator, func});
+
+  assert(ref.locator.offset == 0);
+  auto* binding =
+      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
+  auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
+  builder_->CreateStore(builder_->getInt32(1), flags_ptr);  // TODO
+  auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
+  builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
+  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
+  auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+  builder_->CreateStore(builder_->getInt64(ValueKind::Closure), kind_ptr);
+  auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+  builder_->CreateStore(func, holder_ptr);
+
   builder_->SetInsertPoint(backup);
 }
 
 void Compiler::Set() {
   auto item = PopItem();
   auto ref = PopReference();
-  llvm::Function* call;
+
+  auto* binding =
+      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
+  // TODO: check the mutable flag
+  // auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
+  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
+
   switch (item.type) {
-    case Item::Undefined:
-      call = types_->CreateRuntimePutBindingUndefined();
+    case Item::Undefined: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
+      // Do not touch the holder.  It contains garbage.
       break;
-    case Item::Boolean:
-      call = types_->CreateRuntimePutBindingBoolean();
+    }
+    case Item::Boolean: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
+      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
-    case Item::Number:
-      call = types_->CreateRuntimePutBindingNumber();
+    }
+    case Item::Number: {
+      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
+      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
+    }
     case Item::Any:
-      call = types_->CreateRuntimePutBinding();
+      builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
+          builder_->getInt32(sizeof(ValueHolder)));
       break;
     default:
       assert(false);
-      call = nullptr;
       break;
-  }
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto* symbol = builder_->getInt32(ref.symbol);
-  auto* locator = builder_->getInt32(ref.locator);
-  if (item.type == Item::Undefined) {
-    builder_->CreateCall(call, {context, symbol, locator});
-  } else {
-    builder_->CreateCall(call, {context, symbol, locator, item.value});
   }
   stack_.push_back(item);
 }
 
-void Compiler::PushArgument() {
+void Compiler::Arguments(uint16_t argc) {
+  assert(argc > 0);
+  auto* argv = builder_->CreateAlloca(types_->CreateValueType(), builder_->getInt32(argc));
+  PushArgv(argv);
+  Swap();
+}
+
+void Compiler::Argument(uint16_t index) {
   auto item = Dereference();
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  llvm::Function* call;
+  auto* argv = PopArgv();
+  auto* arg_ptr = builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv, index);
+  llvm::Value* kind_ptr;
+  llvm::Value* holder_ptr;
   switch (item.type) {
     case Item::Undefined:
-      call = types_->CreateRuntimePushArgumentUndefined();
+      kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
+      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 1);
+      builder_->CreateStore(builder_->getInt64(0), holder_ptr);
       break;
     case Item::Boolean:
-      call = types_->CreateRuntimePushArgumentBoolean();
+      kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
+      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
     case Item::Number:
-      call = types_->CreateRuntimePushArgumentNumber();
+      kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 0);
+      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
+      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 1);
+      builder_->CreateStore(item.value, holder_ptr);
       break;
     case Item::Any:
-      call = types_->CreateRuntimePushArgument();
+      builder_->CreateMemCpy(arg_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
+          builder_->getInt32(sizeof(Value)));
       break;
     default:
       assert(false);
-      call = nullptr;
       break;
   }
-  if (item.type == Item::Undefined) {
-    builder_->CreateCall(call, {context});
-  } else {
-    builder_->CreateCall(call, {context, item.value});
-  }
+  PushArgv(argv);
 }
 
-void Compiler::Call() {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  auto func = Dereference();
-  assert(func.type == Item::Any);
+void Compiler::Call(uint16_t argc) {
+  llvm::Value* argv;
+  if (argc > 0) {
+    argv = PopArgv();
+  } else {
+    argv = llvm::Constant::getNullValue(builder_->getPtrTy());
+  }
+  llvm::Value* scope = function_scope_;
+  auto item = Dereference(&scope);
+  assert(item.type == Item::Any);
   // TODO: check value type
+  auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), item.value, 1);
+  auto* func = builder_->CreateLoad(builder_->getPtrTy(), holder_ptr);
+  auto* prototype = llvm::FunctionType::get(
+      // no value returned
+      types_->CreateValueType(),
+      {
+          // runtime (pointer to the runtime)
+          builder_->getPtrTy(),
+          // outer (pointer to the outer function scope)
+          builder_->getPtrTy(),
+          // argc
+          builder_->getInt32Ty(),
+          // argv (pointer to a list of bindings)
+          builder_->getPtrTy(),
+      },
+      false);
+  auto* ret = builder_->CreateCall(
+      prototype, func, {exec_context_, scope, builder_->getInt32(argc), argv});
   auto* value = builder_->CreateAlloca(types_->CreateValueType());
-  builder_->CreateCall(types_->CreateRuntimeCall(), {context, func.value, value});
+  auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 0);
+  auto* kind_value = builder_->CreateExtractValue(ret, 0);
+  builder_->CreateStore(kind_value, kind_ptr);
+  auto* holder_ptr2 = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
+  auto* holder_value = builder_->CreateExtractValue(ret, 1);
+  builder_->CreateStore(holder_value, holder_ptr2);
+  // builder_->CreateCall(types_->CreateRuntimeCall(), {exec_context_, func.value, value});
   PushAny(value);
 }
 
@@ -531,20 +660,38 @@ void Compiler::IfStatement() {
 }
 
 void Compiler::StartFunction(const char* name) {
-  // Create a function.
-  auto* sig = llvm::FunctionType::get(builder_->getVoidTy(), {builder_->getPtrTy()}, false);
-  function_ = llvm::Function::Create(sig, llvm::Function::ExternalLinkage, name, *module_);
+  const auto& found = functions_.find(name);
+  if (found != functions_.end()) {
+    function_ = found->second;
+  } else {
+    // Create a function.
+    auto* sig = llvm::FunctionType::get(
+        // no value returned
+        types_->CreateValueType(),
+        {
+            // runtime (pointer to the runtime)
+            builder_->getPtrTy(),
+            // outer (pointer to the outer function scope)
+            builder_->getPtrTy(),
+            // argc
+            builder_->getInt32Ty(),
+            // argv (pointer to a list of bindings)
+            builder_->getPtrTy(),
+        },
+        false);
+    function_ = llvm::Function::Create(sig, llvm::Function::ExternalLinkage, name, *module_);
+    functions_[name] = function_;
+  }
   prologue_ = llvm::BasicBlock::Create(*context_, "prologue", function_);
   body_ = llvm::BasicBlock::Create(*context_, "body", function_);
 
-  // TODO: arguments
+  exec_context_ = function_->getArg(0);
+  outer_scope_ = function_->getArg(1);
+  argc_ = function_->getArg(2);
+  argv_ = function_->getArg(3);
 
   // Switch the insertion point.
   builder_->SetInsertPoint(body_);
-
-  auto* exec_context = function_->getArg(0);
-  // TODO: use a global variable to hold the execution context.
-  PushExecContext(exec_context);
 }
 
 void Compiler::EndFunction(bool optimize) {
@@ -553,7 +700,8 @@ void Compiler::EndFunction(bool optimize) {
   builder_->CreateBr(body_);
   builder_->SetInsertPoint(backup);
 
-  PopItem();  // exec_conext
+  // DumpStack();
+  // assert(stack_.empty());
 
   if (llvm::verifyFunction(*function_, &llvm::errs())) {
     llvm::errs() << "<broken-function>\n";
@@ -568,6 +716,9 @@ void Compiler::EndFunction(bool optimize) {
 }
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {
+  UNUSED(n);
+  UNUSED(prologue);
+#if 0
   auto* backup = builder_->GetInsertBlock();
   if (prologue) {
     builder_->SetInsertPoint(prologue_);
@@ -575,45 +726,27 @@ void Compiler::AllocateBindings(uint16_t n, bool prologue) {
   CreateCallRuntimeAllocateBindings(n);
   ++scope_depth_;
   builder_->SetInsertPoint(backup);
+#endif
 }
 
 void Compiler::ReleaseBindings(uint16_t n) {
+  UNUSED(n);
+#if 0
   if (builder_->GetInsertBlock()->getTerminator() == nullptr) {
     CreateCallRuntimeReleaseBindings(n);
   }
   --scope_depth_;
+#endif
 }
 
 void Compiler::Return(size_t n) {
+  Item item(Item::Undefined);
   if (n > 0) {
-    assert(n == 1);
-    auto item = Dereference();
-    llvm::Function* call;
-    switch (item.type) {
-      case Item::Undefined:
-        call = nullptr;
-        break;
-      case Item::Boolean:
-        call = types_->CreateRuntimeReturnBoolean();
-        break;
-      case Item::Number:
-        call = types_->CreateRuntimeReturnNumber();
-        break;
-      case Item::Any:
-        call = types_->CreateRuntimeReturnValue();
-        break;
-      default:
-        assert(false);
-        call = nullptr;
-        break;
-    }
-    if (call != nullptr) {
-      // TODO: use a global variable to hold the execution context.
-      auto* context = exec_context();
-      builder_->CreateCall(call, {context, item.value});
-    }
+    item = Dereference();
   }
-  builder_->CreateRetVoid();
+  auto* value = ToAny(item);
+  auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
+  builder_->CreateRet(ret);
 }
 
 void Compiler::Void() {
@@ -637,51 +770,52 @@ void Compiler::DumpStack() {
         llvm::errs() << "number: " << item.value << "\n";
         break;
       case Item::Function:
-        llvm::errs() << "function: " << item.value << "\n";
+        llvm::errs() << "function: " << item.func << "\n";
         break;
       case Item::Any:
         llvm::errs() << "any: " << item.value << "\n";
         break;
       case Item::Reference:
-        llvm::errs() << "reference: " << item.reference.symbol << "(" << item.reference.locator
-                     << ")"
-                     << "\n";
+        llvm::errs() << "reference: symbol=" << item.reference.symbol;
+        if (item.reference.locator.flags & 0x01) {
+          llvm::errs() << " locator=argument(";
+        } else if (item.reference.locator.flags & 0x02) {
+          llvm::errs() << " locator=local(";
+        }
+        // static_cast<uint16_t>() is needed for printing uint8_t values.
+        llvm::errs() << static_cast<uint16_t>(item.reference.locator.offset) << ", "
+                     << item.reference.locator.index << ")\n";
+        break;
+      case Item::Argv:
+        llvm::errs() << "argv: " << item.value << "\n";
         break;
       case Item::Block:
         llvm::errs() << "block: " << item.block << "\n";
         break;
-      case Item::ExecContext:
-        llvm::errs() << "exec-context: " << item.value << "\n";
     }
   }
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
 }
 
 void Compiler::CreateCallRuntimeAllocateBindings(uint16_t n) {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  builder_->CreateCall(types_->CreateRuntimeAllocateBindings(), {context, builder_->getInt16(n)});
+  builder_->CreateCall(
+      types_->CreateRuntimeAllocateBindings(), {exec_context_, builder_->getInt16(n)});
 }
 
 void Compiler::CreateCallRuntimeReleaseBindings(uint16_t n) {
-  // TODO: use a global variable to hold the execution context.
-  auto* context = exec_context();
-  builder_->CreateCall(types_->CreateRuntimeReleaseBindings(), {context, builder_->getInt16(n)});
+  builder_->CreateCall(
+      types_->CreateRuntimeReleaseBindings(), {exec_context_, builder_->getInt16(n)});
 }
 
 void Compiler::CreateCallRuntimeInspectNumber(llvm::Value* value) {
-  // TODO: static dispatch
-  auto* context = exec_context();
-  builder_->CreateCall(types_->CreateRuntimeInspectNumber(), {context, value});
+  builder_->CreateCall(types_->CreateRuntimeInspectNumber(), {exec_context_, value});
 }
 
 void Compiler::CreateCallRuntimeInspect(llvm::Value* value) {
-  // TODO: static dispatch
-  auto* context = exec_context();
-  builder_->CreateCall(types_->CreateRuntimeInspect(), {context, value});
+  builder_->CreateCall(types_->CreateRuntimeInspect(), {exec_context_, value});
 }
 
-Compiler::Item Compiler::Dereference() {
+Compiler::Item Compiler::Dereference(llvm::Value** scope) {
   const auto item = PopItem();
   switch (item.type) {
     case Item::Undefined:
@@ -691,14 +825,34 @@ Compiler::Item Compiler::Dereference() {
     case Item::Any:
       return item;
     case Item::Reference: {
-      // TODO: use a global variable to hold the execution context.
-      auto* context = exec_context();
-      auto* symbol = builder_->getInt32(item.reference.symbol);
-      auto* locator = builder_->getInt32(item.reference.locator);
+      auto* bindings = bindings_;
+      auto* fscope = function_scope_;
+      if (item.reference.locator.offset > 0) {
+        fscope = outer_scope_;
+        for (size_t i = 1; i < item.reference.locator.offset; ++i) {
+          auto* outer_ptr = builder_->CreateStructGEP(function_scope_type_, fscope, 0);
+          fscope = builder_->CreateLoad(builder_->getPtrTy(), outer_ptr);
+        }
+        bindings = builder_->CreateStructGEP(function_scope_type_, fscope, 3);
+      }
+      if ((item.reference.locator.flags & 0x01) != 0) {
+        // argument
+        // TODO: item.reference.locator.offset
+        // TODO: argc_
+        auto* arg = builder_->CreateConstInBoundsGEP1_32(
+            types_->CreateValueType(), argv_, item.reference.locator.index);
+        return Item(Item::Any, arg);
+      }
+      // local
+      auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(
+          bindings_type_, bindings, 0, item.reference.locator.index);
+      auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 2);
       auto* value = builder_->CreateAlloca(types_->CreateValueType());
-      auto* ret = builder_->CreateCall(
-          types_->CreateRuntimeGetBinding(), {context, symbol, locator, value});
-      UNUSED(ret);
+      builder_->CreateMemCpy(value, llvm::MaybeAlign(), value_ptr, llvm::MaybeAlign(),
+          builder_->getInt32(sizeof(Value)));
+      if (scope != nullptr) {
+        *scope = fscope;
+      }
       return Item(Item::Any, value);
     }
     default:

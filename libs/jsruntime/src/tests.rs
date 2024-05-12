@@ -3,11 +3,12 @@ use super::*;
 macro_rules! eval {
     ($src:expr, $expected:expr) => {
         Runtime::initialize();
-        let mut runtime = Runtime::new().with_host_function("print", |args: &[Value]| {
+        let mut runtime = Runtime::new().with_host_function("print", |_, args| {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", args[0]);
             let expected = format!("{:?}", Value::from($expected));
             assert_eq!(actual, expected);
+            Value::Undefined
         });
         let module = runtime.compile_script($src.as_ref()).unwrap();
         runtime.eval(module);
@@ -163,6 +164,14 @@ fn test_eval_terminated_basic_block() {
 #[test]
 fn test_eval_function_single_name_binding() {
     eval!("print(a(1)); function a(x) { return x; }", 1.);
+}
+
+#[test]
+fn test_eval_call_other_function() {
+    eval!(
+        "print(a()); function a() { return b() } function b() { return 1 }",
+        1.
+    );
 }
 
 #[test]

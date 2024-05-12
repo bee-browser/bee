@@ -3,7 +3,6 @@ mod compiler;
 mod executor;
 
 use super::logger;
-use super::FunctionId;
 use super::Runtime;
 pub use executor::Executor;
 

@@ -16,6 +16,7 @@ use function::FunctionId;
 use function::FunctionRegistry;
 use semantics::Locator;
 
+pub use function::HostFn;
 pub use llvmir::Module;
 
 pub struct Runtime {
@@ -39,9 +40,13 @@ impl Runtime {
         }
     }
 
-    pub fn with_host_function(mut self, name: &str, func: fn(&[Value])) -> Self {
+    pub fn with_host_function<F>(mut self, name: &str, func: F) -> Self
+    where
+        F: Fn(&mut Runtime, &[Value]) -> Value,
+    {
         let symbol = self.symbol_registry.intern_str(name);
-        let func_id = self.function_registry.register_host_function(name, func);
+        let func_id = self.function_registry.register_host_function(name);
+        self.executor.register_host_function(name, func);
         logger::debug!(event = "with_host_function", name, ?symbol, ?func_id);
         self
     }
@@ -53,9 +58,17 @@ impl Runtime {
         let func = self
             .function_registry
             .get_native_mut(closure.func_id().value());
-        match self.executor.get_func(&func.name) {
+        match self.executor.get_native_func(&func.name) {
             Some(main) => unsafe {
-                main(self as *mut Self as *mut std::ffi::c_void);
+                main(
+                    // exec_context
+                    self as *mut Self as *mut std::ffi::c_void,
+                    // outer_scope
+                    std::ptr::null_mut(),
+                    // argc, argv
+                    0,
+                    std::ptr::null_mut(),
+                );
             },
             None => unreachable!(),
         }
@@ -75,22 +88,30 @@ impl Runtime {
             let callable = match func.func {
                 Some(callable) => callable,
                 None => {
-                    let callable = self.executor.get_func(&func.name).unwrap();
+                    let callable = self.executor.get_native_func(&func.name).unwrap();
                     func.func = Some(callable);
                     callable
                 }
             };
             unsafe {
-                callable(self as *mut Self as *mut std::ffi::c_void);
+                callable(
+                    // exec_context
+                    self as *mut Self as *mut std::ffi::c_void,
+                    // outer_scope
+                    std::ptr::null_mut(),
+                    // argc, argv
+                    0,
+                    std::ptr::null_mut(),
+                );
             }
         } else {
-            let func = self.function_registry.get_host(closure.func_id().value());
-            let callable = func.func;
-            // TODO
-            let args = &[self
-                .fiber
-                .get_binding(Symbol::NONE, Locator::argument(0, 0))];
-            callable(args);
+            // let func = self.function_registry.get_host(closure.func_id().value());
+            // let callable = func.func;
+            // // TODO
+            // let args = &[self
+            //     .fiber
+            //     .get_binding(Symbol::NONE, Locator::argument(0, 0))];
+            // callable(self, args);
         }
     }
 }

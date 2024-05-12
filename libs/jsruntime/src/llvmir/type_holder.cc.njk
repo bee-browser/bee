@@ -13,6 +13,14 @@ llvm::StructType* TypeHolder::CreateValueType() {
   return value_type_;
 }
 
+llvm::StructType* TypeHolder::CreateBindingType() {
+  if (binding_type_ == nullptr) {
+    binding_type_ = llvm::StructType::create(context_, "Binding");
+    binding_type_->setBody({builder_.getInt32Ty(), builder_.getInt32Ty(), CreateValueType()});
+  }
+  return binding_type_;
+}
+
 llvm::Function* TypeHolder::CreateToBoolean() {
   if (to_boolean_ == nullptr) {
     auto* prototype = llvm::FunctionType::get(builder_.getInt1Ty(), {builder_.getPtrTy()}, false);
