@@ -3,10 +3,6 @@ use std::ffi::CString;
 use jsparser::Symbol;
 
 use crate::llvmir::bridge::NativeFuncPtr;
-use crate::Runtime;
-use crate::Value;
-
-pub type HostFn = fn(&mut Runtime, &[Value]);
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FunctionId(u32);

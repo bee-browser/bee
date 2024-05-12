@@ -4,47 +4,10 @@ use std::ffi::CString;
 use super::bridge;
 use super::Module;
 
-use crate::Runtime;
-use crate::Value;
+use crate::HostFn;
 
 pub struct Executor {
     peer: *mut bridge::Executor,
-}
-
-type HostFunc = unsafe extern "C" fn(
-    *mut std::ffi::c_void,
-    *mut std::ffi::c_void,
-    u32,
-    *mut std::ffi::c_void,
-) -> bridge::Value;
-
-// Took from https://stackoverflow.com/questions/32270030.
-fn wrap<F>(_func: F) -> HostFunc
-where
-    F: Fn(&mut Runtime, &[Value]) -> Value,
-{
-    assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
-    wrapper::<F>
-}
-
-unsafe extern "C" fn wrapper<F>(
-    exec_context: *mut std::ffi::c_void,
-    outer_scope: *mut std::ffi::c_void,
-    argc: u32,
-    argv: *mut std::ffi::c_void,
-) -> bridge::Value
-where
-    F: Fn(&mut Runtime, &[Value]) -> Value,
-{
-    // TODO: re-implement without MaybeUninit.
-    #[allow(clippy::uninit_assumed_init)]
-    let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
-    let runtime = &mut *(exec_context as *mut Runtime);
-    let _ = outer_scope;
-    let args = std::slice::from_raw_parts(argv as *const bridge::Value, argc as usize);
-    // TODO: use c-type
-    let args: Vec<crate::Value> = args.iter().map(|value| crate::Value::load(value)).collect();
-    host_fn(runtime, &args).save()
 }
 
 impl Executor {
@@ -57,17 +20,10 @@ impl Executor {
         Self { peer }
     }
 
-    pub fn register_host_function<F>(&self, name: &str, func: F)
-    where
-        F: Fn(&mut Runtime, &[Value]) -> Value,
-    {
+    pub fn register_host_function(&self, name: &str, func: HostFn) {
         let name = CString::new(name).unwrap();
         unsafe {
-            bridge::executor_peer_register_host_function(
-                self.peer,
-                name.as_ptr(),
-                Some(wrap(func)),
-            );
+            bridge::executor_peer_register_host_function(self.peer, name.as_ptr(), Some(func));
         }
     }
 

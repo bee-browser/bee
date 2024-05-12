@@ -11,7 +11,6 @@ use jsparser::SymbolRegistry;
 use function::FunctionId;
 use function::FunctionRegistry;
 
-pub use function::HostFn;
 pub use llvmir::Module;
 
 pub struct Runtime {
@@ -33,14 +32,23 @@ impl Runtime {
         }
     }
 
-    pub fn with_host_function<F>(mut self, name: &str, func: F) -> Self
+    pub fn with_host_function<F>(self, name: &str, func: F) -> Self
     where
-        F: Fn(&mut Runtime, &[Value]) -> Value,
+        F: Fn(&mut Runtime, &[Value]) -> Value + Send + Sync + 'static,
     {
+        self.with_host_function_internal(name, wrap(func))
+    }
+
+    fn with_host_function_internal(mut self, name: &str, func: HostFn) -> Self {
         let symbol = self.symbol_registry.intern_str(name);
         let func_id = self.function_registry.register_host_function(name);
         self.executor.register_host_function(name, func);
-        logger::debug!(event = "with_host_function", name, ?symbol, ?func_id);
+        logger::debug!(
+            event = "with_host_function_internal",
+            name,
+            ?symbol,
+            ?func_id
+        );
         self
     }
 
@@ -140,4 +148,43 @@ impl From<Closure> for u64 {
     fn from(value: Closure) -> Self {
         u32::from(value.func_id()) as u64 | (value.call_index as u64) << 32
     }
+}
+
+// See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+
+type HostFn = unsafe extern "C" fn(
+    *mut std::ffi::c_void,
+    *mut std::ffi::c_void,
+    u32,
+    *mut std::ffi::c_void,
+) -> llvmir::bridge::Value;
+
+// This function generates a wrapper function for each `host_func` at compile time.
+#[inline(always)]
+fn wrap<F>(host_func: F) -> HostFn
+where
+    F: Fn(&mut Runtime, &[Value]) -> Value + Send + Sync + 'static,
+{
+    debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
+    std::mem::forget(host_func);
+    wrapper::<F>
+}
+
+unsafe extern "C" fn wrapper<F>(
+    exec_context: *mut std::ffi::c_void,
+    outer_scope: *mut std::ffi::c_void,
+    argc: u32,
+    argv: *mut std::ffi::c_void,
+) -> llvmir::bridge::Value
+where
+    F: Fn(&mut Runtime, &[Value]) -> Value + Send + Sync + 'static,
+{
+    #[allow(clippy::uninit_assumed_init)]
+    let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
+    let runtime = &mut *(exec_context as *mut Runtime);
+    let _ = outer_scope;
+    let args = std::slice::from_raw_parts(argv as *const llvmir::bridge::Value, argc as usize);
+    // TODO: use c-type
+    let args: Vec<crate::Value> = args.iter().map(|value| crate::Value::load(value)).collect();
+    host_fn(runtime, &args).save()
 }
