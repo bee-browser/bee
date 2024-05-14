@@ -216,6 +216,8 @@ class Compiler {
   llvm::Value* ToNumeric(const Item& item);
   llvm::Value* ToAny(const Item& item);
 
+  llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;
   std::unique_ptr<llvm::IRBuilder<>> builder_ = nullptr;

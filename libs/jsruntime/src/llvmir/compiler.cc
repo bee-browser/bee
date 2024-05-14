@@ -233,7 +233,7 @@ void Compiler::Bindings(uint16_t n) {
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
   function_scope_type_->setBody(
       {builder_->getPtrTy(), builder_->getIntNTy(kWorkBits), builder_->getPtrTy(), bindings_type_});
-  function_scope_ = builder_->CreateAlloca(function_scope_type_, nullptr);
+  function_scope_ = builder_->CreateAlloca(function_scope_type_);
   auto* outer_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 0);
   builder_->CreateStore(outer_scope_, outer_ptr);
   auto* argc_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 1);
@@ -407,7 +407,7 @@ void Compiler::Set() {
 
 void Compiler::Arguments(uint16_t argc) {
   assert(argc > 0);
-  auto* argv = builder_->CreateAlloca(types_->CreateValueType(), builder_->getIntN(kWorkBits, argc));
+  auto* argv = CreateAllocaInEntryBlock(types_->CreateValueType(), argc);
   PushArgv(argv);
   Swap();
 }
@@ -477,7 +477,7 @@ void Compiler::Call(uint16_t argc) {
       false);
   auto* ret = builder_->CreateCall(
       prototype, func, {exec_context_, scope, builder_->getIntN(kWorkBits, argc), argv});
-  auto* value = builder_->CreateAlloca(types_->CreateValueType());
+  auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
   auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 0);
   auto* kind_value = builder_->CreateExtractValue(ret, 0);
   builder_->CreateStore(kind_value, kind_ptr);
@@ -842,7 +842,7 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
       auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(
           bindings_type_, bindings, 0, item.reference.locator.index);
       auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 2);
-      auto* value = builder_->CreateAlloca(types_->CreateValueType());
+      auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
       builder_->CreateMemCpy(value, llvm::MaybeAlign(), value_ptr, llvm::MaybeAlign(),
           builder_->getInt32(sizeof(Value)));
       if (scope != nullptr) {
@@ -880,7 +880,7 @@ llvm::Value* Compiler::ToAny(const Item& item) {
     return item.value;
   }
 
-  auto* value = builder_->CreateAlloca(types_->CreateValueType());
+  auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
   auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 0);
   llvm::Value* holder_ptr;
   switch (item.type) {
@@ -904,4 +904,12 @@ llvm::Value* Compiler::ToAny(const Item& item) {
       assert(false);
       return nullptr;
   }
+}
+
+llvm::AllocaInst* Compiler::CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n) {
+  auto* backup = builder_->GetInsertBlock();
+  builder_->SetInsertPoint(prologue_);
+  auto* alloca = builder_->CreateAlloca(ty, builder_->getInt32(n));
+  builder_->SetInsertPoint(backup);
+  return alloca;
 }
