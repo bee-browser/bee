@@ -32,9 +32,10 @@ impl Runtime {
         }
     }
 
-    pub fn with_host_function<F>(self, name: &str, func: F) -> Self
+    pub fn with_host_function<F, R>(self, name: &str, func: F) -> Self
     where
-        F: Fn(&mut Runtime, &[Value]) -> Value + Send + Sync + 'static,
+        F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
+        R: Into<llvmir::bridge::Value>,
     {
         self.with_host_function_internal(name, wrap(func))
     }
@@ -155,36 +156,38 @@ impl From<Closure> for u64 {
 type HostFn = unsafe extern "C" fn(
     *mut std::ffi::c_void,
     *mut std::ffi::c_void,
-    u32,
-    *mut std::ffi::c_void,
+    usize,
+    *mut llvmir::bridge::Value,
 ) -> llvmir::bridge::Value;
 
 // This function generates a wrapper function for each `host_func` at compile time.
 #[inline(always)]
-fn wrap<F>(host_func: F) -> HostFn
+fn wrap<F, R>(host_func: F) -> HostFn
 where
-    F: Fn(&mut Runtime, &[Value]) -> Value + Send + Sync + 'static,
+    F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
+    R: Into<llvmir::bridge::Value>,
 {
     debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
     std::mem::forget(host_func);
-    wrapper::<F>
+    wrapper::<F, R>
 }
 
-unsafe extern "C" fn wrapper<F>(
+unsafe extern "C" fn wrapper<F, R>(
     exec_context: *mut std::ffi::c_void,
     outer_scope: *mut std::ffi::c_void,
-    argc: u32,
-    argv: *mut std::ffi::c_void,
+    argc: usize,
+    argv: *mut llvmir::bridge::Value,
 ) -> llvmir::bridge::Value
 where
-    F: Fn(&mut Runtime, &[Value]) -> Value + Send + Sync + 'static,
+    F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
+    R: Into<llvmir::bridge::Value>,
 {
     #[allow(clippy::uninit_assumed_init)]
     let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
     let runtime = &mut *(exec_context as *mut Runtime);
     let _ = outer_scope;
-    let args = std::slice::from_raw_parts(argv as *const llvmir::bridge::Value, argc as usize);
+    let args = std::slice::from_raw_parts(argv as *const llvmir::bridge::Value, argc);
     // TODO: use c-type
     let args: Vec<crate::Value> = args.iter().map(|value| crate::Value::load(value)).collect();
-    host_fn(runtime, &args).save()
+    host_fn(runtime, &args).into()
 }

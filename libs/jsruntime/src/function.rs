@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use jsparser::Symbol;
 
-use crate::llvmir::bridge::NativeFuncPtr;
+use crate::llvmir::bridge::FuncPtr;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FunctionId(u32);
@@ -120,7 +120,7 @@ pub struct NativeFunction {
 
     // [[ECMAScriptCode]]
     pub name: CString,
-    pub func: NativeFuncPtr,
+    pub func: FuncPtr,
 }
 
 pub struct HostFunction {

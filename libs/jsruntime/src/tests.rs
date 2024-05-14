@@ -8,7 +8,6 @@ macro_rules! eval {
             let actual = format!("{:?}", args[0]);
             let expected = format!("{:?}", Value::from($expected));
             assert_eq!(actual, expected);
-            Value::Undefined
         });
         let module = runtime.compile_script($src.as_ref()).unwrap();
         runtime.eval(module);

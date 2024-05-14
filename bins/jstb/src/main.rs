@@ -66,7 +66,6 @@ fn read_from_stdin() -> Result<String> {
     Ok(source)
 }
 
-fn print(_runtime: &mut Runtime, args: &[Value]) -> Value {
-    println!("{:?}", args[0]);
-    Value::Undefined
+fn print(_runtime: &mut Runtime, args: &[Value]) {
+    println!("{args:?}");
 }

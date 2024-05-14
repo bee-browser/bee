@@ -1,6 +1,8 @@
 #include "compiler.hh"
 
+#include <climits>
 #include <cstdint>
+#include <cstdlib>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -20,7 +22,12 @@
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #pragma GCC diagnostic pop
 
+#include "macros.hh"
 #include "module.hh"
+
+namespace {
+constexpr unsigned kWorkBits = sizeof(size_t) * CHAR_BIT;
+}
 
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
@@ -106,7 +113,7 @@ void Compiler::Function(uint32_t func_id, const char* name) {
           // outer (pointer to the outer function scope)
           builder_->getPtrTy(),
           // argc
-          builder_->getInt32Ty(),
+          builder_->getIntNTy(kWorkBits),
           // argv (pointer to a list of bindings)
           builder_->getPtrTy(),
       },
@@ -225,7 +232,7 @@ void Compiler::Bindings(uint16_t n) {
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
   function_scope_type_->setBody(
-      {builder_->getPtrTy(), builder_->getInt32Ty(), builder_->getPtrTy(), bindings_type_});
+      {builder_->getPtrTy(), builder_->getIntNTy(kWorkBits), builder_->getPtrTy(), bindings_type_});
   function_scope_ = builder_->CreateAlloca(function_scope_type_, nullptr);
   auto* outer_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 0);
   builder_->CreateStore(outer_scope_, outer_ptr);
@@ -400,7 +407,7 @@ void Compiler::Set() {
 
 void Compiler::Arguments(uint16_t argc) {
   assert(argc > 0);
-  auto* argv = builder_->CreateAlloca(types_->CreateValueType(), builder_->getInt32(argc));
+  auto* argv = builder_->CreateAlloca(types_->CreateValueType(), builder_->getIntN(kWorkBits, argc));
   PushArgv(argv);
   Swap();
 }
@@ -463,13 +470,13 @@ void Compiler::Call(uint16_t argc) {
           // outer (pointer to the outer function scope)
           builder_->getPtrTy(),
           // argc
-          builder_->getInt32Ty(),
+          builder_->getIntNTy(kWorkBits),
           // argv (pointer to a list of bindings)
           builder_->getPtrTy(),
       },
       false);
   auto* ret = builder_->CreateCall(
-      prototype, func, {exec_context_, scope, builder_->getInt32(argc), argv});
+      prototype, func, {exec_context_, scope, builder_->getIntN(kWorkBits, argc), argv});
   auto* value = builder_->CreateAlloca(types_->CreateValueType());
   auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 0);
   auto* kind_value = builder_->CreateExtractValue(ret, 0);
@@ -680,7 +687,7 @@ void Compiler::StartFunction(const char* name) {
             // outer (pointer to the outer function scope)
             builder_->getPtrTy(),
             // argc
-            builder_->getInt32Ty(),
+            builder_->getIntNTy(kWorkBits),
             // argv (pointer to a list of bindings)
             builder_->getPtrTy(),
         },

@@ -52,7 +52,7 @@ Executor::~Executor() {
   }
 }
 
-void Executor::RegisterHostFunction(const char* name, HostFuncPtr func) {
+void Executor::RegisterHostFunction(const char* name, FuncPtr func) {
   llvm::orc::SymbolMap symbols;
   symbols[exec_session().intern(name)] = {
       llvm::orc::ExecutorAddr::fromPtr(func),
@@ -65,9 +65,9 @@ void Executor::RegisterModule(Module* mod) {
   ExitOnErr(compile_layer_.add(tracker_, std::move(mod->mod)));
 }
 
-NativeFuncPtr Executor::GetNativeFunc(const char* name) {
+FuncPtr Executor::GetNativeFunc(const char* name) {
   auto sym = ExitOnErr(Lookup(name));
-  return sym.getAddress().toPtr<NativeFuncPtr>();
+  return sym.getAddress().toPtr<FuncPtr>();
 }
 
 llvm::Expected<llvm::orc::ExecutorSymbolDef> Executor::Lookup(llvm::StringRef name) {

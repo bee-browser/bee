@@ -37,9 +37,9 @@ class Executor {
   ~Executor();
 
   void RegisterRuntime(const Runtime* runtime);
-  void RegisterHostFunction(const char* name, HostFuncPtr func);
+  void RegisterHostFunction(const char* name, FuncPtr func);
   void RegisterModule(Module* mod);
-  NativeFuncPtr GetNativeFunc(const char* name);
+  FuncPtr GetNativeFunc(const char* name);
 
   llvm::orc::ExecutionSession& exec_session() {
     return *exec_session_;

@@ -3,15 +3,11 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "macros.hh"
-
-BEGIN_C_LINKAGE
-
-typedef struct {
+struct Locator {
   uint8_t offset;
   uint8_t flags;
   uint16_t index;
-} Locator;
+};
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
@@ -22,19 +18,19 @@ enum ValueKind {
   Closure,
 };
 
-typedef union {
+union ValueHolder {
   uintptr_t opaque;
   bool boolean;
   double number;
   void* closure;
-} ValueHolder;
+};
 
 static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
 
-typedef struct {
+struct Value {
   ValueKind kind;
   ValueHolder holder;
-} Value;
+};
 
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
@@ -111,15 +107,12 @@ void compiler_peer_dump_stack(Compiler* self);
 // Execution
 
 class Executor;
-typedef Value (*NativeFuncPtr)(void* exec_context, void* outer_scope, uint32_t argc, void* argv);
-typedef Value (*HostFuncPtr)(void* exec_context, void* outer_scope, uint32_t argc, void* argv);
+typedef Value (*FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv);
 Executor* executor_peer_new();
 void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);
-void executor_peer_register_host_function(Executor* self, const char* name, HostFuncPtr func);
+void executor_peer_register_host_function(Executor* self, const char* name, FuncPtr func);
 void executor_peer_register_module(Executor* self, Module* mod);
 const char* executor_peer_get_data_layout(const Executor* self);
 const char* executor_peer_get_target_triple(const Executor* self);
-NativeFuncPtr executor_peer_get_native_func(Executor* self, const char* name);
-
-END_C_LINKAGE
+FuncPtr executor_peer_get_native_func(Executor* self, const char* name);

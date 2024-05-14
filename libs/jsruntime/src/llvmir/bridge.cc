@@ -214,7 +214,7 @@ void executor_peer_register_runtime(Executor* self, const Runtime* runtime) {
   self->RegisterRuntime(runtime);
 }
 
-void executor_peer_register_host_function(Executor* self, const char* name, HostFuncPtr func) {
+void executor_peer_register_host_function(Executor* self, const char* name, FuncPtr func) {
   self->RegisterHostFunction(name, func);
 }
 
@@ -230,6 +230,6 @@ const char* executor_peer_get_target_triple(const Executor* self) {
   return self->target_triple().getTriple().c_str();
 }
 
-NativeFuncPtr executor_peer_get_native_func(Executor* self, const char* name) {
+FuncPtr executor_peer_get_native_func(Executor* self, const char* name) {
   return self->GetNativeFunc(name);
 }

@@ -41,7 +41,7 @@ impl Executor {
         unsafe { CStr::from_ptr(bridge::executor_peer_get_target_triple(self.peer)) }
     }
 
-    pub fn get_native_func(&self, name: &CStr) -> bridge::NativeFuncPtr {
+    pub fn get_native_func(&self, name: &CStr) -> bridge::FuncPtr {
         unsafe { bridge::executor_peer_get_native_func(self.peer, name.as_ptr()) }
     }
 }
