@@ -48,7 +48,10 @@ Compiler::Compiler() {
   fpm_->addPass(llvm::PromotePass());
   fpm_->addPass(llvm::InstCombinePass());
   fpm_->addPass(llvm::ReassociatePass());
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
   fpm_->addPass(llvm::GVNPass());
+#pragma GCC diagnostic pop
   fpm_->addPass(llvm::SimplifyCFGPass());
 
   llvm::PassBuilder pb;
