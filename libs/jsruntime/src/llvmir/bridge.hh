@@ -97,7 +97,7 @@ void compiler_peer_conditional_expression(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);
 void compiler_peer_start_function(Compiler* self, const char* name);
-void compiler_peer_end_function(Compiler* self);
+void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue);
 void compiler_peer_release_bindings(Compiler* self, uint16_t n);
 void compiler_peer_return(Compiler* self, size_t n);

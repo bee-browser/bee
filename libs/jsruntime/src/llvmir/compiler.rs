@@ -17,7 +17,7 @@ use crate::semantics::CompileCommand;
 use crate::semantics::Locator;
 
 impl Runtime {
-    pub fn compile_script(&mut self, source: &str) -> Option<Module> {
+    pub fn compile_script(&mut self, source: &str, optimize: bool) -> Option<Module> {
         let mut analyzer = Analyzer::new(&mut self.symbol_registry, &mut self.function_registry);
         analyzer.use_global_bindings();
         let processor = Processor::new(analyzer, false);
@@ -34,7 +34,7 @@ impl Runtime {
             for command in func.commands.iter() {
                 compiler.process_command(command);
             }
-            compiler.end_function();
+            compiler.end_function(optimize);
         }
         compiler.end_compile().ok()
     }
@@ -96,10 +96,10 @@ impl<'a> Compiler<'a> {
         }
     }
 
-    fn end_function(&self) {
-        logger::debug!(event = "end_function");
+    fn end_function(&self, optimize: bool) {
+        logger::debug!(event = "end_function", optimize);
         unsafe {
-            bridge::compiler_peer_end_function(self.peer);
+            bridge::compiler_peer_end_function(self.peer, optimize);
         }
     }
 

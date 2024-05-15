@@ -174,8 +174,8 @@ void compiler_peer_start_function(Compiler* self, const char* name) {
   self->StartFunction(name);
 }
 
-void compiler_peer_end_function(Compiler* self) {
-  self->EndFunction();
+void compiler_peer_end_function(Compiler* self, bool optimize) {
+  self->EndFunction(optimize);
 }
 
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue) {
