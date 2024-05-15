@@ -1,4 +1,5 @@
 use std::io::Read;
+use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::Parser as _;
@@ -31,11 +32,11 @@ struct Run {
     #[arg(long)]
     print_module: bool,
 
-    /// The source text of the JavaScript program to run.
+    /// The source file of the JavaScript program to run.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
     #[arg()]
-    source: Option<String>,
+    source: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -46,7 +47,7 @@ fn main() -> Result<()> {
     match cl.command {
         Command::Run(run) => {
             let source = match run.source {
-                Some(source) => source,
+                Some(file) => std::fs::read_to_string(&file)?,
                 None => read_from_stdin()?,
             };
             let module = runtime.compile_script(&source).unwrap();
