@@ -9,7 +9,7 @@ macro_rules! eval {
             let expected = format!("{:?}", Value::from($expected));
             assert_eq!(actual, expected);
         });
-        let module = runtime.compile_script($src.as_ref()).unwrap();
+        let module = runtime.compile_script($src.as_ref(), true).unwrap();
         runtime.eval(module);
     };
 }

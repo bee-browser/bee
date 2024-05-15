@@ -237,13 +237,10 @@ void Compiler::Bindings(uint16_t n) {
   function_scope_type_->setBody(
       {builder_->getPtrTy(), builder_->getIntNTy(kWorkBits), builder_->getPtrTy(), bindings_type_});
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  auto* outer_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 0);
-  builder_->CreateStore(outer_scope_, outer_ptr);
-  auto* argc_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 1);
-  builder_->CreateStore(argc_, argc_ptr);
-  auto* argv_ptr = builder_->CreateStructGEP(function_scope_type_, function_scope_, 2);
-  builder_->CreateStore(argv_, argv_ptr);
-  bindings_ = builder_->CreateStructGEP(function_scope_type_, function_scope_, 3);
+  CreateStoreOuterScope(function_scope_, outer_scope_);
+  CreateStoreArgc(function_scope_, argc_);
+  CreateStoreArgv(function_scope_, argv_);
+  bindings_ = CreateGetBindingsPtr(function_scope_);
   builder_->CreateMemSet(bindings_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
       llvm::MaybeAlign());
   builder_->SetInsertPoint(backup);
@@ -256,43 +253,13 @@ void Compiler::DeclareImmutable() {
   auto ref = PopReference();
 
   assert(ref.locator.offset == 0);
-  auto* binding =
-      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
-  auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
-  builder_->CreateStore(builder_->getInt32(FLAGS), flags_ptr);
-  auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
-  builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
-  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
 
-  switch (item.type) {
-    case Item::Undefined: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
-      // Do not touch the holder.  It contains garbage.
-      break;
-    }
-    case Item::Boolean: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
-      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    }
-    case Item::Number: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
-      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    }
-    case Item::Any:
-      builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
-          builder_->getInt32(sizeof(ValueHolder)));
-      break;
-    default:
-      assert(false);
-      break;
-  }
+  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  CreateStoreFlags(binding_ptr, FLAGS);
+  CreateStoreSymbol(binding_ptr, ref.symbol);
+
+  auto* value_ptr = CreateGetValuePtr(binding_ptr);
+  CreateStoreValue(value_ptr, item);
 }
 
 void Compiler::DeclareMutable() {
@@ -302,43 +269,13 @@ void Compiler::DeclareMutable() {
   auto ref = PopReference();
 
   assert(ref.locator.offset == 0);
-  auto* binding =
-      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
-  auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
-  builder_->CreateStore(builder_->getInt32(FLAGS), flags_ptr);
-  auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
-  builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
-  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
 
-  switch (item.type) {
-    case Item::Undefined: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
-      // Do not touch the holder.  It contains garbage.
-      break;
-    }
-    case Item::Boolean: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
-      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    }
-    case Item::Number: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
-      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    }
-    case Item::Any:
-      builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
-          builder_->getInt32(sizeof(ValueHolder)));
-      break;
-    default:
-      assert(false);
-      break;
-  }
+  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  CreateStoreFlags(binding_ptr, FLAGS);
+  CreateStoreSymbol(binding_ptr, ref.symbol);
+
+  auto* value_ptr = CreateGetValuePtr(binding_ptr);
+  CreateStoreValue(value_ptr, item);
 }
 
 void Compiler::DeclareFunction() {
@@ -347,21 +284,17 @@ void Compiler::DeclareFunction() {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
 
-  auto* func = PopFunction();
+  auto item = Dereference();
   auto ref = PopReference();
 
   assert(ref.locator.offset == 0);
-  auto* binding =
-      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
-  auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
-  builder_->CreateStore(builder_->getInt32(FLAGS), flags_ptr);
-  auto* symbol_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 1);
-  builder_->CreateStore(builder_->getInt32(ref.symbol), symbol_ptr);
-  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
-  auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-  builder_->CreateStore(builder_->getInt64(ValueKind::Closure), kind_ptr);
-  auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
-  builder_->CreateStore(func, holder_ptr);
+
+  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  CreateStoreFlags(binding_ptr, FLAGS);
+  CreateStoreSymbol(binding_ptr, ref.symbol);
+
+  auto* value_ptr = CreateGetValuePtr(binding_ptr);
+  CreateStoreValue(value_ptr, item);
 
   builder_->SetInsertPoint(backup);
 }
@@ -370,41 +303,13 @@ void Compiler::Set() {
   auto item = PopItem();
   auto ref = PopReference();
 
-  auto* binding =
-      builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_, 0, ref.locator.index);
+  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
   // TODO: check the mutable flag
-  // auto* flags_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 0);
-  auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding, 2);
+  // auto* flags_ptr = CreateGetFlagsPtr(binding_ptr);
 
-  switch (item.type) {
-    case Item::Undefined: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
-      // Do not touch the holder.  It contains garbage.
-      break;
-    }
-    case Item::Boolean: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
-      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    }
-    case Item::Number: {
-      auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
-      auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    }
-    case Item::Any:
-      builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
-          builder_->getInt32(sizeof(ValueHolder)));
-      break;
-    default:
-      assert(false);
-      break;
-  }
+  auto* value_ptr = CreateGetValuePtr(binding_ptr);
+  CreateStoreValue(value_ptr, item);
+
   stack_.push_back(item);
 }
 
@@ -419,35 +324,7 @@ void Compiler::Argument(uint16_t index) {
   auto item = Dereference();
   auto* argv = PopArgv();
   auto* arg_ptr = builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv, index);
-  llvm::Value* kind_ptr;
-  llvm::Value* holder_ptr;
-  switch (item.type) {
-    case Item::Undefined:
-      kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
-      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 1);
-      builder_->CreateStore(builder_->getInt64(0), holder_ptr);
-      break;
-    case Item::Boolean:
-      kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
-      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    case Item::Number:
-      kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 0);
-      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
-      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), arg_ptr, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      break;
-    case Item::Any:
-      builder_->CreateMemCpy(arg_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
-          builder_->getInt32(sizeof(Value)));
-      break;
-    default:
-      assert(false);
-      break;
-  }
+  CreateStoreValue(arg_ptr, item);
   PushArgv(argv);
 }
 
@@ -480,15 +357,12 @@ void Compiler::Call(uint16_t argc) {
       false);
   auto* ret = builder_->CreateCall(
       prototype, func, {exec_context_, scope, builder_->getIntN(kWorkBits, argc), argv});
-  auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
-  auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 0);
-  auto* kind_value = builder_->CreateExtractValue(ret, 0);
-  builder_->CreateStore(kind_value, kind_ptr);
-  auto* holder_ptr2 = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
-  auto* holder_value = builder_->CreateExtractValue(ret, 1);
-  builder_->CreateStore(holder_value, holder_ptr2);
-  // builder_->CreateCall(types_->CreateRuntimeCall(), {exec_context_, func.value, value});
-  PushAny(value);
+  auto* value_ptr = CreateAllocaInEntryBlock(types_->CreateValueType());
+  auto* kind_value = CreateExtractValueKind(ret);
+  CreateStoreValueKind(value_ptr, kind_value);
+  auto* holder_value = CreateExtractValueHolder(ret);
+  CreateStoreValueHolder(value_ptr, holder_value);
+  PushAny(value_ptr);
 }
 
 void Compiler::ToBoolean() {
@@ -823,16 +697,6 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
     case Item::Any:
       return item;
     case Item::Reference: {
-      auto* bindings = bindings_;
-      auto* fscope = function_scope_;
-      if (item.reference.locator.offset > 0) {
-        fscope = outer_scope_;
-        for (size_t i = 1; i < item.reference.locator.offset; ++i) {
-          auto* outer_ptr = builder_->CreateStructGEP(function_scope_type_, fscope, 0);
-          fscope = builder_->CreateLoad(builder_->getPtrTy(), outer_ptr);
-        }
-        bindings = builder_->CreateStructGEP(function_scope_type_, fscope, 3);
-      }
       if ((item.reference.locator.flags & 0x01) != 0) {
         // argument
         // TODO: item.reference.locator.offset
@@ -842,9 +706,14 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
         return Item(Item::Any, arg);
       }
       // local
-      auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(
-          bindings_type_, bindings, 0, item.reference.locator.index);
-      auto* value_ptr = builder_->CreateStructGEP(types_->CreateBindingType(), binding_ptr, 2);
+      auto* fscope = function_scope_;
+      auto* bindings_ptr = bindings_;
+      if (item.reference.locator.offset > 0) {
+        fscope = CreateGetScope(item.reference.locator);
+        bindings_ptr = CreateGetBindingsPtr(fscope);
+      }
+      auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_ptr, 0, item.reference.locator.index);
+      auto* value_ptr = CreateGetValuePtr(binding_ptr);
       auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
       builder_->CreateMemCpy(value, llvm::MaybeAlign(), value_ptr, llvm::MaybeAlign(),
           builder_->getInt32(sizeof(Value)));
@@ -857,6 +726,41 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
       // never reach here
       assert(false);
       return Item(Item::Undefined);
+  }
+}
+
+llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
+  auto* scope = function_scope_;
+  if (locator.offset > 0) {
+    scope = outer_scope_;
+    for (size_t i = 1; i < locator.offset; ++i) {
+      scope = CreateLoadOuterScope(scope);
+    }
+  }
+  return scope;
+}
+
+void Compiler::CreateStoreValue(llvm::Value* value_ptr, const Item& item) {
+  switch (item.type) {
+    case Item::Undefined:
+      CreateStoreUndefined(value_ptr);
+      break;
+    case Item::Boolean:
+      CreateStoreBoolean(value_ptr, item.value);
+      break;
+    case Item::Number:
+      CreateStoreNumber(value_ptr, item.value);
+      break;
+    case Item::Function:
+      CreateStoreFunction(value_ptr, item.value);
+      break;
+    case Item::Any:
+      builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
+          builder_->getInt32(sizeof(Value)));
+      break;
+    default:
+      assert(false);
+      break;
   }
 }
 
@@ -882,31 +786,9 @@ llvm::Value* Compiler::ToAny(const Item& item) {
   if (item.type == Item::Any) {
     return item.value;
   }
-
-  auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
-  auto* kind_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 0);
-  llvm::Value* holder_ptr;
-  switch (item.type) {
-    case Item::Undefined:
-      builder_->CreateStore(builder_->getInt64(ValueKind::Undefined), kind_ptr);
-      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
-      builder_->CreateStore(builder_->getInt64(0), holder_ptr);
-      return value;
-    case Item::Boolean:
-      builder_->CreateStore(builder_->getInt64(ValueKind::Boolean), kind_ptr);
-      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      return value;
-    case Item::Number:
-      builder_->CreateStore(builder_->getInt64(ValueKind::Number), kind_ptr);
-      holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), value, 1);
-      builder_->CreateStore(item.value, holder_ptr);
-      return value;
-    default:
-      // TODO
-      assert(false);
-      return nullptr;
-  }
+  auto* value_ptr = CreateAllocaInEntryBlock(types_->CreateValueType());
+  CreateStoreValue(value_ptr, item);
+  return value_ptr;
 }
 
 llvm::AllocaInst* Compiler::CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n) {
