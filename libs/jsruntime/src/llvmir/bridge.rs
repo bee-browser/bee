@@ -43,16 +43,14 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
 }
 
 impl crate::Value {
-    pub fn load(value: *const Value) -> Self {
-        unsafe {
-            let value = &*value;
-            match value.kind {
-                ValueKind_Undefined => Self::Undefined,
-                ValueKind_Boolean => Self::Boolean(value.holder.boolean),
-                ValueKind_Number => Self::Number(value.holder.number),
-                //ValueKind_Closure => Self::Closure(value.holder.closure.into()),
-                _ => unreachable!("{}", value.kind),
-            }
+    pub(crate) unsafe fn load(value: *const Value) -> Self {
+        let value = &*value;
+        match value.kind {
+            ValueKind_Undefined => Self::Undefined,
+            ValueKind_Boolean => Self::Boolean(value.holder.boolean),
+            ValueKind_Number => Self::Number(value.holder.number),
+            //ValueKind_Closure => Self::Closure(value.holder.closure.into()),
+            _ => unreachable!("{}", value.kind),
         }
     }
 }
