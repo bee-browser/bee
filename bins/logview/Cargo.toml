@@ -14,7 +14,7 @@ clap = { version = "4.5.4", features = ["derive"] }
 logging = { path = "../../libs/logging" }
 mime = "0.3.17"
 mustache = "0.9.0"
-open = "5.1.2"
+open = "5.1.3"
 serde = { version = "1.0.202", features = ["derive", "rc"] }
 serde_yaml = "0.9.34"
 shell-words = "1.1.0"
