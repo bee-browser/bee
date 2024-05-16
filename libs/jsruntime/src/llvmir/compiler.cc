@@ -3,6 +3,7 @@
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
+#include <limits>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -599,27 +600,23 @@ void Compiler::EndFunction(bool optimize) {
 }
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {
-  UNUSED(n);
   UNUSED(prologue);
-#if 0
-  auto* backup = builder_->GetInsertBlock();
-  if (prologue) {
-    builder_->SetInsertPoint(prologue_);
-  }
-  CreateCallRuntimeAllocateBindings(n);
-  ++scope_depth_;
-  builder_->SetInsertPoint(backup);
-#endif
+  assert(static_cast<size_t>(allocated_bindings_) + static_cast<size_t>(n) < std::numeric_limits<uint16_t>::max());
+  allocated_bindings_ += n;
 }
 
 void Compiler::ReleaseBindings(uint16_t n) {
-  UNUSED(n);
-#if 0
+  assert(allocated_bindings_ >= n);
   if (builder_->GetInsertBlock()->getTerminator() == nullptr) {
-    CreateCallRuntimeReleaseBindings(n);
+    auto start = allocated_bindings_ - n;
+    while (start < allocated_bindings_) {
+      // TODO: CG
+      auto* binding_ptr = CreateGetBindingPtrOfScope(function_scope_, start);
+      CreateStoreFlagsToBinding(0, binding_ptr);
+      start++;
+    }
   }
-  --scope_depth_;
-#endif
+  allocated_bindings_ -= n;
 }
 
 void Compiler::Return(size_t n) {
@@ -629,6 +626,9 @@ void Compiler::Return(size_t n) {
   }
   auto* value = ToAny(item);
   auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
+  auto backup = allocated_bindings_;
+  ReleaseBindings(backup); // release all bindings
+  allocated_bindings_ = backup;
   builder_->CreateRet(ret);
 }
 

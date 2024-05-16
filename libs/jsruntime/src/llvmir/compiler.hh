@@ -436,7 +436,7 @@ class Compiler {
   llvm::StructType* function_scope_type_ = nullptr;
   llvm::Value* function_scope_ = nullptr;
   llvm::Value* bindings_ = nullptr;
-  size_t scope_depth_ = 0;
+  uint16_t allocated_bindings_ = 0;
 
   std::vector<Item> stack_;
   std::unordered_map<std::string, llvm::Function*> functions_;
