@@ -16,7 +16,7 @@ macro_rules! eval {
 
 #[test]
 fn test_eval_undefined() {
-    eval!("print(undefined)", Value::Undefined);
+    eval!("print(undefined)", Value::UNDEFINED);
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn test_eval_const_declaration() {
 
 #[test]
 fn test_eval_let_declaration() {
-    eval!("let a; print(a);", Value::Undefined);
+    eval!("let a; print(a);", Value::UNDEFINED);
     eval!("let a, b = 2; a = 1; print(a);", 1.);
     eval!("let a, b = 2; a = 1; print(b);", 2.);
 }
@@ -106,8 +106,8 @@ fn test_eval_conditional_expression() {
     eval!("print(1 < 0 ? 2 : 3)", 3.);
     eval!("print(1 > 0 ? true : false)", true);
     eval!("print(1 < 0 ? true : false)", false);
-    eval!("print(1 > 0 ? undefined : undefined)", Value::Undefined);
-    eval!("print(1 < 0 ? undefined : undefined)", Value::Undefined);
+    eval!("print(1 > 0 ? undefined : undefined)", Value::UNDEFINED);
+    eval!("print(1 < 0 ? undefined : undefined)", Value::UNDEFINED);
 }
 
 #[test]
@@ -120,7 +120,7 @@ fn test_eval_conditional_expression_mixed_types() {
     eval!("print(true ? 2.0 : false)", 2.);
     eval!("print(false ? 2.0 : false)", false);
     eval!("print(true ? 2.0 : undefined)", 2.);
-    eval!("print(false ? 2.0 : undefined)", Value::Undefined);
+    eval!("print(false ? 2.0 : undefined)", Value::UNDEFINED);
 }
 
 #[test]

@@ -6,7 +6,7 @@
 include!(concat!(env!("OUT_DIR"), "/bridge.rs"));
 
 impl Locator {
-    pub const NONE: Self = Self::new(LocatorKind_None, 0, 0);
+    pub(crate) const NONE: Self = Self::new(LocatorKind_None, 0, 0);
 
     const MAX_OFFSET: usize = u8::MAX as usize;
     const MAX_INDEX: usize = u16::MAX as usize;
@@ -57,42 +57,60 @@ impl std::fmt::Debug for Locator {
     }
 }
 
-impl crate::Value {
-    pub(crate) unsafe fn load(value: *const Value) -> Self {
-        let value = &*value;
-        match value.kind {
-            ValueKind_Undefined => Self::Undefined,
-            ValueKind_Boolean => Self::Boolean(value.holder.boolean),
-            ValueKind_Number => Self::Number(value.holder.number),
-            //ValueKind_Closure => Self::Closure(value.holder.closure.into()),
-            _ => unreachable!("{}", value.kind),
+impl Value {
+    pub const UNDEFINED: Self = Self {
+        kind: ValueKind_Undefined,
+        holder: ValueHolder { opaque: 0 },
+    };
+
+    pub const TRUE: Self = Self::boolean(true);
+    pub const FALSE: Self = Self::boolean(false);
+
+    pub const fn boolean(boolean: bool) -> Self {
+        Self {
+            kind: ValueKind_Boolean,
+            holder: ValueHolder { boolean },
+        }
+    }
+
+    pub const fn number(number: f64) -> Self {
+        Self {
+            kind: ValueKind_Number,
+            holder: ValueHolder { number },
         }
     }
 }
 
 impl From<()> for Value {
     fn from(_: ()) -> Self {
-        Self {
-            kind: ValueKind_Undefined,
-            holder: ValueHolder { opaque: 0 },
-        }
+        Self::UNDEFINED
     }
 }
 
 impl From<bool> for Value {
-    fn from(boolean: bool) -> Self {
-        Self {
-            kind: ValueKind_Boolean,
-            holder: ValueHolder { boolean },
-        }
+    fn from(value: bool) -> Self {
+        Self::boolean(value)
     }
 }
 
 impl From<f64> for Value {
-    fn from(number: f64) -> Self {
-        Self {
-            kind: ValueKind_Boolean,
-            holder: ValueHolder { number },
+    fn from(value: f64) -> Self {
+        Self::number(value)
+    }
+}
+
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // `unsafe` is needed for accessing the `holder` field.
+        unsafe {
+            match self.kind {
+                ValueKind_Undefined => write!(f, "undefined"),
+                ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
+                ValueKind_Boolean => write!(f, "false"),
+                ValueKind_Number => write!(f, "{}", self.holder.number),
+                ValueKind_Closure => write!(f, "{:?}", self.holder.closure),
+                _ => unreachable!(),
+            }
         }
     }
 }
@@ -122,13 +140,8 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
     let value = &*value;
     match value.kind {
         ValueKind_Undefined => f64::NAN,
-        ValueKind_Boolean => {
-            if value.holder.boolean {
-                1.0
-            } else {
-                0.0
-            }
-        }
+        ValueKind_Boolean if value.holder.boolean => 1.0,
+        ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,
         _ => panic!(),
     }
