@@ -8,7 +8,12 @@
 llvm::StructType* TypeHolder::CreateValueType() {
   if (value_type_ == nullptr) {
     value_type_ = llvm::StructType::create(context_, "Value");
-    value_type_->setBody({builder_.getInt8Ty(), builder_.getInt64Ty()});
+    value_type_->setBody({
+        // kind
+        builder_.getInt8Ty(),
+        // holder
+        builder_.getInt64Ty(),
+    });
   }
   return value_type_;
 }
@@ -16,7 +21,16 @@ llvm::StructType* TypeHolder::CreateValueType() {
 llvm::StructType* TypeHolder::CreateBindingType() {
   if (binding_type_ == nullptr) {
     binding_type_ = llvm::StructType::create(context_, "Binding");
-    binding_type_->setBody({builder_.getInt32Ty(), builder_.getInt32Ty(), CreateValueType()});
+    binding_type_->setBody({
+        // kind
+        builder_.getInt8Ty(),
+        // flags
+        builder_.getInt8Ty(),
+        // reserved
+        builder_.getInt16Ty(),
+        // holder
+        builder_.getInt64Ty(),
+    });
   }
   return binding_type_;
 }

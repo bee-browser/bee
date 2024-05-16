@@ -41,15 +41,19 @@ static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
 
 struct Value {
   ValueKind kind;
+  // uint8_t padding[7];
   ValueHolder holder;
 };
 
 static_assert(sizeof(Value) == sizeof(uint64_t) * 2, "size mismatched");
 
+// Can be copied as Value.
 struct Binding {
-  uint32_t flags;
+  ValueKind kind;
+  uint8_t flags;
+  uint16_t reserved;
   uint32_t symbol;
-  Value value;
+  ValueHolder holder;
 };
 
 #define BINDING_INITIALIZED 0x01
@@ -57,7 +61,7 @@ struct Binding {
 #define BINDING_MUTABLE 0x04
 #define BINDING_STRICT 0x08
 
-static_assert(sizeof(Binding) == sizeof(uint64_t) * 3, "size mismatched");
+static_assert(sizeof(Binding) == sizeof(uint64_t) * 2, "size mismatched");
 
 #include "runtime.hh"
 

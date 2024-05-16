@@ -237,17 +237,17 @@ void Compiler::Bindings(uint16_t n) {
   function_scope_type_->setBody({builder_->getPtrTy(), builder_->getIntNTy(kWorkBits),
       builder_->getPtrTy(), bindings_type_});
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
-  CreateStoreOuterScope(function_scope_, outer_scope_);
-  CreateStoreArgc(function_scope_, argc_);
-  CreateStoreArgv(function_scope_, argv_);
-  bindings_ = CreateGetBindingsPtr(function_scope_);
+  CreateStoreOuterScopeToScope(outer_scope_, function_scope_);
+  CreateStoreArgcToScope(argc_, function_scope_);
+  CreateStoreArgvToScope(argv_, function_scope_);
+  bindings_ = CreateGetBindingsPtrOfScope(function_scope_);
   builder_->CreateMemSet(bindings_, builder_->getInt8(0), builder_->getInt32(n * sizeof(Binding)),
       llvm::MaybeAlign());
   builder_->SetInsertPoint(backup);
 }
 
 void Compiler::DeclareImmutable() {
-  static constexpr uint32_t FLAGS = BINDING_INITIALIZED;
+  static constexpr uint8_t FLAGS = BINDING_INITIALIZED;
 
   auto item = PopItem();
   auto ref = PopReference();
@@ -255,15 +255,13 @@ void Compiler::DeclareImmutable() {
   assert(ref.locator.offset == 0);
 
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
-  CreateStoreFlags(binding_ptr, FLAGS);
-  CreateStoreSymbol(binding_ptr, ref.symbol);
-
-  auto* value_ptr = CreateGetValuePtr(binding_ptr);
-  CreateStoreValue(value_ptr, item);
+  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
+  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
+  CreateStoreItemToBinding(item, binding_ptr);
 }
 
 void Compiler::DeclareMutable() {
-  static constexpr uint32_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
 
   auto item = Dereference();
   auto ref = PopReference();
@@ -271,15 +269,13 @@ void Compiler::DeclareMutable() {
   assert(ref.locator.offset == 0);
 
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
-  CreateStoreFlags(binding_ptr, FLAGS);
-  CreateStoreSymbol(binding_ptr, ref.symbol);
-
-  auto* value_ptr = CreateGetValuePtr(binding_ptr);
-  CreateStoreValue(value_ptr, item);
+  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
+  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
+  CreateStoreItemToBinding(item, binding_ptr);
 }
 
 void Compiler::DeclareFunction() {
-  static constexpr uint32_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
+  static constexpr uint8_t FLAGS = BINDING_INITIALIZED | BINDING_MUTABLE;
 
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
@@ -290,11 +286,9 @@ void Compiler::DeclareFunction() {
   assert(ref.locator.offset == 0);
 
   auto* binding_ptr = CreateGetBindingPtr(ref.locator);
-  CreateStoreFlags(binding_ptr, FLAGS);
-  CreateStoreSymbol(binding_ptr, ref.symbol);
-
-  auto* value_ptr = CreateGetValuePtr(binding_ptr);
-  CreateStoreValue(value_ptr, item);
+  CreateStoreFlagsToBinding(FLAGS, binding_ptr);
+  CreateStoreSymbolToBinding(ref.symbol, binding_ptr);
+  CreateStoreItemToBinding(item, binding_ptr);
 
   builder_->SetInsertPoint(backup);
 }
@@ -307,8 +301,7 @@ void Compiler::Set() {
   // TODO: check the mutable flag
   // auto* flags_ptr = CreateGetFlagsPtr(binding_ptr);
 
-  auto* value_ptr = CreateGetValuePtr(binding_ptr);
-  CreateStoreValue(value_ptr, item);
+  CreateStoreItemToBinding(item, binding_ptr);
 
   stack_.push_back(item);
 }
@@ -324,7 +317,7 @@ void Compiler::Argument(uint16_t index) {
   auto item = Dereference();
   auto* argv = PopArgv();
   auto* arg_ptr = builder_->CreateConstInBoundsGEP1_32(types_->CreateValueType(), argv, index);
-  CreateStoreValue(arg_ptr, item);
+  CreateStoreItemToValue(item, arg_ptr);
   PushArgv(argv);
 }
 
@@ -358,10 +351,10 @@ void Compiler::Call(uint16_t argc) {
   auto* ret = builder_->CreateCall(
       prototype, func, {exec_context_, scope, builder_->getIntN(kWorkBits, argc), argv});
   auto* value_ptr = CreateAllocaInEntryBlock(types_->CreateValueType());
-  auto* kind_value = CreateExtractValueKind(ret);
-  CreateStoreValueKind(value_ptr, kind_value);
-  auto* holder_value = CreateExtractValueHolder(ret);
-  CreateStoreValueHolder(value_ptr, holder_value);
+  auto* kind = CreateExtractValueKindFromValue(ret);
+  CreateStoreValueKindToValue(kind, value_ptr);
+  auto* holder = CreateExtractValueHolderFromValue(ret);
+  CreateStoreValueHolderToValue(holder, value_ptr);
   PushAny(value_ptr);
 }
 
@@ -715,20 +708,19 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
           return Item(Item::Any, arg);
         }
         case LocatorKind::Local: {
-          auto* fscope = function_scope_;
+          auto* scope_ptr = function_scope_;
           auto* bindings_ptr = bindings_;
           if (item.reference.locator.offset > 0) {
-            fscope = CreateGetScope(item.reference.locator);
-            bindings_ptr = CreateGetBindingsPtr(fscope);
+            scope_ptr = CreateGetScope(item.reference.locator);
+            bindings_ptr = CreateGetBindingsPtrOfScope(scope_ptr);
           }
           auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(
               bindings_type_, bindings_ptr, 0, item.reference.locator.index);
-          auto* value_ptr = CreateGetValuePtr(binding_ptr);
           auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
-          builder_->CreateMemCpy(value, llvm::MaybeAlign(), value_ptr, llvm::MaybeAlign(),
+          builder_->CreateMemCpy(value, llvm::MaybeAlign(), binding_ptr, llvm::MaybeAlign(),
               builder_->getInt32(sizeof(Value)));
           if (scope != nullptr) {
-            *scope = fscope;
+            *scope = scope_ptr;
           }
           return Item(Item::Any, value);
         }
@@ -742,29 +734,52 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
 }
 
 llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
-  auto* scope = function_scope_;
+  auto* scope_ptr = function_scope_;
   if (locator.offset > 0) {
-    scope = outer_scope_;
+    scope_ptr = outer_scope_;
     for (size_t i = 1; i < locator.offset; ++i) {
-      scope = CreateLoadOuterScope(scope);
+      scope_ptr = CreateLoadOuterScopeFromScope(scope_ptr);
     }
   }
-  return scope;
+  return scope_ptr;
 }
 
-void Compiler::CreateStoreValue(llvm::Value* value_ptr, const Item& item) {
+void Compiler::CreateStoreItemToBinding(const Item& item, llvm::Value* binding_ptr) {
   switch (item.type) {
     case Item::Undefined:
-      CreateStoreUndefined(value_ptr);
+      CreateStoreUndefinedToBinding(binding_ptr);
       break;
     case Item::Boolean:
-      CreateStoreBoolean(value_ptr, item.value);
+      CreateStoreBooleanToBinding(item.value, binding_ptr);
       break;
     case Item::Number:
-      CreateStoreNumber(value_ptr, item.value);
+      CreateStoreNumberToBinding(item.value, binding_ptr);
       break;
     case Item::Function:
-      CreateStoreFunction(value_ptr, item.value);
+      CreateStoreFunctionToBinding(item.value, binding_ptr);
+      break;
+    case Item::Any:
+      CreateStoreValueToBinding(item.value, binding_ptr);
+      break;
+    default:
+      assert(false);
+      break;
+  }
+}
+
+void Compiler::CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr) {
+  switch (item.type) {
+    case Item::Undefined:
+      CreateStoreUndefinedToValue(value_ptr);
+      break;
+    case Item::Boolean:
+      CreateStoreBooleanToValue(item.value, value_ptr);
+      break;
+    case Item::Number:
+      CreateStoreNumberToValue(item.value, value_ptr);
+      break;
+    case Item::Function:
+      CreateStoreFunctionToValue(item.value, value_ptr);
       break;
     case Item::Any:
       builder_->CreateMemCpy(value_ptr, llvm::MaybeAlign(), item.value, llvm::MaybeAlign(),
@@ -799,7 +814,7 @@ llvm::Value* Compiler::ToAny(const Item& item) {
     return item.value;
   }
   auto* value_ptr = CreateAllocaInEntryBlock(types_->CreateValueType());
-  CreateStoreValue(value_ptr, item);
+  CreateStoreItemToValue(item, value_ptr);
   return value_ptr;
 }
 
