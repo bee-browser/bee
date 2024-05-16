@@ -32,6 +32,7 @@ jobs:
           make coverage LLVM_COV_ARGS='--codecov --output-path=codecov.json' TEST262_ARGS=''
       - uses: codecov/codecov-action@v4
         with:
-          token: '${{ secrets.CODECOV_TOKEN }}'
           files: codecov.json
           fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
