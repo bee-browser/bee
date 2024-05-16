@@ -29,6 +29,8 @@ fn main() {
     bindgen::Builder::default()
         .header(input_file)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+        // TODO: Using rustified enum types causes performance regression in fib(41).
+        // However, wedon't know the exact reason at this point.  Deeper investigation is needed.
         .generate()
         .expect("Unable to generate bindings for Rust")
         .write_to_file(output_file)

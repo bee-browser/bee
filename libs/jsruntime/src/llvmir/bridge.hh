@@ -3,20 +3,32 @@
 #include <cstddef>
 #include <cstdint>
 
+enum LocatorKind : uint8_t {
+  None,
+  Argument,
+  Local,
+};
+
+static_assert(sizeof(LocatorKind) == sizeof(uint8_t), "size mismatched");
+
+// TODO: Changing the order of member variables causes performance regression in fib(41).
+// However, we don't know the exact reason at this point.  Deeper investigation is needed.
 struct Locator {
   uint8_t offset;
-  uint8_t flags;
+  LocatorKind kind;
   uint16_t index;
 };
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
-enum ValueKind {
+enum ValueKind : uint8_t {
   Undefined,
   Boolean,
   Number,
   Closure,
 };
+
+static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
 
 union ValueHolder {
   uintptr_t opaque;

@@ -793,18 +793,19 @@ impl Locator {
 
     const ARGUMENT_BIT: u32 = 0x00010000;
     const LOCAL_BIT: u32 = 0x00020000;
+    const KIND_MASK: u32 = 0x00FF0000;
 
     const MAX_OFFSET: usize = u8::MAX as usize;
     const MAX_INDEX: usize = u16::MAX as usize;
 
     #[inline(always)]
     pub fn is_argument(&self) -> bool {
-        (self.0 & Self::ARGUMENT_BIT) != 0
+        (self.0 & Self::KIND_MASK) == Self::ARGUMENT_BIT
     }
 
     #[inline(always)]
     pub fn is_local(&self) -> bool {
-        (self.0 & Self::LOCAL_BIT) != 0
+        (self.0 & Self::KIND_MASK) == Self::LOCAL_BIT
     }
 
     #[inline(always)]
@@ -813,7 +814,7 @@ impl Locator {
     }
 
     #[inline(always)]
-    pub fn flags(&self) -> u8 {
+    pub fn kind(&self) -> u8 {
         ((self.0 >> 16) & 0x000000FF) as u8
     }
 

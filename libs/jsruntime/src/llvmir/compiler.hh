@@ -314,7 +314,7 @@ class Compiler {
   }
 
   inline void CreateStoreValueKind(llvm::Value* value_ptr, ValueKind kind) {
-    CreateStoreValueKind(value_ptr, builder_->getInt64(kind));
+    CreateStoreValueKind(value_ptr, builder_->getInt8(kind));
   }
 
   inline void CreateStoreValueKind(llvm::Value* value_ptr, llvm::Value* kind) {

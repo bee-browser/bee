@@ -8,7 +8,7 @@
 llvm::StructType* TypeHolder::CreateValueType() {
   if (value_type_ == nullptr) {
     value_type_ = llvm::StructType::create(context_, "Value");
-    value_type_->setBody({builder_.getInt64Ty(), builder_.getInt64Ty()});
+    value_type_->setBody({builder_.getInt8Ty(), builder_.getInt64Ty()});
   }
   return value_type_;
 }

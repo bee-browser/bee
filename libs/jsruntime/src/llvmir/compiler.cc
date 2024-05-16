@@ -234,8 +234,8 @@ void Compiler::Bindings(uint16_t n) {
   builder_->SetInsertPoint(prologue_);
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
-  function_scope_type_->setBody(
-      {builder_->getPtrTy(), builder_->getIntNTy(kWorkBits), builder_->getPtrTy(), bindings_type_});
+  function_scope_type_->setBody({builder_->getPtrTy(), builder_->getIntNTy(kWorkBits),
+      builder_->getPtrTy(), bindings_type_});
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
   CreateStoreOuterScope(function_scope_, outer_scope_);
   CreateStoreArgc(function_scope_, argc_);
@@ -667,10 +667,16 @@ void Compiler::DumpStack() {
         break;
       case Item::Reference:
         llvm::errs() << "reference: symbol=" << item.reference.symbol;
-        if (item.reference.locator.flags & 0x01) {
-          llvm::errs() << " locator=argument(";
-        } else if (item.reference.locator.flags & 0x02) {
-          llvm::errs() << " locator=local(";
+        switch (item.reference.locator.kind) {
+          case LocatorKind::None:
+            llvm::errs() << " locator=none";
+            return;
+          case LocatorKind::Argument:
+            llvm::errs() << " locator=argument(";
+            break;
+          case LocatorKind::Local:
+            llvm::errs() << " locator=local(";
+            break;
         }
         // static_cast<uint16_t>() is needed for printing uint8_t values.
         llvm::errs() << static_cast<uint16_t>(item.reference.locator.offset) << ", "
@@ -696,32 +702,38 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
     case Item::Function:
     case Item::Any:
       return item;
-    case Item::Reference: {
-      if ((item.reference.locator.flags & 0x01) != 0) {
-        // argument
-        // TODO: item.reference.locator.offset
-        // TODO: argc_
-        auto* arg = builder_->CreateConstInBoundsGEP1_32(
-            types_->CreateValueType(), argv_, item.reference.locator.index);
-        return Item(Item::Any, arg);
+    case Item::Reference:
+      switch (item.reference.locator.kind) {
+        case LocatorKind::None:
+          assert(false);
+          return Item(Item::Undefined);
+        case LocatorKind::Argument: {
+          // TODO: item.reference.locator.offset
+          // TODO: argc_
+          auto* arg = builder_->CreateConstInBoundsGEP1_32(
+              types_->CreateValueType(), argv_, item.reference.locator.index);
+          return Item(Item::Any, arg);
+        }
+        case LocatorKind::Local: {
+          auto* fscope = function_scope_;
+          auto* bindings_ptr = bindings_;
+          if (item.reference.locator.offset > 0) {
+            fscope = CreateGetScope(item.reference.locator);
+            bindings_ptr = CreateGetBindingsPtr(fscope);
+          }
+          auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(
+              bindings_type_, bindings_ptr, 0, item.reference.locator.index);
+          auto* value_ptr = CreateGetValuePtr(binding_ptr);
+          auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
+          builder_->CreateMemCpy(value, llvm::MaybeAlign(), value_ptr, llvm::MaybeAlign(),
+              builder_->getInt32(sizeof(Value)));
+          if (scope != nullptr) {
+            *scope = fscope;
+          }
+          return Item(Item::Any, value);
+        }
       }
-      // local
-      auto* fscope = function_scope_;
-      auto* bindings_ptr = bindings_;
-      if (item.reference.locator.offset > 0) {
-        fscope = CreateGetScope(item.reference.locator);
-        bindings_ptr = CreateGetBindingsPtr(fscope);
-      }
-      auto* binding_ptr = builder_->CreateConstInBoundsGEP2_32(bindings_type_, bindings_ptr, 0, item.reference.locator.index);
-      auto* value_ptr = CreateGetValuePtr(binding_ptr);
-      auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
-      builder_->CreateMemCpy(value, llvm::MaybeAlign(), value_ptr, llvm::MaybeAlign(),
-          builder_->getInt32(sizeof(Value)));
-      if (scope != nullptr) {
-        *scope = fscope;
-      }
-      return Item(Item::Any, value);
-    }
+      // fall through
     default:
       // never reach here
       assert(false);

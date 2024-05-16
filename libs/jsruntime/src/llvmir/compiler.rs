@@ -139,7 +139,7 @@ impl<'a> Compiler<'a> {
                     symbol.id(),
                     bridge::Locator {
                         offset: locator.offset(),
-                        flags: locator.flags(),
+                        kind: locator.kind(),
                         index: locator.index(),
                     },
                 );
