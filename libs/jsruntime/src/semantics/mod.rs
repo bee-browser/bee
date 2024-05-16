@@ -11,6 +11,7 @@ use jsparser::Error;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
+use super::llvmir::bridge::Locator;
 use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;
@@ -785,94 +786,6 @@ impl From<AssignmentOperator> for CompileCommand {
     }
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub struct Locator(u32);
-
-impl Locator {
-    pub const NONE: Self = Self(0);
-
-    const ARGUMENT_BIT: u32 = 0x00010000;
-    const LOCAL_BIT: u32 = 0x00020000;
-    const KIND_MASK: u32 = 0x00FF0000;
-
-    const MAX_OFFSET: usize = u8::MAX as usize;
-    const MAX_INDEX: usize = u16::MAX as usize;
-
-    #[inline(always)]
-    pub fn is_argument(&self) -> bool {
-        (self.0 & Self::KIND_MASK) == Self::ARGUMENT_BIT
-    }
-
-    #[inline(always)]
-    pub fn is_local(&self) -> bool {
-        (self.0 & Self::KIND_MASK) == Self::LOCAL_BIT
-    }
-
-    #[inline(always)]
-    pub fn offset(&self) -> u8 {
-        (self.0 >> 24) as u8
-    }
-
-    #[inline(always)]
-    pub fn kind(&self) -> u8 {
-        ((self.0 >> 16) & 0x000000FF) as u8
-    }
-
-    #[inline(always)]
-    pub fn index(&self) -> u16 {
-        (self.0 & 0x0000FFFF) as u16
-    }
-
-    pub fn checked_argument(offset: usize, index: usize) -> Option<Self> {
-        Self::checked_new(Self::ARGUMENT_BIT, offset, index)
-    }
-
-    #[allow(dead_code)]
-    pub const fn local(offset: usize, index: usize) -> Self {
-        Self::new(Self::LOCAL_BIT, offset, index)
-    }
-
-    pub fn checked_local(offset: usize, index: usize) -> Option<Self> {
-        Self::checked_new(Self::LOCAL_BIT, offset, index)
-    }
-
-    const fn new(flags: u32, offset: usize, index: usize) -> Self {
-        Self(flags | (offset as u32) << 24 | index as u32)
-    }
-
-    fn checked_new(flags: u32, offset: usize, index: usize) -> Option<Self> {
-        if offset > Self::MAX_OFFSET {
-            logger::error!(err = "too large", offset);
-            return None;
-        }
-        if index > Self::MAX_INDEX {
-            logger::error!(err = "too large", index);
-            return None;
-        }
-        Some(Self::new(flags, offset, index))
-    }
-}
-
-impl From<u32> for Locator {
-    fn from(value: u32) -> Self {
-        Self(value)
-    }
-}
-
-impl std::fmt::Debug for Locator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let offset = self.offset();
-        let index = self.index();
-        if self.is_argument() {
-            write!(f, "Locator::Argument({offset}, {index})")
-        } else if self.is_local() {
-            write!(f, "Locator::Local({offset}, {index})")
-        } else {
-            write!(f, "Locator::None")
-        }
-    }
-}
-
 #[derive(Debug)]
 struct Reference {
     symbol: Symbol,
@@ -887,11 +800,6 @@ mod tests {
     use jsparser::Processor;
 
     use super::*;
-
-    #[test]
-    fn test_locator_size() {
-        assert_eq!(std::mem::size_of::<Locator>(), 4);
-    }
 
     macro_rules! symbol {
         ($symbol_registry:expr, $name:literal) => {

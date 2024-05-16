@@ -31,6 +31,8 @@ fn main() {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         // TODO: Using rustified enum types causes performance regression in fib(41).
         // However, wedon't know the exact reason at this point.  Deeper investigation is needed.
+        .derive_eq(true)
+        .no_debug("^Locator$")
         .generate()
         .expect("Unable to generate bindings for Rust")
         .write_to_file(output_file)

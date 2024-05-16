@@ -6,6 +6,7 @@ use jsparser::Processor;
 use jsparser::Symbol;
 
 use super::bridge;
+use super::bridge::Locator;
 use super::logger;
 use super::Module;
 use super::Runtime;
@@ -14,7 +15,6 @@ use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
 use crate::semantics::Analyzer;
 use crate::semantics::CompileCommand;
-use crate::semantics::Locator;
 
 impl Runtime {
     pub fn compile_script(&mut self, source: &str, optimize: bool) -> Option<Module> {
@@ -134,15 +134,7 @@ impl<'a> Compiler<'a> {
             }
             CompileCommand::Reference(symbol, locator) => unsafe {
                 assert_ne!(*locator, Locator::NONE);
-                bridge::compiler_peer_reference(
-                    self.peer,
-                    symbol.id(),
-                    bridge::Locator {
-                        offset: locator.offset(),
-                        kind: locator.kind(),
-                        index: locator.index(),
-                    },
-                );
+                bridge::compiler_peer_reference(self.peer, symbol.id(), *locator);
             },
             CompileCommand::Bindings(n) => unsafe {
                 bridge::compiler_peer_bindings(self.peer, *n);
