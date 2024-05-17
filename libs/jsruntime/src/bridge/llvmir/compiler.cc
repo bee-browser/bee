@@ -659,10 +659,14 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
           assert(false);
           return Item(Item::Undefined);
         case LocatorKind::Argument: {
-          // TODO: item.reference.locator.offset
-          // TODO: argc_
+          auto* scope_ptr = function_scope_;
+          auto* argv = argv_;
+          if (item.reference.locator.offset > 0) {
+            scope_ptr = CreateGetScope(item.reference.locator);
+            argv = CreateLoadArgvFromScope(scope_ptr);
+          }
           auto* arg = builder_->CreateConstInBoundsGEP1_32(
-              types_->CreateValueType(), argv_, item.reference.locator.index);
+              types_->CreateValueType(), argv, item.reference.locator.index);
           return Item(Item::Any, arg);
         }
         case LocatorKind::Local: {

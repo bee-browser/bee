@@ -182,6 +182,14 @@ fn test_eval_nested_function() {
 }
 
 #[test]
+fn test_eval_argument_in_outer_function() {
+    eval!(
+        "print(a(1)); function a(x) { return b(); function b() { return x } }",
+        1.
+    );
+}
+
+#[test]
 fn test_eval_fibonacci() {
     eval!(
         "print(fib(10)); \

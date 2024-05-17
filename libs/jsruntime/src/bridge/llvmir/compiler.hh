@@ -263,6 +263,11 @@ class Compiler {
     return builder_->CreateLoad(builder_->getPtrTy(), ptr);
   }
 
+  inline llvm::Value* CreateLoadArgvFromScope(llvm::Value* scope_ptr) {
+    auto* ptr = CreateGetArgvPtrOfScope(scope_ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+  }
+
   inline void CreateStoreOuterScopeToScope(llvm::Value* value, llvm::Value* scope_ptr) {
     auto* ptr = CreateGetOuterScopePtrOfScope(scope_ptr);
     builder_->CreateStore(value, ptr);
