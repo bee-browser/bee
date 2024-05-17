@@ -105,56 +105,6 @@ impl Drop for Module {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Closure {
-    func_id: FunctionId,
-
-    // The index of a `Call` in `Fiber::call_stack`, where the function was defined.
-    call_index: u32,
-}
-
-impl Closure {
-    pub fn new(func_id: FunctionId, call_index: usize) -> Self {
-        Self {
-            func_id,
-            call_index: call_index as u32,
-        }
-    }
-
-    pub fn checked_new(func_id: FunctionId, call_index: usize) -> Option<Self> {
-        if call_index > u32::MAX as usize {
-            logger::error!(err = "too large", call_index);
-            return None;
-        }
-        Some(Self::new(func_id, call_index))
-    }
-
-    #[inline(always)]
-    pub fn func_id(&self) -> FunctionId {
-        self.func_id
-    }
-
-    #[inline(always)]
-    pub fn call_index(&self) -> usize {
-        self.call_index as usize
-    }
-}
-
-impl From<u64> for Closure {
-    fn from(value: u64) -> Self {
-        Self {
-            func_id: (value as u32).into(),
-            call_index: ((value >> 32) as u32),
-        }
-    }
-}
-
-impl From<Closure> for u64 {
-    fn from(value: Closure) -> Self {
-        u32::from(value.func_id()) as u64 | (value.call_index as u64) << 32
-    }
-}
-
 // See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 
 type HostFn =
