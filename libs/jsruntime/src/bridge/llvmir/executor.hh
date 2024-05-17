@@ -22,10 +22,9 @@
 #include <llvm/IR/LLVMContext.h>
 #pragma GCC diagnostic pop
 
-#include "bridge.hh"
+#include "../bridge.hh"
 
 struct Module;
-class Runtime;
 
 class Executor {
  public:
@@ -38,8 +37,9 @@ class Executor {
   ~Executor();
 
   void RegisterRuntime(const Runtime* runtime);
+  void RegisterHostFunction(const char* name, FuncPtr func);
   void RegisterModule(Module* mod);
-  FuncPtr GetFunc(const char* name);
+  FuncPtr GetNativeFunc(const char* name);
 
   llvm::orc::ExecutionSession& exec_session() {
     return *exec_session_;

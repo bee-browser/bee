@@ -1,9 +1,8 @@
-use std::ffi::CStr;
 use std::ffi::CString;
 
 use jsparser::Symbol;
 
-use crate::Value;
+use crate::bridge::FuncPtr;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FunctionId(u32);
@@ -71,20 +70,22 @@ impl FunctionRegistry {
         }
     }
 
+    pub fn get_native(&self, func_id: u32) -> &NativeFunction {
+        let func_id = func_id as usize;
+        &self.native_functions[func_id]
+    }
+
     pub fn get_native_mut(&mut self, func_id: u32) -> &mut NativeFunction {
         let func_id = func_id as usize;
         &mut self.native_functions[func_id]
     }
 
-    pub fn get_host(&mut self, func_id: u32) -> &HostFunction {
+    pub fn get_host(&self, func_id: u32) -> &HostFunction {
         let func_id = func_id as usize;
-        &mut self.host_functions[func_id]
+        &self.host_functions[func_id]
     }
 
-    pub fn create_native_function(
-        &mut self,
-        formal_parameters: Vec<Symbol>,
-    ) -> (FunctionId, &CStr) {
+    pub fn create_native_function(&mut self, formal_parameters: Vec<Symbol>) -> FunctionId {
         let value = self.native_functions.len();
         debug_assert!(value <= FunctionId::MAX as usize);
         let name = CString::new(format!("fn{value}")).unwrap();
@@ -93,15 +94,14 @@ impl FunctionRegistry {
             name,
             func: None,
         });
-        let name = self.native_functions.last().unwrap().name.as_c_str();
-        (FunctionId::native(value as u32), name)
+        FunctionId::native(value as u32)
     }
 
-    pub fn register_host_function(&mut self, name: &str, func: fn(&[Value])) -> FunctionId {
+    pub fn register_host_function(&mut self, name: &str) -> FunctionId {
         let value = self.host_functions.len();
         debug_assert!(value <= FunctionId::MAX as usize);
         let name = CString::new(name).unwrap();
-        self.host_functions.push(HostFunction { name, func });
+        self.host_functions.push(HostFunction { name });
         FunctionId::host(value as u32)
     }
 
@@ -120,12 +120,11 @@ pub struct NativeFunction {
 
     // [[ECMAScriptCode]]
     pub name: CString,
-    pub func: crate::llvmir::bridge::FuncPtr,
+    pub func: FuncPtr,
 }
 
 pub struct HostFunction {
     pub name: CString,
-    pub func: fn(args: &[Value]),
 }
 
 #[cfg(test)]

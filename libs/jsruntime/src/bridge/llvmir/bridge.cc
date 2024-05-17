@@ -1,4 +1,4 @@
-#include "bridge.hh"
+#include "../bridge.hh"
 
 #include <cstdint>
 
@@ -34,6 +34,14 @@ void compiler_peer_delete(Compiler* self) {
   delete self;
 }
 
+void compiler_peer_start(Compiler* self) {
+  UNUSED(self);
+}
+
+Module* compiler_peer_end(Compiler* self) {
+  return self->TakeModule();
+}
+
 void compiler_peer_set_data_layout(Compiler* self, const char* data_layout) {
   self->SetDataLayout(data_layout);
 }
@@ -42,12 +50,8 @@ void compiler_peer_set_target_triple(Compiler* self, const char* triple) {
   self->SetTargetTriple(triple);
 }
 
-void compiler_peer_start(Compiler* self) {
-  UNUSED(self);
-}
-
-Module* compiler_peer_end(Compiler* self) {
-  return self->TakeModule();
+void compiler_peer_set_runtime(Compiler* self, uintptr_t runtime) {
+  self->SetRuntime(runtime);
 }
 
 void compiler_peer_undefined(Compiler* self) {
@@ -62,11 +66,11 @@ void compiler_peer_number(Compiler* self, double value) {
   self->Number(value);
 }
 
-void compiler_peer_function(Compiler* self, uint32_t func_id) {
-  self->Function(func_id);
+void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name) {
+  self->Function(func_id, name);
 }
 
-void compiler_peer_reference(Compiler* self, uint32_t symbol, uint32_t locator) {
+void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator) {
   self->Reference(symbol, locator);
 }
 
@@ -114,6 +118,10 @@ void compiler_peer_ne(Compiler* self) {
   self->Ne();
 }
 
+void compiler_peer_bindings(Compiler* self, uint16_t n) {
+  self->Bindings(n);
+}
+
 void compiler_peer_declare_immutable(Compiler* self) {
   self->DeclareImmutable();
 }
@@ -130,12 +138,16 @@ void compiler_peer_set(Compiler* self) {
   self->Set();
 }
 
-void compiler_peer_push_argument(Compiler* self) {
-  self->PushArgument();
+void compiler_peer_arguments(Compiler* self, uint16_t argc) {
+  self->Arguments(argc);
 }
 
-void compiler_peer_call(Compiler* self) {
-  self->Call();
+void compiler_peer_argument(Compiler* self, uint16_t index) {
+  self->Argument(index);
+}
+
+void compiler_peer_call(Compiler* self, uint16_t argc) {
+  self->Call(argc);
 }
 
 void compiler_peer_to_boolean(Compiler* self) {
@@ -162,8 +174,8 @@ void compiler_peer_start_function(Compiler* self, const char* name) {
   self->StartFunction(name);
 }
 
-void compiler_peer_end_function(Compiler* self) {
-  self->EndFunction();
+void compiler_peer_end_function(Compiler* self, bool optimize) {
+  self->EndFunction(optimize);
 }
 
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue) {
@@ -202,6 +214,10 @@ void executor_peer_register_runtime(Executor* self, const Runtime* runtime) {
   self->RegisterRuntime(runtime);
 }
 
+void executor_peer_register_host_function(Executor* self, const char* name, FuncPtr func) {
+  self->RegisterHostFunction(name, func);
+}
+
 void executor_peer_register_module(Executor* self, Module* mod) {
   self->RegisterModule(mod);
 }
@@ -214,6 +230,6 @@ const char* executor_peer_get_target_triple(const Executor* self) {
   return self->target_triple().getTriple().c_str();
 }
 
-FuncPtr executor_peer_get_func(Executor* self, const char* name) {
-  return self->GetFunc(name);
+FuncPtr executor_peer_get_native_func(Executor* self, const char* name) {
+  return self->GetNativeFunc(name);
 }

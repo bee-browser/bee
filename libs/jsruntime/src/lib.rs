@@ -1,96 +1,80 @@
 mod bridge;
-mod fiber;
+mod compiler;
+mod executor;
 mod function;
-mod llvmir;
 mod logger;
 mod semantics;
 
 #[cfg(test)]
 mod tests;
 
-use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
-use fiber::Fiber;
+use executor::Executor;
 use function::FunctionId;
 use function::FunctionRegistry;
-use semantics::Locator;
 
-pub use llvmir::Module;
+pub use bridge::Value;
 
 pub struct Runtime {
     symbol_registry: SymbolRegistry,
     function_registry: FunctionRegistry,
-    fiber: Fiber,
-    executor: llvmir::Executor,
+    executor: Executor,
 }
 
 impl Runtime {
     pub fn initialize() {
-        llvmir::initialize();
+        unsafe {
+            bridge::llvmir_initialize();
+        }
     }
 
     pub fn new() -> Self {
         Self {
             symbol_registry: Default::default(),
             function_registry: FunctionRegistry::new(),
-            fiber: Fiber::new(),
             executor: Default::default(),
         }
     }
 
-    pub fn with_host_function(mut self, name: &str, func: fn(&[Value])) -> Self {
+    pub fn with_host_function<F, R>(self, name: &str, func: F) -> Self
+    where
+        F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
+        R: Into<Value>,
+    {
+        self.with_host_function_internal(name, wrap(func))
+    }
+
+    fn with_host_function_internal(mut self, name: &str, func: HostFn) -> Self {
         let symbol = self.symbol_registry.intern_str(name);
-        let func_id = self.function_registry.register_host_function(name, func);
-        logger::debug!(event = "with_host_function", name, ?symbol, ?func_id);
+        let func_id = self.function_registry.register_host_function(name);
+        self.executor.register_host_function(name, func);
+        logger::debug!(
+            event = "with_host_function_internal",
+            name,
+            ?symbol,
+            ?func_id
+        );
         self
     }
 
     pub fn eval(&mut self, module: Module) {
         self.executor.register_module(module);
-        let closure = Closure::new(FunctionId::native(0), 0);
-        self.fiber.start_call(closure);
-        let func = self
-            .function_registry
-            .get_native_mut(closure.func_id().value());
-        match self.executor.get_func(&func.name) {
+        let func = self.function_registry.get_native_mut(0);
+        match self.executor.get_native_func(&func.name) {
             Some(main) => unsafe {
-                main(self as *mut Self as *mut std::ffi::c_void);
+                main(
+                    // exec_context
+                    self as *mut Self as *mut std::ffi::c_void,
+                    // outer_scope
+                    std::ptr::null_mut(),
+                    // argc
+                    0,
+                    // argv
+                    std::ptr::null_mut(),
+                );
             },
             None => unreachable!(),
-        }
-        self.fiber.end_call();
-    }
-
-    // ((OrdinaryCallEvaluateBody))
-    // ((EvaludateBody)) of Function.[[ECMAScriptCode]]
-    // ((EvaludateFunctionBody))
-    // ((FunctionDeclarationInstantiation))
-    fn ordinary_call_evaludate_body(&mut self, closure: Closure) {
-        if closure.func_id().is_native() {
-            let func = self
-                .function_registry
-                .get_native_mut(closure.func_id().value());
-            // ((Evaluation)) of FunctionStatementList
-            let callable = match func.func {
-                Some(callable) => callable,
-                None => {
-                    let callable = self.executor.get_func(&func.name).unwrap();
-                    func.func = Some(callable);
-                    callable
-                }
-            };
-            unsafe {
-                callable(self as *mut Self as *mut std::ffi::c_void);
-            }
-        } else {
-            let func = self.function_registry.get_host(closure.func_id().value());
-            let callable = func.func;
-            // TODO
-            let args = &[self
-                .fiber
-                .get_binding(Symbol::NONE, Locator::argument(0, 0))];
-            callable(args);
         }
     }
 }
@@ -101,73 +85,57 @@ impl Default for Runtime {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
-pub enum Value {
-    #[default]
-    Undefined,
-    Boolean(bool),
-    Number(f64),
-    Closure(Closure),
+pub struct Module {
+    peer: *mut bridge::Module,
 }
 
-impl From<bool> for Value {
-    fn from(value: bool) -> Self {
-        Self::Boolean(value)
-    }
-}
-
-impl From<f64> for Value {
-    fn from(value: f64) -> Self {
-        Self::Number(value)
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Closure {
-    func_id: FunctionId,
-
-    // The index of a `Call` in `Fiber::call_stack`, where the function was defined.
-    call_index: u32,
-}
-
-impl Closure {
-    pub fn new(func_id: FunctionId, call_index: usize) -> Self {
-        Self {
-            func_id,
-            call_index: call_index as u32,
-        }
-    }
-
-    pub fn checked_new(func_id: FunctionId, call_index: usize) -> Option<Self> {
-        if call_index > u32::MAX as usize {
-            logger::error!(err = "too large", call_index);
-            return None;
-        }
-        Some(Self::new(func_id, call_index))
-    }
-
-    #[inline(always)]
-    pub fn func_id(&self) -> FunctionId {
-        self.func_id
-    }
-
-    #[inline(always)]
-    pub fn call_index(&self) -> usize {
-        self.call_index as usize
-    }
-}
-
-impl From<u64> for Closure {
-    fn from(value: u64) -> Self {
-        Self {
-            func_id: (value as u32).into(),
-            call_index: ((value >> 32) as u32),
+impl Module {
+    pub fn print(&self, stderr: bool) {
+        unsafe {
+            bridge::module_peer_print(self.peer, stderr);
         }
     }
 }
 
-impl From<Closure> for u64 {
-    fn from(value: Closure) -> Self {
-        u32::from(value.func_id()) as u64 | (value.call_index as u64) << 32
+impl Drop for Module {
+    fn drop(&mut self) {
+        unsafe {
+            bridge::module_peer_delete(self.peer);
+        }
     }
+}
+
+// See https://www.reddit.com/r/rust/comments/ksfk4j/comment/gifzlhg/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+
+type HostFn =
+    unsafe extern "C" fn(*mut std::ffi::c_void, *mut std::ffi::c_void, usize, *mut Value) -> Value;
+
+// This function generates a wrapper function for each `host_func` at compile time.
+#[inline(always)]
+fn wrap<F, R>(host_func: F) -> HostFn
+where
+    F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
+    R: Into<Value>,
+{
+    debug_assert_eq!(std::mem::size_of::<F>(), 0, "Function must have zero size");
+    std::mem::forget(host_func);
+    wrapper::<F, R>
+}
+
+unsafe extern "C" fn wrapper<F, R>(
+    exec_context: *mut std::ffi::c_void,
+    outer_scope: *mut std::ffi::c_void,
+    argc: usize,
+    argv: *mut Value,
+) -> Value
+where
+    F: Fn(&mut Runtime, &[Value]) -> R + Send + Sync + 'static,
+    R: Into<Value>,
+{
+    #[allow(clippy::uninit_assumed_init)]
+    let host_fn = std::mem::MaybeUninit::<F>::uninit().assume_init();
+    let runtime = &mut *(exec_context as *mut Runtime);
+    let _ = outer_scope;
+    let args = std::slice::from_raw_parts(argv as *const Value, argc);
+    host_fn(runtime, args).into()
 }

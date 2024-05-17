@@ -1,0 +1,11 @@
+functions:
+  - name: to_boolean
+    args:
+      - name: value
+        type: '&Value'
+    ret: bool
+  - name: to_numeric
+    args:
+      - name: value
+        type: '&Value'
+    ret: f64

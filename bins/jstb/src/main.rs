@@ -1,4 +1,5 @@
 use std::io::Read;
+use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::Parser as _;
@@ -15,27 +16,37 @@ struct CommandLine {
 /// A testbed for the jsruntime module.
 #[derive(clap::Subcommand)]
 enum Command {
+    /// Compile a JavaScript program and print the compiled module.
+    ///
+    /// lli cannot interpret the module directly.  Because it includes unresolved symbols for the
+    /// runtime function calls.  At this point, there is no command-line option to output anything
+    /// containing the runtime functions which can link to the module.
+    Compile(Compile),
+
     /// Runs a JavaScript program.
     Run(Run),
 }
 
 #[derive(clap::Args)]
 struct Run {
-    /// Prints the compiled module (LLVM-IR) to STDOUT.
-    ///
-    /// lli cannot interpret the module directly.  Because it includes unresolved symbols for the
-    /// runtime function calls.  At this point, there is no command-line option to output anything
-    /// containing the runtime functions which can link to the module.
-    ///
-    /// The module will never be evaluated when this flag is specified.
-    #[arg(long)]
-    print_module: bool,
-
-    /// The source text of the JavaScript program to run.
+    /// The source file of the JavaScript program to run.
     ///
     /// Reads the source text from STDIN if this argument is not specified.
     #[arg()]
-    source: Option<String>,
+    source: Option<PathBuf>,
+}
+
+#[derive(clap::Args)]
+struct Compile {
+    /// Disable optimization.
+    #[arg(long)]
+    no_optimize: bool,
+
+    /// The source file of the JavaScript program to run.
+    ///
+    /// Reads the source text from STDIN if this argument is not specified.
+    #[arg()]
+    source: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -44,20 +55,27 @@ fn main() -> Result<()> {
     let cl = CommandLine::parse();
     let mut runtime = Runtime::new().with_host_function("print", print);
     match cl.command {
-        Command::Run(run) => {
-            let source = match run.source {
-                Some(source) => source,
-                None => read_from_stdin()?,
-            };
-            let module = runtime.compile_script(&source).unwrap();
-            if run.print_module {
-                module.print(false); // to STDOUT
-            } else {
-                runtime.eval(module);
-            }
+        Command::Compile(args) => {
+            let source = read_source(args.source.as_ref())?;
+            let module = runtime.compile_script(&source, !args.no_optimize).unwrap();
+            module.print(false); // to STDOUT
+        }
+        Command::Run(args) => {
+            let source = read_source(args.source.as_ref())?;
+            // Always perform optimization.
+            let module = runtime.compile_script(&source, true).unwrap();
+            runtime.eval(module);
         }
     }
     Ok(())
+}
+
+fn read_source(file: Option<&PathBuf>) -> Result<String> {
+    let source = match file {
+        Some(file) => std::fs::read_to_string(file)?,
+        None => read_from_stdin()?,
+    };
+    Ok(source)
 }
 
 fn read_from_stdin() -> Result<String> {
@@ -66,6 +84,6 @@ fn read_from_stdin() -> Result<String> {
     Ok(source)
 }
 
-fn print(args: &[Value]) {
-    println!("{:?}", args[0]);
+fn print(_runtime: &mut Runtime, args: &[Value]) {
+    println!("{args:?}");
 }
