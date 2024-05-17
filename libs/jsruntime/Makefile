@@ -9,7 +9,7 @@ test:
 
 .PHONY: codegen
 codegen:
-	@$(MAKE) -s -C src/llvmir codegen
+	@$(MAKE) -s -C src/bridge codegen
 
 .PHONY: bench
 bench:

@@ -1,7 +1,9 @@
 use std::ffi::CStr;
+use std::ffi::CString;
 
-use super::bridge;
-use super::Module;
+use crate::bridge;
+use crate::HostFn;
+use crate::Module;
 
 pub struct Executor {
     peer: *mut bridge::Executor,
@@ -15,6 +17,13 @@ impl Executor {
             peer
         };
         Self { peer }
+    }
+
+    pub fn register_host_function(&self, name: &str, func: HostFn) {
+        let name = CString::new(name).unwrap();
+        unsafe {
+            bridge::executor_peer_register_host_function(self.peer, name.as_ptr(), Some(func));
+        }
     }
 
     pub fn register_module(&self, module: Module) {
@@ -31,8 +40,8 @@ impl Executor {
         unsafe { CStr::from_ptr(bridge::executor_peer_get_target_triple(self.peer)) }
     }
 
-    pub fn get_func(&self, name: &CStr) -> bridge::FuncPtr {
-        unsafe { bridge::executor_peer_get_func(self.peer, name.as_ptr()) }
+    pub fn get_native_func(&self, name: &CStr) -> bridge::FuncPtr {
+        unsafe { bridge::executor_peer_get_native_func(self.peer, name.as_ptr()) }
     }
 }
 

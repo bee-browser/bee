@@ -10,7 +10,7 @@ fn fib(c: &mut Criterion) {
     c.bench_function("fib", |b| {
         b.iter(|| {
             let mut runtime = Runtime::new();
-            let module = runtime.compile_script(SRC).unwrap();
+            let module = runtime.compile_script(SRC, true).unwrap();
             runtime.eval(module);
         })
     });

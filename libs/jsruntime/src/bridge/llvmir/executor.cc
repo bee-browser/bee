@@ -52,11 +52,20 @@ Executor::~Executor() {
   }
 }
 
+void Executor::RegisterHostFunction(const char* name, FuncPtr func) {
+  llvm::orc::SymbolMap symbols;
+  symbols[exec_session().intern(name)] = {
+      llvm::orc::ExecutorAddr::fromPtr(func),
+      llvm::JITSymbolFlags::Exported,
+  };
+  ExitOnErr(main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
+}
+
 void Executor::RegisterModule(Module* mod) {
   ExitOnErr(compile_layer_.add(tracker_, std::move(mod->mod)));
 }
 
-FuncPtr Executor::GetFunc(const char* name) {
+FuncPtr Executor::GetNativeFunc(const char* name) {
   auto sym = ExitOnErr(Lookup(name));
   return sym.getAddress().toPtr<FuncPtr>();
 }

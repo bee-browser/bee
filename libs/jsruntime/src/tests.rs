@@ -3,20 +3,20 @@ use super::*;
 macro_rules! eval {
     ($src:expr, $expected:expr) => {
         Runtime::initialize();
-        let mut runtime = Runtime::new().with_host_function("print", |args: &[Value]| {
+        let mut runtime = Runtime::new().with_host_function("print", |_, args| {
             // Some cases including `f64::NAN` fail in `assert_eq!()`.
             let actual = format!("{:?}", args[0]);
             let expected = format!("{:?}", Value::from($expected));
             assert_eq!(actual, expected);
         });
-        let module = runtime.compile_script($src.as_ref()).unwrap();
+        let module = runtime.compile_script($src.as_ref(), true).unwrap();
         runtime.eval(module);
     };
 }
 
 #[test]
 fn test_eval_undefined() {
-    eval!("print(undefined)", Value::Undefined);
+    eval!("print(undefined)", Value::UNDEFINED);
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn test_eval_const_declaration() {
 
 #[test]
 fn test_eval_let_declaration() {
-    eval!("let a; print(a);", Value::Undefined);
+    eval!("let a; print(a);", Value::UNDEFINED);
     eval!("let a, b = 2; a = 1; print(a);", 1.);
     eval!("let a, b = 2; a = 1; print(b);", 2.);
 }
@@ -106,8 +106,8 @@ fn test_eval_conditional_expression() {
     eval!("print(1 < 0 ? 2 : 3)", 3.);
     eval!("print(1 > 0 ? true : false)", true);
     eval!("print(1 < 0 ? true : false)", false);
-    eval!("print(1 > 0 ? undefined : undefined)", Value::Undefined);
-    eval!("print(1 < 0 ? undefined : undefined)", Value::Undefined);
+    eval!("print(1 > 0 ? undefined : undefined)", Value::UNDEFINED);
+    eval!("print(1 < 0 ? undefined : undefined)", Value::UNDEFINED);
 }
 
 #[test]
@@ -120,7 +120,7 @@ fn test_eval_conditional_expression_mixed_types() {
     eval!("print(true ? 2.0 : false)", 2.);
     eval!("print(false ? 2.0 : false)", false);
     eval!("print(true ? 2.0 : undefined)", 2.);
-    eval!("print(false ? 2.0 : undefined)", Value::Undefined);
+    eval!("print(false ? 2.0 : undefined)", Value::UNDEFINED);
 }
 
 #[test]
@@ -166,9 +166,25 @@ fn test_eval_function_single_name_binding() {
 }
 
 #[test]
+fn test_eval_call_other_function() {
+    eval!(
+        "print(a()); function a() { return b() } function b() { return 1 }",
+        1.
+    );
+}
+
+#[test]
 fn test_eval_nested_function() {
     eval!(
         "print(a()); function a() { return b(); function b() { return 1 } }",
+        1.
+    );
+}
+
+#[test]
+fn test_eval_argument_in_outer_function() {
+    eval!(
+        "print(a(1)); function a(x) { return b(); function b() { return x } }",
         1.
     );
 }
