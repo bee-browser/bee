@@ -26,10 +26,6 @@
 #include "macros.hh"
 #include "module.hh"
 
-namespace {
-constexpr unsigned kWorkBits = sizeof(size_t) * CHAR_BIT;
-}
-
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
@@ -108,20 +104,7 @@ void Compiler::Function(uint32_t func_id, const char* name) {
     PushFunction(found->second);
     return;
   }
-  auto* prototype = llvm::FunctionType::get(
-      // no value returned
-      types_->CreateValueType(),
-      {
-          // runtime (pointer to the runtime)
-          builder_->getPtrTy(),
-          // outer (pointer to the outer function scope)
-          builder_->getPtrTy(),
-          // argc
-          builder_->getIntNTy(kWorkBits),
-          // argv (pointer to a list of bindings)
-          builder_->getPtrTy(),
-      },
-      false);
+  auto* prototype = types_->CreateFunctionType();
   auto* func = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
   functions_[name] = func;
   PushFunction(func);
@@ -235,8 +218,8 @@ void Compiler::Bindings(uint16_t n) {
   builder_->SetInsertPoint(prologue_);
   bindings_type_ = llvm::ArrayType::get(types_->CreateBindingType(), n);
   function_scope_type_ = llvm::StructType::create(*context_, "FunctionScope");
-  function_scope_type_->setBody({builder_->getPtrTy(), builder_->getIntNTy(kWorkBits),
-      builder_->getPtrTy(), bindings_type_});
+  function_scope_type_->setBody(
+      {builder_->getPtrTy(), types_->GetWordType(), builder_->getPtrTy(), bindings_type_});
   function_scope_ = builder_->CreateAlloca(function_scope_type_);
   CreateStoreOuterScopeToScope(outer_scope_, function_scope_);
   CreateStoreArgcToScope(argc_, function_scope_);
@@ -335,22 +318,9 @@ void Compiler::Call(uint16_t argc) {
   // TODO: check value type
   auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), item.value, 1);
   auto* func = builder_->CreateLoad(builder_->getPtrTy(), holder_ptr);
-  auto* prototype = llvm::FunctionType::get(
-      // no value returned
-      types_->CreateValueType(),
-      {
-          // runtime (pointer to the runtime)
-          builder_->getPtrTy(),
-          // outer (pointer to the outer function scope)
-          builder_->getPtrTy(),
-          // argc
-          builder_->getIntNTy(kWorkBits),
-          // argv (pointer to a list of bindings)
-          builder_->getPtrTy(),
-      },
-      false);
-  auto* ret = builder_->CreateCall(
-      prototype, func, {exec_context_, scope, builder_->getIntN(kWorkBits, argc), argv});
+  auto* prototype = types_->CreateFunctionType();
+  auto* ret =
+      builder_->CreateCall(prototype, func, {exec_context_, scope, types_->GetWord(argc), argv});
   auto* value_ptr = CreateAllocaInEntryBlock(types_->CreateValueType());
   auto* kind = CreateExtractValueKindFromValue(ret);
   CreateStoreValueKindToValue(kind, value_ptr);
@@ -549,21 +519,8 @@ void Compiler::StartFunction(const char* name) {
     function_ = found->second;
   } else {
     // Create a function.
-    auto* sig = llvm::FunctionType::get(
-        // no value returned
-        types_->CreateValueType(),
-        {
-            // runtime (pointer to the runtime)
-            builder_->getPtrTy(),
-            // outer (pointer to the outer function scope)
-            builder_->getPtrTy(),
-            // argc
-            builder_->getIntNTy(kWorkBits),
-            // argv (pointer to a list of bindings)
-            builder_->getPtrTy(),
-        },
-        false);
-    function_ = llvm::Function::Create(sig, llvm::Function::ExternalLinkage, name, *module_);
+    auto* prototype = types_->CreateFunctionType();
+    function_ = llvm::Function::Create(prototype, llvm::Function::ExternalLinkage, name, *module_);
     functions_[name] = function_;
   }
   prologue_ = llvm::BasicBlock::Create(*context_, "prologue", function_);

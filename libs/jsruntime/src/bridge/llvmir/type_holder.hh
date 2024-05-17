@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <cstdlib>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <llvm/IR/IRBuilder.h>
@@ -17,8 +19,11 @@ class TypeHolder {
   TypeHolder(llvm::LLVMContext& context, llvm::Module& module, llvm::IRBuilder<>& builder)
       : context_(context), module_(module), builder_(builder) {}
 
+  llvm::Type* GetWordType();
+  llvm::Value* GetWord(size_t value);
   llvm::StructType* CreateValueType();
   llvm::StructType* CreateBindingType();
+  llvm::FunctionType* CreateFunctionType();
   llvm::Function* CreateRuntimeToBoolean();
   llvm::Function* CreateRuntimeToNumeric();
 
@@ -28,6 +33,7 @@ class TypeHolder {
   llvm::IRBuilder<>& builder_;
   llvm::StructType* value_type_ = nullptr;
   llvm::StructType* binding_type_ = nullptr;
+  llvm::FunctionType* function_type_ = nullptr;
   llvm::Function* runtime_to_boolean_ = nullptr;
   llvm::Function* runtime_to_numeric_ = nullptr;
 };

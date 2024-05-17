@@ -5,6 +5,20 @@
 
 #include "type_holder.hh"
 
+#include <climits>
+
+namespace {
+constexpr unsigned kWorkBits = sizeof(size_t) * CHAR_BIT;
+}
+
+llvm::Type* TypeHolder::GetWordType() {
+  return builder_.getIntNTy(kWorkBits);
+}
+
+llvm::Value* TypeHolder::GetWord(size_t value) {
+  return builder_.getIntN(kWorkBits, value);
+}
+
 llvm::StructType* TypeHolder::CreateValueType() {
   if (value_type_ == nullptr) {
     value_type_ = llvm::StructType::create(context_, "Value");
@@ -35,6 +49,25 @@ llvm::StructType* TypeHolder::CreateBindingType() {
   return binding_type_;
 }
 
+llvm::FunctionType* TypeHolder::CreateFunctionType() {
+  if (function_type_ == nullptr) {
+    function_type_ = llvm::FunctionType::get(
+        // no value returned
+        CreateValueType(),
+        {
+            // runtime (pointer to the runtime)
+            builder_.getPtrTy(),
+            // outer (pointer to the outer function scope)
+            builder_.getPtrTy(),
+            // argc
+            GetWordType(),
+            // argv (pointer to a list of bindings)
+            builder_.getPtrTy(),
+        },
+        false);
+  }
+  return function_type_;
+}
 {%- for function in data.functions %}
 
 llvm::Function* TypeHolder::CreateRuntime{{ function.name | pascalCase }}() {
