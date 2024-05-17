@@ -601,7 +601,8 @@ void Compiler::EndFunction(bool optimize) {
 
 void Compiler::AllocateBindings(uint16_t n, bool prologue) {
   UNUSED(prologue);
-  assert(static_cast<size_t>(allocated_bindings_) + static_cast<size_t>(n) < std::numeric_limits<uint16_t>::max());
+  assert(static_cast<size_t>(allocated_bindings_) + static_cast<size_t>(n) <
+      std::numeric_limits<uint16_t>::max());
   allocated_bindings_ += n;
 }
 
@@ -627,7 +628,7 @@ void Compiler::Return(size_t n) {
   auto* value = ToAny(item);
   auto* ret = builder_->CreateLoad(types_->CreateValueType(), value);
   auto backup = allocated_bindings_;
-  ReleaseBindings(backup); // release all bindings
+  ReleaseBindings(backup);  // release all bindings
   allocated_bindings_ = backup;
   builder_->CreateRet(ret);
 }

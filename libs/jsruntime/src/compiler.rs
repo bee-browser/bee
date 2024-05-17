@@ -5,16 +5,15 @@ use jsparser::Parser;
 use jsparser::Processor;
 use jsparser::Symbol;
 
-use super::bridge;
-use super::bridge::Locator;
-use super::logger;
-use super::Module;
-use super::Runtime;
-
+use crate::bridge;
+use crate::bridge::Locator;
 use crate::function::FunctionId;
 use crate::function::FunctionRegistry;
+use crate::logger;
 use crate::semantics::Analyzer;
 use crate::semantics::CompileCommand;
+use crate::Module;
+use crate::Runtime;
 
 impl Runtime {
     pub fn compile_script(&mut self, source: &str, optimize: bool) -> Option<Module> {

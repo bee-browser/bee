@@ -11,7 +11,7 @@ use jsparser::Error;
 use jsparser::Symbol;
 use jsparser::SymbolRegistry;
 
-use super::llvmir::bridge::Locator;
+use super::bridge::Locator;
 use super::logger;
 use super::FunctionId;
 use super::FunctionRegistry;

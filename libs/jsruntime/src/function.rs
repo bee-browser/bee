@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use jsparser::Symbol;
 
-use crate::llvmir::bridge::FuncPtr;
+use crate::bridge::FuncPtr;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct FunctionId(u32);

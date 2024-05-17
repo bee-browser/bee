@@ -22,7 +22,7 @@
 #include <llvm/IR/LLVMContext.h>
 #pragma GCC diagnostic pop
 
-#include "bridge.hh"
+#include "../bridge.hh"
 
 struct Module;
 

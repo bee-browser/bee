@@ -1,5 +1,7 @@
+mod bridge;
+mod compiler;
+mod executor;
 mod function;
-mod llvmir;
 mod logger;
 mod semantics;
 
@@ -8,21 +10,23 @@ mod tests;
 
 use jsparser::SymbolRegistry;
 
+use executor::Executor;
 use function::FunctionId;
 use function::FunctionRegistry;
 
-pub use llvmir::bridge::Value;
-pub use llvmir::Module;
+pub use bridge::Value;
 
 pub struct Runtime {
     symbol_registry: SymbolRegistry,
     function_registry: FunctionRegistry,
-    executor: llvmir::Executor,
+    executor: Executor,
 }
 
 impl Runtime {
     pub fn initialize() {
-        llvmir::initialize();
+        unsafe {
+            bridge::llvmir_initialize();
+        }
     }
 
     pub fn new() -> Self {
@@ -78,6 +82,26 @@ impl Runtime {
 impl Default for Runtime {
     fn default() -> Self {
         Runtime::new()
+    }
+}
+
+pub struct Module {
+    peer: *mut bridge::Module,
+}
+
+impl Module {
+    pub fn print(&self, stderr: bool) {
+        unsafe {
+            bridge::module_peer_print(self.peer, stderr);
+        }
+    }
+}
+
+impl Drop for Module {
+    fn drop(&mut self) {
+        unsafe {
+            bridge::module_peer_delete(self.peer);
+        }
     }
 }
 
