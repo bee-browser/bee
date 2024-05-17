@@ -7,6 +7,7 @@ static LLVM_COMPONENTS: &[&str] = &["core", "orcjit", "x86"];
 
 static LLVMIR_SOURCE_FILES: &[&str] = &[
     "src/bridge/bridge.hh",
+    "src/bridge/runtime.hh",
     "src/bridge/llvmir/bridge.cc",
     "src/bridge/llvmir/compiler.cc",
     "src/bridge/llvmir/compiler.hh",
@@ -15,7 +16,6 @@ static LLVMIR_SOURCE_FILES: &[&str] = &[
     "src/bridge/llvmir/executor.hh",
     "src/bridge/llvmir/macros.hh",
     "src/bridge/llvmir/module.hh",
-    "src/bridge/llvmir/runtime.hh",
     "src/bridge/llvmir/type_holder.hh",
     "src/bridge/llvmir/type_holder.cc",
 ];
