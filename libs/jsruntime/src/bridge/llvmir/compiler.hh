@@ -345,7 +345,7 @@ class Compiler {
   }
 
   inline void CreateStoreFunctionToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
-    CreateStoreValueKindToBinding(ValueKind::Closure, binding_ptr);
+    CreateStoreValueKindToBinding(ValueKind::Function, binding_ptr);
     CreateStoreValueHolderToBinding(value, binding_ptr);
   }
 
@@ -412,7 +412,7 @@ class Compiler {
   }
 
   inline void CreateStoreFunctionToValue(llvm::Value* value, llvm::Value* value_ptr) {
-    CreateStoreValueKindToValue(ValueKind::Closure, value_ptr);
+    CreateStoreValueKindToValue(ValueKind::Function, value_ptr);
     CreateStoreValueHolderToValue(value, value_ptr);
   }
 

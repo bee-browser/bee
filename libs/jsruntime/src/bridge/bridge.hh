@@ -3,6 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 
+struct Value;
+typedef Value (*FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv);
+
 enum LocatorKind : uint8_t {
   None,
   Argument,
@@ -25,7 +28,7 @@ enum ValueKind : uint8_t {
   Undefined,
   Boolean,
   Number,
-  Closure,
+  Function,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
@@ -34,7 +37,7 @@ union ValueHolder {
   uintptr_t opaque;
   bool boolean;
   double number;
-  void* closure;
+  FuncPtr function;
 };
 
 static_assert(sizeof(ValueHolder) == sizeof(uint64_t), "size mismatched");
@@ -123,7 +126,6 @@ void compiler_peer_dump_stack(Compiler* self);
 // Execution
 
 class Executor;
-typedef Value (*FuncPtr)(void* exec_context, void* outer_scope, size_t argc, Value* argv);
 Executor* executor_peer_new();
 void executor_peer_delete(Executor* self);
 void executor_peer_register_runtime(Executor* self, const Runtime* runtime);

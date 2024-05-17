@@ -79,6 +79,13 @@ impl Value {
             holder: ValueHolder { number },
         }
     }
+
+    pub const fn function(function: FuncPtr) -> Self {
+        Self {
+            kind: ValueKind_Function,
+            holder: ValueHolder { function },
+        }
+    }
 }
 
 impl From<()> for Value {
@@ -99,6 +106,12 @@ impl From<f64> for Value {
     }
 }
 
+impl From<FuncPtr> for Value {
+    fn from(value: FuncPtr) -> Self {
+        Self::function(value)
+    }
+}
+
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // `unsafe` is needed for accessing the `holder` field.
@@ -108,7 +121,7 @@ impl std::fmt::Debug for Value {
                 ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
                 ValueKind_Boolean => write!(f, "false"),
                 ValueKind_Number => write!(f, "{}", self.holder.number),
-                ValueKind_Closure => write!(f, "{:?}", self.holder.closure),
+                ValueKind_Function => write!(f, "{:?}", self.holder.function),
                 _ => unreachable!(),
             }
         }
@@ -132,7 +145,8 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
         ValueKind_Number if value.holder.number == 0.0 => false,
         ValueKind_Number if value.holder.number.is_nan() => false,
         ValueKind_Number => true,
-        _ => panic!(),
+        ValueKind_Function => true,
+        _ => unreachable!(),
     }
 }
 
@@ -143,6 +157,7 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
         ValueKind_Boolean if value.holder.boolean => 1.0,
         ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,
-        _ => panic!(),
+        ValueKind_Function => f64::NAN,
+        _ => unreachable!(),
     }
 }
