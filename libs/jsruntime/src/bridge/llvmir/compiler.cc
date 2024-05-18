@@ -89,6 +89,10 @@ void Compiler::Undefined() {
   PushUndefined();
 }
 
+void Compiler::Null() {
+  PushNull();
+}
+
 void Compiler::Boolean(bool value) {
   PushBoolean(llvm::ConstantInt::getBool(*context_, value));
 }
@@ -329,11 +333,15 @@ void Compiler::Call(uint16_t argc) {
   PushAny(value_ptr);
 }
 
+// 7.1.2 ToBoolean ( argument )
 void Compiler::ToBoolean() {
   const auto item = Dereference();
   llvm::Value* value;
   switch (item.type) {
     case Item::Undefined:
+      value = builder_->getFalse();
+      break;
+    case Item::Null:
       value = builder_->getFalse();
       break;
     case Item::Boolean:
@@ -342,6 +350,9 @@ void Compiler::ToBoolean() {
     case Item::Number:
       value =
           builder_->CreateFCmpUNE(item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
+      break;
+    case Item::Function:
+      value = builder_->getTrue();
       break;
     case Item::Any: {
       auto* call = types_->CreateRuntimeToBoolean();
@@ -406,6 +417,9 @@ void Compiler::ConditionalExpression() {
     switch (then_item.type) {
       case Item::Undefined:
         PushUndefined();
+        return;
+      case Item::Null:
+        PushNull();
         return;
       case Item::Boolean: {
         auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
@@ -602,7 +616,10 @@ void Compiler::DumpStack() {
     const auto& item = *it;
     switch (item.type) {
       case Item::Undefined:
-        llvm::errs() << "value: " << item.value << "\n";
+        llvm::errs() << "value: undefined\n";
+        break;
+      case Item::Null:
+        llvm::errs() << "value: null\n";
         break;
       case Item::Boolean:
         llvm::errs() << "boolean: " << item.value << "\n";
@@ -648,6 +665,7 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
   const auto item = PopItem();
   switch (item.type) {
     case Item::Undefined:
+    case Item::Null:
     case Item::Boolean:
     case Item::Number:
     case Item::Function:
@@ -711,6 +729,9 @@ void Compiler::CreateStoreItemToBinding(const Item& item, llvm::Value* binding_p
     case Item::Undefined:
       CreateStoreUndefinedToBinding(binding_ptr);
       break;
+    case Item::Null:
+      CreateStoreNullToBinding(binding_ptr);
+      break;
     case Item::Boolean:
       CreateStoreBooleanToBinding(item.value, binding_ptr);
       break;
@@ -734,6 +755,9 @@ void Compiler::CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr) 
     case Item::Undefined:
       CreateStoreUndefinedToValue(value_ptr);
       break;
+    case Item::Null:
+      CreateStoreNullToValue(value_ptr);
+      break;
     case Item::Boolean:
       CreateStoreBooleanToValue(item.value, value_ptr);
       break;
@@ -753,14 +777,19 @@ void Compiler::CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr) 
   }
 }
 
+// 7.1.4 ToNumber ( argument )
 llvm::Value* Compiler::ToNumeric(const Item& item) {
   switch (item.type) {
     case Item::Undefined:
       return llvm::ConstantFP::getNaN(builder_->getDoubleTy());
+    case Item::Null:
+      return llvm::ConstantFP::getZero(builder_->getDoubleTy());
     case Item::Boolean:
       return builder_->CreateUIToFP(item.value, builder_->getDoubleTy());
     case Item::Number:
       return item.value;
+    case Item::Function:
+      return llvm::ConstantFP::getNaN(builder_->getDoubleTy());
     case Item::Any: {
       auto* call = types_->CreateRuntimeToNumeric();
       return builder_->CreateCall(call, {exec_context_, item.value});

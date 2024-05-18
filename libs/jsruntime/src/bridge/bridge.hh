@@ -26,6 +26,7 @@ static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
 enum ValueKind : uint8_t {
   Undefined,
+  Null,
   Boolean,
   Number,
   Function,
@@ -87,6 +88,7 @@ void compiler_peer_set_data_layout(Compiler* self, const char* data_layout);
 void compiler_peer_set_target_triple(Compiler* self, const char* triple);
 void compiler_peer_set_runtime(Compiler* self, uintptr_t runtime);
 void compiler_peer_undefined(Compiler* self);
+void compiler_peer_null(Compiler* self);
 void compiler_peer_boolean(Compiler* self, bool value);
 void compiler_peer_number(Compiler* self, double value);
 void compiler_peer_function(Compiler* self, uint32_t func_id, const char* name);

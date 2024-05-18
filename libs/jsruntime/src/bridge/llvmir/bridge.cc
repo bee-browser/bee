@@ -58,6 +58,10 @@ void compiler_peer_undefined(Compiler* self) {
   self->Undefined();
 }
 
+void compiler_peer_null(Compiler* self) {
+  self->Null();
+}
+
 void compiler_peer_boolean(Compiler* self, bool value) {
   self->Boolean(value);
 }
