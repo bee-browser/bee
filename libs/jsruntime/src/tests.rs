@@ -20,6 +20,11 @@ fn test_eval_undefined() {
 }
 
 #[test]
+fn test_eval_null() {
+    eval!("print(null)", Value::NULL);
+}
+
+#[test]
 fn test_eval_boolean() {
     eval!("print(true)", true);
     eval!("print(false)", false);
@@ -68,6 +73,7 @@ fn test_eval_group_expression() {
 #[test]
 fn test_eval_to_numeric() {
     eval!("print(undefined + 0)", f64::NAN);
+    eval!("print(null + 0)", 0.);
     eval!("print(false + 0)", 0.);
     eval!("print(true + 0)", 1.);
 }

@@ -63,6 +63,11 @@ impl Value {
         holder: ValueHolder { opaque: 0 },
     };
 
+    pub const NULL: Self = Self {
+        kind: ValueKind_Null,
+        holder: ValueHolder { opaque: 0 },
+    };
+
     pub const TRUE: Self = Self::boolean(true);
     pub const FALSE: Self = Self::boolean(false);
 
@@ -118,6 +123,7 @@ impl std::fmt::Debug for Value {
         unsafe {
             match self.kind {
                 ValueKind_Undefined => write!(f, "undefined"),
+                ValueKind_Null => write!(f, "null"),
                 ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
                 ValueKind_Boolean => write!(f, "false"),
                 ValueKind_Number => write!(f, "{}", self.holder.number),
@@ -137,10 +143,12 @@ impl Default for Runtime {
     }
 }
 
+// 7.1.2 ToBoolean ( argument )
 unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
     let value = &*value;
     match value.kind {
         ValueKind_Undefined => false,
+        ValueKind_Null => false,
         ValueKind_Boolean => value.holder.boolean,
         ValueKind_Number if value.holder.number == 0.0 => false,
         ValueKind_Number if value.holder.number.is_nan() => false,
@@ -150,10 +158,13 @@ unsafe extern "C" fn runtime_to_boolean(_: usize, value: *const Value) -> bool {
     }
 }
 
+// 7.1.3 ToNumeric ( value )
+// 7.1.4 ToNumber ( argument )
 unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
     let value = &*value;
     match value.kind {
         ValueKind_Undefined => f64::NAN,
+        ValueKind_Null => 0.0,
         ValueKind_Boolean if value.holder.boolean => 1.0,
         ValueKind_Boolean => 0.0,
         ValueKind_Number => value.holder.number,

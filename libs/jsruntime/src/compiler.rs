@@ -109,9 +109,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::Undefined => unsafe {
                 bridge::compiler_peer_undefined(self.peer);
             },
-            CompileCommand::Null => {
-                // TODO
-            }
+            CompileCommand::Null => unsafe {
+                bridge::compiler_peer_null(self.peer);
+            },
             CompileCommand::Boolean(value) => unsafe {
                 bridge::compiler_peer_boolean(self.peer, *value);
             },
