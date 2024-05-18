@@ -39,7 +39,7 @@ jobs:
       - name: Benchmark tests (push)
         if: ${{ github.event_name == 'push' }}
         run: |
-          bencher run --err --adapter rust_criterion make bench
+          bencher run --err --adapter=rust_criterion make bench
         env:
           BENCHER_PROJECT: bee-browser
           BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
@@ -49,13 +49,14 @@ jobs:
       - name: Benchmark tests (pull_request_target)
         if: ${{ github.event_name == 'pull_request_target' }}
         run: |
-          bencher run --err --adapter rust_criterion \
-            --branch-start-point '${{ github.base_ref }}' \
-            --branch-start-point-hash '${{ github.event.pull_request.base.sha }}' \
+          bencher run --err --adapter=rust_criterion \
+            --branch-start-point='${{ github.base_ref }}' \
+            --branch-start-point-hash='${{ github.event.pull_request.base.sha }}' \
+            --ci-number='${{ github.event.number }}' \
             make bench
         env:
           BENCHER_PROJECT: bee-browser
           BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
-          BENCHER_BRANCH: ${{ github.head_ref }}
+          BENCHER_BRANCH: ${{ github.event.number }}/merge
           BENCHER_TESTBED: ubuntu-latest
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
