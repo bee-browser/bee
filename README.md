@@ -2,8 +2,9 @@
 
 > Browser Engine for Embedding
 
-[![ci-status](https://github.com/bee-browser/bee/workflows/ci/badge.svg)](https://github.com/bee-browser/bee/actions?workflow=ci)
+[![ci](https://github.com/bee-browser/bee/actions/workflows/ci.yml/badge.svg)](https://github.com/bee-browser/bee/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/bee-browser/bee/graph/badge.svg?token=ZU1I8W30M9)](https://codecov.io/gh/bee-browser/bee)
+[![bencher](https://github.com/bee-browser/bee/actions/workflows/bench.yml/badge.svg)](https://bencher.dev/perf/bee-browser)
 
 ## What's BEE?
 
