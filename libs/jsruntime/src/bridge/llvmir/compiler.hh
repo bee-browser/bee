@@ -39,6 +39,7 @@ class Compiler {
   void SetRuntime(uintptr_t runtime);
 
   void Undefined();
+  void Null();
   void Boolean(bool value);
   void Number(double value);
   void Function(uint32_t func_id, const char* name);
@@ -86,6 +87,7 @@ class Compiler {
   struct Item {
     enum Type {
       Undefined,
+      Null,
       Boolean,
       Number,
       Function,
@@ -109,6 +111,8 @@ class Compiler {
 
     inline bool IsValue() const {
       switch (type) {
+        case Item::Undefined:
+        case Item::Null:
         case Item::Boolean:
         case Item::Number:
         case Item::Function:
@@ -122,6 +126,10 @@ class Compiler {
 
   inline void PushUndefined() {
     stack_.push_back(Item(Item::Undefined));
+  }
+
+  inline void PushNull() {
+    stack_.push_back(Item(Item::Null));
   }
 
   inline void PushBoolean(llvm::Value* value) {
@@ -339,6 +347,12 @@ class Compiler {
     CreateStoreValueHolderToBinding(builder_->getInt64(0), binding_ptr);
   }
 
+  inline void CreateStoreNullToBinding(llvm::Value* binding_ptr) {
+    CreateStoreValueKindToBinding(ValueKind::Null, binding_ptr);
+    // zeroinitializer can be used in optimization by filling the holder with zero.
+    CreateStoreValueHolderToBinding(builder_->getInt64(0), binding_ptr);
+  }
+
   inline void CreateStoreBooleanToBinding(llvm::Value* value, llvm::Value* binding_ptr) {
     CreateStoreValueKindToBinding(ValueKind::Boolean, binding_ptr);
     CreateStoreValueHolderToBinding(value, binding_ptr);
@@ -402,6 +416,12 @@ class Compiler {
 
   inline void CreateStoreUndefinedToValue(llvm::Value* value_ptr) {
     CreateStoreValueKindToValue(ValueKind::Undefined, value_ptr);
+    // zeroinitializer can be used in optimization by filling the holder with zero.
+    CreateStoreValueHolderToValue(builder_->getInt64(0), value_ptr);
+  }
+
+  inline void CreateStoreNullToValue(llvm::Value* value_ptr) {
+    CreateStoreValueKindToValue(ValueKind::Null, value_ptr);
     // zeroinitializer can be used in optimization by filling the holder with zero.
     CreateStoreValueHolderToValue(builder_->getInt64(0), value_ptr);
   }
