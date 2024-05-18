@@ -51,6 +51,7 @@ In addition, it's recommended to install the following software:
 * [cargo-llvm-cov]
 * [flamegraph]
 * [perf]
+* [hyperfine]
 
 ## License
 
@@ -79,5 +80,6 @@ shall be dual licensed as above, without any additional terms or conditions.
 [cargo-llvm-cov]: https://github.com/taiki-e/cargo-llvm-cov
 [flamegraph]: https://github.com/flamegraph-rs/flamegraph
 [perf]: https://en.wikipedia.org/wiki/Perf_(Linux)
+[hyperfine]: https://github.com/sharkdp/hyperfine
 [LICENSE-APACHE]: ./LICENSE-APACHE
 [LICENSE-MIT]: ./LICENSE-MIT
