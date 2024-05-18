@@ -1,0 +1,59 @@
+name: bench
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - trial-*
+    paths-ignore:
+      - '**.md'
+  # Don't run this workflow on pull_request.
+  # This workflow uses secrets.
+  pull_request_target:
+    branches:
+      - main
+      - release
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  bench:
+    # Skip if this workflow is triggered by dependabot.
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: 'clippy, rustfmt'
+      - uses: Swatinem/rust-cache@v2
+      - name: Install LLVM
+        run: |
+          sh -x tools/bin/github_actions_install_llvm.sh
+      - uses: bencherdev/bencher@main
+      - name: Benchmark tests (push)
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          bencher run --project bee-browser --adapter rust_criterion --err make bench
+        env:
+          BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
+          BENCHER_BRANCH: ${{ github.ref_name }}
+          BENCHER_TESTBED: ubuntu-latest
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Benchmark tests (pull_request_target)
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          bencher run --project bee-browser --adapter rust_criterion --err \
+            --branch-start-point '${{ github.base_ref }}' \
+            --branch-start-point-hash '${{ github.event.pull_request.base.sha }}' \
+            make bench
+        env:
+          BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
+          BENCHER_BRANCH: ${{ github.head_ref }}
+          BENCHER_TESTBED: ubuntu-latest
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
