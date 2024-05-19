@@ -111,6 +111,18 @@ impl From<f64> for Value {
     }
 }
 
+impl From<i32> for Value {
+    fn from(value: i32) -> Self {
+        Self::from(value as f64)
+    }
+}
+
+impl From<u32> for Value {
+    fn from(value: u32) -> Self {
+        Self::from(value as f64)
+    }
+}
+
 impl From<FuncPtr> for Value {
     fn from(value: FuncPtr) -> Self {
         Self::function(value)

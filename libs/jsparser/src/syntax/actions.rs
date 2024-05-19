@@ -3257,7 +3257,10 @@ where
         // ShiftExpression_Await -> ShiftExpression_Await SHL AdditiveExpression_Await
         Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression_Await -> ShiftExpression_Await SAR AdditiveExpression_Await
-        Action::Invoke(Self::process_right_shift, "process_right_shift"),
+        Action::Invoke(
+            Self::process_signed_right_shift,
+            "process_signed_right_shift",
+        ),
         // ShiftExpression_Await -> ShiftExpression_Await SHR AdditiveExpression_Await
         Action::Invoke(
             Self::process_unsigned_right_shift,
@@ -3760,7 +3763,10 @@ where
         // ShiftExpression -> ShiftExpression SHL AdditiveExpression
         Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression -> ShiftExpression SAR AdditiveExpression
-        Action::Invoke(Self::process_right_shift, "process_right_shift"),
+        Action::Invoke(
+            Self::process_signed_right_shift,
+            "process_signed_right_shift",
+        ),
         // ShiftExpression -> ShiftExpression SHR AdditiveExpression
         Action::Invoke(
             Self::process_unsigned_right_shift,
@@ -4622,7 +4628,10 @@ where
         // ShiftExpression_Yield -> ShiftExpression_Yield SHL AdditiveExpression_Yield
         Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression_Yield -> ShiftExpression_Yield SAR AdditiveExpression_Yield
-        Action::Invoke(Self::process_right_shift, "process_right_shift"),
+        Action::Invoke(
+            Self::process_signed_right_shift,
+            "process_signed_right_shift",
+        ),
         // ShiftExpression_Yield -> ShiftExpression_Yield SHR AdditiveExpression_Yield
         Action::Invoke(
             Self::process_unsigned_right_shift,
@@ -4645,7 +4654,10 @@ where
         // ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHL AdditiveExpression_Yield_Await
         Action::Invoke(Self::process_left_shift, "process_left_shift"),
         // ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SAR AdditiveExpression_Yield_Await
-        Action::Invoke(Self::process_right_shift, "process_right_shift"),
+        Action::Invoke(
+            Self::process_signed_right_shift,
+            "process_signed_right_shift",
+        ),
         // ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHR AdditiveExpression_Yield_Await
         Action::Invoke(
             Self::process_unsigned_right_shift,

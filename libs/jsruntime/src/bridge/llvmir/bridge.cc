@@ -114,6 +114,18 @@ void compiler_peer_gte(Compiler* self) {
   self->Gte();
 }
 
+void compiler_peer_left_shift(Compiler *self) {
+  self->LeftShift();
+}
+
+void compiler_peer_signed_right_shift(Compiler *self) {
+  self->SignedRightShift();
+}
+
+void compiler_peer_unsigned_right_shift(Compiler *self) {
+  self->UnsignedRightShift();
+}
+
 void compiler_peer_eq(Compiler* self) {
   self->Eq();
 }
