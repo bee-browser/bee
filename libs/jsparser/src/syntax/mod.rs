@@ -191,7 +191,7 @@ pub enum BinaryOperator {
     GreaterThan,
     GreaterThanOrEqual,
     LeftShift,
-    RightShift,
+    SignedRightShift,
     UnsignedRightShift,
     Addition,
     Subtraction,
@@ -218,7 +218,7 @@ impl std::fmt::Debug for BinaryOperator {
             Self::GreaterThan => ">",
             Self::GreaterThanOrEqual => ">=",
             Self::LeftShift => "<<",
-            Self::RightShift => ">>",
+            Self::SignedRightShift => ">>",
             Self::UnsignedRightShift => ">>>",
             Self::Addition => "+",
             Self::Subtraction => "-",
@@ -261,7 +261,7 @@ pub enum AssignmentOperator {
     AdditionAssignment,
     SubtractionAssignment,
     LeftShiftAssignment,
-    RightShiftAssignment,
+    SignedRightShiftAssignment,
     UnsignedRightShiftAssignment,
     BitwiseAndAssignment,
     BitwiseXorAssignment,
@@ -282,7 +282,7 @@ impl std::fmt::Debug for AssignmentOperator {
             Self::AdditionAssignment => "+=",
             Self::SubtractionAssignment => "-=",
             Self::LeftShiftAssignment => "<<=",
-            Self::RightShiftAssignment => ">>=",
+            Self::SignedRightShiftAssignment => ">>=",
             Self::UnsignedRightShiftAssignment => ">>>=",
             Self::BitwiseAndAssignment => "&=",
             Self::BitwiseXorAssignment => "^=",
@@ -994,8 +994,8 @@ where
 
     // ShiftExpression[Yield, Await] :
     //   ShiftExpression[?Yield, ?Await] >> AdditiveExpression[?Yield, ?Await]
-    fn process_right_shift(&mut self) -> Result<(), Error> {
-        self.process_binary_expression(BinaryOperator::RightShift)
+    fn process_signed_right_shift(&mut self) -> Result<(), Error> {
+        self.process_binary_expression(BinaryOperator::SignedRightShift)
     }
 
     // ShiftExpression[Yield, Await] :
@@ -1158,7 +1158,7 @@ where
             TokenKind::AddAssign => AssignmentOperator::AdditionAssignment,
             TokenKind::SubAssign => AssignmentOperator::SubtractionAssignment,
             TokenKind::ShlAssign => AssignmentOperator::LeftShiftAssignment,
-            TokenKind::SarAssign => AssignmentOperator::RightShiftAssignment,
+            TokenKind::SarAssign => AssignmentOperator::SignedRightShiftAssignment,
             TokenKind::ShrAssign => AssignmentOperator::UnsignedRightShiftAssignment,
             TokenKind::BitAndAssign => AssignmentOperator::BitwiseAndAssignment,
             TokenKind::BitXorAssign => AssignmentOperator::BitwiseXorAssignment,

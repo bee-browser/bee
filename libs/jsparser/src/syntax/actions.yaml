@@ -3557,7 +3557,7 @@
 - rule: ShiftExpression_Await -> ShiftExpression_Await SHL AdditiveExpression_Await
   action: process_left_shift
 - rule: ShiftExpression_Await -> ShiftExpression_Await SAR AdditiveExpression_Await
-  action: process_right_shift
+  action: process_signed_right_shift
 - rule: ShiftExpression_Await -> ShiftExpression_Await SHR AdditiveExpression_Await
   action: process_unsigned_right_shift
 - rule: LogicalANDExpression_Await -> BitwiseORExpression_Await
@@ -4288,7 +4288,7 @@
 - rule: ShiftExpression -> ShiftExpression SHL AdditiveExpression
   action: process_left_shift
 - rule: ShiftExpression -> ShiftExpression SAR AdditiveExpression
-  action: process_right_shift
+  action: process_signed_right_shift
 - rule: ShiftExpression -> ShiftExpression SHR AdditiveExpression
   action: process_unsigned_right_shift
 - rule: EqualityExpression -> RelationalExpression
@@ -5320,7 +5320,7 @@
 - rule: ShiftExpression_Yield -> ShiftExpression_Yield SHL AdditiveExpression_Yield
   action: process_left_shift
 - rule: ShiftExpression_Yield -> ShiftExpression_Yield SAR AdditiveExpression_Yield
-  action: process_right_shift
+  action: process_signed_right_shift
 - rule: ShiftExpression_Yield -> ShiftExpression_Yield SHR AdditiveExpression_Yield
   action: process_unsigned_right_shift
 - rule: LogicalANDExpression_Yield -> BitwiseORExpression_Yield
@@ -5348,7 +5348,7 @@
 - rule: >-
     ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SAR
     AdditiveExpression_Yield_Await
-  action: process_right_shift
+  action: process_signed_right_shift
 - rule: >-
     ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHR
     AdditiveExpression_Yield_Await

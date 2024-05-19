@@ -53,6 +53,9 @@ class Compiler {
   void Gt();
   void Lte();
   void Gte();
+  void LeftShift();
+  void SignedRightShift();
+  void UnsignedRightShift();
   void Eq();
   void Ne();
   void Bindings(uint16_t n);
@@ -222,6 +225,8 @@ class Compiler {
 
   Item Dereference(llvm::Value** scope = nullptr);
   llvm::Value* ToNumeric(const Item& item);
+  llvm::Value* ToInt32(llvm::Value* number);
+  llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
 
   // Naming convention for field accessors:

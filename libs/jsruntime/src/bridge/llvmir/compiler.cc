@@ -1,6 +1,5 @@
 #include "compiler.hh"
 
-#include <climits>
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
@@ -25,6 +24,13 @@
 
 #include "macros.hh"
 #include "module.hh"
+
+namespace {
+
+constexpr llvm::FPClassTest kNanInfinityZero = \
+    llvm::FPClassTest::fcNan | llvm::FPClassTest::fcInf | llvm::FPClassTest::fcZero;
+
+}  // namespace
 
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
@@ -197,6 +203,54 @@ void Compiler::Gte() {
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpOGE(lhs, rhs);
   PushBoolean(v);
+}
+
+// 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+void Compiler::LeftShift() {
+  Swap();
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: BigInt
+  // 6.1.6.1.9 Number::leftShift ( x, y )
+  auto* lnum = ToInt32(lhs);
+  auto* rnum = ToUint32(rhs);
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
+  auto* shifted = builder_->CreateShl(lnum, shift_count);
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
+// 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+void Compiler::SignedRightShift() {
+  Swap();
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: BigInt
+  // 6.1.6.1.10 Number::signedRightShift ( x, y )
+  auto* lnum = ToInt32(lhs);
+  auto* rnum = ToUint32(rhs);
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
+  auto* shifted = builder_->CreateAShr(lnum, shift_count);
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
+// 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+void Compiler::UnsignedRightShift() {
+  Swap();
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: BigInt
+  // 6.1.6.1.11 Number::unsignedRightShift ( x, y )
+  auto* lnum = ToUint32(lhs);
+  auto* rnum = ToUint32(rhs);
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
+  auto* shifted = builder_->CreateLShr(lnum, shift_count);
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  PushNumber(v);
 }
 
 void Compiler::Eq() {
@@ -798,6 +852,72 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
       assert(false);
       return nullptr;
   }
+}
+
+// 7.1.6 ToInt32 ( argument )
+llvm::Value* Compiler::ToInt32(llvm::Value* number) {
+  // Skip the first step.
+  // We assumed that `number` holds a number value.
+
+  // TODO: use runtime function ToInt32() if generated code is too large.
+
+  auto* tmp = CreateAllocaInEntryBlock(builder_->getInt32Ty());
+
+  auto* then_block = llvm::BasicBlock::Create(*context_, "bl", function_);
+  auto* else_block = llvm::BasicBlock::Create(*context_, "bl", function_);
+  auto* merge_block = llvm::BasicBlock::Create(*context_, "bl", function_);
+
+  auto* nan_infinity_zero = builder_->createIsFPClass(number, kNanInfinityZero);
+  builder_->CreateCondBr(nan_infinity_zero, then_block, else_block);
+
+  // TODO: 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
+  builder_->SetInsertPoint(then_block);
+  builder_->CreateStore(builder_->getInt32(0), tmp);
+  builder_->CreateBr(merge_block);
+
+  // 3. Let int be truncate(ℝ(number)).
+  // 4. Let int32bit be int modulo 2**32.
+  // 5. If int32bit ≥ 2**31, return 𝔽(int32bit - 2**32); otherwise return 𝔽(int32bit).
+  builder_->SetInsertPoint(else_block);
+  auto* converted = builder_->CreateFPToSI(number, builder_->getInt32Ty());
+  builder_->CreateStore(converted, tmp);
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(merge_block);
+  return builder_->CreateLoad(builder_->getInt32Ty(), tmp);
+}
+
+// 7.1.7 ToUint32 ( argument )
+llvm::Value* Compiler::ToUint32(llvm::Value* number) {
+  // Skip the first step.
+  // We assumed that `number` holds a number value.
+
+  // TODO: use runtime function ToInt32() if generated code is too large.
+
+  auto* tmp = CreateAllocaInEntryBlock(builder_->getInt32Ty());
+
+  auto* then_block = llvm::BasicBlock::Create(*context_, "bl", function_);
+  auto* else_block = llvm::BasicBlock::Create(*context_, "bl", function_);
+  auto* merge_block = llvm::BasicBlock::Create(*context_, "bl", function_);
+
+  auto* nan_infinity_zero = builder_->createIsFPClass(number, kNanInfinityZero);
+  builder_->CreateCondBr(nan_infinity_zero, then_block, else_block);
+
+  // TODO: 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
+  builder_->SetInsertPoint(then_block);
+  builder_->CreateStore(builder_->getInt32(0), tmp);
+  builder_->CreateBr(merge_block);
+
+  // 3. Let int be truncate(ℝ(number)).
+  // 4. Let int32bit be int modulo 2**32.
+  // 5. Return 𝔽(int32bit).
+  builder_->SetInsertPoint(else_block);
+  auto* converted = builder_->CreateFPToUI(number, builder_->getInt32Ty());
+  builder_->CreateStore(converted, tmp);
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(merge_block);
+  return builder_->CreateLoad(builder_->getInt32Ty(), tmp);
 }
 
 llvm::Value* Compiler::ToAny(const Item& item) {

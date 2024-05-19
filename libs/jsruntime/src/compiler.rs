@@ -235,15 +235,15 @@ impl<'a> Compiler<'a> {
             CompileCommand::GreaterThanOrEqual => unsafe {
                 bridge::compiler_peer_gte(self.peer);
             },
-            CompileCommand::LeftShift => {
-                // TODO
-            }
-            CompileCommand::RightShift => {
-                // TODO
-            }
-            CompileCommand::UnsignedRightShift => {
-                // TODO
-            }
+            CompileCommand::LeftShift => unsafe {
+                bridge::compiler_peer_left_shift(self.peer);
+            },
+            CompileCommand::SignedRightShift => unsafe {
+                bridge::compiler_peer_signed_right_shift(self.peer);
+            },
+            CompileCommand::UnsignedRightShift => unsafe {
+                bridge::compiler_peer_unsigned_right_shift(self.peer);
+            },
             CompileCommand::Addition => unsafe {
                 bridge::compiler_peer_add(self.peer);
             },
@@ -307,7 +307,7 @@ impl<'a> Compiler<'a> {
             CompileCommand::LeftShiftAssignment => {
                 // TODO
             }
-            CompileCommand::RightShiftAssignment => {
+            CompileCommand::SignedRightShiftAssignment => {
                 // TODO
             }
             CompileCommand::UnsignedRightShiftAssignment => {
