@@ -5026,7 +5026,7 @@
 - rule: UnaryExpression_Await -> ADD UnaryExpression_Await
   action: process_unary_plus
 - rule: UnaryExpression_Await -> SUB UnaryExpression_Await
-  action: process_unary_negation
+  action: process_unary_minus
 - rule: UnaryExpression_Await -> BIT_NOT UnaryExpression_Await
   action: process_bitwise_not
 - rule: UnaryExpression_Await -> NOT UnaryExpression_Await
@@ -5204,7 +5204,7 @@
 - rule: UnaryExpression -> ADD UnaryExpression
   action: process_unary_plus
 - rule: UnaryExpression -> SUB UnaryExpression
-  action: process_unary_negation
+  action: process_unary_minus
 - rule: UnaryExpression -> BIT_NOT UnaryExpression
   action: process_bitwise_not
 - rule: UnaryExpression -> NOT UnaryExpression
@@ -5500,7 +5500,7 @@
 - rule: UnaryExpression_Yield -> ADD UnaryExpression_Yield
   action: process_unary_plus
 - rule: UnaryExpression_Yield -> SUB UnaryExpression_Yield
-  action: process_unary_negation
+  action: process_unary_minus
 - rule: UnaryExpression_Yield -> BIT_NOT UnaryExpression_Yield
   action: process_bitwise_not
 - rule: UnaryExpression_Yield -> NOT UnaryExpression_Yield
@@ -5552,7 +5552,7 @@
 - rule: UnaryExpression_Yield_Await -> ADD UnaryExpression_Yield_Await
   action: process_unary_plus
 - rule: UnaryExpression_Yield_Await -> SUB UnaryExpression_Yield_Await
-  action: process_unary_negation
+  action: process_unary_minus
 - rule: UnaryExpression_Yield_Await -> BIT_NOT UnaryExpression_Yield_Await
   action: process_bitwise_not
 - rule: UnaryExpression_Yield_Await -> NOT UnaryExpression_Yield_Await

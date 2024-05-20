@@ -105,6 +105,11 @@ void compiler_peer_gte(Compiler* self);
 void compiler_peer_left_shift(Compiler* self);
 void compiler_peer_signed_right_shift(Compiler* self);
 void compiler_peer_unsigned_right_shift(Compiler* self);
+void compiler_peer_void(Compiler* self);
+void compiler_peer_unary_plus(Compiler* self);
+void compiler_peer_unary_minus(Compiler* self);
+void compiler_peer_bitwise_not(Compiler* self);
+void compiler_peer_logical_not(Compiler* self);
 void compiler_peer_eq(Compiler* self);
 void compiler_peer_ne(Compiler* self);
 void compiler_peer_bindings(Compiler* self, uint16_t n);
@@ -125,7 +130,7 @@ void compiler_peer_end_function(Compiler* self, bool optimize);
 void compiler_peer_allocate_bindings(Compiler* self, uint16_t n, bool prologue);
 void compiler_peer_release_bindings(Compiler* self, uint16_t n);
 void compiler_peer_return(Compiler* self, size_t n);
-void compiler_peer_void(Compiler* self);
+void compiler_peer_discard(Compiler* self);
 void compiler_peer_dump_stack(Compiler* self);
 
 // Execution

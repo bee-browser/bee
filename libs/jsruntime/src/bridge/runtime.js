@@ -63,6 +63,7 @@ function makeLLVMIRType(type) {
       return 'builder_.getInt1Ty()';
     case 'u16':
       return 'builder_.getInt16Ty()';
+    case 'i32':
     case 'u32':
       return 'builder_.getInt32Ty()';
     case 'f64':
@@ -85,6 +86,8 @@ function makeCType(type) {
       return 'bool';
     case 'u16':
       return 'uint16_t';
+    case 'i32':
+      return 'int32_t';
     case 'u32':
       return 'uint32_t';
     case 'f64':
