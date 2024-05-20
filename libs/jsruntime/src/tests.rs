@@ -110,6 +110,19 @@ fn test_eval_unsigned_right_shift() {
 }
 
 #[test]
+fn test_eval_void() {
+    eval!("print(void undefined)", Value::UNDEFINED);
+    eval!("print(void null)", Value::UNDEFINED);
+    eval!("print(void true)", Value::UNDEFINED);
+    eval!("print(void false)", Value::UNDEFINED);
+    eval!("print(void 0)", Value::UNDEFINED);
+    eval!("print(void NaN)", Value::UNDEFINED);
+    eval!("print(void Infinity)", Value::UNDEFINED);
+    eval!("print(void void 0)", Value::UNDEFINED);
+    eval!("const a = 1; print(void a)", Value::UNDEFINED);
+}
+
+#[test]
 fn test_eval_unary_plus() {
     eval!("print(+undefined)", f64::NAN);
     eval!("print(+null)", 0);

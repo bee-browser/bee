@@ -187,11 +187,11 @@ impl<'a> Compiler<'a> {
             CompileCommand::Delete => {
                 // TODO
             }
-            CompileCommand::Void => {
-                // TODO
-            }
+            CompileCommand::Void => unsafe {
+                bridge::compiler_peer_void(self.peer);
+            },
             CompileCommand::Typeof => {
-                // TODO
+                // TODO: implement String before this.
             }
             CompileCommand::UnaryPlus => unsafe {
                 bridge::compiler_peer_unary_plus(self.peer);
@@ -356,7 +356,7 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_return(self.peer, *n as usize);
             },
             CompileCommand::Discard => unsafe {
-                bridge::compiler_peer_void(self.peer);
+                bridge::compiler_peer_discard(self.peer);
             },
         }
     }

@@ -253,6 +253,12 @@ void Compiler::UnsignedRightShift() {
   PushNumber(v);
 }
 
+// 13.5.2.1 Runtime Semantics: Evaluation
+void Compiler::Void() {
+  PopItem();
+  PushUndefined();
+}
+
 // 13.5.4.1 Runtime Semantics: Evaluation
 void Compiler::UnaryPlus() {
   auto* v = ToNumeric(Dereference());
@@ -692,7 +698,7 @@ void Compiler::Return(size_t n) {
   builder_->CreateRet(ret);
 }
 
-void Compiler::Void() {
+void Compiler::Discard() {
   if (stack_.size() > 1) {
     PopItem();
   }

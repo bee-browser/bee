@@ -56,6 +56,7 @@ class Compiler {
   void LeftShift();
   void SignedRightShift();
   void UnsignedRightShift();
+  void Void();
   void UnaryPlus();
   void UnaryMinus();
   void BitwiseNot();
@@ -80,7 +81,7 @@ class Compiler {
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
   void Return(size_t n);
-  void Void();
+  void Discard();
 
   void DumpStack();
 

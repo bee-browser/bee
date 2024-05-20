@@ -126,6 +126,10 @@ void compiler_peer_unsigned_right_shift(Compiler* self) {
   self->UnsignedRightShift();
 }
 
+void compiler_peer_void(Compiler* self) {
+  self->Void();
+}
+
 void compiler_peer_unary_plus(Compiler* self) {
   self->UnaryPlus();
 }
@@ -224,8 +228,8 @@ void compiler_peer_return(Compiler* self, size_t n) {
   self->Return(n);
 }
 
-void compiler_peer_void(Compiler* self) {
-  self->Void();
+void compiler_peer_discard(Compiler* self) {
+  self->Discard();
 }
 
 void compiler_peer_dump_stack(Compiler* self) {
