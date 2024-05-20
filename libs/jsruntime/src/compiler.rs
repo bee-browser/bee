@@ -172,9 +172,9 @@ impl<'a> Compiler<'a> {
                     bridge::compiler_peer_release_bindings(self.peer, *n);
                 }
             }
-            CompileCommand::PostfixIncrement => {
-                // TODO
-            }
+            CompileCommand::PostfixIncrement => unsafe {
+                bridge::compiler_peer_postfix_increment(self.peer);
+            },
             CompileCommand::PostfixDecrement => {
                 // TODO
             }
