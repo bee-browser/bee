@@ -138,11 +138,11 @@ void compiler_peer_unary_minus(Compiler* self) {
   self->UnaryMinus();
 }
 
-void compiler_peer_bitwise_not(Compiler *self) {
+void compiler_peer_bitwise_not(Compiler* self) {
   self->BitwiseNot();
 }
 
-void compiler_peer_logical_not(Compiler *self) {
+void compiler_peer_logical_not(Compiler* self) {
   self->LogicalNot();
 }
 
