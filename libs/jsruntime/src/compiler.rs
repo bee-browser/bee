@@ -193,9 +193,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::Typeof => {
                 // TODO
             }
-            CompileCommand::Plus => {
-                // TODO
-            }
+            CompileCommand::UnaryPlus => unsafe {
+                bridge::compiler_peer_unary_plus(self.peer);
+            },
             CompileCommand::UnaryMinus => unsafe {
                 bridge::compiler_peer_unary_minus(self.peer);
             },

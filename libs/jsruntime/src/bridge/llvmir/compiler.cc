@@ -253,6 +253,12 @@ void Compiler::UnsignedRightShift() {
   PushNumber(v);
 }
 
+// 13.5.4.1 Runtime Semantics: Evaluation
+void Compiler::UnaryPlus() {
+  auto* v = ToNumeric(Dereference());
+  PushNumber(v);
+}
+
 // 13.5.5.1 Runtime Semantics: Evaluation
 void Compiler::UnaryMinus() {
   auto* num = ToNumeric(Dereference());

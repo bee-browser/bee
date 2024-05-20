@@ -56,6 +56,7 @@ class Compiler {
   void LeftShift();
   void SignedRightShift();
   void UnsignedRightShift();
+  void UnaryPlus();
   void UnaryMinus();
   void Eq();
   void Ne();

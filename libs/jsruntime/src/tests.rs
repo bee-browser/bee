@@ -110,6 +110,15 @@ fn test_eval_unsigned_right_shift() {
 }
 
 #[test]
+fn test_eval_unary_plus() {
+    eval!("print(+0)", 0);
+    eval!("print(+1)", 1);
+    eval!("print(+(+1))", 1);
+    eval!("print(+NaN)", f64::NAN);
+    eval!("print(+Infinity)", f64::INFINITY);
+}
+
+#[test]
 fn test_eval_unary_minus() {
     eval!("print(-0)", -0.);
     eval!("print(-1)", -1);

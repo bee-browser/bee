@@ -126,6 +126,10 @@ void compiler_peer_unsigned_right_shift(Compiler* self) {
   self->UnsignedRightShift();
 }
 
+void compiler_peer_unary_plus(Compiler* self) {
+  self->UnaryPlus();
+}
+
 void compiler_peer_unary_minus(Compiler* self) {
   self->UnaryMinus();
 }
