@@ -88,3 +88,23 @@ llvm::Function* TypeHolder::CreateRuntimeToNumeric() {
   }
   return runtime_to_numeric_;
 }
+
+llvm::Function* TypeHolder::CreateRuntimeToInt32() {
+  if (runtime_to_int32_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(
+        builder_.getInt32Ty(), {builder_.getPtrTy(), builder_.getDoubleTy()}, false);
+    runtime_to_int32_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_to_int32", module_);
+  }
+  return runtime_to_int32_;
+}
+
+llvm::Function* TypeHolder::CreateRuntimeToUint32() {
+  if (runtime_to_uint32_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(
+        builder_.getInt32Ty(), {builder_.getPtrTy(), builder_.getDoubleTy()}, false);
+    runtime_to_uint32_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_to_uint32", module_);
+  }
+  return runtime_to_uint32_;
+}

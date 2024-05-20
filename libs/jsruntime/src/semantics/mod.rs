@@ -634,8 +634,8 @@ pub enum CompileCommand {
     Delete,
     Void,
     Typeof,
-    Plus,
-    Negation,
+    UnaryPlus,
+    UnaryMinus,
     BitwiseNot,
     LogicalNot,
 
@@ -716,8 +716,8 @@ impl From<UnaryOperator> for CompileCommand {
             UnaryOperator::Delete => Self::Delete,
             UnaryOperator::Void => Self::Void,
             UnaryOperator::Typeof => Self::Typeof,
-            UnaryOperator::Plus => Self::Plus,
-            UnaryOperator::Negation => Self::Negation,
+            UnaryOperator::Plus => Self::UnaryPlus,
+            UnaryOperator::Minus => Self::UnaryMinus,
             UnaryOperator::BitwiseNot => Self::BitwiseNot,
             UnaryOperator::LogicalNot => Self::LogicalNot,
         }

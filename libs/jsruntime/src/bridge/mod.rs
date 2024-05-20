@@ -151,6 +151,8 @@ impl Default for Runtime {
         Self {
             to_boolean: Some(runtime_to_boolean),
             to_numeric: Some(runtime_to_numeric),
+            to_int32: Some(runtime_to_int32),
+            to_uint32: Some(runtime_to_uint32),
         }
     }
 }
@@ -182,5 +184,55 @@ unsafe extern "C" fn runtime_to_numeric(_: usize, value: *const Value) -> f64 {
         ValueKind_Number => value.holder.number,
         ValueKind_Function => f64::NAN,
         _ => unreachable!(),
+    }
+}
+
+// 7.1.6 ToInt32 ( argument )
+unsafe extern "C" fn runtime_to_int32(_: usize, value: f64) -> i32 {
+    const EXP2_31: f64 = (2u64 << 31) as f64;
+    const EXP2_32: f64 = (2u64 << 32) as f64;
+
+    // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
+    if !value.is_finite() || value == 0.0 {
+        return 0;
+    }
+
+    // 3. Let int be truncate(ℝ(number)).
+    let int_ = value.trunc();
+
+    // 4. Let int32bit be int modulo 2**32.
+    let int32bit = int_ % EXP2_32;
+    // int32bit may be negative.
+
+    // 5. If int32bit ≥ 2**31, return 𝔽(int32bit - 2**32); otherwise return 𝔽(int32bit).
+    if int32bit >= EXP2_31 {
+        (int32bit - EXP2_32) as i32
+    } else {
+        int32bit as i32
+    }
+}
+
+// 7.1.7 ToUint32 ( argument )
+unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
+    const EXP2_31: f64 = (2u64 << 31) as f64;
+    const EXP2_32: f64 = (2u64 << 32) as f64;
+
+    // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
+    if !value.is_finite() || value == 0.0 {
+        return 0;
+    }
+
+    // 3. Let int be truncate(ℝ(number)).
+    let int_ = dbg!(value.trunc());
+
+    // 4. Let int32bit be int modulo 2**32.
+    let int32bit = dbg!(int_ % EXP2_32);
+    // int32bit may be negative.
+
+    // 5. Return 𝔽(int32bit).
+    if int32bit < 0.0 {
+        dbg!((int32bit + EXP2_31) as u32)
+    } else {
+        dbg!(int32bit as u32)
     }
 }

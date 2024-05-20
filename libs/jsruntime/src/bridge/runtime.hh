@@ -6,4 +6,6 @@
 typedef struct {
   bool (*to_boolean)(uintptr_t context, const Value* value);
   double (*to_numeric)(uintptr_t context, const Value* value);
+  int32_t (*to_int32)(uintptr_t context, double value);
+  uint32_t (*to_uint32)(uintptr_t context, double value);
 } Runtime;

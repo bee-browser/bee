@@ -29,5 +29,13 @@ void Executor::RegisterRuntime(const Runtime* runtime) {
       llvm::orc::ExecutorAddr::fromPtr(runtime->to_numeric),
       llvm::JITSymbolFlags::Exported,
   };
+  symbols[exec_session().intern("runtime_to_int32")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->to_int32),
+      llvm::JITSymbolFlags::Exported,
+  };
+  symbols[exec_session().intern("runtime_to_uint32")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->to_uint32),
+      llvm::JITSymbolFlags::Exported,
+  };
   ExitOnErr(main_jd().define(llvm::orc::absoluteSymbols(std::move(symbols))));
 }

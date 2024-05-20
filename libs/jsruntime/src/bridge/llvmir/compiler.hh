@@ -56,6 +56,11 @@ class Compiler {
   void LeftShift();
   void SignedRightShift();
   void UnsignedRightShift();
+  void Void();
+  void UnaryPlus();
+  void UnaryMinus();
+  void BitwiseNot();
+  void LogicalNot();
   void Eq();
   void Ne();
   void Bindings(uint16_t n);
@@ -76,7 +81,7 @@ class Compiler {
   void AllocateBindings(uint16_t n, bool prologue);
   void ReleaseBindings(uint16_t n);
   void Return(size_t n);
-  void Void();
+  void Discard();
 
   void DumpStack();
 
@@ -176,6 +181,15 @@ class Compiler {
     Item item = stack_.back();
     stack_.pop_back();
     return item;
+  }
+
+  inline llvm::Value* PopBoolean() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    assert(item.type == Item::Boolean);
+    auto* value = item.value;
+    stack_.pop_back();
+    return value;
   }
 
   inline llvm::Value* PopValue() {

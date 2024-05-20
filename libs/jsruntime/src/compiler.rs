@@ -185,26 +185,27 @@ impl<'a> Compiler<'a> {
                 // TODO
             }
             CompileCommand::Delete => {
-                // TODO
+                unimplemented!("delete operator");
             }
-            CompileCommand::Void => {
-                // TODO
-            }
+            CompileCommand::Void => unsafe {
+                bridge::compiler_peer_void(self.peer);
+            },
             CompileCommand::Typeof => {
-                // TODO
+                // TODO: implement String before this
+                unimplemented!("typeof operator");
             }
-            CompileCommand::Plus => {
-                // TODO
-            }
-            CompileCommand::Negation => {
-                // TODO
-            }
-            CompileCommand::BitwiseNot => {
-                // TODO
-            }
-            CompileCommand::LogicalNot => {
-                // TODO
-            }
+            CompileCommand::UnaryPlus => unsafe {
+                bridge::compiler_peer_unary_plus(self.peer);
+            },
+            CompileCommand::UnaryMinus => unsafe {
+                bridge::compiler_peer_unary_minus(self.peer);
+            },
+            CompileCommand::BitwiseNot => unsafe {
+                bridge::compiler_peer_bitwise_not(self.peer);
+            },
+            CompileCommand::LogicalNot => unsafe {
+                bridge::compiler_peer_logical_not(self.peer);
+            },
             CompileCommand::Equality => unsafe {
                 bridge::compiler_peer_eq(self.peer);
             },
@@ -356,7 +357,7 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_return(self.peer, *n as usize);
             },
             CompileCommand::Discard => unsafe {
-                bridge::compiler_peer_void(self.peer);
+                bridge::compiler_peer_discard(self.peer);
             },
         }
     }
