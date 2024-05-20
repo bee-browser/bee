@@ -268,6 +268,17 @@ void Compiler::UnaryMinus() {
   PushNumber(v);
 }
 
+// 13.5.6.1 Runtime Semantics: Evaluation
+void Compiler::BitwiseNot() {
+  auto* num = ToNumeric(Dereference());
+  // TODO: BigInt
+  // 6.1.6.1.2 Number::bitwiseNOT ( x )
+  auto* int32 = ToInt32(num);
+  auto* xored = builder_->CreateXor(int32, -1);
+  auto* v = builder_->CreateSIToFP(xored, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
 void Compiler::Eq() {
   Swap();
   auto* lhs = ToNumeric(Dereference());

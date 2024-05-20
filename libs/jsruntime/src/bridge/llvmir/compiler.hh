@@ -58,6 +58,7 @@ class Compiler {
   void UnsignedRightShift();
   void UnaryPlus();
   void UnaryMinus();
+  void BitwiseNot();
   void Eq();
   void Ne();
   void Bindings(uint16_t n);

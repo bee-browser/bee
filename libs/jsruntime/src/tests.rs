@@ -128,6 +128,15 @@ fn test_eval_unary_minus() {
 }
 
 #[test]
+fn test_eval_bitwise_not() {
+    eval!("print(~0)", -1);
+    eval!("print(~1)", -2);
+    eval!("print(~-3)", 2);
+    eval!("print(~NaN)", -1);
+    eval!("print(~Infinity)", -1);
+}
+
+#[test]
 fn test_eval_to_numeric() {
     eval!("print(undefined + 0)", f64::NAN);
     eval!("print(null + 0)", 0.);

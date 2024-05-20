@@ -134,6 +134,10 @@ void compiler_peer_unary_minus(Compiler* self) {
   self->UnaryMinus();
 }
 
+void compiler_peer_bitwise_not(Compiler *self) {
+  self->BitwiseNot();
+}
+
 void compiler_peer_eq(Compiler* self) {
   self->Eq();
 }
