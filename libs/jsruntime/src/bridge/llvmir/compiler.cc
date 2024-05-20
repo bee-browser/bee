@@ -279,6 +279,14 @@ void Compiler::BitwiseNot() {
   PushNumber(v);
 }
 
+// 13.5.7.1 Runtime Semantics: Evaluation
+void Compiler::LogicalNot() {
+  ToBoolean();
+  auto* boolean = PopBoolean();
+  auto* v = builder_->CreateXor(boolean, builder_->getTrue());
+  PushBoolean(v);
+}
+
 void Compiler::Eq() {
   Swap();
   auto* lhs = ToNumeric(Dereference());

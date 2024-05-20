@@ -111,6 +111,10 @@ fn test_eval_unsigned_right_shift() {
 
 #[test]
 fn test_eval_unary_plus() {
+    eval!("print(+undefined)", f64::NAN);
+    eval!("print(+null)", 0);
+    eval!("print(+true)", 1);
+    eval!("print(+false)", 0);
     eval!("print(+0)", 0);
     eval!("print(+1)", 1);
     eval!("print(+(+1))", 1);
@@ -120,6 +124,10 @@ fn test_eval_unary_plus() {
 
 #[test]
 fn test_eval_unary_minus() {
+    eval!("print(-undefined)", f64::NAN);
+    eval!("print(-null)", -0.);
+    eval!("print(-true)", -1);
+    eval!("print(-false)", -0.);
     eval!("print(-0)", -0.);
     eval!("print(-1)", -1);
     eval!("print(-(-1))", 1);
@@ -129,11 +137,28 @@ fn test_eval_unary_minus() {
 
 #[test]
 fn test_eval_bitwise_not() {
+    eval!("print(~undefined)", -1);
+    eval!("print(~null)", -1);
+    eval!("print(~true)", -2);
+    eval!("print(~false)", -1);
     eval!("print(~0)", -1);
     eval!("print(~1)", -2);
     eval!("print(~-3)", 2);
     eval!("print(~NaN)", -1);
     eval!("print(~Infinity)", -1);
+}
+
+#[test]
+fn test_eval_logical_not() {
+    eval!("print(!undefined)", true);
+    eval!("print(!null)", true);
+    eval!("print(!true)", false);
+    eval!("print(!false)", true);
+    eval!("print(!0)", true);
+    eval!("print(!1)", false);
+    eval!("print(!-1)", false);
+    eval!("print(!NaN)", true);
+    eval!("print(!Infinity)", false);
 }
 
 #[test]

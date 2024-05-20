@@ -202,9 +202,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::BitwiseNot => unsafe {
                 bridge::compiler_peer_bitwise_not(self.peer);
             },
-            CompileCommand::LogicalNot => {
-                // TODO
-            }
+            CompileCommand::LogicalNot => unsafe {
+                bridge::compiler_peer_logical_not(self.peer);
+            },
             CompileCommand::Equality => unsafe {
                 bridge::compiler_peer_eq(self.peer);
             },
