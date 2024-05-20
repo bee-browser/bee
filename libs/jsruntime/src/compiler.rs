@@ -196,9 +196,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::Plus => {
                 // TODO
             }
-            CompileCommand::Negation => {
-                // TODO
-            }
+            CompileCommand::UnaryMinus => unsafe {
+                bridge::compiler_peer_unary_minus(self.peer);
+            },
             CompileCommand::BitwiseNot => {
                 // TODO
             }

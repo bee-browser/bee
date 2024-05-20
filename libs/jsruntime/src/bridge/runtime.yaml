@@ -9,3 +9,13 @@ functions:
       - name: value
         type: '&Value'
     ret: f64
+  - name: to_int32
+    args:
+      - name: value
+        type: f64
+    ret: i32
+  - name: to_uint32
+    args:
+      - name: value
+        type: f64
+    ret: u32

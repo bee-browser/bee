@@ -56,6 +56,7 @@ class Compiler {
   void LeftShift();
   void SignedRightShift();
   void UnsignedRightShift();
+  void UnaryMinus();
   void Eq();
   void Ne();
   void Bindings(uint16_t n);

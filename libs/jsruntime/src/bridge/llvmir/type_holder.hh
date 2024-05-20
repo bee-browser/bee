@@ -26,6 +26,8 @@ class TypeHolder {
   llvm::FunctionType* CreateFunctionType();
   llvm::Function* CreateRuntimeToBoolean();
   llvm::Function* CreateRuntimeToNumeric();
+  llvm::Function* CreateRuntimeToInt32();
+  llvm::Function* CreateRuntimeToUint32();
 
  private:
   llvm::LLVMContext& context_;
@@ -36,4 +38,6 @@ class TypeHolder {
   llvm::FunctionType* function_type_ = nullptr;
   llvm::Function* runtime_to_boolean_ = nullptr;
   llvm::Function* runtime_to_numeric_ = nullptr;
+  llvm::Function* runtime_to_int32_ = nullptr;
+  llvm::Function* runtime_to_uint32_ = nullptr;
 };

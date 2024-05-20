@@ -161,7 +161,7 @@ pub enum UnaryOperator {
     Void,
     Typeof,
     Plus,
-    Negation,
+    Minus,
     BitwiseNot,
     LogicalNot,
 }
@@ -173,7 +173,7 @@ impl std::fmt::Debug for UnaryOperator {
             Self::Void => "void",
             Self::Typeof => "typeof",
             Self::Plus => "+",
-            Self::Negation => "-",
+            Self::Minus => "-",
             Self::BitwiseNot => "~",
             Self::LogicalNot => "!",
         })
@@ -919,8 +919,8 @@ where
 
     // UnaryExpression[Yield, Await] :
     //   - UnaryExpression[?Yield, ?Await]
-    fn process_unary_negation(&mut self) -> Result<(), Error> {
-        self.process_unary_expression(UnaryOperator::Negation)
+    fn process_unary_minus(&mut self) -> Result<(), Error> {
+        self.process_unary_expression(UnaryOperator::Minus)
     }
 
     // UnaryExpression[Yield, Await] :

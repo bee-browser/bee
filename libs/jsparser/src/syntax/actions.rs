@@ -4408,7 +4408,7 @@ where
         // UnaryExpression_Await -> ADD UnaryExpression_Await
         Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression_Await -> SUB UnaryExpression_Await
-        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
+        Action::Invoke(Self::process_unary_minus, "process_unary_minus"),
         // UnaryExpression_Await -> BIT_NOT UnaryExpression_Await
         Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression_Await -> NOT UnaryExpression_Await
@@ -4540,7 +4540,7 @@ where
         // UnaryExpression -> ADD UnaryExpression
         Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression -> SUB UnaryExpression
-        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
+        Action::Invoke(Self::process_unary_minus, "process_unary_minus"),
         // UnaryExpression -> BIT_NOT UnaryExpression
         Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression -> NOT UnaryExpression
@@ -4758,7 +4758,7 @@ where
         // UnaryExpression_Yield -> ADD UnaryExpression_Yield
         Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression_Yield -> SUB UnaryExpression_Yield
-        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
+        Action::Invoke(Self::process_unary_minus, "process_unary_minus"),
         // UnaryExpression_Yield -> BIT_NOT UnaryExpression_Yield
         Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression_Yield -> NOT UnaryExpression_Yield
@@ -4802,7 +4802,7 @@ where
         // UnaryExpression_Yield_Await -> ADD UnaryExpression_Yield_Await
         Action::Invoke(Self::process_unary_plus, "process_unary_plus"),
         // UnaryExpression_Yield_Await -> SUB UnaryExpression_Yield_Await
-        Action::Invoke(Self::process_unary_negation, "process_unary_negation"),
+        Action::Invoke(Self::process_unary_minus, "process_unary_minus"),
         // UnaryExpression_Yield_Await -> BIT_NOT UnaryExpression_Yield_Await
         Action::Invoke(Self::process_bitwise_not, "process_bitwise_not"),
         // UnaryExpression_Yield_Await -> NOT UnaryExpression_Yield_Await

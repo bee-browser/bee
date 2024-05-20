@@ -74,12 +74,12 @@ fn test_eval_group_expression() {
 fn test_eval_left_shift() {
     eval!("print(NaN << 1)", 0);
     eval!("print(Infinity << 1)", 0);
-    //eval!("print(-Infinity << 0)", 0); TODO: unary -
+    eval!("print(-Infinity << 0)", 0);
     eval!("print(0 << 1)", 0);
     eval!("print(1 << 1)", 2);
     eval!("print(0.9 << 1)", 0);
     eval!("print(1.1 << 1)", 2);
-    //eval!("print(-1 << 1)", -2); TODO: unary -
+    eval!("print(-1 << 1)", -2);
     eval!("print(1 << 32)", 1);
 }
 
@@ -87,12 +87,12 @@ fn test_eval_left_shift() {
 fn test_eval_signed_right_shift() {
     eval!("print(NaN >> 1)", 0);
     eval!("print(Infinity >> 1)", 0);
-    //eval!("print(-Infinity >> 0)", 0); TODO: unary -
+    eval!("print(-Infinity >> 0)", 0);
     eval!("print(0 >> 1)", 0);
     eval!("print(4 >> 1)", 2);
     eval!("print(3.9 >> 1)", 1);
     eval!("print(4.1 >> 1)", 2);
-    //eval!("print(-4 >> 1)", -2); TODO: unary -
+    eval!("print(-4 >> 1)", -2);
     eval!("print(1 >> 32)", 1);
 }
 
@@ -100,13 +100,22 @@ fn test_eval_signed_right_shift() {
 fn test_eval_unsigned_right_shift() {
     eval!("print(NaN >>> 1)", 0);
     eval!("print(Infinity >>> 1)", 0);
-    //eval!("print(-Infinity >>> 0)", 0); TODO: unary -
+    eval!("print(-Infinity >>> 0)", 0);
     eval!("print(0 >>> 1)", 0);
     eval!("print(4 >>> 1)", 2);
     eval!("print(3.9 >>> 1)", 1);
     eval!("print(4.1 >>> 1)", 2);
-    //eval!("print(-4 >>> 1)", 2147483646); TODO: unary -
+    eval!("print(-4 >>> 1)", 2147483646);
     eval!("print(1 >> 32)", 1);
+}
+
+#[test]
+fn test_eval_unary_minus() {
+    eval!("print(-0)", -0.);
+    eval!("print(-1)", -1);
+    eval!("print(-(-1))", 1);
+    eval!("print(-NaN)", f64::NAN);
+    eval!("print(-Infinity)", f64::NEG_INFINITY);
 }
 
 #[test]

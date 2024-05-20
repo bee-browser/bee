@@ -105,6 +105,7 @@ void compiler_peer_gte(Compiler* self);
 void compiler_peer_left_shift(Compiler* self);
 void compiler_peer_signed_right_shift(Compiler* self);
 void compiler_peer_unsigned_right_shift(Compiler* self);
+void compiler_peer_unary_minus(Compiler* self);
 void compiler_peer_eq(Compiler* self);
 void compiler_peer_ne(Compiler* self);
 void compiler_peer_bindings(Compiler* self, uint16_t n);

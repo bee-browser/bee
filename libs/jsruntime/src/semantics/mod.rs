@@ -635,7 +635,7 @@ pub enum CompileCommand {
     Void,
     Typeof,
     Plus,
-    Negation,
+    UnaryMinus,
     BitwiseNot,
     LogicalNot,
 
@@ -717,7 +717,7 @@ impl From<UnaryOperator> for CompileCommand {
             UnaryOperator::Void => Self::Void,
             UnaryOperator::Typeof => Self::Typeof,
             UnaryOperator::Plus => Self::Plus,
-            UnaryOperator::Negation => Self::Negation,
+            UnaryOperator::Minus => Self::UnaryMinus,
             UnaryOperator::BitwiseNot => Self::BitwiseNot,
             UnaryOperator::LogicalNot => Self::LogicalNot,
         }

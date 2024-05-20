@@ -27,7 +27,7 @@
 
 namespace {
 
-constexpr llvm::FPClassTest kNanInfinityZero = \
+constexpr llvm::FPClassTest kNanInfinityZero =
     llvm::FPClassTest::fcNan | llvm::FPClassTest::fcInf | llvm::FPClassTest::fcZero;
 
 }  // namespace
@@ -250,6 +250,15 @@ void Compiler::UnsignedRightShift() {
   auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
   auto* shifted = builder_->CreateLShr(lnum, shift_count);
   auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
+// 13.5.5.1 Runtime Semantics: Evaluation
+void Compiler::UnaryMinus() {
+  auto* num = ToNumeric(Dereference());
+  // TODO: BigInt
+  // 6.1.6.1.1 Number::unaryMinus ( x )
+  auto* v = builder_->CreateFNeg(num);
   PushNumber(v);
 }
 
@@ -854,70 +863,24 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
   }
 }
 
+constexpr double kModulus32 = static_cast<double>(static_cast<uint64_t>(1) << 32);
+
 // 7.1.6 ToInt32 ( argument )
 llvm::Value* Compiler::ToInt32(llvm::Value* number) {
   // Skip the first step.
   // We assumed that `number` holds a number value.
-
-  // TODO: use runtime function ToInt32() if generated code is too large.
-
-  auto* tmp = CreateAllocaInEntryBlock(builder_->getInt32Ty());
-
-  auto* then_block = llvm::BasicBlock::Create(*context_, "bl", function_);
-  auto* else_block = llvm::BasicBlock::Create(*context_, "bl", function_);
-  auto* merge_block = llvm::BasicBlock::Create(*context_, "bl", function_);
-
-  auto* nan_infinity_zero = builder_->createIsFPClass(number, kNanInfinityZero);
-  builder_->CreateCondBr(nan_infinity_zero, then_block, else_block);
-
-  // TODO: 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
-  builder_->SetInsertPoint(then_block);
-  builder_->CreateStore(builder_->getInt32(0), tmp);
-  builder_->CreateBr(merge_block);
-
-  // 3. Let int be truncate(ℝ(number)).
-  // 4. Let int32bit be int modulo 2**32.
-  // 5. If int32bit ≥ 2**31, return 𝔽(int32bit - 2**32); otherwise return 𝔽(int32bit).
-  builder_->SetInsertPoint(else_block);
-  auto* converted = builder_->CreateFPToSI(number, builder_->getInt32Ty());
-  builder_->CreateStore(converted, tmp);
-  builder_->CreateBr(merge_block);
-
-  builder_->SetInsertPoint(merge_block);
-  return builder_->CreateLoad(builder_->getInt32Ty(), tmp);
+  // TODO: Create inline instructions if runtime_to_int32() is slow.
+  auto* func = types_->CreateRuntimeToInt32();
+  return builder_->CreateCall(func, {exec_context_, number});
 }
 
 // 7.1.7 ToUint32 ( argument )
 llvm::Value* Compiler::ToUint32(llvm::Value* number) {
   // Skip the first step.
   // We assumed that `number` holds a number value.
-
-  // TODO: use runtime function ToInt32() if generated code is too large.
-
-  auto* tmp = CreateAllocaInEntryBlock(builder_->getInt32Ty());
-
-  auto* then_block = llvm::BasicBlock::Create(*context_, "bl", function_);
-  auto* else_block = llvm::BasicBlock::Create(*context_, "bl", function_);
-  auto* merge_block = llvm::BasicBlock::Create(*context_, "bl", function_);
-
-  auto* nan_infinity_zero = builder_->createIsFPClass(number, kNanInfinityZero);
-  builder_->CreateCondBr(nan_infinity_zero, then_block, else_block);
-
-  // TODO: 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
-  builder_->SetInsertPoint(then_block);
-  builder_->CreateStore(builder_->getInt32(0), tmp);
-  builder_->CreateBr(merge_block);
-
-  // 3. Let int be truncate(ℝ(number)).
-  // 4. Let int32bit be int modulo 2**32.
-  // 5. Return 𝔽(int32bit).
-  builder_->SetInsertPoint(else_block);
-  auto* converted = builder_->CreateFPToUI(number, builder_->getInt32Ty());
-  builder_->CreateStore(converted, tmp);
-  builder_->CreateBr(merge_block);
-
-  builder_->SetInsertPoint(merge_block);
-  return builder_->CreateLoad(builder_->getInt32Ty(), tmp);
+  // TODO: Create inline instructions if runtime_to_uint32() is slow.
+  auto* func = types_->CreateRuntimeToUint32();
+  return builder_->CreateCall(func, {exec_context_, number});
 }
 
 llvm::Value* Compiler::ToAny(const Item& item) {
