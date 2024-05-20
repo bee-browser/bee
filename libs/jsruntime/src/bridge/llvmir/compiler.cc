@@ -894,8 +894,6 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
   }
 }
 
-constexpr double kModulus32 = static_cast<double>(static_cast<uint64_t>(1) << 32);
-
 // 7.1.6 ToInt32 ( argument )
 llvm::Value* Compiler::ToInt32(llvm::Value* number) {
   // Skip the first step.
