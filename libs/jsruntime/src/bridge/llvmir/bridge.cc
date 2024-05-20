@@ -130,6 +130,10 @@ void compiler_peer_postfix_increment(Compiler* self) {
   self->PostfixIncrement();
 }
 
+void compiler_peer_postfix_decrement(Compiler* self) {
+  self->PostfixDecrement();
+}
+
 void compiler_peer_void(Compiler* self) {
   self->Void();
 }

@@ -116,6 +116,12 @@ fn test_eval_postfix_increment() {
 }
 
 #[test]
+fn test_eval_postfix_decrement() {
+    eval!("let a = 0; print(a--)", 0);
+    //TODO: eval!("print(0--)", reference_error!());
+}
+
+#[test]
 fn test_eval_void() {
     eval!("print(void undefined)", Value::UNDEFINED);
     eval!("print(void null)", Value::UNDEFINED);

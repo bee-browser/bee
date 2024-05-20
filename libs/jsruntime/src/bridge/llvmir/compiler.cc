@@ -255,11 +255,21 @@ void Compiler::UnsignedRightShift() {
 
 // 13.4.2.1 Runtime Semantics: Evaluation
 void Compiler::PostfixIncrement() {
+  IncrDecr('+');
+}
+
+// 13.4.3.1 Runtime Semantics: Evaluation
+void Compiler::PostfixDecrement() {
+  IncrDecr('-');
+}
+
+void Compiler::IncrDecr(char op) {
   struct Reference ref;
   auto* old_value = ToNumeric(Dereference(&ref));
   // TODO: BigInt
   auto* one = llvm::ConstantFP::get(builder_->getDoubleTy(), 1.0);
-  auto* new_value = builder_->CreateFAdd(old_value, one);
+  auto* new_value =
+      op == '+' ? builder_->CreateFAdd(old_value, one) : builder_->CreateFSub(old_value, one);
   if (ref.symbol != 0) {
     assert(ref.locator.kind != LocatorKind::None);
     PushReference(ref.symbol, ref.locator);

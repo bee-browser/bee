@@ -106,6 +106,7 @@ void compiler_peer_left_shift(Compiler* self);
 void compiler_peer_signed_right_shift(Compiler* self);
 void compiler_peer_unsigned_right_shift(Compiler* self);
 void compiler_peer_postfix_increment(Compiler* self);
+void compiler_peer_postfix_decrement(Compiler* self);
 void compiler_peer_void(Compiler* self);
 void compiler_peer_unary_plus(Compiler* self);
 void compiler_peer_unary_minus(Compiler* self);

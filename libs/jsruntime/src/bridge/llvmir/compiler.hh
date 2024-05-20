@@ -57,6 +57,8 @@ class Compiler {
   void SignedRightShift();
   void UnsignedRightShift();
   void PostfixIncrement();
+  void PostfixDecrement();
+  void IncrDecr(char incr);
   void Void();
   void UnaryPlus();
   void UnaryMinus();
