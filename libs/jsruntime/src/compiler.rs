@@ -185,13 +185,14 @@ impl<'a> Compiler<'a> {
                 // TODO
             }
             CompileCommand::Delete => {
-                // TODO
+                unimplemented!("delete operator");
             }
             CompileCommand::Void => unsafe {
                 bridge::compiler_peer_void(self.peer);
             },
             CompileCommand::Typeof => {
-                // TODO: implement String before this.
+                // TODO: implement String before this
+                unimplemented!("typeof operator");
             }
             CompileCommand::UnaryPlus => unsafe {
                 bridge::compiler_peer_unary_plus(self.peer);
