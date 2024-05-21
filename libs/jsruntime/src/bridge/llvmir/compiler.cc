@@ -372,30 +372,6 @@ void Compiler::BitwiseOr() {
   NumberBitwiseOp('|', lnum, rnum);
 }
 
-// 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
-void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
-  auto* lint = ToInt32(x);
-  auto* rint = ToInt32(y);
-  llvm::Value* oint;
-  switch (op) {
-    case '&':
-      oint = builder_->CreateAnd(lint, rint);
-      break;
-    case '^':
-      oint = builder_->CreateXor(lint, rint);
-      break;
-    case '|':
-      oint = builder_->CreateOr(lint, rint);
-      break;
-    default:
-      assert(false);
-      oint = nullptr;
-      break;
-  }
-  auto* onum = builder_->CreateSIToFP(oint, builder_->getDoubleTy());
-  PushNumber(onum);
-}
-
 void Compiler::Bindings(uint16_t n) {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
@@ -916,6 +892,30 @@ void Compiler::IncrDecr(char pos, char op) {
     // TODO: throw a ReferenceError at runtime
   }
   pos == '^' ? PushNumber(new_value) : PushNumber(old_value);
+}
+
+// 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
+void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
+  auto* lint = ToInt32(x);
+  auto* rint = ToInt32(y);
+  llvm::Value* oint;
+  switch (op) {
+    case '&':
+      oint = builder_->CreateAnd(lint, rint);
+      break;
+    case '^':
+      oint = builder_->CreateXor(lint, rint);
+      break;
+    case '|':
+      oint = builder_->CreateOr(lint, rint);
+      break;
+    default:
+      assert(false);
+      oint = nullptr;
+      break;
+  }
+  auto* onum = builder_->CreateSIToFP(oint, builder_->getDoubleTy());
+  PushNumber(onum);
 }
 
 llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
