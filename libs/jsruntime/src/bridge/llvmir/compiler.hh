@@ -67,6 +67,9 @@ class Compiler {
   void LogicalNot();
   void Eq();
   void Ne();
+  void BitwiseAnd();
+  void BitwiseXor();
+  void BitwiseOr();
   void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
@@ -244,6 +247,7 @@ class Compiler {
 
   Item Dereference(struct Reference* ref = nullptr, llvm::Value** scope = nullptr);
   void IncrDecr(char pos, char op);
+  void NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y);
   llvm::Value* ToNumeric(const Item& item);
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);

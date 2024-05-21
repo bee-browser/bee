@@ -25,13 +25,6 @@
 #include "macros.hh"
 #include "module.hh"
 
-namespace {
-
-constexpr llvm::FPClassTest kNanInfinityZero =
-    llvm::FPClassTest::fcNan | llvm::FPClassTest::fcInf | llvm::FPClassTest::fcZero;
-
-}  // namespace
-
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
@@ -329,6 +322,54 @@ void Compiler::Ne() {
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpONE(lhs, rhs);
   PushBoolean(v);
+}
+
+// 13.12.1 Runtime Semantics: Evaluation
+void Compiler::BitwiseAnd() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto lval = Dereference();
+  auto rval = Dereference();
+
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lnum = ToNumeric(lval);
+  auto* rnum = ToNumeric(rval);
+  // TODO: BigInt
+
+  // 6.1.6.1.17 Number::bitwiseAND ( x, y )
+  NumberBitwiseOp('&', lnum, rnum);
+}
+
+// 13.12.1 Runtime Semantics: Evaluation
+void Compiler::BitwiseXor() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto lval = Dereference();
+  auto rval = Dereference();
+
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lnum = ToNumeric(lval);
+  auto* rnum = ToNumeric(rval);
+  // TODO: BigInt
+
+  // 6.1.6.1.17 Number::bitwiseAND ( x, y )
+  NumberBitwiseOp('^', lnum, rnum);
+}
+
+// 13.12.1 Runtime Semantics: Evaluation
+void Compiler::BitwiseOr() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto lval = Dereference();
+  auto rval = Dereference();
+
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lnum = ToNumeric(lval);
+  auto* rnum = ToNumeric(rval);
+  // TODO: BigInt
+
+  // 6.1.6.1.19 Number::bitwiseOR ( x, y )
+  NumberBitwiseOp('|', lnum, rnum);
 }
 
 void Compiler::Bindings(uint16_t n) {
@@ -851,6 +892,30 @@ void Compiler::IncrDecr(char pos, char op) {
     // TODO: throw a ReferenceError at runtime
   }
   pos == '^' ? PushNumber(new_value) : PushNumber(old_value);
+}
+
+// 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
+void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
+  auto* lint = ToInt32(x);
+  auto* rint = ToInt32(y);
+  llvm::Value* oint;
+  switch (op) {
+    case '&':
+      oint = builder_->CreateAnd(lint, rint);
+      break;
+    case '^':
+      oint = builder_->CreateXor(lint, rint);
+      break;
+    case '|':
+      oint = builder_->CreateOr(lint, rint);
+      break;
+    default:
+      assert(false);
+      oint = nullptr;
+      break;
+  }
+  auto* onum = builder_->CreateSIToFP(oint, builder_->getDoubleTy());
+  PushNumber(onum);
 }
 
 llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
