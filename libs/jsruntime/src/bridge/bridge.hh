@@ -116,6 +116,7 @@ void compiler_peer_bitwise_not(Compiler* self);
 void compiler_peer_logical_not(Compiler* self);
 void compiler_peer_eq(Compiler* self);
 void compiler_peer_ne(Compiler* self);
+void compiler_peer_bitwise_or(Compiler* self);
 void compiler_peer_bindings(Compiler* self, uint16_t n);
 void compiler_peer_declare_immutable(Compiler* self);
 void compiler_peer_declare_mutable(Compiler* self);

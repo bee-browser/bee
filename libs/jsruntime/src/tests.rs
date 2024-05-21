@@ -203,6 +203,12 @@ fn test_eval_logical_not() {
 }
 
 #[test]
+fn test_eval_bitewise_or() {
+    eval!("print(0 | 1)", 1);
+    eval!("print(1 | 1)", 1);
+}
+
+#[test]
 fn test_eval_to_numeric() {
     eval!("print(undefined + 0)", f64::NAN);
     eval!("print(null + 0)", 0.);

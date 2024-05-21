@@ -170,6 +170,10 @@ void compiler_peer_ne(Compiler* self) {
   self->Ne();
 }
 
+void compiler_peer_bitwise_or(Compiler* self) {
+  self->BitwiseOr();
+}
+
 void compiler_peer_bindings(Compiler* self, uint16_t n) {
   self->Bindings(n);
 }

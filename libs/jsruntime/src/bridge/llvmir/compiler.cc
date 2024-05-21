@@ -331,6 +331,27 @@ void Compiler::Ne() {
   PushBoolean(v);
 }
 
+// 13.12.1 Runtime Semantics: Evaluation
+void Compiler::BitwiseOr() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto lval = Dereference();
+  auto rval = Dereference();
+
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lnum = ToNumeric(lval);
+  auto* rnum = ToNumeric(rval);
+  // TODO: BigInt
+
+  // 6.1.6.1.19 Number::bitwiseOR ( x, y )
+  // 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
+  auto* lint = ToInt32(lnum);
+  auto* rint = ToInt32(rnum);
+  auto* ored = builder_->CreateOr(lint, rint);
+  auto* v = builder_->CreateSIToFP(ored, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
 void Compiler::Bindings(uint16_t n) {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);

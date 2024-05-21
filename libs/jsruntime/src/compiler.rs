@@ -260,9 +260,9 @@ impl<'a> Compiler<'a> {
             CompileCommand::Remainder => unsafe {
                 bridge::compiler_peer_rem(self.peer);
             },
-            CompileCommand::BitwiseOr => {
-                // TODO
-            }
+            CompileCommand::BitwiseOr => unsafe {
+                bridge::compiler_peer_bitwise_or(self.peer);
+            },
             CompileCommand::BitwiseXor => {
                 // TODO
             }

@@ -67,6 +67,7 @@ class Compiler {
   void LogicalNot();
   void Eq();
   void Ne();
+  void BitwiseOr();
   void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
