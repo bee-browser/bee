@@ -253,6 +253,26 @@ void Compiler::UnsignedRightShift() {
   PushNumber(v);
 }
 
+// 13.4.2.1 Runtime Semantics: Evaluation
+void Compiler::PostfixIncrement() {
+  IncrDecr('$', '+');
+}
+
+// 13.4.3.1 Runtime Semantics: Evaluation
+void Compiler::PostfixDecrement() {
+  IncrDecr('$', '-');
+}
+
+// 13.4.4.1 Runtime Semantics: Evaluation
+void Compiler::PrefixIncrement() {
+  IncrDecr('^', '+');
+}
+
+// 13.4.5.1 Runtime Semantics: Evaluation
+void Compiler::PrefixDecrement() {
+  IncrDecr('^', '-');
+}
+
 // 13.5.2.1 Runtime Semantics: Evaluation
 void Compiler::Void() {
   PopItem();
@@ -411,7 +431,7 @@ void Compiler::Call(uint16_t argc) {
     argv = llvm::Constant::getNullValue(builder_->getPtrTy());
   }
   llvm::Value* scope = function_scope_;
-  auto item = Dereference(&scope);
+  auto item = Dereference(nullptr, &scope);
   assert(item.type == Item::Any);
   // TODO: check value type
   auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), item.value, 1);
@@ -755,7 +775,7 @@ void Compiler::DumpStack() {
   llvm::errs() << "</llvm-ir:compiler-stack>\n";
 }
 
-Compiler::Item Compiler::Dereference(llvm::Value** scope) {
+Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope) {
   const auto item = PopItem();
   switch (item.type) {
     case Item::Undefined:
@@ -793,6 +813,9 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
           auto* value = CreateAllocaInEntryBlock(types_->CreateValueType());
           builder_->CreateMemCpy(value, llvm::MaybeAlign(), binding_ptr, llvm::MaybeAlign(),
               builder_->getInt32(sizeof(Value)));
+          if (ref != nullptr) {
+            *ref = item.reference;
+          }
           if (scope != nullptr) {
             *scope = scope_ptr;
           }
@@ -805,6 +828,29 @@ Compiler::Item Compiler::Dereference(llvm::Value** scope) {
       assert(false);
       return Item(Item::Undefined);
   }
+}
+
+// 13.4.2.1 Runtime Semantics: Evaluation
+// 13.4.3.1 Runtime Semantics: Evaluation
+// 13.4.4.1 Runtime Semantics: Evaluation
+// 13.4.5.1 Runtime Semantics: Evaluation
+void Compiler::IncrDecr(char pos, char op) {
+  struct Reference ref;
+  auto* old_value = ToNumeric(Dereference(&ref));
+  // TODO: BigInt
+  auto* one = llvm::ConstantFP::get(builder_->getDoubleTy(), 1.0);
+  auto* new_value =
+      op == '+' ? builder_->CreateFAdd(old_value, one) : builder_->CreateFSub(old_value, one);
+  if (ref.symbol != 0) {
+    assert(ref.locator.kind != LocatorKind::None);
+    PushReference(ref.symbol, ref.locator);
+    PushNumber(new_value);
+    Set();
+    Discard();
+  } else {
+    // TODO: throw a ReferenceError at runtime
+  }
+  pos == '^' ? PushNumber(new_value) : PushNumber(old_value);
 }
 
 llvm::Value* Compiler::CreateGetScope(const Locator& locator) {
