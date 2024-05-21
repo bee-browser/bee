@@ -126,6 +126,22 @@ void compiler_peer_unsigned_right_shift(Compiler* self) {
   self->UnsignedRightShift();
 }
 
+void compiler_peer_postfix_increment(Compiler* self) {
+  self->PostfixIncrement();
+}
+
+void compiler_peer_postfix_decrement(Compiler* self) {
+  self->PostfixDecrement();
+}
+
+void compiler_peer_prefix_increment(Compiler* self) {
+  self->PrefixIncrement();
+}
+
+void compiler_peer_prefix_decrement(Compiler* self) {
+  self->PrefixDecrement();
+}
+
 void compiler_peer_void(Compiler* self) {
   self->Void();
 }

@@ -17,9 +17,9 @@ static_assert(sizeof(LocatorKind) == sizeof(uint8_t), "size mismatched");
 // TODO: Changing the order of member variables causes performance regression in fib(41).
 // However, we don't know the exact reason at this point.  Deeper investigation is needed.
 struct Locator {
-  uint8_t offset;
-  LocatorKind kind;
-  uint16_t index;
+  uint8_t offset = 0;
+  LocatorKind kind = LocatorKind::None;
+  uint16_t index = 0;
 };
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
@@ -105,6 +105,10 @@ void compiler_peer_gte(Compiler* self);
 void compiler_peer_left_shift(Compiler* self);
 void compiler_peer_signed_right_shift(Compiler* self);
 void compiler_peer_unsigned_right_shift(Compiler* self);
+void compiler_peer_postfix_increment(Compiler* self);
+void compiler_peer_postfix_decrement(Compiler* self);
+void compiler_peer_prefix_increment(Compiler* self);
+void compiler_peer_prefix_decrement(Compiler* self);
 void compiler_peer_void(Compiler* self);
 void compiler_peer_unary_plus(Compiler* self);
 void compiler_peer_unary_minus(Compiler* self);

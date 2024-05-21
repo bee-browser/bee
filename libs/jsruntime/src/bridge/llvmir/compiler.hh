@@ -56,6 +56,10 @@ class Compiler {
   void LeftShift();
   void SignedRightShift();
   void UnsignedRightShift();
+  void PostfixIncrement();
+  void PostfixDecrement();
+  void PrefixIncrement();
+  void PrefixDecrement();
   void Void();
   void UnaryPlus();
   void UnaryMinus();
@@ -87,8 +91,9 @@ class Compiler {
 
  private:
   struct Reference {
-    uint32_t symbol;
+    uint32_t symbol = 0;
     Locator locator;
+    Reference() = default;
     Reference(uint32_t symbol, Locator locator) : symbol(symbol), locator(locator) {}
   };
 
@@ -237,7 +242,8 @@ class Compiler {
     return block;
   }
 
-  Item Dereference(llvm::Value** scope = nullptr);
+  Item Dereference(struct Reference* ref = nullptr, llvm::Value** scope = nullptr);
+  void IncrDecr(char pos, char op);
   llvm::Value* ToNumeric(const Item& item);
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);
