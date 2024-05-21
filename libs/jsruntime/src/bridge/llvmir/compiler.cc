@@ -25,13 +25,6 @@
 #include "macros.hh"
 #include "module.hh"
 
-namespace {
-
-constexpr llvm::FPClassTest kNanInfinityZero =
-    llvm::FPClassTest::fcNan | llvm::FPClassTest::fcInf | llvm::FPClassTest::fcZero;
-
-}  // namespace
-
 Compiler::Compiler() {
   context_ = std::make_unique<llvm::LLVMContext>();
   module_ = std::make_unique<llvm::Module>("<main>", *context_);
