@@ -58,7 +58,8 @@ class Compiler {
   void UnsignedRightShift();
   void PostfixIncrement();
   void PostfixDecrement();
-  void IncrDecr(char incr);
+  void PrefixIncrement();
+  void PrefixDecrement();
   void Void();
   void UnaryPlus();
   void UnaryMinus();
@@ -242,6 +243,7 @@ class Compiler {
   }
 
   Item Dereference(struct Reference* ref = nullptr, llvm::Value** scope = nullptr);
+  void IncrDecr(char pos, char op);
   llvm::Value* ToNumeric(const Item& item);
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);

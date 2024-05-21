@@ -255,31 +255,22 @@ void Compiler::UnsignedRightShift() {
 
 // 13.4.2.1 Runtime Semantics: Evaluation
 void Compiler::PostfixIncrement() {
-  IncrDecr('+');
+  IncrDecr('$', '+');
 }
 
 // 13.4.3.1 Runtime Semantics: Evaluation
 void Compiler::PostfixDecrement() {
-  IncrDecr('-');
+  IncrDecr('$', '-');
 }
 
-void Compiler::IncrDecr(char op) {
-  struct Reference ref;
-  auto* old_value = ToNumeric(Dereference(&ref));
-  // TODO: BigInt
-  auto* one = llvm::ConstantFP::get(builder_->getDoubleTy(), 1.0);
-  auto* new_value =
-      op == '+' ? builder_->CreateFAdd(old_value, one) : builder_->CreateFSub(old_value, one);
-  if (ref.symbol != 0) {
-    assert(ref.locator.kind != LocatorKind::None);
-    PushReference(ref.symbol, ref.locator);
-    PushNumber(new_value);
-    Set();
-    Discard();
-  } else {
-    // TODO: throw a ReferenceError at runtime
-  }
-  PushNumber(old_value);
+// 13.4.4.1 Runtime Semantics: Evaluation
+void Compiler::PrefixIncrement() {
+  IncrDecr('^', '+');
+}
+
+// 13.4.5.1 Runtime Semantics: Evaluation
+void Compiler::PrefixDecrement() {
+  IncrDecr('^', '-');
 }
 
 // 13.5.2.1 Runtime Semantics: Evaluation
@@ -837,6 +828,29 @@ Compiler::Item Compiler::Dereference(struct Reference* ref, llvm::Value** scope)
       assert(false);
       return Item(Item::Undefined);
   }
+}
+
+// 13.4.2.1 Runtime Semantics: Evaluation
+// 13.4.3.1 Runtime Semantics: Evaluation
+// 13.4.4.1 Runtime Semantics: Evaluation
+// 13.4.5.1 Runtime Semantics: Evaluation
+void Compiler::IncrDecr(char pos, char op) {
+  struct Reference ref;
+  auto* old_value = ToNumeric(Dereference(&ref));
+  // TODO: BigInt
+  auto* one = llvm::ConstantFP::get(builder_->getDoubleTy(), 1.0);
+  auto* new_value =
+      op == '+' ? builder_->CreateFAdd(old_value, one) : builder_->CreateFSub(old_value, one);
+  if (ref.symbol != 0) {
+    assert(ref.locator.kind != LocatorKind::None);
+    PushReference(ref.symbol, ref.locator);
+    PushNumber(new_value);
+    Set();
+    Discard();
+  } else {
+    // TODO: throw a ReferenceError at runtime
+  }
+  pos == '^' ? PushNumber(new_value) : PushNumber(old_value);
 }
 
 llvm::Value* Compiler::CreateGetScope(const Locator& locator) {

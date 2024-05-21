@@ -178,12 +178,12 @@ impl<'a> Compiler<'a> {
             CompileCommand::PostfixDecrement => unsafe {
                 bridge::compiler_peer_postfix_decrement(self.peer);
             },
-            CompileCommand::PrefixIncrement => {
-                // TODO
-            }
-            CompileCommand::PrefixDecrement => {
-                // TODO
-            }
+            CompileCommand::PrefixIncrement => unsafe {
+                bridge::compiler_peer_prefix_increment(self.peer);
+            },
+            CompileCommand::PrefixDecrement => unsafe {
+                bridge::compiler_peer_prefix_decrement(self.peer);
+            },
             CompileCommand::Delete => {
                 unimplemented!("delete operator");
             }
