@@ -325,6 +325,38 @@ void Compiler::Ne() {
 }
 
 // 13.12.1 Runtime Semantics: Evaluation
+void Compiler::BitwiseAnd() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto lval = Dereference();
+  auto rval = Dereference();
+
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lnum = ToNumeric(lval);
+  auto* rnum = ToNumeric(rval);
+  // TODO: BigInt
+
+  // 6.1.6.1.17 Number::bitwiseAND ( x, y )
+  NumberBitwiseOp('&', lnum, rnum);
+}
+
+// 13.12.1 Runtime Semantics: Evaluation
+void Compiler::BitwiseXor() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto lval = Dereference();
+  auto rval = Dereference();
+
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  auto* lnum = ToNumeric(lval);
+  auto* rnum = ToNumeric(rval);
+  // TODO: BigInt
+
+  // 6.1.6.1.17 Number::bitwiseAND ( x, y )
+  NumberBitwiseOp('^', lnum, rnum);
+}
+
+// 13.12.1 Runtime Semantics: Evaluation
 void Compiler::BitwiseOr() {
   // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
   Swap();
@@ -337,12 +369,31 @@ void Compiler::BitwiseOr() {
   // TODO: BigInt
 
   // 6.1.6.1.19 Number::bitwiseOR ( x, y )
-  // 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
-  auto* lint = ToInt32(lnum);
-  auto* rint = ToInt32(rnum);
-  auto* ored = builder_->CreateOr(lint, rint);
-  auto* v = builder_->CreateSIToFP(ored, builder_->getDoubleTy());
-  PushNumber(v);
+  NumberBitwiseOp('|', lnum, rnum);
+}
+
+// 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
+void Compiler::NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y) {
+  auto* lint = ToInt32(x);
+  auto* rint = ToInt32(y);
+  llvm::Value* oint;
+  switch (op) {
+    case '&':
+      oint = builder_->CreateAnd(lint, rint);
+      break;
+    case '^':
+      oint = builder_->CreateXor(lint, rint);
+      break;
+    case '|':
+      oint = builder_->CreateOr(lint, rint);
+      break;
+    default:
+      assert(false);
+      oint = nullptr;
+      break;
+  }
+  auto* onum = builder_->CreateSIToFP(oint, builder_->getDoubleTy());
+  PushNumber(onum);
 }
 
 void Compiler::Bindings(uint16_t n) {

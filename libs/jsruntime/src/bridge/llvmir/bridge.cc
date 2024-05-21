@@ -170,6 +170,14 @@ void compiler_peer_ne(Compiler* self) {
   self->Ne();
 }
 
+void compiler_peer_bitwise_and(Compiler* self) {
+  self->BitwiseAnd();
+}
+
+void compiler_peer_bitwise_xor(Compiler* self) {
+  self->BitwiseXor();
+}
+
 void compiler_peer_bitwise_or(Compiler* self) {
   self->BitwiseOr();
 }
