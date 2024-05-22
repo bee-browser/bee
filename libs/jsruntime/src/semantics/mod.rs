@@ -86,7 +86,7 @@ impl<'r> Analyzer<'r> {
             Node::UpdateExpression(op) => self.handle_operator(op),
             Node::UnaryExpression(op) => self.handle_operator(op),
             Node::BinaryExpression(op) => self.handle_operator(op),
-            Node::LogicalExpression(op) => self.handle_operator(op),
+            Node::LogicalExpression(op) => self.handle_logical_expression(op),
             Node::ConditionalExpression => self.handle_conditional_expression(),
             Node::AssignmentExpression(op) => self.handle_operator(op),
             Node::BlockStatement => (),
@@ -104,6 +104,7 @@ impl<'r> Analyzer<'r> {
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
+            Node::AndThen => self.handle_and_then(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
@@ -189,6 +190,26 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(op.into());
+    }
+
+    // For the short-circuit evaluation of the LHS, we convert the logical expression into a
+    // corresponding conditional expression.
+    fn handle_logical_expression(&mut self, op: LogicalOperator) {
+        let context = self.context_stack.last_mut().unwrap();
+        match op {
+            LogicalOperator::LogicalAnd => {
+                // See handle_and_then() for the top-half.
+                context.put_command(CompileCommand::Else);
+                context.put_command(CompileCommand::Boolean(false));
+                context.put_command(CompileCommand::ConditionalTernary);
+            }
+            LogicalOperator::LogicalOr => {
+                todo!();
+            }
+            LogicalOperator::Nullish => {
+                todo!();
+            }
+        }
     }
 
     fn handle_conditional_expression(&mut self) {
@@ -287,6 +308,12 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(CompileCommand::Else);
+    }
+
+    fn handle_and_then(&mut self) {
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Then);
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -663,8 +690,10 @@ pub enum CompileCommand {
     Instanceof,
     Exponentiation,
 
-    // logical operators
-    LogicalAnd,
+    // No compile command for logical operators.
+    //
+    // For the short-circuit evaluation of the LHS, we convert logical expressions into
+    // corresponding conditional expressions.
     LogicalOr,
     Nullish,
 
@@ -756,7 +785,7 @@ impl From<BinaryOperator> for CompileCommand {
 impl From<LogicalOperator> for CompileCommand {
     fn from(value: LogicalOperator) -> Self {
         match value {
-            LogicalOperator::LogicalAnd => Self::LogicalAnd,
+            LogicalOperator::LogicalAnd => panic!(),
             LogicalOperator::LogicalOr => Self::LogicalOr,
             LogicalOperator::Nullish => Self::Nullish,
         }

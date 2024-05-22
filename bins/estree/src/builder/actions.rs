@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -1582,7 +1582,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     Some((Builder::class_element_semicolon, "class_element_semicolon")),
     // LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND BitwiseORExpression_In_Await
+    // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _AND_THEN_ BitwiseORExpression_In_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead_In_Await -> CoalesceExpression_In_Await
     Some((Builder::nop, "nop")),
@@ -1936,6 +1936,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
         Builder::property_definition_value,
         "property_definition_value",
     )),
+    // _AND_THEN_ -> (empty)
+    Some((Builder::nop, "nop")),
     // BitwiseXORExpression_In_Await -> BitwiseANDExpression_In_Await
     Some((Builder::nop, "nop")),
     // BitwiseXORExpression_In_Await -> BitwiseXORExpression_In_Await BIT_XOR BitwiseANDExpression_In_Await
@@ -2076,7 +2078,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     Some((Builder::append_to_array, "append_to_array")),
     // LogicalANDExpression_In -> BitwiseORExpression_In
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression_In -> LogicalANDExpression_In AND BitwiseORExpression_In
+    // LogicalANDExpression_In -> LogicalANDExpression_In AND _AND_THEN_ BitwiseORExpression_In
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead_In -> CoalesceExpression_In
     Some((Builder::nop, "nop")),
@@ -2753,7 +2755,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     )),
     // LogicalANDExpression -> BitwiseORExpression
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression -> LogicalANDExpression AND BitwiseORExpression
+    // LogicalANDExpression -> LogicalANDExpression AND _AND_THEN_ BitwiseORExpression
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead -> CoalesceExpression
     Some((Builder::nop, "nop")),
@@ -3453,7 +3455,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     Some((Builder::binary_expression, "binary_expression")),
     // LogicalANDExpression_Await -> BitwiseORExpression_Await
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression_Await -> LogicalANDExpression_Await AND BitwiseORExpression_Await
+    // LogicalANDExpression_Await -> LogicalANDExpression_Await AND _AND_THEN_ BitwiseORExpression_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead_Await -> CoalesceExpression_Await
     Some((Builder::nop, "nop")),
@@ -4138,7 +4140,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     Some((Builder::switch_case, "switch_case")),
     // LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND BitwiseORExpression_In_Yield
+    // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _AND_THEN_ BitwiseORExpression_In_Yield
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead_In_Yield -> CoalesceExpression_In_Yield
     Some((Builder::nop, "nop")),
@@ -4245,7 +4247,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     Some((Builder::switch_case_default, "switch_case_default")),
     // LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND BitwiseORExpression_In_Yield_Await
+    // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _AND_THEN_ BitwiseORExpression_In_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead_In_Yield_Await -> CoalesceExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
@@ -5082,7 +5084,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     Some((Builder::binary_expression, "binary_expression")),
     // LogicalANDExpression_Yield -> BitwiseORExpression_Yield
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND BitwiseORExpression_Yield
+    // LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _AND_THEN_ BitwiseORExpression_Yield
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead_Yield -> CoalesceExpression_Yield
     Some((Builder::nop, "nop")),
@@ -5102,7 +5104,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2100] = [
     Some((Builder::binary_expression, "binary_expression")),
     // LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await
     Some((Builder::nop, "nop")),
-    // LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND BitwiseORExpression_Yield_Await
+    // LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _AND_THEN_ BitwiseORExpression_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await
     Some((Builder::nop, "nop")),

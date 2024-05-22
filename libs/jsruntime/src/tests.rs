@@ -224,6 +224,15 @@ fn test_eval_bitewise_or() {
 }
 
 #[test]
+fn test_eval_logical_and() {
+    eval!("print(true && true)", true);
+    eval!("print(true && false)", false);
+    eval!("print(false && true)", false);
+    eval!("let a = 0; true && (a = 1); print(a)", 1);
+    eval!("let a = 0; false && (a = 1); print(a)", 0);
+}
+
+#[test]
 fn test_eval_to_numeric() {
     eval!("print(undefined + 0)", f64::NAN);
     eval!("print(null + 0)", 0.);

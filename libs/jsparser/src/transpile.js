@@ -170,6 +170,7 @@ class Transpiler {
           modifyFunctionDeclaration,
           modifyIfStatement,
           modifyConditionalExpression,
+          modifyLogicalANDExpression,
           expandOptionals,
           expandParameterizedRules,
           modifyBlock,
@@ -589,6 +590,7 @@ function addActions(rules) {
     '_ELSE_BLOCK_',
     '_THEN_BLOCK_',
     '_BLOCK_SCOPE_',
+    '_AND_THEN_',
   ];
 
   for (const action of ACTIONS) {
@@ -664,6 +666,19 @@ function modifyConditionalExpression(rules) {
     '_ELSE_BLOCK_',
     elseBlock,
   ].join(' ');
+
+  return rules;
+}
+
+function modifyLogicalANDExpression(rules) {
+  log.debug('Modifying LogicalANDExpression...');
+
+  const rule = rules.find((rule) => rule.name === 'LogicalANDExpression[In, Yield, Await]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 2);
+  const [lhs, rhs] = rule.values[1].split('`&&`').map((term) => term.trim());
+  // Insert _AND_THEN_ for the short-circuit evaluation of the LHS.
+  rule.values[1] = [lhs, '`&&`', '_AND_THEN_', rhs].join(' ');
 
   return rules;
 }

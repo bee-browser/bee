@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2100] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2101] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -1505,7 +1505,7 @@ where
         Action::Undefined,
         // LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
         Action::Nop,
-        // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND BitwiseORExpression_In_Await
+        // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _AND_THEN_ BitwiseORExpression_In_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Await -> CoalesceExpression_In_Await
         Action::Nop,
@@ -1862,6 +1862,8 @@ where
         Action::Undefined,
         // FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await
         Action::Undefined,
+        // _AND_THEN_ -> (empty)
+        Action::Invoke(Self::process_and_then, "process_and_then"),
         // BitwiseXORExpression_In_Await -> BitwiseANDExpression_In_Await
         Action::Nop,
         // BitwiseXORExpression_In_Await -> BitwiseXORExpression_In_Await BIT_XOR BitwiseANDExpression_In_Await
@@ -1984,7 +1986,7 @@ where
         Action::Undefined,
         // LogicalANDExpression_In -> BitwiseORExpression_In
         Action::Nop,
-        // LogicalANDExpression_In -> LogicalANDExpression_In AND BitwiseORExpression_In
+        // LogicalANDExpression_In -> LogicalANDExpression_In AND _AND_THEN_ BitwiseORExpression_In
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In -> CoalesceExpression_In
         Action::Nop,
@@ -2643,7 +2645,7 @@ where
         Action::Undefined,
         // LogicalANDExpression -> BitwiseORExpression
         Action::Nop,
-        // LogicalANDExpression -> LogicalANDExpression AND BitwiseORExpression
+        // LogicalANDExpression -> LogicalANDExpression AND _AND_THEN_ BitwiseORExpression
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead -> CoalesceExpression
         Action::Nop,
@@ -3268,7 +3270,7 @@ where
         ),
         // LogicalANDExpression_Await -> BitwiseORExpression_Await
         Action::Nop,
-        // LogicalANDExpression_Await -> LogicalANDExpression_Await AND BitwiseORExpression_Await
+        // LogicalANDExpression_Await -> LogicalANDExpression_Await AND _AND_THEN_ BitwiseORExpression_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Await -> CoalesceExpression_Await
         Action::Nop,
@@ -3788,7 +3790,7 @@ where
         Action::Undefined,
         // LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
         Action::Nop,
-        // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND BitwiseORExpression_In_Yield
+        // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _AND_THEN_ BitwiseORExpression_In_Yield
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Yield -> CoalesceExpression_In_Yield
         Action::Nop,
@@ -3892,7 +3894,7 @@ where
         Action::Undefined,
         // LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
         Action::Nop,
-        // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND BitwiseORExpression_In_Yield_Await
+        // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _AND_THEN_ BitwiseORExpression_In_Yield_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Yield_Await -> CoalesceExpression_In_Yield_Await
         Action::Nop,
@@ -4639,7 +4641,7 @@ where
         ),
         // LogicalANDExpression_Yield -> BitwiseORExpression_Yield
         Action::Nop,
-        // LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND BitwiseORExpression_Yield
+        // LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _AND_THEN_ BitwiseORExpression_Yield
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Yield -> CoalesceExpression_Yield
         Action::Nop,
@@ -4665,7 +4667,7 @@ where
         ),
         // LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await
         Action::Nop,
-        // LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND BitwiseORExpression_Yield_Await
+        // LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _AND_THEN_ BitwiseORExpression_Yield_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await
         Action::Nop,

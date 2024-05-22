@@ -278,9 +278,6 @@ impl<'a> Compiler<'a> {
             CompileCommand::Exponentiation => {
                 // TODO
             }
-            CompileCommand::LogicalAnd => {
-                // TODO
-            }
             CompileCommand::LogicalOr => {
                 // TODO
             }
