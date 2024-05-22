@@ -193,8 +193,6 @@ impl<'r> Analyzer<'r> {
             .put_command(op.into());
     }
 
-    // For the short-circuit evaluation of the LHS, we convert the logical expression into a
-    // corresponding conditional expression.
     fn handle_logical_expression(&mut self, op: LogicalOperator) {
         let context = self.context_stack.last_mut().unwrap();
         match op {
@@ -210,7 +208,7 @@ impl<'r> Analyzer<'r> {
             }
             LogicalOperator::Nullish => {
                 // TODO: implement this after `===` is implemented
-                todo!();
+                unimplemented!("nullish coalesing operator");
             }
         }
     }
@@ -701,7 +699,7 @@ pub enum CompileCommand {
     Instanceof,
     Exponentiation,
 
-    // No compile command for logical operators.
+    // There is no compile command for logical operators.
     //
     // For the short-circuit evaluation on the LHS in a logical expression, we convert the logical
     // expression into a corresponding conditional expression.
