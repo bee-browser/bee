@@ -132,6 +132,8 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ThenBlock,
     ElseBlock,
+    AndThen,
+    OrElse,
     StartBlockScope,
     EndBlockScope,
 }
@@ -411,6 +413,18 @@ where
             _ => unreachable!(),
         };
         self.enqueue(Node::FunctionSignature(func_name));
+        Ok(())
+    }
+
+    // _AND_THEN_
+    fn process_and_then(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::AndThen);
+        Ok(())
+    }
+
+    // _OR_ELSE_
+    fn process_or_else(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::OrElse);
         Ok(())
     }
 

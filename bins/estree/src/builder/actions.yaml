@@ -1040,7 +1040,9 @@
   action: class_element_list_append
 - rule: LogicalORExpression_In_Await -> LogicalANDExpression_In_Await
   action: nop
-- rule: LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR LogicalANDExpression_In_Await
+- rule: >-
+    LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR _OR_ELSE_
+    LogicalANDExpression_In_Await
   action: logical_expression
 - rule: >-
     CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH
@@ -1438,8 +1440,12 @@
   action: class_element_semicolon
 - rule: LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
   action: nop
-- rule: LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND BitwiseORExpression_In_Await
+- rule: >-
+    LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _AND_THEN_
+    BitwiseORExpression_In_Await
   action: logical_expression
+- rule: _OR_ELSE_ -> (empty)
+  action: nop
 - rule: CoalesceExpressionHead_In_Await -> CoalesceExpression_In_Await
   action: nop
 - rule: CoalesceExpressionHead_In_Await -> BitwiseORExpression_In_Await
@@ -1540,7 +1546,7 @@
   action: concat_csv_arrays
 - rule: LogicalORExpression_In -> LogicalANDExpression_In
   action: nop
-- rule: LogicalORExpression_In -> LogicalORExpression_In OR LogicalANDExpression_In
+- rule: LogicalORExpression_In -> LogicalORExpression_In OR _OR_ELSE_ LogicalANDExpression_In
   action: logical_expression
 - rule: CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
   action: logical_expression
@@ -1750,6 +1756,8 @@
   action: property_definition
 - rule: FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await
   action: property_definition_value
+- rule: _AND_THEN_ -> (empty)
+  action: nop
 - rule: BitwiseXORExpression_In_Await -> BitwiseANDExpression_In_Await
   action: nop
 - rule: >-
@@ -1877,7 +1885,7 @@
   action: append_to_array
 - rule: LogicalANDExpression_In -> BitwiseORExpression_In
   action: nop
-- rule: LogicalANDExpression_In -> LogicalANDExpression_In AND BitwiseORExpression_In
+- rule: LogicalANDExpression_In -> LogicalANDExpression_In AND _AND_THEN_ BitwiseORExpression_In
   action: logical_expression
 - rule: CoalesceExpressionHead_In -> CoalesceExpression_In
   action: nop
@@ -2221,7 +2229,7 @@
   action: template_spans_append
 - rule: LogicalORExpression -> LogicalANDExpression
   action: nop
-- rule: LogicalORExpression -> LogicalORExpression OR LogicalANDExpression
+- rule: LogicalORExpression -> LogicalORExpression OR _OR_ELSE_ LogicalANDExpression
   action: logical_expression
 - rule: CoalesceExpression -> CoalesceExpressionHead NULLISH BitwiseORExpression
   action: logical_expression
@@ -2519,7 +2527,7 @@
   action: template_middle_list_append
 - rule: LogicalANDExpression -> BitwiseORExpression
   action: nop
-- rule: LogicalANDExpression -> LogicalANDExpression AND BitwiseORExpression
+- rule: LogicalANDExpression -> LogicalANDExpression AND _AND_THEN_ BitwiseORExpression
   action: logical_expression
 - rule: CoalesceExpressionHead -> CoalesceExpression
   action: nop
@@ -2818,7 +2826,7 @@
   action: template_middle_list_append
 - rule: LogicalORExpression_Await -> LogicalANDExpression_Await
   action: nop
-- rule: LogicalORExpression_Await -> LogicalORExpression_Await OR LogicalANDExpression_Await
+- rule: LogicalORExpression_Await -> LogicalORExpression_Await OR _OR_ELSE_ LogicalANDExpression_Await
   action: logical_expression
 - rule: CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH BitwiseORExpression_Await
   action: logical_expression
@@ -3207,7 +3215,9 @@
   action: binary_expression
 - rule: LogicalANDExpression_Await -> BitwiseORExpression_Await
   action: nop
-- rule: LogicalANDExpression_Await -> LogicalANDExpression_Await AND BitwiseORExpression_Await
+- rule: >-
+    LogicalANDExpression_Await -> LogicalANDExpression_Await AND _AND_THEN_
+    BitwiseORExpression_Await
   action: logical_expression
 - rule: CoalesceExpressionHead_Await -> CoalesceExpression_Await
   action: nop
@@ -3255,7 +3265,9 @@
   action: computed_property_name
 - rule: LogicalORExpression_In_Yield -> LogicalANDExpression_In_Yield
   action: nop
-- rule: LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR LogicalANDExpression_In_Yield
+- rule: >-
+    LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _OR_ELSE_
+    LogicalANDExpression_In_Yield
   action: logical_expression
 - rule: >-
     CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH
@@ -3588,7 +3600,7 @@
 - rule: LogicalORExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await
   action: nop
 - rule: >-
-    LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR
+    LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _OR_ELSE_
     LogicalANDExpression_In_Yield_Await
   action: logical_expression
 - rule: >-
@@ -3860,7 +3872,9 @@
   action: switch_case
 - rule: LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
   action: nop
-- rule: LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND BitwiseORExpression_In_Yield
+- rule: >-
+    LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _AND_THEN_
+    BitwiseORExpression_In_Yield
   action: logical_expression
 - rule: CoalesceExpressionHead_In_Yield -> CoalesceExpression_In_Yield
   action: nop
@@ -3957,7 +3971,7 @@
 - rule: LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
   action: nop
 - rule: >-
-    LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND
+    LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _AND_THEN_
     BitwiseORExpression_In_Yield_Await
   action: logical_expression
 - rule: CoalesceExpressionHead_In_Yield_Await -> CoalesceExpression_In_Yield_Await
@@ -4672,7 +4686,7 @@
   action: template_middle_list_append
 - rule: LogicalORExpression_Yield -> LogicalANDExpression_Yield
   action: nop
-- rule: LogicalORExpression_Yield -> LogicalORExpression_Yield OR LogicalANDExpression_Yield
+- rule: LogicalORExpression_Yield -> LogicalORExpression_Yield OR _OR_ELSE_ LogicalANDExpression_Yield
   action: logical_expression
 - rule: CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
   action: logical_expression
@@ -4715,7 +4729,7 @@
 - rule: LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await
   action: nop
 - rule: >-
-    LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR
+    LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _OR_ELSE_
     LogicalANDExpression_Yield_Await
   action: logical_expression
 - rule: >-
@@ -4732,7 +4746,9 @@
   action: binary_expression
 - rule: LogicalANDExpression_Yield -> BitwiseORExpression_Yield
   action: nop
-- rule: LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND BitwiseORExpression_Yield
+- rule: >-
+    LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _AND_THEN_
+    BitwiseORExpression_Yield
   action: logical_expression
 - rule: CoalesceExpressionHead_Yield -> CoalesceExpression_Yield
   action: nop
@@ -4753,7 +4769,7 @@
 - rule: LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await
   action: nop
 - rule: >-
-    LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND
+    LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _AND_THEN_
     BitwiseORExpression_Yield_Await
   action: logical_expression
 - rule: CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await
