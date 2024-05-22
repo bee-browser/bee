@@ -735,5 +735,6 @@ pub enum NonTerminal {
     _ELSE_BLOCK_,
     _FUNCTION_CONTEXT_,
     _FUNCTION_SIGNATURE_,
+    _OR_ELSE_,
     _THEN_BLOCK_,
 }

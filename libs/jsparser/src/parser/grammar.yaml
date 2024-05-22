@@ -4859,6 +4859,8 @@
     - type: token
       data: OR
     - type: non-terminal
+      data: _OR_ELSE_
+    - type: non-terminal
       data: LogicalANDExpression
 - name: LogicalORExpression_Await
   production:
@@ -4870,6 +4872,8 @@
       data: LogicalORExpression_Await
     - type: token
       data: OR
+    - type: non-terminal
+      data: _OR_ELSE_
     - type: non-terminal
       data: LogicalANDExpression_Await
 - name: LogicalORExpression_Yield
@@ -4883,6 +4887,8 @@
     - type: token
       data: OR
     - type: non-terminal
+      data: _OR_ELSE_
+    - type: non-terminal
       data: LogicalANDExpression_Yield
 - name: LogicalORExpression_Yield_Await
   production:
@@ -4894,6 +4900,8 @@
       data: LogicalORExpression_Yield_Await
     - type: token
       data: OR
+    - type: non-terminal
+      data: _OR_ELSE_
     - type: non-terminal
       data: LogicalANDExpression_Yield_Await
 - name: LogicalORExpression_In
@@ -4907,6 +4915,8 @@
     - type: token
       data: OR
     - type: non-terminal
+      data: _OR_ELSE_
+    - type: non-terminal
       data: LogicalANDExpression_In
 - name: LogicalORExpression_In_Await
   production:
@@ -4918,6 +4928,8 @@
       data: LogicalORExpression_In_Await
     - type: token
       data: OR
+    - type: non-terminal
+      data: _OR_ELSE_
     - type: non-terminal
       data: LogicalANDExpression_In_Await
 - name: LogicalORExpression_In_Yield
@@ -4931,6 +4943,8 @@
     - type: token
       data: OR
     - type: non-terminal
+      data: _OR_ELSE_
+    - type: non-terminal
       data: LogicalANDExpression_In_Yield
 - name: LogicalORExpression_In_Yield_Await
   production:
@@ -4942,6 +4956,8 @@
       data: LogicalORExpression_In_Yield_Await
     - type: token
       data: OR
+    - type: non-terminal
+      data: _OR_ELSE_
     - type: non-terminal
       data: LogicalANDExpression_In_Yield_Await
 - name: CoalesceExpression
@@ -18976,6 +18992,9 @@
   production:
     - type: empty
 - name: _AND_THEN_
+  production:
+    - type: empty
+- name: _OR_ELSE_
   production:
     - type: empty
 - name: NullLiteral

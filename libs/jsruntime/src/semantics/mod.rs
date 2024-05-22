@@ -105,6 +105,7 @@ impl<'r> Analyzer<'r> {
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
             Node::AndThen => self.handle_and_then(),
+            Node::OrElse => self.handle_or_else(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
@@ -204,7 +205,8 @@ impl<'r> Analyzer<'r> {
                 context.put_command(CompileCommand::ConditionalTernary);
             }
             LogicalOperator::LogicalOr => {
-                todo!();
+                // See handle_or_else() for the top-half.
+                context.put_command(CompileCommand::ConditionalTernary);
             }
             LogicalOperator::Nullish => {
                 todo!();
@@ -314,6 +316,14 @@ impl<'r> Analyzer<'r> {
         let context = self.context_stack.last_mut().unwrap();
         context.put_command(CompileCommand::Test);
         context.put_command(CompileCommand::Then);
+    }
+
+    fn handle_or_else(&mut self) {
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Then);
+        context.put_command(CompileCommand::Boolean(true));
+        context.put_command(CompileCommand::Else);
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -692,9 +702,16 @@ pub enum CompileCommand {
 
     // No compile command for logical operators.
     //
-    // For the short-circuit evaluation of the LHS, we convert logical expressions into
-    // corresponding conditional expressions.
-    LogicalOr,
+    // For the short-circuit evaluation on the LHS in a logical expression, we convert the logical
+    // expression into a corresponding conditional expression.
+    //
+    // The conversion is performed in the following two steps:
+    //
+    //   1. Perform the short-circuit evaluation by using a special action for each logical
+    //      operator in handle_and_then() for `&&`, handle_or_else() for `||`.
+    //   2. Emit supplemental commands and CompileCommand::ConditionalTernery in
+    //      handle_logical_expression()
+    //
     Nullish,
 
     // assignment operators
@@ -785,9 +802,8 @@ impl From<BinaryOperator> for CompileCommand {
 impl From<LogicalOperator> for CompileCommand {
     fn from(value: LogicalOperator) -> Self {
         match value {
-            LogicalOperator::LogicalAnd => panic!(),
-            LogicalOperator::LogicalOr => Self::LogicalOr,
             LogicalOperator::Nullish => Self::Nullish,
+            _ => panic!(),
         }
     }
 }

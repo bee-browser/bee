@@ -228,8 +228,19 @@ fn test_eval_logical_and() {
     eval!("print(true && true)", true);
     eval!("print(true && false)", false);
     eval!("print(false && true)", false);
+    eval!("print(false && false)", false);
     eval!("let a = 0; true && (a = 1); print(a)", 1);
     eval!("let a = 0; false && (a = 1); print(a)", 0);
+}
+
+#[test]
+fn test_eval_logical_or() {
+    eval!("print(true || true)", true);
+    eval!("print(true || false)", true);
+    eval!("print(false || true)", true);
+    eval!("print(false || false)", false);
+    eval!("let a = 0; true || (a = 1); print(a)", 0);
+    eval!("let a = 0; false || (a = 1); print(a)", 1);
 }
 
 #[test]

@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2102] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -1113,7 +1113,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // LogicalORExpression_In_Await -> LogicalANDExpression_In_Await
     Some((Builder::nop, "nop")),
-    // LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR LogicalANDExpression_In_Await
+    // LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR _OR_ELSE_ LogicalANDExpression_In_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH BitwiseORExpression_In_Await
     Some((Builder::logical_expression, "logical_expression")),
@@ -1584,6 +1584,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::nop, "nop")),
     // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _AND_THEN_ BitwiseORExpression_In_Await
     Some((Builder::logical_expression, "logical_expression")),
+    // _OR_ELSE_ -> (empty)
+    Some((Builder::nop, "nop")),
     // CoalesceExpressionHead_In_Await -> CoalesceExpression_In_Await
     Some((Builder::nop, "nop")),
     // CoalesceExpressionHead_In_Await -> BitwiseORExpression_In_Await
@@ -1689,7 +1691,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::concat_csv_arrays, "concat_csv_arrays")),
     // LogicalORExpression_In -> LogicalANDExpression_In
     Some((Builder::nop, "nop")),
-    // LogicalORExpression_In -> LogicalORExpression_In OR LogicalANDExpression_In
+    // LogicalORExpression_In -> LogicalORExpression_In OR _OR_ELSE_ LogicalANDExpression_In
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
     Some((Builder::logical_expression, "logical_expression")),
@@ -2475,7 +2477,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::template_spans_append, "template_spans_append")),
     // LogicalORExpression -> LogicalANDExpression
     Some((Builder::nop, "nop")),
-    // LogicalORExpression -> LogicalORExpression OR LogicalANDExpression
+    // LogicalORExpression -> LogicalORExpression OR _OR_ELSE_ LogicalANDExpression
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression -> CoalesceExpressionHead NULLISH BitwiseORExpression
     Some((Builder::logical_expression, "logical_expression")),
@@ -3063,7 +3065,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // LogicalORExpression_Await -> LogicalANDExpression_Await
     Some((Builder::nop, "nop")),
-    // LogicalORExpression_Await -> LogicalORExpression_Await OR LogicalANDExpression_Await
+    // LogicalORExpression_Await -> LogicalORExpression_Await OR _OR_ELSE_ LogicalANDExpression_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH BitwiseORExpression_Await
     Some((Builder::logical_expression, "logical_expression")),
@@ -3512,7 +3514,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::computed_property_name, "computed_property_name")),
     // LogicalORExpression_In_Yield -> LogicalANDExpression_In_Yield
     Some((Builder::nop, "nop")),
-    // LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR LogicalANDExpression_In_Yield
+    // LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _OR_ELSE_ LogicalANDExpression_In_Yield
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH BitwiseORExpression_In_Yield
     Some((Builder::logical_expression, "logical_expression")),
@@ -3859,7 +3861,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     Some((Builder::computed_property_name, "computed_property_name")),
     // LogicalORExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await
     Some((Builder::nop, "nop")),
-    // LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR LogicalANDExpression_In_Yield_Await
+    // LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _OR_ELSE_ LogicalANDExpression_In_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH BitwiseORExpression_In_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
@@ -5036,7 +5038,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // LogicalORExpression_Yield -> LogicalANDExpression_Yield
     Some((Builder::nop, "nop")),
-    // LogicalORExpression_Yield -> LogicalORExpression_Yield OR LogicalANDExpression_Yield
+    // LogicalORExpression_Yield -> LogicalORExpression_Yield OR _OR_ELSE_ LogicalANDExpression_Yield
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
     Some((Builder::logical_expression, "logical_expression")),
@@ -5070,7 +5072,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2101] = [
     )),
     // LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await
     Some((Builder::nop, "nop")),
-    // LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR LogicalANDExpression_Yield_Await
+    // LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _OR_ELSE_ LogicalANDExpression_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH BitwiseORExpression_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
