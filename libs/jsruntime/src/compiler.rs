@@ -278,9 +278,6 @@ impl<'a> Compiler<'a> {
             CompileCommand::Exponentiation => {
                 // TODO
             }
-            CompileCommand::Nullish => {
-                // TODO
-            }
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_set(self.peer);
             },

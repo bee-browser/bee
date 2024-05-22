@@ -209,6 +209,7 @@ impl<'r> Analyzer<'r> {
                 context.put_command(CompileCommand::ConditionalTernary);
             }
             LogicalOperator::Nullish => {
+                // TODO: implement this after `===` is implemented
                 todo!();
             }
         }
@@ -712,7 +713,7 @@ pub enum CompileCommand {
     //   2. Emit supplemental commands and CompileCommand::ConditionalTernery in
     //      handle_logical_expression()
     //
-    Nullish,
+    // TODO: nullish coalescing operator
 
     // assignment operators
     Assignment,
@@ -795,15 +796,6 @@ impl From<BinaryOperator> for CompileCommand {
             BinaryOperator::In => Self::In,
             BinaryOperator::Instanceof => Self::Instanceof,
             BinaryOperator::Exponentiation => Self::Exponentiation,
-        }
-    }
-}
-
-impl From<LogicalOperator> for CompileCommand {
-    fn from(value: LogicalOperator) -> Self {
-        match value {
-            LogicalOperator::Nullish => Self::Nullish,
-            _ => panic!(),
         }
     }
 }
