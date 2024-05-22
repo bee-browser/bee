@@ -730,9 +730,11 @@ pub enum NonTerminal {
     YieldExpression_Await,
     YieldExpression_In,
     YieldExpression_In_Await,
+    _AND_THEN_,
     _BLOCK_SCOPE_,
     _ELSE_BLOCK_,
     _FUNCTION_CONTEXT_,
     _FUNCTION_SIGNATURE_,
+    _OR_ELSE_,
     _THEN_BLOCK_,
 }
