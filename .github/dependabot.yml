@@ -4,7 +4,19 @@ updates:
     directory: /
     schedule:
       interval: daily
+    # Workaround for bug https://github.com/dependabot/dependabot-core/issues/9784.
+    # Block can be removed once it's fixed.
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps-dev)"
+      include: "scope"
   - package-ecosystem: cargo
     directory: /
     schedule:
       interval: daily
+    # Workaround for bug https://github.com/dependabot/dependabot-core/issues/9784.
+    # Block can be removed once it's fixed.
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps-dev)"
+      include: "scope"
