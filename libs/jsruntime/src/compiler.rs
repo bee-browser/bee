@@ -210,19 +210,19 @@ impl<'a> Compiler<'a> {
                 unimplemented!("** operator");
             }
             CompileCommand::Multiplication => unsafe {
-                bridge::compiler_peer_mul(self.peer);
+                bridge::compiler_peer_multiplication(self.peer);
             },
             CompileCommand::Division => unsafe {
-                bridge::compiler_peer_div(self.peer);
+                bridge::compiler_peer_division(self.peer);
             },
             CompileCommand::Remainder => unsafe {
-                bridge::compiler_peer_rem(self.peer);
+                bridge::compiler_peer_remainder(self.peer);
             },
             CompileCommand::Addition => unsafe {
-                bridge::compiler_peer_add(self.peer);
+                bridge::compiler_peer_addition(self.peer);
             },
             CompileCommand::Subtraction => unsafe {
-                bridge::compiler_peer_sub(self.peer);
+                bridge::compiler_peer_subtraction(self.peer);
             },
             CompileCommand::LeftShift => unsafe {
                 bridge::compiler_peer_left_shift(self.peer);
@@ -234,16 +234,16 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_unsigned_right_shift(self.peer);
             },
             CompileCommand::LessThan => unsafe {
-                bridge::compiler_peer_lt(self.peer);
+                bridge::compiler_peer_less_than(self.peer);
             },
             CompileCommand::GreaterThan => unsafe {
-                bridge::compiler_peer_gt(self.peer);
+                bridge::compiler_peer_greater_than(self.peer);
             },
             CompileCommand::LessThanOrEqual => unsafe {
-                bridge::compiler_peer_lte(self.peer);
+                bridge::compiler_peer_less_than_or_equal(self.peer);
             },
             CompileCommand::GreaterThanOrEqual => unsafe {
-                bridge::compiler_peer_gte(self.peer);
+                bridge::compiler_peer_greater_than_or_equal(self.peer);
             },
             CompileCommand::Instanceof => {
                 unimplemented!("instanceof operator");
@@ -252,21 +252,21 @@ impl<'a> Compiler<'a> {
                 unimplemented!("in operator");
             }
             CompileCommand::Equality => unsafe {
-                bridge::compiler_peer_eq(self.peer);
+                bridge::compiler_peer_equality(self.peer);
             },
             CompileCommand::Inequality => unsafe {
-                bridge::compiler_peer_ne(self.peer);
+                bridge::compiler_peer_inequality(self.peer);
             },
             CompileCommand::StrictEquality => {
                 // TODO: check type
                 unsafe {
-                    bridge::compiler_peer_eq(self.peer);
+                    bridge::compiler_peer_equality(self.peer);
                 }
             }
             CompileCommand::StrictInequality => {
                 // TODO: check type
                 unsafe {
-                    bridge::compiler_peer_ne(self.peer);
+                    bridge::compiler_peer_inequality(self.peer);
                 }
             }
             CompileCommand::BitwiseAnd => unsafe {
@@ -282,7 +282,7 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_conditional_expression(self.peer);
             },
             CompileCommand::Assignment => unsafe {
-                bridge::compiler_peer_set(self.peer);
+                bridge::compiler_peer_assignment(self.peer);
             },
             CompileCommand::MultiplicationAssignment => {
                 unimplemented!("*= operator");
@@ -329,7 +329,7 @@ impl<'a> Compiler<'a> {
             CompileCommand::NullishCoalescingAssignment => {
                 unimplemented!("??= operator");
             }
-            CompileCommand::Test => unsafe {
+            CompileCommand::Truthy => unsafe {
                 bridge::compiler_peer_to_boolean(self.peer);
             },
             CompileCommand::Then => unsafe {

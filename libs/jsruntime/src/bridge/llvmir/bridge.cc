@@ -78,54 +78,6 @@ void compiler_peer_reference(Compiler* self, uint32_t symbol, Locator locator) {
   self->Reference(symbol, locator);
 }
 
-void compiler_peer_add(Compiler* self) {
-  self->Add();
-}
-
-void compiler_peer_sub(Compiler* self) {
-  self->Sub();
-}
-
-void compiler_peer_mul(Compiler* self) {
-  self->Mul();
-}
-
-void compiler_peer_div(Compiler* self) {
-  self->Div();
-}
-
-void compiler_peer_rem(Compiler* self) {
-  self->Rem();
-}
-
-void compiler_peer_lt(Compiler* self) {
-  self->Lt();
-}
-
-void compiler_peer_gt(Compiler* self) {
-  self->Gt();
-}
-
-void compiler_peer_lte(Compiler* self) {
-  self->Lte();
-}
-
-void compiler_peer_gte(Compiler* self) {
-  self->Gte();
-}
-
-void compiler_peer_left_shift(Compiler* self) {
-  self->LeftShift();
-}
-
-void compiler_peer_signed_right_shift(Compiler* self) {
-  self->SignedRightShift();
-}
-
-void compiler_peer_unsigned_right_shift(Compiler* self) {
-  self->UnsignedRightShift();
-}
-
 void compiler_peer_postfix_increment(Compiler* self) {
   self->PostfixIncrement();
 }
@@ -142,8 +94,16 @@ void compiler_peer_prefix_decrement(Compiler* self) {
   self->PrefixDecrement();
 }
 
+void compiler_peer_unary_delete(Compiler* self) {
+  self->UnaryDelete();
+}
+
 void compiler_peer_void(Compiler* self) {
   self->Void();
+}
+
+void compiler_peer_typeof(Compiler* self) {
+  self->Typeof();
 }
 
 void compiler_peer_unary_plus(Compiler* self) {
@@ -162,12 +122,80 @@ void compiler_peer_logical_not(Compiler* self) {
   self->LogicalNot();
 }
 
-void compiler_peer_eq(Compiler* self) {
-  self->Eq();
+void compiler_peer_exponentiation(Compiler* self) {
+  self->Exponentiation();
 }
 
-void compiler_peer_ne(Compiler* self) {
-  self->Ne();
+void compiler_peer_multiplication(Compiler* self) {
+  self->Multiplication();
+}
+
+void compiler_peer_division(Compiler* self) {
+  self->Division();
+}
+
+void compiler_peer_remainder(Compiler* self) {
+  self->Remainder();
+}
+
+void compiler_peer_addition(Compiler* self) {
+  self->Addition();
+}
+
+void compiler_peer_subtraction(Compiler* self) {
+  self->Subtraction();
+}
+
+void compiler_peer_left_shift(Compiler* self) {
+  self->LeftShift();
+}
+
+void compiler_peer_signed_right_shift(Compiler* self) {
+  self->SignedRightShift();
+}
+
+void compiler_peer_unsigned_right_shift(Compiler* self) {
+  self->UnsignedRightShift();
+}
+
+void compiler_peer_less_than(Compiler* self) {
+  self->LessThan();
+}
+
+void compiler_peer_greater_than(Compiler* self) {
+  self->GreaterThan();
+}
+
+void compiler_peer_less_than_or_equal(Compiler* self) {
+  self->LessThanOrEqual();
+}
+
+void compiler_peer_greater_than_or_equal(Compiler* self) {
+  self->GreaterThanOrEqual();
+}
+
+void compiler_peer_instanceof(Compiler* self) {
+  self->Instanceof();
+}
+
+void compiler_peer_in(Compiler* self) {
+  self->In();
+}
+
+void compiler_peer_equality(Compiler* self) {
+  self->Equality();
+}
+
+void compiler_peer_inequality(Compiler* self) {
+  self->Inequality();
+}
+
+void compiler_peer_strict_equality(Compiler* self) {
+  self->StrictEquality();
+}
+
+void compiler_peer_strict_inequality(Compiler* self) {
+  self->StrictInequality();
 }
 
 void compiler_peer_bitwise_and(Compiler* self) {
@@ -180,6 +208,14 @@ void compiler_peer_bitwise_xor(Compiler* self) {
 
 void compiler_peer_bitwise_or(Compiler* self) {
   self->BitwiseOr();
+}
+
+void compiler_peer_conditional_expression(Compiler* self) {
+  self->ConditionalExpression();
+}
+
+void compiler_peer_assignment(Compiler* self) {
+  self->Assignment();
 }
 
 void compiler_peer_bindings(Compiler* self, uint16_t n) {
@@ -196,10 +232,6 @@ void compiler_peer_declare_mutable(Compiler* self) {
 
 void compiler_peer_declare_function(Compiler* self) {
   self->DeclareFunction();
-}
-
-void compiler_peer_set(Compiler* self) {
-  self->Set();
 }
 
 void compiler_peer_arguments(Compiler* self, uint16_t argc) {
@@ -220,10 +252,6 @@ void compiler_peer_to_boolean(Compiler* self) {
 
 void compiler_peer_block(Compiler* self) {
   self->Block();
-}
-
-void compiler_peer_conditional_expression(Compiler* self) {
-  self->ConditionalExpression();
 }
 
 void compiler_peer_if_else_statement(Compiler* self) {

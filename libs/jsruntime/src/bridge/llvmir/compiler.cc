@@ -117,135 +117,6 @@ void Compiler::Reference(uint32_t symbol, Locator locator) {
   PushReference(symbol, locator);
 }
 
-void Compiler::Add() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFAdd(lhs, rhs);
-  PushNumber(v);
-}
-
-void Compiler::Sub() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFSub(lhs, rhs);
-  PushNumber(v);
-}
-
-void Compiler::Mul() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFMul(lhs, rhs);
-  PushNumber(v);
-}
-
-void Compiler::Div() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFDiv(lhs, rhs);
-  PushNumber(v);
-}
-
-void Compiler::Rem() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFRem(lhs, rhs);
-  PushNumber(v);
-}
-
-void Compiler::Lt() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOLT(lhs, rhs);
-  PushBoolean(v);
-}
-
-void Compiler::Gt() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOGT(lhs, rhs);
-  PushBoolean(v);
-}
-
-void Compiler::Lte() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOLE(lhs, rhs);
-  PushBoolean(v);
-}
-
-void Compiler::Gte() {
-  Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOGE(lhs, rhs);
-  PushBoolean(v);
-}
-
-// 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-void Compiler::LeftShift() {
-  Swap();
-  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: BigInt
-  // 6.1.6.1.9 Number::leftShift ( x, y )
-  auto* lnum = ToInt32(lhs);
-  auto* rnum = ToUint32(rhs);
-  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
-  auto* shifted = builder_->CreateShl(lnum, shift_count);
-  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
-  PushNumber(v);
-}
-
-// 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-void Compiler::SignedRightShift() {
-  Swap();
-  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: BigInt
-  // 6.1.6.1.10 Number::signedRightShift ( x, y )
-  auto* lnum = ToInt32(lhs);
-  auto* rnum = ToUint32(rhs);
-  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
-  auto* shifted = builder_->CreateAShr(lnum, shift_count);
-  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
-  PushNumber(v);
-}
-
-// 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
-void Compiler::UnsignedRightShift() {
-  Swap();
-  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: BigInt
-  // 6.1.6.1.11 Number::unsignedRightShift ( x, y )
-  auto* lnum = ToUint32(lhs);
-  auto* rnum = ToUint32(rhs);
-  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
-  auto* shifted = builder_->CreateLShr(lnum, shift_count);
-  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
-  PushNumber(v);
-}
-
 // 13.4.2.1 Runtime Semantics: Evaluation
 void Compiler::PostfixIncrement() {
   IncrDecr('$', '+');
@@ -266,10 +137,22 @@ void Compiler::PrefixDecrement() {
   IncrDecr('^', '-');
 }
 
+// 13.5.1.2 Runtime Semantics: Evaluation
+void Compiler::UnaryDelete() {
+  // TODO
+  std::abort();
+}
+
 // 13.5.2.1 Runtime Semantics: Evaluation
 void Compiler::Void() {
   PopItem();
   PushUndefined();
+}
+
+// 13.5.3.1 Runtime Semantics: Evaluation
+void Compiler::Typeof() {
+  // TODO
+  std::abort();
 }
 
 // 13.5.4.1 Runtime Semantics: Evaluation
@@ -306,7 +189,168 @@ void Compiler::LogicalNot() {
   PushBoolean(v);
 }
 
-void Compiler::Eq() {
+// 13.6.1 Runtime Semantics: Evaluation
+void Compiler::Exponentiation() {
+  // TODO
+  std::abort();
+}
+
+// 13.7.1 Runtime Semantics: Evaluation
+void Compiler::Multiplication() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFMul(lhs, rhs);
+  PushNumber(v);
+}
+
+// 13.7.1 Runtime Semantics: Evaluation
+void Compiler::Division() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFDiv(lhs, rhs);
+  PushNumber(v);
+}
+
+// 13.7.1 Runtime Semantics: Evaluation
+void Compiler::Remainder() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFRem(lhs, rhs);
+  PushNumber(v);
+}
+
+// 13.8.1.1 Runtime Semantics: Evaluation
+void Compiler::Addition() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFAdd(lhs, rhs);
+  PushNumber(v);
+}
+
+// 13.8.2.1 Runtime Semantics: Evaluation
+void Compiler::Subtraction() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFSub(lhs, rhs);
+  PushNumber(v);
+}
+
+// 13.9.1.1 Runtime Semantics: Evaluation
+void Compiler::LeftShift() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  // TODO: BigInt
+  // 6.1.6.1.9 Number::leftShift ( x, y )
+  auto* lnum = ToInt32(lhs);
+  auto* rnum = ToUint32(rhs);
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
+  auto* shifted = builder_->CreateShl(lnum, shift_count);
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
+// 13.9.2.1 Runtime Semantics: Evaluation
+void Compiler::SignedRightShift() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  // TODO: BigInt
+  // 6.1.6.1.10 Number::signedRightShift ( x, y )
+  auto* lnum = ToInt32(lhs);
+  auto* rnum = ToUint32(rhs);
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
+  auto* shifted = builder_->CreateAShr(lnum, shift_count);
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
+// 13.9.3.1 Runtime Semantics: Evaluation
+void Compiler::UnsignedRightShift() {
+  // 13.15.4 EvaluateStringOrNumericBinaryExpression ( leftOperand, opText, rightOperand )
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
+  // TODO: BigInt
+  // 6.1.6.1.11 Number::unsignedRightShift ( x, y )
+  auto* lnum = ToUint32(lhs);
+  auto* rnum = ToUint32(rhs);
+  auto* shift_count = builder_->CreateURem(rnum, builder_->getInt32(32));
+  auto* shifted = builder_->CreateLShr(lnum, shift_count);
+  auto* v = builder_->CreateSIToFP(shifted, builder_->getDoubleTy());
+  PushNumber(v);
+}
+
+// 13.10.1 Runtime Semantics: Evaluation
+void Compiler::LessThan() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOLT(lhs, rhs);
+  PushBoolean(v);
+}
+
+// 13.10.1 Runtime Semantics: Evaluation
+void Compiler::GreaterThan() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOGT(lhs, rhs);
+  PushBoolean(v);
+}
+
+// 13.10.1 Runtime Semantics: Evaluation
+void Compiler::LessThanOrEqual() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOLE(lhs, rhs);
+  PushBoolean(v);
+}
+
+// 13.10.1 Runtime Semantics: Evaluation
+void Compiler::GreaterThanOrEqual() {
+  Swap();
+  auto* lhs = ToNumeric(Dereference());
+  auto* rhs = ToNumeric(Dereference());
+  // TODO: static dispatch
+  auto* v = builder_->CreateFCmpOGE(lhs, rhs);
+  PushBoolean(v);
+}
+
+// 13.10.1 Runtime Semantics: Evaluation
+void Compiler::Instanceof() {
+  // TODO
+  std::abort();
+}
+
+// 13.10.1 Runtime Semantics: Evaluation
+void Compiler::In() {
+  // TODO
+  std::abort();
+}
+
+// 13.11.1 Runtime Semantics: Evaluation
+void Compiler::Equality() {
   Swap();
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
@@ -315,13 +359,26 @@ void Compiler::Eq() {
   PushBoolean(v);
 }
 
-void Compiler::Ne() {
+// 13.11.1 Runtime Semantics: Evaluation
+void Compiler::Inequality() {
   Swap();
   auto* lhs = ToNumeric(Dereference());
   auto* rhs = ToNumeric(Dereference());
   // TODO: static dispatch
   auto* v = builder_->CreateFCmpONE(lhs, rhs);
   PushBoolean(v);
+}
+
+// 13.11.1 Runtime Semantics: Evaluation
+void Compiler::StrictEquality() {
+  // TODO
+  Equality();
+}
+
+// 13.11.1 Runtime Semantics: Evaluation
+void Compiler::StrictInequality() {
+  // TODO
+  Inequality();
 }
 
 // 13.12.1 Runtime Semantics: Evaluation
@@ -370,6 +427,103 @@ void Compiler::BitwiseOr() {
 
   // 6.1.6.1.19 Number::bitwiseOR ( x, y )
   NumberBitwiseOp('|', lnum, rnum);
+}
+
+void Compiler::ConditionalExpression() {
+  auto* else_tail_block = builder_->GetInsertBlock();
+  auto* func = else_tail_block->getParent();
+
+  auto else_item = Dereference();
+
+  auto* else_head_block = PopBlock();
+  auto* then_tail_block = PopBlock();
+
+  builder_->SetInsertPoint(then_tail_block);
+  auto then_item = Dereference();
+
+  auto* then_head_block = PopBlock();
+  auto* cond_block = PopBlock();
+
+  builder_->SetInsertPoint(cond_block);
+  auto* cond_value = PopValue();
+  builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
+
+  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
+
+  if (then_item.type == else_item.type) {
+    builder_->SetInsertPoint(then_tail_block);
+    builder_->CreateBr(block);
+
+    builder_->SetInsertPoint(else_tail_block);
+    builder_->CreateBr(block);
+
+    builder_->SetInsertPoint(block);
+
+    // In this case, we can use the value of each item as is.
+    switch (then_item.type) {
+      case Item::Undefined:
+        PushUndefined();
+        return;
+      case Item::Null:
+        PushNull();
+        return;
+      case Item::Boolean: {
+        auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(else_item.value, else_tail_block);
+        PushBoolean(phi);
+        return;
+      }
+      case Item::Number: {
+        auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2);
+        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(else_item.value, else_tail_block);
+        PushNumber(phi);
+        return;
+      }
+      case Item::Any: {
+        auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
+        phi->addIncoming(then_item.value, then_tail_block);
+        phi->addIncoming(else_item.value, else_tail_block);
+        PushAny(phi);
+        return;
+      }
+      default:
+        // TODO
+        assert(false);
+        PushUndefined();
+        return;
+    }
+  }
+
+  // We have to convert the value before the branch in each block.
+
+  builder_->SetInsertPoint(then_tail_block);
+  auto* then_value = ToAny(then_item);
+  builder_->CreateBr(block);
+
+  builder_->SetInsertPoint(else_tail_block);
+  auto* else_value = ToAny(else_item);
+  builder_->CreateBr(block);
+
+  builder_->SetInsertPoint(block);
+  auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
+  phi->addIncoming(then_value, then_tail_block);
+  phi->addIncoming(else_value, else_tail_block);
+  PushAny(phi);
+}
+
+void Compiler::Assignment() {
+  auto item = PopItem();
+  auto ref = PopReference();
+
+  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
+  // TODO: check the mutable flag
+  // auto* flags_ptr = CreateGetFlagsPtr(binding_ptr);
+
+  CreateStoreItemToBinding(item, binding_ptr);
+
+  stack_.push_back(item);
 }
 
 void Compiler::Bindings(uint16_t n) {
@@ -434,19 +588,6 @@ void Compiler::DeclareFunction() {
   CreateStoreItemToBinding(item, binding_ptr);
 
   builder_->SetInsertPoint(backup);
-}
-
-void Compiler::Set() {
-  auto item = PopItem();
-  auto ref = PopReference();
-
-  auto* binding_ptr = CreateGetBindingPtr(ref.locator);
-  // TODO: check the mutable flag
-  // auto* flags_ptr = CreateGetFlagsPtr(binding_ptr);
-
-  CreateStoreItemToBinding(item, binding_ptr);
-
-  stack_.push_back(item);
 }
 
 void Compiler::Arguments(uint16_t argc) {
@@ -536,90 +677,6 @@ void Compiler::Block() {
   PushBlock(block);
 
   builder_->SetInsertPoint(block);
-}
-
-void Compiler::ConditionalExpression() {
-  auto* else_tail_block = builder_->GetInsertBlock();
-  auto* func = else_tail_block->getParent();
-
-  auto else_item = Dereference();
-
-  auto* else_head_block = PopBlock();
-  auto* then_tail_block = PopBlock();
-
-  builder_->SetInsertPoint(then_tail_block);
-  auto then_item = Dereference();
-
-  auto* then_head_block = PopBlock();
-  auto* cond_block = PopBlock();
-
-  builder_->SetInsertPoint(cond_block);
-  auto* cond_value = PopValue();
-  builder_->CreateCondBr(cond_value, then_head_block, else_head_block);
-
-  auto* block = llvm::BasicBlock::Create(*context_, "bl", func);
-
-  if (then_item.type == else_item.type) {
-    builder_->SetInsertPoint(then_tail_block);
-    builder_->CreateBr(block);
-
-    builder_->SetInsertPoint(else_tail_block);
-    builder_->CreateBr(block);
-
-    builder_->SetInsertPoint(block);
-
-    // In this case, we can use the value of each item as is.
-    switch (then_item.type) {
-      case Item::Undefined:
-        PushUndefined();
-        return;
-      case Item::Null:
-        PushNull();
-        return;
-      case Item::Boolean: {
-        auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
-        phi->addIncoming(then_item.value, then_tail_block);
-        phi->addIncoming(else_item.value, else_tail_block);
-        PushBoolean(phi);
-        return;
-      }
-      case Item::Number: {
-        auto* phi = builder_->CreatePHI(builder_->getDoubleTy(), 2);
-        phi->addIncoming(then_item.value, then_tail_block);
-        phi->addIncoming(else_item.value, else_tail_block);
-        PushNumber(phi);
-        return;
-      }
-      case Item::Any: {
-        auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
-        phi->addIncoming(then_item.value, then_tail_block);
-        phi->addIncoming(else_item.value, else_tail_block);
-        PushAny(phi);
-        return;
-      }
-      default:
-        // TODO
-        assert(false);
-        PushUndefined();
-        return;
-    }
-  }
-
-  // We have to convert the value before the branch in each block.
-
-  builder_->SetInsertPoint(then_tail_block);
-  auto* then_value = ToAny(then_item);
-  builder_->CreateBr(block);
-
-  builder_->SetInsertPoint(else_tail_block);
-  auto* else_value = ToAny(else_item);
-  builder_->CreateBr(block);
-
-  builder_->SetInsertPoint(block);
-  auto* phi = builder_->CreatePHI(builder_->getPtrTy(), 2);
-  phi->addIncoming(then_value, then_tail_block);
-  phi->addIncoming(else_value, else_tail_block);
-  PushAny(phi);
 }
 
 void Compiler::IfElseStatement() {
@@ -886,7 +943,7 @@ void Compiler::IncrDecr(char pos, char op) {
     assert(ref.locator.kind != LocatorKind::None);
     PushReference(ref.symbol, ref.locator);
     PushNumber(new_value);
-    Set();
+    Assignment();
     Discard();
   } else {
     // TODO: throw a ReferenceError at runtime

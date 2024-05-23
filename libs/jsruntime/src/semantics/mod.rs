@@ -300,7 +300,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_then_block(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Truthy);
         context.put_command(CompileCommand::Then);
     }
 
@@ -313,13 +313,13 @@ impl<'r> Analyzer<'r> {
 
     fn handle_and_then(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Truthy);
         context.put_command(CompileCommand::Then);
     }
 
     fn handle_or_else(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Truthy);
         context.put_command(CompileCommand::Then);
         context.put_command(CompileCommand::Boolean(true));
         context.put_command(CompileCommand::Else);
@@ -747,7 +747,7 @@ pub enum CompileCommand {
     NullishCoalescingAssignment,
 
     // conditional
-    Test,
+    Truthy,
     Then,
     Else,
     IfElseStatement,
