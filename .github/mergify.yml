@@ -1,8 +1,15 @@
 pull_request_rules:
-  - name: automatic merge for Dependabot pull requests
+  - name: Automatically approve Dependabot PRs
     conditions:
       - author = dependabot[bot]
       - check-success = build / build
+    actions:
+      review:
+        type: APPROVE
+  - name: automatic merge for Dependabot pull requests
+    conditions:
+      - author = dependabot[bot]
+      - '#approved-reviews-by >= 1'
     actions:
       merge:
         method: merge
