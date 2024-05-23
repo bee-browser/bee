@@ -675,31 +675,43 @@ pub enum CompileCommand {
     BitwiseNot,
     LogicalNot,
 
-    // binary operators
+    // exponentiation operator
+    Exponentiation,
+
+    // multiplicative operators
+    Multiplication,
+    Division,
+    Remainder,
+
+    // additive operators
+    Addition,
+    Subtraction,
+
+    // bitwise shift operators
+    LeftShift,
+    SignedRightShift,
+    UnsignedRightShift,
+
+    // relational operators
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
+    Instanceof,
+    In,
+
+    // equality operators
     Equality,
     Inequality,
     StrictEquality,
     StrictInequality,
-    LessThan,
-    LessThanOrEqual,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LeftShift,
-    SignedRightShift,
-    UnsignedRightShift,
-    Addition,
-    Subtraction,
-    Multiplication,
-    Division,
-    Remainder,
-    BitwiseOr,
-    BitwiseXor,
-    BitwiseAnd,
-    In,
-    Instanceof,
-    Exponentiation,
 
-    // There is no compile command for logical operators.
+    // binary bitwise operators
+    BitwiseAnd,
+    BitwiseXor,
+    BitwiseOr,
+
+    // There is no compile command for binary logical operators.
     //
     // For the short-circuit evaluation on the LHS in a logical expression, we convert the logical
     // expression into a corresponding conditional expression.
@@ -712,6 +724,9 @@ pub enum CompileCommand {
     //      handle_logical_expression()
     //
     // TODO: nullish coalescing operator
+
+    // conditional operator
+    ConditionalTernary,
 
     // assignment operators
     Assignment,
@@ -735,7 +750,6 @@ pub enum CompileCommand {
     Test,
     Then,
     Else,
-    ConditionalTernary,
     IfElseStatement,
     IfStatement,
 

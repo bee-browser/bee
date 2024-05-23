@@ -119,7 +119,7 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_number(self.peer, *value);
             },
             CompileCommand::String(_value) => {
-                // TODO
+                unimplemented!("string literal");
             }
             CompileCommand::Function(func_id) => {
                 let name = if func_id.is_native() {
@@ -206,6 +206,51 @@ impl<'a> Compiler<'a> {
             CompileCommand::LogicalNot => unsafe {
                 bridge::compiler_peer_logical_not(self.peer);
             },
+            CompileCommand::Exponentiation => {
+                unimplemented!("** operator");
+            }
+            CompileCommand::Multiplication => unsafe {
+                bridge::compiler_peer_mul(self.peer);
+            },
+            CompileCommand::Division => unsafe {
+                bridge::compiler_peer_div(self.peer);
+            },
+            CompileCommand::Remainder => unsafe {
+                bridge::compiler_peer_rem(self.peer);
+            },
+            CompileCommand::Addition => unsafe {
+                bridge::compiler_peer_add(self.peer);
+            },
+            CompileCommand::Subtraction => unsafe {
+                bridge::compiler_peer_sub(self.peer);
+            },
+            CompileCommand::LeftShift => unsafe {
+                bridge::compiler_peer_left_shift(self.peer);
+            },
+            CompileCommand::SignedRightShift => unsafe {
+                bridge::compiler_peer_signed_right_shift(self.peer);
+            },
+            CompileCommand::UnsignedRightShift => unsafe {
+                bridge::compiler_peer_unsigned_right_shift(self.peer);
+            },
+            CompileCommand::LessThan => unsafe {
+                bridge::compiler_peer_lt(self.peer);
+            },
+            CompileCommand::GreaterThan => unsafe {
+                bridge::compiler_peer_gt(self.peer);
+            },
+            CompileCommand::LessThanOrEqual => unsafe {
+                bridge::compiler_peer_lte(self.peer);
+            },
+            CompileCommand::GreaterThanOrEqual => unsafe {
+                bridge::compiler_peer_gte(self.peer);
+            },
+            CompileCommand::Instanceof => {
+                unimplemented!("instanceof operator");
+            }
+            CompileCommand::In => {
+                unimplemented!("in operator");
+            }
             CompileCommand::Equality => unsafe {
                 bridge::compiler_peer_eq(self.peer);
             },
@@ -224,42 +269,6 @@ impl<'a> Compiler<'a> {
                     bridge::compiler_peer_ne(self.peer);
                 }
             }
-            CompileCommand::LessThan => unsafe {
-                bridge::compiler_peer_lt(self.peer);
-            },
-            CompileCommand::LessThanOrEqual => unsafe {
-                bridge::compiler_peer_lte(self.peer);
-            },
-            CompileCommand::GreaterThan => unsafe {
-                bridge::compiler_peer_gt(self.peer);
-            },
-            CompileCommand::GreaterThanOrEqual => unsafe {
-                bridge::compiler_peer_gte(self.peer);
-            },
-            CompileCommand::LeftShift => unsafe {
-                bridge::compiler_peer_left_shift(self.peer);
-            },
-            CompileCommand::SignedRightShift => unsafe {
-                bridge::compiler_peer_signed_right_shift(self.peer);
-            },
-            CompileCommand::UnsignedRightShift => unsafe {
-                bridge::compiler_peer_unsigned_right_shift(self.peer);
-            },
-            CompileCommand::Addition => unsafe {
-                bridge::compiler_peer_add(self.peer);
-            },
-            CompileCommand::Subtraction => unsafe {
-                bridge::compiler_peer_sub(self.peer);
-            },
-            CompileCommand::Multiplication => unsafe {
-                bridge::compiler_peer_mul(self.peer);
-            },
-            CompileCommand::Division => unsafe {
-                bridge::compiler_peer_div(self.peer);
-            },
-            CompileCommand::Remainder => unsafe {
-                bridge::compiler_peer_rem(self.peer);
-            },
             CompileCommand::BitwiseAnd => unsafe {
                 bridge::compiler_peer_bitwise_and(self.peer);
             },
@@ -269,62 +278,56 @@ impl<'a> Compiler<'a> {
             CompileCommand::BitwiseOr => unsafe {
                 bridge::compiler_peer_bitwise_or(self.peer);
             },
-            CompileCommand::In => {
-                // TODO
-            }
-            CompileCommand::Instanceof => {
-                // TODO
-            }
-            CompileCommand::Exponentiation => {
-                // TODO
-            }
+            CompileCommand::ConditionalTernary => unsafe {
+                bridge::compiler_peer_conditional_expression(self.peer);
+            },
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_set(self.peer);
             },
             CompileCommand::MultiplicationAssignment => {
-                // TODO
+                unimplemented!("*= operator");
             }
             CompileCommand::DivisionAssignment => {
-                // TODO
+                unimplemented!("/= operator");
             }
             CompileCommand::RemainderAssignment => {
-                // TODO
+                unimplemented!("%= operator");
             }
             CompileCommand::AdditionAssignment => {
-                // TODO
+                unimplemented!("+= operator");
             }
             CompileCommand::SubtractionAssignment => {
-                // TODO
+                unimplemented!("-= operator");
             }
             CompileCommand::LeftShiftAssignment => {
-                // TODO
+                unimplemented!("<<= operator");
             }
             CompileCommand::SignedRightShiftAssignment => {
-                // TODO
+                unimplemented!(">>= operator");
             }
             CompileCommand::UnsignedRightShiftAssignment => {
-                // TODO
+                unimplemented!(">>>= operator");
             }
             CompileCommand::BitwiseAndAssignment => {
-                // TODO
+                unimplemented!("&= operator");
             }
             CompileCommand::BitwiseXorAssignment => {
-                // TODO
+                unimplemented!("^= operator");
             }
             CompileCommand::BitwiseOrAssignment => {
-                // TODO
+                unimplemented!("|= operator");
             }
             CompileCommand::ExponentiationAssignment => {
-                // TODO
+                unimplemented!("**= operator");
             }
             CompileCommand::LogicalAndAssignment => {
-                // TODO
+                unimplemented!("&&= operator");
             }
             CompileCommand::LogicalOrAssignment => {
-                // TODO
+                unimplemented!("||= operator");
             }
             CompileCommand::NullishCoalescingAssignment => {
-                // TODO
+                unimplemented!("??= operator");
             }
             CompileCommand::Test => unsafe {
                 bridge::compiler_peer_to_boolean(self.peer);
@@ -334,9 +337,6 @@ impl<'a> Compiler<'a> {
             },
             CompileCommand::Else => unsafe {
                 bridge::compiler_peer_block(self.peer);
-            },
-            CompileCommand::ConditionalTernary => unsafe {
-                bridge::compiler_peer_conditional_expression(self.peer);
             },
             CompileCommand::IfElseStatement => unsafe {
                 bridge::compiler_peer_if_else_statement(self.peer);
