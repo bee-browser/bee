@@ -300,7 +300,7 @@ impl<'r> Analyzer<'r> {
 
     fn handle_then_block(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Truthy);
         context.put_command(CompileCommand::Then);
     }
 
@@ -313,13 +313,13 @@ impl<'r> Analyzer<'r> {
 
     fn handle_and_then(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Truthy);
         context.put_command(CompileCommand::Then);
     }
 
     fn handle_or_else(&mut self) {
         let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Test);
+        context.put_command(CompileCommand::Truthy);
         context.put_command(CompileCommand::Then);
         context.put_command(CompileCommand::Boolean(true));
         context.put_command(CompileCommand::Else);
@@ -675,31 +675,43 @@ pub enum CompileCommand {
     BitwiseNot,
     LogicalNot,
 
-    // binary operators
+    // exponentiation operator
+    Exponentiation,
+
+    // multiplicative operators
+    Multiplication,
+    Division,
+    Remainder,
+
+    // additive operators
+    Addition,
+    Subtraction,
+
+    // bitwise shift operators
+    LeftShift,
+    SignedRightShift,
+    UnsignedRightShift,
+
+    // relational operators
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
+    Instanceof,
+    In,
+
+    // equality operators
     Equality,
     Inequality,
     StrictEquality,
     StrictInequality,
-    LessThan,
-    LessThanOrEqual,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LeftShift,
-    SignedRightShift,
-    UnsignedRightShift,
-    Addition,
-    Subtraction,
-    Multiplication,
-    Division,
-    Remainder,
-    BitwiseOr,
-    BitwiseXor,
-    BitwiseAnd,
-    In,
-    Instanceof,
-    Exponentiation,
 
-    // There is no compile command for logical operators.
+    // binary bitwise operators
+    BitwiseAnd,
+    BitwiseXor,
+    BitwiseOr,
+
+    // There is no compile command for binary logical operators.
     //
     // For the short-circuit evaluation on the LHS in a logical expression, we convert the logical
     // expression into a corresponding conditional expression.
@@ -712,6 +724,9 @@ pub enum CompileCommand {
     //      handle_logical_expression()
     //
     // TODO: nullish coalescing operator
+
+    // conditional operator
+    ConditionalTernary,
 
     // assignment operators
     Assignment,
@@ -732,10 +747,9 @@ pub enum CompileCommand {
     NullishCoalescingAssignment,
 
     // conditional
-    Test,
+    Truthy,
     Then,
     Else,
-    ConditionalTernary,
     IfElseStatement,
     IfStatement,
 
