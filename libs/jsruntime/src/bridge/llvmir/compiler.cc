@@ -524,6 +524,7 @@ void Compiler::ConditionalExpression() {
   PushAny(phi);
 }
 
+// 13.15.2 Runtime Semantics: Evaluation
 void Compiler::Assignment() {
   auto item = PopItem();
   auto ref = PopReference();
@@ -535,6 +536,145 @@ void Compiler::Assignment() {
   CreateStoreItemToBinding(item, binding_ptr);
 
   stack_.push_back(item);
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::ExponentiationAssignment() {
+  // TODO
+  assert(false);
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::MultiplicationAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  Multiplication();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::DivisionAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  Division();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::RemainderAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  Remainder();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::AdditionAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  Addition();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::SubtractionAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  Subtraction();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::LeftShiftAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  LeftShift();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::SignedRightShiftAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  SignedRightShift();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::UnsignedRightShiftAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  UnsignedRightShift();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::BitwiseAndAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  BitwiseAnd();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::BitwiseXorAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  BitwiseXor();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::BitwiseOrAssignment() {
+  auto item = PopItem();
+  assert(!stack_.empty());
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  stack_.push_back(item);
+  BitwiseOr();
+  Assignment();
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::LogicalAndAssignment() {
+  // TODO
+  assert(false);
+}
+
+// 13.15.2 Runtime Semantics: Evaluation
+void Compiler::LogicalOrAssignment() {
+  // TODO
+  assert(false);
 }
 
 void Compiler::Bindings(uint16_t n) {

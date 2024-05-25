@@ -278,48 +278,48 @@ impl<'a> Compiler<'a> {
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_assignment(self.peer);
             },
-            CompileCommand::MultiplicationAssignment => {
-                unimplemented!("*= operator");
-            }
-            CompileCommand::DivisionAssignment => {
-                unimplemented!("/= operator");
-            }
-            CompileCommand::RemainderAssignment => {
-                unimplemented!("%= operator");
-            }
-            CompileCommand::AdditionAssignment => {
-                unimplemented!("+= operator");
-            }
-            CompileCommand::SubtractionAssignment => {
-                unimplemented!("-= operator");
-            }
-            CompileCommand::LeftShiftAssignment => {
-                unimplemented!("<<= operator");
-            }
-            CompileCommand::SignedRightShiftAssignment => {
-                unimplemented!(">>= operator");
-            }
-            CompileCommand::UnsignedRightShiftAssignment => {
-                unimplemented!(">>>= operator");
-            }
-            CompileCommand::BitwiseAndAssignment => {
-                unimplemented!("&= operator");
-            }
-            CompileCommand::BitwiseXorAssignment => {
-                unimplemented!("^= operator");
-            }
-            CompileCommand::BitwiseOrAssignment => {
-                unimplemented!("|= operator");
-            }
             CompileCommand::ExponentiationAssignment => {
                 unimplemented!("**= operator");
-            }
-            CompileCommand::LogicalAndAssignment => {
-                unimplemented!("&&= operator");
-            }
-            CompileCommand::LogicalOrAssignment => {
-                unimplemented!("||= operator");
-            }
+            },
+            CompileCommand::MultiplicationAssignment => unsafe {
+                bridge::compiler_peer_multiplication_assignment(self.peer);
+            },
+            CompileCommand::DivisionAssignment => unsafe {
+                bridge::compiler_peer_division_assignment(self.peer);
+            },
+            CompileCommand::RemainderAssignment => unsafe {
+                bridge::compiler_peer_remainder_assignment(self.peer);
+            },
+            CompileCommand::AdditionAssignment => unsafe {
+                bridge::compiler_peer_addition_assignment(self.peer);
+            },
+            CompileCommand::SubtractionAssignment => unsafe {
+                bridge::compiler_peer_subtraction_assignment(self.peer);
+            },
+            CompileCommand::LeftShiftAssignment => unsafe {
+                bridge::compiler_peer_left_shift_assignment(self.peer);
+            },
+            CompileCommand::SignedRightShiftAssignment => unsafe {
+                bridge::compiler_peer_signed_right_shift_assignment(self.peer);
+            },
+            CompileCommand::UnsignedRightShiftAssignment => unsafe {
+                bridge::compiler_peer_unsigned_right_shift_assignment(self.peer);
+            },
+            CompileCommand::BitwiseAndAssignment => unsafe {
+                bridge::compiler_peer_bitwise_and_assignment(self.peer);
+            },
+            CompileCommand::BitwiseXorAssignment => unsafe {
+                bridge::compiler_peer_bitwise_xor_assignment(self.peer);
+            },
+            CompileCommand::BitwiseOrAssignment => unsafe {
+                bridge::compiler_peer_bitwise_or_assignment(self.peer);
+            },
+            CompileCommand::LogicalAndAssignment => unsafe {
+                bridge::compiler_peer_logical_and_assignment(self.peer);
+            },
+            CompileCommand::LogicalOrAssignment => unsafe {
+                bridge::compiler_peer_logical_or_assignment(self.peer);
+            },
             CompileCommand::NullishCoalescingAssignment => {
                 unimplemented!("??= operator");
             }

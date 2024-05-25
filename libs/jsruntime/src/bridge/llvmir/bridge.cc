@@ -218,6 +218,66 @@ void compiler_peer_assignment(Compiler* self) {
   self->Assignment();
 }
 
+void compiler_peer_exponentiation_assignment(Compiler* self) {
+  self->ExponentiationAssignment();
+}
+
+void compiler_peer_multiplication_assignment(Compiler* self) {
+  self->MultiplicationAssignment();
+}
+
+void compiler_peer_division_assignment(Compiler* self) {
+  self->DivisionAssignment();
+}
+
+void compiler_peer_remainder_assignment(Compiler* self) {
+  self->RemainderAssignment();
+}
+
+void compiler_peer_addition_assignment(Compiler* self) {
+  self->AdditionAssignment();
+}
+
+void compiler_peer_subtraction_assignment(Compiler* self) {
+  self->SubtractionAssignment();
+}
+
+void compiler_peer_left_shift_assignment(Compiler* self) {
+  self->LeftShiftAssignment();
+}
+
+void compiler_peer_signed_right_shift_assignment(Compiler* self) {
+  self->SignedRightShiftAssignment();
+}
+
+void compiler_peer_unsigned_right_shift_assignment(Compiler* self) {
+  self->UnsignedRightShiftAssignment();
+}
+
+void compiler_peer_bitwise_and_assignment(Compiler* self) {
+  self->BitwiseAndAssignment();
+}
+
+void compiler_peer_bitwise_xor_assignment(Compiler* self) {
+  self->BitwiseXorAssignment();
+}
+
+void compiler_peer_bitwise_or_assignment(Compiler* self) {
+  self->BitwiseOrAssignment();
+}
+
+void compiler_peer_logical_and_assignment(Compiler* self) {
+  self->LogicalAndAssignment();
+}
+
+void compiler_peer_logical_or_assignment(Compiler* self) {
+  self->LogicalOrAssignment();
+}
+
+void compiler_peer_nullish_coalescing_assignment(Compiler* self) {
+  self->NullishCoalescingAssignment();
+}
+
 void compiler_peer_bindings(Compiler* self, uint16_t n) {
   self->Bindings(n);
 }

@@ -79,6 +79,21 @@ class Compiler {
   void BitwiseOr();
   void ConditionalExpression();
   void Assignment();
+  void ExponentiationAssignment();
+  void MultiplicationAssignment();
+  void DivisionAssignment();
+  void RemainderAssignment();
+  void AdditionAssignment();
+  void SubtractionAssignment();
+  void LeftShiftAssignment();
+  void SignedRightShiftAssignment();
+  void UnsignedRightShiftAssignment();
+  void BitwiseAndAssignment();
+  void BitwiseXorAssignment();
+  void BitwiseOrAssignment();
+  void LogicalAndAssignment();
+  void LogicalOrAssignment();
+  void NullishCoalescingAssignment();
   void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
@@ -253,6 +268,12 @@ class Compiler {
     auto* block = item.block;
     stack_.pop_back();
     return block;
+  }
+
+  inline void Duplicate() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    stack_.push_back(item);
   }
 
   Item Dereference(struct Reference* ref = nullptr, llvm::Value** scope = nullptr);
