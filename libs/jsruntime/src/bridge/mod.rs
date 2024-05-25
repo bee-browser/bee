@@ -240,7 +240,11 @@ unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
 }
 
 // 7.2.13 IsLooselyEqual ( x, y )
-unsafe extern "C" fn runtime_is_loosely_equal(runtime: usize, a: *const Value, b: *const Value) -> bool {
+unsafe extern "C" fn runtime_is_loosely_equal(
+    runtime: usize,
+    a: *const Value,
+    b: *const Value,
+) -> bool {
     let x = &*a;
     let y = &*b;
     // 1. If Type(x) is Type(y)
