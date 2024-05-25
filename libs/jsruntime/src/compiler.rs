@@ -257,18 +257,12 @@ impl<'a> Compiler<'a> {
             CompileCommand::Inequality => unsafe {
                 bridge::compiler_peer_inequality(self.peer);
             },
-            CompileCommand::StrictEquality => {
-                // TODO: check type
-                unsafe {
-                    bridge::compiler_peer_equality(self.peer);
-                }
-            }
-            CompileCommand::StrictInequality => {
-                // TODO: check type
-                unsafe {
-                    bridge::compiler_peer_inequality(self.peer);
-                }
-            }
+            CompileCommand::StrictEquality => unsafe {
+                bridge::compiler_peer_strict_equality(self.peer);
+            },
+            CompileCommand::StrictInequality => unsafe {
+                bridge::compiler_peer_strict_inequality(self.peer);
+            },
             CompileCommand::BitwiseAnd => unsafe {
                 bridge::compiler_peer_bitwise_and(self.peer);
             },

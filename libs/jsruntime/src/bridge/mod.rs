@@ -153,6 +153,8 @@ impl Default for Runtime {
             to_numeric: Some(runtime_to_numeric),
             to_int32: Some(runtime_to_int32),
             to_uint32: Some(runtime_to_uint32),
+            is_loosely_equal: Some(runtime_is_loosely_equal),
+            is_strictly_equal: Some(runtime_is_strictly_equal),
         }
     }
 }
@@ -234,5 +236,59 @@ unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
         dbg!((int32bit + EXP2_31) as u32)
     } else {
         dbg!(int32bit as u32)
+    }
+}
+
+// 7.2.13 IsLooselyEqual ( x, y )
+unsafe extern "C" fn runtime_is_loosely_equal(
+    runtime: usize,
+    a: *const Value,
+    b: *const Value,
+) -> bool {
+    let x = &*a;
+    let y = &*b;
+    // 1. If Type(x) is Type(y)
+    if x.kind == y.kind {
+        // a. Return IsStrictlyEqual(x, y).
+        return runtime_is_strictly_equal(runtime, a, b);
+    }
+    // 2. If x is null and y is undefined, return true.
+    if x.kind == ValueKind_Null && y.kind == ValueKind_Undefined {
+        return true;
+    }
+    // 3. If x is undefined and y is null, return true.
+    if x.kind == ValueKind_Undefined && y.kind == ValueKind_Null {
+        return true;
+    }
+    // TODO: 4. NOTE: This step is replaced in section B.3.6.2.
+    // TODO: 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
+    // TODO: 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
+    // TODO: 7. If x is a BigInt and y is a String, then
+    // TODO: 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
+    // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
+    // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
+    // ...
+    let xnum = runtime_to_numeric(runtime, x);
+    let ynum = runtime_to_numeric(runtime, y);
+    if xnum.is_nan() || ynum.is_nan() {
+        return false;
+    }
+    xnum == ynum
+}
+
+// 7.2.14 IsStrictlyEqual ( x, y )
+unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *const Value) -> bool {
+    let x = &*a;
+    let y = &*b;
+    if x.kind != y.kind {
+        return false;
+    }
+    match x.kind {
+        ValueKind_Undefined => true,
+        ValueKind_Null => true,
+        ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
+        ValueKind_Number => x.holder.number == y.holder.number,
+        ValueKind_Function => x.holder.function == y.holder.function,
+        _ => unreachable!(),
     }
 }
