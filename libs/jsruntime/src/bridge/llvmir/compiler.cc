@@ -371,14 +371,22 @@ void Compiler::Inequality() {
 
 // 13.11.1 Runtime Semantics: Evaluation
 void Compiler::StrictEquality() {
-  // TODO
-  Equality();
+  Swap();
+  auto lhs = Dereference();
+  auto rhs = Dereference();
+  auto* v = CreateIsStrictlyEqual(lhs, rhs);
+  PushBoolean(v);
 }
 
 // 13.11.1 Runtime Semantics: Evaluation
 void Compiler::StrictInequality() {
-  // TODO
-  Inequality();
+  Swap();
+  auto lhs = Dereference();
+  auto rhs = Dereference();
+  auto* eq = CreateIsStrictlyEqual(lhs, rhs);
+  // TODO: should reuse LogicalNot()?
+  auto* v = builder_->CreateXor(eq, builder_->getTrue());
+  PushBoolean(v);
 }
 
 // 13.12.1 Runtime Semantics: Evaluation
@@ -1095,4 +1103,149 @@ llvm::AllocaInst* Compiler::CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n)
   auto* alloca = builder_->CreateAlloca(ty, builder_->getInt32(n));
   builder_->SetInsertPoint(backup);
   return alloca;
+}
+
+// 7.2.14 IsStrictlyEqual ( x, y )
+
+llvm::Value* Compiler::CreateIsStrictlyEqual(const Item& lhs, const Item& rhs) {
+  if (lhs.type == Item::Any) {
+    return CreateIsStrictlyEqual(lhs.value, rhs);
+  }
+  if (rhs.type == Item::Any) {
+    return CreateIsStrictlyEqual(rhs.value, lhs);
+  }
+  if (lhs.type != rhs.type) {
+    return builder_->getFalse();
+  }
+  // TODO: BigInt
+  switch (lhs.type) {
+    case Item::Undefined:
+    case Item::Null:
+      return builder_->getTrue();
+    case Item::Boolean:
+      return builder_->CreateICmpEQ(lhs.value, rhs.value);
+    case Item::Number:
+      return builder_->CreateFCmpOEQ(lhs.value, rhs.value);
+    case Item::Function:
+      return builder_->CreateICmpEQ(lhs.value, rhs.value);
+    default:
+      // never reach here.
+      assert(false);
+      return nullptr;
+  }
+}
+
+llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* value_ptr, const Item& item) {
+  switch (item.type) {
+    case Item::Undefined:
+      return CreateIsUndefined(value_ptr);
+    case Item::Null:
+      return CreateIsNull(value_ptr);
+    case Item::Boolean:
+      return CreateIsSameBooleanValue(value_ptr, item.value);
+    case Item::Number:
+      return CreateIsSameNumberValue(value_ptr, item.value);
+    case Item::Function:
+      return CreateIsSameFunctionValue(value_ptr, item.value);
+    case Item::Any:
+      return CreateIsStrictlyEqual(value_ptr, item.value);
+    default:
+      // never reach here.
+      assert(false);
+      return nullptr;
+  }
+}
+
+llvm::Value* Compiler::CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y) {
+  // TODO: Create inline instructions if runtime_is_strictly_equal() is slow.
+  auto* func = types_->CreateRuntimeIsStrictlyEqual();
+  return builder_->CreateCall(func, {exec_context_, x, y});
+}
+
+llvm::Value* Compiler::CreateIsUndefined(llvm::Value* value_ptr) {
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
+  return builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Undefined));
+}
+
+llvm::Value* Compiler::CreateIsNull(llvm::Value* value_ptr) {
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
+  return builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Null));
+}
+
+llvm::Value* Compiler::CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value) {
+  auto* then_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+  auto* else_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+  auto* merge_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Boolean));
+  builder_->CreateCondBr(cond, then_block, else_block);
+
+  builder_->SetInsertPoint(then_block);
+  auto* boolean = CreateLoadBooleanFromValue(value_ptr);
+  auto* then_value = builder_->CreateICmpEQ(boolean, value);
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(else_block);
+  auto* else_value = builder_->getFalse();
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(merge_block);
+  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+  phi->addIncoming(then_value, then_block);
+  phi->addIncoming(else_value, else_block);
+
+  return phi;
+}
+
+llvm::Value* Compiler::CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value) {
+  auto* then_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+  auto* else_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+  auto* merge_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Boolean));
+  builder_->CreateCondBr(cond, then_block, else_block);
+
+  builder_->SetInsertPoint(then_block);
+  auto* number = CreateLoadNumberFromValue(value_ptr);
+  auto* then_value = builder_->CreateFCmpOEQ(number, value);
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(else_block);
+  auto* else_value = builder_->getFalse();
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(merge_block);
+  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+  phi->addIncoming(then_value, then_block);
+  phi->addIncoming(else_value, else_block);
+
+  return phi;
+}
+
+llvm::Value* Compiler::CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::Value* value) {
+  auto* then_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+  auto* else_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+  auto* merge_block = llvm::BasicBlock::Create(*context_, "bb", function_);
+
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
+  auto* cond = builder_->CreateICmpEQ(kind, builder_->getInt8(ValueKind::Boolean));
+  builder_->CreateCondBr(cond, then_block, else_block);
+
+  builder_->SetInsertPoint(then_block);
+  auto* func_ptr = CreateLoadFunctionFromValue(value_ptr);
+  auto* then_value = builder_->CreateICmpEQ(func_ptr, value);
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(else_block);
+  auto* else_value = builder_->getFalse();
+  builder_->CreateBr(merge_block);
+
+  builder_->SetInsertPoint(merge_block);
+  auto* phi = builder_->CreatePHI(builder_->getInt1Ty(), 2);
+  phi->addIncoming(then_value, then_block);
+  phi->addIncoming(else_value, else_block);
+
+  return phi;
 }

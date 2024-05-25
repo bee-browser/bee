@@ -153,6 +153,7 @@ impl Default for Runtime {
             to_numeric: Some(runtime_to_numeric),
             to_int32: Some(runtime_to_int32),
             to_uint32: Some(runtime_to_uint32),
+            is_strictly_equal: Some(runtime_is_strictly_equal),
         }
     }
 }
@@ -234,5 +235,22 @@ unsafe extern "C" fn runtime_to_uint32(_: usize, value: f64) -> u32 {
         dbg!((int32bit + EXP2_31) as u32)
     } else {
         dbg!(int32bit as u32)
+    }
+}
+
+// 7.2.14 IsStrictlyEqual ( x, y )
+unsafe extern "C" fn runtime_is_strictly_equal(_: usize, a: *const Value, b: *const Value) -> bool {
+    let x = &*a;
+    let y = &*b;
+    if x.kind != y.kind {
+        return false;
+    }
+    match x.kind {
+        ValueKind_Undefined => true,
+        ValueKind_Null => true,
+        ValueKind_Boolean => x.holder.boolean == y.holder.boolean,
+        ValueKind_Number => x.holder.number == y.holder.number,
+        ValueKind_Function => x.holder.function == y.holder.function,
+        _ => unreachable!(),
     }
 }

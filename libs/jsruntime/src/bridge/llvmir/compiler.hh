@@ -259,6 +259,15 @@ class Compiler {
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
+  llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+  llvm::Value* CreateIsStrictlyEqual(const Item& lhs, const Item& rhs);
+  llvm::Value* CreateIsStrictlyEqual(llvm::Value* value, const Item& item);
+  llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y);
+  llvm::Value* CreateIsUndefined(llvm::Value* value_ptr);
+  llvm::Value* CreateIsNull(llvm::Value* value_ptr);
+  llvm::Value* CreateIsSameBooleanValue(llvm::Value* value_ptr, llvm::Value* value);
+  llvm::Value* CreateIsSameNumberValue(llvm::Value* value_ptr, llvm::Value* value);
+  llvm::Value* CreateIsSameFunctionValue(llvm::Value* value_ptr, llvm::Value* value);
 
   // Naming convention for field accessors:
   //
@@ -432,6 +441,26 @@ class Compiler {
     return builder_->CreateExtractValue(value, 1);
   }
 
+  inline llvm::Value* CreateLoadValueKindFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueKindPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt8Ty(), ptr);
+  }
+
+  inline llvm::Value* CreateLoadBooleanFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getInt1Ty(), ptr);
+  }
+
+  inline llvm::Value* CreateLoadNumberFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getDoubleTy(), ptr);
+  }
+
+  inline llvm::Value* CreateLoadFunctionFromValue(llvm::Value* value_ptr) {
+    auto* ptr = CreateGetValueHolderPtrOfValue(value_ptr);
+    return builder_->CreateLoad(builder_->getPtrTy(), ptr);
+  }
+
   inline llvm::Value* CreateLoadValue(llvm::Value* value_ptr) {
     return builder_->CreateLoad(types_->CreateValueType(), value_ptr);
   }
@@ -478,8 +507,6 @@ class Compiler {
   }
 
   void CreateStoreItemToValue(const Item& item, llvm::Value* value_ptr);
-
-  llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
 
   std::unique_ptr<llvm::LLVMContext> context_ = nullptr;
   std::unique_ptr<llvm::Module> module_ = nullptr;

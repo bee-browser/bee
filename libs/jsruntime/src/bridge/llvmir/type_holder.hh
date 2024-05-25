@@ -28,6 +28,7 @@ class TypeHolder {
   llvm::Function* CreateRuntimeToNumeric();
   llvm::Function* CreateRuntimeToInt32();
   llvm::Function* CreateRuntimeToUint32();
+  llvm::Function* CreateRuntimeIsStrictlyEqual();
 
  private:
   llvm::LLVMContext& context_;
@@ -40,4 +41,5 @@ class TypeHolder {
   llvm::Function* runtime_to_numeric_ = nullptr;
   llvm::Function* runtime_to_int32_ = nullptr;
   llvm::Function* runtime_to_uint32_ = nullptr;
+  llvm::Function* runtime_is_strictly_equal_ = nullptr;
 };
