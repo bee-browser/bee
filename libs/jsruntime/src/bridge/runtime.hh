@@ -8,4 +8,6 @@ typedef struct {
   double (*to_numeric)(uintptr_t context, const Value* value);
   int32_t (*to_int32)(uintptr_t context, double value);
   uint32_t (*to_uint32)(uintptr_t context, double value);
+  bool (*is_loosely_equal)(uintptr_t context, const Value* a, const Value* b);
+  bool (*is_strictly_equal)(uintptr_t context, const Value* a, const Value* b);
 } Runtime;

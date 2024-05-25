@@ -108,3 +108,23 @@ llvm::Function* TypeHolder::CreateRuntimeToUint32() {
   }
   return runtime_to_uint32_;
 }
+
+llvm::Function* TypeHolder::CreateRuntimeIsLooselyEqual() {
+  if (runtime_is_loosely_equal_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_.getInt1Ty(),
+        {builder_.getPtrTy(), builder_.getPtrTy(), builder_.getPtrTy()}, false);
+    runtime_is_loosely_equal_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_is_loosely_equal", module_);
+  }
+  return runtime_is_loosely_equal_;
+}
+
+llvm::Function* TypeHolder::CreateRuntimeIsStrictlyEqual() {
+  if (runtime_is_strictly_equal_ == nullptr) {
+    auto* prototype = llvm::FunctionType::get(builder_.getInt1Ty(),
+        {builder_.getPtrTy(), builder_.getPtrTy(), builder_.getPtrTy()}, false);
+    runtime_is_strictly_equal_ = llvm::Function::Create(
+        prototype, llvm::Function::ExternalLinkage, "runtime_is_strictly_equal", module_);
+  }
+  return runtime_is_strictly_equal_;
+}
