@@ -19,6 +19,13 @@ functions:
       - name: value
         type: f64
     ret: u32
+  - name: is_loosely_equal
+    args:
+      - name: a
+        type: '&Value'
+      - name: b
+        type: '&Value'
+    ret: bool
   - name: is_strictly_equal
     args:
       - name: a

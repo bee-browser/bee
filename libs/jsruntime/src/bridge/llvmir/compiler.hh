@@ -101,9 +101,12 @@ class Compiler {
 
  private:
   struct Reference {
-    uint32_t symbol = 0;
-    Locator locator;
-    Reference() = default;
+    uint32_t symbol;
+    union {
+      Locator locator;
+      uint32_t opaque;  // used for comparing the locator value.
+    };
+    Reference() : symbol(0), locator() {}
     Reference(uint32_t symbol, Locator locator) : symbol(symbol), locator(locator) {}
   };
 
@@ -256,12 +259,18 @@ class Compiler {
   void IncrDecr(char pos, char op);
   void NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y);
   llvm::Value* ToNumeric(const Item& item);
+  llvm::Value* ToNumeric(llvm::Value* value_ptr);
   llvm::Value* ToInt32(llvm::Value* number);
   llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
   llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+
+  llvm::Value* CreateIsLooselyEqual(const Item& lhs, const Item& rhs);
+  llvm::Value* CreateIsLooselyEqual(llvm::Value* value_ptr, const Item& item);
+  llvm::Value* CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y);
+
   llvm::Value* CreateIsStrictlyEqual(const Item& lhs, const Item& rhs);
-  llvm::Value* CreateIsStrictlyEqual(llvm::Value* value, const Item& item);
+  llvm::Value* CreateIsStrictlyEqual(llvm::Value* value_ptr, const Item& item);
   llvm::Value* CreateIsStrictlyEqual(llvm::Value* x, llvm::Value* y);
   llvm::Value* CreateIsUndefined(llvm::Value* value_ptr);
   llvm::Value* CreateIsNull(llvm::Value* value_ptr);

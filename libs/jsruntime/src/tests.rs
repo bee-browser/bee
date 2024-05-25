@@ -203,6 +203,58 @@ fn test_eval_logical_not() {
 }
 
 #[test]
+fn test_eval_equality() {
+    test_eval_equality_inequality("==");
+}
+
+#[test]
+fn test_eval_inequality() {
+    test_eval_equality_inequality("!=");
+}
+
+fn test_eval_equality_inequality(op: &str) {
+    macro_rules! eval_equality {
+        ($lhs:literal, $rhs:literal) => {
+            if op == "==" {
+                eval!(format!("print({} == {})", $lhs, $rhs), true);
+            } else {
+                eval!(format!("print({} != {})", $lhs, $rhs), false);
+            }
+        };
+    }
+
+    macro_rules! eval_inequality {
+        ($lhs:literal, $rhs:literal) => {
+            if op == "==" {
+                eval!(format!("print({} == {})", $lhs, $rhs), false);
+            } else {
+                eval!(format!("print({} != {})", $lhs, $rhs), true);
+            }
+        };
+    }
+
+    eval_equality!("undefined", "undefined");
+    eval_equality!("undefined", "null");
+    eval_equality!("true", "true");
+    eval_equality!("false", "false");
+    eval_equality!("0", "0");
+    eval_equality!("+0", "-0");
+    eval_equality!("1", "1");
+    eval_equality!("Infinity", "Infinity");
+
+    eval_inequality!("undefined", "true");
+    eval_inequality!("null", "true");
+    eval_inequality!("true", "false");
+    eval_inequality!("0", "1");
+    eval_inequality!("0", "Infinity");
+    eval_inequality!("0", "NaN");
+    eval_inequality!("1", "Infinity");
+    eval_inequality!("1", "NaN");
+    eval_inequality!("Infinity", "NaN");
+    eval_inequality!("NaN", "NaN");
+}
+
+#[test]
 fn test_eval_strict_equality() {
     test_eval_strict_equality_inequality("===");
 }

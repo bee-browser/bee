@@ -37,6 +37,10 @@ void Executor::RegisterRuntime(const Runtime* runtime) {
       llvm::orc::ExecutorAddr::fromPtr(runtime->to_uint32),
       llvm::JITSymbolFlags::Exported,
   };
+  symbols[exec_session().intern("runtime_is_loosely_equal")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime->is_loosely_equal),
+      llvm::JITSymbolFlags::Exported,
+  };
   symbols[exec_session().intern("runtime_is_strictly_equal")] = {
       llvm::orc::ExecutorAddr::fromPtr(runtime->is_strictly_equal),
       llvm::JITSymbolFlags::Exported,

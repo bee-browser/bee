@@ -352,20 +352,23 @@ void Compiler::In() {
 // 13.11.1 Runtime Semantics: Evaluation
 void Compiler::Equality() {
   Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFCmpOEQ(lhs, rhs);
+  auto lhs = Dereference();
+  auto rhs = Dereference();
+  // TODO: comparing references improves the performance.
+  auto* v = CreateIsLooselyEqual(lhs, rhs);
   PushBoolean(v);
 }
 
 // 13.11.1 Runtime Semantics: Evaluation
 void Compiler::Inequality() {
   Swap();
-  auto* lhs = ToNumeric(Dereference());
-  auto* rhs = ToNumeric(Dereference());
-  // TODO: static dispatch
-  auto* v = builder_->CreateFCmpONE(lhs, rhs);
+  struct Reference lref, rref;
+  auto lhs = Dereference();
+  auto rhs = Dereference();
+  // TODO: comparing references improves the performance.
+  auto* eq = CreateIsLooselyEqual(lhs, rhs);
+  // TODO: should reuse LogicalNot()?
+  auto* v = builder_->CreateXor(eq, builder_->getTrue());
   PushBoolean(v);
 }
 
@@ -1060,14 +1063,17 @@ llvm::Value* Compiler::ToNumeric(const Item& item) {
       return item.value;
     case Item::Function:
       return llvm::ConstantFP::getNaN(builder_->getDoubleTy());
-    case Item::Any: {
-      auto* call = types_->CreateRuntimeToNumeric();
-      return builder_->CreateCall(call, {exec_context_, item.value});
-    }
+    case Item::Any:
+      return ToNumeric(item.value);
     default:
       assert(false);
       return nullptr;
   }
+}
+
+llvm::Value* Compiler::ToNumeric(llvm::Value* value_ptr) {
+  auto* call = types_->CreateRuntimeToNumeric();
+  return builder_->CreateCall(call, {exec_context_, value_ptr});
 }
 
 // 7.1.6 ToInt32 ( argument )
@@ -1103,6 +1109,52 @@ llvm::AllocaInst* Compiler::CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n)
   auto* alloca = builder_->CreateAlloca(ty, builder_->getInt32(n));
   builder_->SetInsertPoint(backup);
   return alloca;
+}
+
+// 7.2.13 IsLooselyEqual ( x, y )
+
+llvm::Value* Compiler::CreateIsLooselyEqual(const Item& lhs, const Item& rhs) {
+  if (lhs.type == Item::Any) {
+    return CreateIsLooselyEqual(lhs.value, rhs);
+  }
+  if (rhs.type == Item::Any) {
+    return CreateIsLooselyEqual(rhs.value, lhs);
+  }
+  // 1. If Type(x) is Type(y), then Return IsStrictlyEqual(x, y).
+  if (lhs.type == rhs.type) {
+    return CreateIsStrictlyEqual(lhs, rhs);
+  }
+  // 2. If x is null and y is undefined, return true.
+  if (lhs.type == Item::Undefined && rhs.type == Item::Null) {
+    return builder_->getTrue();
+  }
+  // 3. If x is undefined and y is null, return true.
+  if (lhs.type == Item::Null && rhs.type == Item::Undefined) {
+    return builder_->getTrue();
+  }
+  // TODO: 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
+  // TODO: 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
+  // TODO: 7. If x is a BigInt and y is a String, then
+  // TODO: 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
+  // TODO
+  // TODO: 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
+  // TODO: 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
+  // TODO: ...
+  auto* lval = ToAny(lhs);
+  auto* rval = ToAny(rhs);
+  return CreateIsLooselyEqual(lval, rval);
+}
+
+llvm::Value* Compiler::CreateIsLooselyEqual(llvm::Value* value_ptr, const Item& item) {
+  // TODO: compile-time evaluation
+  auto* any = ToAny(item);
+  return CreateIsLooselyEqual(value_ptr, any);
+}
+
+llvm::Value* Compiler::CreateIsLooselyEqual(llvm::Value* x, llvm::Value* y) {
+  // TODO: Create inline instructions if runtime_is_loosely_equal() is slow.
+  auto* func = types_->CreateRuntimeIsLooselyEqual();
+  return builder_->CreateCall(func, {exec_context_, x, y});
 }
 
 // 7.2.14 IsStrictlyEqual ( x, y )
