@@ -1983,12 +1983,12 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     Some((Builder::object_expression, "object_expression")),
     // ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await COMMA RBRACE
     Some((Builder::object_expression_comma, "object_expression_comma")),
-    // FunctionExpression -> FUNCTION LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((
         Builder::anonymous_function_expression,
         "anonymous_function_expression",
     )),
-    // FunctionExpression -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+    // FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
     Some((Builder::function_expression, "function_expression")),
     // ClassExpression_Await -> CLASS ClassTail_Await
     Some((

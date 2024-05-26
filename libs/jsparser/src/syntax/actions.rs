@@ -1557,7 +1557,7 @@ where
         // PrimaryExpression_Await -> ObjectLiteral_Await
         Action::Undefined,
         // PrimaryExpression_Await -> FunctionExpression
-        Action::Undefined,
+        Action::Nop,
         // PrimaryExpression_Await -> ClassExpression_Await
         Action::Undefined,
         // PrimaryExpression_Await -> GeneratorExpression
@@ -1936,10 +1936,16 @@ where
         Action::Undefined,
         // ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await COMMA RBRACE
         Action::Undefined,
-        // FunctionExpression -> FUNCTION LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-        Action::Undefined,
-        // FunctionExpression -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
-        Action::Undefined,
+        // FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        Action::Invoke(
+            Self::process_anonymous_function_expression,
+            "process_anonymous_function_expression",
+        ),
+        // FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+        Action::Invoke(
+            Self::process_function_expression,
+            "process_function_expression",
+        ),
         // ClassExpression_Await -> CLASS ClassTail_Await
         Action::Undefined,
         // ClassExpression_Await -> CLASS BindingIdentifier_Await ClassTail_Await
@@ -2044,7 +2050,7 @@ where
         // PrimaryExpression -> ObjectLiteral
         Action::Undefined,
         // PrimaryExpression -> FunctionExpression
-        Action::Undefined,
+        Action::Nop,
         // PrimaryExpression -> ClassExpression
         Action::Undefined,
         // PrimaryExpression -> GeneratorExpression
@@ -3860,7 +3866,7 @@ where
         // PrimaryExpression_Yield -> ObjectLiteral_Yield
         Action::Undefined,
         // PrimaryExpression_Yield -> FunctionExpression
-        Action::Undefined,
+        Action::Nop,
         // PrimaryExpression_Yield -> ClassExpression_Yield
         Action::Undefined,
         // PrimaryExpression_Yield -> GeneratorExpression
@@ -3964,7 +3970,7 @@ where
         // PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
         Action::Undefined,
         // PrimaryExpression_Yield_Await -> FunctionExpression
-        Action::Undefined,
+        Action::Nop,
         // PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await
         Action::Undefined,
         // PrimaryExpression_Yield_Await -> GeneratorExpression

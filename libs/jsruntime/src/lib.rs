@@ -59,6 +59,7 @@ impl Runtime {
     }
 
     pub fn eval(&mut self, module: Module) {
+        logger::debug!(event = "eval");
         self.executor.register_module(module);
         let func = self.function_registry.get_native_mut(0);
         match self.executor.get_native_func(&func.name) {

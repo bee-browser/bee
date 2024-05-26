@@ -1816,11 +1816,13 @@
   action: object_expression
 - rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await COMMA RBRACE
   action: object_expression_comma
-- rule: FunctionExpression -> FUNCTION LPAREN FormalParameters RPAREN LBRACE FunctionBody RBRACE
+- rule: >-
+    FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN
+    _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: anonymous_function_expression
 - rule: >-
-    FunctionExpression -> FUNCTION BindingIdentifier LPAREN FormalParameters RPAREN LBRACE
-    FunctionBody RBRACE
+    FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters
+    RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
   action: function_expression
 - rule: ClassExpression_Await -> CLASS ClassTail_Await
   action: anonymous_class_expression

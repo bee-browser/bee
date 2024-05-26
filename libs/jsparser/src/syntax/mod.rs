@@ -130,6 +130,7 @@ pub enum Node<'s> {
     FunctionContext,
     FunctionSignature(Symbol),
     FunctionDeclaration,
+    FunctionExpression(bool),
     ThenBlock,
     ElseBlock,
     FalsyShortCircuit,
@@ -414,6 +415,10 @@ where
     fn process_function_signature(&mut self) -> Result<(), Error> {
         let func_name = match self.stack[self.stack.len() - 4].detail {
             Detail::BindingIdentifier(symbol) => symbol,
+            Detail::Token(index) => {
+                debug_assert!(matches!(self.tokens[index].kind, TokenKind::Function));
+                Symbol::NONE // anonymous function
+            }
             _ => unreachable!(),
         };
         self.enqueue(Node::FunctionSignature(func_name));
@@ -1594,6 +1599,23 @@ where
     fn process_function_declaration(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FunctionDeclaration);
         self.replace(8, Detail::Declaration);
+        Ok(())
+    }
+
+    // FunctionExpression :
+    //   function ( FormalParameters[~Yield, ~Await] ) { FunctionBody[~Yield, ~Await] }
+    fn process_anonymous_function_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FunctionExpression(false));
+        self.replace(7, Detail::Expression);
+        Ok(())
+    }
+
+    // FunctionExpression :
+    //   function BindingIdentifier[~Yield, ~Await] ( FormalParameters[~Yield, ~Await] )
+    //   { FunctionBody[~Yield, ~Await] }
+    fn process_function_expression(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FunctionExpression(true));
+        self.replace(8, Detail::Expression);
         Ok(())
     }
 

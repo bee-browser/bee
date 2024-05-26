@@ -16134,12 +16134,16 @@
   production:
     - type: token
       data: FUNCTION
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal
@@ -16152,12 +16156,16 @@
       data: FUNCTION
     - type: non-terminal
       data: BindingIdentifier
+    - type: non-terminal
+      data: _FUNCTION_CONTEXT_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: FormalParameters
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _FUNCTION_SIGNATURE_
     - type: token
       data: LBRACE
     - type: non-terminal

@@ -139,7 +139,7 @@ impl std::fmt::Debug for Value {
                 ValueKind_Boolean if self.holder.boolean => write!(f, "true"),
                 ValueKind_Boolean => write!(f, "false"),
                 ValueKind_Number => write!(f, "{}", self.holder.number),
-                ValueKind_Function => write!(f, "{:?}", self.holder.function),
+                ValueKind_Function => write!(f, "function({:?})", self.holder.function.unwrap()),
                 _ => unreachable!(),
             }
         }
