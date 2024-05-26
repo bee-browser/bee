@@ -753,10 +753,15 @@ void Compiler::Call(uint16_t argc) {
   }
   llvm::Value* scope = function_scope_;
   auto item = Dereference(nullptr, &scope);
-  assert(item.type == Item::Any);
-  // TODO: check value type
-  auto* holder_ptr = builder_->CreateStructGEP(types_->CreateValueType(), item.value, 1);
-  auto* func = builder_->CreateLoad(builder_->getPtrTy(), holder_ptr);
+  llvm::Value* func;
+  if (item.type == Item::Function) {
+    func = item.value;  // IIFE
+  } else {
+    assert(item.type == Item::Any);
+    auto* kind = CreateLoadValueKindFromValue(item.value);
+    UNUSED(kind);  // TODO: check kind
+    func = CreateLoadFunctionFromValue(item.value);
+  }
   auto* prototype = types_->CreateFunctionType();
   auto* ret =
       builder_->CreateCall(prototype, func, {exec_context_, scope, types_->GetWord(argc), argv});
