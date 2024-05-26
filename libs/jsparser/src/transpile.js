@@ -171,6 +171,7 @@ class Transpiler {
           modifyIfStatement,
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
+          modifyFunctionExpression,
           expandOptionals,
           expandParameterizedRules,
           modifyBlock,
@@ -609,20 +610,27 @@ function addActions(rules) {
 }
 
 function modifyFunctionDeclaration(rules) {
+  // The action will be inserted before the token.
+  const TARGETS = [
+    {
+      token: '`(`',
+      action: '_FUNCTION_CONTEXT_',
+    },
+    {
+      token: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+    },
+  ];
+
   log.debug('Modifying FunctionDeclaration...');
 
-  let rule;
-
-  rule = rules.find((rule) => rule.name === 'FunctionDeclaration[Yield, Await, Default]');
+  const rule = rules.find((rule) => rule.name === 'FunctionDeclaration[Yield, Await, Default]');
   assert(rule !== undefined);
+
   for (let i = 0; i < rule.values.length; ++i) {
-    {
-      const [head, tail] = rule.values[i].split('`(`');
-      rule.values[i] = `${head} _FUNCTION_CONTEXT_ \`(\` ${tail}`;
-    }
-    {
-      const [head, tail] = rule.values[i].split('`{`');
-      rule.values[i] = `${head} _FUNCTION_SIGNATURE_ \`{\` ${tail}`;
+    for (const target of TARGETS) {
+      const [head, tail] = rule.values[i].split(target.token);
+      rule.values[i] = [head, target.action, target.token, tail].join(' ');
     }
   }
 
@@ -718,6 +726,34 @@ function modifyShortCircuitExpressions(rules) {
     const [lhs, rhs] = rule.values[index].split(target.op).map((term) => term.trim());
     // Insert target.action for the short-circuit evaluation of the LHS.
     rule.values[index] = [lhs, target.op, target.action, rhs].join(' ');
+  }
+
+  return rules;
+}
+
+function modifyFunctionExpression(rules) {
+  // The action will be inserted before the token.
+  const TARGETS = [
+    {
+      token: '`(`',
+      action: '_FUNCTION_CONTEXT_',
+    },
+    {
+      token: '`{`',
+      action: '_FUNCTION_SIGNATURE_',
+    },
+  ];
+
+  log.debug('Modifying FunctionExpression...');
+
+  const rule = rules.find((rule) => rule.name === 'FunctionExpression');
+  assert(rule !== undefined);
+
+  for (let i = 0; i < rule.values.length; ++i) {
+    for (const target of TARGETS) {
+      const [head, tail] = rule.values[i].split(target.token);
+      rule.values[i] = [head, target.action, target.token, tail].join(' ');
+    }
   }
 
   return rules;

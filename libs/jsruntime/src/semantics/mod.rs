@@ -110,6 +110,7 @@ impl<'r> Analyzer<'r> {
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
             Node::FunctionDeclaration => self.handle_function_declaration(),
+            Node::FunctionExpression(named) => self.handle_function_expression(named),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
@@ -294,6 +295,23 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .process_function_declaration(self.functions[func_index].id);
+    }
+
+    // TODO: reduce code clone took from handle_function_declaration().
+    fn handle_function_expression(&mut self, named: bool) {
+        self.scope_manager.pop();
+
+        let mut context = self.context_stack.pop().unwrap();
+        context.end_scope(true);
+        // TODO: remaining references must be handled as var bindings w/ undefined value.
+        context.commands[0] = CompileCommand::Bindings(context.max_bindings as u16);
+        let func_index = context.func_index as usize;
+        self.functions[func_index].commands = context.commands;
+
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .process_function_expression(self.functions[func_index].id, named);
     }
 
     fn handle_then_block(&mut self) {
@@ -624,6 +642,14 @@ impl FunctionContext {
         self.commands.push(CompileCommand::Function(func_id));
         self.commands.push(CompileCommand::DeclareFunction);
         self.scope_stack.last_mut().unwrap().num_bindings += 1;
+    }
+
+    fn process_function_expression(&mut self, func_id: FunctionId, named: bool) {
+        if named {
+            // Remove the BindingIdentifier of the function.
+            self.put_command(CompileCommand::Discard);
+        }
+        self.commands.push(CompileCommand::Function(func_id));
     }
 
     fn start_scope(&mut self) {

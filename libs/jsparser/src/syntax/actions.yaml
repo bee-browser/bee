@@ -1595,7 +1595,7 @@
 - rule: PrimaryExpression_Await -> ObjectLiteral_Await
   action: undefined
 - rule: PrimaryExpression_Await -> FunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Await -> ClassExpression_Await
   action: undefined
 - rule: PrimaryExpression_Await -> GeneratorExpression
@@ -1956,13 +1956,13 @@
 - rule: ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await COMMA RBRACE
   action: undefined
 - rule: >-
-    FunctionExpression -> FUNCTION LPAREN FormalParameters RPAREN LBRACE
-    FunctionBody RBRACE
-  action: undefined
+    FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters
+    RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+  action: process_anonymous_function_expression
 - rule: >-
-    FunctionExpression -> FUNCTION BindingIdentifier LPAREN FormalParameters
-    RPAREN LBRACE FunctionBody RBRACE
-  action: undefined
+    FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN
+    FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE
+  action: process_function_expression
 - rule: ClassExpression_Await -> CLASS ClassTail_Await
   action: undefined
 - rule: ClassExpression_Await -> CLASS BindingIdentifier_Await ClassTail_Await
@@ -2080,7 +2080,7 @@
 - rule: PrimaryExpression -> ObjectLiteral
   action: undefined
 - rule: PrimaryExpression -> FunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression -> ClassExpression
   action: undefined
 - rule: PrimaryExpression -> GeneratorExpression
@@ -4355,7 +4355,7 @@
 - rule: PrimaryExpression_Yield -> ObjectLiteral_Yield
   action: undefined
 - rule: PrimaryExpression_Yield -> FunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield -> ClassExpression_Yield
   action: undefined
 - rule: PrimaryExpression_Yield -> GeneratorExpression
@@ -4459,7 +4459,7 @@
 - rule: PrimaryExpression_Yield_Await -> ObjectLiteral_Yield_Await
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> FunctionExpression
-  action: undefined
+  action: nop
 - rule: PrimaryExpression_Yield_Await -> ClassExpression_Yield_Await
   action: undefined
 - rule: PrimaryExpression_Yield_Await -> GeneratorExpression

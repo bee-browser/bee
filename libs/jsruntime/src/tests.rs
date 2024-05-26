@@ -391,7 +391,7 @@ fn test_eval_to_numeric() {
 
 #[test]
 fn test_eval_call_with_no_argument() {
-    eval!("function a() { return 1 } print(a())", 1.);
+    eval!("function a() { return 1 } print(a())", 1);
 }
 
 #[test]
@@ -603,4 +603,20 @@ fn test_eval_fibonacci() {
          function fib(n) { if (n < 2) return n; return fib(n - 1) + fib(n - 2); }",
         55.
     );
+}
+
+#[test]
+fn test_eval_function_expression() {
+    eval!("const a = function x() { return 1 }; print(a())", 1);
+}
+
+#[test]
+fn test_eval_anonymous_function_expression() {
+    eval!("const a = function() { return 1 }; print(a())", 1);
+}
+
+#[test]
+fn test_eval_iife() { // IIFE: Immediately Invoked Function Expression
+    eval!("print((function() { return 1 })())", 1);
+    eval!("print((function x() { return 1 })())", 1);
 }
