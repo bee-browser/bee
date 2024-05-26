@@ -88,6 +88,9 @@ impl<'r> Analyzer<'r> {
             Node::BinaryExpression(op) => self.handle_operator(op),
             Node::LogicalExpression(op) => self.handle_logical_expression(op),
             Node::ConditionalExpression => self.handle_conditional_expression(),
+            Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => self.handle_conditional_assignment(),
+            Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => self.handle_conditional_assignment(),
+            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => (),
             Node::AssignmentExpression(op) => self.handle_operator(op),
             Node::BlockStatement => (),
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
@@ -104,8 +107,10 @@ impl<'r> Analyzer<'r> {
             Node::FunctionDeclaration => self.handle_function_declaration(),
             Node::ThenBlock => self.handle_then_block(),
             Node::ElseBlock => self.handle_else_block(),
-            Node::AndThen => self.handle_and_then(),
-            Node::OrElse => self.handle_or_else(),
+            Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
+            Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
+            Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
+            Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
@@ -198,8 +203,6 @@ impl<'r> Analyzer<'r> {
         match op {
             LogicalOperator::LogicalAnd => {
                 // See handle_and_then() for the top-half.
-                context.put_command(CompileCommand::Else);
-                context.put_command(CompileCommand::Boolean(false));
                 context.put_command(CompileCommand::ConditionalTernary);
             }
             LogicalOperator::LogicalOr => {
@@ -218,6 +221,12 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(CompileCommand::ConditionalTernary);
+    }
+
+    fn handle_conditional_assignment(&mut self) {
+        let context = self.context_stack.last_mut().unwrap();
+        context.put_command(CompileCommand::ConditionalTernary);
+        context.put_command(CompileCommand::Assignment);
     }
 
     fn handle_lexical_binding(&mut self, init: bool) {
@@ -311,18 +320,20 @@ impl<'r> Analyzer<'r> {
             .put_command(CompileCommand::Else);
     }
 
-    fn handle_and_then(&mut self) {
-        let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Truthy);
-        context.put_command(CompileCommand::Then);
+    fn handle_falsy_short_circuit(&mut self) {
+        self.context_stack.last_mut().unwrap().put_command(CompileCommand::FalsyShortCircuit);
     }
 
-    fn handle_or_else(&mut self) {
-        let context = self.context_stack.last_mut().unwrap();
-        context.put_command(CompileCommand::Truthy);
-        context.put_command(CompileCommand::Then);
-        context.put_command(CompileCommand::Boolean(true));
-        context.put_command(CompileCommand::Else);
+    fn handle_truthy_short_circuit(&mut self) {
+        self.context_stack.last_mut().unwrap().put_command(CompileCommand::TruthyShortCircuit);
+    }
+
+    fn handle_falsy_short_circuit_assignment(&mut self) {
+        self.context_stack.last_mut().unwrap().put_command(CompileCommand::FalsyShortCircuitAssignment);
+    }
+
+    fn handle_truthy_short_circuit_assignment(&mut self) {
+        self.context_stack.last_mut().unwrap().put_command(CompileCommand::TruthyShortCircuitAssignment);
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -713,13 +724,14 @@ pub enum CompileCommand {
 
     // There is no compile command for binary logical operators.
     //
-    // For the short-circuit evaluation on the LHS in a logical expression, we convert the logical
-    // expression into a corresponding conditional expression.
+    // For the short-circuit evaluation on the LHS in a logical expression, we convert a binary
+    // logical expression into a corresponding conditional expression.
     //
     // The conversion is performed in the following two steps:
     //
     //   1. Perform the short-circuit evaluation by using a special action for each logical
-    //      operator in handle_and_then() for `&&`, handle_or_else() for `||`.
+    //      operator in handle_falsy_short_circuit() for `&&`, handle_truthy_short_circuit() for
+    //      `||`.
     //   2. Emit supplemental commands and CompileCommand::ConditionalTernery in
     //      handle_logical_expression()
     //
@@ -742,9 +754,12 @@ pub enum CompileCommand {
     BitwiseXorAssignment,
     BitwiseOrAssignment,
     ExponentiationAssignment,
-    LogicalAndAssignment,
-    LogicalOrAssignment,
-    NullishCoalescingAssignment,
+
+    // short-circuit
+    FalsyShortCircuit,
+    TruthyShortCircuit,
+    FalsyShortCircuitAssignment,
+    TruthyShortCircuitAssignment,
 
     // conditional
     Truthy,
@@ -828,9 +843,10 @@ impl From<AssignmentOperator> for CompileCommand {
             AssignmentOperator::BitwiseXorAssignment => Self::BitwiseXorAssignment,
             AssignmentOperator::BitwiseOrAssignment => Self::BitwiseOrAssignment,
             AssignmentOperator::ExponentiationAssignment => Self::ExponentiationAssignment,
-            AssignmentOperator::LogicalAndAssignment => Self::LogicalAndAssignment,
-            AssignmentOperator::LogicalOrAssignment => Self::LogicalOrAssignment,
-            AssignmentOperator::NullishCoalescingAssignment => Self::NullishCoalescingAssignment,
+            // There is no corresponding command for `&&=`, `||=` and `??=`.
+            // These are converted into the corresponding conditional expression for short-circuit
+            // evaluation of the LHS.
+            _ => unreachable!(),
         }
     }
 }

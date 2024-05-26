@@ -132,8 +132,10 @@ pub enum Node<'s> {
     FunctionDeclaration,
     ThenBlock,
     ElseBlock,
-    AndThen,
-    OrElse,
+    FalsyShortCircuit,
+    TruthyShortCircuit,
+    FalsyShortCircuitAssignment,
+    TruthyShortCircuitAssignment,
     StartBlockScope,
     EndBlockScope,
 }
@@ -416,15 +418,27 @@ where
         Ok(())
     }
 
-    // _AND_THEN_
-    fn process_and_then(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::AndThen);
+    // _FALSY_SHORT_CIRCUIT_
+    fn process_falsy_short_circuit(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FalsyShortCircuit);
         Ok(())
     }
 
-    // _OR_ELSE_
-    fn process_or_else(&mut self) -> Result<(), Error> {
-        self.enqueue(Node::OrElse);
+    // _TRUTHY_SHORT_CIRCUIT_
+    fn process_truthy_short_circuit(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::TruthyShortCircuit);
+        Ok(())
+    }
+
+    // _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    fn process_falsy_short_circuit_assignment(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::FalsyShortCircuitAssignment);
+        Ok(())
+    }
+
+    // _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
+    fn process_truthy_short_circuit_assignment(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::TruthyShortCircuitAssignment);
         Ok(())
     }
 

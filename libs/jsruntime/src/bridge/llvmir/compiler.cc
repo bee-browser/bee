@@ -183,9 +183,9 @@ void Compiler::BitwiseNot() {
 
 // 13.5.7.1 Runtime Semantics: Evaluation
 void Compiler::LogicalNot() {
-  ToBoolean();
-  auto* boolean = PopBoolean();
-  auto* v = builder_->CreateXor(boolean, builder_->getTrue());
+  const auto item = Dereference();
+  auto* truthy = CreateToBoolean(item);
+  auto* v = builder_->CreateXor(truthy, builder_->getTrue());
   PushBoolean(v);
 }
 
@@ -440,7 +440,7 @@ void Compiler::BitwiseOr() {
   NumberBitwiseOp('|', lnum, rnum);
 }
 
-void Compiler::ConditionalExpression() {
+void Compiler::ConditionalTernary() {
   auto* else_tail_block = builder_->GetInsertBlock();
   auto* func = else_tail_block->getParent();
 
@@ -665,18 +665,6 @@ void Compiler::BitwiseOrAssignment() {
   Assignment();
 }
 
-// 13.15.2 Runtime Semantics: Evaluation
-void Compiler::LogicalAndAssignment() {
-  // TODO
-  assert(false);
-}
-
-// 13.15.2 Runtime Semantics: Evaluation
-void Compiler::LogicalOrAssignment() {
-  // TODO
-  assert(false);
-}
-
 void Compiler::Bindings(uint16_t n) {
   auto* backup = builder_->GetInsertBlock();
   builder_->SetInsertPoint(prologue_);
@@ -780,39 +768,52 @@ void Compiler::Call(uint16_t argc) {
   PushAny(value_ptr);
 }
 
-// 7.1.2 ToBoolean ( argument )
-void Compiler::ToBoolean() {
+void Compiler::Truthy() {
   const auto item = Dereference();
-  llvm::Value* value;
-  switch (item.type) {
-    case Item::Undefined:
-      value = builder_->getFalse();
-      break;
-    case Item::Null:
-      value = builder_->getFalse();
-      break;
-    case Item::Boolean:
-      value = item.value;
-      break;
-    case Item::Number:
-      value =
-          builder_->CreateFCmpUNE(item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
-      break;
-    case Item::Function:
-      value = builder_->getTrue();
-      break;
-    case Item::Any: {
-      auto* call = types_->CreateRuntimeToBoolean();
-      value = builder_->CreateCall(call, {exec_context_, item.value});
-      break;
-    }
-    default:
-      // TODO
-      assert(false);
-      value = nullptr;
-      break;
-  }
-  PushBoolean(value);
+  auto* v = CreateToBoolean(item);
+  PushBoolean(v);
+}
+
+void Compiler::FalsyShortCircuit() {
+  const auto item = Dereference();
+  auto* truthy = CreateToBoolean(item);
+  PushBoolean(truthy);
+  LogicalNot();
+  Block();  // then
+  stack_.push_back(item);
+  Block();  // else
+}
+
+void Compiler::TruthyShortCircuit() {
+  const auto item = Dereference();
+  auto* truthy = CreateToBoolean(item);
+  PushBoolean(truthy);
+  Block();  // then
+  stack_.push_back(item);
+  Block();  // else
+}
+
+void Compiler::FalsyShortCircuitAssignment() {
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  const auto item = Dereference();
+  auto* truthy = CreateToBoolean(item);
+  PushBoolean(truthy);
+  LogicalNot();
+  Block();  // then
+  stack_.push_back(item);
+  Block();  // else
+}
+
+void Compiler::TruthyShortCircuitAssignment() {
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  const auto item = Dereference();
+  auto* truthy = CreateToBoolean(item);
+  PushBoolean(truthy);
+  Block();  // then
+  stack_.push_back(item);
+  Block();  // else
 }
 
 void Compiler::Block() {
@@ -1249,6 +1250,34 @@ llvm::AllocaInst* Compiler::CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n)
   auto* alloca = builder_->CreateAlloca(ty, builder_->getInt32(n));
   builder_->SetInsertPoint(backup);
   return alloca;
+}
+
+// 7.1.2 ToBoolean ( argument )
+
+llvm::Value* Compiler::CreateToBoolean(const Item& item) {
+  switch (item.type) {
+    case Item::Undefined:
+      return builder_->getFalse();
+    case Item::Null:
+      return builder_->getFalse();
+    case Item::Boolean:
+      return item.value;
+    case Item::Number:
+      return builder_->CreateFCmpUNE(item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
+    case Item::Function:
+      return builder_->getTrue();
+    case Item::Any:
+      return CreateToBoolean(item.value);
+    default:
+      // TODO
+      assert(false);
+      return nullptr;
+  }
+}
+
+llvm::Value* Compiler::CreateToBoolean(llvm::Value* value_ptr) {
+  auto* func = types_->CreateRuntimeToBoolean();
+  return builder_->CreateCall(func, {exec_context_, value_ptr});
 }
 
 // 7.2.13 IsLooselyEqual ( x, y )

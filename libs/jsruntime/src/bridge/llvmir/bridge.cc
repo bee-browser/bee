@@ -210,8 +210,8 @@ void compiler_peer_bitwise_or(Compiler* self) {
   self->BitwiseOr();
 }
 
-void compiler_peer_conditional_expression(Compiler* self) {
-  self->ConditionalExpression();
+void compiler_peer_conditional_ternary(Compiler* self) {
+  self->ConditionalTernary();
 }
 
 void compiler_peer_assignment(Compiler* self) {
@@ -266,18 +266,6 @@ void compiler_peer_bitwise_or_assignment(Compiler* self) {
   self->BitwiseOrAssignment();
 }
 
-void compiler_peer_logical_and_assignment(Compiler* self) {
-  self->LogicalAndAssignment();
-}
-
-void compiler_peer_logical_or_assignment(Compiler* self) {
-  self->LogicalOrAssignment();
-}
-
-void compiler_peer_nullish_coalescing_assignment(Compiler* self) {
-  self->NullishCoalescingAssignment();
-}
-
 void compiler_peer_bindings(Compiler* self, uint16_t n) {
   self->Bindings(n);
 }
@@ -306,8 +294,24 @@ void compiler_peer_call(Compiler* self, uint16_t argc) {
   self->Call(argc);
 }
 
-void compiler_peer_to_boolean(Compiler* self) {
-  self->ToBoolean();
+void compiler_peer_truthy(Compiler* self) {
+  self->Truthy();
+}
+
+void compiler_peer_falsy_short_circuit(Compiler* self) {
+  self->FalsyShortCircuit();
+}
+
+void compiler_peer_truthy_short_circuit(Compiler* self) {
+  self->TruthyShortCircuit();
+}
+
+void compiler_peer_falsy_short_circuit_assignment(Compiler* self) {
+  self->FalsyShortCircuitAssignment();
+}
+
+void compiler_peer_truthy_short_circuit_assignment(Compiler* self) {
+  self->TruthyShortCircuitAssignment();
 }
 
 void compiler_peer_block(Compiler* self) {

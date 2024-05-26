@@ -77,7 +77,7 @@ class Compiler {
   void BitwiseAnd();
   void BitwiseXor();
   void BitwiseOr();
-  void ConditionalExpression();
+  void ConditionalTernary();
   void Assignment();
   void ExponentiationAssignment();
   void MultiplicationAssignment();
@@ -91,9 +91,6 @@ class Compiler {
   void BitwiseAndAssignment();
   void BitwiseXorAssignment();
   void BitwiseOrAssignment();
-  void LogicalAndAssignment();
-  void LogicalOrAssignment();
-  void NullishCoalescingAssignment();
   void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
@@ -101,7 +98,11 @@ class Compiler {
   void Arguments(uint16_t argc);
   void Argument(uint16_t index);
   void Call(uint16_t argc);
-  void ToBoolean();
+  void Truthy();
+  void FalsyShortCircuit();
+  void TruthyShortCircuit();
+  void FalsyShortCircuitAssignment();
+  void TruthyShortCircuitAssignment();
   void Block();
   void IfElseStatement();
   void IfStatement();
@@ -285,6 +286,9 @@ class Compiler {
   llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
   llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+
+  llvm::Value* CreateToBoolean(const Item& item);
+  llvm::Value* CreateToBoolean(llvm::Value* value_ptr);
 
   llvm::Value* CreateIsLooselyEqual(const Item& lhs, const Item& rhs);
   llvm::Value* CreateIsLooselyEqual(llvm::Value* value_ptr, const Item& item);

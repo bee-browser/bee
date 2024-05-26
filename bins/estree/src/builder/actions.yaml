@@ -202,11 +202,11 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Await -> LeftHandSideExpression_Await AND_ASSIGN
-    AssignmentExpression_In_Await
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Await -> LeftHandSideExpression_Await OR_ASSIGN
-    AssignmentExpression_In_Await
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN
@@ -447,6 +447,10 @@
   action: nop
 - rule: AssignmentOperator -> EXP_ASSIGN
   action: nop
+- rule: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
+  action: nop
+- rule: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
+  action: nop
 - rule: BlockStatement_Await -> Block_Await
   action: nop
 - rule: >-
@@ -503,9 +507,13 @@
   action: assignment_expression
 - rule: AssignmentExpression_In -> LeftHandSideExpression AssignmentOperator AssignmentExpression_In
   action: assignment_expression
-- rule: AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN AssignmentExpression_In
+- rule: >-
+    AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    AssignmentExpression_In
   action: assignment_expression
-- rule: AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN AssignmentExpression_In
+- rule: >-
+    AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
+    AssignmentExpression_In
   action: assignment_expression
 - rule: AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression_In
   action: assignment_expression
@@ -1041,7 +1049,7 @@
 - rule: LogicalORExpression_In_Await -> LogicalANDExpression_In_Await
   action: nop
 - rule: >-
-    LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR _OR_ELSE_
+    LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR _TRUTHY_SHORT_CIRCUIT_
     LogicalANDExpression_In_Await
   action: logical_expression
 - rule: >-
@@ -1320,9 +1328,13 @@
   action: assignment_expression
 - rule: AssignmentExpression -> LeftHandSideExpression AssignmentOperator AssignmentExpression
   action: assignment_expression
-- rule: AssignmentExpression -> LeftHandSideExpression AND_ASSIGN AssignmentExpression
+- rule: >-
+    AssignmentExpression -> LeftHandSideExpression AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    AssignmentExpression
   action: assignment_expression
-- rule: AssignmentExpression -> LeftHandSideExpression OR_ASSIGN AssignmentExpression
+- rule: >-
+    AssignmentExpression -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
+    AssignmentExpression
   action: assignment_expression
 - rule: AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression
   action: assignment_expression
@@ -1441,10 +1453,10 @@
 - rule: LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
   action: nop
 - rule: >-
-    LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _AND_THEN_
+    LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _FALSY_SHORT_CIRCUIT_
     BitwiseORExpression_In_Await
   action: logical_expression
-- rule: _OR_ELSE_ -> (empty)
+- rule: _TRUTHY_SHORT_CIRCUIT_ -> (empty)
   action: nop
 - rule: CoalesceExpressionHead_In_Await -> CoalesceExpression_In_Await
   action: nop
@@ -1546,7 +1558,9 @@
   action: concat_csv_arrays
 - rule: LogicalORExpression_In -> LogicalANDExpression_In
   action: nop
-- rule: LogicalORExpression_In -> LogicalORExpression_In OR _OR_ELSE_ LogicalANDExpression_In
+- rule: >-
+    LogicalORExpression_In -> LogicalORExpression_In OR _TRUTHY_SHORT_CIRCUIT_
+    LogicalANDExpression_In
   action: logical_expression
 - rule: CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
   action: logical_expression
@@ -1756,7 +1770,7 @@
   action: property_definition
 - rule: FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await
   action: property_definition_value
-- rule: _AND_THEN_ -> (empty)
+- rule: _FALSY_SHORT_CIRCUIT_ -> (empty)
   action: nop
 - rule: BitwiseXORExpression_In_Await -> BitwiseANDExpression_In_Await
   action: nop
@@ -1853,9 +1867,11 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Await -> LeftHandSideExpression_Await AND_ASSIGN
-    AssignmentExpression_Await
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
   action: assignment_expression
-- rule: AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN AssignmentExpression_Await
+- rule: >-
+    AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN
@@ -1885,7 +1901,9 @@
   action: append_to_array
 - rule: LogicalANDExpression_In -> BitwiseORExpression_In
   action: nop
-- rule: LogicalANDExpression_In -> LogicalANDExpression_In AND _AND_THEN_ BitwiseORExpression_In
+- rule: >-
+    LogicalANDExpression_In -> LogicalANDExpression_In AND _FALSY_SHORT_CIRCUIT_
+    BitwiseORExpression_In
   action: logical_expression
 - rule: CoalesceExpressionHead_In -> CoalesceExpression_In
   action: nop
@@ -2229,7 +2247,7 @@
   action: template_spans_append
 - rule: LogicalORExpression -> LogicalANDExpression
   action: nop
-- rule: LogicalORExpression -> LogicalORExpression OR _OR_ELSE_ LogicalANDExpression
+- rule: LogicalORExpression -> LogicalORExpression OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression
   action: logical_expression
 - rule: CoalesceExpression -> CoalesceExpressionHead NULLISH BitwiseORExpression
   action: logical_expression
@@ -2291,11 +2309,11 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN
-    AssignmentExpression_In_Yield
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN
-    AssignmentExpression_In_Yield
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN
@@ -2395,11 +2413,11 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN
-    AssignmentExpression_In_Yield_Await
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN
-    AssignmentExpression_In_Yield_Await
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN
@@ -2527,7 +2545,7 @@
   action: template_middle_list_append
 - rule: LogicalANDExpression -> BitwiseORExpression
   action: nop
-- rule: LogicalANDExpression -> LogicalANDExpression AND _AND_THEN_ BitwiseORExpression
+- rule: LogicalANDExpression -> LogicalANDExpression AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression
   action: logical_expression
 - rule: CoalesceExpressionHead -> CoalesceExpression
   action: nop
@@ -2826,7 +2844,9 @@
   action: template_middle_list_append
 - rule: LogicalORExpression_Await -> LogicalANDExpression_Await
   action: nop
-- rule: LogicalORExpression_Await -> LogicalORExpression_Await OR _OR_ELSE_ LogicalANDExpression_Await
+- rule: >-
+    LogicalORExpression_Await -> LogicalORExpression_Await OR _TRUTHY_SHORT_CIRCUIT_
+    LogicalANDExpression_Await
   action: logical_expression
 - rule: CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH BitwiseORExpression_Await
   action: logical_expression
@@ -3216,7 +3236,7 @@
 - rule: LogicalANDExpression_Await -> BitwiseORExpression_Await
   action: nop
 - rule: >-
-    LogicalANDExpression_Await -> LogicalANDExpression_Await AND _AND_THEN_
+    LogicalANDExpression_Await -> LogicalANDExpression_Await AND _FALSY_SHORT_CIRCUIT_
     BitwiseORExpression_Await
   action: logical_expression
 - rule: CoalesceExpressionHead_Await -> CoalesceExpression_Await
@@ -3266,7 +3286,7 @@
 - rule: LogicalORExpression_In_Yield -> LogicalANDExpression_In_Yield
   action: nop
 - rule: >-
-    LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _OR_ELSE_
+    LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _TRUTHY_SHORT_CIRCUIT_
     LogicalANDExpression_In_Yield
   action: logical_expression
 - rule: >-
@@ -3600,8 +3620,8 @@
 - rule: LogicalORExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await
   action: nop
 - rule: >-
-    LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _OR_ELSE_
-    LogicalANDExpression_In_Yield_Await
+    LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR
+    _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield_Await
   action: logical_expression
 - rule: >-
     CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH
@@ -3873,7 +3893,7 @@
 - rule: LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
   action: nop
 - rule: >-
-    LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _AND_THEN_
+    LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _FALSY_SHORT_CIRCUIT_
     BitwiseORExpression_In_Yield
   action: logical_expression
 - rule: CoalesceExpressionHead_In_Yield -> CoalesceExpression_In_Yield
@@ -3971,8 +3991,8 @@
 - rule: LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
   action: nop
 - rule: >-
-    LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _AND_THEN_
-    BitwiseORExpression_In_Yield_Await
+    LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND
+    _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
   action: logical_expression
 - rule: CoalesceExpressionHead_In_Yield_Await -> CoalesceExpression_In_Yield_Await
   action: nop
@@ -4152,9 +4172,11 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN
-    AssignmentExpression_Yield
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
   action: assignment_expression
-- rule: AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN AssignmentExpression_Yield
+- rule: >-
+    AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN
@@ -4244,11 +4266,11 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN
-    AssignmentExpression_Yield_Await
+    _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN
-    AssignmentExpression_Yield_Await
+    _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN
@@ -4686,7 +4708,9 @@
   action: template_middle_list_append
 - rule: LogicalORExpression_Yield -> LogicalANDExpression_Yield
   action: nop
-- rule: LogicalORExpression_Yield -> LogicalORExpression_Yield OR _OR_ELSE_ LogicalANDExpression_Yield
+- rule: >-
+    LogicalORExpression_Yield -> LogicalORExpression_Yield OR _TRUTHY_SHORT_CIRCUIT_
+    LogicalANDExpression_Yield
   action: logical_expression
 - rule: CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
   action: logical_expression
@@ -4729,7 +4753,7 @@
 - rule: LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await
   action: nop
 - rule: >-
-    LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _OR_ELSE_
+    LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_
     LogicalANDExpression_Yield_Await
   action: logical_expression
 - rule: >-
@@ -4747,7 +4771,7 @@
 - rule: LogicalANDExpression_Yield -> BitwiseORExpression_Yield
   action: nop
 - rule: >-
-    LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _AND_THEN_
+    LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _FALSY_SHORT_CIRCUIT_
     BitwiseORExpression_Yield
   action: logical_expression
 - rule: CoalesceExpressionHead_Yield -> CoalesceExpression_Yield
@@ -4769,7 +4793,7 @@
 - rule: LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await
   action: nop
 - rule: >-
-    LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _AND_THEN_
+    LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _FALSY_SHORT_CIRCUIT_
     BitwiseORExpression_Yield_Await
   action: logical_expression
 - rule: CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await

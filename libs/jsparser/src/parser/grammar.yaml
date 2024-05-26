@@ -4747,7 +4747,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression
 - name: LogicalANDExpression_Await
@@ -4761,7 +4761,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_Await
 - name: LogicalANDExpression_Yield
@@ -4775,7 +4775,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_Yield
 - name: LogicalANDExpression_Yield_Await
@@ -4789,7 +4789,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_Yield_Await
 - name: LogicalANDExpression_In
@@ -4803,7 +4803,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_In
 - name: LogicalANDExpression_In_Await
@@ -4817,7 +4817,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_In_Await
 - name: LogicalANDExpression_In_Yield
@@ -4831,7 +4831,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_In_Yield
 - name: LogicalANDExpression_In_Yield_Await
@@ -4845,7 +4845,7 @@
     - type: token
       data: AND
     - type: non-terminal
-      data: _AND_THEN_
+      data: _FALSY_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_In_Yield_Await
 - name: LogicalORExpression
@@ -4859,7 +4859,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression
 - name: LogicalORExpression_Await
@@ -4873,7 +4873,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression_Await
 - name: LogicalORExpression_Yield
@@ -4887,7 +4887,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression_Yield
 - name: LogicalORExpression_Yield_Await
@@ -4901,7 +4901,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression_Yield_Await
 - name: LogicalORExpression_In
@@ -4915,7 +4915,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression_In
 - name: LogicalORExpression_In_Await
@@ -4929,7 +4929,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression_In_Await
 - name: LogicalORExpression_In_Yield
@@ -4943,7 +4943,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression_In_Yield
 - name: LogicalORExpression_In_Yield_Await
@@ -4957,7 +4957,7 @@
     - type: token
       data: OR
     - type: non-terminal
-      data: _OR_ELSE_
+      data: _TRUTHY_SHORT_CIRCUIT_
     - type: non-terminal
       data: LogicalANDExpression_In_Yield_Await
 - name: CoalesceExpression
@@ -5347,6 +5347,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression
 - name: AssignmentExpression
   production:
@@ -5354,6 +5356,8 @@
       data: LeftHandSideExpression
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression
 - name: AssignmentExpression
@@ -5399,6 +5403,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_Await
 - name: AssignmentExpression_Await
   production:
@@ -5406,6 +5412,8 @@
       data: LeftHandSideExpression_Await
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_Await
 - name: AssignmentExpression_Await
@@ -5455,6 +5463,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_Yield
 - name: AssignmentExpression_Yield
   production:
@@ -5462,6 +5472,8 @@
       data: LeftHandSideExpression_Yield
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_Yield
 - name: AssignmentExpression_Yield
@@ -5511,6 +5523,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_Yield_Await
 - name: AssignmentExpression_Yield_Await
   production:
@@ -5518,6 +5532,8 @@
       data: LeftHandSideExpression_Yield_Await
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_Yield_Await
 - name: AssignmentExpression_Yield_Await
@@ -5563,6 +5579,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_In
 - name: AssignmentExpression_In
   production:
@@ -5570,6 +5588,8 @@
       data: LeftHandSideExpression
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_In
 - name: AssignmentExpression_In
@@ -5615,6 +5635,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_In_Await
 - name: AssignmentExpression_In_Await
   production:
@@ -5622,6 +5644,8 @@
       data: LeftHandSideExpression_Await
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_In_Await
 - name: AssignmentExpression_In_Await
@@ -5671,6 +5695,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield
 - name: AssignmentExpression_In_Yield
   production:
@@ -5678,6 +5704,8 @@
       data: LeftHandSideExpression_Yield
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_In_Yield
 - name: AssignmentExpression_In_Yield
@@ -5727,6 +5755,8 @@
     - type: token
       data: AND_ASSIGN
     - type: non-terminal
+      data: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
 - name: AssignmentExpression_In_Yield_Await
   production:
@@ -5734,6 +5764,8 @@
       data: LeftHandSideExpression_Yield_Await
     - type: token
       data: OR_ASSIGN
+    - type: non-terminal
+      data: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
 - name: AssignmentExpression_In_Yield_Await
@@ -18991,10 +19023,16 @@
 - name: _BLOCK_SCOPE_
   production:
     - type: empty
-- name: _AND_THEN_
+- name: _FALSY_SHORT_CIRCUIT_
   production:
     - type: empty
-- name: _OR_ELSE_
+- name: _TRUTHY_SHORT_CIRCUIT_
+  production:
+    - type: empty
+- name: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
+  production:
+    - type: empty
+- name: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
   production:
     - type: empty
 - name: NullLiteral

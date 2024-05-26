@@ -273,7 +273,7 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_bitwise_or(self.peer);
             },
             CompileCommand::ConditionalTernary => unsafe {
-                bridge::compiler_peer_conditional_expression(self.peer);
+                bridge::compiler_peer_conditional_ternary(self.peer);
             },
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_assignment(self.peer);
@@ -314,17 +314,20 @@ impl<'a> Compiler<'a> {
             CompileCommand::BitwiseOrAssignment => unsafe {
                 bridge::compiler_peer_bitwise_or_assignment(self.peer);
             },
-            CompileCommand::LogicalAndAssignment => unsafe {
-                bridge::compiler_peer_logical_and_assignment(self.peer);
-            },
-            CompileCommand::LogicalOrAssignment => unsafe {
-                bridge::compiler_peer_logical_or_assignment(self.peer);
-            },
-            CompileCommand::NullishCoalescingAssignment => {
-                unimplemented!("??= operator");
-            }
             CompileCommand::Truthy => unsafe {
-                bridge::compiler_peer_to_boolean(self.peer);
+                bridge::compiler_peer_truthy(self.peer);
+            },
+            CompileCommand::FalsyShortCircuit => unsafe {
+                bridge::compiler_peer_falsy_short_circuit(self.peer);
+            },
+            CompileCommand::TruthyShortCircuit => unsafe {
+                bridge::compiler_peer_truthy_short_circuit(self.peer);
+            },
+            CompileCommand::FalsyShortCircuitAssignment => unsafe {
+                bridge::compiler_peer_falsy_short_circuit_assignment(self.peer);
+            },
+            CompileCommand::TruthyShortCircuitAssignment => unsafe {
+                bridge::compiler_peer_truthy_short_circuit_assignment(self.peer);
             },
             CompileCommand::Then => unsafe {
                 bridge::compiler_peer_block(self.peer);
