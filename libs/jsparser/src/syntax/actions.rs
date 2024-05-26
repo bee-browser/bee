@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2102] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2106] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -231,17 +231,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression_In_Await -> LeftHandSideExpression_Await AND_ASSIGN AssignmentExpression_In_Await
+        // AssignmentExpression_In_Await -> LeftHandSideExpression_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression_In_Await -> LeftHandSideExpression_Await OR_ASSIGN AssignmentExpression_In_Await
+        // AssignmentExpression_In_Await -> LeftHandSideExpression_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN AssignmentExpression_In_Await
+        // AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -479,6 +479,21 @@ where
         Action::Nop,
         // AssignmentOperator -> EXP_ASSIGN
         Action::Nop,
+        // _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
+        Action::Invoke(
+            Self::process_falsy_short_circuit_assignment,
+            "process_falsy_short_circuit_assignment",
+        ),
+        // _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
+        Action::Invoke(
+            Self::process_truthy_short_circuit_assignment,
+            "process_truthy_short_circuit_assignment",
+        ),
+        // _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
+        Action::Invoke(
+            Self::process_nullish_short_circuit_assignment,
+            "process_nullish_short_circuit_assignment",
+        ),
         // BlockStatement_Await -> Block_Await
         Action::Invoke(Self::process_block_statement, "process_block_statement"),
         // ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
@@ -535,17 +550,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN AssignmentExpression_In
+        // AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN AssignmentExpression_In
+        // AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression_In
+        // AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -1120,10 +1135,13 @@ where
         Action::Undefined,
         // LogicalORExpression_In_Await -> LogicalANDExpression_In_Await
         Action::Nop,
-        // LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR _OR_ELSE_ LogicalANDExpression_In_Await
+        // LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Await
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH BitwiseORExpression_In_Await
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Await
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await RPAREN
         Action::Invoke(
             Self::process_cpeaapl_expression,
@@ -1367,17 +1385,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression -> LeftHandSideExpression AND_ASSIGN AssignmentExpression
+        // AssignmentExpression -> LeftHandSideExpression AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression -> LeftHandSideExpression OR_ASSIGN AssignmentExpression
+        // AssignmentExpression -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression
+        // AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -1505,14 +1523,22 @@ where
         Action::Undefined,
         // LogicalANDExpression_In_Await -> BitwiseORExpression_In_Await
         Action::Nop,
-        // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _AND_THEN_ BitwiseORExpression_In_Await
+        // LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
-        // _OR_ELSE_ -> (empty)
-        Action::Invoke(Self::process_or_else, "process_or_else"),
+        // _TRUTHY_SHORT_CIRCUIT_ -> (empty)
+        Action::Invoke(
+            Self::process_truthy_short_circuit,
+            "process_truthy_short_circuit",
+        ),
         // CoalesceExpressionHead_In_Await -> CoalesceExpression_In_Await
         Action::Nop,
         // CoalesceExpressionHead_In_Await -> BitwiseORExpression_In_Await
         Action::Nop,
+        // _NULLISH_SHORT_CIRCUIT_ -> (empty)
+        Action::Invoke(
+            Self::process_nullish_short_circuit,
+            "process_nullish_short_circuit",
+        ),
         // BitwiseORExpression_In_Await -> BitwiseXORExpression_In_Await
         Action::Nop,
         // BitwiseORExpression_In_Await -> BitwiseORExpression_In_Await BIT_OR BitwiseXORExpression_In_Await
@@ -1617,10 +1643,13 @@ where
         Action::Undefined,
         // LogicalORExpression_In -> LogicalANDExpression_In
         Action::Nop,
-        // LogicalORExpression_In -> LogicalORExpression_In OR _OR_ELSE_ LogicalANDExpression_In
+        // LogicalORExpression_In -> LogicalORExpression_In OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN
         Action::Invoke(
             Self::process_cpeaapl_expression,
@@ -1864,8 +1893,11 @@ where
         Action::Undefined,
         // FieldDefinition_Await -> ClassElementName_Await Initializer_In_Await
         Action::Undefined,
-        // _AND_THEN_ -> (empty)
-        Action::Invoke(Self::process_and_then, "process_and_then"),
+        // _FALSY_SHORT_CIRCUIT_ -> (empty)
+        Action::Invoke(
+            Self::process_falsy_short_circuit,
+            "process_falsy_short_circuit",
+        ),
         // BitwiseXORExpression_In_Await -> BitwiseANDExpression_In_Await
         Action::Nop,
         // BitwiseXORExpression_In_Await -> BitwiseXORExpression_In_Await BIT_XOR BitwiseANDExpression_In_Await
@@ -1949,17 +1981,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression_Await -> LeftHandSideExpression_Await AND_ASSIGN AssignmentExpression_Await
+        // AssignmentExpression_Await -> LeftHandSideExpression_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN AssignmentExpression_Await
+        // AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN AssignmentExpression_Await
+        // AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -1988,7 +2020,7 @@ where
         Action::Undefined,
         // LogicalANDExpression_In -> BitwiseORExpression_In
         Action::Nop,
-        // LogicalANDExpression_In -> LogicalANDExpression_In AND _AND_THEN_ BitwiseORExpression_In
+        // LogicalANDExpression_In -> LogicalANDExpression_In AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In -> CoalesceExpression_In
         Action::Nop,
@@ -2352,10 +2384,13 @@ where
         Action::Undefined,
         // LogicalORExpression -> LogicalANDExpression
         Action::Nop,
-        // LogicalORExpression -> LogicalORExpression OR _OR_ELSE_ LogicalANDExpression
+        // LogicalORExpression -> LogicalORExpression OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression -> CoalesceExpressionHead NULLISH BitwiseORExpression
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression -> CoalesceExpressionHead NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // ExpressionBody -> AssignmentExpression
         Action::Undefined,
         // ExpressionBody_Await -> AssignmentExpression_Await
@@ -2412,17 +2447,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN AssignmentExpression_In_Yield
+        // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN AssignmentExpression_In_Yield
+        // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN AssignmentExpression_In_Yield
+        // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -2514,17 +2549,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN AssignmentExpression_In_Yield_Await
+        // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN AssignmentExpression_In_Yield_Await
+        // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN AssignmentExpression_In_Yield_Await
+        // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -2647,7 +2682,7 @@ where
         Action::Undefined,
         // LogicalANDExpression -> BitwiseORExpression
         Action::Nop,
-        // LogicalANDExpression -> LogicalANDExpression AND _AND_THEN_ BitwiseORExpression
+        // LogicalANDExpression -> LogicalANDExpression AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead -> CoalesceExpression
         Action::Nop,
@@ -2928,10 +2963,13 @@ where
         Action::Undefined,
         // LogicalORExpression_Await -> LogicalANDExpression_Await
         Action::Nop,
-        // LogicalORExpression_Await -> LogicalORExpression_Await OR _OR_ELSE_ LogicalANDExpression_Await
+        // LogicalORExpression_Await -> LogicalORExpression_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Await
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH BitwiseORExpression_Await
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Await
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // EqualityExpression_In -> RelationalExpression_In
         Action::Nop,
         // EqualityExpression_In -> EqualityExpression_In EQ RelationalExpression_In
@@ -3272,7 +3310,7 @@ where
         ),
         // LogicalANDExpression_Await -> BitwiseORExpression_Await
         Action::Nop,
-        // LogicalANDExpression_Await -> LogicalANDExpression_Await AND _AND_THEN_ BitwiseORExpression_Await
+        // LogicalANDExpression_Await -> LogicalANDExpression_Await AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Await -> CoalesceExpression_Await
         Action::Nop,
@@ -3326,10 +3364,13 @@ where
         Action::Undefined,
         // LogicalORExpression_In_Yield -> LogicalANDExpression_In_Yield
         Action::Nop,
-        // LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _OR_ELSE_ LogicalANDExpression_In_Yield
+        // LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH BitwiseORExpression_In_Yield
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN
         Action::Invoke(
             Self::process_cpeaapl_expression,
@@ -3571,10 +3612,13 @@ where
         Action::Undefined,
         // LogicalORExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await
         Action::Nop,
-        // LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _OR_ELSE_ LogicalANDExpression_In_Yield_Await
+        // LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield_Await
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH BitwiseORExpression_In_Yield_Await
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await RPAREN
         Action::Invoke(
             Self::process_cpeaapl_expression,
@@ -3792,7 +3836,7 @@ where
         Action::Undefined,
         // LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield
         Action::Nop,
-        // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _AND_THEN_ BitwiseORExpression_In_Yield
+        // LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Yield -> CoalesceExpression_In_Yield
         Action::Nop,
@@ -3896,7 +3940,7 @@ where
         Action::Undefined,
         // LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await
         Action::Nop,
-        // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _AND_THEN_ BitwiseORExpression_In_Yield_Await
+        // LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_In_Yield_Await -> CoalesceExpression_In_Yield_Await
         Action::Nop,
@@ -4083,17 +4127,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN AssignmentExpression_Yield
+        // AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN AssignmentExpression_Yield
+        // AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN AssignmentExpression_Yield
+        // AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -4180,17 +4224,17 @@ where
             Self::process_assignment_operator,
             "process_assignment_operator",
         ),
-        // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN AssignmentExpression_Yield_Await
+        // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
         Action::Invoke(
             Self::process_logical_and_assignment,
             "process_logical_and_assignment",
         ),
-        // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN AssignmentExpression_Yield_Await
+        // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
         Action::Invoke(
             Self::process_logical_or_assignment,
             "process_logical_or_assignment",
         ),
-        // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN AssignmentExpression_Yield_Await
+        // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
         Action::Invoke(
             Self::process_nullish_coalescing_assignment,
             "process_nullish_coalescing_assignment",
@@ -4589,10 +4633,13 @@ where
         Action::Undefined,
         // LogicalORExpression_Yield -> LogicalANDExpression_Yield
         Action::Nop,
-        // LogicalORExpression_Yield -> LogicalORExpression_Yield OR _OR_ELSE_ LogicalANDExpression_Yield
+        // LogicalORExpression_Yield -> LogicalORExpression_Yield OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
         Action::Nop,
         // RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LT ShiftExpression_Yield_Await
@@ -4623,10 +4670,13 @@ where
         Action::Undefined,
         // LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await
         Action::Nop,
-        // LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _OR_ELSE_ LogicalANDExpression_Yield_Await
+        // LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield_Await
         Action::Invoke(Self::process_logical_or, "process_logical_or"),
-        // CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH BitwiseORExpression_Yield_Await
-        Action::Invoke(Self::process_nullish, "process_nullish"),
+        // CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await
+        Action::Invoke(
+            Self::process_nullish_coalescing,
+            "process_nullish_coalescing",
+        ),
         // ShiftExpression_Yield -> AdditiveExpression_Yield
         Action::Nop,
         // ShiftExpression_Yield -> ShiftExpression_Yield SHL AdditiveExpression_Yield
@@ -4643,7 +4693,7 @@ where
         ),
         // LogicalANDExpression_Yield -> BitwiseORExpression_Yield
         Action::Nop,
-        // LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _AND_THEN_ BitwiseORExpression_Yield
+        // LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Yield -> CoalesceExpression_Yield
         Action::Nop,
@@ -4669,7 +4719,7 @@ where
         ),
         // LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await
         Action::Nop,
-        // LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _AND_THEN_ BitwiseORExpression_Yield_Await
+        // LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await
         Action::Invoke(Self::process_logical_and, "process_logical_and"),
         // CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await
         Action::Nop,

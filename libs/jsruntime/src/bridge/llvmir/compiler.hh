@@ -77,8 +77,20 @@ class Compiler {
   void BitwiseAnd();
   void BitwiseXor();
   void BitwiseOr();
-  void ConditionalExpression();
+  void ConditionalTernary();
   void Assignment();
+  void ExponentiationAssignment();
+  void MultiplicationAssignment();
+  void DivisionAssignment();
+  void RemainderAssignment();
+  void AdditionAssignment();
+  void SubtractionAssignment();
+  void LeftShiftAssignment();
+  void SignedRightShiftAssignment();
+  void UnsignedRightShiftAssignment();
+  void BitwiseAndAssignment();
+  void BitwiseXorAssignment();
+  void BitwiseOrAssignment();
   void Bindings(uint16_t n);
   void DeclareImmutable();
   void DeclareMutable();
@@ -86,7 +98,13 @@ class Compiler {
   void Arguments(uint16_t argc);
   void Argument(uint16_t index);
   void Call(uint16_t argc);
-  void ToBoolean();
+  void Truthy();
+  void FalsyShortCircuit();
+  void TruthyShortCircuit();
+  void NullishShortCircuit();
+  void FalsyShortCircuitAssignment();
+  void TruthyShortCircuitAssignment();
+  void NullishShortCircuitAssignment();
   void Block();
   void IfElseStatement();
   void IfStatement();
@@ -255,6 +273,12 @@ class Compiler {
     return block;
   }
 
+  inline void Duplicate() {
+    assert(!stack_.empty());
+    const auto& item = stack_.back();
+    stack_.push_back(item);
+  }
+
   Item Dereference(struct Reference* ref = nullptr, llvm::Value** scope = nullptr);
   void IncrDecr(char pos, char op);
   void NumberBitwiseOp(char op, llvm::Value* x, llvm::Value* y);
@@ -264,6 +288,12 @@ class Compiler {
   llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
   llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+
+  llvm::Value* CreateIsNonNullish(const Item& item);
+  llvm::Value* CreateIsNonNullish(llvm::Value* value_ptr);
+
+  llvm::Value* CreateToBoolean(const Item& item);
+  llvm::Value* CreateToBoolean(llvm::Value* value_ptr);
 
   llvm::Value* CreateIsLooselyEqual(const Item& lhs, const Item& rhs);
   llvm::Value* CreateIsLooselyEqual(llvm::Value* value_ptr, const Item& item);

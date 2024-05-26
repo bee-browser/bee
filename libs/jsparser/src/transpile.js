@@ -170,8 +170,7 @@ class Transpiler {
           modifyFunctionDeclaration,
           modifyIfStatement,
           modifyConditionalExpression,
-          modifyLogicalANDExpression,
-          modifyLogicalORExpression,
+          modifyShortCircuitExpressions,
           expandOptionals,
           expandParameterizedRules,
           modifyBlock,
@@ -591,8 +590,12 @@ function addActions(rules) {
     '_ELSE_BLOCK_',
     '_THEN_BLOCK_',
     '_BLOCK_SCOPE_',
-    '_AND_THEN_',
-    '_OR_ELSE_',
+    '_FALSY_SHORT_CIRCUIT_',
+    '_TRUTHY_SHORT_CIRCUIT_',
+    '_NULLISH_SHORT_CIRCUIT_',
+    '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
+    '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
+    '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
   ];
 
   for (const action of ACTIONS) {
@@ -672,28 +675,50 @@ function modifyConditionalExpression(rules) {
   return rules;
 }
 
-function modifyLogicalANDExpression(rules) {
-  log.debug('Modifying LogicalANDExpression...');
+function modifyShortCircuitExpressions(rules) {
+  const TARGETS = [
+    {
+      rule: 'LogicalANDExpression[In, Yield, Await]',
+      op: '`&&`',
+      action: '_FALSY_SHORT_CIRCUIT_',
+    },
+    {
+      rule: 'LogicalORExpression[In, Yield, Await]',
+      op: '`||`',
+      action: '_TRUTHY_SHORT_CIRCUIT_',
+    },
+    {
+      rule: 'CoalesceExpression[In, Yield, Await]',
+      op: '`??`',
+      action: '_NULLISH_SHORT_CIRCUIT_',
+    },
+    {
+      rule: 'AssignmentExpression[In, Yield, Await]',
+      op: '`&&=`',
+      action: '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
+    },
+    {
+      rule: 'AssignmentExpression[In, Yield, Await]',
+      op: '`||=`',
+      action: '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
+    },
+    {
+      rule: 'AssignmentExpression[In, Yield, Await]',
+      op: '`??=`',
+      action: '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
+    },
+  ];
 
-  const rule = rules.find((rule) => rule.name === 'LogicalANDExpression[In, Yield, Await]');
-  assert(rule !== undefined);
-  assert(rule.values.length === 2);
-  const [lhs, rhs] = rule.values[1].split('`&&`').map((term) => term.trim());
-  // Insert _AND_THEN_ for the short-circuit evaluation of the LHS.
-  rule.values[1] = [lhs, '`&&`', '_AND_THEN_', rhs].join(' ');
-
-  return rules;
-}
-
-function modifyLogicalORExpression(rules) {
-  log.debug('Modifying LogicalORExpression...');
-
-  const rule = rules.find((rule) => rule.name === 'LogicalORExpression[In, Yield, Await]');
-  assert(rule !== undefined);
-  assert(rule.values.length === 2);
-  const [lhs, rhs] = rule.values[1].split('`||`').map((term) => term.trim());
-  // Insert _OR_ELSE_ for the short-circuit evaluation of the LHS.
-  rule.values[1] = [lhs, '`||`', '_OR_ELSE_', rhs].join(' ');
+  for (const target of TARGETS) {
+    log.debug(`Modifying ${target.rule}...`);
+    const rule = rules.find((rule) => rule.name === target.rule);
+    assert(rule !== undefined);
+    const index = rule.values.findIndex((production) => production.includes(target.op));
+    assert(index !== -1);
+    const [lhs, rhs] = rule.values[index].split(target.op).map((term) => term.trim());
+    // Insert target.action for the short-circuit evaluation of the LHS.
+    rule.values[index] = [lhs, target.op, target.action, rhs].join(' ');
+  }
 
   return rules;
 }

@@ -24,12 +24,14 @@ struct Locator {
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
+// The value for each kind is a bit flag so that we can quickly check a category such as
+// "null or undefined".
 enum ValueKind : uint8_t {
-  Undefined,
-  Null,
-  Boolean,
-  Number,
-  Function,
+  Undefined = 0x01,
+  Null = 0x02,
+  Boolean = 0x04,
+  Number = 0x08,
+  Function = 0x10,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
@@ -126,8 +128,20 @@ void compiler_peer_strict_inequality(Compiler* self);
 void compiler_peer_bitwise_and(Compiler* self);
 void compiler_peer_bitwise_xor(Compiler* self);
 void compiler_peer_bitwise_or(Compiler* self);
-void compiler_peer_conditional_expression(Compiler* self);
+void compiler_peer_conditional_ternary(Compiler* self);
 void compiler_peer_assignment(Compiler* self);
+void compiler_peer_exponentiation_assignment(Compiler* self);
+void compiler_peer_multiplication_assignment(Compiler* self);
+void compiler_peer_division_assignment(Compiler* self);
+void compiler_peer_remainder_assignment(Compiler* self);
+void compiler_peer_addition_assignment(Compiler* self);
+void compiler_peer_subtraction_assignment(Compiler* self);
+void compiler_peer_left_shift_assignment(Compiler* self);
+void compiler_peer_signed_right_shift_assignment(Compiler* self);
+void compiler_peer_unsigned_right_shift_assignment(Compiler* self);
+void compiler_peer_bitwise_and_assignment(Compiler* self);
+void compiler_peer_bitwise_xor_assignment(Compiler* self);
+void compiler_peer_bitwise_or_assignment(Compiler* self);
 void compiler_peer_bindings(Compiler* self, uint16_t n);
 void compiler_peer_declare_immutable(Compiler* self);
 void compiler_peer_declare_mutable(Compiler* self);
@@ -135,7 +149,13 @@ void compiler_peer_declare_function(Compiler* self);
 void compiler_peer_arguments(Compiler* self, uint16_t argc);
 void compiler_peer_argument(Compiler* self, uint16_t index);
 void compiler_peer_call(Compiler* self, uint16_t argc);
-void compiler_peer_to_boolean(Compiler* self);
+void compiler_peer_truthy(Compiler* self);
+void compiler_peer_falsy_short_circuit(Compiler* self);
+void compiler_peer_truthy_short_circuit(Compiler* self);
+void compiler_peer_nullish_short_circuit(Compiler* self);
+void compiler_peer_falsy_short_circuit_assignment(Compiler* self);
+void compiler_peer_truthy_short_circuit_assignment(Compiler* self);
+void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
 void compiler_peer_block(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);

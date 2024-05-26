@@ -273,58 +273,67 @@ impl<'a> Compiler<'a> {
                 bridge::compiler_peer_bitwise_or(self.peer);
             },
             CompileCommand::ConditionalTernary => unsafe {
-                bridge::compiler_peer_conditional_expression(self.peer);
+                bridge::compiler_peer_conditional_ternary(self.peer);
             },
             CompileCommand::Assignment => unsafe {
                 bridge::compiler_peer_assignment(self.peer);
             },
-            CompileCommand::MultiplicationAssignment => {
-                unimplemented!("*= operator");
-            }
-            CompileCommand::DivisionAssignment => {
-                unimplemented!("/= operator");
-            }
-            CompileCommand::RemainderAssignment => {
-                unimplemented!("%= operator");
-            }
-            CompileCommand::AdditionAssignment => {
-                unimplemented!("+= operator");
-            }
-            CompileCommand::SubtractionAssignment => {
-                unimplemented!("-= operator");
-            }
-            CompileCommand::LeftShiftAssignment => {
-                unimplemented!("<<= operator");
-            }
-            CompileCommand::SignedRightShiftAssignment => {
-                unimplemented!(">>= operator");
-            }
-            CompileCommand::UnsignedRightShiftAssignment => {
-                unimplemented!(">>>= operator");
-            }
-            CompileCommand::BitwiseAndAssignment => {
-                unimplemented!("&= operator");
-            }
-            CompileCommand::BitwiseXorAssignment => {
-                unimplemented!("^= operator");
-            }
-            CompileCommand::BitwiseOrAssignment => {
-                unimplemented!("|= operator");
-            }
             CompileCommand::ExponentiationAssignment => {
                 unimplemented!("**= operator");
             }
-            CompileCommand::LogicalAndAssignment => {
-                unimplemented!("&&= operator");
-            }
-            CompileCommand::LogicalOrAssignment => {
-                unimplemented!("||= operator");
-            }
-            CompileCommand::NullishCoalescingAssignment => {
-                unimplemented!("??= operator");
-            }
+            CompileCommand::MultiplicationAssignment => unsafe {
+                bridge::compiler_peer_multiplication_assignment(self.peer);
+            },
+            CompileCommand::DivisionAssignment => unsafe {
+                bridge::compiler_peer_division_assignment(self.peer);
+            },
+            CompileCommand::RemainderAssignment => unsafe {
+                bridge::compiler_peer_remainder_assignment(self.peer);
+            },
+            CompileCommand::AdditionAssignment => unsafe {
+                bridge::compiler_peer_addition_assignment(self.peer);
+            },
+            CompileCommand::SubtractionAssignment => unsafe {
+                bridge::compiler_peer_subtraction_assignment(self.peer);
+            },
+            CompileCommand::LeftShiftAssignment => unsafe {
+                bridge::compiler_peer_left_shift_assignment(self.peer);
+            },
+            CompileCommand::SignedRightShiftAssignment => unsafe {
+                bridge::compiler_peer_signed_right_shift_assignment(self.peer);
+            },
+            CompileCommand::UnsignedRightShiftAssignment => unsafe {
+                bridge::compiler_peer_unsigned_right_shift_assignment(self.peer);
+            },
+            CompileCommand::BitwiseAndAssignment => unsafe {
+                bridge::compiler_peer_bitwise_and_assignment(self.peer);
+            },
+            CompileCommand::BitwiseXorAssignment => unsafe {
+                bridge::compiler_peer_bitwise_xor_assignment(self.peer);
+            },
+            CompileCommand::BitwiseOrAssignment => unsafe {
+                bridge::compiler_peer_bitwise_or_assignment(self.peer);
+            },
             CompileCommand::Truthy => unsafe {
-                bridge::compiler_peer_to_boolean(self.peer);
+                bridge::compiler_peer_truthy(self.peer);
+            },
+            CompileCommand::FalsyShortCircuit => unsafe {
+                bridge::compiler_peer_falsy_short_circuit(self.peer);
+            },
+            CompileCommand::TruthyShortCircuit => unsafe {
+                bridge::compiler_peer_truthy_short_circuit(self.peer);
+            },
+            CompileCommand::NullishShortCircuit => unsafe {
+                bridge::compiler_peer_nullish_short_circuit(self.peer);
+            },
+            CompileCommand::FalsyShortCircuitAssignment => unsafe {
+                bridge::compiler_peer_falsy_short_circuit_assignment(self.peer);
+            },
+            CompileCommand::TruthyShortCircuitAssignment => unsafe {
+                bridge::compiler_peer_truthy_short_circuit_assignment(self.peer);
+            },
+            CompileCommand::NullishShortCircuitAssignment => unsafe {
+                bridge::compiler_peer_nullish_short_circuit_assignment(self.peer);
             },
             CompileCommand::Then => unsafe {
                 bridge::compiler_peer_block(self.peer);
