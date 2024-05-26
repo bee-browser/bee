@@ -87,9 +87,15 @@ impl<'r> Analyzer<'r> {
             Node::BinaryExpression(op) => self.handle_operator(op),
             Node::LogicalExpression(_op) => self.handle_conditional_expression(),
             Node::ConditionalExpression => self.handle_conditional_expression(),
-            Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => self.handle_conditional_assignment(),
-            Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => self.handle_conditional_assignment(),
-            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => self.handle_conditional_assignment(),
+            Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => {
+                self.handle_conditional_assignment()
+            }
+            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => {
+                self.handle_conditional_assignment()
+            }
             Node::AssignmentExpression(op) => self.handle_operator(op),
             Node::BlockStatement => (),
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
@@ -304,27 +310,45 @@ impl<'r> Analyzer<'r> {
     }
 
     fn handle_falsy_short_circuit(&mut self) {
-        self.context_stack.last_mut().unwrap().put_command(CompileCommand::FalsyShortCircuit);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::FalsyShortCircuit);
     }
 
     fn handle_truthy_short_circuit(&mut self) {
-        self.context_stack.last_mut().unwrap().put_command(CompileCommand::TruthyShortCircuit);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::TruthyShortCircuit);
     }
 
     fn handle_nullish_short_circuit(&mut self) {
-        self.context_stack.last_mut().unwrap().put_command(CompileCommand::NullishShortCircuit);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::NullishShortCircuit);
     }
 
     fn handle_falsy_short_circuit_assignment(&mut self) {
-        self.context_stack.last_mut().unwrap().put_command(CompileCommand::FalsyShortCircuitAssignment);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::FalsyShortCircuitAssignment);
     }
 
     fn handle_truthy_short_circuit_assignment(&mut self) {
-        self.context_stack.last_mut().unwrap().put_command(CompileCommand::TruthyShortCircuitAssignment);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::TruthyShortCircuitAssignment);
     }
 
     fn handle_nullish_short_circuit_assignment(&mut self) {
-        self.context_stack.last_mut().unwrap().put_command(CompileCommand::NullishShortCircuitAssignment);
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::NullishShortCircuitAssignment);
     }
 
     fn handle_start_block_scope(&mut self) {

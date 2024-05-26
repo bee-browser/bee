@@ -1310,7 +1310,8 @@ llvm::Value* Compiler::CreateToBoolean(const Item& item) {
     case Item::Boolean:
       return item.value;
     case Item::Number:
-      return builder_->CreateFCmpUNE(item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
+      return builder_->CreateFCmpUNE(
+          item.value, llvm::ConstantFP::getZero(builder_->getDoubleTy()));
     case Item::Function:
       return builder_->getTrue();
     case Item::Any:

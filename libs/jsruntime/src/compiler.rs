@@ -280,7 +280,7 @@ impl<'a> Compiler<'a> {
             },
             CompileCommand::ExponentiationAssignment => {
                 unimplemented!("**= operator");
-            },
+            }
             CompileCommand::MultiplicationAssignment => unsafe {
                 bridge::compiler_peer_multiplication_assignment(self.peer);
             },
