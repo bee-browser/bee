@@ -616,7 +616,8 @@ fn test_eval_anonymous_function_expression() {
 }
 
 #[test]
-fn test_eval_iife() { // IIFE: Immediately Invoked Function Expression
+fn test_eval_iife() {
+    // IIFE: Immediately Invoked Function Expression
     eval!("print((function() { return 1 })())", 1);
     eval!("print((function x() { return 1 })())", 1);
 }
