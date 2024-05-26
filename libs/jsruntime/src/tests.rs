@@ -354,6 +354,9 @@ fn test_eval_logical_and() {
     eval!("print(false && false)", false);
     eval!("let a = 0; true && (a = 1); print(a)", 1);
     eval!("let a = 0; false && (a = 1); print(a)", 0);
+    eval!("print(0 && 1)", 0);
+    eval!("print(1 && 0)", 0);
+    eval!("print(1 && 2)", 2);
 }
 
 #[test]
@@ -364,6 +367,18 @@ fn test_eval_logical_or() {
     eval!("print(false || false)", false);
     eval!("let a = 0; true || (a = 1); print(a)", 0);
     eval!("let a = 0; false || (a = 1); print(a)", 1);
+    eval!("print(0 || 0)", 0);
+    eval!("print(0 || 1)", 1);
+    eval!("print(1 || 0)", 1);
+}
+
+#[test]
+fn test_eval_nullish_coalescing() {
+    eval!("print(undefined ?? 1)", 1);
+    eval!("print(null ?? 1)", 1);
+    eval!("print(0 ?? 1)", 0);
+    eval!("let a = 0; null ?? (a = 1); print(a)", 1);
+    eval!("let a = 0; 0 ?? (a = 1); print(a)", 0);
 }
 
 #[test]
@@ -410,6 +425,96 @@ fn test_eval_conditional_expression() {
     eval!("print(1 < 0 ? true : false)", false);
     eval!("print(1 > 0 ? undefined : undefined)", Value::UNDEFINED);
     eval!("print(1 < 0 ? undefined : undefined)", Value::UNDEFINED);
+}
+
+#[test]
+fn test_eval_multiplication_assignment() {
+    eval!("let a = 2; print(a *= 2)", 4);
+    eval!("let a = 2; a *= 2; print(a)", 4);
+}
+
+#[test]
+fn test_eval_division_assignment() {
+    eval!("let a = 2; print(a /= 2)", 1);
+    eval!("let a = 2; a /= 2; print(a)", 1);
+}
+
+#[test]
+fn test_eval_remainder_assignment() {
+    eval!("let a = 2; print(a %= 7)", 2);
+    eval!("let a = 2; a %= 7; print(a)", 2);
+}
+
+#[test]
+fn test_eval_addition_assignment() {
+    eval!("let a = 2; print(a += 2)", 4);
+    eval!("let a = 2; a += 2; print(a)", 4);
+}
+
+#[test]
+fn test_eval_subtraction_assignment() {
+    eval!("let a = 2; print(a -= 2)", 0);
+    eval!("let a = 2; a -= 2; print(a)", 0);
+}
+
+#[test]
+fn test_eval_left_shift_assignment() {
+    eval!("let a = 2; print(a <<= 2)", 8);
+    eval!("let a = 2; a <<= 2; print(a)", 8);
+}
+
+#[test]
+fn test_eval_signed_right_shift_assignment() {
+    eval!("let a = 4; print(a >>= 1)", 2);
+    eval!("let a = 4; a >>= 1; print(a)", 2);
+}
+
+#[test]
+fn test_eval_unsigned_right_shift_assignment() {
+    eval!("let a = 4; print(a >>>= 1)", 2);
+    eval!("let a = 4; a >>>= 1; print(a)", 2);
+}
+
+#[test]
+fn test_eval_bitwise_and_assignment() {
+    eval!("let a = 4; print(a &= 1)", 0);
+    eval!("let a = 4; a &= 1; print(a)", 0);
+}
+
+#[test]
+fn test_eval_bitwise_xor_assignment() {
+    eval!("let a = 4; print(a ^= 5)", 1);
+    eval!("let a = 4; a ^= 5; print(a)", 1);
+}
+
+#[test]
+fn test_eval_bitwise_or_assignment() {
+    eval!("let a = 4; print(a |= 1)", 5);
+    eval!("let a = 4; a |= 1; print(a)", 5);
+}
+
+#[test]
+fn test_eval_logical_and_assignment() {
+    eval!("let a = 0; print(a &&= 1)", 0);
+    eval!("let a = 0; a &&= 1; print(a)", 0);
+    eval!("let a = 4; print(a &&= 1)", 1);
+    eval!("let a = 4; a &&= 1; print(a)", 1);
+}
+
+#[test]
+fn test_eval_logical_or_assignment() {
+    eval!("let a = 0; print(a ||= 1)", 1);
+    eval!("let a = 0; a ||= 1; print(a)", 1);
+    eval!("let a = 4; print(a ||= 1)", 4);
+    eval!("let a = 4; a ||= 1; print(a)", 4);
+}
+
+#[test]
+fn test_eval_nullish_coalescing_assignment() {
+    eval!("let a = null; print(a ??= 1)", 1);
+    eval!("let a = null; a ??= 1; print(a)", 1);
+    eval!("let a = 0; print(a ??= 1)", 0);
+    eval!("let a = 0; a ??= 1; print(a)", 0);
 }
 
 #[test]
