@@ -11,8 +11,17 @@
 
 static llvm::ExitOnError ExitOnErr;
 
+// TODO: link libm directly
+extern "C" double runtime_fmod(double a, double b) {
+  return std::fmod(a, b);
+}
+
 void Executor::RegisterRuntime(const Runtime* runtime) {
   llvm::orc::SymbolMap symbols;
+  symbols[exec_session().intern("fmod")] = {
+      llvm::orc::ExecutorAddr::fromPtr(runtime_fmod),
+      llvm::JITSymbolFlags::Exported,
+  };
   symbols[exec_session().intern("memcpy")] = {
       llvm::orc::ExecutorAddr::fromPtr(std::memcpy),
       llvm::JITSymbolFlags::Exported,
