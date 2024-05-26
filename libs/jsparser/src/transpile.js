@@ -592,8 +592,10 @@ function addActions(rules) {
     '_BLOCK_SCOPE_',
     '_FALSY_SHORT_CIRCUIT_',
     '_TRUTHY_SHORT_CIRCUIT_',
+    '_NULLISH_SHORT_CIRCUIT_',
     '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
     '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
+    '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
   ];
 
   for (const action of ACTIONS) {
@@ -686,6 +688,11 @@ function modifyShortCircuitExpressions(rules) {
       action: '_TRUTHY_SHORT_CIRCUIT_',
     },
     {
+      rule: 'CoalesceExpression[In, Yield, Await]',
+      op: '`??`',
+      action: '_NULLISH_SHORT_CIRCUIT_',
+    },
+    {
       rule: 'AssignmentExpression[In, Yield, Await]',
       op: '`&&=`',
       action: '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
@@ -694,6 +701,11 @@ function modifyShortCircuitExpressions(rules) {
       rule: 'AssignmentExpression[In, Yield, Await]',
       op: '`||=`',
       action: '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
+    },
+    {
+      rule: 'AssignmentExpression[In, Yield, Await]',
+      op: '`??=`',
+      action: '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
     },
   ];
 

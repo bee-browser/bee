@@ -24,12 +24,14 @@ struct Locator {
 
 static_assert(sizeof(Locator) == sizeof(uint32_t), "size mismatched");
 
+// The value for each kind is a bit flag so that we can quickly check a category such as
+// "null or undefined".
 enum ValueKind : uint8_t {
-  Undefined,
-  Null,
-  Boolean,
-  Number,
-  Function,
+  Undefined = 0x01,
+  Null = 0x02,
+  Boolean = 0x04,
+  Number = 0x08,
+  Function = 0x10,
 };
 
 static_assert(sizeof(ValueKind) == sizeof(uint8_t), "size mismatched");
@@ -150,8 +152,10 @@ void compiler_peer_call(Compiler* self, uint16_t argc);
 void compiler_peer_truthy(Compiler* self);
 void compiler_peer_falsy_short_circuit(Compiler* self);
 void compiler_peer_truthy_short_circuit(Compiler* self);
+void compiler_peer_nullish_short_circuit(Compiler* self);
 void compiler_peer_falsy_short_circuit_assignment(Compiler* self);
 void compiler_peer_truthy_short_circuit_assignment(Compiler* self);
+void compiler_peer_nullish_short_circuit_assignment(Compiler* self);
 void compiler_peer_block(Compiler* self);
 void compiler_peer_if_else_statement(Compiler* self);
 void compiler_peer_if_statement(Compiler* self);

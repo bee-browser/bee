@@ -101,8 +101,10 @@ class Compiler {
   void Truthy();
   void FalsyShortCircuit();
   void TruthyShortCircuit();
+  void NullishShortCircuit();
   void FalsyShortCircuitAssignment();
   void TruthyShortCircuitAssignment();
+  void NullishShortCircuitAssignment();
   void Block();
   void IfElseStatement();
   void IfStatement();
@@ -286,6 +288,9 @@ class Compiler {
   llvm::Value* ToUint32(llvm::Value* number);
   llvm::Value* ToAny(const Item& item);
   llvm::AllocaInst* CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n = 1);
+
+  llvm::Value* CreateIsNonNullish(const Item& item);
+  llvm::Value* CreateIsNonNullish(llvm::Value* value_ptr);
 
   llvm::Value* CreateToBoolean(const Item& item);
   llvm::Value* CreateToBoolean(llvm::Value* value_ptr);

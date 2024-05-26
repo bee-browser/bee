@@ -134,8 +134,10 @@ pub enum Node<'s> {
     ElseBlock,
     FalsyShortCircuit,
     TruthyShortCircuit,
+    NullishShortCircuit,
     FalsyShortCircuitAssignment,
     TruthyShortCircuitAssignment,
+    NullishShortCircuitAssignment,
     StartBlockScope,
     EndBlockScope,
 }
@@ -243,7 +245,7 @@ impl std::fmt::Debug for BinaryOperator {
 pub enum LogicalOperator {
     LogicalAnd,
     LogicalOr,
-    Nullish,
+    NullishCoalescing,
 }
 
 impl std::fmt::Debug for LogicalOperator {
@@ -251,7 +253,7 @@ impl std::fmt::Debug for LogicalOperator {
         f.write_str(match self {
             Self::LogicalAnd => "&&",
             Self::LogicalOr => "||",
-            Self::Nullish => "??",
+            Self::NullishCoalescing => "??",
         })
     }
 }
@@ -430,6 +432,12 @@ where
         Ok(())
     }
 
+    // _NULLISH_SHORT_CIRCUIT_
+    fn process_nullish_short_circuit(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NullishShortCircuit);
+        Ok(())
+    }
+
     // _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
     fn process_falsy_short_circuit_assignment(&mut self) -> Result<(), Error> {
         self.enqueue(Node::FalsyShortCircuitAssignment);
@@ -439,6 +447,12 @@ where
     // _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     fn process_truthy_short_circuit_assignment(&mut self) -> Result<(), Error> {
         self.enqueue(Node::TruthyShortCircuitAssignment);
+        Ok(())
+    }
+
+    // _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+    fn process_nullish_short_circuit_assignment(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::NullishShortCircuitAssignment);
         Ok(())
     }
 
@@ -1139,8 +1153,8 @@ where
 
     // CoalesceExpression[In, Yield, Await] :
     //   CoalesceExpressionHead[?In, ?Yield, ?Await] ?? BitwiseORExpression[?In, ?Yield, ?Await]
-    fn process_nullish(&mut self) -> Result<(), Error> {
-        self.process_logical_expression(LogicalOperator::Nullish)
+    fn process_nullish_coalescing(&mut self) -> Result<(), Error> {
+        self.process_logical_expression(LogicalOperator::NullishCoalescing)
     }
 
     // 13.14 Conditional Operator ( ? : )

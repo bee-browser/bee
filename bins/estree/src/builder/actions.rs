@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -216,7 +216,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_In_Await -> LeftHandSideExpression_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN AssignmentExpression_In_Await
+    // AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
     Some((Builder::assignment_expression, "assignment_expression")),
     // Statement_Await -> BlockStatement_Await
     Some((Builder::nop, "nop")),
@@ -470,6 +470,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
     Some((Builder::nop, "nop")),
+    // _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
+    Some((Builder::nop, "nop")),
     // BlockStatement_Await -> Block_Await
     Some((Builder::nop, "nop")),
     // ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON
@@ -536,7 +538,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression_In
+    // AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
     Some((Builder::assignment_expression, "assignment_expression")),
     // DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
@@ -1119,7 +1121,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Await
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH BitwiseORExpression_In_Await
+    // CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await RPAREN
     Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
@@ -1437,7 +1439,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression
+    // AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
     Some((Builder::assignment_expression, "assignment_expression")),
     // VariableDeclaration -> BindingIdentifier
     Some((Builder::variable_declarator, "variable_declarator")),
@@ -1594,6 +1596,8 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // CoalesceExpressionHead_In_Await -> BitwiseORExpression_In_Await
     Some((Builder::nop, "nop")),
+    // _NULLISH_SHORT_CIRCUIT_ -> (empty)
+    Some((Builder::nop, "nop")),
     // BitwiseORExpression_In_Await -> BitwiseXORExpression_In_Await
     Some((Builder::nop, "nop")),
     // BitwiseORExpression_In_Await -> BitwiseORExpression_In_Await BIT_OR BitwiseXORExpression_In_Await
@@ -1697,7 +1701,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression_In -> LogicalORExpression_In OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
+    // CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN
     Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
@@ -2049,7 +2053,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_Await -> LeftHandSideExpression_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN AssignmentExpression_Await
+    // AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
     Some((Builder::assignment_expression, "assignment_expression")),
     // VariableDeclaration_Await -> BindingIdentifier_Await
     Some((Builder::variable_declarator, "variable_declarator")),
@@ -2483,7 +2487,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression -> LogicalORExpression OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression -> CoalesceExpressionHead NULLISH BitwiseORExpression
+    // CoalesceExpression -> CoalesceExpressionHead NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression
     Some((Builder::logical_expression, "logical_expression")),
     // ExpressionBody -> AssignmentExpression
     Some((Builder::nop, "nop")),
@@ -2545,7 +2549,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN AssignmentExpression_In_Yield
+    // AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
     Some((Builder::assignment_expression, "assignment_expression")),
     // Statement_Yield_Return -> BlockStatement_Yield_Return
     Some((Builder::nop, "nop")),
@@ -2635,7 +2639,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN AssignmentExpression_In_Yield_Await
+    // AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
     Some((Builder::assignment_expression, "assignment_expression")),
     // Statement_Yield_Await_Return -> BlockStatement_Yield_Await_Return
     Some((Builder::nop, "nop")),
@@ -3071,7 +3075,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression_Await -> LogicalORExpression_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Await
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH BitwiseORExpression_Await
+    // CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Await
     Some((Builder::logical_expression, "logical_expression")),
     // EqualityExpression_In -> RelationalExpression_In
     Some((Builder::nop, "nop")),
@@ -3520,7 +3524,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH BitwiseORExpression_In_Yield
+    // CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN
     Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
@@ -3867,7 +3871,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH BitwiseORExpression_In_Yield_Await
+    // CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
     // CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await RPAREN
     Some((Builder::cpeaapl_expr, "cpeaapl_expr")),
@@ -4438,7 +4442,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN AssignmentExpression_Yield
+    // AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
     Some((Builder::assignment_expression, "assignment_expression")),
     // VariableDeclaration_Yield -> BindingIdentifier_Yield
     Some((Builder::variable_declarator, "variable_declarator")),
@@ -4550,7 +4554,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
     Some((Builder::assignment_expression, "assignment_expression")),
-    // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN AssignmentExpression_Yield_Await
+    // AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
     Some((Builder::assignment_expression, "assignment_expression")),
     // VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await
     Some((Builder::variable_declarator, "variable_declarator")),
@@ -5044,7 +5048,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression_Yield -> LogicalORExpression_Yield OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
+    // CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield
     Some((Builder::logical_expression, "logical_expression")),
     // RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
     Some((Builder::nop, "nop")),
@@ -5078,7 +5082,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2104] = [
     Some((Builder::nop, "nop")),
     // LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
-    // CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH BitwiseORExpression_Yield_Await
+    // CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await
     Some((Builder::logical_expression, "logical_expression")),
     // ShiftExpression_Yield -> AdditiveExpression_Yield
     Some((Builder::nop, "nop")),

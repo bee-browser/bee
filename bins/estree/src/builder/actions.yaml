@@ -210,7 +210,7 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN
-    AssignmentExpression_In_Await
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await
   action: assignment_expression
 - rule: Statement_Await -> BlockStatement_Await
   action: nop
@@ -451,6 +451,8 @@
   action: nop
 - rule: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
   action: nop
+- rule: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty)
+  action: nop
 - rule: BlockStatement_Await -> Block_Await
   action: nop
 - rule: >-
@@ -515,7 +517,9 @@
     AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     AssignmentExpression_In
   action: assignment_expression
-- rule: AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression_In
+- rule: >-
+    AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
   action: assignment_expression
 - rule: DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
   action: do_while_statement
@@ -1053,7 +1057,7 @@
     LogicalANDExpression_In_Await
   action: logical_expression
 - rule: >-
-    CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH
+    CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH _NULLISH_SHORT_CIRCUIT_
     BitwiseORExpression_In_Await
   action: logical_expression
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await RPAREN
@@ -1336,7 +1340,9 @@
     AssignmentExpression -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
     AssignmentExpression
   action: assignment_expression
-- rule: AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN AssignmentExpression
+- rule: >-
+    AssignmentExpression -> LeftHandSideExpression NULLISH_ASSIGN
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression
   action: assignment_expression
 - rule: VariableDeclaration -> BindingIdentifier
   action: variable_declarator
@@ -1462,6 +1468,8 @@
   action: nop
 - rule: CoalesceExpressionHead_In_Await -> BitwiseORExpression_In_Await
   action: nop
+- rule: _NULLISH_SHORT_CIRCUIT_ -> (empty)
+  action: nop
 - rule: BitwiseORExpression_In_Await -> BitwiseXORExpression_In_Await
   action: nop
 - rule: >-
@@ -1562,7 +1570,9 @@
     LogicalORExpression_In -> LogicalORExpression_In OR _TRUTHY_SHORT_CIRCUIT_
     LogicalANDExpression_In
   action: logical_expression
-- rule: CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH BitwiseORExpression_In
+- rule: >-
+    CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH _NULLISH_SHORT_CIRCUIT_
+    BitwiseORExpression_In
   action: logical_expression
 - rule: CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN
   action: cpeaapl_expr
@@ -1875,7 +1885,7 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN
-    AssignmentExpression_Await
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Await
   action: assignment_expression
 - rule: VariableDeclaration_Await -> BindingIdentifier_Await
   action: variable_declarator
@@ -2249,7 +2259,9 @@
   action: nop
 - rule: LogicalORExpression -> LogicalORExpression OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression
   action: logical_expression
-- rule: CoalesceExpression -> CoalesceExpressionHead NULLISH BitwiseORExpression
+- rule: >-
+    CoalesceExpression -> CoalesceExpressionHead NULLISH _NULLISH_SHORT_CIRCUIT_
+    BitwiseORExpression
   action: logical_expression
 - rule: ExpressionBody -> AssignmentExpression
   action: nop
@@ -2317,7 +2329,7 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN
-    AssignmentExpression_In_Yield
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield
   action: assignment_expression
 - rule: Statement_Yield_Return -> BlockStatement_Yield_Return
   action: nop
@@ -2421,7 +2433,7 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN
-    AssignmentExpression_In_Yield_Await
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await
   action: assignment_expression
 - rule: Statement_Yield_Await_Return -> BlockStatement_Yield_Await_Return
   action: nop
@@ -2848,7 +2860,9 @@
     LogicalORExpression_Await -> LogicalORExpression_Await OR _TRUTHY_SHORT_CIRCUIT_
     LogicalANDExpression_Await
   action: logical_expression
-- rule: CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH BitwiseORExpression_Await
+- rule: >-
+    CoalesceExpression_Await -> CoalesceExpressionHead_Await NULLISH _NULLISH_SHORT_CIRCUIT_
+    BitwiseORExpression_Await
   action: logical_expression
 - rule: EqualityExpression_In -> RelationalExpression_In
   action: nop
@@ -3290,7 +3304,7 @@
     LogicalANDExpression_In_Yield
   action: logical_expression
 - rule: >-
-    CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH
+    CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH _NULLISH_SHORT_CIRCUIT_
     BitwiseORExpression_In_Yield
   action: logical_expression
 - rule: CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN
@@ -3625,7 +3639,7 @@
   action: logical_expression
 - rule: >-
     CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH
-    BitwiseORExpression_In_Yield_Await
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await
   action: logical_expression
 - rule: >-
     CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN
@@ -4180,7 +4194,7 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN
-    AssignmentExpression_Yield
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield
   action: assignment_expression
 - rule: VariableDeclaration_Yield -> BindingIdentifier_Yield
   action: variable_declarator
@@ -4274,7 +4288,7 @@
   action: assignment_expression
 - rule: >-
     AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN
-    AssignmentExpression_Yield_Await
+    _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await
   action: assignment_expression
 - rule: VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await
   action: variable_declarator
@@ -4712,7 +4726,9 @@
     LogicalORExpression_Yield -> LogicalORExpression_Yield OR _TRUTHY_SHORT_CIRCUIT_
     LogicalANDExpression_Yield
   action: logical_expression
-- rule: CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH BitwiseORExpression_Yield
+- rule: >-
+    CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH _NULLISH_SHORT_CIRCUIT_
+    BitwiseORExpression_Yield
   action: logical_expression
 - rule: RelationalExpression_In_Yield_Await -> ShiftExpression_Yield_Await
   action: nop
@@ -4758,7 +4774,7 @@
   action: logical_expression
 - rule: >-
     CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH
-    BitwiseORExpression_Yield_Await
+    _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await
   action: logical_expression
 - rule: ShiftExpression_Yield -> AdditiveExpression_Yield
   action: nop

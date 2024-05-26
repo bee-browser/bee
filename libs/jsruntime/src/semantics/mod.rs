@@ -2,7 +2,6 @@ mod scope;
 
 use jsparser::syntax::AssignmentOperator;
 use jsparser::syntax::BinaryOperator;
-use jsparser::syntax::LogicalOperator;
 use jsparser::syntax::Node;
 use jsparser::syntax::NodeHandler;
 use jsparser::syntax::UnaryOperator;
@@ -86,11 +85,11 @@ impl<'r> Analyzer<'r> {
             Node::UpdateExpression(op) => self.handle_operator(op),
             Node::UnaryExpression(op) => self.handle_operator(op),
             Node::BinaryExpression(op) => self.handle_operator(op),
-            Node::LogicalExpression(op) => self.handle_logical_expression(op),
+            Node::LogicalExpression(_op) => self.handle_conditional_expression(),
             Node::ConditionalExpression => self.handle_conditional_expression(),
             Node::AssignmentExpression(AssignmentOperator::LogicalAndAssignment) => self.handle_conditional_assignment(),
             Node::AssignmentExpression(AssignmentOperator::LogicalOrAssignment) => self.handle_conditional_assignment(),
-            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => (),
+            Node::AssignmentExpression(AssignmentOperator::NullishCoalescingAssignment) => self.handle_conditional_assignment(),
             Node::AssignmentExpression(op) => self.handle_operator(op),
             Node::BlockStatement => (),
             Node::LexicalBinding(init) => self.handle_lexical_binding(init),
@@ -109,8 +108,10 @@ impl<'r> Analyzer<'r> {
             Node::ElseBlock => self.handle_else_block(),
             Node::FalsyShortCircuit => self.handle_falsy_short_circuit(),
             Node::TruthyShortCircuit => self.handle_truthy_short_circuit(),
+            Node::NullishShortCircuit => self.handle_nullish_short_circuit(),
             Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
             Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
+            Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
@@ -196,24 +197,6 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(op.into());
-    }
-
-    fn handle_logical_expression(&mut self, op: LogicalOperator) {
-        let context = self.context_stack.last_mut().unwrap();
-        match op {
-            LogicalOperator::LogicalAnd => {
-                // See handle_and_then() for the top-half.
-                context.put_command(CompileCommand::ConditionalTernary);
-            }
-            LogicalOperator::LogicalOr => {
-                // See handle_or_else() for the top-half.
-                context.put_command(CompileCommand::ConditionalTernary);
-            }
-            LogicalOperator::Nullish => {
-                // TODO: implement this after `===` is implemented
-                unimplemented!("nullish coalesing operator");
-            }
-        }
     }
 
     fn handle_conditional_expression(&mut self) {
@@ -328,12 +311,20 @@ impl<'r> Analyzer<'r> {
         self.context_stack.last_mut().unwrap().put_command(CompileCommand::TruthyShortCircuit);
     }
 
+    fn handle_nullish_short_circuit(&mut self) {
+        self.context_stack.last_mut().unwrap().put_command(CompileCommand::NullishShortCircuit);
+    }
+
     fn handle_falsy_short_circuit_assignment(&mut self) {
         self.context_stack.last_mut().unwrap().put_command(CompileCommand::FalsyShortCircuitAssignment);
     }
 
     fn handle_truthy_short_circuit_assignment(&mut self) {
         self.context_stack.last_mut().unwrap().put_command(CompileCommand::TruthyShortCircuitAssignment);
+    }
+
+    fn handle_nullish_short_circuit_assignment(&mut self) {
+        self.context_stack.last_mut().unwrap().put_command(CompileCommand::NullishShortCircuitAssignment);
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -731,11 +722,9 @@ pub enum CompileCommand {
     //
     //   1. Perform the short-circuit evaluation by using a special action for each logical
     //      operator in handle_falsy_short_circuit() for `&&`, handle_truthy_short_circuit() for
-    //      `||`.
+    //      `||` and handle_nullish_short_circuit() for `??`.
     //   2. Emit supplemental commands and CompileCommand::ConditionalTernery in
     //      handle_logical_expression()
-    //
-    // TODO: nullish coalescing operator
 
     // conditional operator
     ConditionalTernary,
@@ -758,8 +747,10 @@ pub enum CompileCommand {
     // short-circuit
     FalsyShortCircuit,
     TruthyShortCircuit,
+    NullishShortCircuit,
     FalsyShortCircuitAssignment,
     TruthyShortCircuitAssignment,
+    NullishShortCircuitAssignment,
 
     // conditional
     Truthy,

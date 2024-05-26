@@ -793,6 +793,15 @@ void Compiler::TruthyShortCircuit() {
   Block();  // else
 }
 
+void Compiler::NullishShortCircuit() {
+  const auto item = Dereference();
+  auto* non_nullish = CreateIsNonNullish(item);
+  PushBoolean(non_nullish);
+  Block();  // then
+  stack_.push_back(item);
+  Block();  // else
+}
+
 void Compiler::FalsyShortCircuitAssignment() {
   assert(stack_.back().type == Item::Reference);
   Duplicate();
@@ -811,6 +820,17 @@ void Compiler::TruthyShortCircuitAssignment() {
   const auto item = Dereference();
   auto* truthy = CreateToBoolean(item);
   PushBoolean(truthy);
+  Block();  // then
+  stack_.push_back(item);
+  Block();  // else
+}
+
+void Compiler::NullishShortCircuitAssignment() {
+  assert(stack_.back().type == Item::Reference);
+  Duplicate();
+  const auto item = Dereference();
+  auto* non_nullish = CreateIsNonNullish(item);
+  PushBoolean(non_nullish);
   Block();  // then
   stack_.push_back(item);
   Block();  // else
@@ -1252,6 +1272,33 @@ llvm::AllocaInst* Compiler::CreateAllocaInEntryBlock(llvm::Type* ty, uint32_t n)
   return alloca;
 }
 
+// non-nullish
+
+llvm::Value* Compiler::CreateIsNonNullish(const Item& item) {
+  switch (item.type) {
+    case Item::Undefined:
+    case Item::Null:
+      return builder_->getFalse();
+    case Item::Boolean:
+    case Item::Number:
+    case Item::Function:
+      return builder_->getTrue();
+    case Item::Any:
+      return CreateIsNonNullish(item.value);
+    default:
+      // never reach here.
+      assert(false);
+      return nullptr;
+  }
+}
+
+llvm::Value* Compiler::CreateIsNonNullish(llvm::Value* value_ptr) {
+  constexpr uint8_t kNullish = ValueKind::Null | ValueKind::Undefined;
+  auto* kind = CreateLoadValueKindFromValue(value_ptr);
+  auto* nullish = builder_->CreateAnd(kind, builder_->getInt8(kNullish));
+  return builder_->CreateICmpEQ(nullish, builder_->getInt8(0));
+}
+
 // 7.1.2 ToBoolean ( argument )
 
 llvm::Value* Compiler::CreateToBoolean(const Item& item) {
@@ -1269,7 +1316,7 @@ llvm::Value* Compiler::CreateToBoolean(const Item& item) {
     case Item::Any:
       return CreateToBoolean(item.value);
     default:
-      // TODO
+      // never reach here.
       assert(false);
       return nullptr;
   }

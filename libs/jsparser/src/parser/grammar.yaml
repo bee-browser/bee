@@ -4967,6 +4967,8 @@
     - type: token
       data: NULLISH
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
+    - type: non-terminal
       data: BitwiseORExpression
 - name: CoalesceExpression_Await
   production:
@@ -4974,6 +4976,8 @@
       data: CoalesceExpressionHead_Await
     - type: token
       data: NULLISH
+    - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_Await
 - name: CoalesceExpression_Yield
@@ -4983,6 +4987,8 @@
     - type: token
       data: NULLISH
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
+    - type: non-terminal
       data: BitwiseORExpression_Yield
 - name: CoalesceExpression_Yield_Await
   production:
@@ -4990,6 +4996,8 @@
       data: CoalesceExpressionHead_Yield_Await
     - type: token
       data: NULLISH
+    - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_Yield_Await
 - name: CoalesceExpression_In
@@ -4999,6 +5007,8 @@
     - type: token
       data: NULLISH
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
+    - type: non-terminal
       data: BitwiseORExpression_In
 - name: CoalesceExpression_In_Await
   production:
@@ -5006,6 +5016,8 @@
       data: CoalesceExpressionHead_In_Await
     - type: token
       data: NULLISH
+    - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_In_Await
 - name: CoalesceExpression_In_Yield
@@ -5015,6 +5027,8 @@
     - type: token
       data: NULLISH
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
+    - type: non-terminal
       data: BitwiseORExpression_In_Yield
 - name: CoalesceExpression_In_Yield_Await
   production:
@@ -5022,6 +5036,8 @@
       data: CoalesceExpressionHead_In_Yield_Await
     - type: token
       data: NULLISH
+    - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_
     - type: non-terminal
       data: BitwiseORExpression_In_Yield_Await
 - name: CoalesceExpressionHead
@@ -5367,6 +5383,8 @@
     - type: token
       data: NULLISH_ASSIGN
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression
 - name: AssignmentExpression_Await
   production:
@@ -5422,6 +5440,8 @@
       data: LeftHandSideExpression_Await
     - type: token
       data: NULLISH_ASSIGN
+    - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_Await
 - name: AssignmentExpression_Yield
@@ -5483,6 +5503,8 @@
     - type: token
       data: NULLISH_ASSIGN
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_Yield
 - name: AssignmentExpression_Yield_Await
   production:
@@ -5543,6 +5565,8 @@
     - type: token
       data: NULLISH_ASSIGN
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_Yield_Await
 - name: AssignmentExpression_In
   production:
@@ -5599,6 +5623,8 @@
     - type: token
       data: NULLISH_ASSIGN
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_In
 - name: AssignmentExpression_In_Await
   production:
@@ -5654,6 +5680,8 @@
       data: LeftHandSideExpression_Await
     - type: token
       data: NULLISH_ASSIGN
+    - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_In_Await
 - name: AssignmentExpression_In_Yield
@@ -5715,6 +5743,8 @@
     - type: token
       data: NULLISH_ASSIGN
     - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+    - type: non-terminal
       data: AssignmentExpression_In_Yield
 - name: AssignmentExpression_In_Yield_Await
   production:
@@ -5774,6 +5804,8 @@
       data: LeftHandSideExpression_Yield_Await
     - type: token
       data: NULLISH_ASSIGN
+    - type: non-terminal
+      data: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
     - type: non-terminal
       data: AssignmentExpression_In_Yield_Await
 - name: AssignmentOperator
@@ -19029,10 +19061,16 @@
 - name: _TRUTHY_SHORT_CIRCUIT_
   production:
     - type: empty
+- name: _NULLISH_SHORT_CIRCUIT_
+  production:
+    - type: empty
 - name: _FALSY_SHORT_CIRCUIT_ASSIGNMENT_
   production:
     - type: empty
 - name: _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_
+  production:
+    - type: empty
+- name: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
   production:
     - type: empty
 - name: NullLiteral

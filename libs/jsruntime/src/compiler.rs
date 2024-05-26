@@ -323,11 +323,17 @@ impl<'a> Compiler<'a> {
             CompileCommand::TruthyShortCircuit => unsafe {
                 bridge::compiler_peer_truthy_short_circuit(self.peer);
             },
+            CompileCommand::NullishShortCircuit => unsafe {
+                bridge::compiler_peer_nullish_short_circuit(self.peer);
+            },
             CompileCommand::FalsyShortCircuitAssignment => unsafe {
                 bridge::compiler_peer_falsy_short_circuit_assignment(self.peer);
             },
             CompileCommand::TruthyShortCircuitAssignment => unsafe {
                 bridge::compiler_peer_truthy_short_circuit_assignment(self.peer);
+            },
+            CompileCommand::NullishShortCircuitAssignment => unsafe {
+                bridge::compiler_peer_nullish_short_circuit_assignment(self.peer);
             },
             CompileCommand::Then => unsafe {
                 bridge::compiler_peer_block(self.peer);

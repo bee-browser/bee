@@ -373,6 +373,15 @@ fn test_eval_logical_or() {
 }
 
 #[test]
+fn test_eval_nullish_coalescing() {
+    eval!("print(undefined ?? 1)", 1);
+    eval!("print(null ?? 1)", 1);
+    eval!("print(0 ?? 1)", 0);
+    eval!("let a = 0; null ?? (a = 1); print(a)", 1);
+    eval!("let a = 0; 0 ?? (a = 1); print(a)", 0);
+}
+
+#[test]
 fn test_eval_to_numeric() {
     eval!("print(undefined + 0)", f64::NAN);
     eval!("print(null + 0)", 0.);
@@ -498,6 +507,14 @@ fn test_eval_logical_or_assignment() {
     eval!("let a = 0; a ||= 1; print(a)", 1);
     eval!("let a = 4; print(a ||= 1)", 4);
     eval!("let a = 4; a ||= 1; print(a)", 4);
+}
+
+#[test]
+fn test_eval_nullish_coalescing_assignment() {
+    eval!("let a = null; print(a ??= 1)", 1);
+    eval!("let a = null; a ??= 1; print(a)", 1);
+    eval!("let a = 0; print(a ??= 1)", 0);
+    eval!("let a = 0; a ??= 1; print(a)", 0);
 }
 
 #[test]

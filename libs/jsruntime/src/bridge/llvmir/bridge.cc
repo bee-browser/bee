@@ -306,12 +306,20 @@ void compiler_peer_truthy_short_circuit(Compiler* self) {
   self->TruthyShortCircuit();
 }
 
+void compiler_peer_nullish_short_circuit(Compiler* self) {
+  self->NullishShortCircuit();
+}
+
 void compiler_peer_falsy_short_circuit_assignment(Compiler* self) {
   self->FalsyShortCircuitAssignment();
 }
 
 void compiler_peer_truthy_short_circuit_assignment(Compiler* self) {
   self->TruthyShortCircuitAssignment();
+}
+
+void compiler_peer_nullish_short_circuit_assignment(Compiler* self) {
+  self->NullishShortCircuitAssignment();
 }
 
 void compiler_peer_block(Compiler* self) {
