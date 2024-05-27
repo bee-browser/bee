@@ -124,6 +124,7 @@ pub enum Node<'s> {
     ExpressionStatement,
     IfElseStatement,
     IfStatement,
+    WhileStatement,
     ReturnStatement(u32),
     FormalParameter,
     FormalParameters(u32),
@@ -139,6 +140,8 @@ pub enum Node<'s> {
     FalsyShortCircuitAssignment,
     TruthyShortCircuitAssignment,
     NullishShortCircuitAssignment,
+    LoopStart,
+    ContinueIfTruthy,
     StartBlockScope,
     EndBlockScope,
 }
@@ -458,6 +461,18 @@ where
     // _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
     fn process_nullish_short_circuit_assignment(&mut self) -> Result<(), Error> {
         self.enqueue(Node::NullishShortCircuitAssignment);
+        Ok(())
+    }
+
+    // _LOOP_START_
+    fn process_loop_start(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::LoopStart);
+        Ok(())
+    }
+
+    // _CONTINUE_IF_TRUTHY_
+    fn process_continue_if_truthy(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::ContinueIfTruthy);
         Ok(())
     }
 
@@ -1492,6 +1507,18 @@ where
     fn process_if_statement(&mut self) -> Result<(), Error> {
         // TODO: 14.6.1 Static Semantics: Early Errors
         self.enqueue(Node::IfStatement);
+        self.replace(5, Detail::Statement);
+        Ok(())
+    }
+
+    // 14.7 Iteration Statements
+
+    // 14.7.3 The while Statement
+
+    // WhileStatement[Yield, Await, Return] :
+    //   while ( Expression[+In, ?Yield, ?Await] ) Statement[?Yield, ?Await, ?Return]
+    fn process_while_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::WhileStatement);
         self.replace(5, Detail::Statement);
         Ok(())
     }

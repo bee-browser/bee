@@ -916,6 +916,35 @@ void Compiler::IfStatement() {
   builder_->SetInsertPoint(block);
 }
 
+void Compiler::LoopStart() {
+  auto* loop_start = llvm::BasicBlock::Create(*context_, "ls", function_);
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_start);
+
+  PushBlock(loop_start);
+}
+
+void Compiler::ContinueIfTruthy() {
+  auto* loop_body = llvm::BasicBlock::Create(*context_, "lb", function_);
+  auto* loop_end = llvm::BasicBlock::Create(*context_, "le", function_);
+
+  auto cond = Dereference();
+  auto* truthy = CreateToBoolean(cond);
+  builder_->CreateCondBr(truthy, loop_body, loop_end);
+  builder_->SetInsertPoint(loop_body);
+
+  PushBlock(loop_end);
+}
+
+void Compiler::LoopEnd() {
+  auto* loop_end = PopBlock();
+  auto* loop_start = PopBlock();
+
+  builder_->CreateBr(loop_start);
+  builder_->SetInsertPoint(loop_end);
+}
+
 void Compiler::StartFunction(const char* name) {
   const auto& found = functions_.find(name);
   if (found != functions_.end()) {

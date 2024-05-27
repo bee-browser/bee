@@ -523,7 +523,7 @@
   action: assignment_expression
 - rule: DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
   action: do_while_statement
-- rule: WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
+- rule: WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement
   action: while_statement
 - rule: 'ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement'
   action: for_statement_no_init_test_update
@@ -928,6 +928,10 @@
   action: nop
 - rule: LeftHandSideExpression -> OptionalExpression
   action: nop
+- rule: _LOOP_START_ -> (empty)
+  action: nop
+- rule: _CONTINUE_IF_TRUTHY_ -> (empty)
+  action: nop
 - rule: Expression -> AssignmentExpression
   action: nop
 - rule: Expression -> Expression COMMA AssignmentExpression
@@ -1144,7 +1148,9 @@
   action: append_to_list
 - rule: DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
   action: do_while_statement
-- rule: WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
+- rule: >-
+    WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN
+    _CONTINUE_IF_TRUTHY_ Statement_Await
   action: while_statement
 - rule: 'ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await'
   action: for_statement_no_init_test_update
@@ -2898,7 +2904,9 @@
   action: binary_expression
 - rule: DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON
   action: do_while_statement
-- rule: WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
+- rule: >-
+    WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_
+    Statement_Return
   action: while_statement
 - rule: 'ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return'
   action: for_statement_no_init_test_update
@@ -3393,7 +3401,9 @@
     DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield
     RPAREN SEMICOLON
   action: do_while_statement
-- rule: WhileStatement_Yield_Return -> WHILE LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
+- rule: >-
+    WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN
+    _CONTINUE_IF_TRUTHY_ Statement_Yield_Return
   action: while_statement
 - rule: >-
     ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
@@ -3515,7 +3525,9 @@
     DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await
     RPAREN SEMICOLON
   action: do_while_statement
-- rule: WhileStatement_Await_Return -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await_Return
+- rule: >-
+    WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN
+    _CONTINUE_IF_TRUTHY_ Statement_Await_Return
   action: while_statement
 - rule: >-
     ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
@@ -3732,8 +3744,8 @@
     Expression_In_Yield_Await RPAREN SEMICOLON
   action: do_while_statement
 - rule: >-
-    WhileStatement_Yield_Await_Return -> WHILE LPAREN Expression_In_Yield_Await RPAREN
-    Statement_Yield_Await_Return
+    WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN
+    _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return
   action: while_statement
 - rule: >-
     ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN

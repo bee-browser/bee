@@ -621,3 +621,8 @@ fn test_eval_iife() {
     eval!("print((function() { return 1 })())", 1);
     eval!("print((function x() { return 1 })())", 1);
 }
+
+#[test]
+fn test_eval_while_statement() {
+    eval!("let i = 0; while (i < 2) { i++ } print(i)", 2);
+}

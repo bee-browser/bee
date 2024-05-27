@@ -7,7 +7,7 @@ use super::Builder;
 
 type Action = fn(&mut Builder) -> Result<(), String>;
 
-pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
+pub static ACTIONS: [Option<(Action, &'static str)>; 2108] = [
     // Script -> (empty)
     Some((Builder::empty_script, "empty_script")),
     // Script -> ScriptBody
@@ -542,7 +542,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     Some((Builder::assignment_expression, "assignment_expression")),
     // DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
-    // WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
+    // WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement
     Some((Builder::while_statement, "while_statement")),
     // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement
     Some((
@@ -982,6 +982,10 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     Some((Builder::nop, "nop")),
     // LeftHandSideExpression -> OptionalExpression
     Some((Builder::nop, "nop")),
+    // _LOOP_START_ -> (empty)
+    Some((Builder::nop, "nop")),
+    // _CONTINUE_IF_TRUTHY_ -> (empty)
+    Some((Builder::nop, "nop")),
     // Expression -> AssignmentExpression
     Some((Builder::nop, "nop")),
     // Expression -> Expression COMMA AssignmentExpression
@@ -1233,7 +1237,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     Some((Builder::append_to_list, "append_to_list")),
     // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
-    // WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
+    // WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await
     Some((Builder::while_statement, "while_statement")),
     // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await
     Some((
@@ -3112,7 +3116,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     Some((Builder::binary_expression, "binary_expression")),
     // DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
-    // WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
+    // WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement_Return
     Some((Builder::while_statement, "while_statement")),
     // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return
     Some((
@@ -3640,7 +3644,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     )),
     // DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
-    // WhileStatement_Yield_Return -> WHILE LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
+    // WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return
     Some((Builder::while_statement, "while_statement")),
     // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
     Some((
@@ -3759,7 +3763,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     )),
     // DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
-    // WhileStatement_Await_Return -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await_Return
+    // WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await_Return
     Some((Builder::while_statement, "while_statement")),
     // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return
     Some((
@@ -3987,7 +3991,7 @@ pub static ACTIONS: [Option<(Action, &'static str)>; 2106] = [
     )),
     // DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
     Some((Builder::do_while_statement, "do_while_statement")),
-    // WhileStatement_Yield_Await_Return -> WHILE LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
+    // WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return
     Some((Builder::while_statement, "while_statement")),
     // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
     Some((

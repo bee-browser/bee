@@ -172,6 +172,7 @@ class Transpiler {
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyWhileStatement,
           expandOptionals,
           expandParameterizedRules,
           modifyBlock,
@@ -597,6 +598,8 @@ function addActions(rules) {
     '_FALSY_SHORT_CIRCUIT_ASSIGNMENT_',
     '_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_',
     '_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_',
+    '_LOOP_START_',
+    '_CONTINUE_IF_TRUTHY_',
   ];
 
   for (const action of ACTIONS) {
@@ -753,6 +756,38 @@ function modifyFunctionExpression(rules) {
     for (const target of TARGETS) {
       const [head, tail] = rule.values[i].split(target.token);
       rule.values[i] = [head, target.action, target.token, tail].join(' ');
+    }
+  }
+
+  return rules;
+}
+
+function modifyWhileStatement(rules) {
+  const TARGETS = [
+    {
+      term: '`(`',
+      action: '_LOOP_START_',
+      insertBefore: true,
+    },
+    {
+      term: '`)`',
+      action: '_CONTINUE_IF_TRUTHY_',
+      insertBefore: false,
+    },
+  ];
+
+  log.debug('Modifying WhileStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'WhileStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 1);
+
+  for (const target of TARGETS) {
+    const [head, tail] = rule.values[0].split(target.term);
+    if (target.insertBefore) {
+      rule.values[0] = [head, target.action, target.term, tail].join(' ');
+    } else {
+      rule.values[0] = [head, target.term, target.action, tail].join(' ');
     }
   }
 

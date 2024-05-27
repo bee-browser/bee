@@ -20,7 +20,7 @@ where
     ///
     /// We cannot specify `static` instead of `const`.  Rust does not support static variables of
     /// generic types.  Additionally, Rust does not support associated static variables.
-    pub(super) const ACTIONS: [Action<'s, H>; 2106] = [
+    pub(super) const ACTIONS: [Action<'s, H>; 2108] = [
         // Script -> (empty)
         Action::Invoke(Self::process_empty_script, "process_empty_script"),
         // Script -> ScriptBody
@@ -68,7 +68,7 @@ where
         // Statement -> IfStatement
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> BreakableStatement
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement -> ContinueStatement
         Action::Undefined,
         // Statement -> BreakStatement
@@ -127,7 +127,7 @@ where
         // IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement -> IterationStatement
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement -> SwitchStatement
         Action::Undefined,
         // ContinueStatement -> CONTINUE SEMICOLON
@@ -257,7 +257,7 @@ where
         // Statement_Await -> IfStatement_Await
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> BreakableStatement_Await
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await -> ContinueStatement_Await
         Action::Undefined,
         // Statement_Await -> BreakStatement_Await
@@ -291,7 +291,7 @@ where
         // IterationStatement -> DoWhileStatement
         Action::Undefined,
         // IterationStatement -> WhileStatement
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement -> ForStatement
         Action::Undefined,
         // IterationStatement -> ForInOfStatement
@@ -506,7 +506,7 @@ where
         // IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await -> IterationStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Await -> SwitchStatement_Await
         Action::Undefined,
         // ContinueStatement_Await -> CONTINUE SEMICOLON
@@ -567,8 +567,8 @@ where
         ),
         // DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
         Action::Undefined,
-        // WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
-        Action::Undefined,
+        // WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
         // ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement
         Action::Undefined,
         // ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement
@@ -943,7 +943,7 @@ where
         // IterationStatement_Await -> DoWhileStatement_Await
         Action::Undefined,
         // IterationStatement_Await -> WhileStatement_Await
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await -> ForStatement_Await
         Action::Undefined,
         // IterationStatement_Await -> ForInOfStatement_Await
@@ -992,6 +992,13 @@ where
         Action::Nop,
         // LeftHandSideExpression -> OptionalExpression
         Action::Undefined,
+        // _LOOP_START_ -> (empty)
+        Action::Invoke(Self::process_loop_start, "process_loop_start"),
+        // _CONTINUE_IF_TRUTHY_ -> (empty)
+        Action::Invoke(
+            Self::process_continue_if_truthy,
+            "process_continue_if_truthy",
+        ),
         // Expression -> AssignmentExpression
         Action::Nop,
         // Expression -> Expression COMMA AssignmentExpression
@@ -1237,8 +1244,8 @@ where
         Action::Undefined,
         // DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
         Action::Undefined,
-        // WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await
-        Action::Undefined,
+        // WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
         // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await
         Action::Undefined,
         // ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await
@@ -2121,7 +2128,7 @@ where
         // Statement_Return -> IfStatement_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> BreakableStatement_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Return -> ContinueStatement
         Action::Undefined,
         // Statement_Return -> BreakStatement
@@ -2408,7 +2415,7 @@ where
         // IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Return -> IterationStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Return -> SwitchStatement_Return
         Action::Undefined,
         // ReturnStatement -> RETURN SEMICOLON
@@ -2479,7 +2486,7 @@ where
         // Statement_Yield_Return -> IfStatement_Yield_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> BreakableStatement_Yield_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Return -> ContinueStatement_Yield
         Action::Undefined,
         // Statement_Yield_Return -> BreakStatement_Yield
@@ -2513,7 +2520,7 @@ where
         // Statement_Await_Return -> IfStatement_Await_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> BreakableStatement_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Await_Return -> ContinueStatement_Await
         Action::Undefined,
         // Statement_Await_Return -> BreakStatement_Await
@@ -2581,7 +2588,7 @@ where
         // Statement_Yield_Await_Return -> IfStatement_Yield_Await_Return
         Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> BreakableStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Invoke(Self::process_statement, "process_statement"),
         // Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
         Action::Undefined,
         // Statement_Yield_Await_Return -> BreakStatement_Yield_Await
@@ -2705,7 +2712,7 @@ where
         // IterationStatement_Return -> DoWhileStatement_Return
         Action::Undefined,
         // IterationStatement_Return -> WhileStatement_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Return -> ForStatement_Return
         Action::Undefined,
         // IterationStatement_Return -> ForInOfStatement_Return
@@ -2769,7 +2776,7 @@ where
         // IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
         Action::Undefined,
         // ContinueStatement_Yield -> CONTINUE SEMICOLON
@@ -2823,7 +2830,7 @@ where
         // IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Await_Return -> IterationStatement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Await_Return -> SwitchStatement_Await_Return
         Action::Undefined,
         // ReturnStatement_Await -> RETURN SEMICOLON
@@ -2890,7 +2897,7 @@ where
         // IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])
         Action::Invoke(Self::process_if_statement, "process_if_statement"),
         // BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
         Action::Undefined,
         // ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
@@ -3008,8 +3015,8 @@ where
         Action::Invoke(Self::process_bitwise_xor, "process_bitwise_xor"),
         // DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON
         Action::Undefined,
-        // WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
-        Action::Undefined,
+        // WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
         // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return
         Action::Undefined,
         // ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement_Return
@@ -3126,7 +3133,7 @@ where
         // IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
         Action::Undefined,
         // IterationStatement_Yield_Return -> WhileStatement_Yield_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Return -> ForStatement_Yield_Return
         Action::Undefined,
         // IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
@@ -3180,7 +3187,7 @@ where
         // IterationStatement_Await_Return -> DoWhileStatement_Await_Return
         Action::Undefined,
         // IterationStatement_Await_Return -> WhileStatement_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Await_Return -> ForStatement_Await_Return
         Action::Undefined,
         // IterationStatement_Await_Return -> ForInOfStatement_Await_Return
@@ -3255,7 +3262,7 @@ where
         // IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
         Action::Undefined,
         // IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
-        Action::Undefined,
+        Action::Nop,
         // IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return
         Action::Undefined,
         // IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
@@ -3470,8 +3477,8 @@ where
         Action::Undefined,
         // DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON
         Action::Undefined,
-        // WhileStatement_Yield_Return -> WHILE LPAREN Expression_In_Yield RPAREN Statement_Yield_Return
-        Action::Undefined,
+        // WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
         // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
         Action::Undefined,
         // ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return
@@ -3550,8 +3557,8 @@ where
         Action::Undefined,
         // DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON
         Action::Undefined,
-        // WhileStatement_Await_Return -> WHILE LPAREN Expression_In_Await RPAREN Statement_Await_Return
-        Action::Undefined,
+        // WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
         // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return
         Action::Undefined,
         // ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return
@@ -3718,8 +3725,8 @@ where
         Action::Undefined,
         // DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
         Action::Undefined,
-        // WhileStatement_Yield_Await_Return -> WHILE LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return
-        Action::Undefined,
+        // WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return
+        Action::Invoke(Self::process_while_statement, "process_while_statement"),
         // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return
         Action::Undefined,
         // ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return

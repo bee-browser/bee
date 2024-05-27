@@ -9976,18 +9976,24 @@
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: non-terminal
       data: Statement
 - name: WhileStatement_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -9995,23 +10001,31 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
+    - type: non-terminal
       data: Statement_Return
 - name: WhileStatement_Await
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: non-terminal
       data: Statement_Await
 - name: WhileStatement_Await_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -10019,23 +10033,31 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
+    - type: non-terminal
       data: Statement_Await_Return
 - name: WhileStatement_Yield
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: non-terminal
       data: Statement_Yield
 - name: WhileStatement_Yield_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
@@ -10043,29 +10065,39 @@
     - type: token
       data: RPAREN
     - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
+    - type: non-terminal
       data: Statement_Yield_Return
 - name: WhileStatement_Yield_Await
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: non-terminal
       data: Statement_Yield_Await
 - name: WhileStatement_Yield_Await_Return
   production:
     - type: token
       data: WHILE
+    - type: non-terminal
+      data: _LOOP_START_
     - type: token
       data: LPAREN
     - type: non-terminal
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: non-terminal
       data: Statement_Yield_Await_Return
 - name: ForStatement
@@ -19079,6 +19111,12 @@
   production:
     - type: empty
 - name: _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_
+  production:
+    - type: empty
+- name: _LOOP_START_
+  production:
+    - type: empty
+- name: _CONTINUE_IF_TRUTHY_
   production:
     - type: empty
 - name: NullLiteral

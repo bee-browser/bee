@@ -41,7 +41,7 @@
 - rule: Statement -> IfStatement
   action: process_statement
 - rule: Statement -> BreakableStatement
-  action: undefined
+  action: process_statement
 - rule: Statement -> ContinueStatement
   action: undefined
 - rule: Statement -> BreakStatement
@@ -105,7 +105,7 @@
     (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement -> IterationStatement
-  action: undefined
+  action: nop
 - rule: BreakableStatement -> SwitchStatement
   action: undefined
 - rule: ContinueStatement -> CONTINUE SEMICOLON
@@ -235,7 +235,7 @@
 - rule: Statement_Await -> IfStatement_Await
   action: process_statement
 - rule: Statement_Await -> BreakableStatement_Await
-  action: undefined
+  action: process_statement
 - rule: Statement_Await -> ContinueStatement_Await
   action: undefined
 - rule: Statement_Await -> BreakStatement_Await
@@ -271,7 +271,7 @@
 - rule: IterationStatement -> DoWhileStatement
   action: undefined
 - rule: IterationStatement -> WhileStatement
-  action: undefined
+  action: nop
 - rule: IterationStatement -> ForStatement
   action: undefined
 - rule: IterationStatement -> ForInOfStatement
@@ -490,7 +490,7 @@
     Statement_Await (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Await -> IterationStatement_Await
-  action: undefined
+  action: nop
 - rule: BreakableStatement_Await -> SwitchStatement_Await
   action: undefined
 - rule: ContinueStatement_Await -> CONTINUE SEMICOLON
@@ -557,8 +557,10 @@
   action: process_nullish_coalescing_assignment
 - rule: DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
   action: undefined
-- rule: WhileStatement -> WHILE LPAREN Expression_In RPAREN Statement
-  action: undefined
+- rule: >-
+    WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN
+    _CONTINUE_IF_TRUTHY_ Statement
+  action: process_while_statement
 - rule: >-
     ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
     Statement
@@ -949,7 +951,7 @@
 - rule: IterationStatement_Await -> DoWhileStatement_Await
   action: undefined
 - rule: IterationStatement_Await -> WhileStatement_Await
-  action: undefined
+  action: nop
 - rule: IterationStatement_Await -> ForStatement_Await
   action: undefined
 - rule: IterationStatement_Await -> ForInOfStatement_Await
@@ -1004,6 +1006,10 @@
   action: nop
 - rule: LeftHandSideExpression -> OptionalExpression
   action: undefined
+- rule: _LOOP_START_ -> (empty)
+  action: process_loop_start
+- rule: _CONTINUE_IF_TRUTHY_ -> (empty)
+  action: process_continue_if_truthy
 - rule: Expression -> AssignmentExpression
   action: nop
 - rule: Expression -> Expression COMMA AssignmentExpression
@@ -1233,9 +1239,9 @@
     Expression_In_Await RPAREN SEMICOLON
   action: undefined
 - rule: >-
-    WhileStatement_Await -> WHILE LPAREN Expression_In_Await RPAREN
-    Statement_Await
-  action: undefined
+    WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN
+    _CONTINUE_IF_TRUTHY_ Statement_Await
+  action: process_while_statement
 - rule: >-
     ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN
     Statement_Await
@@ -2138,7 +2144,7 @@
 - rule: Statement_Return -> IfStatement_Return
   action: process_statement
 - rule: Statement_Return -> BreakableStatement_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Return -> ContinueStatement
   action: undefined
 - rule: Statement_Return -> BreakStatement
@@ -2463,7 +2469,7 @@
     Statement_Return (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Return -> IterationStatement_Return
-  action: undefined
+  action: nop
 - rule: BreakableStatement_Return -> SwitchStatement_Return
   action: undefined
 - rule: ReturnStatement -> RETURN SEMICOLON
@@ -2535,7 +2541,7 @@
 - rule: Statement_Yield_Return -> IfStatement_Yield_Return
   action: process_statement
 - rule: Statement_Yield_Return -> BreakableStatement_Yield_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Return -> ContinueStatement_Yield
   action: undefined
 - rule: Statement_Yield_Return -> BreakStatement_Yield
@@ -2569,7 +2575,7 @@
 - rule: Statement_Await_Return -> IfStatement_Await_Return
   action: process_statement
 - rule: Statement_Await_Return -> BreakableStatement_Await_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Await_Return -> ContinueStatement_Await
   action: undefined
 - rule: Statement_Await_Return -> BreakStatement_Await
@@ -2642,7 +2648,7 @@
 - rule: Statement_Yield_Await_Return -> IfStatement_Yield_Await_Return
   action: process_statement
 - rule: Statement_Yield_Await_Return -> BreakableStatement_Yield_Await_Return
-  action: undefined
+  action: process_statement
 - rule: Statement_Yield_Await_Return -> ContinueStatement_Yield_Await
   action: undefined
 - rule: Statement_Yield_Await_Return -> BreakStatement_Yield_Await
@@ -2782,7 +2788,7 @@
 - rule: IterationStatement_Return -> DoWhileStatement_Return
   action: undefined
 - rule: IterationStatement_Return -> WhileStatement_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Return -> ForStatement_Return
   action: undefined
 - rule: IterationStatement_Return -> ForInOfStatement_Return
@@ -2862,7 +2868,7 @@
     _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Yield_Return -> IterationStatement_Yield_Return
-  action: undefined
+  action: nop
 - rule: BreakableStatement_Yield_Return -> SwitchStatement_Yield_Return
   action: undefined
 - rule: ContinueStatement_Yield -> CONTINUE SEMICOLON
@@ -2928,7 +2934,7 @@
     _THEN_BLOCK_ Statement_Await_Return (?![ELSE])
   action: process_if_statement
 - rule: BreakableStatement_Await_Return -> IterationStatement_Await_Return
-  action: undefined
+  action: nop
 - rule: BreakableStatement_Await_Return -> SwitchStatement_Await_Return
   action: undefined
 - rule: ReturnStatement_Await -> RETURN SEMICOLON
@@ -3026,7 +3032,7 @@
 - rule: >-
     BreakableStatement_Yield_Await_Return ->
     IterationStatement_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return
   action: undefined
 - rule: ContinueStatement_Yield_Await -> CONTINUE SEMICOLON
@@ -3177,8 +3183,10 @@
     DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In
     RPAREN SEMICOLON
   action: undefined
-- rule: WhileStatement_Return -> WHILE LPAREN Expression_In RPAREN Statement_Return
-  action: undefined
+- rule: >-
+    WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN
+    _CONTINUE_IF_TRUTHY_ Statement_Return
+  action: process_while_statement
 - rule: >-
     ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
     RPAREN Statement_Return
@@ -3348,7 +3356,7 @@
 - rule: IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
   action: undefined
 - rule: IterationStatement_Yield_Return -> WhileStatement_Yield_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Yield_Return -> ForStatement_Yield_Return
   action: undefined
 - rule: IterationStatement_Yield_Return -> ForInOfStatement_Yield_Return
@@ -3411,7 +3419,7 @@
 - rule: IterationStatement_Await_Return -> DoWhileStatement_Await_Return
   action: undefined
 - rule: IterationStatement_Await_Return -> WhileStatement_Await_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Await_Return -> ForStatement_Await_Return
   action: undefined
 - rule: IterationStatement_Await_Return -> ForInOfStatement_Await_Return
@@ -3516,7 +3524,7 @@
 - rule: IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
   action: undefined
 - rule: IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return
   action: undefined
 - rule: IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return
@@ -3738,9 +3746,9 @@
     Expression_In_Yield RPAREN SEMICOLON
   action: undefined
 - rule: >-
-    WhileStatement_Yield_Return -> WHILE LPAREN Expression_In_Yield RPAREN
-    Statement_Yield_Return
-  action: undefined
+    WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield
+    RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return
+  action: process_while_statement
 - rule: >-
     ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
     RPAREN Statement_Yield_Return
@@ -3872,9 +3880,9 @@
     Expression_In_Await RPAREN SEMICOLON
   action: undefined
 - rule: >-
-    WhileStatement_Await_Return -> WHILE LPAREN Expression_In_Await RPAREN
-    Statement_Await_Return
-  action: undefined
+    WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await
+    RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await_Return
+  action: process_while_statement
 - rule: >-
     ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON
     RPAREN Statement_Await_Return
@@ -4134,9 +4142,10 @@
     LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
   action: undefined
 - rule: >-
-    WhileStatement_Yield_Await_Return -> WHILE LPAREN Expression_In_Yield_Await
-    RPAREN Statement_Yield_Await_Return
-  action: undefined
+    WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN
+    Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_
+    Statement_Yield_Await_Return
+  action: process_while_statement
 - rule: >-
     ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON
     SEMICOLON RPAREN Statement_Yield_Await_Return

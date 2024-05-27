@@ -334,6 +334,18 @@ void compiler_peer_if_statement(Compiler* self) {
   self->IfStatement();
 }
 
+void compiler_peer_loop_start(Compiler* self) {
+  self->LoopStart();
+}
+
+void compiler_peer_continue_if_truthy(Compiler* self) {
+  self->ContinueIfTruthy();
+}
+
+void compiler_peer_loop_end(Compiler* self) {
+  self->LoopEnd();
+}
+
 void compiler_peer_start_function(Compiler* self, const char* name) {
   self->StartFunction(name);
 }

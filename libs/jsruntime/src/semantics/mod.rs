@@ -106,6 +106,7 @@ impl<'r> Analyzer<'r> {
             Node::ExpressionStatement => self.handle_expression_statement(),
             Node::IfElseStatement => self.handle_if_else_statement(),
             Node::IfStatement => self.handle_if_statement(),
+            Node::WhileStatement => self.handle_while_statement(),
             Node::ReturnStatement(n) => self.handle_return_statement(n),
             Node::FormalParameter => self.handle_formal_parameter(),
             Node::FormalParameters(n) => self.handle_formal_parameters(n),
@@ -119,6 +120,8 @@ impl<'r> Analyzer<'r> {
             Node::FalsyShortCircuitAssignment => self.handle_falsy_short_circuit_assignment(),
             Node::TruthyShortCircuitAssignment => self.handle_truthy_short_circuit_assignment(),
             Node::NullishShortCircuitAssignment => self.handle_nullish_short_circuit_assignment(),
+            Node::LoopStart => self.handle_loop_start(),
+            Node::ContinueIfTruthy => self.handle_continue_if_truthy(),
             Node::StartBlockScope => self.handle_start_block_scope(),
             Node::EndBlockScope => self.handle_end_block_scope(),
             Node::FunctionContext => self.handle_function_context(),
@@ -266,6 +269,13 @@ impl<'r> Analyzer<'r> {
             .put_command(CompileCommand::IfStatement);
     }
 
+    fn handle_while_statement(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::LoopEnd);
+    }
+
     fn handle_return_statement(&mut self, n: u32) {
         self.context_stack
             .last_mut()
@@ -367,6 +377,20 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(CompileCommand::NullishShortCircuitAssignment);
+    }
+
+    fn handle_loop_start(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::LoopStart);
+    }
+
+    fn handle_continue_if_truthy(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::ContinueIfTruthy);
     }
 
     fn handle_start_block_scope(&mut self) {
@@ -808,6 +832,11 @@ pub enum CompileCommand {
     Else,
     IfElseStatement,
     IfStatement,
+
+    // loop
+    LoopStart,
+    ContinueIfTruthy,
+    LoopEnd,
 
     Return(u32),
 
