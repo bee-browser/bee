@@ -9849,6 +9849,8 @@
     - type: token
       data: DO
     - type: non-terminal
+      data: _LOOP_START_
+    - type: non-terminal
       data: Statement
     - type: token
       data: WHILE
@@ -9858,12 +9860,16 @@
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Return
   production:
     - type: token
       data: DO
+    - type: non-terminal
+      data: _LOOP_START_
     - type: non-terminal
       data: Statement_Return
     - type: token
@@ -9874,12 +9880,16 @@
       data: Expression_In
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Await
   production:
     - type: token
       data: DO
+    - type: non-terminal
+      data: _LOOP_START_
     - type: non-terminal
       data: Statement_Await
     - type: token
@@ -9890,12 +9900,16 @@
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Await_Return
   production:
     - type: token
       data: DO
+    - type: non-terminal
+      data: _LOOP_START_
     - type: non-terminal
       data: Statement_Await_Return
     - type: token
@@ -9906,12 +9920,16 @@
       data: Expression_In_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield
   production:
     - type: token
       data: DO
+    - type: non-terminal
+      data: _LOOP_START_
     - type: non-terminal
       data: Statement_Yield
     - type: token
@@ -9922,12 +9940,16 @@
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield_Return
   production:
     - type: token
       data: DO
+    - type: non-terminal
+      data: _LOOP_START_
     - type: non-terminal
       data: Statement_Yield_Return
     - type: token
@@ -9938,12 +9960,16 @@
       data: Expression_In_Yield
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield_Await
   production:
     - type: token
       data: DO
+    - type: non-terminal
+      data: _LOOP_START_
     - type: non-terminal
       data: Statement_Yield_Await
     - type: token
@@ -9954,12 +9980,16 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: DoWhileStatement_Yield_Await_Return
   production:
     - type: token
       data: DO
+    - type: non-terminal
+      data: _LOOP_START_
     - type: non-terminal
       data: Statement_Yield_Await_Return
     - type: token
@@ -9970,6 +10000,8 @@
       data: Expression_In_Yield_Await
     - type: token
       data: RPAREN
+    - type: non-terminal
+      data: _CONTINUE_IF_TRUTHY_
     - type: token
       data: SEMICOLON
 - name: WhileStatement

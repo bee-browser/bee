@@ -106,6 +106,7 @@ impl<'r> Analyzer<'r> {
             Node::ExpressionStatement => self.handle_expression_statement(),
             Node::IfElseStatement => self.handle_if_else_statement(),
             Node::IfStatement => self.handle_if_statement(),
+            Node::DoWhileStatement => self.handle_do_while_statement(),
             Node::WhileStatement => self.handle_while_statement(),
             Node::ReturnStatement(n) => self.handle_return_statement(n),
             Node::FormalParameter => self.handle_formal_parameter(),
@@ -267,6 +268,13 @@ impl<'r> Analyzer<'r> {
             .last_mut()
             .unwrap()
             .put_command(CompileCommand::IfStatement);
+    }
+
+    fn handle_do_while_statement(&mut self) {
+        self.context_stack
+            .last_mut()
+            .unwrap()
+            .put_command(CompileCommand::LoopEnd);
     }
 
     fn handle_while_statement(&mut self) {

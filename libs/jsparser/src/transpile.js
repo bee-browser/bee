@@ -172,6 +172,7 @@ class Transpiler {
           modifyConditionalExpression,
           modifyShortCircuitExpressions,
           modifyFunctionExpression,
+          modifyDoWhileStatement,
           modifyWhileStatement,
           expandOptionals,
           expandParameterizedRules,
@@ -762,6 +763,31 @@ function modifyFunctionExpression(rules) {
   return rules;
 }
 
+function modifyDoWhileStatement(rules) {
+  const TARGETS = [
+    {
+      term: '`do`',
+      action: '_LOOP_START_',
+      insertBefore: false,
+    },
+    {
+      term: '`)`',
+      action: '_CONTINUE_IF_TRUTHY_',
+      insertBefore: false,
+    },
+  ];
+
+  log.debug('Modifying WhileStatement...');
+
+  const rule = rules.find((rule) => rule.name === 'DoWhileStatement[Yield, Await, Return]');
+  assert(rule !== undefined);
+  assert(rule.values.length === 1);
+
+  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
+
+  return rules;
+}
+
 function modifyWhileStatement(rules) {
   const TARGETS = [
     {
@@ -782,16 +808,27 @@ function modifyWhileStatement(rules) {
   assert(rule !== undefined);
   assert(rule.values.length === 1);
 
-  for (const target of TARGETS) {
-    const [head, tail] = rule.values[0].split(target.term);
-    if (target.insertBefore) {
-      rule.values[0] = [head, target.action, target.term, tail].join(' ');
-    } else {
-      rule.values[0] = [head, target.term, target.action, tail].join(' ');
-    }
-  }
+  rule.values[0] = modifyTargetsInProduction(rule.values[0], TARGETS);
 
   return rules;
+}
+
+function modifyTargetsInProduction(production, targets) {
+  for (const target of targets) {
+    production = modifyTargetInProduction(production, target);
+  }
+  return production;
+}
+
+function modifyTargetInProduction(production, target) {
+  const [head, tail] = production.split(target.term);
+  let terms;
+  if (target.insertBefore) {
+    terms = [head, target.action, target.term, tail];
+  } else {
+    terms = [head, target.term, target.action, tail];
+  }
+  return terms.filter((term) => term !== '').join(' ');
 }
 
 function expandOptionals(rules) {

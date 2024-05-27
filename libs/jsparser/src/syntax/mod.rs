@@ -124,6 +124,7 @@ pub enum Node<'s> {
     ExpressionStatement,
     IfElseStatement,
     IfStatement,
+    DoWhileStatement,
     WhileStatement,
     ReturnStatement(u32),
     FormalParameter,
@@ -1512,6 +1513,17 @@ where
     }
 
     // 14.7 Iteration Statements
+
+    // 14.7.2 The do-while Statement
+
+    // DoWhileStatement[Yield, Await, Return] :
+    //   `do` Statement[?Yield, ?Await, ?Return] `while` `(` Expression[+In, ?Yield, ?Await] `)`
+    //   `;`
+    fn process_do_while_statement(&mut self) -> Result<(), Error> {
+        self.enqueue(Node::DoWhileStatement);
+        self.replace(7, Detail::Statement);
+        Ok(())
+    }
 
     // 14.7.3 The while Statement
 

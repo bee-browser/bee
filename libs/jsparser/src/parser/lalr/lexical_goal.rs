@@ -5,7 +5,7 @@
 
 use crate::lexer::Goal;
 
-pub static TABLE: [Goal; 4260] = [
+pub static TABLE: [Goal; 4272] = [
     // State(0)
     //   [Script -> (empty) .]*
     //   [^ -> . Script]*
@@ -63,7 +63,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [UnaryExpression -> DELETE . UnaryExpression]*
     Goal::RegExp,
     // State(14)
-    //   [DoWhileStatement -> DO . Statement WHILE LPAREN Expression_In RPAREN SEMICOLON]*
+    //   [DoWhileStatement -> DO . _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(15)
     //   [BooleanLiteral -> FALSE .]*
@@ -592,7 +593,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [UnaryExpression_Await -> DELETE . UnaryExpression_Await]*
     Goal::RegExp,
     // State(152)
-    //   [DoWhileStatement_Await -> DO . Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO . _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(153)
     //   [ExportDeclaration -> EXPORT . DEFAULT ClassDeclaration_Await_Default]*
@@ -1219,14 +1221,9 @@ pub static TABLE: [Goal; 4260] = [
     //   [UnaryExpression -> DELETE UnaryExpression .]*
     Goal::TemplateTail,
     // State(311)
-    //   [AsyncArrowFunction_In -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
-    Goal::Div,
+    //   [DoWhileStatement -> DO _LOOP_START_ . Statement WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
     // State(312)
-    //   [DoWhileStatement -> DO Statement . WHILE LPAREN Expression_In RPAREN SEMICOLON]*
-    Goal::Div,
-    // State(313)
     //   [ForInOfStatement -> FOR LPAREN . VAR ForBinding IN Expression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR LPAREN . VAR ForBinding OF AssignmentExpression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR LPAREN . ForDeclaration IN Expression_In RPAREN Statement]*
@@ -1250,33 +1247,33 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN . (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::RegExp,
-    // State(314)
+    // State(313)
     //   [GeneratorDeclaration -> FUNCTION MUL . BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(315)
+    // State(314)
     //   [FunctionDeclaration -> FUNCTION BindingIdentifier . _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_CONTEXT_ -> (empty) .]*
     Goal::Div,
-    // State(316)
+    // State(315)
     //   [IfStatement -> IF LPAREN . Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement]*
     //   [IfStatement -> IF LPAREN . Expression_In RPAREN _THEN_BLOCK_ Statement (?![ELSE])]*
     Goal::RegExp,
-    // State(317)
+    // State(316)
     //   [ImportMeta -> IMPORT DOT . META]*
     Goal::Div,
-    // State(318)
+    // State(317)
     //   [ImportCall -> IMPORT LPAREN . AssignmentExpression_In RPAREN]*
     Goal::RegExp,
-    // State(319)
+    // State(318)
     //   [UpdateExpression -> INC UnaryExpression .]*
     Goal::TemplateTail,
-    // State(320)
+    // State(319)
     //   [Block -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(321)
+    // State(320)
     //   [Block -> LBRACE _BLOCK_SCOPE_ . StatementList RBRACE]*
     Goal::RegExp,
-    // State(322)
+    // State(321)
     //   [AsyncArrowFunction_In -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncFunctionExpression -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -1289,27 +1286,27 @@ pub static TABLE: [Goal; 4260] = [
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::TemplateTail,
-    // State(323)
+    // State(322)
     //   [BindingIdentifier -> AWAIT .]*
     //   [IdentifierReference -> AWAIT .]*
     Goal::TemplateTail,
-    // State(324)
+    // State(323)
     //   [Elision -> COMMA .]*
     Goal::RegExp,
-    // State(325)
+    // State(324)
     //   [SpreadElement -> ELLIPSIS . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(326)
+    // State(325)
     //   [ArrayLiteral -> LBRACK RBRACK .]*
     Goal::TemplateTail,
-    // State(327)
+    // State(326)
     //   [BindingIdentifier -> YIELD .]*
     //   [IdentifierReference -> YIELD .]*
     Goal::TemplateTail,
-    // State(328)
+    // State(327)
     //   [ElementList -> AssignmentExpression_In .]*
     Goal::Div,
-    // State(329)
+    // State(328)
     //   [ArrayLiteral -> LBRACK ElementList . COMMA RBRACK]*
     //   [ArrayLiteral -> LBRACK ElementList . COMMA Elision RBRACK]*
     //   [ArrayLiteral -> LBRACK ElementList . RBRACK]*
@@ -1318,48 +1315,48 @@ pub static TABLE: [Goal; 4260] = [
     //   [ElementList -> ElementList . COMMA Elision SpreadElement]*
     //   [ElementList -> ElementList . COMMA SpreadElement]*
     Goal::Div,
-    // State(330)
+    // State(329)
     //   [ArrayLiteral -> LBRACK Elision . RBRACK]*
     //   [ElementList -> Elision . AssignmentExpression_In]*
     //   [ElementList -> Elision . SpreadElement]*
     //   [Elision -> Elision . COMMA]*
     Goal::RegExp,
-    // State(331)
+    // State(330)
     //   [BindingIdentifier -> Identifier .]*
     //   [IdentifierReference -> Identifier .]*
     Goal::TemplateTail,
-    // State(332)
+    // State(331)
     //   [ElementList -> SpreadElement .]*
     Goal::Div,
-    // State(333)
+    // State(332)
     //   [BindingList_In -> BindingList_In . COMMA LexicalBinding_In]*
     //   [LexicalDeclaration_In -> LET BindingList_In . SEMICOLON]*
     Goal::Div,
-    // State(334)
+    // State(333)
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS . BindingIdentifier RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS . BindingPattern RPAREN]*
     Goal::Div,
-    // State(335)
+    // State(334)
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN RPAREN .]*
     Goal::TemplateTail,
-    // State(336)
+    // State(335)
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In . COMMA ELLIPSIS BindingIdentifier RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In . COMMA ELLIPSIS BindingPattern RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In . COMMA RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In . RPAREN]*
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::Div,
-    // State(337)
+    // State(336)
     //   [NewTarget -> NEW DOT . TARGET]*
     Goal::Div,
-    // State(338)
+    // State(337)
     //   [ImportMeta -> IMPORT . DOT META]*
     Goal::Div,
-    // State(339)
+    // State(338)
     //   [SuperProperty -> SUPER . DOT KeywordOrIdentifierName]*
     //   [SuperProperty -> SUPER . LBRACK Expression_In RBRACK]*
     Goal::Div,
-    // State(340)
+    // State(339)
     //   [MemberExpression -> NEW MemberExpression . Arguments]*
     //   [MemberExpression -> MemberExpression . DOT PRIVATE_IDENTIFIER]*
     //   [MemberExpression -> MemberExpression . DOT KeywordOrIdentifierName]*
@@ -1367,118 +1364,118 @@ pub static TABLE: [Goal; 4260] = [
     //   [MemberExpression -> MemberExpression . TemplateLiteral_Tagged]*
     //   [NewExpression -> MemberExpression .]*
     Goal::TemplateTail,
-    // State(341)
+    // State(340)
     //   [NewExpression -> NEW NewExpression .]*
     Goal::TemplateTail,
-    // State(342)
+    // State(341)
     //   [UnaryExpression -> NOT UnaryExpression .]*
     Goal::TemplateTail,
-    // State(343)
+    // State(342)
     //   [RelationalExpression_In -> PRIVATE_IDENTIFIER IN . ShiftExpression]*
     Goal::RegExp,
-    // State(344)
+    // State(343)
     //   [UnaryExpression -> SUB UnaryExpression .]*
     Goal::TemplateTail,
-    // State(345)
+    // State(344)
     //   [SuperProperty -> SUPER DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(346)
+    // State(345)
     //   [SuperProperty -> SUPER LBRACK . Expression_In RBRACK]*
     Goal::RegExp,
-    // State(347)
+    // State(346)
     //   [Arguments -> LPAREN . RPAREN]*
     //   [Arguments -> LPAREN . ArgumentList COMMA RPAREN]*
     //   [Arguments -> LPAREN . ArgumentList RPAREN]*
     Goal::RegExp,
-    // State(348)
+    // State(347)
     //   [SuperCall -> SUPER Arguments .]*
     Goal::TemplateTail,
-    // State(349)
+    // State(348)
     //   [SwitchStatement -> SWITCH LPAREN . Expression_In RPAREN CaseBlock]*
     Goal::RegExp,
-    // State(350)
+    // State(349)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [SubstitutionTemplate -> TEMPLATE_HEAD Expression_In . TemplateSpans]*
     Goal::TemplateTail,
-    // State(351)
+    // State(350)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In . SEMICOLON]*
     Goal::Div,
-    // State(352)
+    // State(351)
     Goal::Div,
-    // State(353)
+    // State(352)
     //   [TryStatement -> TRY Block . Catch]*
     //   [TryStatement -> TRY Block . Catch Finally]*
     //   [TryStatement -> TRY Block . Finally]*
     Goal::Div,
-    // State(354)
+    // State(353)
     //   [UnaryExpression -> TYPEOF UnaryExpression .]*
     Goal::TemplateTail,
-    // State(355)
+    // State(354)
     //   [VariableDeclaration_In -> BindingIdentifier .]*
     //   [VariableDeclaration_In -> BindingIdentifier . Initializer_In]*
     Goal::Div,
-    // State(356)
+    // State(355)
     //   [VariableDeclaration_In -> BindingPattern . Initializer_In]*
     Goal::Div,
-    // State(357)
+    // State(356)
     //   [VariableDeclarationList_In -> VariableDeclarationList_In . COMMA VariableDeclaration_In]*
     //   [VariableStatement -> VAR VariableDeclarationList_In . SEMICOLON]*
     Goal::Div,
-    // State(358)
+    // State(357)
     //   [VariableDeclarationList_In -> VariableDeclaration_In .]*
     Goal::Div,
-    // State(359)
+    // State(358)
     //   [UnaryExpression -> VOID UnaryExpression .]*
     Goal::TemplateTail,
-    // State(360)
+    // State(359)
     //   [WhileStatement -> WHILE _LOOP_START_ . LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement]*
     Goal::Div,
-    // State(361)
+    // State(360)
     //   [WithStatement -> WITH LPAREN . Expression_In RPAREN Statement]*
     Goal::RegExp,
-    // State(362)
+    // State(361)
     //   [AdditiveExpression -> AdditiveExpression ADD . MultiplicativeExpression]*
     Goal::RegExp,
-    // State(363)
+    // State(362)
     //   [AdditiveExpression -> AdditiveExpression SUB . MultiplicativeExpression]*
     Goal::RegExp,
-    // State(364)
+    // State(363)
     //   [ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW . ConciseBody_In]*
     Goal::RegExp,
-    // State(365)
+    // State(364)
     //   [BitwiseANDExpression_In -> BitwiseANDExpression_In BIT_AND . EqualityExpression_In]*
     Goal::RegExp,
-    // State(366)
+    // State(365)
     //   [BitwiseORExpression_In -> BitwiseORExpression_In BIT_OR . BitwiseXORExpression_In]*
     Goal::RegExp,
-    // State(367)
+    // State(366)
     //   [BitwiseXORExpression_In -> BitwiseXORExpression_In BIT_XOR . BitwiseANDExpression_In]*
     Goal::RegExp,
-    // State(368)
+    // State(367)
     //   [CallExpression -> CallExpression DOT . PRIVATE_IDENTIFIER]*
     //   [CallExpression -> CallExpression DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(369)
+    // State(368)
     //   [CallExpression -> CallExpression LBRACK . Expression_In RBRACK]*
     Goal::RegExp,
-    // State(370)
+    // State(369)
     //   [TemplateLiteral_Tagged -> NO_SUBSTITUTION_TEMPLATE .]*
     Goal::TemplateTail,
-    // State(371)
+    // State(370)
     //   [OptionalChain -> OPTIONAL_CHAINING . LBRACK Expression_In RBRACK]*
     //   [OptionalChain -> OPTIONAL_CHAINING . PRIVATE_IDENTIFIER]*
     //   [OptionalChain -> OPTIONAL_CHAINING . Arguments]*
     //   [OptionalChain -> OPTIONAL_CHAINING . KeywordOrIdentifierName]*
     //   [OptionalChain -> OPTIONAL_CHAINING . TemplateLiteral_Tagged]*
     Goal::Div,
-    // State(372)
+    // State(371)
     //   [SubstitutionTemplate_Tagged -> TEMPLATE_HEAD . Expression_In TemplateSpans_Tagged]*
     Goal::RegExp,
-    // State(373)
+    // State(372)
     //   [CallExpression -> CallExpression Arguments .]*
     Goal::TemplateTail,
-    // State(374)
+    // State(373)
     //   [OptionalChain -> OptionalChain . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain -> OptionalChain . DOT KeywordOrIdentifierName]*
     //   [OptionalChain -> OptionalChain . LBRACK Expression_In RBRACK]*
@@ -1486,101 +1483,101 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain -> OptionalChain . TemplateLiteral_Tagged]*
     //   [OptionalExpression -> CallExpression OptionalChain .]*
     Goal::TemplateTail,
-    // State(375)
+    // State(374)
     //   [TemplateLiteral_Tagged -> SubstitutionTemplate_Tagged .]*
     Goal::TemplateTail,
-    // State(376)
+    // State(375)
     //   [CallExpression -> CallExpression TemplateLiteral_Tagged .]*
     Goal::TemplateTail,
-    // State(377)
+    // State(376)
     //   [CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH . _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In]*
     //   [_NULLISH_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(378)
+    // State(377)
     //   [AsyncArrowFunction_In -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody_In]*
     Goal::RegExp,
-    // State(379)
+    // State(378)
     //   [EqualityExpression_In -> EqualityExpression_In EQ . RelationalExpression_In]*
     Goal::RegExp,
-    // State(380)
+    // State(379)
     //   [EqualityExpression_In -> EqualityExpression_In EQ_STRICT . RelationalExpression_In]*
     Goal::RegExp,
-    // State(381)
+    // State(380)
     //   [EqualityExpression_In -> EqualityExpression_In NE . RelationalExpression_In]*
     Goal::RegExp,
-    // State(382)
+    // State(381)
     //   [EqualityExpression_In -> EqualityExpression_In NE_STRICT . RelationalExpression_In]*
     Goal::RegExp,
-    // State(383)
+    // State(382)
     //   [Expression_In -> Expression_In COMMA . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(384)
+    // State(383)
     //   [ExpressionStatement -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In SEMICOLON .]*
     Goal::RegExp,
-    // State(385)
+    // State(384)
     //   [LabelledStatement -> LabelIdentifier COLON . LabelledItem]*
     Goal::RegExp,
-    // State(386)
+    // State(385)
     //   [AssignmentOperator -> ADD_ASSIGN .]*
     Goal::RegExp,
-    // State(387)
+    // State(386)
     //   [AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN . _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In]*
     //   [_FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(388)
+    // State(387)
     //   [AssignmentExpression_In -> LeftHandSideExpression ASSIGN . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(389)
+    // State(388)
     //   [AssignmentOperator -> BIT_AND_ASSIGN .]*
     Goal::RegExp,
-    // State(390)
+    // State(389)
     //   [AssignmentOperator -> BIT_OR_ASSIGN .]*
     Goal::RegExp,
-    // State(391)
+    // State(390)
     //   [AssignmentOperator -> BIT_XOR_ASSIGN .]*
     Goal::RegExp,
-    // State(392)
+    // State(391)
     //   [UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) DEC .]*
     Goal::TemplateTail,
-    // State(393)
+    // State(392)
     //   [AssignmentOperator -> DIV_ASSIGN .]*
     Goal::RegExp,
-    // State(394)
+    // State(393)
     //   [AssignmentOperator -> EXP_ASSIGN .]*
     Goal::RegExp,
-    // State(395)
+    // State(394)
     //   [UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) INC .]*
     Goal::TemplateTail,
-    // State(396)
+    // State(395)
     //   [AssignmentOperator -> MOD_ASSIGN .]*
     Goal::RegExp,
-    // State(397)
+    // State(396)
     //   [AssignmentOperator -> MUL_ASSIGN .]*
     Goal::RegExp,
-    // State(398)
+    // State(397)
     //   [AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN . _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In]*
     //   [_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(399)
+    // State(398)
     //   [AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN . _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In]*
     //   [_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(400)
+    // State(399)
     //   [AssignmentOperator -> SAR_ASSIGN .]*
     Goal::RegExp,
-    // State(401)
+    // State(400)
     //   [AssignmentOperator -> SHL_ASSIGN .]*
     Goal::RegExp,
-    // State(402)
+    // State(401)
     //   [AssignmentOperator -> SHR_ASSIGN .]*
     Goal::RegExp,
-    // State(403)
+    // State(402)
     //   [AssignmentOperator -> SUB_ASSIGN .]*
     Goal::RegExp,
-    // State(404)
+    // State(403)
     //   [AssignmentExpression_In -> LeftHandSideExpression AssignmentOperator . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(405)
+    // State(404)
     //   [AssignmentExpression_In -> LeftHandSideExpression . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In]*
     //   [AssignmentExpression_In -> LeftHandSideExpression . ASSIGN AssignmentExpression_In]*
     //   [AssignmentExpression_In -> LeftHandSideExpression . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In]*
@@ -1588,25 +1585,25 @@ pub static TABLE: [Goal; 4260] = [
     //   [AssignmentExpression_In -> LeftHandSideExpression . AssignmentOperator AssignmentExpression_In]*
     //   [UpdateExpression -> LeftHandSideExpression .]*
     Goal::TemplateTail,
-    // State(406)
+    // State(405)
     //   [LogicalANDExpression_In -> LogicalANDExpression_In AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In]*
     //   [_FALSY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(407)
+    // State(406)
     //   [LogicalORExpression_In -> LogicalORExpression_In OR . _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In]*
     //   [_TRUTHY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(408)
+    // State(407)
     //   [MemberExpression -> MemberExpression DOT . PRIVATE_IDENTIFIER]*
     //   [MemberExpression -> MemberExpression DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(409)
+    // State(408)
     //   [MemberExpression -> MemberExpression LBRACK . Expression_In RBRACK]*
     Goal::RegExp,
-    // State(410)
+    // State(409)
     //   [CoverCallExpressionAndAsyncArrowHead -> MemberExpression Arguments .]*
     Goal::TemplateTail,
-    // State(411)
+    // State(410)
     //   [OptionalChain -> OptionalChain . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain -> OptionalChain . DOT KeywordOrIdentifierName]*
     //   [OptionalChain -> OptionalChain . LBRACK Expression_In RBRACK]*
@@ -1614,19 +1611,19 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain -> OptionalChain . TemplateLiteral_Tagged]*
     //   [OptionalExpression -> MemberExpression OptionalChain .]*
     Goal::TemplateTail,
-    // State(412)
+    // State(411)
     //   [MemberExpression -> MemberExpression TemplateLiteral_Tagged .]*
     Goal::TemplateTail,
-    // State(413)
+    // State(412)
     //   [MultiplicativeExpression -> MultiplicativeExpression DIV . ExponentiationExpression]*
     Goal::RegExp,
-    // State(414)
+    // State(413)
     //   [MultiplicativeExpression -> MultiplicativeExpression MOD . ExponentiationExpression]*
     Goal::RegExp,
-    // State(415)
+    // State(414)
     //   [MultiplicativeExpression -> MultiplicativeExpression MUL . ExponentiationExpression]*
     Goal::RegExp,
-    // State(416)
+    // State(415)
     //   [OptionalChain -> OptionalChain . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain -> OptionalChain . DOT KeywordOrIdentifierName]*
     //   [OptionalChain -> OptionalChain . LBRACK Expression_In RBRACK]*
@@ -1634,142 +1631,142 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain -> OptionalChain . TemplateLiteral_Tagged]*
     //   [OptionalExpression -> OptionalExpression OptionalChain .]*
     Goal::TemplateTail,
-    // State(417)
+    // State(416)
     //   [RelationalExpression_In -> RelationalExpression_In GT . ShiftExpression]*
     Goal::RegExp,
-    // State(418)
+    // State(417)
     //   [RelationalExpression_In -> RelationalExpression_In GTE . ShiftExpression]*
     Goal::RegExp,
-    // State(419)
+    // State(418)
     //   [RelationalExpression_In -> RelationalExpression_In IN . ShiftExpression]*
     Goal::RegExp,
-    // State(420)
+    // State(419)
     //   [RelationalExpression_In -> RelationalExpression_In INSTANCEOF . ShiftExpression]*
     Goal::RegExp,
-    // State(421)
+    // State(420)
     //   [RelationalExpression_In -> RelationalExpression_In LT . ShiftExpression]*
     Goal::RegExp,
-    // State(422)
+    // State(421)
     //   [RelationalExpression_In -> RelationalExpression_In LTE . ShiftExpression]*
     Goal::RegExp,
-    // State(423)
+    // State(422)
     //   [ShiftExpression -> ShiftExpression SAR . AdditiveExpression]*
     Goal::RegExp,
-    // State(424)
+    // State(423)
     //   [ShiftExpression -> ShiftExpression SHL . AdditiveExpression]*
     Goal::RegExp,
-    // State(425)
+    // State(424)
     //   [ShiftExpression -> ShiftExpression SHR . AdditiveExpression]*
     Goal::RegExp,
-    // State(426)
+    // State(425)
     //   [ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL . _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In]*
     //   [_THEN_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(427)
+    // State(426)
     //   [StatementList -> StatementList StatementListItem .]*
     Goal::RegExp,
-    // State(428)
+    // State(427)
     //   [ExponentiationExpression -> UpdateExpression EXP . ExponentiationExpression]*
     Goal::RegExp,
-    // State(429)
+    // State(428)
     //   [AwaitExpression -> AWAIT . UnaryExpression_Await]*
     Goal::RegExp,
-    // State(430)
+    // State(429)
     //   [ClassExpression_Await -> CLASS . BindingIdentifier_Await ClassTail_Await]*
     //   [ClassExpression_Await -> CLASS . ClassTail_Await]*
     Goal::Div,
-    // State(431)
+    // State(430)
     //   [ImportCall_Await -> IMPORT . LPAREN AssignmentExpression_In_Await RPAREN]*
     //   [ImportMeta -> IMPORT . DOT META]*
     Goal::Div,
-    // State(432)
+    // State(431)
     //   [ObjectLiteral_Await -> LBRACE . RBRACE]*
     //   [ObjectLiteral_Await -> LBRACE . PropertyDefinitionList_Await COMMA RBRACE]*
     //   [ObjectLiteral_Await -> LBRACE . PropertyDefinitionList_Await RBRACE]*
     Goal::Div,
-    // State(433)
+    // State(432)
     //   [IdentifierReference_Await -> YIELD .]*
     Goal::TemplateTail,
-    // State(434)
+    // State(433)
     //   [PrimaryExpression_Await -> AsyncFunctionExpression .]*
     Goal::TemplateTail,
-    // State(435)
+    // State(434)
     //   [PrimaryExpression_Await -> AsyncGeneratorExpression .]*
     Goal::TemplateTail,
-    // State(436)
+    // State(435)
     //   [PrimaryExpression_Await -> ClassExpression_Await .]*
     Goal::TemplateTail,
-    // State(437)
+    // State(436)
     //   [CallExpression_Await -> CoverCallExpressionAndAsyncArrowHead_Await .]*
     Goal::TemplateTail,
-    // State(438)
+    // State(437)
     //   [PrimaryExpression_Await -> CoverParenthesizedExpressionAndArrowParameterList_Await .]*
     Goal::TemplateTail,
-    // State(439)
+    // State(438)
     //   [PrimaryExpression_Await -> FunctionExpression .]*
     Goal::TemplateTail,
-    // State(440)
+    // State(439)
     //   [PrimaryExpression_Await -> GeneratorExpression .]*
     Goal::TemplateTail,
-    // State(441)
+    // State(440)
     //   [IdentifierReference_Await -> Identifier .]*
     Goal::TemplateTail,
-    // State(442)
+    // State(441)
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await . (!LINE_TERMINATOR_SEQUENCE) DEC]*
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) . DEC]*
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await . (!LINE_TERMINATOR_SEQUENCE) INC]*
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::TemplateTail,
-    // State(443)
+    // State(442)
     //   [PrimaryExpression_Await -> ObjectLiteral_Await .]*
     Goal::TemplateTail,
-    // State(444)
+    // State(443)
     //   [UnaryExpression_Await -> ADD UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(445)
+    // State(444)
     //   [UnaryExpression_Await -> UpdateExpression_Await .]*
     Goal::TemplateTail,
-    // State(446)
+    // State(445)
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(447)
+    // State(446)
     //   [AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody_In]*
     Goal::Div,
-    // State(448)
+    // State(447)
     //   [AwaitExpression -> AWAIT UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(449)
+    // State(448)
     //   [UnaryExpression_Await -> BIT_NOT UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(450)
+    // State(449)
     //   [BreakStatement_Await -> BREAK SEMICOLON .]*
     Goal::RegExp,
-    // State(451)
+    // State(450)
     //   [LabelIdentifier_Await -> YIELD .]*
     Goal::Div,
-    // State(452)
+    // State(451)
     //   [LabelIdentifier_Await -> Identifier .]*
     Goal::Div,
-    // State(453)
+    // State(452)
     //   [BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await . SEMICOLON]*
     Goal::Div,
-    // State(454)
+    // State(453)
     //   [BreakStatement_Await -> BREAK . SEMICOLON]*
     Goal::Div,
-    // State(455)
+    // State(454)
     //   [ClassDeclaration_Await -> CLASS BindingIdentifier_Await . ClassTail_Await]*
     Goal::Div,
-    // State(456)
+    // State(455)
     //   [ObjectBindingPattern_Await -> LBRACE . RBRACE]*
     //   [ObjectBindingPattern_Await -> LBRACE . BindingPropertyList_Await COMMA RBRACE]*
     //   [ObjectBindingPattern_Await -> LBRACE . BindingPropertyList_Await COMMA BindingRestProperty_Await RBRACE]*
     //   [ObjectBindingPattern_Await -> LBRACE . BindingPropertyList_Await RBRACE]*
     //   [ObjectBindingPattern_Await -> LBRACE . BindingRestProperty_Await RBRACE]*
     Goal::Div,
-    // State(457)
+    // State(456)
     //   [ArrayBindingPattern_Await -> LBRACK . RBRACK]*
     //   [ArrayBindingPattern_Await -> LBRACK . BindingElementList_Await COMMA RBRACK]*
     //   [ArrayBindingPattern_Await -> LBRACK . BindingElementList_Await COMMA BindingRestElement_Await RBRACK]*
@@ -1780,91 +1777,86 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern_Await -> LBRACK . Elision RBRACK]*
     //   [ArrayBindingPattern_Await -> LBRACK . Elision BindingRestElement_Await RBRACK]*
     Goal::Div,
-    // State(458)
+    // State(457)
     //   [BindingPattern_Await -> ArrayBindingPattern_Await .]*
     Goal::Div,
-    // State(459)
+    // State(458)
     //   [LexicalBinding_In_Await -> BindingIdentifier_Await .]*
     //   [LexicalBinding_In_Await -> BindingIdentifier_Await . Initializer_In_Await]*
     Goal::Div,
-    // State(460)
+    // State(459)
     //   [BindingList_In_Await -> BindingList_In_Await . COMMA LexicalBinding_In_Await]*
     //   [LexicalDeclaration_In_Await -> CONST BindingList_In_Await . SEMICOLON]*
     Goal::Div,
-    // State(461)
+    // State(460)
     //   [LexicalBinding_In_Await -> BindingPattern_Await . Initializer_In_Await]*
     Goal::Div,
-    // State(462)
+    // State(461)
     //   [BindingList_In_Await -> LexicalBinding_In_Await .]*
     Goal::Div,
-    // State(463)
+    // State(462)
     //   [BindingPattern_Await -> ObjectBindingPattern_Await .]*
     Goal::Div,
-    // State(464)
+    // State(463)
     //   [ContinueStatement_Await -> CONTINUE SEMICOLON .]*
     Goal::RegExp,
-    // State(465)
+    // State(464)
     //   [ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await . SEMICOLON]*
     Goal::Div,
-    // State(466)
+    // State(465)
     //   [ContinueStatement_Await -> CONTINUE . SEMICOLON]*
     Goal::Div,
-    // State(467)
+    // State(466)
     //   [UpdateExpression_Await -> DEC UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(468)
+    // State(467)
     //   [UnaryExpression_Await -> DELETE UnaryExpression_Await .]*
     Goal::TemplateTail,
+    // State(468)
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ . Statement_Await WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
     // State(469)
-    //   [AsyncArrowFunction_In_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
-    Goal::Div,
-    // State(470)
-    //   [DoWhileStatement_Await -> DO Statement_Await . WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
-    Goal::Div,
-    // State(471)
     //   [AsyncFunctionDeclaration_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncGeneratorDeclaration_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(472)
+    // State(470)
     //   [ExportDeclaration -> EXPORT DEFAULT . ClassDeclaration_Await_Default]*
     //   [ExportDeclaration -> EXPORT DEFAULT . HoistableDeclaration_Await_Default]*
     //   [ExportDeclaration -> EXPORT DEFAULT . (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION]) AssignmentExpression_In_Await SEMICOLON]*
     Goal::RegExp,
-    // State(473)
+    // State(471)
     //   [NamedExports -> LBRACE . RBRACE]*
     //   [NamedExports -> LBRACE . ExportsList COMMA RBRACE]*
     //   [NamedExports -> LBRACE . ExportsList RBRACE]*
     Goal::Div,
-    // State(474)
+    // State(472)
     //   [LexicalDeclaration_In_Await -> LET . BindingList_In_Await SEMICOLON]*
     Goal::Div,
-    // State(475)
+    // State(473)
     //   [ExportFromClause -> MUL .]*
     //   [ExportFromClause -> MUL . AS ModuleExportName]*
     Goal::Div,
-    // State(476)
+    // State(474)
     //   [ExportDeclaration -> EXPORT Declaration_Await .]*
     Goal::RegExp,
-    // State(477)
+    // State(475)
     //   [ExportDeclaration -> EXPORT ExportFromClause . FromClause SEMICOLON]*
     Goal::Div,
-    // State(478)
+    // State(476)
     //   [ExportDeclaration -> EXPORT NamedExports . SEMICOLON]*
     //   [ExportFromClause -> NamedExports .]*
     Goal::Div,
-    // State(479)
+    // State(477)
     //   [ExportDeclaration -> EXPORT VariableStatement_Await .]*
     Goal::RegExp,
-    // State(480)
+    // State(478)
     //   [ForInOfStatement_Await -> FOR AWAIT . LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR AWAIT . LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR AWAIT . LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     Goal::Div,
-    // State(481)
+    // State(479)
     //   [ForInOfStatement_Await -> FOR LPAREN . VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR LPAREN . VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await]*
     //   [ForInOfStatement_Await -> FOR LPAREN . ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await]*
@@ -1888,64 +1880,64 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await]*
     //   [ForStatement_Await -> FOR LPAREN . (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await]*
     Goal::RegExp,
-    // State(482)
+    // State(480)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL . BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(483)
+    // State(481)
     //   [FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await . _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_CONTEXT_ -> (empty) .]*
     Goal::Div,
-    // State(484)
+    // State(482)
     //   [IfStatement_Await -> IF LPAREN . Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE _ELSE_BLOCK_ Statement_Await]*
     //   [IfStatement_Await -> IF LPAREN . Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await (?![ELSE])]*
     Goal::RegExp,
-    // State(485)
+    // State(483)
     //   [NamedImports -> LBRACE . RBRACE]*
     //   [NamedImports -> LBRACE . ImportsList COMMA RBRACE]*
     //   [NamedImports -> LBRACE . ImportsList RBRACE]*
     Goal::Div,
-    // State(486)
+    // State(484)
     //   [ImportCall_Await -> IMPORT LPAREN . AssignmentExpression_In_Await RPAREN]*
     Goal::RegExp,
-    // State(487)
+    // State(485)
     //   [NameSpaceImport -> MUL . AS ImportedBinding]*
     Goal::Div,
-    // State(488)
+    // State(486)
     //   [ModuleSpecifier -> STRING_LITERAL .]*
     Goal::Div,
-    // State(489)
+    // State(487)
     //   [ImportedBinding -> BindingIdentifier_Await .]*
     Goal::Div,
-    // State(490)
+    // State(488)
     //   [ImportDeclaration -> IMPORT ImportClause . FromClause SEMICOLON]*
     Goal::Div,
-    // State(491)
+    // State(489)
     //   [ImportedDefaultBinding -> ImportedBinding .]*
     Goal::Div,
-    // State(492)
+    // State(490)
     //   [ImportClause -> ImportedDefaultBinding .]*
     //   [ImportClause -> ImportedDefaultBinding . COMMA NameSpaceImport]*
     //   [ImportClause -> ImportedDefaultBinding . COMMA NamedImports]*
     Goal::Div,
-    // State(493)
+    // State(491)
     //   [ImportDeclaration -> IMPORT ModuleSpecifier . SEMICOLON]*
     Goal::Div,
-    // State(494)
+    // State(492)
     //   [ImportClause -> NameSpaceImport .]*
     Goal::Div,
-    // State(495)
+    // State(493)
     //   [ImportClause -> NamedImports .]*
     Goal::Div,
-    // State(496)
+    // State(494)
     //   [UpdateExpression_Await -> INC UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(497)
+    // State(495)
     //   [Block_Await -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(498)
+    // State(496)
     //   [Block_Await -> LBRACE _BLOCK_SCOPE_ . StatementList_Await RBRACE]*
     Goal::RegExp,
-    // State(499)
+    // State(497)
     //   [AsyncArrowFunction_In_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncFunctionExpression -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -1958,20 +1950,20 @@ pub static TABLE: [Goal; 4260] = [
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::TemplateTail,
-    // State(500)
+    // State(498)
     //   [SpreadElement_Await -> ELLIPSIS . AssignmentExpression_In_Await]*
     Goal::RegExp,
-    // State(501)
+    // State(499)
     //   [ArrayLiteral_Await -> LBRACK RBRACK .]*
     Goal::TemplateTail,
-    // State(502)
+    // State(500)
     //   [BindingIdentifier_Await -> YIELD .]*
     //   [IdentifierReference_Await -> YIELD .]*
     Goal::TemplateTail,
-    // State(503)
+    // State(501)
     //   [ElementList_Await -> AssignmentExpression_In_Await .]*
     Goal::Div,
-    // State(504)
+    // State(502)
     //   [ArrayLiteral_Await -> LBRACK ElementList_Await . COMMA RBRACK]*
     //   [ArrayLiteral_Await -> LBRACK ElementList_Await . COMMA Elision RBRACK]*
     //   [ArrayLiteral_Await -> LBRACK ElementList_Await . RBRACK]*
@@ -1980,42 +1972,42 @@ pub static TABLE: [Goal; 4260] = [
     //   [ElementList_Await -> ElementList_Await . COMMA Elision SpreadElement_Await]*
     //   [ElementList_Await -> ElementList_Await . COMMA SpreadElement_Await]*
     Goal::Div,
-    // State(505)
+    // State(503)
     //   [ArrayLiteral_Await -> LBRACK Elision . RBRACK]*
     //   [ElementList_Await -> Elision . AssignmentExpression_In_Await]*
     //   [ElementList_Await -> Elision . SpreadElement_Await]*
     //   [Elision -> Elision . COMMA]*
     Goal::RegExp,
-    // State(506)
+    // State(504)
     //   [BindingIdentifier_Await -> Identifier .]*
     //   [IdentifierReference_Await -> Identifier .]*
     Goal::TemplateTail,
-    // State(507)
+    // State(505)
     //   [ElementList_Await -> SpreadElement_Await .]*
     Goal::Div,
-    // State(508)
+    // State(506)
     //   [BindingList_In_Await -> BindingList_In_Await . COMMA LexicalBinding_In_Await]*
     //   [LexicalDeclaration_In_Await -> LET BindingList_In_Await . SEMICOLON]*
     Goal::Div,
-    // State(509)
+    // State(507)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS . BindingIdentifier_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN ELLIPSIS . BindingPattern_Await RPAREN]*
     Goal::Div,
-    // State(510)
+    // State(508)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN RPAREN .]*
     Goal::TemplateTail,
-    // State(511)
+    // State(509)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await . COMMA ELLIPSIS BindingIdentifier_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await . COMMA ELLIPSIS BindingPattern_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await . COMMA RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Await -> LPAREN Expression_In_Await . RPAREN]*
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::Div,
-    // State(512)
+    // State(510)
     //   [SuperProperty_Await -> SUPER . DOT KeywordOrIdentifierName]*
     //   [SuperProperty_Await -> SUPER . LBRACK Expression_In_Await RBRACK]*
     Goal::Div,
-    // State(513)
+    // State(511)
     //   [MemberExpression_Await -> NEW MemberExpression_Await . Arguments_Await]*
     //   [MemberExpression_Await -> MemberExpression_Await . DOT PRIVATE_IDENTIFIER]*
     //   [MemberExpression_Await -> MemberExpression_Await . DOT KeywordOrIdentifierName]*
@@ -2023,116 +2015,116 @@ pub static TABLE: [Goal; 4260] = [
     //   [MemberExpression_Await -> MemberExpression_Await . TemplateLiteral_Await_Tagged]*
     //   [NewExpression_Await -> MemberExpression_Await .]*
     Goal::TemplateTail,
-    // State(514)
+    // State(512)
     //   [NewExpression_Await -> NEW NewExpression_Await .]*
     Goal::TemplateTail,
-    // State(515)
+    // State(513)
     //   [UnaryExpression_Await -> NOT UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(516)
+    // State(514)
     //   [RelationalExpression_In_Await -> PRIVATE_IDENTIFIER IN . ShiftExpression_Await]*
     Goal::RegExp,
-    // State(517)
+    // State(515)
     //   [UnaryExpression_Await -> SUB UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(518)
+    // State(516)
     //   [SuperProperty_Await -> SUPER DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(519)
+    // State(517)
     //   [SuperProperty_Await -> SUPER LBRACK . Expression_In_Await RBRACK]*
     Goal::RegExp,
-    // State(520)
+    // State(518)
     //   [Arguments_Await -> LPAREN . RPAREN]*
     //   [Arguments_Await -> LPAREN . ArgumentList_Await COMMA RPAREN]*
     //   [Arguments_Await -> LPAREN . ArgumentList_Await RPAREN]*
     Goal::RegExp,
-    // State(521)
+    // State(519)
     //   [SuperCall_Await -> SUPER Arguments_Await .]*
     Goal::TemplateTail,
-    // State(522)
+    // State(520)
     //   [SwitchStatement_Await -> SWITCH LPAREN . Expression_In_Await RPAREN CaseBlock_Await]*
     Goal::RegExp,
-    // State(523)
+    // State(521)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [SubstitutionTemplate_Await -> TEMPLATE_HEAD Expression_In_Await . TemplateSpans_Await]*
     Goal::TemplateTail,
-    // State(524)
+    // State(522)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ThrowStatement_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Await . SEMICOLON]*
     Goal::Div,
-    // State(525)
+    // State(523)
     //   [TryStatement_Await -> TRY Block_Await . Catch_Await]*
     //   [TryStatement_Await -> TRY Block_Await . Catch_Await Finally_Await]*
     //   [TryStatement_Await -> TRY Block_Await . Finally_Await]*
     Goal::Div,
-    // State(526)
+    // State(524)
     //   [UnaryExpression_Await -> TYPEOF UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(527)
+    // State(525)
     //   [VariableDeclaration_In_Await -> BindingIdentifier_Await .]*
     //   [VariableDeclaration_In_Await -> BindingIdentifier_Await . Initializer_In_Await]*
     Goal::Div,
-    // State(528)
+    // State(526)
     //   [VariableDeclaration_In_Await -> BindingPattern_Await . Initializer_In_Await]*
     Goal::Div,
-    // State(529)
+    // State(527)
     //   [VariableDeclarationList_In_Await -> VariableDeclarationList_In_Await . COMMA VariableDeclaration_In_Await]*
     //   [VariableStatement_Await -> VAR VariableDeclarationList_In_Await . SEMICOLON]*
     Goal::Div,
-    // State(530)
+    // State(528)
     //   [VariableDeclarationList_In_Await -> VariableDeclaration_In_Await .]*
     Goal::Div,
-    // State(531)
+    // State(529)
     //   [UnaryExpression_Await -> VOID UnaryExpression_Await .]*
     Goal::TemplateTail,
-    // State(532)
+    // State(530)
     //   [WhileStatement_Await -> WHILE _LOOP_START_ . LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await]*
     Goal::Div,
-    // State(533)
+    // State(531)
     //   [WithStatement_Await -> WITH LPAREN . Expression_In_Await RPAREN Statement_Await]*
     Goal::RegExp,
-    // State(534)
+    // State(532)
     //   [AdditiveExpression_Await -> AdditiveExpression_Await ADD . MultiplicativeExpression_Await]*
     Goal::RegExp,
-    // State(535)
+    // State(533)
     //   [AdditiveExpression_Await -> AdditiveExpression_Await SUB . MultiplicativeExpression_Await]*
     Goal::RegExp,
-    // State(536)
+    // State(534)
     //   [ArrowFunction_In_Await -> ArrowParameters_Await (!LINE_TERMINATOR_SEQUENCE) ARROW . ConciseBody_In]*
     Goal::RegExp,
-    // State(537)
+    // State(535)
     //   [BitwiseANDExpression_In_Await -> BitwiseANDExpression_In_Await BIT_AND . EqualityExpression_In_Await]*
     Goal::RegExp,
-    // State(538)
+    // State(536)
     //   [BitwiseORExpression_In_Await -> BitwiseORExpression_In_Await BIT_OR . BitwiseXORExpression_In_Await]*
     Goal::RegExp,
-    // State(539)
+    // State(537)
     //   [BitwiseXORExpression_In_Await -> BitwiseXORExpression_In_Await BIT_XOR . BitwiseANDExpression_In_Await]*
     Goal::RegExp,
-    // State(540)
+    // State(538)
     //   [CallExpression_Await -> CallExpression_Await DOT . PRIVATE_IDENTIFIER]*
     //   [CallExpression_Await -> CallExpression_Await DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(541)
+    // State(539)
     //   [CallExpression_Await -> CallExpression_Await LBRACK . Expression_In_Await RBRACK]*
     Goal::RegExp,
-    // State(542)
+    // State(540)
     //   [TemplateLiteral_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE .]*
     Goal::TemplateTail,
-    // State(543)
+    // State(541)
     //   [OptionalChain_Await -> OPTIONAL_CHAINING . LBRACK Expression_In_Await RBRACK]*
     //   [OptionalChain_Await -> OPTIONAL_CHAINING . PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Await -> OPTIONAL_CHAINING . Arguments_Await]*
     //   [OptionalChain_Await -> OPTIONAL_CHAINING . KeywordOrIdentifierName]*
     //   [OptionalChain_Await -> OPTIONAL_CHAINING . TemplateLiteral_Await_Tagged]*
     Goal::Div,
-    // State(544)
+    // State(542)
     //   [SubstitutionTemplate_Await_Tagged -> TEMPLATE_HEAD . Expression_In_Await TemplateSpans_Await_Tagged]*
     Goal::RegExp,
-    // State(545)
+    // State(543)
     //   [CallExpression_Await -> CallExpression_Await Arguments_Await .]*
     Goal::TemplateTail,
-    // State(546)
+    // State(544)
     //   [OptionalChain_Await -> OptionalChain_Await . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Await -> OptionalChain_Await . DOT KeywordOrIdentifierName]*
     //   [OptionalChain_Await -> OptionalChain_Await . LBRACK Expression_In_Await RBRACK]*
@@ -2140,65 +2132,65 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain_Await -> OptionalChain_Await . TemplateLiteral_Await_Tagged]*
     //   [OptionalExpression_Await -> CallExpression_Await OptionalChain_Await .]*
     Goal::TemplateTail,
-    // State(547)
+    // State(545)
     //   [TemplateLiteral_Await_Tagged -> SubstitutionTemplate_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(548)
+    // State(546)
     //   [CallExpression_Await -> CallExpression_Await TemplateLiteral_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(549)
+    // State(547)
     //   [CoalesceExpression_In_Await -> CoalesceExpressionHead_In_Await NULLISH . _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Await]*
     //   [_NULLISH_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(550)
+    // State(548)
     //   [AsyncArrowFunction_In_Await -> CoverCallExpressionAndAsyncArrowHead_Await (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody_In]*
     Goal::RegExp,
-    // State(551)
+    // State(549)
     //   [EqualityExpression_In_Await -> EqualityExpression_In_Await EQ . RelationalExpression_In_Await]*
     Goal::RegExp,
-    // State(552)
+    // State(550)
     //   [EqualityExpression_In_Await -> EqualityExpression_In_Await EQ_STRICT . RelationalExpression_In_Await]*
     Goal::RegExp,
-    // State(553)
+    // State(551)
     //   [EqualityExpression_In_Await -> EqualityExpression_In_Await NE . RelationalExpression_In_Await]*
     Goal::RegExp,
-    // State(554)
+    // State(552)
     //   [EqualityExpression_In_Await -> EqualityExpression_In_Await NE_STRICT . RelationalExpression_In_Await]*
     Goal::RegExp,
-    // State(555)
+    // State(553)
     //   [Expression_In_Await -> Expression_In_Await COMMA . AssignmentExpression_In_Await]*
     Goal::RegExp,
-    // State(556)
+    // State(554)
     //   [ExpressionStatement_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(557)
+    // State(555)
     //   [LabelledStatement_Await -> LabelIdentifier_Await COLON . LabelledItem_Await]*
     Goal::RegExp,
-    // State(558)
+    // State(556)
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await AND_ASSIGN . _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await]*
     //   [_FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(559)
+    // State(557)
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await ASSIGN . AssignmentExpression_In_Await]*
     Goal::RegExp,
-    // State(560)
+    // State(558)
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) DEC .]*
     Goal::TemplateTail,
-    // State(561)
+    // State(559)
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await (!LINE_TERMINATOR_SEQUENCE) INC .]*
     Goal::TemplateTail,
-    // State(562)
+    // State(560)
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await NULLISH_ASSIGN . _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await]*
     //   [_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(563)
+    // State(561)
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await OR_ASSIGN . _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await]*
     //   [_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(564)
+    // State(562)
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await AssignmentOperator . AssignmentExpression_In_Await]*
     Goal::RegExp,
-    // State(565)
+    // State(563)
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await]*
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await . ASSIGN AssignmentExpression_In_Await]*
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Await]*
@@ -2206,25 +2198,25 @@ pub static TABLE: [Goal; 4260] = [
     //   [AssignmentExpression_In_Await -> LeftHandSideExpression_Await . AssignmentOperator AssignmentExpression_In_Await]*
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     Goal::TemplateTail,
-    // State(566)
+    // State(564)
     //   [LogicalANDExpression_In_Await -> LogicalANDExpression_In_Await AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Await]*
     //   [_FALSY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(567)
+    // State(565)
     //   [LogicalORExpression_In_Await -> LogicalORExpression_In_Await OR . _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Await]*
     //   [_TRUTHY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(568)
+    // State(566)
     //   [MemberExpression_Await -> MemberExpression_Await DOT . PRIVATE_IDENTIFIER]*
     //   [MemberExpression_Await -> MemberExpression_Await DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(569)
+    // State(567)
     //   [MemberExpression_Await -> MemberExpression_Await LBRACK . Expression_In_Await RBRACK]*
     Goal::RegExp,
-    // State(570)
+    // State(568)
     //   [CoverCallExpressionAndAsyncArrowHead_Await -> MemberExpression_Await Arguments_Await .]*
     Goal::TemplateTail,
-    // State(571)
+    // State(569)
     //   [OptionalChain_Await -> OptionalChain_Await . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Await -> OptionalChain_Await . DOT KeywordOrIdentifierName]*
     //   [OptionalChain_Await -> OptionalChain_Await . LBRACK Expression_In_Await RBRACK]*
@@ -2232,22 +2224,22 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain_Await -> OptionalChain_Await . TemplateLiteral_Await_Tagged]*
     //   [OptionalExpression_Await -> MemberExpression_Await OptionalChain_Await .]*
     Goal::TemplateTail,
-    // State(572)
+    // State(570)
     //   [MemberExpression_Await -> MemberExpression_Await TemplateLiteral_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(573)
+    // State(571)
     //   [ModuleItemList -> ModuleItemList ModuleItem .]*
     Goal::RegExp,
-    // State(574)
+    // State(572)
     //   [MultiplicativeExpression_Await -> MultiplicativeExpression_Await DIV . ExponentiationExpression_Await]*
     Goal::RegExp,
-    // State(575)
+    // State(573)
     //   [MultiplicativeExpression_Await -> MultiplicativeExpression_Await MOD . ExponentiationExpression_Await]*
     Goal::RegExp,
-    // State(576)
+    // State(574)
     //   [MultiplicativeExpression_Await -> MultiplicativeExpression_Await MUL . ExponentiationExpression_Await]*
     Goal::RegExp,
-    // State(577)
+    // State(575)
     //   [OptionalChain_Await -> OptionalChain_Await . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Await -> OptionalChain_Await . DOT KeywordOrIdentifierName]*
     //   [OptionalChain_Await -> OptionalChain_Await . LBRACK Expression_In_Await RBRACK]*
@@ -2255,79 +2247,79 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain_Await -> OptionalChain_Await . TemplateLiteral_Await_Tagged]*
     //   [OptionalExpression_Await -> OptionalExpression_Await OptionalChain_Await .]*
     Goal::TemplateTail,
-    // State(578)
+    // State(576)
     //   [RelationalExpression_In_Await -> RelationalExpression_In_Await GT . ShiftExpression_Await]*
     Goal::RegExp,
-    // State(579)
+    // State(577)
     //   [RelationalExpression_In_Await -> RelationalExpression_In_Await GTE . ShiftExpression_Await]*
     Goal::RegExp,
-    // State(580)
+    // State(578)
     //   [RelationalExpression_In_Await -> RelationalExpression_In_Await IN . ShiftExpression_Await]*
     Goal::RegExp,
-    // State(581)
+    // State(579)
     //   [RelationalExpression_In_Await -> RelationalExpression_In_Await INSTANCEOF . ShiftExpression_Await]*
     Goal::RegExp,
-    // State(582)
+    // State(580)
     //   [RelationalExpression_In_Await -> RelationalExpression_In_Await LT . ShiftExpression_Await]*
     Goal::RegExp,
-    // State(583)
+    // State(581)
     //   [RelationalExpression_In_Await -> RelationalExpression_In_Await LTE . ShiftExpression_Await]*
     Goal::RegExp,
-    // State(584)
+    // State(582)
     //   [ShiftExpression_Await -> ShiftExpression_Await SAR . AdditiveExpression_Await]*
     Goal::RegExp,
-    // State(585)
+    // State(583)
     //   [ShiftExpression_Await -> ShiftExpression_Await SHL . AdditiveExpression_Await]*
     Goal::RegExp,
-    // State(586)
+    // State(584)
     //   [ShiftExpression_Await -> ShiftExpression_Await SHR . AdditiveExpression_Await]*
     Goal::RegExp,
-    // State(587)
+    // State(585)
     //   [ConditionalExpression_In_Await -> ShortCircuitExpression_In_Await CONDITIONAL . _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Await]*
     //   [_THEN_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(588)
+    // State(586)
     //   [ExponentiationExpression_Await -> UpdateExpression_Await EXP . ExponentiationExpression_Await]*
     Goal::RegExp,
-    // State(589)
+    // State(587)
     //   [AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(590)
+    // State(588)
     //   [ClassHeritage -> EXTENDS . LeftHandSideExpression]*
     Goal::RegExp,
-    // State(591)
+    // State(589)
     //   [ClassTail -> LBRACE . RBRACE]*
     //   [ClassTail -> LBRACE . ClassBody RBRACE]*
     Goal::Div,
-    // State(592)
+    // State(590)
     //   [ClassExpression -> CLASS BindingIdentifier . ClassTail]*
     Goal::Div,
-    // State(593)
+    // State(591)
     //   [ClassTail -> ClassHeritage . LBRACE RBRACE]*
     //   [ClassTail -> ClassHeritage . LBRACE ClassBody RBRACE]*
     Goal::Div,
-    // State(594)
+    // State(592)
     //   [ClassExpression -> CLASS ClassTail .]*
     Goal::TemplateTail,
-    // State(595)
+    // State(593)
     //   [GeneratorExpression -> FUNCTION MUL . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     //   [GeneratorExpression -> FUNCTION MUL . BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(596)
+    // State(594)
     //   [FunctionExpression -> FUNCTION BindingIdentifier . _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_CONTEXT_ -> (empty) .]*
     Goal::Div,
-    // State(597)
+    // State(595)
     //   [FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ . LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(598)
+    // State(596)
     //   [IdentifierNameButNotReservedWord -> AS .]*
     //   [KeywordOrIdentifierName -> AS .]*
     Goal::Div,
-    // State(599)
+    // State(597)
     //   [AsyncGeneratorMethod -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncMethod -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -2335,325 +2327,325 @@ pub static TABLE: [Goal; 4260] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     //   [KeywordOrIdentifierName -> ASYNC .]*
     Goal::Div,
-    // State(600)
+    // State(598)
     //   [IdentifierReference -> AWAIT .]*
     //   [KeywordOrIdentifierName -> AWAIT .]*
     Goal::Div,
-    // State(601)
+    // State(599)
     //   [KeywordOrIdentifierName -> BREAK .]*
     Goal::TemplateTail,
-    // State(602)
+    // State(600)
     //   [KeywordOrIdentifierName -> CASE .]*
     Goal::TemplateTail,
-    // State(603)
+    // State(601)
     //   [KeywordOrIdentifierName -> CATCH .]*
     Goal::TemplateTail,
-    // State(604)
+    // State(602)
     //   [KeywordOrIdentifierName -> CLASS .]*
     Goal::TemplateTail,
-    // State(605)
+    // State(603)
     //   [KeywordOrIdentifierName -> CONST .]*
     Goal::TemplateTail,
-    // State(606)
+    // State(604)
     //   [KeywordOrIdentifierName -> CONTINUE .]*
     Goal::TemplateTail,
-    // State(607)
+    // State(605)
     //   [KeywordOrIdentifierName -> DEBUGGER .]*
     Goal::TemplateTail,
-    // State(608)
+    // State(606)
     //   [KeywordOrIdentifierName -> DEFAULT .]*
     Goal::TemplateTail,
-    // State(609)
+    // State(607)
     //   [KeywordOrIdentifierName -> DELETE .]*
     Goal::TemplateTail,
-    // State(610)
+    // State(608)
     //   [KeywordOrIdentifierName -> DO .]*
     Goal::TemplateTail,
-    // State(611)
+    // State(609)
     //   [PropertyDefinition -> ELLIPSIS . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(612)
+    // State(610)
     //   [KeywordOrIdentifierName -> ELSE .]*
     Goal::TemplateTail,
-    // State(613)
+    // State(611)
     //   [KeywordOrIdentifierName -> ENUM .]*
     Goal::TemplateTail,
-    // State(614)
+    // State(612)
     //   [KeywordOrIdentifierName -> EXPORT .]*
     Goal::TemplateTail,
-    // State(615)
+    // State(613)
     //   [KeywordOrIdentifierName -> EXTENDS .]*
     Goal::TemplateTail,
-    // State(616)
+    // State(614)
     //   [KeywordOrIdentifierName -> FALSE .]*
     Goal::TemplateTail,
-    // State(617)
+    // State(615)
     //   [KeywordOrIdentifierName -> FINALLY .]*
     Goal::TemplateTail,
-    // State(618)
+    // State(616)
     //   [KeywordOrIdentifierName -> FOR .]*
     Goal::TemplateTail,
-    // State(619)
+    // State(617)
     //   [IdentifierNameButNotReservedWord -> FROM .]*
     //   [KeywordOrIdentifierName -> FROM .]*
     Goal::Div,
-    // State(620)
+    // State(618)
     //   [KeywordOrIdentifierName -> FUNCTION .]*
     Goal::TemplateTail,
-    // State(621)
+    // State(619)
     //   [IdentifierNameButNotReservedWord -> GET .]*
     //   [KeywordOrIdentifierName -> GET .]*
     //   [MethodDefinition -> GET . ClassElementName LPAREN RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(622)
+    // State(620)
     //   [IdentifierNameButNotReservedWord -> IDENTIFIER_NAME .]*
     //   [KeywordOrIdentifierName -> IDENTIFIER_NAME .]*
     Goal::Div,
-    // State(623)
+    // State(621)
     //   [KeywordOrIdentifierName -> IF .]*
     Goal::TemplateTail,
-    // State(624)
+    // State(622)
     //   [IdentifierNameButNotReservedWord -> IMPLEMENTS .]*
     //   [KeywordOrIdentifierName -> IMPLEMENTS .]*
     Goal::Div,
-    // State(625)
+    // State(623)
     //   [KeywordOrIdentifierName -> IMPORT .]*
     Goal::TemplateTail,
-    // State(626)
+    // State(624)
     //   [KeywordOrIdentifierName -> IN .]*
     Goal::TemplateTail,
-    // State(627)
+    // State(625)
     //   [KeywordOrIdentifierName -> INSTANCEOF .]*
     Goal::TemplateTail,
-    // State(628)
+    // State(626)
     //   [IdentifierNameButNotReservedWord -> INTERFACE .]*
     //   [KeywordOrIdentifierName -> INTERFACE .]*
     Goal::Div,
-    // State(629)
+    // State(627)
     //   [ComputedPropertyName -> LBRACK . AssignmentExpression_In RBRACK]*
     Goal::RegExp,
-    // State(630)
+    // State(628)
     //   [IdentifierNameButNotReservedWord -> LET .]*
     //   [KeywordOrIdentifierName -> LET .]*
     Goal::Div,
-    // State(631)
+    // State(629)
     //   [IdentifierNameButNotReservedWord -> META .]*
     //   [KeywordOrIdentifierName -> META .]*
     Goal::Div,
-    // State(632)
+    // State(630)
     //   [GeneratorMethod -> MUL . ClassElementName LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(633)
+    // State(631)
     //   [KeywordOrIdentifierName -> NEW .]*
     Goal::TemplateTail,
-    // State(634)
+    // State(632)
     //   [KeywordOrIdentifierName -> NULL .]*
     Goal::TemplateTail,
-    // State(635)
+    // State(633)
     //   [LiteralPropertyName -> NUMERIC_LITERAL .]*
     Goal::Div,
-    // State(636)
+    // State(634)
     //   [IdentifierNameButNotReservedWord -> OF .]*
     //   [KeywordOrIdentifierName -> OF .]*
     Goal::Div,
-    // State(637)
+    // State(635)
     //   [IdentifierNameButNotReservedWord -> PACKAGE .]*
     //   [KeywordOrIdentifierName -> PACKAGE .]*
     Goal::Div,
-    // State(638)
+    // State(636)
     //   [IdentifierNameButNotReservedWord -> PRIVATE .]*
     //   [KeywordOrIdentifierName -> PRIVATE .]*
     Goal::Div,
-    // State(639)
+    // State(637)
     //   [ClassElementName -> PRIVATE_IDENTIFIER .]*
     Goal::Div,
-    // State(640)
+    // State(638)
     //   [IdentifierNameButNotReservedWord -> PROTECTED .]*
     //   [KeywordOrIdentifierName -> PROTECTED .]*
     Goal::Div,
-    // State(641)
+    // State(639)
     //   [IdentifierNameButNotReservedWord -> PUBLIC .]*
     //   [KeywordOrIdentifierName -> PUBLIC .]*
     Goal::Div,
-    // State(642)
+    // State(640)
     //   [ObjectLiteral -> LBRACE RBRACE .]*
     Goal::TemplateTail,
-    // State(643)
+    // State(641)
     //   [KeywordOrIdentifierName -> RETURN .]*
     Goal::TemplateTail,
-    // State(644)
+    // State(642)
     //   [IdentifierNameButNotReservedWord -> SET .]*
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition -> SET . ClassElementName LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(645)
+    // State(643)
     //   [IdentifierNameButNotReservedWord -> STATIC .]*
     //   [KeywordOrIdentifierName -> STATIC .]*
     Goal::Div,
-    // State(646)
+    // State(644)
     //   [LiteralPropertyName -> STRING_LITERAL .]*
     Goal::Div,
-    // State(647)
+    // State(645)
     //   [KeywordOrIdentifierName -> SUPER .]*
     Goal::TemplateTail,
-    // State(648)
+    // State(646)
     //   [KeywordOrIdentifierName -> SWITCH .]*
     Goal::TemplateTail,
-    // State(649)
+    // State(647)
     //   [IdentifierNameButNotReservedWord -> TARGET .]*
     //   [KeywordOrIdentifierName -> TARGET .]*
     Goal::Div,
-    // State(650)
+    // State(648)
     //   [KeywordOrIdentifierName -> THIS .]*
     Goal::TemplateTail,
-    // State(651)
+    // State(649)
     //   [KeywordOrIdentifierName -> THROW .]*
     Goal::TemplateTail,
-    // State(652)
+    // State(650)
     //   [KeywordOrIdentifierName -> TRUE .]*
     Goal::TemplateTail,
-    // State(653)
+    // State(651)
     //   [KeywordOrIdentifierName -> TRY .]*
     Goal::TemplateTail,
-    // State(654)
+    // State(652)
     //   [KeywordOrIdentifierName -> TYPEOF .]*
     Goal::TemplateTail,
-    // State(655)
+    // State(653)
     //   [KeywordOrIdentifierName -> VAR .]*
     Goal::TemplateTail,
-    // State(656)
+    // State(654)
     //   [KeywordOrIdentifierName -> VOID .]*
     Goal::TemplateTail,
-    // State(657)
+    // State(655)
     //   [KeywordOrIdentifierName -> WHILE .]*
     Goal::TemplateTail,
-    // State(658)
+    // State(656)
     //   [KeywordOrIdentifierName -> WITH .]*
     Goal::TemplateTail,
-    // State(659)
+    // State(657)
     //   [IdentifierReference -> YIELD .]*
     //   [KeywordOrIdentifierName -> YIELD .]*
     Goal::Div,
-    // State(660)
+    // State(658)
     //   [MethodDefinition -> AsyncGeneratorMethod .]*
     Goal::Div,
-    // State(661)
+    // State(659)
     //   [MethodDefinition -> AsyncMethod .]*
     Goal::Div,
-    // State(662)
+    // State(660)
     //   [MethodDefinition -> ClassElementName . LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(663)
+    // State(661)
     //   [PropertyName -> ComputedPropertyName .]*
     Goal::Div,
-    // State(664)
+    // State(662)
     //   [PropertyDefinition -> CoverInitializedName .]*
     Goal::Div,
-    // State(665)
+    // State(663)
     //   [MethodDefinition -> GeneratorMethod .]*
     Goal::Div,
-    // State(666)
+    // State(664)
     //   [CoverInitializedName -> IdentifierReference . Initializer_In]*
     //   [PropertyDefinition -> IdentifierReference .]*
     Goal::Div,
-    // State(667)
+    // State(665)
     //   [LiteralPropertyName -> KeywordOrIdentifierName .]*
     Goal::Div,
-    // State(668)
+    // State(666)
     //   [PropertyName -> LiteralPropertyName .]*
     Goal::Div,
-    // State(669)
+    // State(667)
     //   [PropertyDefinition -> MethodDefinition .]*
     Goal::Div,
-    // State(670)
+    // State(668)
     //   [PropertyDefinitionList -> PropertyDefinition .]*
     Goal::Div,
-    // State(671)
+    // State(669)
     //   [ObjectLiteral -> LBRACE PropertyDefinitionList . COMMA RBRACE]*
     //   [ObjectLiteral -> LBRACE PropertyDefinitionList . RBRACE]*
     //   [PropertyDefinitionList -> PropertyDefinitionList . COMMA PropertyDefinition]*
     Goal::Div,
-    // State(672)
+    // State(670)
     //   [ClassElementName -> PropertyName .]*
     //   [PropertyDefinition -> PropertyName . COLON AssignmentExpression_In]*
     Goal::Div,
-    // State(673)
+    // State(671)
     //   [UpdateExpression -> LeftHandSideExpression .]*
     Goal::TemplateTail,
-    // State(674)
+    // State(672)
     //   [AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL . BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(675)
+    // State(673)
     //   [AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(676)
+    // State(674)
     //   [AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody_In]*
     Goal::RegExp,
-    // State(677)
+    // State(675)
     //   [BreakStatement -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON .]*
     Goal::RegExp,
-    // State(678)
+    // State(676)
     //   [ClassDeclaration -> CLASS BindingIdentifier ClassTail .]*
     Goal::RegExp,
-    // State(679)
+    // State(677)
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     //   [KeywordOrIdentifierName -> ASYNC .]*
     Goal::Div,
-    // State(680)
+    // State(678)
     //   [BindingIdentifier -> AWAIT .]*
     //   [KeywordOrIdentifierName -> AWAIT .]*
     Goal::Div,
-    // State(681)
+    // State(679)
     //   [BindingRestProperty -> ELLIPSIS . BindingIdentifier]*
     Goal::Div,
-    // State(682)
+    // State(680)
     //   [IdentifierNameButNotReservedWord -> GET .]*
     //   [KeywordOrIdentifierName -> GET .]*
     Goal::Div,
-    // State(683)
+    // State(681)
     //   [ObjectBindingPattern -> LBRACE RBRACE .]*
     Goal::Div,
-    // State(684)
+    // State(682)
     //   [IdentifierNameButNotReservedWord -> SET .]*
     //   [KeywordOrIdentifierName -> SET .]*
     Goal::Div,
-    // State(685)
+    // State(683)
     //   [BindingIdentifier -> YIELD .]*
     //   [KeywordOrIdentifierName -> YIELD .]*
     Goal::Div,
-    // State(686)
+    // State(684)
     //   [SingleNameBinding -> BindingIdentifier .]*
     //   [SingleNameBinding -> BindingIdentifier . Initializer_In]*
     Goal::Div,
-    // State(687)
+    // State(685)
     //   [BindingPropertyList -> BindingProperty .]*
     Goal::Div,
-    // State(688)
+    // State(686)
     //   [BindingPropertyList -> BindingPropertyList . COMMA BindingProperty]*
     //   [ObjectBindingPattern -> LBRACE BindingPropertyList . COMMA RBRACE]*
     //   [ObjectBindingPattern -> LBRACE BindingPropertyList . COMMA BindingRestProperty RBRACE]*
     //   [ObjectBindingPattern -> LBRACE BindingPropertyList . RBRACE]*
     Goal::Div,
-    // State(689)
+    // State(687)
     //   [ObjectBindingPattern -> LBRACE BindingRestProperty . RBRACE]*
     Goal::Div,
-    // State(690)
+    // State(688)
     //   [BindingProperty -> PropertyName . COLON BindingElement]*
     Goal::Div,
-    // State(691)
+    // State(689)
     //   [BindingProperty -> SingleNameBinding .]*
     Goal::Div,
-    // State(692)
+    // State(690)
     //   [BindingRestElement -> ELLIPSIS . BindingIdentifier]*
     //   [BindingRestElement -> ELLIPSIS . BindingPattern]*
     Goal::Div,
-    // State(693)
+    // State(691)
     //   [ArrayBindingPattern -> LBRACK RBRACK .]*
     Goal::Div,
-    // State(694)
+    // State(692)
     //   [BindingElisionElement -> BindingElement .]*
     Goal::Div,
-    // State(695)
+    // State(693)
     //   [ArrayBindingPattern -> LBRACK BindingElementList . COMMA RBRACK]*
     //   [ArrayBindingPattern -> LBRACK BindingElementList . COMMA BindingRestElement RBRACK]*
     //   [ArrayBindingPattern -> LBRACK BindingElementList . COMMA Elision RBRACK]*
@@ -2661,47 +2653,52 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern -> LBRACK BindingElementList . RBRACK]*
     //   [BindingElementList -> BindingElementList . COMMA BindingElisionElement]*
     Goal::Div,
-    // State(696)
+    // State(694)
     //   [BindingElementList -> BindingElisionElement .]*
     Goal::Div,
-    // State(697)
+    // State(695)
     //   [BindingElement -> BindingPattern .]*
     //   [BindingElement -> BindingPattern . Initializer_In]*
     Goal::Div,
-    // State(698)
+    // State(696)
     //   [ArrayBindingPattern -> LBRACK BindingRestElement . RBRACK]*
     Goal::Div,
-    // State(699)
+    // State(697)
     //   [ArrayBindingPattern -> LBRACK Elision . RBRACK]*
     //   [ArrayBindingPattern -> LBRACK Elision . BindingRestElement RBRACK]*
     //   [BindingElisionElement -> Elision . BindingElement]*
     //   [Elision -> Elision . COMMA]*
     Goal::Div,
-    // State(700)
+    // State(698)
     //   [BindingElement -> SingleNameBinding .]*
     Goal::Div,
-    // State(701)
+    // State(699)
     //   [Initializer_In -> ASSIGN . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(702)
+    // State(700)
     //   [LexicalBinding_In -> BindingIdentifier Initializer_In .]*
     Goal::Div,
-    // State(703)
+    // State(701)
     //   [BindingList_In -> BindingList_In COMMA . LexicalBinding_In]*
     Goal::Div,
-    // State(704)
+    // State(702)
     //   [LexicalDeclaration_In -> CONST BindingList_In SEMICOLON .]*
     Goal::RegExp,
-    // State(705)
+    // State(703)
     //   [LexicalBinding_In -> BindingPattern Initializer_In .]*
     Goal::Div,
-    // State(706)
+    // State(704)
     //   [ContinueStatement -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier SEMICOLON .]*
     Goal::RegExp,
-    // State(707)
-    //   [DoWhileStatement -> DO Statement WHILE . LPAREN Expression_In RPAREN SEMICOLON]*
+    // State(705)
+    //   [AsyncArrowFunction_In -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [AsyncArrowFunction_In -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
-    // State(708)
+    // State(706)
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement . WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
+    // State(707)
     //   [AsyncArrowFunction -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncFunctionExpression -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -2714,22 +2711,22 @@ pub static TABLE: [Goal; 4260] = [
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
-    // State(709)
+    // State(708)
     //   [ForDeclaration -> CONST . ForBinding]*
     //   [LexicalDeclaration -> CONST . BindingList SEMICOLON]*
     Goal::Div,
-    // State(710)
+    // State(709)
     //   [ForDeclaration -> LET . ForBinding]*
     //   [IdentifierNameButNotReservedWord -> LET .]*
     //   [LexicalDeclaration -> LET . BindingList SEMICOLON]*
     Goal::Div,
-    // State(711)
+    // State(710)
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::RegExp,
-    // State(712)
+    // State(711)
     //   [ForInOfStatement -> FOR LPAREN VAR . ForBinding IN Expression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR LPAREN VAR . ForBinding OF AssignmentExpression_In RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement]*
@@ -2737,66 +2734,66 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN VAR . VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::Div,
-    // State(713)
+    // State(712)
     //   [AssignmentExpression -> ArrowFunction .]*
     Goal::Div,
-    // State(714)
+    // State(713)
     //   [ArrowFunction -> ArrowParameters . (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody]*
     //   [ArrowFunction -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) . ARROW ConciseBody]*
     Goal::Div,
-    // State(715)
+    // State(714)
     //   [Expression -> AssignmentExpression .]*
     Goal::Div,
-    // State(716)
+    // State(715)
     //   [AssignmentExpression -> AsyncArrowFunction .]*
     Goal::Div,
-    // State(717)
+    // State(716)
     //   [BitwiseANDExpression -> BitwiseANDExpression . BIT_AND EqualityExpression]*
     //   [BitwiseXORExpression -> BitwiseANDExpression .]*
     Goal::Div,
-    // State(718)
+    // State(717)
     //   [BitwiseORExpression -> BitwiseORExpression . BIT_OR BitwiseXORExpression]*
     //   [CoalesceExpressionHead -> BitwiseORExpression .]*
     //   [LogicalANDExpression -> BitwiseORExpression .]*
     Goal::Div,
-    // State(719)
+    // State(718)
     //   [BitwiseORExpression -> BitwiseXORExpression .]*
     //   [BitwiseXORExpression -> BitwiseXORExpression . BIT_XOR BitwiseANDExpression]*
     Goal::Div,
-    // State(720)
+    // State(719)
     //   [CoalesceExpressionHead -> CoalesceExpression .]*
     //   [ShortCircuitExpression -> CoalesceExpression .]*
     Goal::Div,
-    // State(721)
+    // State(720)
     //   [CoalesceExpression -> CoalesceExpressionHead . NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression]*
     Goal::Div,
-    // State(722)
+    // State(721)
     //   [AssignmentExpression -> ConditionalExpression .]*
     Goal::Div,
-    // State(723)
+    // State(722)
     //   [AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
     //   [CallExpression -> CoverCallExpressionAndAsyncArrowHead .]*
     Goal::Div,
-    // State(724)
+    // State(723)
     //   [BitwiseANDExpression -> EqualityExpression .]*
     //   [EqualityExpression -> EqualityExpression . EQ RelationalExpression]*
     //   [EqualityExpression -> EqualityExpression . EQ_STRICT RelationalExpression]*
     //   [EqualityExpression -> EqualityExpression . NE RelationalExpression]*
     //   [EqualityExpression -> EqualityExpression . NE_STRICT RelationalExpression]*
     Goal::Div,
-    // State(725)
+    // State(724)
     //   [Expression -> Expression . COMMA AssignmentExpression]*
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON SEMICOLON Expression_In RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON Expression_In SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression . SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::Div,
-    // State(726)
+    // State(725)
     //   [ForInOfStatement -> FOR LPAREN ForDeclaration . IN Expression_In RPAREN Statement]*
     //   [ForInOfStatement -> FOR LPAREN ForDeclaration . OF AssignmentExpression_In RPAREN Statement]*
     Goal::Div,
-    // State(727)
+    // State(726)
     //   [AssignmentExpression -> LeftHandSideExpression . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression]*
     //   [AssignmentExpression -> LeftHandSideExpression . ASSIGN AssignmentExpression]*
     //   [AssignmentExpression -> LeftHandSideExpression . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression]*
@@ -2810,21 +2807,21 @@ pub static TABLE: [Goal; 4260] = [
     //   [UpdateExpression -> LeftHandSideExpression . (!LINE_TERMINATOR_SEQUENCE) INC]*
     //   [UpdateExpression -> LeftHandSideExpression (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
-    // State(728)
+    // State(727)
     //   [ForStatement -> FOR LPAREN LexicalDeclaration . SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN LexicalDeclaration . SEMICOLON Expression_In RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN LexicalDeclaration . Expression_In SEMICOLON RPAREN Statement]*
     //   [ForStatement -> FOR LPAREN LexicalDeclaration . Expression_In SEMICOLON Expression_In RPAREN Statement]*
     Goal::RegExp,
-    // State(729)
+    // State(728)
     //   [LogicalANDExpression -> LogicalANDExpression . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression]*
     //   [LogicalORExpression -> LogicalANDExpression .]*
     Goal::Div,
-    // State(730)
+    // State(729)
     //   [LogicalORExpression -> LogicalORExpression . OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression]*
     //   [ShortCircuitExpression -> LogicalORExpression .]*
     Goal::Div,
-    // State(731)
+    // State(730)
     //   [EqualityExpression -> RelationalExpression .]*
     //   [RelationalExpression -> RelationalExpression . GT ShiftExpression]*
     //   [RelationalExpression -> RelationalExpression . GTE ShiftExpression]*
@@ -2832,41 +2829,41 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression -> RelationalExpression . LT ShiftExpression]*
     //   [RelationalExpression -> RelationalExpression . LTE ShiftExpression]*
     Goal::Div,
-    // State(732)
+    // State(731)
     //   [RelationalExpression -> ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::Div,
-    // State(733)
+    // State(732)
     //   [ConditionalExpression -> ShortCircuitExpression .]*
     //   [ConditionalExpression -> ShortCircuitExpression . CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression]*
     Goal::Div,
-    // State(734)
+    // State(733)
     //   [GeneratorDeclaration -> FUNCTION MUL BindingIdentifier . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(735)
+    // State(734)
     //   [FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ . LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(736)
+    // State(735)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [IfStatement -> IF LPAREN Expression_In . RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement]*
     //   [IfStatement -> IF LPAREN Expression_In . RPAREN _THEN_BLOCK_ Statement (?![ELSE])]*
     Goal::Div,
-    // State(737)
+    // State(736)
     //   [ImportMeta -> IMPORT DOT META .]*
     Goal::TemplateTail,
-    // State(738)
+    // State(737)
     //   [ImportCall -> IMPORT LPAREN AssignmentExpression_In . RPAREN]*
     Goal::Div,
-    // State(739)
+    // State(738)
     //   [Block -> LBRACE _BLOCK_SCOPE_ StatementList . RBRACE]*
     //   [StatementList -> StatementList . StatementListItem]*
     Goal::RegExp,
-    // State(740)
+    // State(739)
     //   [SpreadElement -> ELLIPSIS AssignmentExpression_In .]*
     Goal::Div,
-    // State(741)
+    // State(740)
     //   [ArrayLiteral -> LBRACK ElementList COMMA . RBRACK]*
     //   [ArrayLiteral -> LBRACK ElementList COMMA . Elision RBRACK]*
     //   [ElementList -> ElementList COMMA . AssignmentExpression_In]*
@@ -2874,282 +2871,282 @@ pub static TABLE: [Goal; 4260] = [
     //   [ElementList -> ElementList COMMA . Elision SpreadElement]*
     //   [ElementList -> ElementList COMMA . SpreadElement]*
     Goal::RegExp,
-    // State(742)
+    // State(741)
     //   [ArrayLiteral -> LBRACK ElementList RBRACK .]*
     Goal::TemplateTail,
-    // State(743)
+    // State(742)
     //   [Elision -> Elision COMMA .]*
     Goal::RegExp,
-    // State(744)
+    // State(743)
     //   [ArrayLiteral -> LBRACK Elision RBRACK .]*
     Goal::TemplateTail,
-    // State(745)
+    // State(744)
     //   [ElementList -> Elision AssignmentExpression_In .]*
     Goal::Div,
-    // State(746)
+    // State(745)
     //   [ElementList -> Elision SpreadElement .]*
     Goal::Div,
-    // State(747)
+    // State(746)
     //   [LexicalDeclaration_In -> LET BindingList_In SEMICOLON .]*
     Goal::RegExp,
-    // State(748)
+    // State(747)
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingIdentifier . RPAREN]*
     Goal::Div,
-    // State(749)
+    // State(748)
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN ELLIPSIS BindingPattern . RPAREN]*
     Goal::Div,
-    // State(750)
+    // State(749)
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA . ELLIPSIS BindingIdentifier RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA . ELLIPSIS BindingPattern RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In COMMA . RPAREN]*
     //   [Expression_In -> Expression_In COMMA . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(751)
+    // State(750)
     //   [CoverParenthesizedExpressionAndArrowParameterList -> LPAREN Expression_In RPAREN .]*
     Goal::TemplateTail,
-    // State(752)
+    // State(751)
     //   [NewTarget -> NEW DOT TARGET .]*
     Goal::TemplateTail,
-    // State(753)
+    // State(752)
     //   [MemberExpression -> NEW MemberExpression Arguments .]*
     Goal::TemplateTail,
-    // State(754)
+    // State(753)
     //   [RelationalExpression_In -> PRIVATE_IDENTIFIER IN ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::TemplateTail,
-    // State(755)
+    // State(754)
     //   [KeywordOrIdentifierName -> AS .]*
     Goal::TemplateTail,
-    // State(756)
+    // State(755)
     //   [KeywordOrIdentifierName -> ASYNC .]*
     Goal::TemplateTail,
-    // State(757)
+    // State(756)
     //   [KeywordOrIdentifierName -> AWAIT .]*
     Goal::TemplateTail,
-    // State(758)
+    // State(757)
     //   [KeywordOrIdentifierName -> FROM .]*
     Goal::TemplateTail,
-    // State(759)
+    // State(758)
     //   [KeywordOrIdentifierName -> GET .]*
     Goal::TemplateTail,
-    // State(760)
+    // State(759)
     //   [KeywordOrIdentifierName -> IDENTIFIER_NAME .]*
     Goal::TemplateTail,
-    // State(761)
+    // State(760)
     //   [KeywordOrIdentifierName -> IMPLEMENTS .]*
     Goal::TemplateTail,
-    // State(762)
+    // State(761)
     //   [KeywordOrIdentifierName -> INTERFACE .]*
     Goal::TemplateTail,
-    // State(763)
+    // State(762)
     //   [KeywordOrIdentifierName -> LET .]*
     Goal::TemplateTail,
-    // State(764)
+    // State(763)
     //   [KeywordOrIdentifierName -> META .]*
     Goal::TemplateTail,
-    // State(765)
+    // State(764)
     //   [KeywordOrIdentifierName -> OF .]*
     Goal::TemplateTail,
-    // State(766)
+    // State(765)
     //   [KeywordOrIdentifierName -> PACKAGE .]*
     Goal::TemplateTail,
-    // State(767)
+    // State(766)
     //   [KeywordOrIdentifierName -> PRIVATE .]*
     Goal::TemplateTail,
-    // State(768)
+    // State(767)
     //   [KeywordOrIdentifierName -> PROTECTED .]*
     Goal::TemplateTail,
-    // State(769)
+    // State(768)
     //   [KeywordOrIdentifierName -> PUBLIC .]*
     Goal::TemplateTail,
-    // State(770)
+    // State(769)
     //   [KeywordOrIdentifierName -> SET .]*
     Goal::TemplateTail,
-    // State(771)
+    // State(770)
     //   [KeywordOrIdentifierName -> STATIC .]*
     Goal::TemplateTail,
-    // State(772)
+    // State(771)
     //   [KeywordOrIdentifierName -> TARGET .]*
     Goal::TemplateTail,
-    // State(773)
+    // State(772)
     //   [KeywordOrIdentifierName -> YIELD .]*
     Goal::TemplateTail,
-    // State(774)
+    // State(773)
     //   [SuperProperty -> SUPER DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(775)
+    // State(774)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [SuperProperty -> SUPER LBRACK Expression_In . RBRACK]*
     Goal::Div,
-    // State(776)
+    // State(775)
     //   [ArgumentList -> ELLIPSIS . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(777)
+    // State(776)
     //   [Arguments -> LPAREN RPAREN .]*
     Goal::TemplateTail,
-    // State(778)
+    // State(777)
     //   [ArgumentList -> ArgumentList . COMMA ELLIPSIS AssignmentExpression_In]*
     //   [ArgumentList -> ArgumentList . COMMA AssignmentExpression_In]*
     //   [Arguments -> LPAREN ArgumentList . COMMA RPAREN]*
     //   [Arguments -> LPAREN ArgumentList . RPAREN]*
     Goal::Div,
-    // State(779)
+    // State(778)
     //   [ArgumentList -> AssignmentExpression_In .]*
     Goal::Div,
-    // State(780)
+    // State(779)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [SwitchStatement -> SWITCH LPAREN Expression_In . RPAREN CaseBlock]*
     Goal::Div,
-    // State(781)
+    // State(780)
     //   [TemplateMiddleList -> TEMPLATE_MIDDLE . Expression_In]*
     Goal::RegExp,
-    // State(782)
+    // State(781)
     //   [TemplateSpans -> TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(783)
+    // State(782)
     //   [TemplateMiddleList -> TemplateMiddleList . TEMPLATE_MIDDLE Expression_In]*
     //   [TemplateSpans -> TemplateMiddleList . TEMPLATE_TAIL]*
     Goal::TemplateTail,
-    // State(784)
+    // State(783)
     //   [SubstitutionTemplate -> TEMPLATE_HEAD Expression_In TemplateSpans .]*
     Goal::TemplateTail,
-    // State(785)
+    // State(784)
     //   [ThrowStatement -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In SEMICOLON .]*
     Goal::RegExp,
-    // State(786)
+    // State(785)
     //   [Catch -> CATCH . LPAREN CatchParameter RPAREN Block]*
     //   [Catch -> CATCH . Block]*
     Goal::Div,
-    // State(787)
+    // State(786)
     //   [Finally -> FINALLY . Block]*
     Goal::Div,
-    // State(788)
+    // State(787)
     //   [TryStatement -> TRY Block Catch .]*
     //   [TryStatement -> TRY Block Catch . Finally]*
     Goal::RegExp,
-    // State(789)
+    // State(788)
     //   [TryStatement -> TRY Block Finally .]*
     Goal::RegExp,
-    // State(790)
+    // State(789)
     //   [VariableDeclaration_In -> BindingIdentifier Initializer_In .]*
     Goal::Div,
-    // State(791)
+    // State(790)
     //   [VariableDeclaration_In -> BindingPattern Initializer_In .]*
     Goal::Div,
-    // State(792)
+    // State(791)
     //   [VariableDeclarationList_In -> VariableDeclarationList_In COMMA . VariableDeclaration_In]*
     Goal::Div,
-    // State(793)
+    // State(792)
     //   [VariableStatement -> VAR VariableDeclarationList_In SEMICOLON .]*
     Goal::RegExp,
-    // State(794)
+    // State(793)
     //   [WhileStatement -> WHILE _LOOP_START_ LPAREN . Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement]*
     Goal::RegExp,
-    // State(795)
+    // State(794)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [WithStatement -> WITH LPAREN Expression_In . RPAREN Statement]*
     Goal::Div,
-    // State(796)
+    // State(795)
     //   [AdditiveExpression -> AdditiveExpression ADD MultiplicativeExpression .]*
     //   [MultiplicativeExpression -> MultiplicativeExpression . DIV ExponentiationExpression]*
     //   [MultiplicativeExpression -> MultiplicativeExpression . MOD ExponentiationExpression]*
     //   [MultiplicativeExpression -> MultiplicativeExpression . MUL ExponentiationExpression]*
     Goal::TemplateTail,
-    // State(797)
+    // State(796)
     //   [AdditiveExpression -> AdditiveExpression SUB MultiplicativeExpression .]*
     //   [MultiplicativeExpression -> MultiplicativeExpression . DIV ExponentiationExpression]*
     //   [MultiplicativeExpression -> MultiplicativeExpression . MOD ExponentiationExpression]*
     //   [MultiplicativeExpression -> MultiplicativeExpression . MUL ExponentiationExpression]*
     Goal::TemplateTail,
-    // State(798)
+    // State(797)
     //   [ConciseBody_In -> LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(799)
+    // State(798)
     //   [ExpressionBody_In -> AssignmentExpression_In .]*
     Goal::TemplateTail,
-    // State(800)
+    // State(799)
     //   [ArrowFunction_In -> ArrowParameters (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In .]*
     Goal::TemplateTail,
-    // State(801)
+    // State(800)
     //   [ConciseBody_In -> (?![LBRACE]) ExpressionBody_In .]*
     Goal::TemplateTail,
-    // State(802)
+    // State(801)
     //   [BitwiseANDExpression_In -> BitwiseANDExpression_In BIT_AND EqualityExpression_In .]*
     //   [EqualityExpression_In -> EqualityExpression_In . EQ RelationalExpression_In]*
     //   [EqualityExpression_In -> EqualityExpression_In . EQ_STRICT RelationalExpression_In]*
     //   [EqualityExpression_In -> EqualityExpression_In . NE RelationalExpression_In]*
     //   [EqualityExpression_In -> EqualityExpression_In . NE_STRICT RelationalExpression_In]*
     Goal::TemplateTail,
-    // State(803)
+    // State(802)
     //   [BitwiseORExpression_In -> BitwiseORExpression_In BIT_OR BitwiseXORExpression_In .]*
     //   [BitwiseXORExpression_In -> BitwiseXORExpression_In . BIT_XOR BitwiseANDExpression_In]*
     Goal::TemplateTail,
-    // State(804)
+    // State(803)
     //   [BitwiseANDExpression_In -> BitwiseANDExpression_In . BIT_AND EqualityExpression_In]*
     //   [BitwiseXORExpression_In -> BitwiseXORExpression_In BIT_XOR BitwiseANDExpression_In .]*
     Goal::TemplateTail,
-    // State(805)
+    // State(804)
     //   [CallExpression -> CallExpression DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(806)
+    // State(805)
     //   [CallExpression -> CallExpression DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(807)
+    // State(806)
     //   [CallExpression -> CallExpression LBRACK Expression_In . RBRACK]*
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::Div,
-    // State(808)
+    // State(807)
     //   [OptionalChain -> OPTIONAL_CHAINING LBRACK . Expression_In RBRACK]*
     Goal::RegExp,
-    // State(809)
+    // State(808)
     //   [OptionalChain -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(810)
+    // State(809)
     //   [OptionalChain -> OPTIONAL_CHAINING Arguments .]*
     Goal::TemplateTail,
-    // State(811)
+    // State(810)
     //   [OptionalChain -> OPTIONAL_CHAINING KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(812)
+    // State(811)
     //   [OptionalChain -> OPTIONAL_CHAINING TemplateLiteral_Tagged .]*
     Goal::TemplateTail,
-    // State(813)
+    // State(812)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [SubstitutionTemplate_Tagged -> TEMPLATE_HEAD Expression_In . TemplateSpans_Tagged]*
     Goal::TemplateTail,
-    // State(814)
+    // State(813)
     //   [OptionalChain -> OptionalChain DOT . PRIVATE_IDENTIFIER]*
     //   [OptionalChain -> OptionalChain DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(815)
+    // State(814)
     //   [OptionalChain -> OptionalChain LBRACK . Expression_In RBRACK]*
     Goal::RegExp,
-    // State(816)
+    // State(815)
     //   [OptionalChain -> OptionalChain Arguments .]*
     Goal::TemplateTail,
-    // State(817)
+    // State(816)
     //   [OptionalChain -> OptionalChain TemplateLiteral_Tagged .]*
     Goal::TemplateTail,
-    // State(818)
+    // State(817)
     //   [CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH _NULLISH_SHORT_CIRCUIT_ . BitwiseORExpression_In]*
     Goal::RegExp,
-    // State(819)
+    // State(818)
     //   [AsyncConciseBody_In -> LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(820)
+    // State(819)
     //   [ExpressionBody_In_Await -> AssignmentExpression_In_Await .]*
     Goal::TemplateTail,
-    // State(821)
+    // State(820)
     //   [AsyncArrowFunction_In -> CoverCallExpressionAndAsyncArrowHead (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In .]*
     Goal::TemplateTail,
-    // State(822)
+    // State(821)
     //   [AsyncConciseBody_In -> (?![LBRACE]) ExpressionBody_In_Await .]*
     Goal::TemplateTail,
-    // State(823)
+    // State(822)
     //   [EqualityExpression_In -> EqualityExpression_In EQ RelationalExpression_In .]*
     //   [RelationalExpression_In -> RelationalExpression_In . GT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . GTE ShiftExpression]*
@@ -3158,7 +3155,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In -> RelationalExpression_In . LT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . LTE ShiftExpression]*
     Goal::TemplateTail,
-    // State(824)
+    // State(823)
     //   [EqualityExpression_In -> EqualityExpression_In EQ_STRICT RelationalExpression_In .]*
     //   [RelationalExpression_In -> RelationalExpression_In . GT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . GTE ShiftExpression]*
@@ -3167,7 +3164,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In -> RelationalExpression_In . LT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . LTE ShiftExpression]*
     Goal::TemplateTail,
-    // State(825)
+    // State(824)
     //   [EqualityExpression_In -> EqualityExpression_In NE RelationalExpression_In .]*
     //   [RelationalExpression_In -> RelationalExpression_In . GT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . GTE ShiftExpression]*
@@ -3176,7 +3173,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In -> RelationalExpression_In . LT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . LTE ShiftExpression]*
     Goal::TemplateTail,
-    // State(826)
+    // State(825)
     //   [EqualityExpression_In -> EqualityExpression_In NE_STRICT RelationalExpression_In .]*
     //   [RelationalExpression_In -> RelationalExpression_In . GT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . GTE ShiftExpression]*
@@ -3185,136 +3182,136 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In -> RelationalExpression_In . LT ShiftExpression]*
     //   [RelationalExpression_In -> RelationalExpression_In . LTE ShiftExpression]*
     Goal::TemplateTail,
-    // State(827)
+    // State(826)
     //   [Expression_In -> Expression_In COMMA AssignmentExpression_In .]*
     Goal::TemplateTail,
-    // State(828)
+    // State(827)
     //   [FunctionDeclaration -> FUNCTION . BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(829)
+    // State(828)
     //   [LabelledItem -> FunctionDeclaration .]*
     Goal::RegExp,
-    // State(830)
+    // State(829)
     //   [LabelledStatement -> LabelIdentifier COLON LabelledItem .]*
     Goal::RegExp,
-    // State(831)
+    // State(830)
     //   [LabelledItem -> Statement .]*
     Goal::RegExp,
-    // State(832)
+    // State(831)
     //   [AssignmentExpression_In -> LeftHandSideExpression AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(833)
+    // State(832)
     //   [AssignmentExpression_In -> LeftHandSideExpression ASSIGN AssignmentExpression_In .]*
     Goal::TemplateTail,
-    // State(834)
+    // State(833)
     //   [AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(835)
+    // State(834)
     //   [AssignmentExpression_In -> LeftHandSideExpression OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In]*
     Goal::RegExp,
-    // State(836)
+    // State(835)
     //   [AssignmentExpression_In -> LeftHandSideExpression AssignmentOperator AssignmentExpression_In .]*
     Goal::TemplateTail,
-    // State(837)
+    // State(836)
     //   [LogicalANDExpression_In -> LogicalANDExpression_In AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_In]*
     Goal::RegExp,
-    // State(838)
+    // State(837)
     //   [LogicalORExpression_In -> LogicalORExpression_In OR _TRUTHY_SHORT_CIRCUIT_ . LogicalANDExpression_In]*
     Goal::RegExp,
-    // State(839)
+    // State(838)
     //   [MemberExpression -> MemberExpression DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(840)
+    // State(839)
     //   [MemberExpression -> MemberExpression DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(841)
+    // State(840)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [MemberExpression -> MemberExpression LBRACK Expression_In . RBRACK]*
     Goal::Div,
-    // State(842)
+    // State(841)
     //   [MultiplicativeExpression -> MultiplicativeExpression DIV ExponentiationExpression .]*
     Goal::TemplateTail,
-    // State(843)
+    // State(842)
     //   [MultiplicativeExpression -> MultiplicativeExpression MOD ExponentiationExpression .]*
     Goal::TemplateTail,
-    // State(844)
+    // State(843)
     //   [MultiplicativeExpression -> MultiplicativeExpression MUL ExponentiationExpression .]*
     Goal::TemplateTail,
-    // State(845)
+    // State(844)
     //   [RelationalExpression_In -> RelationalExpression_In GT ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::TemplateTail,
-    // State(846)
+    // State(845)
     //   [RelationalExpression_In -> RelationalExpression_In GTE ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::TemplateTail,
-    // State(847)
+    // State(846)
     //   [RelationalExpression_In -> RelationalExpression_In IN ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::TemplateTail,
-    // State(848)
+    // State(847)
     //   [RelationalExpression_In -> RelationalExpression_In INSTANCEOF ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::TemplateTail,
-    // State(849)
+    // State(848)
     //   [RelationalExpression_In -> RelationalExpression_In LT ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::TemplateTail,
-    // State(850)
+    // State(849)
     //   [RelationalExpression_In -> RelationalExpression_In LTE ShiftExpression .]*
     //   [ShiftExpression -> ShiftExpression . SAR AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHL AdditiveExpression]*
     //   [ShiftExpression -> ShiftExpression . SHR AdditiveExpression]*
     Goal::TemplateTail,
-    // State(851)
+    // State(850)
     //   [AdditiveExpression -> AdditiveExpression . ADD MultiplicativeExpression]*
     //   [AdditiveExpression -> AdditiveExpression . SUB MultiplicativeExpression]*
     //   [ShiftExpression -> ShiftExpression SAR AdditiveExpression .]*
     Goal::TemplateTail,
-    // State(852)
+    // State(851)
     //   [AdditiveExpression -> AdditiveExpression . ADD MultiplicativeExpression]*
     //   [AdditiveExpression -> AdditiveExpression . SUB MultiplicativeExpression]*
     //   [ShiftExpression -> ShiftExpression SHL AdditiveExpression .]*
     Goal::TemplateTail,
-    // State(853)
+    // State(852)
     //   [AdditiveExpression -> AdditiveExpression . ADD MultiplicativeExpression]*
     //   [AdditiveExpression -> AdditiveExpression . SUB MultiplicativeExpression]*
     //   [ShiftExpression -> ShiftExpression SHR AdditiveExpression .]*
     Goal::TemplateTail,
-    // State(854)
+    // State(853)
     //   [ConditionalExpression_In -> ShortCircuitExpression_In CONDITIONAL _THEN_BLOCK_ . AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression_In]*
     Goal::RegExp,
-    // State(855)
+    // State(854)
     //   [ExponentiationExpression -> UpdateExpression EXP ExponentiationExpression .]*
     Goal::TemplateTail,
-    // State(856)
+    // State(855)
     //   [ClassHeritage_Await -> EXTENDS . LeftHandSideExpression_Await]*
     Goal::RegExp,
-    // State(857)
+    // State(856)
     //   [ClassTail_Await -> LBRACE . RBRACE]*
     //   [ClassTail_Await -> LBRACE . ClassBody_Await RBRACE]*
     Goal::Div,
-    // State(858)
+    // State(857)
     //   [ClassExpression_Await -> CLASS BindingIdentifier_Await . ClassTail_Await]*
     Goal::Div,
-    // State(859)
+    // State(858)
     //   [ClassTail_Await -> ClassHeritage_Await . LBRACE RBRACE]*
     //   [ClassTail_Await -> ClassHeritage_Await . LBRACE ClassBody_Await RBRACE]*
     Goal::Div,
-    // State(860)
+    // State(859)
     //   [ClassExpression_Await -> CLASS ClassTail_Await .]*
     Goal::TemplateTail,
-    // State(861)
+    // State(860)
     //   [AsyncGeneratorMethod_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncMethod_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -3322,137 +3319,137 @@ pub static TABLE: [Goal; 4260] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     //   [KeywordOrIdentifierName -> ASYNC .]*
     Goal::Div,
-    // State(862)
+    // State(861)
     //   [PropertyDefinition_Await -> ELLIPSIS . AssignmentExpression_In_Await]*
     Goal::RegExp,
-    // State(863)
+    // State(862)
     //   [IdentifierNameButNotReservedWord -> GET .]*
     //   [KeywordOrIdentifierName -> GET .]*
     //   [MethodDefinition_Await -> GET . ClassElementName_Await LPAREN RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(864)
+    // State(863)
     //   [ComputedPropertyName_Await -> LBRACK . AssignmentExpression_In_Await RBRACK]*
     Goal::RegExp,
-    // State(865)
+    // State(864)
     //   [GeneratorMethod_Await -> MUL . ClassElementName_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(866)
+    // State(865)
     //   [ClassElementName_Await -> PRIVATE_IDENTIFIER .]*
     Goal::Div,
-    // State(867)
+    // State(866)
     //   [ObjectLiteral_Await -> LBRACE RBRACE .]*
     Goal::TemplateTail,
-    // State(868)
+    // State(867)
     //   [IdentifierNameButNotReservedWord -> SET .]*
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition_Await -> SET . ClassElementName_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(869)
+    // State(868)
     //   [IdentifierReference_Await -> YIELD .]*
     //   [KeywordOrIdentifierName -> YIELD .]*
     Goal::Div,
-    // State(870)
+    // State(869)
     //   [MethodDefinition_Await -> AsyncGeneratorMethod_Await .]*
     Goal::Div,
-    // State(871)
+    // State(870)
     //   [MethodDefinition_Await -> AsyncMethod_Await .]*
     Goal::Div,
-    // State(872)
+    // State(871)
     //   [MethodDefinition_Await -> ClassElementName_Await . LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(873)
+    // State(872)
     //   [PropertyName_Await -> ComputedPropertyName_Await .]*
     Goal::Div,
-    // State(874)
+    // State(873)
     //   [PropertyDefinition_Await -> CoverInitializedName_Await .]*
     Goal::Div,
-    // State(875)
+    // State(874)
     //   [MethodDefinition_Await -> GeneratorMethod_Await .]*
     Goal::Div,
-    // State(876)
+    // State(875)
     //   [CoverInitializedName_Await -> IdentifierReference_Await . Initializer_In_Await]*
     //   [PropertyDefinition_Await -> IdentifierReference_Await .]*
     Goal::Div,
-    // State(877)
+    // State(876)
     //   [PropertyName_Await -> LiteralPropertyName .]*
     Goal::Div,
-    // State(878)
+    // State(877)
     //   [PropertyDefinition_Await -> MethodDefinition_Await .]*
     Goal::Div,
-    // State(879)
+    // State(878)
     //   [ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await . COMMA RBRACE]*
     //   [ObjectLiteral_Await -> LBRACE PropertyDefinitionList_Await . RBRACE]*
     //   [PropertyDefinitionList_Await -> PropertyDefinitionList_Await . COMMA PropertyDefinition_Await]*
     Goal::Div,
-    // State(880)
+    // State(879)
     //   [PropertyDefinitionList_Await -> PropertyDefinition_Await .]*
     Goal::Div,
-    // State(881)
+    // State(880)
     //   [ClassElementName_Await -> PropertyName_Await .]*
     //   [PropertyDefinition_Await -> PropertyName_Await . COLON AssignmentExpression_In_Await]*
     Goal::Div,
-    // State(882)
+    // State(881)
     //   [UpdateExpression_Await -> LeftHandSideExpression_Await .]*
     Goal::TemplateTail,
-    // State(883)
+    // State(882)
     //   [AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL . BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(884)
+    // State(883)
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(885)
+    // State(884)
     //   [AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody_In]*
     Goal::RegExp,
-    // State(886)
+    // State(885)
     //   [BreakStatement_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(887)
+    // State(886)
     //   [ClassDeclaration_Await -> CLASS BindingIdentifier_Await ClassTail_Await .]*
     Goal::RegExp,
-    // State(888)
+    // State(887)
     //   [BindingIdentifier_Await -> AWAIT .]*
     //   [KeywordOrIdentifierName -> AWAIT .]*
     Goal::Div,
-    // State(889)
+    // State(888)
     //   [BindingRestProperty_Await -> ELLIPSIS . BindingIdentifier_Await]*
     Goal::Div,
-    // State(890)
+    // State(889)
     //   [ObjectBindingPattern_Await -> LBRACE RBRACE .]*
     Goal::Div,
-    // State(891)
+    // State(890)
     //   [BindingIdentifier_Await -> YIELD .]*
     //   [KeywordOrIdentifierName -> YIELD .]*
     Goal::Div,
-    // State(892)
+    // State(891)
     //   [SingleNameBinding_Await -> BindingIdentifier_Await .]*
     //   [SingleNameBinding_Await -> BindingIdentifier_Await . Initializer_In_Await]*
     Goal::Div,
-    // State(893)
+    // State(892)
     //   [BindingPropertyList_Await -> BindingPropertyList_Await . COMMA BindingProperty_Await]*
     //   [ObjectBindingPattern_Await -> LBRACE BindingPropertyList_Await . COMMA RBRACE]*
     //   [ObjectBindingPattern_Await -> LBRACE BindingPropertyList_Await . COMMA BindingRestProperty_Await RBRACE]*
     //   [ObjectBindingPattern_Await -> LBRACE BindingPropertyList_Await . RBRACE]*
     Goal::Div,
-    // State(894)
+    // State(893)
     //   [BindingPropertyList_Await -> BindingProperty_Await .]*
     Goal::Div,
-    // State(895)
+    // State(894)
     //   [ObjectBindingPattern_Await -> LBRACE BindingRestProperty_Await . RBRACE]*
     Goal::Div,
-    // State(896)
+    // State(895)
     //   [BindingProperty_Await -> PropertyName_Await . COLON BindingElement_Await]*
     Goal::Div,
-    // State(897)
+    // State(896)
     //   [BindingProperty_Await -> SingleNameBinding_Await .]*
     Goal::Div,
-    // State(898)
+    // State(897)
     //   [BindingRestElement_Await -> ELLIPSIS . BindingIdentifier_Await]*
     //   [BindingRestElement_Await -> ELLIPSIS . BindingPattern_Await]*
     Goal::Div,
-    // State(899)
+    // State(898)
     //   [ArrayBindingPattern_Await -> LBRACK RBRACK .]*
     Goal::Div,
-    // State(900)
+    // State(899)
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await . COMMA RBRACK]*
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await . COMMA BindingRestElement_Await RBRACK]*
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await . COMMA Elision RBRACK]*
@@ -3460,48 +3457,53 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await . RBRACK]*
     //   [BindingElementList_Await -> BindingElementList_Await . COMMA BindingElisionElement_Await]*
     Goal::Div,
-    // State(901)
+    // State(900)
     //   [BindingElisionElement_Await -> BindingElement_Await .]*
     Goal::Div,
-    // State(902)
+    // State(901)
     //   [BindingElementList_Await -> BindingElisionElement_Await .]*
     Goal::Div,
-    // State(903)
+    // State(902)
     //   [BindingElement_Await -> BindingPattern_Await .]*
     //   [BindingElement_Await -> BindingPattern_Await . Initializer_In_Await]*
     Goal::Div,
-    // State(904)
+    // State(903)
     //   [ArrayBindingPattern_Await -> LBRACK BindingRestElement_Await . RBRACK]*
     Goal::Div,
-    // State(905)
+    // State(904)
     //   [ArrayBindingPattern_Await -> LBRACK Elision . RBRACK]*
     //   [ArrayBindingPattern_Await -> LBRACK Elision . BindingRestElement_Await RBRACK]*
     //   [BindingElisionElement_Await -> Elision . BindingElement_Await]*
     //   [Elision -> Elision . COMMA]*
     Goal::Div,
-    // State(906)
+    // State(905)
     //   [BindingElement_Await -> SingleNameBinding_Await .]*
     Goal::Div,
-    // State(907)
+    // State(906)
     //   [Initializer_In_Await -> ASSIGN . AssignmentExpression_In_Await]*
     Goal::RegExp,
-    // State(908)
+    // State(907)
     //   [LexicalBinding_In_Await -> BindingIdentifier_Await Initializer_In_Await .]*
     Goal::Div,
-    // State(909)
+    // State(908)
     //   [BindingList_In_Await -> BindingList_In_Await COMMA . LexicalBinding_In_Await]*
     Goal::Div,
-    // State(910)
+    // State(909)
     //   [LexicalDeclaration_In_Await -> CONST BindingList_In_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(911)
+    // State(910)
     //   [LexicalBinding_In_Await -> BindingPattern_Await Initializer_In_Await .]*
     Goal::Div,
-    // State(912)
+    // State(911)
     //   [ContinueStatement_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Await SEMICOLON .]*
     Goal::RegExp,
+    // State(912)
+    //   [AsyncArrowFunction_In_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [AsyncArrowFunction_In_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
+    Goal::Div,
     // State(913)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE . LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await . WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
     Goal::Div,
     // State(914)
     //   [AsyncArrowFunction_In_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
@@ -4333,8 +4335,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [BindingList_In -> BindingList_In COMMA LexicalBinding_In .]*
     Goal::Div,
     // State(1124)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN . Expression_In RPAREN SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE . LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
     // State(1125)
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
@@ -4610,7 +4612,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [WithStatement -> WITH LPAREN Expression_In RPAREN . Statement]*
     Goal::RegExp,
     // State(1200)
-    //   [DoWhileStatement_Return -> DO . Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON]*
+    //   [DoWhileStatement_Return -> DO . _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(1201)
     //   [ForInOfStatement_Return -> FOR . LPAREN VAR ForBinding IN Expression_In RPAREN Statement_Return]*
@@ -4785,7 +4788,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [CoalesceExpression_In -> CoalesceExpressionHead_In NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In .]*
     Goal::TemplateTail,
     // State(1247)
-    //   [DoWhileStatement_Await_Return -> DO . Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    //   [DoWhileStatement_Await_Return -> DO . _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(1248)
     //   [ForInOfStatement_Await_Return -> FOR . AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -5128,8 +5132,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [BindingList_In_Await -> BindingList_In_Await COMMA LexicalBinding_In_Await .]*
     Goal::Div,
     // State(1342)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN . Expression_In_Await RPAREN SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE . LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
     // State(1343)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -5781,9 +5785,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern -> LBRACK Elision BindingRestElement RBRACK .]*
     Goal::Div,
     // State(1527)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In . RPAREN SEMICOLON]*
-    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    Goal::Div,
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN . Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
     // State(1528)
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody]*
     Goal::RegExp,
@@ -6094,8 +6097,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [WithStatement -> WITH LPAREN Expression_In RPAREN Statement .]*
     Goal::RegExp,
     // State(1604)
-    //   [DoWhileStatement_Return -> DO Statement_Return . WHILE LPAREN Expression_In RPAREN SEMICOLON]*
-    Goal::Div,
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ . Statement_Return WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
     // State(1605)
     //   [ForInOfStatement_Return -> FOR LPAREN . VAR ForBinding IN Expression_In RPAREN Statement_Return]*
     //   [ForInOfStatement_Return -> FOR LPAREN . VAR ForBinding OF AssignmentExpression_In RPAREN Statement_Return]*
@@ -6180,8 +6183,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain -> OptionalChain LBRACK Expression_In RBRACK .]*
     Goal::TemplateTail,
     // State(1624)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return . WHILE LPAREN Expression_In_Await RPAREN SEMICOLON]*
-    Goal::Div,
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ . Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
     // State(1625)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT . LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     //   [ForInOfStatement_Await_Return -> FOR AWAIT . LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -6352,9 +6355,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern_Await -> LBRACK Elision BindingRestElement_Await RBRACK .]*
     Goal::Div,
     // State(1670)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await . RPAREN SEMICOLON]*
-    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    Goal::Div,
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN . Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
     // State(1671)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN . FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [FormalParameters_Await -> (empty) .]*
@@ -6944,7 +6946,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement . RBRACK]*
     Goal::Div,
     // State(1831)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In . RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::Div,
     // State(1832)
     //   [AsyncArrowFunction -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody .]*
@@ -7139,7 +7142,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ . Statement]*
     Goal::RegExp,
     // State(1885)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE . LPAREN Expression_In RPAREN SEMICOLON]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return . WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
     Goal::Div,
     // State(1886)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Return]*
@@ -7237,7 +7240,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [TemplateMiddleList_Tagged -> TemplateMiddleList_Tagged TEMPLATE_MIDDLE Expression_In .]*
     Goal::TemplateTail,
     // State(1906)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE . LPAREN Expression_In_Await RPAREN SEMICOLON]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return . WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
     Goal::Div,
     // State(1907)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN . VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
@@ -7382,7 +7385,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision BindingRestElement_Await . RBRACK]*
     Goal::Div,
     // State(1942)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await . RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::Div,
     // State(1943)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -8110,8 +8114,9 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern -> LBRACK BindingElementList COMMA Elision BindingRestElement RBRACK .]*
     Goal::Div,
     // State(2137)
-    //   [DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON .]*
-    Goal::RegExp,
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    Goal::Div,
     // State(2138)
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement .]*
     Goal::RegExp,
@@ -8226,8 +8231,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement .]*
     Goal::RegExp,
     // State(2172)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN . Expression_In RPAREN SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE . LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
     // State(2173)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
@@ -8316,8 +8321,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [WithStatement_Return -> WITH LPAREN Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
     // State(2194)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN . Expression_In_Await RPAREN SEMICOLON]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE . LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
     // State(2195)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR . ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::Div,
@@ -8448,8 +8453,9 @@ pub static TABLE: [Goal; 4260] = [
     //   [ArrayBindingPattern_Await -> LBRACK BindingElementList_Await COMMA Elision BindingRestElement_Await RBRACK .]*
     Goal::Div,
     // State(2229)
-    //   [DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN Expression_In_Await RPAREN SEMICOLON .]*
-    Goal::RegExp,
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    Goal::Div,
     // State(2230)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
@@ -9445,7 +9451,8 @@ pub static TABLE: [Goal; 4260] = [
     //   [ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) . LabelIdentifier_Yield SEMICOLON]*
     Goal::Div,
     // State(2494)
-    //   [DoWhileStatement_Yield_Return -> DO . Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
+    //   [DoWhileStatement_Yield_Return -> DO . _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
     // State(2495)
     //   [ForInOfStatement_Yield_Return -> FOR . LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -9673,136 +9680,138 @@ pub static TABLE: [Goal; 4260] = [
     //   [AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
     // State(2556)
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ . SEMICOLON]*
+    Goal::Div,
+    // State(2557)
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::RegExp,
-    // State(2557)
+    // State(2558)
     //   [ForInOfStatement -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN Statement .]*
     Goal::RegExp,
-    // State(2558)
+    // State(2559)
     //   [ForInOfStatement -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement .]*
     Goal::RegExp,
-    // State(2559)
+    // State(2560)
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement .]*
     Goal::RegExp,
-    // State(2560)
+    // State(2561)
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN . Statement]*
     Goal::RegExp,
-    // State(2561)
+    // State(2562)
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN . Statement]*
     Goal::RegExp,
-    // State(2562)
+    // State(2563)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement]*
     Goal::Div,
-    // State(2563)
+    // State(2564)
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement .]*
     Goal::RegExp,
-    // State(2564)
+    // State(2565)
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement .]*
     Goal::RegExp,
-    // State(2565)
+    // State(2566)
     //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement]*
     Goal::RegExp,
-    // State(2566)
+    // State(2567)
     //   [ForStatement -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::RegExp,
-    // State(2567)
+    // State(2568)
     //   [ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ . AssignmentExpression]*
     Goal::RegExp,
-    // State(2568)
+    // State(2569)
     //   [GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(2569)
+    // State(2570)
     //   [FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(2570)
+    // State(2571)
     //   [IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ . Statement]*
     Goal::RegExp,
-    // State(2571)
+    // State(2572)
     //   [CaseClause -> CASE Expression_In COLON .]*
     //   [CaseClause -> CASE Expression_In COLON . StatementList]*
     Goal::RegExp,
-    // State(2572)
+    // State(2573)
     //   [DefaultClause -> DEFAULT COLON StatementList .]*
     //   [StatementList -> StatementList . StatementListItem]*
     Goal::RegExp,
-    // State(2573)
+    // State(2574)
     //   [CaseBlock -> LBRACE CaseClauses DefaultClause RBRACE .]*
     Goal::RegExp,
-    // State(2574)
+    // State(2575)
     //   [CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses . RBRACE]*
     //   [CaseClauses -> CaseClauses . CaseClause]*
     Goal::Div,
-    // State(2575)
+    // State(2576)
     //   [CaseBlock -> LBRACE DefaultClause CaseClauses RBRACE .]*
     Goal::RegExp,
-    // State(2576)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In . RPAREN SEMICOLON]*
-    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
-    Goal::Div,
     // State(2577)
-    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Return]*
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN . Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
     Goal::RegExp,
     // State(2578)
+    //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Return]*
+    Goal::RegExp,
+    // State(2579)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(2579)
+    // State(2580)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(2580)
+    // State(2581)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN . Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(2581)
+    // State(2582)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF . AssignmentExpression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(2582)
+    // State(2583)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . SEMICOLON Expression_In RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON . Expression_In SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(2583)
+    // State(2584)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(2584)
+    // State(2585)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In . SEMICOLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::Div,
-    // State(2585)
+    // State(2586)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(2586)
+    // State(2587)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration OF AssignmentExpression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(2587)
+    // State(2588)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForInOfStatement_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(2588)
+    // State(2589)
     //   [ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(2589)
+    // State(2590)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(2590)
+    // State(2591)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(2591)
+    // State(2592)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(2592)
+    // State(2593)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ . Statement_Return ELSE _ELSE_BLOCK_ Statement_Return]*
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ . Statement_Return (?![ELSE])]*
     Goal::RegExp,
-    // State(2593)
+    // State(2594)
     //   [CaseBlock_Return -> LBRACE . RBRACE]*
     //   [CaseBlock_Return -> LBRACE . CaseClauses_Return RBRACE]*
     //   [CaseBlock_Return -> LBRACE . CaseClauses_Return DefaultClause_Return RBRACE]*
@@ -9810,94 +9819,93 @@ pub static TABLE: [Goal; 4260] = [
     //   [CaseBlock_Return -> LBRACE . DefaultClause_Return RBRACE]*
     //   [CaseBlock_Return -> LBRACE . DefaultClause_Return CaseClauses_Return RBRACE]*
     Goal::Div,
-    // State(2594)
+    // State(2595)
     //   [SwitchStatement_Return -> SWITCH LPAREN Expression_In RPAREN CaseBlock_Return .]*
     Goal::RegExp,
-    // State(2595)
+    // State(2596)
     //   [Catch_Return -> CATCH LPAREN CatchParameter . RPAREN Block_Return]*
     Goal::Div,
-    // State(2596)
+    // State(2597)
     //   [WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ Statement_Return]*
     //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
     Goal::RegExp,
-    // State(2597)
+    // State(2598)
     //   [WithStatement_Return -> WITH LPAREN Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(2598)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await . RPAREN SEMICOLON]*
-    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
-    Goal::Div,
     // State(2599)
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN . Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
+    // State(2600)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await . OF AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2600)
+    // State(2601)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2601)
+    // State(2602)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2602)
+    // State(2603)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(2603)
+    // State(2604)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2604)
+    // State(2605)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2605)
+    // State(2606)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2606)
+    // State(2607)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2607)
+    // State(2608)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON . Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2608)
+    // State(2609)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2609)
+    // State(2610)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2610)
+    // State(2611)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2611)
+    // State(2612)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2612)
+    // State(2613)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2613)
+    // State(2614)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2614)
+    // State(2615)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(2615)
+    // State(2616)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(2616)
+    // State(2617)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(2617)
+    // State(2618)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ . Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return]*
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ . Statement_Await_Return (?![ELSE])]*
     Goal::RegExp,
-    // State(2618)
+    // State(2619)
     //   [CaseBlock_Await_Return -> LBRACE . RBRACE]*
     //   [CaseBlock_Await_Return -> LBRACE . CaseClauses_Await_Return RBRACE]*
     //   [CaseBlock_Await_Return -> LBRACE . CaseClauses_Await_Return DefaultClause_Await_Return RBRACE]*
@@ -9905,216 +9913,219 @@ pub static TABLE: [Goal; 4260] = [
     //   [CaseBlock_Await_Return -> LBRACE . DefaultClause_Await_Return RBRACE]*
     //   [CaseBlock_Await_Return -> LBRACE . DefaultClause_Await_Return CaseClauses_Await_Return RBRACE]*
     Goal::Div,
-    // State(2619)
+    // State(2620)
     //   [SwitchStatement_Await_Return -> SWITCH LPAREN Expression_In_Await RPAREN CaseBlock_Await_Return .]*
     Goal::RegExp,
-    // State(2620)
+    // State(2621)
     //   [Catch_Await_Return -> CATCH LPAREN CatchParameter_Await . RPAREN Block_Await_Return]*
     Goal::Div,
-    // State(2621)
+    // State(2622)
     //   [WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN . _CONTINUE_IF_TRUTHY_ Statement_Await_Return]*
     //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
     Goal::RegExp,
-    // State(2622)
+    // State(2623)
     //   [WithStatement_Await_Return -> WITH LPAREN Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(2623)
+    // State(2624)
     //   [AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(2624)
+    // State(2625)
     //   [AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(2625)
+    // State(2626)
     //   [MethodDefinition_Await -> GET ClassElementName_Await LPAREN RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(2626)
+    // State(2627)
     //   [FunctionStatementList_Yield -> (empty) .]*
     //   [GeneratorMethod_Await -> MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE . GeneratorBody RBRACE]*
     Goal::RegExp,
-    // State(2627)
+    // State(2628)
     //   [FunctionStatementList -> (empty) .]*
     //   [MethodDefinition_Await -> SET ClassElementName_Await LPAREN PropertySetParameterList RPAREN LBRACE . FunctionBody RBRACE]*
     Goal::RegExp,
-    // State(2628)
+    // State(2629)
     //   [MethodDefinition_Await -> ClassElementName_Await LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(2629)
+    // State(2630)
     //   [AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(2630)
+    // State(2631)
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(2631)
+    // State(2632)
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ . SEMICOLON]*
+    Goal::Div,
+    // State(2633)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(2632)
+    // State(2634)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(2633)
+    // State(2635)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await . RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(2634)
+    // State(2636)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(2635)
+    // State(2637)
     //   [FunctionStatementList_Yield -> (empty) .]*
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN LBRACE . GeneratorBody RBRACE]*
     Goal::RegExp,
-    // State(2636)
+    // State(2638)
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN . LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(2637)
+    // State(2639)
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN . _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_SIGNATURE_ -> (empty) .]*
     Goal::Div,
-    // State(2638)
+    // State(2640)
     //   [FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2639)
+    // State(2641)
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await]*
     Goal::RegExp,
-    // State(2640)
+    // State(2642)
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2641)
+    // State(2643)
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2642)
+    // State(2644)
     //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2643)
+    // State(2645)
     //   [ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2644)
+    // State(2646)
     //   [ForInOfStatement_Await -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2645)
+    // State(2647)
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2646)
+    // State(2648)
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::RegExp,
-    // State(2647)
+    // State(2649)
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await]*
     Goal::RegExp,
-    // State(2648)
+    // State(2650)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await]*
     Goal::Div,
-    // State(2649)
+    // State(2651)
     //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2650)
+    // State(2652)
     //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2651)
+    // State(2653)
     //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::RegExp,
-    // State(2652)
+    // State(2654)
     //   [ForStatement_Await -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(2653)
+    // State(2655)
     //   [ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ . AssignmentExpression_Await]*
     Goal::RegExp,
-    // State(2654)
+    // State(2656)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(2655)
+    // State(2657)
     //   [FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(2656)
+    // State(2658)
     //   [IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE _ELSE_BLOCK_ . Statement_Await]*
     Goal::RegExp,
-    // State(2657)
+    // State(2659)
     //   [CaseClause_Await -> CASE Expression_In_Await COLON .]*
     //   [CaseClause_Await -> CASE Expression_In_Await COLON . StatementList_Await]*
     Goal::RegExp,
-    // State(2658)
+    // State(2660)
     //   [DefaultClause_Await -> DEFAULT COLON StatementList_Await .]*
     //   [StatementList_Await -> StatementList_Await . StatementListItem_Await]*
     Goal::RegExp,
-    // State(2659)
+    // State(2661)
     //   [CaseBlock_Await -> LBRACE CaseClauses_Await DefaultClause_Await RBRACE .]*
     Goal::RegExp,
-    // State(2660)
+    // State(2662)
     //   [CaseBlock_Await -> LBRACE CaseClauses_Await DefaultClause_Await CaseClauses_Await . RBRACE]*
     //   [CaseClauses_Await -> CaseClauses_Await . CaseClause_Await]*
     Goal::Div,
-    // State(2661)
+    // State(2663)
     //   [CaseBlock_Await -> LBRACE DefaultClause_Await CaseClauses_Await RBRACE .]*
     Goal::RegExp,
-    // State(2662)
+    // State(2664)
     //   [AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::TemplateTail,
-    // State(2663)
+    // State(2665)
     //   [AwaitExpression_Yield -> AWAIT . UnaryExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2664)
+    // State(2666)
     //   [CallExpression_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2665)
+    // State(2667)
     //   [PrimaryExpression_Yield_Await -> CoverParenthesizedExpressionAndArrowParameterList_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2666)
+    // State(2668)
     //   [IdentifierReference_Yield_Await -> Identifier .]*
     Goal::TemplateTail,
-    // State(2667)
+    // State(2669)
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await .]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . (!LINE_TERMINATOR_SEQUENCE) DEC]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) . DEC]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . (!LINE_TERMINATOR_SEQUENCE) INC]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::TemplateTail,
-    // State(2668)
+    // State(2670)
     //   [UnaryExpression_Yield_Await -> ADD UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2669)
+    // State(2671)
     //   [UnaryExpression_Yield_Await -> UpdateExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2670)
+    // State(2672)
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody_In]*
     Goal::Div,
-    // State(2671)
+    // State(2673)
     //   [AwaitExpression_Yield -> AWAIT UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2672)
+    // State(2674)
     //   [UnaryExpression_Yield_Await -> BIT_NOT UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2673)
+    // State(2675)
     //   [ClassHeritage_Yield_Await -> EXTENDS . LeftHandSideExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2674)
+    // State(2676)
     //   [ClassTail_Yield_Await -> LBRACE . RBRACE]*
     //   [ClassTail_Yield_Await -> LBRACE . ClassBody_Yield_Await RBRACE]*
     Goal::Div,
-    // State(2675)
+    // State(2677)
     //   [ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await . ClassTail_Yield_Await]*
     Goal::Div,
-    // State(2676)
+    // State(2678)
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await . LBRACE RBRACE]*
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await . LBRACE ClassBody_Yield_Await RBRACE]*
     Goal::Div,
-    // State(2677)
+    // State(2679)
     //   [ClassExpression_Yield_Await -> CLASS ClassTail_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2678)
+    // State(2680)
     //   [UpdateExpression_Yield_Await -> DEC UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2679)
+    // State(2681)
     //   [UnaryExpression_Yield_Await -> DELETE UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2680)
+    // State(2682)
     //   [ImportCall_Yield_Await -> IMPORT LPAREN . AssignmentExpression_In_Yield_Await RPAREN]*
     Goal::RegExp,
-    // State(2681)
+    // State(2683)
     //   [UpdateExpression_Yield_Await -> INC UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2682)
+    // State(2684)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncMethod_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -10122,72 +10133,72 @@ pub static TABLE: [Goal; 4260] = [
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     //   [KeywordOrIdentifierName -> ASYNC .]*
     Goal::Div,
-    // State(2683)
+    // State(2685)
     //   [PropertyDefinition_Yield_Await -> ELLIPSIS . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2684)
+    // State(2686)
     //   [IdentifierNameButNotReservedWord -> GET .]*
     //   [KeywordOrIdentifierName -> GET .]*
     //   [MethodDefinition_Yield_Await -> GET . ClassElementName_Yield_Await LPAREN RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2685)
+    // State(2687)
     //   [GeneratorMethod_Yield_Await -> MUL . ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(2686)
+    // State(2688)
     //   [ClassElementName_Yield_Await -> PRIVATE_IDENTIFIER .]*
     Goal::Div,
-    // State(2687)
+    // State(2689)
     //   [ObjectLiteral_Yield_Await -> LBRACE RBRACE .]*
     Goal::TemplateTail,
-    // State(2688)
+    // State(2690)
     //   [IdentifierNameButNotReservedWord -> SET .]*
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition_Yield_Await -> SET . ClassElementName_Yield_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2689)
+    // State(2691)
     //   [MethodDefinition_Yield_Await -> AsyncGeneratorMethod_Yield_Await .]*
     Goal::Div,
-    // State(2690)
+    // State(2692)
     //   [MethodDefinition_Yield_Await -> AsyncMethod_Yield_Await .]*
     Goal::Div,
-    // State(2691)
+    // State(2693)
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await . LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2692)
+    // State(2694)
     //   [PropertyDefinition_Yield_Await -> CoverInitializedName_Yield_Await .]*
     Goal::Div,
-    // State(2693)
+    // State(2695)
     //   [MethodDefinition_Yield_Await -> GeneratorMethod_Yield_Await .]*
     Goal::Div,
-    // State(2694)
+    // State(2696)
     //   [CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await . Initializer_In_Yield_Await]*
     //   [PropertyDefinition_Yield_Await -> IdentifierReference_Yield_Await .]*
     Goal::Div,
-    // State(2695)
+    // State(2697)
     //   [PropertyDefinition_Yield_Await -> MethodDefinition_Yield_Await .]*
     Goal::Div,
-    // State(2696)
+    // State(2698)
     //   [ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await . COMMA RBRACE]*
     //   [ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await . RBRACE]*
     //   [PropertyDefinitionList_Yield_Await -> PropertyDefinitionList_Yield_Await . COMMA PropertyDefinition_Yield_Await]*
     Goal::Div,
-    // State(2697)
+    // State(2699)
     //   [PropertyDefinitionList_Yield_Await -> PropertyDefinition_Yield_Await .]*
     Goal::Div,
-    // State(2698)
+    // State(2700)
     //   [ClassElementName_Yield_Await -> PropertyName_Yield_Await .]*
     //   [PropertyDefinition_Yield_Await -> PropertyName_Yield_Await . COLON AssignmentExpression_In_Yield_Await]*
     Goal::Div,
-    // State(2699)
+    // State(2701)
     //   [SpreadElement_Yield_Await -> ELLIPSIS . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2700)
+    // State(2702)
     //   [ArrayLiteral_Yield_Await -> LBRACK RBRACK .]*
     Goal::TemplateTail,
-    // State(2701)
+    // State(2703)
     //   [ElementList_Yield_Await -> AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(2702)
+    // State(2704)
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await . COMMA RBRACK]*
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await . COMMA Elision RBRACK]*
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await . RBRACK]*
@@ -10196,37 +10207,37 @@ pub static TABLE: [Goal; 4260] = [
     //   [ElementList_Yield_Await -> ElementList_Yield_Await . COMMA Elision SpreadElement_Yield_Await]*
     //   [ElementList_Yield_Await -> ElementList_Yield_Await . COMMA SpreadElement_Yield_Await]*
     Goal::Div,
-    // State(2703)
+    // State(2705)
     //   [ArrayLiteral_Yield_Await -> LBRACK Elision . RBRACK]*
     //   [ElementList_Yield_Await -> Elision . AssignmentExpression_In_Yield_Await]*
     //   [ElementList_Yield_Await -> Elision . SpreadElement_Yield_Await]*
     //   [Elision -> Elision . COMMA]*
     Goal::RegExp,
-    // State(2704)
+    // State(2706)
     //   [ElementList_Yield_Await -> SpreadElement_Yield_Await .]*
     Goal::Div,
-    // State(2705)
+    // State(2707)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS . BindingIdentifier_Yield_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS . BindingPattern_Yield_Await RPAREN]*
     Goal::Div,
-    // State(2706)
+    // State(2708)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN RPAREN .]*
     Goal::TemplateTail,
-    // State(2707)
+    // State(2709)
     //   [Expression_In_Yield_Await -> AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2708)
+    // State(2710)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await . COMMA ELLIPSIS BindingIdentifier_Yield_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await . COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await . COMMA RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await . RPAREN]*
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::Div,
-    // State(2709)
+    // State(2711)
     //   [SuperProperty_Yield_Await -> SUPER . DOT KeywordOrIdentifierName]*
     //   [SuperProperty_Yield_Await -> SUPER . LBRACK Expression_In_Yield_Await RBRACK]*
     Goal::Div,
-    // State(2710)
+    // State(2712)
     //   [MemberExpression_Yield_Await -> NEW MemberExpression_Yield_Await . Arguments_Yield_Await]*
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await . DOT PRIVATE_IDENTIFIER]*
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await . DOT KeywordOrIdentifierName]*
@@ -10234,97 +10245,97 @@ pub static TABLE: [Goal; 4260] = [
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await . TemplateLiteral_Yield_Await_Tagged]*
     //   [NewExpression_Yield_Await -> MemberExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2711)
+    // State(2713)
     //   [NewExpression_Yield_Await -> NEW NewExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2712)
+    // State(2714)
     //   [UnaryExpression_Yield_Await -> NOT UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2713)
+    // State(2715)
     //   [RelationalExpression_In_Yield_Await -> PRIVATE_IDENTIFIER IN . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2714)
+    // State(2716)
     //   [UnaryExpression_Yield_Await -> SUB UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2715)
+    // State(2717)
     //   [SuperProperty_Yield_Await -> SUPER DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(2716)
+    // State(2718)
     //   [SuperProperty_Yield_Await -> SUPER LBRACK . Expression_In_Yield_Await RBRACK]*
     Goal::RegExp,
-    // State(2717)
+    // State(2719)
     //   [Arguments_Yield_Await -> LPAREN . RPAREN]*
     //   [Arguments_Yield_Await -> LPAREN . ArgumentList_Yield_Await COMMA RPAREN]*
     //   [Arguments_Yield_Await -> LPAREN . ArgumentList_Yield_Await RPAREN]*
     Goal::RegExp,
-    // State(2718)
+    // State(2720)
     //   [SuperCall_Yield_Await -> SUPER Arguments_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2719)
+    // State(2721)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [SubstitutionTemplate_Yield_Await -> TEMPLATE_HEAD Expression_In_Yield_Await . TemplateSpans_Yield_Await]*
     Goal::TemplateTail,
-    // State(2720)
+    // State(2722)
     //   [UnaryExpression_Yield_Await -> TYPEOF UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2721)
+    // State(2723)
     //   [UnaryExpression_Yield_Await -> VOID UnaryExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2722)
+    // State(2724)
     //   [YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2723)
+    // State(2725)
     //   [YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2724)
+    // State(2726)
     //   [BindingIdentifier_Yield_Await -> YIELD .]*
     //   [YieldExpression_In_Await -> YIELD .]*
     Goal::TemplateTail,
-    // State(2725)
+    // State(2727)
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await ADD . MultiplicativeExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2726)
+    // State(2728)
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await SUB . MultiplicativeExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2727)
+    // State(2729)
     //   [ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW . ConciseBody_In]*
     Goal::RegExp,
-    // State(2728)
+    // State(2730)
     //   [ComputedPropertyName_Yield_Await -> LBRACK AssignmentExpression_In_Yield_Await RBRACK .]*
     Goal::Div,
-    // State(2729)
+    // State(2731)
     //   [BitwiseANDExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await BIT_AND . EqualityExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2730)
+    // State(2732)
     //   [BitwiseORExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await BIT_OR . BitwiseXORExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2731)
+    // State(2733)
     //   [BitwiseXORExpression_In_Yield_Await -> BitwiseXORExpression_In_Yield_Await BIT_XOR . BitwiseANDExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2732)
+    // State(2734)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await DOT . PRIVATE_IDENTIFIER]*
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(2733)
+    // State(2735)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await LBRACK . Expression_In_Yield_Await RBRACK]*
     Goal::RegExp,
-    // State(2734)
+    // State(2736)
     //   [TemplateLiteral_Yield_Await_Tagged -> NO_SUBSTITUTION_TEMPLATE .]*
     Goal::TemplateTail,
-    // State(2735)
+    // State(2737)
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING . LBRACK Expression_In_Yield_Await RBRACK]*
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING . PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING . Arguments_Yield_Await]*
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING . KeywordOrIdentifierName]*
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING . TemplateLiteral_Yield_Await_Tagged]*
     Goal::Div,
-    // State(2736)
+    // State(2738)
     //   [SubstitutionTemplate_Yield_Await_Tagged -> TEMPLATE_HEAD . Expression_In_Yield_Await TemplateSpans_Yield_Await_Tagged]*
     Goal::RegExp,
-    // State(2737)
+    // State(2739)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await Arguments_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2738)
+    // State(2740)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . DOT KeywordOrIdentifierName]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . LBRACK Expression_In_Yield_Await RBRACK]*
@@ -10332,56 +10343,56 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . TemplateLiteral_Yield_Await_Tagged]*
     //   [OptionalExpression_Yield_Await -> CallExpression_Yield_Await OptionalChain_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2739)
+    // State(2741)
     //   [TemplateLiteral_Yield_Await_Tagged -> SubstitutionTemplate_Yield_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(2740)
+    // State(2742)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await TemplateLiteral_Yield_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(2741)
+    // State(2743)
     //   [CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH . _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await]*
     //   [_NULLISH_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(2742)
+    // State(2744)
     //   [AsyncArrowFunction_In_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody_In]*
     Goal::RegExp,
-    // State(2743)
+    // State(2745)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ . RelationalExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2744)
+    // State(2746)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ_STRICT . RelationalExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2745)
+    // State(2747)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE . RelationalExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2746)
+    // State(2748)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE_STRICT . RelationalExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2747)
+    // State(2749)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN . _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await]*
     //   [_FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(2748)
+    // State(2750)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2749)
+    // State(2751)
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) DEC .]*
     Goal::TemplateTail,
-    // State(2750)
+    // State(2752)
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) INC .]*
     Goal::TemplateTail,
-    // State(2751)
+    // State(2753)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN . _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await]*
     //   [_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(2752)
+    // State(2754)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN . _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await]*
     //   [_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(2753)
+    // State(2755)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(2754)
+    // State(2756)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await]*
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await . ASSIGN AssignmentExpression_In_Yield_Await]*
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await]*
@@ -10389,25 +10400,25 @@ pub static TABLE: [Goal; 4260] = [
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await . AssignmentOperator AssignmentExpression_In_Yield_Await]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2755)
+    // State(2757)
     //   [LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await]*
     //   [_FALSY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(2756)
+    // State(2758)
     //   [LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR . _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield_Await]*
     //   [_TRUTHY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(2757)
+    // State(2759)
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT . PRIVATE_IDENTIFIER]*
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(2758)
+    // State(2760)
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK . Expression_In_Yield_Await RBRACK]*
     Goal::RegExp,
-    // State(2759)
+    // State(2761)
     //   [CoverCallExpressionAndAsyncArrowHead_Yield_Await -> MemberExpression_Yield_Await Arguments_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2760)
+    // State(2762)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . DOT KeywordOrIdentifierName]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . LBRACK Expression_In_Yield_Await RBRACK]*
@@ -10415,19 +10426,19 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . TemplateLiteral_Yield_Await_Tagged]*
     //   [OptionalExpression_Yield_Await -> MemberExpression_Yield_Await OptionalChain_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2761)
+    // State(2763)
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await TemplateLiteral_Yield_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(2762)
+    // State(2764)
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV . ExponentiationExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2763)
+    // State(2765)
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD . ExponentiationExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2764)
+    // State(2766)
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL . ExponentiationExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2765)
+    // State(2767)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . DOT PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . DOT KeywordOrIdentifierName]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . LBRACK Expression_In_Yield_Await RBRACK]*
@@ -10435,71 +10446,71 @@ pub static TABLE: [Goal; 4260] = [
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await . TemplateLiteral_Yield_Await_Tagged]*
     //   [OptionalExpression_Yield_Await -> OptionalExpression_Yield_Await OptionalChain_Yield_Await .]*
     Goal::TemplateTail,
-    // State(2766)
+    // State(2768)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GT . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2767)
+    // State(2769)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GTE . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2768)
+    // State(2770)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await IN . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2769)
+    // State(2771)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await INSTANCEOF . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2770)
+    // State(2772)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LT . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2771)
+    // State(2773)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LTE . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2772)
+    // State(2774)
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SAR . AdditiveExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2773)
+    // State(2775)
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHL . AdditiveExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2774)
+    // State(2776)
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHR . AdditiveExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2775)
+    // State(2777)
     //   [ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL . _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await]*
     //   [_THEN_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(2776)
+    // State(2778)
     //   [ExponentiationExpression_Yield_Await -> UpdateExpression_Yield_Await EXP . ExponentiationExpression_Yield_Await]*
     Goal::RegExp,
-    // State(2777)
+    // State(2779)
     //   [ObjectBindingPattern_Yield_Await -> LBRACE BindingPropertyList_Yield_Await COMMA RBRACE .]*
     Goal::Div,
-    // State(2778)
+    // State(2780)
     //   [BindingPropertyList_Yield_Await -> BindingPropertyList_Yield_Await COMMA BindingProperty_Yield_Await .]*
     Goal::Div,
-    // State(2779)
+    // State(2781)
     //   [ObjectBindingPattern_Yield_Await -> LBRACE BindingPropertyList_Yield_Await COMMA BindingRestProperty_Yield_Await . RBRACE]*
     Goal::Div,
-    // State(2780)
+    // State(2782)
     //   [BindingProperty_Yield_Await -> PropertyName_Yield_Await COLON BindingElement_Yield_Await .]*
     Goal::Div,
-    // State(2781)
+    // State(2783)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA RBRACK .]*
     Goal::Div,
-    // State(2782)
+    // State(2784)
     //   [BindingElementList_Yield_Await -> BindingElementList_Yield_Await COMMA BindingElisionElement_Yield_Await .]*
     Goal::Div,
-    // State(2783)
+    // State(2785)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA BindingRestElement_Yield_Await . RBRACK]*
     Goal::Div,
-    // State(2784)
+    // State(2786)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision . RBRACK]*
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision . BindingRestElement_Yield_Await RBRACK]*
     //   [BindingElisionElement_Yield_Await -> Elision . BindingElement_Yield_Await]*
     //   [Elision -> Elision . COMMA]*
     Goal::Div,
-    // State(2785)
+    // State(2787)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK Elision BindingRestElement_Yield_Await RBRACK .]*
     Goal::Div,
-    // State(2786)
+    // State(2788)
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -10508,26 +10519,27 @@ pub static TABLE: [Goal; 4260] = [
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
-    // State(2787)
+    // State(2789)
     //   [BreakStatement_Yield_Await -> BREAK . SEMICOLON]*
     //   [BreakStatement_Yield_Await -> BREAK . (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON]*
     //   [BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) . LabelIdentifier_Yield_Await SEMICOLON]*
     Goal::Div,
-    // State(2788)
+    // State(2790)
     //   [ClassDeclaration_Yield_Await -> CLASS . BindingIdentifier_Yield_Await ClassTail_Yield_Await]*
     Goal::Div,
-    // State(2789)
+    // State(2791)
     //   [LexicalDeclaration_In_Yield_Await -> CONST . BindingList_In_Yield_Await SEMICOLON]*
     Goal::Div,
-    // State(2790)
+    // State(2792)
     //   [ContinueStatement_Yield_Await -> CONTINUE . SEMICOLON]*
     //   [ContinueStatement_Yield_Await -> CONTINUE . (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON]*
     //   [ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) . LabelIdentifier_Yield_Await SEMICOLON]*
     Goal::Div,
-    // State(2791)
-    //   [DoWhileStatement_Yield_Await_Return -> DO . Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
+    // State(2793)
+    //   [DoWhileStatement_Yield_Await_Return -> DO . _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_LOOP_START_ -> (empty) .]*
     Goal::RegExp,
-    // State(2792)
+    // State(2794)
     //   [ForInOfStatement_Yield_Await_Return -> FOR . AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR . AWAIT LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR . AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -10554,287 +10566,287 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR . LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(2793)
+    // State(2795)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION . BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION . MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(2794)
+    // State(2796)
     //   [IfStatement_Yield_Await_Return -> IF . LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return]*
     //   [IfStatement_Yield_Await_Return -> IF . LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])]*
     Goal::Div,
-    // State(2795)
+    // State(2797)
     //   [Block_Yield_Await_Return -> LBRACE . RBRACE]*
     //   [Block_Yield_Await_Return -> LBRACE . _BLOCK_SCOPE_ StatementList_Yield_Await_Return RBRACE]*
     //   [_BLOCK_SCOPE_ -> (empty) .]*
     Goal::RegExp,
-    // State(2796)
+    // State(2798)
     //   [IdentifierNameButNotReservedWord -> LET .]*
     //   [LexicalDeclaration_In_Yield_Await -> LET . BindingList_In_Yield_Await SEMICOLON]*
     Goal::Div,
-    // State(2797)
+    // State(2799)
     //   [ReturnStatement_Yield_Await -> RETURN . SEMICOLON]*
     //   [ReturnStatement_Yield_Await -> RETURN . (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON]*
     //   [ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) . Expression_In_Yield_Await SEMICOLON]*
     Goal::RegExp,
-    // State(2798)
+    // State(2800)
     //   [SwitchStatement_Yield_Await_Return -> SWITCH . LPAREN Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return]*
     Goal::Div,
-    // State(2799)
+    // State(2801)
     //   [ThrowStatement_Yield_Await -> THROW . (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON]*
     //   [ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) . Expression_In_Yield_Await SEMICOLON]*
     Goal::RegExp,
-    // State(2800)
+    // State(2802)
     //   [TryStatement_Yield_Await_Return -> TRY . Block_Yield_Await_Return Catch_Yield_Await_Return]*
     //   [TryStatement_Yield_Await_Return -> TRY . Block_Yield_Await_Return Catch_Yield_Await_Return Finally_Yield_Await_Return]*
     //   [TryStatement_Yield_Await_Return -> TRY . Block_Yield_Await_Return Finally_Yield_Await_Return]*
     Goal::Div,
-    // State(2801)
+    // State(2803)
     //   [VariableStatement_Yield_Await -> VAR . VariableDeclarationList_In_Yield_Await SEMICOLON]*
     Goal::Div,
-    // State(2802)
+    // State(2804)
     //   [WhileStatement_Yield_Await_Return -> WHILE . _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return]*
     //   [_LOOP_START_ -> (empty) .]*
     Goal::Div,
-    // State(2803)
+    // State(2805)
     //   [WithStatement_Yield_Await_Return -> WITH . LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(2804)
+    // State(2806)
     //   [HoistableDeclaration_Yield_Await -> AsyncFunctionDeclaration_Yield_Await .]*
     Goal::RegExp,
-    // State(2805)
+    // State(2807)
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(2806)
+    // State(2808)
     //   [HoistableDeclaration_Yield_Await -> AsyncGeneratorDeclaration_Yield_Await .]*
     Goal::RegExp,
-    // State(2807)
+    // State(2809)
     //   [Statement_Yield_Await_Return -> BlockStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2808)
+    // State(2810)
     //   [BlockStatement_Yield_Await_Return -> Block_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2809)
+    // State(2811)
     //   [Statement_Yield_Await_Return -> BreakStatement_Yield_Await .]*
     Goal::RegExp,
-    // State(2810)
+    // State(2812)
     //   [Statement_Yield_Await_Return -> BreakableStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2811)
+    // State(2813)
     //   [Declaration_Yield_Await -> ClassDeclaration_Yield_Await .]*
     Goal::RegExp,
-    // State(2812)
+    // State(2814)
     //   [Statement_Yield_Await_Return -> ContinueStatement_Yield_Await .]*
     Goal::RegExp,
-    // State(2813)
+    // State(2815)
     //   [Statement_Yield_Await_Return -> DebuggerStatement .]*
     Goal::RegExp,
-    // State(2814)
+    // State(2816)
     //   [StatementListItem_Yield_Await_Return -> Declaration_Yield_Await .]*
     Goal::RegExp,
-    // State(2815)
+    // State(2817)
     //   [IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2816)
+    // State(2818)
     //   [Statement_Yield_Await_Return -> EmptyStatement .]*
     Goal::RegExp,
-    // State(2817)
+    // State(2819)
     //   [Statement_Yield_Await_Return -> ExpressionStatement_Yield_Await .]*
     Goal::RegExp,
-    // State(2818)
+    // State(2820)
     //   [ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await . SEMICOLON]*
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::Div,
-    // State(2819)
+    // State(2821)
     //   [IterationStatement_Yield_Await_Return -> ForInOfStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2820)
+    // State(2822)
     //   [IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2821)
+    // State(2823)
     //   [AsyncGeneratorBody -> FunctionBody_Yield_Await .]*
     Goal::Div,
-    // State(2822)
+    // State(2824)
     //   [HoistableDeclaration_Yield_Await -> FunctionDeclaration_Yield_Await .]*
     Goal::RegExp,
-    // State(2823)
+    // State(2825)
     //   [FunctionBody_Yield_Await -> FunctionStatementList_Yield_Await .]*
     Goal::Div,
-    // State(2824)
+    // State(2826)
     //   [HoistableDeclaration_Yield_Await -> GeneratorDeclaration_Yield_Await .]*
     Goal::RegExp,
-    // State(2825)
+    // State(2827)
     //   [Declaration_Yield_Await -> HoistableDeclaration_Yield_Await .]*
     Goal::RegExp,
-    // State(2826)
+    // State(2828)
     //   [BindingIdentifier_Yield_Await -> Identifier .]*
     //   [IdentifierReference_Yield_Await -> Identifier .]*
     //   [LabelIdentifier_Yield_Await -> Identifier .]*
     Goal::Div,
-    // State(2827)
+    // State(2829)
     //   [Statement_Yield_Await_Return -> IfStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2828)
+    // State(2830)
     //   [BreakableStatement_Yield_Await_Return -> IterationStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2829)
+    // State(2831)
     //   [LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await . COLON LabelledItem_Yield_Await_Return]*
     Goal::Div,
-    // State(2830)
+    // State(2832)
     //   [Statement_Yield_Await_Return -> LabelledStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2831)
+    // State(2833)
     //   [Declaration_Yield_Await -> LexicalDeclaration_In_Yield_Await .]*
     Goal::RegExp,
-    // State(2832)
+    // State(2834)
     //   [Statement_Yield_Await_Return -> ReturnStatement_Yield_Await .]*
     Goal::RegExp,
-    // State(2833)
+    // State(2835)
     //   [StatementList_Yield_Await_Return -> StatementListItem_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2834)
+    // State(2836)
     //   [FunctionStatementList_Yield_Await -> StatementList_Yield_Await_Return .]*
     //   [StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return . StatementListItem_Yield_Await_Return]*
     Goal::RegExp,
-    // State(2835)
+    // State(2837)
     //   [StatementListItem_Yield_Await_Return -> Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2836)
+    // State(2838)
     //   [BreakableStatement_Yield_Await_Return -> SwitchStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2837)
+    // State(2839)
     //   [Statement_Yield_Await_Return -> ThrowStatement_Yield_Await .]*
     Goal::RegExp,
-    // State(2838)
+    // State(2840)
     //   [Statement_Yield_Await_Return -> TryStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2839)
+    // State(2841)
     //   [Statement_Yield_Await_Return -> VariableStatement_Yield_Await .]*
     Goal::RegExp,
-    // State(2840)
+    // State(2842)
     //   [IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2841)
+    // State(2843)
     //   [Statement_Yield_Await_Return -> WithStatement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(2842)
+    // State(2844)
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(2843)
+    // State(2845)
     //   [AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(2844)
+    // State(2846)
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2845)
+    // State(2847)
     //   [AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody_In]*
     Goal::RegExp,
-    // State(2846)
+    // State(2848)
     //   [ClassHeritage_Yield -> EXTENDS LeftHandSideExpression_Yield .]*
     Goal::Div,
-    // State(2847)
+    // State(2849)
     //   [AsyncGeneratorMethod_Yield -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncMethod_Yield -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [KeywordOrIdentifierName -> ASYNC .]*
     Goal::Div,
-    // State(2848)
+    // State(2850)
     //   [KeywordOrIdentifierName -> GET .]*
     //   [MethodDefinition_Yield -> GET . ClassElementName_Yield LPAREN RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2849)
+    // State(2851)
     //   [ClassTail_Yield -> LBRACE RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(2850)
+    // State(2852)
     //   [ClassElement_Yield -> SEMICOLON .]*
     Goal::Div,
-    // State(2851)
+    // State(2853)
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition_Yield -> SET . ClassElementName_Yield LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2852)
+    // State(2854)
     //   [ClassElement_Yield -> STATIC . FieldDefinition_Yield SEMICOLON]*
     //   [ClassElement_Yield -> STATIC . MethodDefinition_Yield]*
     //   [ClassStaticBlock -> STATIC . LBRACE ClassStaticBlockBody RBRACE]*
     //   [KeywordOrIdentifierName -> STATIC .]*
     Goal::Div,
-    // State(2853)
+    // State(2855)
     //   [ClassTail_Yield -> LBRACE ClassBody_Yield . RBRACE]*
     Goal::Div,
-    // State(2854)
+    // State(2856)
     //   [ClassBody_Yield -> ClassElementList_Yield .]*
     //   [ClassElementList_Yield -> ClassElementList_Yield . ClassElement_Yield]*
     Goal::Div,
-    // State(2855)
+    // State(2857)
     //   [FieldDefinition_Yield -> ClassElementName_Yield .]*
     //   [FieldDefinition_Yield -> ClassElementName_Yield . Initializer_In_Yield]*
     //   [MethodDefinition_Yield -> ClassElementName_Yield . LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2856)
+    // State(2858)
     //   [ClassElementList_Yield -> ClassElement_Yield .]*
     Goal::Div,
-    // State(2857)
+    // State(2859)
     //   [ClassElement_Yield -> ClassStaticBlock .]*
     Goal::Div,
-    // State(2858)
+    // State(2860)
     //   [ClassElement_Yield -> FieldDefinition_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2859)
+    // State(2861)
     //   [ClassElement_Yield -> MethodDefinition_Yield .]*
     Goal::Div,
-    // State(2860)
+    // State(2862)
     //   [ClassElementName_Yield -> PropertyName_Yield .]*
     Goal::Div,
-    // State(2861)
+    // State(2863)
     //   [ClassExpression_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield .]*
     Goal::TemplateTail,
-    // State(2862)
+    // State(2864)
     //   [ClassTail_Yield -> ClassHeritage_Yield LBRACE . RBRACE]*
     //   [ClassTail_Yield -> ClassHeritage_Yield LBRACE . ClassBody_Yield RBRACE]*
     Goal::Div,
-    // State(2863)
+    // State(2865)
     //   [ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield . RPAREN]*
     Goal::Div,
-    // State(2864)
+    // State(2866)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL . ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(2865)
+    // State(2867)
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield . LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(2866)
+    // State(2868)
     //   [PropertyDefinition_Yield -> ELLIPSIS AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(2867)
+    // State(2869)
     //   [MethodDefinition_Yield -> GET ClassElementName_Yield . LPAREN RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2868)
+    // State(2870)
     //   [GeneratorMethod_Yield -> MUL ClassElementName_Yield . LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(2869)
+    // State(2871)
     //   [MethodDefinition_Yield -> SET ClassElementName_Yield . LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2870)
+    // State(2872)
     //   [FormalParameters -> (empty) .]*
     //   [MethodDefinition_Yield -> ClassElementName_Yield LPAREN . UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(2871)
+    // State(2873)
     //   [CoverInitializedName_Yield -> IdentifierReference_Yield Initializer_In_Yield .]*
     Goal::Div,
-    // State(2872)
+    // State(2874)
     //   [ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield COMMA . RBRACE]*
     //   [PropertyDefinitionList_Yield -> PropertyDefinitionList_Yield COMMA . PropertyDefinition_Yield]*
     Goal::Div,
-    // State(2873)
+    // State(2875)
     //   [ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield RBRACE .]*
     Goal::TemplateTail,
-    // State(2874)
+    // State(2876)
     //   [PropertyDefinition_Yield -> PropertyName_Yield COLON . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2875)
+    // State(2877)
     //   [SpreadElement_Yield -> ELLIPSIS AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(2876)
+    // State(2878)
     //   [ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA . RBRACK]*
     //   [ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA . Elision RBRACK]*
     //   [ElementList_Yield -> ElementList_Yield COMMA . AssignmentExpression_In_Yield]*
@@ -10842,162 +10854,162 @@ pub static TABLE: [Goal; 4260] = [
     //   [ElementList_Yield -> ElementList_Yield COMMA . Elision SpreadElement_Yield]*
     //   [ElementList_Yield -> ElementList_Yield COMMA . SpreadElement_Yield]*
     Goal::RegExp,
-    // State(2877)
+    // State(2879)
     //   [ArrayLiteral_Yield -> LBRACK ElementList_Yield RBRACK .]*
     Goal::TemplateTail,
-    // State(2878)
+    // State(2880)
     //   [ArrayLiteral_Yield -> LBRACK Elision RBRACK .]*
     Goal::TemplateTail,
-    // State(2879)
+    // State(2881)
     //   [ElementList_Yield -> Elision AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(2880)
+    // State(2882)
     //   [ElementList_Yield -> Elision SpreadElement_Yield .]*
     Goal::Div,
-    // State(2881)
+    // State(2883)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingIdentifier_Yield . RPAREN]*
     Goal::Div,
-    // State(2882)
+    // State(2884)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingPattern_Yield . RPAREN]*
     Goal::Div,
-    // State(2883)
+    // State(2885)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA . ELLIPSIS BindingIdentifier_Yield RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA . ELLIPSIS BindingPattern_Yield RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA . RPAREN]*
     //   [Expression_In_Yield -> Expression_In_Yield COMMA . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2884)
+    // State(2886)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield RPAREN .]*
     Goal::TemplateTail,
-    // State(2885)
+    // State(2887)
     //   [MemberExpression_Yield -> NEW MemberExpression_Yield Arguments_Yield .]*
     Goal::TemplateTail,
-    // State(2886)
+    // State(2888)
     //   [RelationalExpression_In_Yield -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::TemplateTail,
-    // State(2887)
+    // State(2889)
     //   [SuperProperty_Yield -> SUPER DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(2888)
+    // State(2890)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield . RBRACK]*
     Goal::Div,
-    // State(2889)
+    // State(2891)
     //   [ArgumentList_Yield -> ELLIPSIS . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2890)
+    // State(2892)
     //   [Arguments_Yield -> LPAREN RPAREN .]*
     Goal::TemplateTail,
-    // State(2891)
+    // State(2893)
     //   [ArgumentList_Yield -> ArgumentList_Yield . COMMA ELLIPSIS AssignmentExpression_In_Yield]*
     //   [ArgumentList_Yield -> ArgumentList_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [Arguments_Yield -> LPAREN ArgumentList_Yield . COMMA RPAREN]*
     //   [Arguments_Yield -> LPAREN ArgumentList_Yield . RPAREN]*
     Goal::Div,
-    // State(2892)
+    // State(2894)
     //   [ArgumentList_Yield -> AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(2893)
+    // State(2895)
     //   [Expression_In_Yield -> Expression_In_Yield COMMA . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2894)
+    // State(2896)
     //   [TemplateMiddleList_Yield -> TEMPLATE_MIDDLE . Expression_In_Yield]*
     Goal::RegExp,
-    // State(2895)
+    // State(2897)
     //   [TemplateSpans_Yield -> TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(2896)
+    // State(2898)
     //   [TemplateMiddleList_Yield -> TemplateMiddleList_Yield . TEMPLATE_MIDDLE Expression_In_Yield]*
     //   [TemplateSpans_Yield -> TemplateMiddleList_Yield . TEMPLATE_TAIL]*
     Goal::TemplateTail,
-    // State(2897)
+    // State(2899)
     //   [SubstitutionTemplate_Yield -> TEMPLATE_HEAD Expression_In_Yield TemplateSpans_Yield .]*
     Goal::TemplateTail,
-    // State(2898)
+    // State(2900)
     //   [YieldExpression_In -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(2899)
+    // State(2901)
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield ADD MultiplicativeExpression_Yield .]*
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield . DIV ExponentiationExpression_Yield]*
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield . MOD ExponentiationExpression_Yield]*
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield . MUL ExponentiationExpression_Yield]*
     Goal::TemplateTail,
-    // State(2900)
+    // State(2902)
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield SUB MultiplicativeExpression_Yield .]*
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield . DIV ExponentiationExpression_Yield]*
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield . MOD ExponentiationExpression_Yield]*
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield . MUL ExponentiationExpression_Yield]*
     Goal::TemplateTail,
-    // State(2901)
+    // State(2903)
     //   [ArrowFunction_In_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In .]*
     Goal::TemplateTail,
-    // State(2902)
+    // State(2904)
     //   [BitwiseANDExpression_In_Yield -> BitwiseANDExpression_In_Yield BIT_AND EqualityExpression_In_Yield .]*
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield . EQ RelationalExpression_In_Yield]*
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield . EQ_STRICT RelationalExpression_In_Yield]*
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield . NE RelationalExpression_In_Yield]*
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield . NE_STRICT RelationalExpression_In_Yield]*
     Goal::TemplateTail,
-    // State(2903)
+    // State(2905)
     //   [BitwiseORExpression_In_Yield -> BitwiseORExpression_In_Yield BIT_OR BitwiseXORExpression_In_Yield .]*
     //   [BitwiseXORExpression_In_Yield -> BitwiseXORExpression_In_Yield . BIT_XOR BitwiseANDExpression_In_Yield]*
     Goal::TemplateTail,
-    // State(2904)
+    // State(2906)
     //   [BitwiseANDExpression_In_Yield -> BitwiseANDExpression_In_Yield . BIT_AND EqualityExpression_In_Yield]*
     //   [BitwiseXORExpression_In_Yield -> BitwiseXORExpression_In_Yield BIT_XOR BitwiseANDExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(2905)
+    // State(2907)
     //   [CallExpression_Yield -> CallExpression_Yield DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(2906)
+    // State(2908)
     //   [CallExpression_Yield -> CallExpression_Yield DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(2907)
+    // State(2909)
     //   [CallExpression_Yield -> CallExpression_Yield LBRACK Expression_In_Yield . RBRACK]*
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     Goal::Div,
-    // State(2908)
+    // State(2910)
     //   [OptionalChain_Yield -> OPTIONAL_CHAINING LBRACK . Expression_In_Yield RBRACK]*
     Goal::RegExp,
-    // State(2909)
+    // State(2911)
     //   [OptionalChain_Yield -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(2910)
+    // State(2912)
     //   [OptionalChain_Yield -> OPTIONAL_CHAINING Arguments_Yield .]*
     Goal::TemplateTail,
-    // State(2911)
+    // State(2913)
     //   [OptionalChain_Yield -> OPTIONAL_CHAINING KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(2912)
+    // State(2914)
     //   [OptionalChain_Yield -> OPTIONAL_CHAINING TemplateLiteral_Yield_Tagged .]*
     Goal::TemplateTail,
-    // State(2913)
+    // State(2915)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [SubstitutionTemplate_Yield_Tagged -> TEMPLATE_HEAD Expression_In_Yield . TemplateSpans_Yield_Tagged]*
     Goal::TemplateTail,
-    // State(2914)
+    // State(2916)
     //   [OptionalChain_Yield -> OptionalChain_Yield DOT . PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Yield -> OptionalChain_Yield DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(2915)
+    // State(2917)
     //   [OptionalChain_Yield -> OptionalChain_Yield LBRACK . Expression_In_Yield RBRACK]*
     Goal::RegExp,
-    // State(2916)
+    // State(2918)
     //   [OptionalChain_Yield -> OptionalChain_Yield Arguments_Yield .]*
     Goal::TemplateTail,
-    // State(2917)
+    // State(2919)
     //   [OptionalChain_Yield -> OptionalChain_Yield TemplateLiteral_Yield_Tagged .]*
     Goal::TemplateTail,
-    // State(2918)
+    // State(2920)
     //   [CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ . BitwiseORExpression_In_Yield]*
     Goal::RegExp,
-    // State(2919)
+    // State(2921)
     //   [AsyncArrowFunction_In_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In .]*
     Goal::TemplateTail,
-    // State(2920)
+    // State(2922)
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ RelationalExpression_In_Yield .]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GTE ShiftExpression_Yield]*
@@ -11006,7 +11018,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LTE ShiftExpression_Yield]*
     Goal::TemplateTail,
-    // State(2921)
+    // State(2923)
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield EQ_STRICT RelationalExpression_In_Yield .]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GTE ShiftExpression_Yield]*
@@ -11015,7 +11027,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LTE ShiftExpression_Yield]*
     Goal::TemplateTail,
-    // State(2922)
+    // State(2924)
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE RelationalExpression_In_Yield .]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GTE ShiftExpression_Yield]*
@@ -11024,7 +11036,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LTE ShiftExpression_Yield]*
     Goal::TemplateTail,
-    // State(2923)
+    // State(2925)
     //   [EqualityExpression_In_Yield -> EqualityExpression_In_Yield NE_STRICT RelationalExpression_In_Yield .]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . GTE ShiftExpression_Yield]*
@@ -11033,169 +11045,164 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield . LTE ShiftExpression_Yield]*
     Goal::TemplateTail,
-    // State(2924)
+    // State(2926)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2925)
+    // State(2927)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield ASSIGN AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(2926)
+    // State(2928)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2927)
+    // State(2929)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2928)
+    // State(2930)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AssignmentOperator AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(2929)
+    // State(2931)
     //   [LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_In_Yield]*
     Goal::RegExp,
-    // State(2930)
+    // State(2932)
     //   [LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _TRUTHY_SHORT_CIRCUIT_ . LogicalANDExpression_In_Yield]*
     Goal::RegExp,
-    // State(2931)
+    // State(2933)
     //   [MemberExpression_Yield -> MemberExpression_Yield DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(2932)
+    // State(2934)
     //   [MemberExpression_Yield -> MemberExpression_Yield DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(2933)
+    // State(2935)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield . RBRACK]*
     Goal::Div,
-    // State(2934)
+    // State(2936)
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield DIV ExponentiationExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2935)
+    // State(2937)
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MOD ExponentiationExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2936)
+    // State(2938)
     //   [MultiplicativeExpression_Yield -> MultiplicativeExpression_Yield MUL ExponentiationExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2937)
+    // State(2939)
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield GT ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::TemplateTail,
-    // State(2938)
+    // State(2940)
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield GTE ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::TemplateTail,
-    // State(2939)
+    // State(2941)
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield IN ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::TemplateTail,
-    // State(2940)
+    // State(2942)
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield INSTANCEOF ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::TemplateTail,
-    // State(2941)
+    // State(2943)
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield LT ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::TemplateTail,
-    // State(2942)
+    // State(2944)
     //   [RelationalExpression_In_Yield -> RelationalExpression_In_Yield LTE ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::TemplateTail,
-    // State(2943)
+    // State(2945)
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield . ADD MultiplicativeExpression_Yield]*
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield . SUB MultiplicativeExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield SAR AdditiveExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2944)
+    // State(2946)
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield . ADD MultiplicativeExpression_Yield]*
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield . SUB MultiplicativeExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield SHL AdditiveExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2945)
+    // State(2947)
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield . ADD MultiplicativeExpression_Yield]*
     //   [AdditiveExpression_Yield -> AdditiveExpression_Yield . SUB MultiplicativeExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield SHR AdditiveExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2946)
+    // State(2948)
     //   [ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ . AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(2947)
+    // State(2949)
     //   [ExponentiationExpression_Yield -> UpdateExpression_Yield EXP ExponentiationExpression_Yield .]*
     Goal::TemplateTail,
-    // State(2948)
+    // State(2950)
     //   [ObjectBindingPattern_Yield -> LBRACE BindingPropertyList_Yield COMMA BindingRestProperty_Yield RBRACE .]*
     Goal::Div,
-    // State(2949)
+    // State(2951)
     //   [ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA BindingRestElement_Yield RBRACK .]*
     Goal::Div,
-    // State(2950)
+    // State(2952)
     //   [ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision RBRACK .]*
     Goal::Div,
-    // State(2951)
+    // State(2953)
     //   [ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision BindingRestElement_Yield . RBRACK]*
     Goal::Div,
-    // State(2952)
+    // State(2954)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(2953)
+    // State(2955)
     //   [LabelIdentifier_Yield -> AWAIT .]*
     Goal::Div,
-    // State(2954)
+    // State(2956)
     //   [BreakStatement_Yield -> BREAK SEMICOLON .]*
     Goal::RegExp,
-    // State(2955)
+    // State(2957)
     //   [LabelIdentifier_Yield -> Identifier .]*
     Goal::Div,
-    // State(2956)
+    // State(2958)
     //   [BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2957)
+    // State(2959)
     //   [BreakStatement_Yield -> BREAK . SEMICOLON]*
     Goal::Div,
-    // State(2958)
+    // State(2960)
     //   [ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield . ClassTail_Yield]*
     Goal::Div,
-    // State(2959)
+    // State(2961)
     //   [LexicalBinding_In_Yield -> BindingIdentifier_Yield .]*
     //   [LexicalBinding_In_Yield -> BindingIdentifier_Yield . Initializer_In_Yield]*
     Goal::Div,
-    // State(2960)
+    // State(2962)
     //   [BindingList_In_Yield -> BindingList_In_Yield . COMMA LexicalBinding_In_Yield]*
     //   [LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2961)
+    // State(2963)
     //   [LexicalBinding_In_Yield -> BindingPattern_Yield . Initializer_In_Yield]*
     Goal::Div,
-    // State(2962)
+    // State(2964)
     //   [BindingList_In_Yield -> LexicalBinding_In_Yield .]*
     Goal::Div,
-    // State(2963)
+    // State(2965)
     //   [ContinueStatement_Yield -> CONTINUE SEMICOLON .]*
     Goal::RegExp,
-    // State(2964)
+    // State(2966)
     //   [ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2965)
+    // State(2967)
     //   [ContinueStatement_Yield -> CONTINUE . SEMICOLON]*
     Goal::Div,
-    // State(2966)
-    //   [AsyncArrowFunction_In_Yield -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
-    Goal::Div,
-    // State(2967)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return . WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON]*
-    Goal::Div,
     // State(2968)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ . Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
+    // State(2969)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN . VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN . VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN . ForDeclaration_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
@@ -11219,561 +11226,569 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(2969)
+    // State(2970)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL . BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(2970)
+    // State(2971)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield . _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_CONTEXT_ -> (empty) .]*
     Goal::Div,
-    // State(2971)
+    // State(2972)
     //   [IfStatement_Yield_Return -> IF LPAREN . Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return]*
     //   [IfStatement_Yield_Return -> IF LPAREN . Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])]*
     Goal::RegExp,
-    // State(2972)
+    // State(2973)
     //   [Block_Yield_Return -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(2973)
+    // State(2974)
     //   [Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ . StatementList_Yield_Return RBRACE]*
     Goal::RegExp,
-    // State(2974)
+    // State(2975)
     //   [BindingList_In_Yield -> BindingList_In_Yield . COMMA LexicalBinding_In_Yield]*
     //   [LexicalDeclaration_In_Yield -> LET BindingList_In_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2975)
+    // State(2976)
     //   [ReturnStatement_Yield -> RETURN SEMICOLON .]*
     Goal::RegExp,
-    // State(2976)
+    // State(2977)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2977)
+    // State(2978)
     //   [ReturnStatement_Yield -> RETURN . SEMICOLON]*
     Goal::Div,
-    // State(2978)
+    // State(2979)
     //   [SwitchStatement_Yield_Return -> SWITCH LPAREN . Expression_In_Yield RPAREN CaseBlock_Yield_Return]*
     Goal::RegExp,
-    // State(2979)
+    // State(2980)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2980)
+    // State(2981)
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return . Catch_Yield_Return]*
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return . Catch_Yield_Return Finally_Yield_Return]*
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return . Finally_Yield_Return]*
     Goal::Div,
-    // State(2981)
+    // State(2982)
     //   [VariableDeclaration_In_Yield -> BindingIdentifier_Yield .]*
     //   [VariableDeclaration_In_Yield -> BindingIdentifier_Yield . Initializer_In_Yield]*
     Goal::Div,
-    // State(2982)
+    // State(2983)
     //   [VariableDeclaration_In_Yield -> BindingPattern_Yield . Initializer_In_Yield]*
     Goal::Div,
-    // State(2983)
+    // State(2984)
     //   [VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield . COMMA VariableDeclaration_In_Yield]*
     //   [VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield . SEMICOLON]*
     Goal::Div,
-    // State(2984)
+    // State(2985)
     //   [VariableDeclarationList_In_Yield -> VariableDeclaration_In_Yield .]*
     Goal::Div,
-    // State(2985)
+    // State(2986)
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ . LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return]*
     Goal::Div,
-    // State(2986)
+    // State(2987)
     //   [WithStatement_Yield_Return -> WITH LPAREN . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(2987)
+    // State(2988)
     //   [ExpressionStatement_Yield -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(2988)
+    // State(2989)
     //   [GeneratorExpression -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::TemplateTail,
-    // State(2989)
+    // State(2990)
     //   [LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON . LabelledItem_Yield_Return]*
     Goal::RegExp,
-    // State(2990)
+    // State(2991)
     //   [StatementList_Yield_Return -> StatementList_Yield_Return StatementListItem_Yield_Return .]*
     Goal::RegExp,
-    // State(2991)
+    // State(2992)
     //   [GeneratorExpression -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(2992)
+    // State(2993)
     //   [FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(2993)
+    // State(2994)
     //   [FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(2994)
+    // State(2995)
     //   [AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(2995)
+    // State(2996)
     //   [AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(2996)
+    // State(2997)
     //   [MethodDefinition -> GET ClassElementName LPAREN RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(2997)
+    // State(2998)
     //   [GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(2998)
+    // State(2999)
     //   [MethodDefinition -> SET ClassElementName LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(2999)
+    // State(3000)
     //   [MethodDefinition -> ClassElementName LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(3000)
+    // State(3001)
     //   [AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3001)
+    // State(3002)
     //   [AsyncFunctionDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3002)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement .]*
-    Goal::RegExp,
     // State(3003)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement .]*
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON .]*
     Goal::RegExp,
     // State(3004)
-    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement .]*
     Goal::RegExp,
     // State(3005)
-    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement .]*
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement .]*
     Goal::RegExp,
     // State(3006)
-    //   [ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression .]*
-    Goal::Div,
+    //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement]*
+    Goal::RegExp,
     // State(3007)
-    //   [GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
+    //   [ForStatement -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::RegExp,
     // State(3008)
-    //   [FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
+    //   [ConditionalExpression -> ShortCircuitExpression CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In COLON _ELSE_BLOCK_ AssignmentExpression .]*
     Goal::Div,
     // State(3009)
-    //   [IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement .]*
+    //   [GeneratorDeclaration -> FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::RegExp,
     // State(3010)
+    //   [FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
+    Goal::Div,
+    // State(3011)
+    //   [IfStatement -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement ELSE _ELSE_BLOCK_ Statement .]*
+    Goal::RegExp,
+    // State(3012)
     //   [CaseClause -> CASE Expression_In COLON StatementList .]*
     //   [StatementList -> StatementList . StatementListItem]*
     Goal::RegExp,
-    // State(3011)
+    // State(3013)
     //   [CaseBlock -> LBRACE CaseClauses DefaultClause CaseClauses RBRACE .]*
     Goal::RegExp,
-    // State(3012)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN . SEMICOLON]*
+    // State(3014)
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In . RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::Div,
-    // State(3013)
+    // State(3015)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3014)
+    // State(3016)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3015)
+    // State(3017)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3016)
+    // State(3018)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3017)
+    // State(3019)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3018)
+    // State(3020)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3019)
+    // State(3021)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(3020)
+    // State(3022)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In . SEMICOLON RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In . SEMICOLON Expression_In RPAREN Statement_Return]*
     Goal::Div,
-    // State(3021)
+    // State(3023)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3022)
+    // State(3024)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3023)
+    // State(3025)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(3024)
+    // State(3026)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3025)
+    // State(3027)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration OF AssignmentExpression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3026)
+    // State(3028)
     //   [ForInOfStatement_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3027)
+    // State(3029)
     //   [ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3028)
+    // State(3030)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3029)
+    // State(3031)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3030)
+    // State(3032)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3031)
+    // State(3033)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3032)
+    // State(3034)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return . ELSE _ELSE_BLOCK_ Statement_Return]*
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return . (?![ELSE])]*
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return (?![ELSE]) .]*
     Goal::RegExp,
-    // State(3033)
+    // State(3035)
     //   [CaseClause_Return -> CASE . Expression_In COLON]*
     //   [CaseClause_Return -> CASE . Expression_In COLON StatementList_Return]*
     Goal::RegExp,
-    // State(3034)
+    // State(3036)
     //   [DefaultClause_Return -> DEFAULT . COLON]*
     //   [DefaultClause_Return -> DEFAULT . COLON StatementList_Return]*
     Goal::Div,
-    // State(3035)
+    // State(3037)
     //   [CaseBlock_Return -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(3036)
+    // State(3038)
     //   [CaseClauses_Return -> CaseClause_Return .]*
     Goal::Div,
-    // State(3037)
+    // State(3039)
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return . RBRACE]*
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return . DefaultClause_Return RBRACE]*
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return . DefaultClause_Return CaseClauses_Return RBRACE]*
     //   [CaseClauses_Return -> CaseClauses_Return . CaseClause_Return]*
     Goal::Div,
-    // State(3038)
+    // State(3040)
     //   [CaseBlock_Return -> LBRACE DefaultClause_Return . RBRACE]*
     //   [CaseBlock_Return -> LBRACE DefaultClause_Return . CaseClauses_Return RBRACE]*
     Goal::Div,
-    // State(3039)
+    // State(3041)
     //   [Catch_Return -> CATCH LPAREN CatchParameter RPAREN . Block_Return]*
     Goal::Div,
-    // State(3040)
+    // State(3042)
     //   [WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ . Statement_Return]*
     Goal::RegExp,
-    // State(3041)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . SEMICOLON]*
-    Goal::Div,
-    // State(3042)
-    //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
-    Goal::RegExp,
     // State(3043)
-    //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await . RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::Div,
     // State(3044)
+    //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF . AssignmentExpression_In_Await RPAREN Statement_Await_Return]*
+    Goal::RegExp,
+    // State(3045)
+    //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
+    Goal::Div,
+    // State(3046)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3045)
+    // State(3047)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3046)
+    // State(3048)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3047)
+    // State(3049)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3048)
+    // State(3050)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3049)
+    // State(3051)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3050)
+    // State(3052)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3051)
+    // State(3053)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(3052)
+    // State(3054)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await . SEMICOLON RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await . SEMICOLON Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3053)
+    // State(3055)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3054)
+    // State(3056)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3055)
+    // State(3057)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(3056)
+    // State(3058)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3057)
+    // State(3059)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3058)
+    // State(3060)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3059)
+    // State(3061)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3060)
+    // State(3062)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3061)
+    // State(3063)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3062)
+    // State(3064)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3063)
+    // State(3065)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3064)
+    // State(3066)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return . ELSE _ELSE_BLOCK_ Statement_Await_Return]*
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return . (?![ELSE])]*
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return (?![ELSE]) .]*
     Goal::RegExp,
-    // State(3065)
+    // State(3067)
     //   [CaseClause_Await_Return -> CASE . Expression_In_Await COLON]*
     //   [CaseClause_Await_Return -> CASE . Expression_In_Await COLON StatementList_Await_Return]*
     Goal::RegExp,
-    // State(3066)
+    // State(3068)
     //   [DefaultClause_Await_Return -> DEFAULT . COLON]*
     //   [DefaultClause_Await_Return -> DEFAULT . COLON StatementList_Await_Return]*
     Goal::Div,
-    // State(3067)
+    // State(3069)
     //   [CaseBlock_Await_Return -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(3068)
+    // State(3070)
     //   [CaseClauses_Await_Return -> CaseClause_Await_Return .]*
     Goal::Div,
-    // State(3069)
+    // State(3071)
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return . RBRACE]*
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return . DefaultClause_Await_Return RBRACE]*
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return . DefaultClause_Await_Return CaseClauses_Await_Return RBRACE]*
     //   [CaseClauses_Await_Return -> CaseClauses_Await_Return . CaseClause_Await_Return]*
     Goal::Div,
-    // State(3070)
+    // State(3072)
     //   [CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return . RBRACE]*
     //   [CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return . CaseClauses_Await_Return RBRACE]*
     Goal::Div,
-    // State(3071)
+    // State(3073)
     //   [Catch_Await_Return -> CATCH LPAREN CatchParameter_Await RPAREN . Block_Await_Return]*
     Goal::Div,
-    // State(3072)
+    // State(3074)
     //   [WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3073)
+    // State(3075)
     //   [AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(3074)
+    // State(3076)
     //   [AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(3075)
+    // State(3077)
     //   [MethodDefinition_Await -> GET ClassElementName_Await LPAREN RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(3076)
+    // State(3078)
     //   [GeneratorMethod_Await -> MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3077)
+    // State(3079)
     //   [MethodDefinition_Await -> SET ClassElementName_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(3078)
+    // State(3080)
     //   [MethodDefinition_Await -> ClassElementName_Await LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(3079)
+    // State(3081)
     //   [AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3080)
+    // State(3082)
     //   [AsyncFunctionDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3081)
+    // State(3083)
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON .]*
+    Goal::RegExp,
+    // State(3084)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(3082)
+    // State(3085)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(3083)
+    // State(3086)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3084)
+    // State(3087)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(3085)
+    // State(3088)
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3086)
+    // State(3089)
     //   [FunctionStatementList_Yield -> (empty) .]*
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE . GeneratorBody RBRACE]*
     Goal::RegExp,
-    // State(3087)
+    // State(3090)
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3088)
+    // State(3091)
     //   [FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(3089)
+    // State(3092)
     //   [ForInOfStatement_Await -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(3090)
+    // State(3093)
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(3091)
+    // State(3094)
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(3092)
+    // State(3095)
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await]*
     Goal::RegExp,
-    // State(3093)
+    // State(3096)
     //   [ForStatement_Await -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(3094)
+    // State(3097)
     //   [ConditionalExpression_Await -> ShortCircuitExpression_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Await COLON _ELSE_BLOCK_ AssignmentExpression_Await .]*
     Goal::Div,
-    // State(3095)
+    // State(3098)
     //   [GeneratorDeclaration_Await -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(3096)
+    // State(3099)
     //   [FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(3097)
+    // State(3100)
     //   [IfStatement_Await -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await ELSE _ELSE_BLOCK_ Statement_Await .]*
     Goal::RegExp,
-    // State(3098)
+    // State(3101)
     //   [CaseClause_Await -> CASE Expression_In_Await COLON StatementList_Await .]*
     //   [StatementList_Await -> StatementList_Await . StatementListItem_Await]*
     Goal::RegExp,
-    // State(3099)
+    // State(3102)
     //   [CaseBlock_Await -> LBRACE CaseClauses_Await DefaultClause_Await CaseClauses_Await RBRACE .]*
     Goal::RegExp,
-    // State(3100)
+    // State(3103)
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3101)
+    // State(3104)
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody_In]*
     Goal::RegExp,
-    // State(3102)
+    // State(3105)
     //   [ClassHeritage_Yield_Await -> EXTENDS LeftHandSideExpression_Yield_Await .]*
     Goal::Div,
-    // State(3103)
+    // State(3106)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [AsyncMethod_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [KeywordOrIdentifierName -> ASYNC .]*
     Goal::Div,
-    // State(3104)
+    // State(3107)
     //   [KeywordOrIdentifierName -> GET .]*
     //   [MethodDefinition_Yield_Await -> GET . ClassElementName_Yield_Await LPAREN RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3105)
+    // State(3108)
     //   [ClassTail_Yield_Await -> LBRACE RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(3106)
+    // State(3109)
     //   [ClassElement_Yield_Await -> SEMICOLON .]*
     Goal::Div,
-    // State(3107)
+    // State(3110)
     //   [KeywordOrIdentifierName -> SET .]*
     //   [MethodDefinition_Yield_Await -> SET . ClassElementName_Yield_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3108)
+    // State(3111)
     //   [ClassElement_Yield_Await -> STATIC . FieldDefinition_Yield_Await SEMICOLON]*
     //   [ClassElement_Yield_Await -> STATIC . MethodDefinition_Yield_Await]*
     //   [ClassStaticBlock -> STATIC . LBRACE ClassStaticBlockBody RBRACE]*
     //   [KeywordOrIdentifierName -> STATIC .]*
     Goal::Div,
-    // State(3109)
+    // State(3112)
     //   [ClassTail_Yield_Await -> LBRACE ClassBody_Yield_Await . RBRACE]*
     Goal::Div,
-    // State(3110)
+    // State(3113)
     //   [ClassBody_Yield_Await -> ClassElementList_Yield_Await .]*
     //   [ClassElementList_Yield_Await -> ClassElementList_Yield_Await . ClassElement_Yield_Await]*
     Goal::Div,
-    // State(3111)
+    // State(3114)
     //   [FieldDefinition_Yield_Await -> ClassElementName_Yield_Await .]*
     //   [FieldDefinition_Yield_Await -> ClassElementName_Yield_Await . Initializer_In_Yield_Await]*
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await . LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3112)
+    // State(3115)
     //   [ClassElementList_Yield_Await -> ClassElement_Yield_Await .]*
     Goal::Div,
-    // State(3113)
+    // State(3116)
     //   [ClassElement_Yield_Await -> ClassStaticBlock .]*
     Goal::Div,
-    // State(3114)
+    // State(3117)
     //   [ClassElement_Yield_Await -> FieldDefinition_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3115)
+    // State(3118)
     //   [ClassElement_Yield_Await -> MethodDefinition_Yield_Await .]*
     Goal::Div,
-    // State(3116)
+    // State(3119)
     //   [ClassElementName_Yield_Await -> PropertyName_Yield_Await .]*
     Goal::Div,
-    // State(3117)
+    // State(3120)
     //   [ClassExpression_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3118)
+    // State(3121)
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE . RBRACE]*
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE . ClassBody_Yield_Await RBRACE]*
     Goal::Div,
-    // State(3119)
+    // State(3122)
     //   [ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await . RPAREN]*
     Goal::Div,
-    // State(3120)
+    // State(3123)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL . ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3121)
+    // State(3124)
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await . LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3122)
+    // State(3125)
     //   [PropertyDefinition_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3123)
+    // State(3126)
     //   [MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await . LPAREN RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3124)
+    // State(3127)
     //   [GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await . LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3125)
+    // State(3128)
     //   [MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await . LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3126)
+    // State(3129)
     //   [FormalParameters -> (empty) .]*
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN . UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3127)
+    // State(3130)
     //   [CoverInitializedName_Yield_Await -> IdentifierReference_Yield_Await Initializer_In_Yield_Await .]*
     Goal::Div,
-    // State(3128)
+    // State(3131)
     //   [ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await COMMA . RBRACE]*
     //   [PropertyDefinitionList_Yield_Await -> PropertyDefinitionList_Yield_Await COMMA . PropertyDefinition_Yield_Await]*
     Goal::Div,
-    // State(3129)
+    // State(3132)
     //   [ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await RBRACE .]*
     Goal::TemplateTail,
-    // State(3130)
+    // State(3133)
     //   [PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3131)
+    // State(3134)
     //   [SpreadElement_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3132)
+    // State(3135)
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA . RBRACK]*
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA . Elision RBRACK]*
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA . AssignmentExpression_In_Yield_Await]*
@@ -11781,162 +11796,162 @@ pub static TABLE: [Goal; 4260] = [
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA . Elision SpreadElement_Yield_Await]*
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA . SpreadElement_Yield_Await]*
     Goal::RegExp,
-    // State(3133)
+    // State(3136)
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await RBRACK .]*
     Goal::TemplateTail,
-    // State(3134)
+    // State(3137)
     //   [ArrayLiteral_Yield_Await -> LBRACK Elision RBRACK .]*
     Goal::TemplateTail,
-    // State(3135)
+    // State(3138)
     //   [ElementList_Yield_Await -> Elision AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3136)
+    // State(3139)
     //   [ElementList_Yield_Await -> Elision SpreadElement_Yield_Await .]*
     Goal::Div,
-    // State(3137)
+    // State(3140)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingIdentifier_Yield_Await . RPAREN]*
     Goal::Div,
-    // State(3138)
+    // State(3141)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingPattern_Yield_Await . RPAREN]*
     Goal::Div,
-    // State(3139)
+    // State(3142)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA . ELLIPSIS BindingIdentifier_Yield_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA . ELLIPSIS BindingPattern_Yield_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA . RPAREN]*
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await COMMA . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3140)
+    // State(3143)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await RPAREN .]*
     Goal::TemplateTail,
-    // State(3141)
+    // State(3144)
     //   [MemberExpression_Yield_Await -> NEW MemberExpression_Yield_Await Arguments_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3142)
+    // State(3145)
     //   [RelationalExpression_In_Yield_Await -> PRIVATE_IDENTIFIER IN ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3143)
+    // State(3146)
     //   [SuperProperty_Yield_Await -> SUPER DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(3144)
+    // State(3147)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await . RBRACK]*
     Goal::Div,
-    // State(3145)
+    // State(3148)
     //   [ArgumentList_Yield_Await -> ELLIPSIS . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3146)
+    // State(3149)
     //   [Arguments_Yield_Await -> LPAREN RPAREN .]*
     Goal::TemplateTail,
-    // State(3147)
+    // State(3150)
     //   [ArgumentList_Yield_Await -> ArgumentList_Yield_Await . COMMA ELLIPSIS AssignmentExpression_In_Yield_Await]*
     //   [ArgumentList_Yield_Await -> ArgumentList_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await . COMMA RPAREN]*
     //   [Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await . RPAREN]*
     Goal::Div,
-    // State(3148)
+    // State(3151)
     //   [ArgumentList_Yield_Await -> AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3149)
+    // State(3152)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await COMMA . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3150)
+    // State(3153)
     //   [TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE . Expression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3151)
+    // State(3154)
     //   [TemplateSpans_Yield_Await -> TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(3152)
+    // State(3155)
     //   [TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await . TEMPLATE_MIDDLE Expression_In_Yield_Await]*
     //   [TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await . TEMPLATE_TAIL]*
     Goal::TemplateTail,
-    // State(3153)
+    // State(3156)
     //   [SubstitutionTemplate_Yield_Await -> TEMPLATE_HEAD Expression_In_Yield_Await TemplateSpans_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3154)
+    // State(3157)
     //   [YieldExpression_In_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3155)
+    // State(3158)
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await ADD MultiplicativeExpression_Yield_Await .]*
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await . DIV ExponentiationExpression_Yield_Await]*
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await . MOD ExponentiationExpression_Yield_Await]*
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await . MUL ExponentiationExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3156)
+    // State(3159)
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await SUB MultiplicativeExpression_Yield_Await .]*
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await . DIV ExponentiationExpression_Yield_Await]*
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await . MOD ExponentiationExpression_Yield_Await]*
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await . MUL ExponentiationExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3157)
+    // State(3160)
     //   [ArrowFunction_In_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody_In .]*
     Goal::TemplateTail,
-    // State(3158)
+    // State(3161)
     //   [BitwiseANDExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await BIT_AND EqualityExpression_In_Yield_Await .]*
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await . EQ RelationalExpression_In_Yield_Await]*
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await . EQ_STRICT RelationalExpression_In_Yield_Await]*
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await . NE RelationalExpression_In_Yield_Await]*
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await . NE_STRICT RelationalExpression_In_Yield_Await]*
     Goal::TemplateTail,
-    // State(3159)
+    // State(3162)
     //   [BitwiseORExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await BIT_OR BitwiseXORExpression_In_Yield_Await .]*
     //   [BitwiseXORExpression_In_Yield_Await -> BitwiseXORExpression_In_Yield_Await . BIT_XOR BitwiseANDExpression_In_Yield_Await]*
     Goal::TemplateTail,
-    // State(3160)
+    // State(3163)
     //   [BitwiseANDExpression_In_Yield_Await -> BitwiseANDExpression_In_Yield_Await . BIT_AND EqualityExpression_In_Yield_Await]*
     //   [BitwiseXORExpression_In_Yield_Await -> BitwiseXORExpression_In_Yield_Await BIT_XOR BitwiseANDExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3161)
+    // State(3164)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(3162)
+    // State(3165)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(3163)
+    // State(3166)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await LBRACK Expression_In_Yield_Await . RBRACK]*
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::Div,
-    // State(3164)
+    // State(3167)
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING LBRACK . Expression_In_Yield_Await RBRACK]*
     Goal::RegExp,
-    // State(3165)
+    // State(3168)
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(3166)
+    // State(3169)
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING Arguments_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3167)
+    // State(3170)
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(3168)
+    // State(3171)
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING TemplateLiteral_Yield_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(3169)
+    // State(3172)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [SubstitutionTemplate_Yield_Await_Tagged -> TEMPLATE_HEAD Expression_In_Yield_Await . TemplateSpans_Yield_Await_Tagged]*
     Goal::TemplateTail,
-    // State(3170)
+    // State(3173)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT . PRIVATE_IDENTIFIER]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT . KeywordOrIdentifierName]*
     Goal::Div,
-    // State(3171)
+    // State(3174)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await LBRACK . Expression_In_Yield_Await RBRACK]*
     Goal::RegExp,
-    // State(3172)
+    // State(3175)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await Arguments_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3173)
+    // State(3176)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await TemplateLiteral_Yield_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(3174)
+    // State(3177)
     //   [CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ . BitwiseORExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3175)
+    // State(3178)
     //   [AsyncArrowFunction_In_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In .]*
     Goal::TemplateTail,
-    // State(3176)
+    // State(3179)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ RelationalExpression_In_Yield_Await .]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -11945,7 +11960,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3177)
+    // State(3180)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await EQ_STRICT RelationalExpression_In_Yield_Await .]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -11954,7 +11969,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3178)
+    // State(3181)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE RelationalExpression_In_Yield_Await .]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -11963,7 +11978,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3179)
+    // State(3182)
     //   [EqualityExpression_In_Yield_Await -> EqualityExpression_In_Yield_Await NE_STRICT RelationalExpression_In_Yield_Await .]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -11972,171 +11987,166 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3180)
+    // State(3183)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3181)
+    // State(3184)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3182)
+    // State(3185)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3183)
+    // State(3186)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3184)
+    // State(3187)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3185)
+    // State(3188)
     //   [LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3186)
+    // State(3189)
     //   [LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ . LogicalANDExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3187)
+    // State(3190)
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(3188)
+    // State(3191)
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(3189)
+    // State(3192)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK Expression_In_Yield_Await . RBRACK]*
     Goal::Div,
-    // State(3190)
+    // State(3193)
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await DIV ExponentiationExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3191)
+    // State(3194)
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MOD ExponentiationExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3192)
+    // State(3195)
     //   [MultiplicativeExpression_Yield_Await -> MultiplicativeExpression_Yield_Await MUL ExponentiationExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3193)
+    // State(3196)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GT ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3194)
+    // State(3197)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await GTE ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3195)
+    // State(3198)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await IN ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3196)
+    // State(3199)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await INSTANCEOF ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3197)
+    // State(3200)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LT ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3198)
+    // State(3201)
     //   [RelationalExpression_In_Yield_Await -> RelationalExpression_In_Yield_Await LTE ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::TemplateTail,
-    // State(3199)
+    // State(3202)
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await . ADD MultiplicativeExpression_Yield_Await]*
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await . SUB MultiplicativeExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SAR AdditiveExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3200)
+    // State(3203)
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await . ADD MultiplicativeExpression_Yield_Await]*
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await . SUB MultiplicativeExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHL AdditiveExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3201)
+    // State(3204)
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await . ADD MultiplicativeExpression_Yield_Await]*
     //   [AdditiveExpression_Yield_Await -> AdditiveExpression_Yield_Await . SUB MultiplicativeExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await SHR AdditiveExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3202)
+    // State(3205)
     //   [ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ . AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3203)
+    // State(3206)
     //   [ExponentiationExpression_Yield_Await -> UpdateExpression_Yield_Await EXP ExponentiationExpression_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3204)
+    // State(3207)
     //   [ObjectBindingPattern_Yield_Await -> LBRACE BindingPropertyList_Yield_Await COMMA BindingRestProperty_Yield_Await RBRACE .]*
     Goal::Div,
-    // State(3205)
+    // State(3208)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA BindingRestElement_Yield_Await RBRACK .]*
     Goal::Div,
-    // State(3206)
+    // State(3209)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision RBRACK .]*
     Goal::Div,
-    // State(3207)
+    // State(3210)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision BindingRestElement_Yield_Await . RBRACK]*
     Goal::Div,
-    // State(3208)
+    // State(3211)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION . MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3209)
+    // State(3212)
     //   [BreakStatement_Yield_Await -> BREAK SEMICOLON .]*
     Goal::RegExp,
-    // State(3210)
+    // State(3213)
     //   [LabelIdentifier_Yield_Await -> Identifier .]*
     Goal::Div,
-    // State(3211)
+    // State(3214)
     //   [BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3212)
+    // State(3215)
     //   [BreakStatement_Yield_Await -> BREAK . SEMICOLON]*
     Goal::Div,
-    // State(3213)
+    // State(3216)
     //   [ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await . ClassTail_Yield_Await]*
     Goal::Div,
-    // State(3214)
+    // State(3217)
     //   [LexicalBinding_In_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [LexicalBinding_In_Yield_Await -> BindingIdentifier_Yield_Await . Initializer_In_Yield_Await]*
     Goal::Div,
-    // State(3215)
+    // State(3218)
     //   [BindingList_In_Yield_Await -> BindingList_In_Yield_Await . COMMA LexicalBinding_In_Yield_Await]*
     //   [LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3216)
+    // State(3219)
     //   [LexicalBinding_In_Yield_Await -> BindingPattern_Yield_Await . Initializer_In_Yield_Await]*
     Goal::Div,
-    // State(3217)
+    // State(3220)
     //   [BindingList_In_Yield_Await -> LexicalBinding_In_Yield_Await .]*
     Goal::Div,
-    // State(3218)
+    // State(3221)
     //   [ContinueStatement_Yield_Await -> CONTINUE SEMICOLON .]*
     Goal::RegExp,
-    // State(3219)
+    // State(3222)
     //   [ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3220)
+    // State(3223)
     //   [ContinueStatement_Yield_Await -> CONTINUE . SEMICOLON]*
     Goal::Div,
-    // State(3221)
-    //   [AsyncArrowFunction_In_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
-    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
-    Goal::Div,
-    // State(3222)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return . WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
-    Goal::Div,
-    // State(3223)
+    // State(3224)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ . Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
+    // State(3225)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT . LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT . LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT . LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3224)
+    // State(3226)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN . VAR ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN . VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN . ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
@@ -12160,296 +12170,301 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN . (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3225)
+    // State(3227)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL . BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3226)
+    // State(3228)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await . _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_CONTEXT_ -> (empty) .]*
     Goal::Div,
-    // State(3227)
+    // State(3229)
     //   [IfStatement_Yield_Await_Return -> IF LPAREN . Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return]*
     //   [IfStatement_Yield_Await_Return -> IF LPAREN . Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])]*
     Goal::RegExp,
-    // State(3228)
+    // State(3230)
     //   [Block_Yield_Await_Return -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(3229)
+    // State(3231)
     //   [Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_ . StatementList_Yield_Await_Return RBRACE]*
     Goal::RegExp,
-    // State(3230)
+    // State(3232)
     //   [BindingList_In_Yield_Await -> BindingList_In_Yield_Await . COMMA LexicalBinding_In_Yield_Await]*
     //   [LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3231)
+    // State(3233)
     //   [ReturnStatement_Yield_Await -> RETURN SEMICOLON .]*
     Goal::RegExp,
-    // State(3232)
+    // State(3234)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3233)
+    // State(3235)
     //   [ReturnStatement_Yield_Await -> RETURN . SEMICOLON]*
     Goal::Div,
-    // State(3234)
+    // State(3236)
     //   [SwitchStatement_Yield_Await_Return -> SWITCH LPAREN . Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3235)
+    // State(3237)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3236)
+    // State(3238)
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return . Catch_Yield_Await_Return]*
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return . Catch_Yield_Await_Return Finally_Yield_Await_Return]*
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return . Finally_Yield_Await_Return]*
     Goal::Div,
-    // State(3237)
+    // State(3239)
     //   [VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await . Initializer_In_Yield_Await]*
     Goal::Div,
-    // State(3238)
+    // State(3240)
     //   [VariableDeclaration_In_Yield_Await -> BindingPattern_Yield_Await . Initializer_In_Yield_Await]*
     Goal::Div,
-    // State(3239)
+    // State(3241)
     //   [VariableDeclarationList_In_Yield_Await -> VariableDeclarationList_In_Yield_Await . COMMA VariableDeclaration_In_Yield_Await]*
     //   [VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3240)
+    // State(3242)
     //   [VariableDeclarationList_In_Yield_Await -> VariableDeclaration_In_Yield_Await .]*
     Goal::Div,
-    // State(3241)
+    // State(3243)
     //   [WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ . LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3242)
+    // State(3244)
     //   [WithStatement_Yield_Await_Return -> WITH LPAREN . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3243)
+    // State(3245)
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::TemplateTail,
-    // State(3244)
+    // State(3246)
     //   [ExpressionStatement_Yield_Await -> (?![ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION, CLASS, FUNCTION, LBRACE, LET LBRACK]) Expression_In_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3245)
+    // State(3247)
     //   [LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON . LabelledItem_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3246)
+    // State(3248)
     //   [StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return StatementListItem_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3247)
+    // State(3249)
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3248)
+    // State(3250)
     //   [AsyncFunctionExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::TemplateTail,
-    // State(3249)
+    // State(3251)
     //   [AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In .]*
     Goal::TemplateTail,
-    // State(3250)
+    // State(3252)
     //   [ClassElement_Yield -> STATIC FieldDefinition_Yield . SEMICOLON]*
     Goal::Div,
-    // State(3251)
+    // State(3253)
     //   [ClassElement_Yield -> STATIC MethodDefinition_Yield .]*
     Goal::Div,
-    // State(3252)
+    // State(3254)
     //   [ClassTail_Yield -> LBRACE ClassBody_Yield RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(3253)
+    // State(3255)
     //   [ClassElementList_Yield -> ClassElementList_Yield ClassElement_Yield .]*
     Goal::Div,
-    // State(3254)
+    // State(3256)
     //   [FieldDefinition_Yield -> ClassElementName_Yield Initializer_In_Yield .]*
     Goal::Div,
-    // State(3255)
+    // State(3257)
     //   [ClassElement_Yield -> FieldDefinition_Yield SEMICOLON .]*
     Goal::Div,
-    // State(3256)
+    // State(3258)
     //   [ClassTail_Yield -> ClassHeritage_Yield LBRACE RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(3257)
+    // State(3259)
     //   [ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield . RBRACE]*
     Goal::Div,
-    // State(3258)
+    // State(3260)
     //   [ImportCall_Yield -> IMPORT LPAREN AssignmentExpression_In_Yield RPAREN .]*
     Goal::TemplateTail,
-    // State(3259)
+    // State(3261)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield . LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3260)
+    // State(3262)
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN . UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [FormalParameters_Await -> (empty) .]*
     Goal::Div,
-    // State(3261)
+    // State(3263)
     //   [MethodDefinition_Yield -> GET ClassElementName_Yield LPAREN . RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3262)
+    // State(3264)
     //   [FormalParameters_Yield -> (empty) .]*
     //   [GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN . UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3263)
+    // State(3265)
     //   [MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN . PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3264)
+    // State(3266)
     //   [MethodDefinition_Yield -> ClassElementName_Yield LPAREN UniqueFormalParameters . RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3265)
+    // State(3267)
     //   [ObjectLiteral_Yield -> LBRACE PropertyDefinitionList_Yield COMMA RBRACE .]*
     Goal::TemplateTail,
-    // State(3266)
+    // State(3268)
     //   [PropertyDefinitionList_Yield -> PropertyDefinitionList_Yield COMMA PropertyDefinition_Yield .]*
     Goal::Div,
-    // State(3267)
+    // State(3269)
     //   [PropertyDefinition_Yield -> PropertyName_Yield COLON AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(3268)
+    // State(3270)
     //   [ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA RBRACK .]*
     Goal::TemplateTail,
-    // State(3269)
+    // State(3271)
     //   [ElementList_Yield -> ElementList_Yield COMMA AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(3270)
+    // State(3272)
     //   [ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision . RBRACK]*
     //   [ElementList_Yield -> ElementList_Yield COMMA Elision . AssignmentExpression_In_Yield]*
     //   [ElementList_Yield -> ElementList_Yield COMMA Elision . SpreadElement_Yield]*
     //   [Elision -> Elision . COMMA]*
     Goal::RegExp,
-    // State(3271)
+    // State(3273)
     //   [ElementList_Yield -> ElementList_Yield COMMA SpreadElement_Yield .]*
     Goal::Div,
-    // State(3272)
+    // State(3274)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingIdentifier_Yield RPAREN .]*
     Goal::TemplateTail,
-    // State(3273)
+    // State(3275)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN ELLIPSIS BindingPattern_Yield RPAREN .]*
     Goal::TemplateTail,
-    // State(3274)
+    // State(3276)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS . BindingIdentifier_Yield RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS . BindingPattern_Yield RPAREN]*
     Goal::Div,
-    // State(3275)
+    // State(3277)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA RPAREN .]*
     Goal::TemplateTail,
-    // State(3276)
+    // State(3278)
     //   [Expression_In_Yield -> Expression_In_Yield COMMA AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3277)
+    // State(3279)
     //   [SuperProperty_Yield -> SUPER LBRACK Expression_In_Yield RBRACK .]*
     Goal::TemplateTail,
-    // State(3278)
+    // State(3280)
     //   [ArgumentList_Yield -> ELLIPSIS AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(3279)
+    // State(3281)
     //   [ArgumentList_Yield -> ArgumentList_Yield COMMA . ELLIPSIS AssignmentExpression_In_Yield]*
     //   [ArgumentList_Yield -> ArgumentList_Yield COMMA . AssignmentExpression_In_Yield]*
     //   [Arguments_Yield -> LPAREN ArgumentList_Yield COMMA . RPAREN]*
     Goal::RegExp,
-    // State(3280)
+    // State(3282)
     //   [Arguments_Yield -> LPAREN ArgumentList_Yield RPAREN .]*
     Goal::TemplateTail,
-    // State(3281)
+    // State(3283)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [TemplateMiddleList_Yield -> TEMPLATE_MIDDLE Expression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3282)
+    // State(3284)
     //   [TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE . Expression_In_Yield]*
     Goal::RegExp,
-    // State(3283)
+    // State(3285)
     //   [TemplateSpans_Yield -> TemplateMiddleList_Yield TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(3284)
+    // State(3286)
     //   [CallExpression_Yield -> CallExpression_Yield LBRACK Expression_In_Yield RBRACK .]*
     Goal::TemplateTail,
-    // State(3285)
+    // State(3287)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [OptionalChain_Yield -> OPTIONAL_CHAINING LBRACK Expression_In_Yield . RBRACK]*
     Goal::Div,
-    // State(3286)
+    // State(3288)
     //   [TemplateMiddleList_Yield_Tagged -> TEMPLATE_MIDDLE . Expression_In_Yield]*
     Goal::RegExp,
-    // State(3287)
+    // State(3289)
     //   [TemplateSpans_Yield_Tagged -> TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(3288)
+    // State(3290)
     //   [TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged . TEMPLATE_MIDDLE Expression_In_Yield]*
     //   [TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged . TEMPLATE_TAIL]*
     Goal::TemplateTail,
-    // State(3289)
+    // State(3291)
     //   [SubstitutionTemplate_Yield_Tagged -> TEMPLATE_HEAD Expression_In_Yield TemplateSpans_Yield_Tagged .]*
     Goal::TemplateTail,
-    // State(3290)
+    // State(3292)
     //   [OptionalChain_Yield -> OptionalChain_Yield DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(3291)
+    // State(3293)
     //   [OptionalChain_Yield -> OptionalChain_Yield DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(3292)
+    // State(3294)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [OptionalChain_Yield -> OptionalChain_Yield LBRACK Expression_In_Yield . RBRACK]*
     Goal::Div,
-    // State(3293)
+    // State(3295)
     //   [BitwiseORExpression_In_Yield -> BitwiseORExpression_In_Yield . BIT_OR BitwiseXORExpression_In_Yield]*
     //   [CoalesceExpression_In_Yield -> CoalesceExpressionHead_In_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3294)
+    // State(3296)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3295)
+    // State(3297)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3296)
+    // State(3298)
     //   [AssignmentExpression_In_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3297)
+    // State(3299)
     //   [BitwiseORExpression_In_Yield -> BitwiseORExpression_In_Yield . BIT_OR BitwiseXORExpression_In_Yield]*
     //   [LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3298)
+    // State(3300)
     //   [BitwiseORExpression_In_Yield -> BitwiseORExpression_In_Yield . BIT_OR BitwiseXORExpression_In_Yield]*
     //   [LogicalANDExpression_In_Yield -> BitwiseORExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3299)
+    // State(3301)
     //   [LogicalANDExpression_In_Yield -> LogicalANDExpression_In_Yield . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield]*
     //   [LogicalORExpression_In_Yield -> LogicalORExpression_In_Yield OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3300)
+    // State(3302)
     //   [MemberExpression_Yield -> MemberExpression_Yield LBRACK Expression_In_Yield RBRACK .]*
     Goal::TemplateTail,
-    // State(3301)
+    // State(3303)
     //   [ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield . COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield]*
     Goal::Div,
-    // State(3302)
+    // State(3304)
     //   [ArrayBindingPattern_Yield -> LBRACK BindingElementList_Yield COMMA Elision BindingRestElement_Yield RBRACK .]*
     Goal::Div,
-    // State(3303)
+    // State(3305)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL . BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3304)
+    // State(3306)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3305)
+    // State(3307)
     //   [BreakStatement_Yield -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3306)
+    // State(3308)
     //   [ClassDeclaration_Yield -> CLASS BindingIdentifier_Yield ClassTail_Yield .]*
     Goal::RegExp,
-    // State(3307)
+    // State(3309)
     //   [LexicalBinding_In_Yield -> BindingIdentifier_Yield Initializer_In_Yield .]*
     Goal::Div,
-    // State(3308)
+    // State(3310)
     //   [BindingList_In_Yield -> BindingList_In_Yield COMMA . LexicalBinding_In_Yield]*
     Goal::Div,
-    // State(3309)
+    // State(3311)
     //   [LexicalDeclaration_In_Yield -> CONST BindingList_In_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3310)
+    // State(3312)
     //   [LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield .]*
     Goal::Div,
-    // State(3311)
+    // State(3313)
     //   [ContinueStatement_Yield -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3312)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE . LPAREN Expression_In_Yield RPAREN SEMICOLON]*
+    // State(3314)
+    //   [AsyncArrowFunction_In_Yield -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [AsyncArrowFunction_In_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
-    // State(3313)
+    // State(3315)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return . WHILE LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
+    // State(3316)
     //   [AsyncArrowFunction_Yield -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncFunctionExpression -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -12462,22 +12477,22 @@ pub static TABLE: [Goal; 4260] = [
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
-    // State(3314)
+    // State(3317)
     //   [ForDeclaration_Yield -> CONST . ForBinding_Yield]*
     //   [LexicalDeclaration_Yield -> CONST . BindingList_Yield SEMICOLON]*
     Goal::Div,
-    // State(3315)
+    // State(3318)
     //   [ForDeclaration_Yield -> LET . ForBinding_Yield]*
     //   [IdentifierNameButNotReservedWord -> LET .]*
     //   [LexicalDeclaration_Yield -> LET . BindingList_Yield SEMICOLON]*
     Goal::Div,
-    // State(3316)
+    // State(3319)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3317)
+    // State(3320)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR . ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR . ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
@@ -12485,7 +12500,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3318)
+    // State(3321)
     //   [BindingIdentifier_Yield -> YIELD .]*
     //   [YieldExpression -> YIELD .]*
     //   [YieldExpression -> YIELD . (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield]*
@@ -12493,66 +12508,66 @@ pub static TABLE: [Goal; 4260] = [
     //   [YieldExpression -> YIELD . (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield]*
     //   [YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3319)
+    // State(3322)
     //   [AssignmentExpression_Yield -> ArrowFunction_Yield .]*
     Goal::Div,
-    // State(3320)
+    // State(3323)
     //   [ArrowFunction_Yield -> ArrowParameters_Yield . (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody]*
     //   [ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) . ARROW ConciseBody]*
     Goal::Div,
-    // State(3321)
+    // State(3324)
     //   [Expression_Yield -> AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(3322)
+    // State(3325)
     //   [AssignmentExpression_Yield -> AsyncArrowFunction_Yield .]*
     Goal::Div,
-    // State(3323)
+    // State(3326)
     //   [BitwiseANDExpression_Yield -> BitwiseANDExpression_Yield . BIT_AND EqualityExpression_Yield]*
     //   [BitwiseXORExpression_Yield -> BitwiseANDExpression_Yield .]*
     Goal::Div,
-    // State(3324)
+    // State(3327)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield . BIT_OR BitwiseXORExpression_Yield]*
     //   [CoalesceExpressionHead_Yield -> BitwiseORExpression_Yield .]*
     //   [LogicalANDExpression_Yield -> BitwiseORExpression_Yield .]*
     Goal::Div,
-    // State(3325)
+    // State(3328)
     //   [BitwiseORExpression_Yield -> BitwiseXORExpression_Yield .]*
     //   [BitwiseXORExpression_Yield -> BitwiseXORExpression_Yield . BIT_XOR BitwiseANDExpression_Yield]*
     Goal::Div,
-    // State(3326)
+    // State(3329)
     //   [CoalesceExpression_Yield -> CoalesceExpressionHead_Yield . NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield]*
     Goal::Div,
-    // State(3327)
+    // State(3330)
     //   [CoalesceExpressionHead_Yield -> CoalesceExpression_Yield .]*
     //   [ShortCircuitExpression_Yield -> CoalesceExpression_Yield .]*
     Goal::Div,
-    // State(3328)
+    // State(3331)
     //   [AssignmentExpression_Yield -> ConditionalExpression_Yield .]*
     Goal::Div,
-    // State(3329)
+    // State(3332)
     //   [AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
     //   [CallExpression_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield .]*
     Goal::Div,
-    // State(3330)
+    // State(3333)
     //   [BitwiseANDExpression_Yield -> EqualityExpression_Yield .]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . EQ RelationalExpression_Yield]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . EQ_STRICT RelationalExpression_Yield]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . NE RelationalExpression_Yield]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . NE_STRICT RelationalExpression_Yield]*
     Goal::Div,
-    // State(3331)
+    // State(3334)
     //   [Expression_Yield -> Expression_Yield . COMMA AssignmentExpression_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield . SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3332)
+    // State(3335)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield . IN Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield . OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3333)
+    // State(3336)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . ASSIGN AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
@@ -12566,21 +12581,21 @@ pub static TABLE: [Goal; 4260] = [
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield . (!LINE_TERMINATOR_SEQUENCE) INC]*
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
-    // State(3334)
+    // State(3337)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3335)
+    // State(3338)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield]*
     //   [LogicalORExpression_Yield -> LogicalANDExpression_Yield .]*
     Goal::Div,
-    // State(3336)
+    // State(3339)
     //   [LogicalORExpression_Yield -> LogicalORExpression_Yield . OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield]*
     //   [ShortCircuitExpression_Yield -> LogicalORExpression_Yield .]*
     Goal::Div,
-    // State(3337)
+    // State(3340)
     //   [EqualityExpression_Yield -> RelationalExpression_Yield .]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GTE ShiftExpression_Yield]*
@@ -12588,590 +12603,597 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LTE ShiftExpression_Yield]*
     Goal::Div,
-    // State(3338)
+    // State(3341)
     //   [RelationalExpression_Yield -> ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::Div,
-    // State(3339)
+    // State(3342)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield .]*
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield . CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield]*
     Goal::Div,
-    // State(3340)
+    // State(3343)
     //   [AssignmentExpression_Yield -> YieldExpression .]*
     Goal::Div,
-    // State(3341)
+    // State(3344)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3342)
+    // State(3345)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ . LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3343)
+    // State(3346)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield . RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return]*
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield . RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])]*
     Goal::Div,
-    // State(3344)
+    // State(3347)
     //   [Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return . RBRACE]*
     //   [StatementList_Yield_Return -> StatementList_Yield_Return . StatementListItem_Yield_Return]*
     Goal::RegExp,
-    // State(3345)
+    // State(3348)
     //   [LexicalDeclaration_In_Yield -> LET BindingList_In_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3346)
+    // State(3349)
     //   [ReturnStatement_Yield -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3347)
+    // State(3350)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield . RPAREN CaseBlock_Yield_Return]*
     Goal::Div,
-    // State(3348)
+    // State(3351)
     //   [ThrowStatement_Yield -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3349)
+    // State(3352)
     //   [Catch_Yield_Return -> CATCH . LPAREN CatchParameter_Yield RPAREN Block_Yield_Return]*
     //   [Catch_Yield_Return -> CATCH . Block_Yield_Return]*
     Goal::Div,
-    // State(3350)
+    // State(3353)
     //   [Finally_Yield_Return -> FINALLY . Block_Yield_Return]*
     Goal::Div,
-    // State(3351)
+    // State(3354)
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return .]*
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return . Finally_Yield_Return]*
     Goal::RegExp,
-    // State(3352)
+    // State(3355)
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return Finally_Yield_Return .]*
     Goal::RegExp,
-    // State(3353)
+    // State(3356)
     //   [VariableDeclaration_In_Yield -> BindingIdentifier_Yield Initializer_In_Yield .]*
     Goal::Div,
-    // State(3354)
+    // State(3357)
     //   [VariableDeclaration_In_Yield -> BindingPattern_Yield Initializer_In_Yield .]*
     Goal::Div,
-    // State(3355)
+    // State(3358)
     //   [VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield COMMA . VariableDeclaration_In_Yield]*
     Goal::Div,
-    // State(3356)
+    // State(3359)
     //   [VariableStatement_Yield -> VAR VariableDeclarationList_In_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3357)
+    // State(3360)
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN . Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3358)
+    // State(3361)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3359)
+    // State(3362)
     //   [FunctionDeclaration_Yield -> FUNCTION . BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3360)
+    // State(3363)
     //   [LabelledItem_Yield_Return -> FunctionDeclaration_Yield .]*
     Goal::RegExp,
-    // State(3361)
+    // State(3364)
     //   [LabelledStatement_Yield_Return -> LabelIdentifier_Yield COLON LabelledItem_Yield_Return .]*
     Goal::RegExp,
-    // State(3362)
+    // State(3365)
     //   [LabelledItem_Yield_Return -> Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(3363)
+    // State(3366)
     //   [GeneratorExpression -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::TemplateTail,
-    // State(3364)
+    // State(3367)
     //   [FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(3365)
+    // State(3368)
     //   [FunctionExpression -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::TemplateTail,
-    // State(3366)
+    // State(3369)
     //   [AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3367)
+    // State(3370)
     //   [AsyncMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::Div,
-    // State(3368)
+    // State(3371)
     //   [GeneratorMethod -> MUL ClassElementName LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::Div,
-    // State(3369)
+    // State(3372)
     //   [MethodDefinition -> SET ClassElementName LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(3370)
+    // State(3373)
     //   [AsyncGeneratorDeclaration -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(3371)
+    // State(3374)
     //   [ForStatement -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement .]*
     Goal::RegExp,
-    // State(3372)
+    // State(3375)
     //   [FunctionDeclaration -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3373)
-    //   [DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In RPAREN SEMICOLON .]*
-    Goal::RegExp,
-    // State(3374)
+    // State(3376)
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    Goal::Div,
+    // State(3377)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3375)
+    // State(3378)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3376)
+    // State(3379)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3377)
+    // State(3380)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3378)
+    // State(3381)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3379)
+    // State(3382)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3380)
+    // State(3383)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3381)
+    // State(3384)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . RPAREN Statement_Return]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON . Expression_In RPAREN Statement_Return]*
     Goal::RegExp,
-    // State(3382)
+    // State(3385)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3383)
+    // State(3386)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3384)
+    // State(3387)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3385)
+    // State(3388)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3386)
+    // State(3389)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration IN Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3387)
+    // State(3390)
     //   [ForInOfStatement_Return -> FOR LPAREN ForDeclaration OF AssignmentExpression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3388)
+    // State(3391)
     //   [ForInOfStatement_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression IN Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3389)
+    // State(3392)
     //   [ForInOfStatement_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression OF AssignmentExpression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3390)
+    // State(3393)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3391)
+    // State(3394)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3392)
+    // State(3395)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3393)
+    // State(3396)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE . _ELSE_BLOCK_ Statement_Return]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3394)
+    // State(3397)
     //   [CaseClause_Return -> CASE Expression_In . COLON]*
     //   [CaseClause_Return -> CASE Expression_In . COLON StatementList_Return]*
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     Goal::Div,
-    // State(3395)
+    // State(3398)
     //   [DefaultClause_Return -> DEFAULT COLON .]*
     //   [DefaultClause_Return -> DEFAULT COLON . StatementList_Return]*
     Goal::RegExp,
-    // State(3396)
+    // State(3399)
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return RBRACE .]*
     Goal::RegExp,
-    // State(3397)
+    // State(3400)
     //   [CaseClauses_Return -> CaseClauses_Return CaseClause_Return .]*
     Goal::Div,
-    // State(3398)
+    // State(3401)
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return . RBRACE]*
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return . CaseClauses_Return RBRACE]*
     Goal::Div,
-    // State(3399)
+    // State(3402)
     //   [CaseBlock_Return -> LBRACE DefaultClause_Return RBRACE .]*
     Goal::RegExp,
-    // State(3400)
+    // State(3403)
     //   [CaseBlock_Return -> LBRACE DefaultClause_Return CaseClauses_Return . RBRACE]*
     //   [CaseClauses_Return -> CaseClauses_Return . CaseClause_Return]*
     Goal::Div,
-    // State(3401)
+    // State(3404)
     //   [Catch_Return -> CATCH LPAREN CatchParameter RPAREN Block_Return .]*
     Goal::RegExp,
-    // State(3402)
+    // State(3405)
     //   [WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ Statement_Return .]*
     Goal::RegExp,
-    // State(3403)
-    //   [DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN SEMICOLON .]*
-    Goal::RegExp,
-    // State(3404)
+    // State(3406)
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    Goal::Div,
+    // State(3407)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3405)
+    // State(3408)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3406)
+    // State(3409)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3407)
+    // State(3410)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3408)
+    // State(3411)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3409)
+    // State(3412)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3410)
+    // State(3413)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3411)
+    // State(3414)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3412)
+    // State(3415)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3413)
+    // State(3416)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3414)
+    // State(3417)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . RPAREN Statement_Await_Return]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON . Expression_In_Await RPAREN Statement_Await_Return]*
     Goal::RegExp,
-    // State(3415)
+    // State(3418)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3416)
+    // State(3419)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3417)
+    // State(3420)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3418)
+    // State(3421)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3419)
+    // State(3422)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await IN Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3420)
+    // State(3423)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3421)
+    // State(3424)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Await IN Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3422)
+    // State(3425)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3423)
+    // State(3426)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3424)
+    // State(3427)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3425)
+    // State(3428)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3426)
+    // State(3429)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE . _ELSE_BLOCK_ Statement_Await_Return]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3427)
+    // State(3430)
     //   [CaseClause_Await_Return -> CASE Expression_In_Await . COLON]*
     //   [CaseClause_Await_Return -> CASE Expression_In_Await . COLON StatementList_Await_Return]*
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     Goal::Div,
-    // State(3428)
+    // State(3431)
     //   [DefaultClause_Await_Return -> DEFAULT COLON .]*
     //   [DefaultClause_Await_Return -> DEFAULT COLON . StatementList_Await_Return]*
     Goal::RegExp,
-    // State(3429)
+    // State(3432)
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(3430)
+    // State(3433)
     //   [CaseClauses_Await_Return -> CaseClauses_Await_Return CaseClause_Await_Return .]*
     Goal::Div,
-    // State(3431)
+    // State(3434)
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return DefaultClause_Await_Return . RBRACE]*
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return DefaultClause_Await_Return . CaseClauses_Await_Return RBRACE]*
     Goal::Div,
-    // State(3432)
+    // State(3435)
     //   [CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(3433)
+    // State(3436)
     //   [CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return CaseClauses_Await_Return . RBRACE]*
     //   [CaseClauses_Await_Return -> CaseClauses_Await_Return . CaseClause_Await_Return]*
     Goal::Div,
-    // State(3434)
+    // State(3437)
     //   [Catch_Await_Return -> CATCH LPAREN CatchParameter_Await RPAREN Block_Await_Return .]*
     Goal::RegExp,
-    // State(3435)
+    // State(3438)
     //   [WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3436)
+    // State(3439)
     //   [AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3437)
+    // State(3440)
     //   [AsyncMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::Div,
-    // State(3438)
+    // State(3441)
     //   [GeneratorMethod_Await -> MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::Div,
-    // State(3439)
+    // State(3442)
     //   [MethodDefinition_Await -> SET ClassElementName_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(3440)
+    // State(3443)
     //   [AsyncGeneratorDeclaration_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(3441)
+    // State(3444)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3442)
+    // State(3445)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3443)
+    // State(3446)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(3444)
+    // State(3447)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(3445)
+    // State(3448)
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(3446)
+    // State(3449)
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3447)
+    // State(3450)
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(3448)
+    // State(3451)
     //   [FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(3449)
+    // State(3452)
     //   [ForStatement_Await -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await .]*
     Goal::RegExp,
-    // State(3450)
+    // State(3453)
     //   [FunctionDeclaration_Await -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3451)
+    // State(3454)
     //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In .]*
     Goal::TemplateTail,
-    // State(3452)
+    // State(3455)
     //   [ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3453)
+    // State(3456)
     //   [ClassElement_Yield_Await -> STATIC MethodDefinition_Yield_Await .]*
     Goal::Div,
-    // State(3454)
+    // State(3457)
     //   [ClassTail_Yield_Await -> LBRACE ClassBody_Yield_Await RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(3455)
+    // State(3458)
     //   [ClassElementList_Yield_Await -> ClassElementList_Yield_Await ClassElement_Yield_Await .]*
     Goal::Div,
-    // State(3456)
+    // State(3459)
     //   [FieldDefinition_Yield_Await -> ClassElementName_Yield_Await Initializer_In_Yield_Await .]*
     Goal::Div,
-    // State(3457)
+    // State(3460)
     //   [ClassElement_Yield_Await -> FieldDefinition_Yield_Await SEMICOLON .]*
     Goal::Div,
-    // State(3458)
+    // State(3461)
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(3459)
+    // State(3462)
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE ClassBody_Yield_Await . RBRACE]*
     Goal::Div,
-    // State(3460)
+    // State(3463)
     //   [ImportCall_Yield_Await -> IMPORT LPAREN AssignmentExpression_In_Yield_Await RPAREN .]*
     Goal::TemplateTail,
-    // State(3461)
+    // State(3464)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await . LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3462)
+    // State(3465)
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN . UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [FormalParameters_Await -> (empty) .]*
     Goal::Div,
-    // State(3463)
+    // State(3466)
     //   [MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await LPAREN . RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3464)
+    // State(3467)
     //   [FormalParameters_Yield -> (empty) .]*
     //   [GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN . UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3465)
+    // State(3468)
     //   [MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN . PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3466)
+    // State(3469)
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN UniqueFormalParameters . RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3467)
+    // State(3470)
     //   [ObjectLiteral_Yield_Await -> LBRACE PropertyDefinitionList_Yield_Await COMMA RBRACE .]*
     Goal::TemplateTail,
-    // State(3468)
+    // State(3471)
     //   [PropertyDefinitionList_Yield_Await -> PropertyDefinitionList_Yield_Await COMMA PropertyDefinition_Yield_Await .]*
     Goal::Div,
-    // State(3469)
+    // State(3472)
     //   [PropertyDefinition_Yield_Await -> PropertyName_Yield_Await COLON AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3470)
+    // State(3473)
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA RBRACK .]*
     Goal::TemplateTail,
-    // State(3471)
+    // State(3474)
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3472)
+    // State(3475)
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision . RBRACK]*
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision . AssignmentExpression_In_Yield_Await]*
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision . SpreadElement_Yield_Await]*
     //   [Elision -> Elision . COMMA]*
     Goal::RegExp,
-    // State(3473)
+    // State(3476)
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA SpreadElement_Yield_Await .]*
     Goal::Div,
-    // State(3474)
+    // State(3477)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingIdentifier_Yield_Await RPAREN .]*
     Goal::TemplateTail,
-    // State(3475)
+    // State(3478)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN ELLIPSIS BindingPattern_Yield_Await RPAREN .]*
     Goal::TemplateTail,
-    // State(3476)
+    // State(3479)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS . BindingIdentifier_Yield_Await RPAREN]*
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS . BindingPattern_Yield_Await RPAREN]*
     Goal::Div,
-    // State(3477)
+    // State(3480)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA RPAREN .]*
     Goal::TemplateTail,
-    // State(3478)
+    // State(3481)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await COMMA AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3479)
+    // State(3482)
     //   [SuperProperty_Yield_Await -> SUPER LBRACK Expression_In_Yield_Await RBRACK .]*
     Goal::TemplateTail,
-    // State(3480)
+    // State(3483)
     //   [ArgumentList_Yield_Await -> ELLIPSIS AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3481)
+    // State(3484)
     //   [ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA . ELLIPSIS AssignmentExpression_In_Yield_Await]*
     //   [ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA . AssignmentExpression_In_Yield_Await]*
     //   [Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await COMMA . RPAREN]*
     Goal::RegExp,
-    // State(3482)
+    // State(3485)
     //   [Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await RPAREN .]*
     Goal::TemplateTail,
-    // State(3483)
+    // State(3486)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [TemplateMiddleList_Yield_Await -> TEMPLATE_MIDDLE Expression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3484)
+    // State(3487)
     //   [TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_MIDDLE . Expression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3485)
+    // State(3488)
     //   [TemplateSpans_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(3486)
+    // State(3489)
     //   [CallExpression_Yield_Await -> CallExpression_Yield_Await LBRACK Expression_In_Yield_Await RBRACK .]*
     Goal::TemplateTail,
-    // State(3487)
+    // State(3490)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING LBRACK Expression_In_Yield_Await . RBRACK]*
     Goal::Div,
-    // State(3488)
+    // State(3491)
     //   [TemplateMiddleList_Yield_Await_Tagged -> TEMPLATE_MIDDLE . Expression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3489)
+    // State(3492)
     //   [TemplateSpans_Yield_Await_Tagged -> TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(3490)
+    // State(3493)
     //   [TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged . TEMPLATE_MIDDLE Expression_In_Yield_Await]*
     //   [TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged . TEMPLATE_TAIL]*
     Goal::TemplateTail,
-    // State(3491)
+    // State(3494)
     //   [SubstitutionTemplate_Yield_Await_Tagged -> TEMPLATE_HEAD Expression_In_Yield_Await TemplateSpans_Yield_Await_Tagged .]*
     Goal::TemplateTail,
-    // State(3492)
+    // State(3495)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT PRIVATE_IDENTIFIER .]*
     Goal::TemplateTail,
-    // State(3493)
+    // State(3496)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await DOT KeywordOrIdentifierName .]*
     Goal::TemplateTail,
-    // State(3494)
+    // State(3497)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await LBRACK Expression_In_Yield_Await . RBRACK]*
     Goal::Div,
-    // State(3495)
+    // State(3498)
     //   [BitwiseORExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await . BIT_OR BitwiseXORExpression_In_Yield_Await]*
     //   [CoalesceExpression_In_Yield_Await -> CoalesceExpressionHead_In_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3496)
+    // State(3499)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3497)
+    // State(3500)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3498)
+    // State(3501)
     //   [AssignmentExpression_In_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3499)
+    // State(3502)
     //   [BitwiseORExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await . BIT_OR BitwiseXORExpression_In_Yield_Await]*
     //   [LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3500)
+    // State(3503)
     //   [BitwiseORExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await . BIT_OR BitwiseXORExpression_In_Yield_Await]*
     //   [LogicalANDExpression_In_Yield_Await -> BitwiseORExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3501)
+    // State(3504)
     //   [LogicalANDExpression_In_Yield_Await -> LogicalANDExpression_In_Yield_Await . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_In_Yield_Await]*
     //   [LogicalORExpression_In_Yield_Await -> LogicalORExpression_In_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3502)
+    // State(3505)
     //   [MemberExpression_Yield_Await -> MemberExpression_Yield_Await LBRACK Expression_In_Yield_Await RBRACK .]*
     Goal::TemplateTail,
-    // State(3503)
+    // State(3506)
     //   [ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await . COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await]*
     Goal::Div,
-    // State(3504)
+    // State(3507)
     //   [ArrayBindingPattern_Yield_Await -> LBRACK BindingElementList_Yield_Await COMMA Elision BindingRestElement_Yield_Await RBRACK .]*
     Goal::Div,
-    // State(3505)
+    // State(3508)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL . BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3506)
+    // State(3509)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await . LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3507)
+    // State(3510)
     //   [BreakStatement_Yield_Await -> BREAK (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3508)
+    // State(3511)
     //   [ClassDeclaration_Yield_Await -> CLASS BindingIdentifier_Yield_Await ClassTail_Yield_Await .]*
     Goal::RegExp,
-    // State(3509)
+    // State(3512)
     //   [LexicalBinding_In_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await .]*
     Goal::Div,
-    // State(3510)
+    // State(3513)
     //   [BindingList_In_Yield_Await -> BindingList_In_Yield_Await COMMA . LexicalBinding_In_Yield_Await]*
     Goal::Div,
-    // State(3511)
+    // State(3514)
     //   [LexicalDeclaration_In_Yield_Await -> CONST BindingList_In_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3512)
+    // State(3515)
     //   [LexicalBinding_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await .]*
     Goal::Div,
-    // State(3513)
+    // State(3516)
     //   [ContinueStatement_Yield_Await -> CONTINUE (!LINE_TERMINATOR_SEQUENCE) LabelIdentifier_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3514)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE . LPAREN Expression_In_Yield_Await RPAREN SEMICOLON]*
+    // State(3517)
+    //   [AsyncArrowFunction_In_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [AsyncArrowFunction_In_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody_In]*
+    //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
-    // State(3515)
+    // State(3518)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return . WHILE LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
+    // State(3519)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN . VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN . ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN . (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3516)
+    // State(3520)
     //   [AsyncArrowFunction_Yield_Await -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncFunctionExpression -> ASYNC . (!LINE_TERMINATOR_SEQUENCE) FUNCTION LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
@@ -13184,22 +13206,22 @@ pub static TABLE: [Goal; 4260] = [
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) . FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [IdentifierNameButNotReservedWord -> ASYNC .]*
     Goal::Div,
-    // State(3517)
+    // State(3521)
     //   [ForDeclaration_Yield_Await -> CONST . ForBinding_Yield_Await]*
     //   [LexicalDeclaration_Yield_Await -> CONST . BindingList_Yield_Await SEMICOLON]*
     Goal::Div,
-    // State(3518)
+    // State(3522)
     //   [ForDeclaration_Yield_Await -> LET . ForBinding_Yield_Await]*
     //   [IdentifierNameButNotReservedWord -> LET .]*
     //   [LexicalDeclaration_Yield_Await -> LET . BindingList_Yield_Await SEMICOLON]*
     Goal::Div,
-    // State(3519)
+    // State(3523)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3520)
+    // State(3524)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR . ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR . ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
@@ -13207,7 +13229,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR . VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3521)
+    // State(3525)
     //   [BindingIdentifier_Yield_Await -> YIELD .]*
     //   [YieldExpression_Await -> YIELD .]*
     //   [YieldExpression_Await -> YIELD . (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield_Await]*
@@ -13215,66 +13237,66 @@ pub static TABLE: [Goal; 4260] = [
     //   [YieldExpression_Await -> YIELD . (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield_Await]*
     //   [YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3522)
+    // State(3526)
     //   [AssignmentExpression_Yield_Await -> ArrowFunction_Yield_Await .]*
     Goal::Div,
-    // State(3523)
+    // State(3527)
     //   [ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await . (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody]*
     //   [ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) . ARROW ConciseBody]*
     Goal::Div,
-    // State(3524)
+    // State(3528)
     //   [Expression_Yield_Await -> AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(3525)
+    // State(3529)
     //   [AssignmentExpression_Yield_Await -> AsyncArrowFunction_Yield_Await .]*
     Goal::Div,
-    // State(3526)
+    // State(3530)
     //   [BitwiseANDExpression_Yield_Await -> BitwiseANDExpression_Yield_Await . BIT_AND EqualityExpression_Yield_Await]*
     //   [BitwiseXORExpression_Yield_Await -> BitwiseANDExpression_Yield_Await .]*
     Goal::Div,
-    // State(3527)
+    // State(3531)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await . BIT_OR BitwiseXORExpression_Yield_Await]*
     //   [CoalesceExpressionHead_Yield_Await -> BitwiseORExpression_Yield_Await .]*
     //   [LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await .]*
     Goal::Div,
-    // State(3528)
+    // State(3532)
     //   [BitwiseORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await .]*
     //   [BitwiseXORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await . BIT_XOR BitwiseANDExpression_Yield_Await]*
     Goal::Div,
-    // State(3529)
+    // State(3533)
     //   [CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await . NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await]*
     Goal::Div,
-    // State(3530)
+    // State(3534)
     //   [CoalesceExpressionHead_Yield_Await -> CoalesceExpression_Yield_Await .]*
     //   [ShortCircuitExpression_Yield_Await -> CoalesceExpression_Yield_Await .]*
     Goal::Div,
-    // State(3531)
+    // State(3535)
     //   [AssignmentExpression_Yield_Await -> ConditionalExpression_Yield_Await .]*
     Goal::Div,
-    // State(3532)
+    // State(3536)
     //   [AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
     //   [CallExpression_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await .]*
     Goal::Div,
-    // State(3533)
+    // State(3537)
     //   [BitwiseANDExpression_Yield_Await -> EqualityExpression_Yield_Await .]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . EQ RelationalExpression_Yield_Await]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . EQ_STRICT RelationalExpression_Yield_Await]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . NE RelationalExpression_Yield_Await]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . NE_STRICT RelationalExpression_Yield_Await]*
     Goal::Div,
-    // State(3534)
+    // State(3538)
     //   [Expression_Yield_Await -> Expression_Yield_Await . COMMA AssignmentExpression_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3535)
+    // State(3539)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await . IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await . OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3536)
+    // State(3540)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . ASSIGN AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
@@ -13288,21 +13310,21 @@ pub static TABLE: [Goal; 4260] = [
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . (!LINE_TERMINATOR_SEQUENCE) INC]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
-    // State(3537)
+    // State(3541)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3538)
+    // State(3542)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await]*
     //   [LogicalORExpression_Yield_Await -> LogicalANDExpression_Yield_Await .]*
     Goal::Div,
-    // State(3539)
+    // State(3543)
     //   [LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await . OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield_Await]*
     //   [ShortCircuitExpression_Yield_Await -> LogicalORExpression_Yield_Await .]*
     Goal::Div,
-    // State(3540)
+    // State(3544)
     //   [EqualityExpression_Yield_Await -> RelationalExpression_Yield_Await .]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -13310,250 +13332,250 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::Div,
-    // State(3541)
+    // State(3545)
     //   [RelationalExpression_Yield_Await -> ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::Div,
-    // State(3542)
+    // State(3546)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await .]*
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await . CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await]*
     Goal::Div,
-    // State(3543)
+    // State(3547)
     //   [AssignmentExpression_Yield_Await -> YieldExpression_Await .]*
     Goal::Div,
-    // State(3544)
+    // State(3548)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await . LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3545)
+    // State(3549)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ . LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3546)
+    // State(3550)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await . RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return]*
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await . RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])]*
     Goal::Div,
-    // State(3547)
+    // State(3551)
     //   [Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Await_Return . RBRACE]*
     //   [StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return . StatementListItem_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3548)
+    // State(3552)
     //   [LexicalDeclaration_In_Yield_Await -> LET BindingList_In_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3549)
+    // State(3553)
     //   [ReturnStatement_Yield_Await -> RETURN (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3550)
+    // State(3554)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await . RPAREN CaseBlock_Yield_Await_Return]*
     Goal::Div,
-    // State(3551)
+    // State(3555)
     //   [ThrowStatement_Yield_Await -> THROW (!LINE_TERMINATOR_SEQUENCE) Expression_In_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3552)
+    // State(3556)
     //   [Catch_Yield_Await_Return -> CATCH . LPAREN CatchParameter_Yield_Await RPAREN Block_Yield_Await_Return]*
     //   [Catch_Yield_Await_Return -> CATCH . Block_Yield_Await_Return]*
     Goal::Div,
-    // State(3553)
+    // State(3557)
     //   [Finally_Yield_Await_Return -> FINALLY . Block_Yield_Await_Return]*
     Goal::Div,
-    // State(3554)
+    // State(3558)
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return .]*
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return . Finally_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3555)
+    // State(3559)
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Finally_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3556)
+    // State(3560)
     //   [VariableDeclaration_In_Yield_Await -> BindingIdentifier_Yield_Await Initializer_In_Yield_Await .]*
     Goal::Div,
-    // State(3557)
+    // State(3561)
     //   [VariableDeclaration_In_Yield_Await -> BindingPattern_Yield_Await Initializer_In_Yield_Await .]*
     Goal::Div,
-    // State(3558)
+    // State(3562)
     //   [VariableDeclarationList_In_Yield_Await -> VariableDeclarationList_In_Yield_Await COMMA . VariableDeclaration_In_Yield_Await]*
     Goal::Div,
-    // State(3559)
+    // State(3563)
     //   [VariableStatement_Yield_Await -> VAR VariableDeclarationList_In_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3560)
+    // State(3564)
     //   [WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN . Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3561)
+    // State(3565)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3562)
+    // State(3566)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION . BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3563)
+    // State(3567)
     //   [LabelledItem_Yield_Await_Return -> FunctionDeclaration_Yield_Await .]*
     Goal::RegExp,
-    // State(3564)
+    // State(3568)
     //   [LabelledStatement_Yield_Await_Return -> LabelIdentifier_Yield_Await COLON LabelledItem_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3565)
+    // State(3569)
     //   [LabelledItem_Yield_Await_Return -> Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3566)
+    // State(3570)
     //   [AsyncGeneratorExpression -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::TemplateTail,
-    // State(3567)
+    // State(3571)
     //   [ClassElement_Yield -> STATIC FieldDefinition_Yield SEMICOLON .]*
     Goal::Div,
-    // State(3568)
+    // State(3572)
     //   [ClassTail_Yield -> ClassHeritage_Yield LBRACE ClassBody_Yield RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(3569)
+    // State(3573)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN . UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [FormalParameters_Yield_Await -> (empty) .]*
     Goal::Div,
-    // State(3570)
+    // State(3574)
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN UniqueFormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3571)
+    // State(3575)
     //   [MethodDefinition_Yield -> GET ClassElementName_Yield LPAREN RPAREN . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3572)
+    // State(3576)
     //   [GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield . RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3573)
+    // State(3577)
     //   [MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN PropertySetParameterList . RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3574)
+    // State(3578)
     //   [MethodDefinition_Yield -> ClassElementName_Yield LPAREN UniqueFormalParameters RPAREN . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3575)
+    // State(3579)
     //   [ArrayLiteral_Yield -> LBRACK ElementList_Yield COMMA Elision RBRACK .]*
     Goal::TemplateTail,
-    // State(3576)
+    // State(3580)
     //   [ElementList_Yield -> ElementList_Yield COMMA Elision AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(3577)
+    // State(3581)
     //   [ElementList_Yield -> ElementList_Yield COMMA Elision SpreadElement_Yield .]*
     Goal::Div,
-    // State(3578)
+    // State(3582)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingIdentifier_Yield . RPAREN]*
     Goal::Div,
-    // State(3579)
+    // State(3583)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingPattern_Yield . RPAREN]*
     Goal::Div,
-    // State(3580)
+    // State(3584)
     //   [ArgumentList_Yield -> ArgumentList_Yield COMMA ELLIPSIS . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(3581)
+    // State(3585)
     //   [Arguments_Yield -> LPAREN ArgumentList_Yield COMMA RPAREN .]*
     Goal::TemplateTail,
-    // State(3582)
+    // State(3586)
     //   [ArgumentList_Yield -> ArgumentList_Yield COMMA AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(3583)
+    // State(3587)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [TemplateMiddleList_Yield -> TemplateMiddleList_Yield TEMPLATE_MIDDLE Expression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3584)
+    // State(3588)
     //   [OptionalChain_Yield -> OPTIONAL_CHAINING LBRACK Expression_In_Yield RBRACK .]*
     Goal::TemplateTail,
-    // State(3585)
+    // State(3589)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [TemplateMiddleList_Yield_Tagged -> TEMPLATE_MIDDLE Expression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3586)
+    // State(3590)
     //   [TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_MIDDLE . Expression_In_Yield]*
     Goal::RegExp,
-    // State(3587)
+    // State(3591)
     //   [TemplateSpans_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(3588)
+    // State(3592)
     //   [OptionalChain_Yield -> OptionalChain_Yield LBRACK Expression_In_Yield RBRACK .]*
     Goal::TemplateTail,
-    // State(3589)
+    // State(3593)
     //   [ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON . _ELSE_BLOCK_ AssignmentExpression_In_Yield]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3590)
+    // State(3594)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield . LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3591)
+    // State(3595)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN . FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [FormalParameters_Await -> (empty) .]*
     Goal::Div,
-    // State(3592)
+    // State(3596)
     //   [BindingList_In_Yield -> BindingList_In_Yield COMMA LexicalBinding_In_Yield .]*
     Goal::Div,
-    // State(3593)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN . Expression_In_Yield RPAREN SEMICOLON]*
-    Goal::RegExp,
-    // State(3594)
+    // State(3597)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE . LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
+    // State(3598)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
     Goal::Div,
-    // State(3595)
+    // State(3599)
     //   [ForBinding_Yield -> BindingIdentifier_Yield .]*
     //   [LexicalBinding_Yield -> BindingIdentifier_Yield .]*
     //   [LexicalBinding_Yield -> BindingIdentifier_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3596)
+    // State(3600)
     //   [BindingList_Yield -> BindingList_Yield . COMMA LexicalBinding_Yield]*
     //   [LexicalDeclaration_Yield -> CONST BindingList_Yield . SEMICOLON]*
     Goal::Div,
-    // State(3597)
+    // State(3601)
     //   [ForBinding_Yield -> BindingPattern_Yield .]*
     //   [LexicalBinding_Yield -> BindingPattern_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3598)
+    // State(3602)
     //   [ForDeclaration_Yield -> CONST ForBinding_Yield .]*
     Goal::Div,
-    // State(3599)
+    // State(3603)
     //   [BindingList_Yield -> LexicalBinding_Yield .]*
     Goal::Div,
-    // State(3600)
+    // State(3604)
     //   [BindingList_Yield -> BindingList_Yield . COMMA LexicalBinding_Yield]*
     //   [LexicalDeclaration_Yield -> LET BindingList_Yield . SEMICOLON]*
     Goal::Div,
-    // State(3601)
+    // State(3605)
     //   [ForDeclaration_Yield -> LET ForBinding_Yield .]*
     Goal::Div,
-    // State(3602)
+    // State(3606)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3603)
+    // State(3607)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3604)
+    // State(3608)
     //   [ForBinding_Yield -> BindingIdentifier_Yield .]*
     //   [VariableDeclaration_Yield -> BindingIdentifier_Yield .]*
     //   [VariableDeclaration_Yield -> BindingIdentifier_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3605)
+    // State(3609)
     //   [ForBinding_Yield -> BindingPattern_Yield .]*
     //   [VariableDeclaration_Yield -> BindingPattern_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3606)
+    // State(3610)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield . IN Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield . OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3607)
+    // State(3611)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield . SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield . COMMA VariableDeclaration_Yield]*
     Goal::Div,
-    // State(3608)
+    // State(3612)
     //   [VariableDeclarationList_Yield -> VariableDeclaration_Yield .]*
     Goal::Div,
-    // State(3609)
+    // State(3613)
     //   [YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3610)
+    // State(3614)
     //   [YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(3611)
+    // State(3615)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . ASSIGN AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
@@ -13565,81 +13587,81 @@ pub static TABLE: [Goal; 4260] = [
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield . (!LINE_TERMINATOR_SEQUENCE) INC]*
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
-    // State(3612)
+    // State(3616)
     //   [BindingIdentifier_Yield -> YIELD .]*
     //   [YieldExpression -> YIELD .]*
     Goal::Div,
-    // State(3613)
+    // State(3617)
     //   [ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW . ConciseBody]*
     Goal::RegExp,
-    // State(3614)
+    // State(3618)
     //   [BitwiseANDExpression_Yield -> BitwiseANDExpression_Yield BIT_AND . EqualityExpression_Yield]*
     Goal::RegExp,
-    // State(3615)
+    // State(3619)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield BIT_OR . BitwiseXORExpression_Yield]*
     Goal::RegExp,
-    // State(3616)
+    // State(3620)
     //   [BitwiseXORExpression_Yield -> BitwiseXORExpression_Yield BIT_XOR . BitwiseANDExpression_Yield]*
     Goal::RegExp,
-    // State(3617)
+    // State(3621)
     //   [CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH . _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield]*
     //   [_NULLISH_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3618)
+    // State(3622)
     //   [AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody]*
     Goal::RegExp,
-    // State(3619)
+    // State(3623)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield EQ . RelationalExpression_Yield]*
     Goal::RegExp,
-    // State(3620)
+    // State(3624)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield EQ_STRICT . RelationalExpression_Yield]*
     Goal::RegExp,
-    // State(3621)
+    // State(3625)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield NE . RelationalExpression_Yield]*
     Goal::RegExp,
-    // State(3622)
+    // State(3626)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield NE_STRICT . RelationalExpression_Yield]*
     Goal::RegExp,
-    // State(3623)
+    // State(3627)
     //   [Expression_Yield -> Expression_Yield COMMA . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3624)
+    // State(3628)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3625)
+    // State(3629)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3626)
+    // State(3630)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield OF . AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3627)
+    // State(3631)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN . _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
     //   [_FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3628)
+    // State(3632)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield ASSIGN . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3629)
+    // State(3633)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3630)
+    // State(3634)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN . _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
     //   [_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3631)
+    // State(3635)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF . AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3632)
+    // State(3636)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN . _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
     //   [_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3633)
+    // State(3637)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield AssignmentOperator . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3634)
+    // State(3638)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . ASSIGN AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
@@ -13649,399 +13671,405 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield . IN Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield .]*
     Goal::Div,
-    // State(3635)
+    // State(3639)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3636)
+    // State(3640)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3637)
+    // State(3641)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield]*
     //   [_FALSY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3638)
+    // State(3642)
     //   [LogicalORExpression_Yield -> LogicalORExpression_Yield OR . _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield]*
     //   [_TRUTHY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3639)
+    // State(3643)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield GT . ShiftExpression_Yield]*
     Goal::RegExp,
-    // State(3640)
+    // State(3644)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield GTE . ShiftExpression_Yield]*
     Goal::RegExp,
-    // State(3641)
+    // State(3645)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield INSTANCEOF . ShiftExpression_Yield]*
     Goal::RegExp,
-    // State(3642)
+    // State(3646)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield LT . ShiftExpression_Yield]*
     Goal::RegExp,
-    // State(3643)
+    // State(3647)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield LTE . ShiftExpression_Yield]*
     Goal::RegExp,
-    // State(3644)
+    // State(3648)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL . _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield]*
     //   [_THEN_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3645)
+    // State(3649)
     //   [FormalParameters_Yield -> (empty) .]*
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN . FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3646)
+    // State(3650)
     //   [FormalParameters -> (empty) .]*
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN . FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3647)
+    // State(3651)
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN . _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return]*
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN . _THEN_BLOCK_ Statement_Yield_Return (?![ELSE])]*
     //   [_THEN_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3648)
+    // State(3652)
     //   [Block_Yield_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Return RBRACE .]*
     Goal::RegExp,
-    // State(3649)
+    // State(3653)
     //   [SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN . CaseBlock_Yield_Return]*
     Goal::Div,
-    // State(3650)
+    // State(3654)
     //   [Catch_Yield_Return -> CATCH LPAREN . CatchParameter_Yield RPAREN Block_Yield_Return]*
     Goal::Div,
-    // State(3651)
+    // State(3655)
     //   [Catch_Yield_Return -> CATCH Block_Yield_Return .]*
     Goal::RegExp,
-    // State(3652)
+    // State(3656)
     //   [Finally_Yield_Return -> FINALLY Block_Yield_Return .]*
     Goal::RegExp,
-    // State(3653)
+    // State(3657)
     //   [TryStatement_Yield_Return -> TRY Block_Yield_Return Catch_Yield_Return Finally_Yield_Return .]*
     Goal::RegExp,
-    // State(3654)
+    // State(3658)
     //   [VariableDeclarationList_In_Yield -> VariableDeclarationList_In_Yield COMMA VariableDeclaration_In_Yield .]*
     Goal::Div,
-    // State(3655)
+    // State(3659)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield . RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return]*
     Goal::Div,
-    // State(3656)
+    // State(3660)
     //   [WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3657)
+    // State(3661)
     //   [FunctionExpression -> FUNCTION BindingIdentifier _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::TemplateTail,
-    // State(3658)
+    // State(3662)
     //   [AsyncGeneratorMethod -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::Div,
-    // State(3659)
+    // State(3663)
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ . SEMICOLON]*
+    Goal::Div,
+    // State(3664)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3660)
+    // State(3665)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding IN Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3661)
+    // State(3666)
     //   [ForInOfStatement_Return -> FOR LPAREN VAR ForBinding OF AssignmentExpression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3662)
+    // State(3667)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3663)
+    // State(3668)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3664)
+    // State(3669)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3665)
+    // State(3670)
     //   [Expression_In -> Expression_In . COMMA AssignmentExpression_In]*
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In . RPAREN Statement_Return]*
     Goal::Div,
-    // State(3666)
+    // State(3671)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3667)
+    // State(3672)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3668)
+    // State(3673)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3669)
+    // State(3674)
     //   [ForStatement_Return -> FOR LPAREN LexicalDeclaration Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3670)
+    // State(3675)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ . Statement_Return]*
     Goal::RegExp,
-    // State(3671)
+    // State(3676)
     //   [CaseClause_Return -> CASE Expression_In COLON .]*
     //   [CaseClause_Return -> CASE Expression_In COLON . StatementList_Return]*
     Goal::RegExp,
-    // State(3672)
+    // State(3677)
     //   [DefaultClause_Return -> DEFAULT COLON StatementList_Return .]*
     //   [StatementList_Return -> StatementList_Return . StatementListItem_Return]*
     Goal::RegExp,
-    // State(3673)
+    // State(3678)
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return RBRACE .]*
     Goal::RegExp,
-    // State(3674)
+    // State(3679)
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return CaseClauses_Return . RBRACE]*
     //   [CaseClauses_Return -> CaseClauses_Return . CaseClause_Return]*
     Goal::Div,
-    // State(3675)
+    // State(3680)
     //   [CaseBlock_Return -> LBRACE DefaultClause_Return CaseClauses_Return RBRACE .]*
     Goal::RegExp,
-    // State(3676)
+    // State(3681)
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ . SEMICOLON]*
+    Goal::Div,
+    // State(3682)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3677)
+    // State(3683)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3678)
+    // State(3684)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3679)
+    // State(3685)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3680)
+    // State(3686)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await IN Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3681)
+    // State(3687)
     //   [ForInOfStatement_Await_Return -> FOR LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3682)
+    // State(3688)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3683)
+    // State(3689)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3684)
+    // State(3690)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3685)
+    // State(3691)
     //   [Expression_In_Await -> Expression_In_Await . COMMA AssignmentExpression_In_Await]*
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await . RPAREN Statement_Await_Return]*
     Goal::Div,
-    // State(3686)
+    // State(3692)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3687)
+    // State(3693)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3688)
+    // State(3694)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3689)
+    // State(3695)
     //   [ForStatement_Await_Return -> FOR LPAREN LexicalDeclaration_Await Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3690)
+    // State(3696)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3691)
+    // State(3697)
     //   [CaseClause_Await_Return -> CASE Expression_In_Await COLON .]*
     //   [CaseClause_Await_Return -> CASE Expression_In_Await COLON . StatementList_Await_Return]*
     Goal::RegExp,
-    // State(3692)
+    // State(3698)
     //   [DefaultClause_Await_Return -> DEFAULT COLON StatementList_Await_Return .]*
     //   [StatementList_Await_Return -> StatementList_Await_Return . StatementListItem_Await_Return]*
     Goal::RegExp,
-    // State(3693)
+    // State(3699)
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return DefaultClause_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(3694)
+    // State(3700)
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return DefaultClause_Await_Return CaseClauses_Await_Return . RBRACE]*
     //   [CaseClauses_Await_Return -> CaseClauses_Await_Return . CaseClause_Await_Return]*
     Goal::Div,
-    // State(3695)
+    // State(3701)
     //   [CaseBlock_Await_Return -> LBRACE DefaultClause_Await_Return CaseClauses_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(3696)
+    // State(3702)
     //   [AsyncGeneratorMethod_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::Div,
-    // State(3697)
+    // State(3703)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(3698)
+    // State(3704)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(3699)
+    // State(3705)
     //   [AsyncFunctionDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3700)
+    // State(3706)
     //   [GeneratorDeclaration_Await_Default -> FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(3701)
+    // State(3707)
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(3702)
+    // State(3708)
     //   [FunctionDeclaration_Await_Default -> FUNCTION _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3703)
+    // State(3709)
     //   [ClassElement_Yield_Await -> STATIC FieldDefinition_Yield_Await SEMICOLON .]*
     Goal::Div,
-    // State(3704)
+    // State(3710)
     //   [ClassTail_Yield_Await -> ClassHeritage_Yield_Await LBRACE ClassBody_Yield_Await RBRACE .]*
     Goal::RegExpOrTemplateTail,
-    // State(3705)
+    // State(3711)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN . UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [FormalParameters_Yield_Await -> (empty) .]*
     Goal::Div,
-    // State(3706)
+    // State(3712)
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3707)
+    // State(3713)
     //   [MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await LPAREN RPAREN . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3708)
+    // State(3714)
     //   [GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield . RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3709)
+    // State(3715)
     //   [MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN PropertySetParameterList . RPAREN LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3710)
+    // State(3716)
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN UniqueFormalParameters RPAREN . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3711)
+    // State(3717)
     //   [ArrayLiteral_Yield_Await -> LBRACK ElementList_Yield_Await COMMA Elision RBRACK .]*
     Goal::TemplateTail,
-    // State(3712)
+    // State(3718)
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3713)
+    // State(3719)
     //   [ElementList_Yield_Await -> ElementList_Yield_Await COMMA Elision SpreadElement_Yield_Await .]*
     Goal::Div,
-    // State(3714)
+    // State(3720)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingIdentifier_Yield_Await . RPAREN]*
     Goal::Div,
-    // State(3715)
+    // State(3721)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await . RPAREN]*
     Goal::Div,
-    // State(3716)
+    // State(3722)
     //   [ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA ELLIPSIS . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3717)
+    // State(3723)
     //   [Arguments_Yield_Await -> LPAREN ArgumentList_Yield_Await COMMA RPAREN .]*
     Goal::TemplateTail,
-    // State(3718)
+    // State(3724)
     //   [ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3719)
+    // State(3725)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [TemplateMiddleList_Yield_Await -> TemplateMiddleList_Yield_Await TEMPLATE_MIDDLE Expression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3720)
+    // State(3726)
     //   [OptionalChain_Yield_Await -> OPTIONAL_CHAINING LBRACK Expression_In_Yield_Await RBRACK .]*
     Goal::TemplateTail,
-    // State(3721)
+    // State(3727)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [TemplateMiddleList_Yield_Await_Tagged -> TEMPLATE_MIDDLE Expression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3722)
+    // State(3728)
     //   [TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_MIDDLE . Expression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3723)
+    // State(3729)
     //   [TemplateSpans_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_TAIL .]*
     Goal::TemplateTail,
-    // State(3724)
+    // State(3730)
     //   [OptionalChain_Yield_Await -> OptionalChain_Yield_Await LBRACK Expression_In_Yield_Await RBRACK .]*
     Goal::TemplateTail,
-    // State(3725)
+    // State(3731)
     //   [ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON . _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3726)
+    // State(3732)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await . LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3727)
+    // State(3733)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN . FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE]*
     //   [FormalParameters_Await -> (empty) .]*
     Goal::Div,
-    // State(3728)
+    // State(3734)
     //   [BindingList_In_Yield_Await -> BindingList_In_Yield_Await COMMA LexicalBinding_In_Yield_Await .]*
     Goal::Div,
-    // State(3729)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN . Expression_In_Yield_Await RPAREN SEMICOLON]*
-    Goal::RegExp,
-    // State(3730)
+    // State(3735)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE . LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::Div,
+    // State(3736)
     //   [ForDeclaration_Yield_Await -> CONST . ForBinding_Yield_Await]*
     Goal::Div,
-    // State(3731)
+    // State(3737)
     //   [ForDeclaration_Yield_Await -> LET . ForBinding_Yield_Await]*
     Goal::Div,
-    // State(3732)
+    // State(3738)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR . ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3733)
+    // State(3739)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Yield_Await . OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3734)
+    // State(3740)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await . OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3735)
+    // State(3741)
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield . (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody]*
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) . ARROW AsyncConciseBody]*
     Goal::Div,
-    // State(3736)
+    // State(3742)
     //   [ForBinding_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(3737)
+    // State(3743)
     //   [BindingList_Yield_Await -> BindingList_Yield_Await . COMMA LexicalBinding_Yield_Await]*
     //   [LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3738)
+    // State(3744)
     //   [ForBinding_Yield_Await -> BindingPattern_Yield_Await .]*
     //   [LexicalBinding_Yield_Await -> BindingPattern_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(3739)
+    // State(3745)
     //   [ForDeclaration_Yield_Await -> CONST ForBinding_Yield_Await .]*
     Goal::Div,
-    // State(3740)
+    // State(3746)
     //   [BindingList_Yield_Await -> LexicalBinding_Yield_Await .]*
     Goal::Div,
-    // State(3741)
+    // State(3747)
     //   [BindingList_Yield_Await -> BindingList_Yield_Await . COMMA LexicalBinding_Yield_Await]*
     //   [LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await . SEMICOLON]*
     Goal::Div,
-    // State(3742)
+    // State(3748)
     //   [ForDeclaration_Yield_Await -> LET ForBinding_Yield_Await .]*
     Goal::Div,
-    // State(3743)
+    // State(3749)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3744)
+    // State(3750)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3745)
+    // State(3751)
     //   [ForBinding_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(3746)
+    // State(3752)
     //   [ForBinding_Yield_Await -> BindingPattern_Yield_Await .]*
     //   [VariableDeclaration_Yield_Await -> BindingPattern_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(3747)
+    // State(3753)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await . IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await . OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3748)
+    // State(3754)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await . SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await . COMMA VariableDeclaration_Yield_Await]*
     Goal::Div,
-    // State(3749)
+    // State(3755)
     //   [VariableDeclarationList_Yield_Await -> VariableDeclaration_Yield_Await .]*
     Goal::Div,
-    // State(3750)
+    // State(3756)
     //   [YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3751)
+    // State(3757)
     //   [YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(3752)
+    // State(3758)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . ASSIGN AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
@@ -14053,81 +14081,81 @@ pub static TABLE: [Goal; 4260] = [
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . (!LINE_TERMINATOR_SEQUENCE) INC]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await (!LINE_TERMINATOR_SEQUENCE) . INC]*
     Goal::Div,
-    // State(3753)
+    // State(3759)
     //   [BindingIdentifier_Yield_Await -> YIELD .]*
     //   [YieldExpression_Await -> YIELD .]*
     Goal::Div,
-    // State(3754)
+    // State(3760)
     //   [ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW . ConciseBody]*
     Goal::RegExp,
-    // State(3755)
+    // State(3761)
     //   [BitwiseANDExpression_Yield_Await -> BitwiseANDExpression_Yield_Await BIT_AND . EqualityExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3756)
+    // State(3762)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await BIT_OR . BitwiseXORExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3757)
+    // State(3763)
     //   [BitwiseXORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await BIT_XOR . BitwiseANDExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3758)
+    // State(3764)
     //   [CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH . _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await]*
     //   [_NULLISH_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3759)
+    // State(3765)
     //   [AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody]*
     Goal::RegExp,
-    // State(3760)
+    // State(3766)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ . RelationalExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3761)
+    // State(3767)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ_STRICT . RelationalExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3762)
+    // State(3768)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE . RelationalExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3763)
+    // State(3769)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE_STRICT . RelationalExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3764)
+    // State(3770)
     //   [Expression_Yield_Await -> Expression_Yield_Await COMMA . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3765)
+    // State(3771)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3766)
+    // State(3772)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3767)
+    // State(3773)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3768)
+    // State(3774)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN . _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
     //   [_FALSY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3769)
+    // State(3775)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3770)
+    // State(3776)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3771)
+    // State(3777)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN . _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
     //   [_NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3772)
+    // State(3778)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3773)
+    // State(3779)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN . _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
     //   [_TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3774)
+    // State(3780)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3775)
+    // State(3781)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . ASSIGN AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
@@ -14137,187 +14165,186 @@ pub static TABLE: [Goal; 4260] = [
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await . IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await .]*
     Goal::Div,
-    // State(3776)
+    // State(3782)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3777)
+    // State(3783)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3778)
+    // State(3784)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND . _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await]*
     //   [_FALSY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3779)
+    // State(3785)
     //   [LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR . _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield_Await]*
     //   [_TRUTHY_SHORT_CIRCUIT_ -> (empty) .]*
     Goal::RegExp,
-    // State(3780)
+    // State(3786)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GT . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3781)
+    // State(3787)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GTE . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3782)
+    // State(3788)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await INSTANCEOF . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3783)
+    // State(3789)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LT . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3784)
+    // State(3790)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LTE . ShiftExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3785)
+    // State(3791)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL . _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await]*
     //   [_THEN_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3786)
+    // State(3792)
     //   [FormalParameters_Yield -> (empty) .]*
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN . FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3787)
+    // State(3793)
     //   [FormalParameters -> (empty) .]*
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN . FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3788)
+    // State(3794)
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN . _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return]*
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN . _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE])]*
     //   [_THEN_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(3789)
+    // State(3795)
     //   [Block_Yield_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Yield_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(3790)
+    // State(3796)
     //   [SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN . CaseBlock_Yield_Await_Return]*
     Goal::Div,
-    // State(3791)
+    // State(3797)
     //   [Catch_Yield_Await_Return -> CATCH LPAREN . CatchParameter_Yield_Await RPAREN Block_Yield_Await_Return]*
     Goal::Div,
-    // State(3792)
+    // State(3798)
     //   [Catch_Yield_Await_Return -> CATCH Block_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3793)
+    // State(3799)
     //   [Finally_Yield_Await_Return -> FINALLY Block_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3794)
+    // State(3800)
     //   [TryStatement_Yield_Await_Return -> TRY Block_Yield_Await_Return Catch_Yield_Await_Return Finally_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3795)
+    // State(3801)
     //   [VariableDeclarationList_In_Yield_Await -> VariableDeclarationList_In_Yield_Await COMMA VariableDeclaration_In_Yield_Await .]*
     Goal::Div,
-    // State(3796)
+    // State(3802)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await . RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3797)
+    // State(3803)
     //   [WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3798)
+    // State(3804)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await . RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3799)
+    // State(3805)
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3800)
+    // State(3806)
     //   [FunctionStatementList -> (empty) .]*
     //   [MethodDefinition_Yield -> GET ClassElementName_Yield LPAREN RPAREN LBRACE . FunctionBody RBRACE]*
     Goal::RegExp,
-    // State(3801)
+    // State(3807)
     //   [GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield RPAREN . LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3802)
+    // State(3808)
     //   [MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN PropertySetParameterList RPAREN . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3803)
+    // State(3809)
     //   [FunctionStatementList -> (empty) .]*
     //   [MethodDefinition_Yield -> ClassElementName_Yield LPAREN UniqueFormalParameters RPAREN LBRACE . FunctionBody RBRACE]*
     Goal::RegExp,
-    // State(3804)
+    // State(3810)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingIdentifier_Yield RPAREN .]*
     Goal::TemplateTail,
-    // State(3805)
+    // State(3811)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield -> LPAREN Expression_In_Yield COMMA ELLIPSIS BindingPattern_Yield RPAREN .]*
     Goal::TemplateTail,
-    // State(3806)
+    // State(3812)
     //   [ArgumentList_Yield -> ArgumentList_Yield COMMA ELLIPSIS AssignmentExpression_In_Yield .]*
     Goal::Div,
-    // State(3807)
+    // State(3813)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [TemplateMiddleList_Yield_Tagged -> TemplateMiddleList_Yield_Tagged TEMPLATE_MIDDLE Expression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3808)
+    // State(3814)
     //   [ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ . AssignmentExpression_In_Yield]*
     Goal::RegExp,
-    // State(3809)
+    // State(3815)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield LPAREN . FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [FormalParameters_Yield_Await -> (empty) .]*
     Goal::Div,
-    // State(3810)
+    // State(3816)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3811)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield . RPAREN SEMICOLON]*
-    //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
-    Goal::Div,
-    // State(3812)
+    // State(3817)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN . Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
+    // State(3818)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody]*
     Goal::RegExp,
-    // State(3813)
+    // State(3819)
     //   [Initializer_Yield -> ASSIGN . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3814)
+    // State(3820)
     //   [LexicalBinding_Yield -> BindingIdentifier_Yield Initializer_Yield .]*
     Goal::Div,
-    // State(3815)
+    // State(3821)
     //   [BindingList_Yield -> BindingList_Yield COMMA . LexicalBinding_Yield]*
     Goal::Div,
-    // State(3816)
+    // State(3822)
     //   [LexicalDeclaration_Yield -> CONST BindingList_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3817)
+    // State(3823)
     //   [LexicalBinding_Yield -> BindingPattern_Yield Initializer_Yield .]*
     Goal::Div,
-    // State(3818)
+    // State(3824)
     //   [LexicalDeclaration_Yield -> LET BindingList_Yield SEMICOLON .]*
     Goal::RegExp,
-    // State(3819)
+    // State(3825)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3820)
+    // State(3826)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3821)
+    // State(3827)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3822)
+    // State(3828)
     //   [VariableDeclaration_Yield -> BindingIdentifier_Yield Initializer_Yield .]*
     Goal::Div,
-    // State(3823)
+    // State(3829)
     //   [VariableDeclaration_Yield -> BindingPattern_Yield Initializer_Yield .]*
     Goal::Div,
-    // State(3824)
+    // State(3830)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3825)
+    // State(3831)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF . AssignmentExpression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3826)
+    // State(3832)
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA . VariableDeclaration_Yield]*
     Goal::Div,
-    // State(3827)
+    // State(3833)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON . Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3828)
+    // State(3834)
     //   [YieldExpression -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(3829)
+    // State(3835)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . ASSIGN AssignmentExpression_Yield]*
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield]*
@@ -14325,31 +14352,31 @@ pub static TABLE: [Goal; 4260] = [
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield . AssignmentOperator AssignmentExpression_Yield]*
     //   [UpdateExpression_Yield -> LeftHandSideExpression_Yield .]*
     Goal::Div,
-    // State(3830)
+    // State(3836)
     //   [ArrowFunction_Yield -> ArrowParameters_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody .]*
     Goal::Div,
-    // State(3831)
+    // State(3837)
     //   [BitwiseANDExpression_Yield -> BitwiseANDExpression_Yield BIT_AND EqualityExpression_Yield .]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . EQ RelationalExpression_Yield]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . EQ_STRICT RelationalExpression_Yield]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . NE RelationalExpression_Yield]*
     //   [EqualityExpression_Yield -> EqualityExpression_Yield . NE_STRICT RelationalExpression_Yield]*
     Goal::Div,
-    // State(3832)
+    // State(3838)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield BIT_OR BitwiseXORExpression_Yield .]*
     //   [BitwiseXORExpression_Yield -> BitwiseXORExpression_Yield . BIT_XOR BitwiseANDExpression_Yield]*
     Goal::Div,
-    // State(3833)
+    // State(3839)
     //   [BitwiseANDExpression_Yield -> BitwiseANDExpression_Yield . BIT_AND EqualityExpression_Yield]*
     //   [BitwiseXORExpression_Yield -> BitwiseXORExpression_Yield BIT_XOR BitwiseANDExpression_Yield .]*
     Goal::Div,
-    // State(3834)
+    // State(3840)
     //   [CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ . BitwiseORExpression_Yield]*
     Goal::RegExp,
-    // State(3835)
+    // State(3841)
     //   [AsyncArrowFunction_Yield -> CoverCallExpressionAndAsyncArrowHead_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody .]*
     Goal::Div,
-    // State(3836)
+    // State(3842)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield EQ RelationalExpression_Yield .]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GTE ShiftExpression_Yield]*
@@ -14357,7 +14384,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LTE ShiftExpression_Yield]*
     Goal::Div,
-    // State(3837)
+    // State(3843)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield EQ_STRICT RelationalExpression_Yield .]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GTE ShiftExpression_Yield]*
@@ -14365,7 +14392,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LTE ShiftExpression_Yield]*
     Goal::Div,
-    // State(3838)
+    // State(3844)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield NE RelationalExpression_Yield .]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GTE ShiftExpression_Yield]*
@@ -14373,7 +14400,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LTE ShiftExpression_Yield]*
     Goal::Div,
-    // State(3839)
+    // State(3845)
     //   [EqualityExpression_Yield -> EqualityExpression_Yield NE_STRICT RelationalExpression_Yield .]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . GTE ShiftExpression_Yield]*
@@ -14381,108 +14408,108 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LT ShiftExpression_Yield]*
     //   [RelationalExpression_Yield -> RelationalExpression_Yield . LTE ShiftExpression_Yield]*
     Goal::Div,
-    // State(3840)
+    // State(3846)
     //   [Expression_Yield -> Expression_Yield COMMA AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(3841)
+    // State(3847)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3842)
+    // State(3848)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3843)
+    // State(3849)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3844)
+    // State(3850)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3845)
+    // State(3851)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3846)
+    // State(3852)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield ASSIGN AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(3847)
+    // State(3853)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3848)
+    // State(3854)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3849)
+    // State(3855)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3850)
+    // State(3856)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3851)
+    // State(3857)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield AssignmentOperator AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(3852)
+    // State(3858)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3853)
+    // State(3859)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3854)
+    // State(3860)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3855)
+    // State(3861)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_Yield]*
     Goal::RegExp,
-    // State(3856)
+    // State(3862)
     //   [LogicalORExpression_Yield -> LogicalORExpression_Yield OR _TRUTHY_SHORT_CIRCUIT_ . LogicalANDExpression_Yield]*
     Goal::RegExp,
-    // State(3857)
+    // State(3863)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield GT ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::Div,
-    // State(3858)
+    // State(3864)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield GTE ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::Div,
-    // State(3859)
+    // State(3865)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield INSTANCEOF ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::Div,
-    // State(3860)
+    // State(3866)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield LT ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::Div,
-    // State(3861)
+    // State(3867)
     //   [RelationalExpression_Yield -> RelationalExpression_Yield LTE ShiftExpression_Yield .]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SAR AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHL AdditiveExpression_Yield]*
     //   [ShiftExpression_Yield -> ShiftExpression_Yield . SHR AdditiveExpression_Yield]*
     Goal::Div,
-    // State(3862)
+    // State(3868)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ . AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(3863)
+    // State(3869)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield . RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3864)
+    // State(3870)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters . RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3865)
+    // State(3871)
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ . Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return]*
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ . Statement_Yield_Return (?![ELSE])]*
     Goal::RegExp,
-    // State(3866)
+    // State(3872)
     //   [CaseBlock_Yield_Return -> LBRACE . RBRACE]*
     //   [CaseBlock_Yield_Return -> LBRACE . CaseClauses_Yield_Return RBRACE]*
     //   [CaseBlock_Yield_Return -> LBRACE . CaseClauses_Yield_Return DefaultClause_Yield_Return RBRACE]*
@@ -14490,197 +14517,202 @@ pub static TABLE: [Goal; 4260] = [
     //   [CaseBlock_Yield_Return -> LBRACE . DefaultClause_Yield_Return RBRACE]*
     //   [CaseBlock_Yield_Return -> LBRACE . DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE]*
     Goal::Div,
-    // State(3867)
+    // State(3873)
     //   [SwitchStatement_Yield_Return -> SWITCH LPAREN Expression_In_Yield RPAREN CaseBlock_Yield_Return .]*
     Goal::RegExp,
-    // State(3868)
+    // State(3874)
     //   [CatchParameter_Yield -> BindingIdentifier_Yield .]*
     Goal::Div,
-    // State(3869)
+    // State(3875)
     //   [CatchParameter_Yield -> BindingPattern_Yield .]*
     Goal::Div,
-    // State(3870)
+    // State(3876)
     //   [Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield . RPAREN Block_Yield_Return]*
     Goal::Div,
-    // State(3871)
+    // State(3877)
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN . _CONTINUE_IF_TRUTHY_ Statement_Yield_Return]*
     //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
     Goal::RegExp,
-    // State(3872)
+    // State(3878)
     //   [WithStatement_Yield_Return -> WITH LPAREN Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(3873)
+    // State(3879)
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON .]*
+    Goal::RegExp,
+    // State(3880)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3874)
+    // State(3881)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3875)
+    // State(3882)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN . Statement_Return]*
     Goal::RegExp,
-    // State(3876)
+    // State(3883)
     //   [ForStatement_Return -> FOR LPAREN (?![LET LBRACK]) Expression SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(3877)
+    // State(3884)
     //   [IfStatement_Return -> IF LPAREN Expression_In RPAREN _THEN_BLOCK_ Statement_Return ELSE _ELSE_BLOCK_ Statement_Return .]*
     Goal::RegExp,
-    // State(3878)
+    // State(3885)
     //   [CaseClause_Return -> CASE Expression_In COLON StatementList_Return .]*
     //   [StatementList_Return -> StatementList_Return . StatementListItem_Return]*
     Goal::RegExp,
-    // State(3879)
+    // State(3886)
     //   [CaseBlock_Return -> LBRACE CaseClauses_Return DefaultClause_Return CaseClauses_Return RBRACE .]*
     Goal::RegExp,
-    // State(3880)
+    // State(3887)
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON .]*
+    Goal::RegExp,
+    // State(3888)
     //   [ForInOfStatement_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Await OF AssignmentExpression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3881)
+    // State(3889)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3882)
+    // State(3890)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3883)
+    // State(3891)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN . Statement_Await_Return]*
     Goal::RegExp,
-    // State(3884)
+    // State(3892)
     //   [ForStatement_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3885)
+    // State(3893)
     //   [IfStatement_Await_Return -> IF LPAREN Expression_In_Await RPAREN _THEN_BLOCK_ Statement_Await_Return ELSE _ELSE_BLOCK_ Statement_Await_Return .]*
     Goal::RegExp,
-    // State(3886)
+    // State(3894)
     //   [CaseClause_Await_Return -> CASE Expression_In_Await COLON StatementList_Await_Return .]*
     //   [StatementList_Await_Return -> StatementList_Await_Return . StatementListItem_Await_Return]*
     Goal::RegExp,
-    // State(3887)
+    // State(3895)
     //   [CaseBlock_Await_Return -> LBRACE CaseClauses_Await_Return DefaultClause_Await_Return CaseClauses_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(3888)
+    // State(3896)
     //   [AsyncGeneratorDeclaration_Await_Default -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(3889)
+    // State(3897)
     //   [FunctionDeclaration_Await_Default -> FUNCTION BindingIdentifier_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(3890)
+    // State(3898)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await . RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3891)
+    // State(3899)
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3892)
+    // State(3900)
     //   [FunctionStatementList -> (empty) .]*
     //   [MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await LPAREN RPAREN LBRACE . FunctionBody RBRACE]*
     Goal::RegExp,
-    // State(3893)
+    // State(3901)
     //   [GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield RPAREN . LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3894)
+    // State(3902)
     //   [MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN PropertySetParameterList RPAREN . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3895)
+    // State(3903)
     //   [FunctionStatementList -> (empty) .]*
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN UniqueFormalParameters RPAREN LBRACE . FunctionBody RBRACE]*
     Goal::RegExp,
-    // State(3896)
+    // State(3904)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingIdentifier_Yield_Await RPAREN .]*
     Goal::TemplateTail,
-    // State(3897)
+    // State(3905)
     //   [CoverParenthesizedExpressionAndArrowParameterList_Yield_Await -> LPAREN Expression_In_Yield_Await COMMA ELLIPSIS BindingPattern_Yield_Await RPAREN .]*
     Goal::TemplateTail,
-    // State(3898)
+    // State(3906)
     //   [ArgumentList_Yield_Await -> ArgumentList_Yield_Await COMMA ELLIPSIS AssignmentExpression_In_Yield_Await .]*
     Goal::Div,
-    // State(3899)
+    // State(3907)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [TemplateMiddleList_Yield_Await_Tagged -> TemplateMiddleList_Yield_Await_Tagged TEMPLATE_MIDDLE Expression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(3900)
+    // State(3908)
     //   [ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ . AssignmentExpression_In_Yield_Await]*
     Goal::RegExp,
-    // State(3901)
+    // State(3909)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN . FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     //   [FormalParameters_Yield_Await -> (empty) .]*
     Goal::Div,
-    // State(3902)
+    // State(3910)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await . RPAREN LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3903)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await . RPAREN SEMICOLON]*
-    //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
-    Goal::Div,
-    // State(3904)
+    // State(3911)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN . Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    Goal::RegExp,
+    // State(3912)
     //   [ForBinding_Yield_Await -> BindingIdentifier_Yield_Await .]*
     Goal::Div,
-    // State(3905)
+    // State(3913)
     //   [ForBinding_Yield_Await -> BindingPattern_Yield_Await .]*
     Goal::Div,
-    // State(3906)
+    // State(3914)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await . OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3907)
+    // State(3915)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3908)
+    // State(3916)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3909)
+    // State(3917)
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW . AsyncConciseBody]*
     Goal::RegExp,
-    // State(3910)
+    // State(3918)
     //   [Initializer_Yield_Await -> ASSIGN . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3911)
+    // State(3919)
     //   [LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await Initializer_Yield_Await .]*
     Goal::Div,
-    // State(3912)
+    // State(3920)
     //   [BindingList_Yield_Await -> BindingList_Yield_Await COMMA . LexicalBinding_Yield_Await]*
     Goal::Div,
-    // State(3913)
+    // State(3921)
     //   [LexicalDeclaration_Yield_Await -> CONST BindingList_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3914)
+    // State(3922)
     //   [LexicalBinding_Yield_Await -> BindingPattern_Yield_Await Initializer_Yield_Await .]*
     Goal::Div,
-    // State(3915)
+    // State(3923)
     //   [LexicalDeclaration_Yield_Await -> LET BindingList_Yield_Await SEMICOLON .]*
     Goal::RegExp,
-    // State(3916)
+    // State(3924)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3917)
+    // State(3925)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3918)
+    // State(3926)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3919)
+    // State(3927)
     //   [VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await Initializer_Yield_Await .]*
     Goal::Div,
-    // State(3920)
+    // State(3928)
     //   [VariableDeclaration_Yield_Await -> BindingPattern_Yield_Await Initializer_Yield_Await .]*
     Goal::Div,
-    // State(3921)
+    // State(3929)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await IN . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3922)
+    // State(3930)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3923)
+    // State(3931)
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA . VariableDeclaration_Yield_Await]*
     Goal::Div,
-    // State(3924)
+    // State(3932)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON . Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3925)
+    // State(3933)
     //   [YieldExpression_Await -> YIELD (!LINE_TERMINATOR_SEQUENCE) MUL AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(3926)
+    // State(3934)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . ASSIGN AssignmentExpression_Yield_Await]*
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await]*
@@ -14688,31 +14720,31 @@ pub static TABLE: [Goal; 4260] = [
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await . AssignmentOperator AssignmentExpression_Yield_Await]*
     //   [UpdateExpression_Yield_Await -> LeftHandSideExpression_Yield_Await .]*
     Goal::Div,
-    // State(3927)
+    // State(3935)
     //   [ArrowFunction_Yield_Await -> ArrowParameters_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW ConciseBody .]*
     Goal::Div,
-    // State(3928)
+    // State(3936)
     //   [BitwiseANDExpression_Yield_Await -> BitwiseANDExpression_Yield_Await BIT_AND EqualityExpression_Yield_Await .]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . EQ RelationalExpression_Yield_Await]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . EQ_STRICT RelationalExpression_Yield_Await]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . NE RelationalExpression_Yield_Await]*
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await . NE_STRICT RelationalExpression_Yield_Await]*
     Goal::Div,
-    // State(3929)
+    // State(3937)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await BIT_OR BitwiseXORExpression_Yield_Await .]*
     //   [BitwiseXORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await . BIT_XOR BitwiseANDExpression_Yield_Await]*
     Goal::Div,
-    // State(3930)
+    // State(3938)
     //   [BitwiseANDExpression_Yield_Await -> BitwiseANDExpression_Yield_Await . BIT_AND EqualityExpression_Yield_Await]*
     //   [BitwiseXORExpression_Yield_Await -> BitwiseXORExpression_Yield_Await BIT_XOR BitwiseANDExpression_Yield_Await .]*
     Goal::Div,
-    // State(3931)
+    // State(3939)
     //   [CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ . BitwiseORExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3932)
+    // State(3940)
     //   [AsyncArrowFunction_Yield_Await -> CoverCallExpressionAndAsyncArrowHead_Yield_Await (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody .]*
     Goal::Div,
-    // State(3933)
+    // State(3941)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ RelationalExpression_Yield_Await .]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -14720,7 +14752,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::Div,
-    // State(3934)
+    // State(3942)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await EQ_STRICT RelationalExpression_Yield_Await .]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -14728,7 +14760,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::Div,
-    // State(3935)
+    // State(3943)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE RelationalExpression_Yield_Await .]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -14736,7 +14768,7 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::Div,
-    // State(3936)
+    // State(3944)
     //   [EqualityExpression_Yield_Await -> EqualityExpression_Yield_Await NE_STRICT RelationalExpression_Yield_Await .]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . GTE ShiftExpression_Yield_Await]*
@@ -14744,108 +14776,108 @@ pub static TABLE: [Goal; 4260] = [
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LT ShiftExpression_Yield_Await]*
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await . LTE ShiftExpression_Yield_Await]*
     Goal::Div,
-    // State(3937)
+    // State(3945)
     //   [Expression_Yield_Await -> Expression_Yield_Await COMMA AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(3938)
+    // State(3946)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3939)
+    // State(3947)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3940)
+    // State(3948)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3941)
+    // State(3949)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3942)
+    // State(3950)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3943)
+    // State(3951)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await ASSIGN AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(3944)
+    // State(3952)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3945)
+    // State(3953)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3946)
+    // State(3954)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3947)
+    // State(3955)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3948)
+    // State(3956)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AssignmentOperator AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(3949)
+    // State(3957)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3950)
+    // State(3958)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(3951)
+    // State(3959)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(3952)
+    // State(3960)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _FALSY_SHORT_CIRCUIT_ . BitwiseORExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3953)
+    // State(3961)
     //   [LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ . LogicalANDExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3954)
+    // State(3962)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GT ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::Div,
-    // State(3955)
+    // State(3963)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await GTE ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::Div,
-    // State(3956)
+    // State(3964)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await INSTANCEOF ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::Div,
-    // State(3957)
+    // State(3965)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LT ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::Div,
-    // State(3958)
+    // State(3966)
     //   [RelationalExpression_Yield_Await -> RelationalExpression_Yield_Await LTE ShiftExpression_Yield_Await .]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SAR AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHL AdditiveExpression_Yield_Await]*
     //   [ShiftExpression_Yield_Await -> ShiftExpression_Yield_Await . SHR AdditiveExpression_Yield_Await]*
     Goal::Div,
-    // State(3959)
+    // State(3967)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ . AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(3960)
+    // State(3968)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield . RPAREN LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(3961)
+    // State(3969)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters . RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(3962)
+    // State(3970)
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ . Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return]*
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ . Statement_Yield_Await_Return (?![ELSE])]*
     Goal::RegExp,
-    // State(3963)
+    // State(3971)
     //   [CaseBlock_Yield_Await_Return -> LBRACE . RBRACE]*
     //   [CaseBlock_Yield_Await_Return -> LBRACE . CaseClauses_Yield_Await_Return RBRACE]*
     //   [CaseBlock_Yield_Await_Return -> LBRACE . CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return RBRACE]*
@@ -14853,985 +14885,1001 @@ pub static TABLE: [Goal; 4260] = [
     //   [CaseBlock_Yield_Await_Return -> LBRACE . DefaultClause_Yield_Await_Return RBRACE]*
     //   [CaseBlock_Yield_Await_Return -> LBRACE . DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE]*
     Goal::Div,
-    // State(3964)
+    // State(3972)
     //   [SwitchStatement_Yield_Await_Return -> SWITCH LPAREN Expression_In_Yield_Await RPAREN CaseBlock_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3965)
+    // State(3973)
     //   [CatchParameter_Yield_Await -> BindingIdentifier_Yield_Await .]*
     Goal::Div,
-    // State(3966)
+    // State(3974)
     //   [CatchParameter_Yield_Await -> BindingPattern_Yield_Await .]*
     Goal::Div,
-    // State(3967)
+    // State(3975)
     //   [Catch_Yield_Await_Return -> CATCH LPAREN CatchParameter_Yield_Await . RPAREN Block_Yield_Await_Return]*
     Goal::Div,
-    // State(3968)
+    // State(3976)
     //   [WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN . _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return]*
     //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
     Goal::RegExp,
-    // State(3969)
+    // State(3977)
     //   [WithStatement_Yield_Await_Return -> WITH LPAREN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(3970)
+    // State(3978)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3971)
+    // State(3979)
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(3972)
+    // State(3980)
     //   [MethodDefinition_Yield -> GET ClassElementName_Yield LPAREN RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(3973)
+    // State(3981)
     //   [FunctionStatementList_Yield -> (empty) .]*
     //   [GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield RPAREN LBRACE . GeneratorBody RBRACE]*
     Goal::RegExp,
-    // State(3974)
+    // State(3982)
     //   [FunctionStatementList -> (empty) .]*
     //   [MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN PropertySetParameterList RPAREN LBRACE . FunctionBody RBRACE]*
     Goal::RegExp,
-    // State(3975)
+    // State(3983)
     //   [MethodDefinition_Yield -> ClassElementName_Yield LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(3976)
+    // State(3984)
     //   [ConditionalExpression_In_Yield -> ShortCircuitExpression_In_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield .]*
     Goal::TemplateTail,
-    // State(3977)
+    // State(3985)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await . RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(3978)
+    // State(3986)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(3979)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . SEMICOLON]*
+    // State(3987)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield . RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     Goal::Div,
-    // State(3980)
+    // State(3988)
     //   [AsyncArrowFunction_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody .]*
     Goal::Div,
-    // State(3981)
+    // State(3989)
     //   [Initializer_Yield -> ASSIGN AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(3982)
+    // State(3990)
     //   [LexicalBinding_Yield -> BindingIdentifier_Yield .]*
     //   [LexicalBinding_Yield -> BindingIdentifier_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3983)
+    // State(3991)
     //   [LexicalBinding_Yield -> BindingPattern_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3984)
+    // State(3992)
     //   [BindingList_Yield -> BindingList_Yield COMMA LexicalBinding_Yield .]*
     Goal::Div,
-    // State(3985)
+    // State(3993)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(3986)
+    // State(3994)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3987)
+    // State(3995)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3988)
+    // State(3996)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3989)
+    // State(3997)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3990)
+    // State(3998)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3991)
+    // State(3999)
     //   [VariableDeclaration_Yield -> BindingIdentifier_Yield .]*
     //   [VariableDeclaration_Yield -> BindingIdentifier_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3992)
+    // State(4000)
     //   [VariableDeclaration_Yield -> BindingPattern_Yield . Initializer_Yield]*
     Goal::Div,
-    // State(3993)
+    // State(4001)
     //   [VariableDeclarationList_Yield -> VariableDeclarationList_Yield COMMA VariableDeclaration_Yield .]*
     Goal::Div,
-    // State(3994)
+    // State(4002)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3995)
+    // State(4003)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield . SEMICOLON RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield . SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3996)
+    // State(4004)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield . BIT_OR BitwiseXORExpression_Yield]*
     //   [CoalesceExpression_Yield -> CoalesceExpressionHead_Yield NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield .]*
     Goal::Div,
-    // State(3997)
+    // State(4005)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(3998)
+    // State(4006)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(3999)
+    // State(4007)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4000)
+    // State(4008)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4001)
+    // State(4009)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4002)
+    // State(4010)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(4003)
+    // State(4011)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4004)
+    // State(4012)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(4005)
+    // State(4013)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4006)
+    // State(4014)
     //   [AssignmentExpression_Yield -> LeftHandSideExpression_Yield OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(4007)
+    // State(4015)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4008)
+    // State(4016)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4009)
+    // State(4017)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4010)
+    // State(4018)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(4011)
+    // State(4019)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield . BIT_OR BitwiseXORExpression_Yield]*
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield .]*
     Goal::Div,
-    // State(4012)
+    // State(4020)
     //   [BitwiseORExpression_Yield -> BitwiseORExpression_Yield . BIT_OR BitwiseXORExpression_Yield]*
     //   [LogicalANDExpression_Yield -> BitwiseORExpression_Yield .]*
     Goal::Div,
-    // State(4013)
+    // State(4021)
     //   [LogicalANDExpression_Yield -> LogicalANDExpression_Yield . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield]*
     //   [LogicalORExpression_Yield -> LogicalORExpression_Yield OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield .]*
     Goal::Div,
-    // State(4014)
+    // State(4022)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield . COLON _ELSE_BLOCK_ AssignmentExpression_Yield]*
     Goal::Div,
-    // State(4015)
+    // State(4023)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN . LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(4016)
+    // State(4024)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN . _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_SIGNATURE_ -> (empty) .]*
     Goal::Div,
-    // State(4017)
+    // State(4025)
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return . ELSE _ELSE_BLOCK_ Statement_Yield_Return]*
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return . (?![ELSE])]*
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return (?![ELSE]) .]*
     Goal::RegExp,
-    // State(4018)
+    // State(4026)
     //   [CaseClause_Yield_Return -> CASE . Expression_In_Yield COLON]*
     //   [CaseClause_Yield_Return -> CASE . Expression_In_Yield COLON StatementList_Yield_Return]*
     Goal::RegExp,
-    // State(4019)
+    // State(4027)
     //   [DefaultClause_Yield_Return -> DEFAULT . COLON]*
     //   [DefaultClause_Yield_Return -> DEFAULT . COLON StatementList_Yield_Return]*
     Goal::Div,
-    // State(4020)
+    // State(4028)
     //   [CaseBlock_Yield_Return -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(4021)
+    // State(4029)
     //   [CaseClauses_Yield_Return -> CaseClause_Yield_Return .]*
     Goal::Div,
-    // State(4022)
+    // State(4030)
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return . RBRACE]*
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return . DefaultClause_Yield_Return RBRACE]*
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return . DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE]*
     //   [CaseClauses_Yield_Return -> CaseClauses_Yield_Return . CaseClause_Yield_Return]*
     Goal::Div,
-    // State(4023)
+    // State(4031)
     //   [CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return . RBRACE]*
     //   [CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return . CaseClauses_Yield_Return RBRACE]*
     Goal::Div,
-    // State(4024)
+    // State(4032)
     //   [Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield RPAREN . Block_Yield_Return]*
     Goal::Div,
-    // State(4025)
+    // State(4033)
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4026)
+    // State(4034)
     //   [ForStatement_Return -> FOR LPAREN VAR VariableDeclarationList SEMICOLON Expression_In SEMICOLON Expression_In RPAREN Statement_Return .]*
     Goal::RegExp,
-    // State(4027)
+    // State(4035)
     //   [ForStatement_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Await SEMICOLON Expression_In_Await SEMICOLON Expression_In_Await RPAREN Statement_Await_Return .]*
     Goal::RegExp,
-    // State(4028)
+    // State(4036)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(4029)
+    // State(4037)
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(4030)
+    // State(4038)
     //   [MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await LPAREN RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(4031)
+    // State(4039)
     //   [FunctionStatementList_Yield -> (empty) .]*
     //   [GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE . GeneratorBody RBRACE]*
     Goal::RegExp,
-    // State(4032)
+    // State(4040)
     //   [FunctionStatementList -> (empty) .]*
     //   [MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN PropertySetParameterList RPAREN LBRACE . FunctionBody RBRACE]*
     Goal::RegExp,
-    // State(4033)
+    // State(4041)
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(4034)
+    // State(4042)
     //   [ConditionalExpression_In_Yield_Await -> ShortCircuitExpression_In_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_In_Yield_Await .]*
     Goal::TemplateTail,
-    // State(4035)
+    // State(4043)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await . RPAREN LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(4036)
+    // State(4044)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN . LBRACE AsyncFunctionBody RBRACE]*
     Goal::Div,
-    // State(4037)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . SEMICOLON]*
+    // State(4045)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await . RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::Div,
-    // State(4038)
+    // State(4046)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF . AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4039)
+    // State(4047)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4040)
+    // State(4048)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4041)
+    // State(4049)
     //   [AsyncArrowFunction_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) AsyncArrowBindingIdentifier_Yield (!LINE_TERMINATOR_SEQUENCE) ARROW AsyncConciseBody .]*
     Goal::Div,
-    // State(4042)
+    // State(4050)
     //   [Initializer_Yield_Await -> ASSIGN AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(4043)
+    // State(4051)
     //   [LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [LexicalBinding_Yield_Await -> BindingIdentifier_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(4044)
+    // State(4052)
     //   [LexicalBinding_Yield_Await -> BindingPattern_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(4045)
+    // State(4053)
     //   [BindingList_Yield_Await -> BindingList_Yield_Await COMMA LexicalBinding_Yield_Await .]*
     Goal::Div,
-    // State(4046)
+    // State(4054)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4047)
+    // State(4055)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4048)
+    // State(4056)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4049)
+    // State(4057)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4050)
+    // State(4058)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await IN Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4051)
+    // State(4059)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4052)
+    // State(4060)
     //   [VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await .]*
     //   [VariableDeclaration_Yield_Await -> BindingIdentifier_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(4053)
+    // State(4061)
     //   [VariableDeclaration_Yield_Await -> BindingPattern_Yield_Await . Initializer_Yield_Await]*
     Goal::Div,
-    // State(4054)
+    // State(4062)
     //   [VariableDeclarationList_Yield_Await -> VariableDeclarationList_Yield_Await COMMA VariableDeclaration_Yield_Await .]*
     Goal::Div,
-    // State(4055)
+    // State(4063)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4056)
+    // State(4064)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await . SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4057)
+    // State(4065)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await . BIT_OR BitwiseXORExpression_Yield_Await]*
     //   [CoalesceExpression_Yield_Await -> CoalesceExpressionHead_Yield_Await NULLISH _NULLISH_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await .]*
     Goal::Div,
-    // State(4058)
+    // State(4066)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4059)
+    // State(4067)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4060)
+    // State(4068)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4061)
+    // State(4069)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4062)
+    // State(4070)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4063)
+    // State(4071)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await AND_ASSIGN _FALSY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(4064)
+    // State(4072)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4065)
+    // State(4073)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await NULLISH_ASSIGN _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(4066)
+    // State(4074)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4067)
+    // State(4075)
     //   [AssignmentExpression_Yield_Await -> LeftHandSideExpression_Yield_Await OR_ASSIGN _TRUTHY_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(4068)
+    // State(4076)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4069)
+    // State(4077)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4070)
+    // State(4078)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4071)
+    // State(4079)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4072)
+    // State(4080)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await . BIT_OR BitwiseXORExpression_Yield_Await]*
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await .]*
     Goal::Div,
-    // State(4073)
+    // State(4081)
     //   [BitwiseORExpression_Yield_Await -> BitwiseORExpression_Yield_Await . BIT_OR BitwiseXORExpression_Yield_Await]*
     //   [LogicalANDExpression_Yield_Await -> BitwiseORExpression_Yield_Await .]*
     Goal::Div,
-    // State(4074)
+    // State(4082)
     //   [LogicalANDExpression_Yield_Await -> LogicalANDExpression_Yield_Await . AND _FALSY_SHORT_CIRCUIT_ BitwiseORExpression_Yield_Await]*
     //   [LogicalORExpression_Yield_Await -> LogicalORExpression_Yield_Await OR _TRUTHY_SHORT_CIRCUIT_ LogicalANDExpression_Yield_Await .]*
     Goal::Div,
-    // State(4075)
+    // State(4083)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await . COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await]*
     Goal::Div,
-    // State(4076)
+    // State(4084)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN . LBRACE GeneratorBody RBRACE]*
     Goal::Div,
-    // State(4077)
+    // State(4085)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN . _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE]*
     //   [_FUNCTION_SIGNATURE_ -> (empty) .]*
     Goal::Div,
-    // State(4078)
+    // State(4086)
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return . ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return]*
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return . (?![ELSE])]*
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return (?![ELSE]) .]*
     Goal::RegExp,
-    // State(4079)
+    // State(4087)
     //   [CaseClause_Yield_Await_Return -> CASE . Expression_In_Yield_Await COLON]*
     //   [CaseClause_Yield_Await_Return -> CASE . Expression_In_Yield_Await COLON StatementList_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4080)
+    // State(4088)
     //   [DefaultClause_Yield_Await_Return -> DEFAULT . COLON]*
     //   [DefaultClause_Yield_Await_Return -> DEFAULT . COLON StatementList_Yield_Await_Return]*
     Goal::Div,
-    // State(4081)
+    // State(4089)
     //   [CaseBlock_Yield_Await_Return -> LBRACE RBRACE .]*
     Goal::RegExp,
-    // State(4082)
+    // State(4090)
     //   [CaseClauses_Yield_Await_Return -> CaseClause_Yield_Await_Return .]*
     Goal::Div,
-    // State(4083)
+    // State(4091)
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return . RBRACE]*
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return . DefaultClause_Yield_Await_Return RBRACE]*
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return . DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE]*
     //   [CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return . CaseClause_Yield_Await_Return]*
     Goal::Div,
-    // State(4084)
+    // State(4092)
     //   [CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return . RBRACE]*
     //   [CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return . CaseClauses_Yield_Await_Return RBRACE]*
     Goal::Div,
-    // State(4085)
+    // State(4093)
     //   [Catch_Yield_Await_Return -> CATCH LPAREN CatchParameter_Yield_Await RPAREN . Block_Yield_Await_Return]*
     Goal::Div,
-    // State(4086)
+    // State(4094)
     //   [WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4087)
+    // State(4095)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(4088)
+    // State(4096)
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(4089)
+    // State(4097)
     //   [MethodDefinition_Yield -> GET ClassElementName_Yield LPAREN RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(4090)
+    // State(4098)
     //   [GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4091)
+    // State(4099)
     //   [MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(4092)
+    // State(4100)
     //   [MethodDefinition_Yield -> ClassElementName_Yield LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(4093)
+    // State(4101)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(4094)
+    // State(4102)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(4095)
-    //   [DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN SEMICOLON .]*
-    Goal::RegExp,
-    // State(4096)
+    // State(4103)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    Goal::Div,
+    // State(4104)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4097)
+    // State(4105)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4098)
+    // State(4106)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4099)
+    // State(4107)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4100)
+    // State(4108)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4101)
+    // State(4109)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4102)
+    // State(4110)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(4103)
+    // State(4111)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . RPAREN Statement_Yield_Return]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON . Expression_In_Yield RPAREN Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4104)
+    // State(4112)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4105)
+    // State(4113)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4106)
+    // State(4114)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4107)
+    // State(4115)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(4108)
+    // State(4116)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4109)
+    // State(4117)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN ForDeclaration_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4110)
+    // State(4118)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4111)
+    // State(4119)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4112)
+    // State(4120)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4113)
+    // State(4121)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4114)
+    // State(4122)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4115)
+    // State(4123)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON . _ELSE_BLOCK_ AssignmentExpression_Yield]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(4116)
+    // State(4124)
     //   [FunctionStatementList_Yield -> (empty) .]*
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE . GeneratorBody RBRACE]*
     Goal::RegExp,
-    // State(4117)
+    // State(4125)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(4118)
+    // State(4126)
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE . _ELSE_BLOCK_ Statement_Yield_Return]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(4119)
+    // State(4127)
     //   [CaseClause_Yield_Return -> CASE Expression_In_Yield . COLON]*
     //   [CaseClause_Yield_Return -> CASE Expression_In_Yield . COLON StatementList_Yield_Return]*
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     Goal::Div,
-    // State(4120)
+    // State(4128)
     //   [DefaultClause_Yield_Return -> DEFAULT COLON .]*
     //   [DefaultClause_Yield_Return -> DEFAULT COLON . StatementList_Yield_Return]*
     Goal::RegExp,
-    // State(4121)
+    // State(4129)
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return RBRACE .]*
     Goal::RegExp,
-    // State(4122)
+    // State(4130)
     //   [CaseClauses_Yield_Return -> CaseClauses_Yield_Return CaseClause_Yield_Return .]*
     Goal::Div,
-    // State(4123)
+    // State(4131)
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return . RBRACE]*
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return . CaseClauses_Yield_Return RBRACE]*
     Goal::Div,
-    // State(4124)
+    // State(4132)
     //   [CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return RBRACE .]*
     Goal::RegExp,
-    // State(4125)
+    // State(4133)
     //   [CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return CaseClauses_Yield_Return . RBRACE]*
     //   [CaseClauses_Yield_Return -> CaseClauses_Yield_Return . CaseClause_Yield_Return]*
     Goal::Div,
-    // State(4126)
+    // State(4134)
     //   [Catch_Yield_Return -> CATCH LPAREN CatchParameter_Yield RPAREN Block_Yield_Return .]*
     Goal::RegExp,
-    // State(4127)
+    // State(4135)
     //   [WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4128)
+    // State(4136)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(4129)
+    // State(4137)
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(4130)
+    // State(4138)
     //   [MethodDefinition_Yield_Await -> GET ClassElementName_Yield_Await LPAREN RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(4131)
+    // State(4139)
     //   [GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4132)
+    // State(4140)
     //   [MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(4133)
+    // State(4141)
     //   [MethodDefinition_Yield_Await -> ClassElementName_Yield_Await LPAREN UniqueFormalParameters RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(4134)
+    // State(4142)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN . LBRACE AsyncGeneratorBody RBRACE]*
     Goal::Div,
-    // State(4135)
+    // State(4143)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE . AsyncFunctionBody RBRACE]*
     //   [FunctionStatementList_Await -> (empty) .]*
     Goal::RegExp,
-    // State(4136)
-    //   [DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN SEMICOLON .]*
-    Goal::RegExp,
-    // State(4137)
+    // State(4144)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    Goal::Div,
+    // State(4145)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4138)
+    // State(4146)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4139)
+    // State(4147)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4140)
+    // State(4148)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4141)
+    // State(4149)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4142)
+    // State(4150)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4143)
+    // State(4151)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4144)
+    // State(4152)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4145)
+    // State(4153)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4146)
+    // State(4154)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4147)
+    // State(4155)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . RPAREN Statement_Yield_Await_Return]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON . Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4148)
+    // State(4156)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4149)
+    // State(4157)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4150)
+    // State(4158)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4151)
+    // State(4159)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4152)
+    // State(4160)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4153)
+    // State(4161)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4154)
+    // State(4162)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) LeftHandSideExpression_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4155)
+    // State(4163)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN (?![ASYNC OF, LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4156)
+    // State(4164)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4157)
+    // State(4165)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4158)
+    // State(4166)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4159)
+    // State(4167)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON . _ELSE_BLOCK_ AssignmentExpression_Yield_Await]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(4160)
+    // State(4168)
     //   [FunctionStatementList_Yield -> (empty) .]*
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE . GeneratorBody RBRACE]*
     Goal::RegExp,
-    // State(4161)
+    // State(4169)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ . LBRACE FunctionBody RBRACE]*
     Goal::Div,
-    // State(4162)
+    // State(4170)
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE . _ELSE_BLOCK_ Statement_Yield_Await_Return]*
     //   [_ELSE_BLOCK_ -> (empty) .]*
     Goal::RegExp,
-    // State(4163)
+    // State(4171)
     //   [CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await . COLON]*
     //   [CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await . COLON StatementList_Yield_Await_Return]*
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     Goal::Div,
-    // State(4164)
+    // State(4172)
     //   [DefaultClause_Yield_Await_Return -> DEFAULT COLON .]*
     //   [DefaultClause_Yield_Await_Return -> DEFAULT COLON . StatementList_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4165)
+    // State(4173)
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(4166)
+    // State(4174)
     //   [CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return CaseClause_Yield_Await_Return .]*
     Goal::Div,
-    // State(4167)
+    // State(4175)
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return . RBRACE]*
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return . CaseClauses_Yield_Await_Return RBRACE]*
     Goal::Div,
-    // State(4168)
+    // State(4176)
     //   [CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(4169)
+    // State(4177)
     //   [CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return . RBRACE]*
     //   [CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return . CaseClause_Yield_Await_Return]*
     Goal::Div,
-    // State(4170)
+    // State(4178)
     //   [Catch_Yield_Await_Return -> CATCH LPAREN CatchParameter_Yield_Await RPAREN Block_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4171)
+    // State(4179)
     //   [WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4172)
+    // State(4180)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4173)
+    // State(4181)
     //   [AsyncMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::Div,
-    // State(4174)
+    // State(4182)
     //   [GeneratorMethod_Yield -> MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::Div,
-    // State(4175)
+    // State(4183)
     //   [MethodDefinition_Yield -> SET ClassElementName_Yield LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(4176)
+    // State(4184)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(4177)
+    // State(4185)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(4178)
+    // State(4186)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ . SEMICOLON]*
+    Goal::Div,
+    // State(4187)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4179)
+    // State(4188)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield IN Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4180)
+    // State(4189)
     //   [ForInOfStatement_Yield_Return -> FOR LPAREN VAR ForBinding_Yield OF AssignmentExpression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4181)
+    // State(4190)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4182)
+    // State(4191)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4183)
+    // State(4192)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4184)
+    // State(4193)
     //   [Expression_In_Yield -> Expression_In_Yield . COMMA AssignmentExpression_In_Yield]*
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield . RPAREN Statement_Yield_Return]*
     Goal::Div,
-    // State(4185)
+    // State(4194)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4186)
+    // State(4195)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4187)
+    // State(4196)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4188)
+    // State(4197)
     //   [ForStatement_Yield_Return -> FOR LPAREN LexicalDeclaration_Yield Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4189)
+    // State(4198)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ . AssignmentExpression_Yield]*
     Goal::RegExp,
-    // State(4190)
+    // State(4199)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4191)
+    // State(4200)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(4192)
+    // State(4201)
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4193)
+    // State(4202)
     //   [CaseClause_Yield_Return -> CASE Expression_In_Yield COLON .]*
     //   [CaseClause_Yield_Return -> CASE Expression_In_Yield COLON . StatementList_Yield_Return]*
     Goal::RegExp,
-    // State(4194)
+    // State(4203)
     //   [DefaultClause_Yield_Return -> DEFAULT COLON StatementList_Yield_Return .]*
     //   [StatementList_Yield_Return -> StatementList_Yield_Return . StatementListItem_Yield_Return]*
     Goal::RegExp,
-    // State(4195)
+    // State(4204)
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return RBRACE .]*
     Goal::RegExp,
-    // State(4196)
+    // State(4205)
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return CaseClauses_Yield_Return . RBRACE]*
     //   [CaseClauses_Yield_Return -> CaseClauses_Yield_Return . CaseClause_Yield_Return]*
     Goal::Div,
-    // State(4197)
+    // State(4206)
     //   [CaseBlock_Yield_Return -> LBRACE DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE .]*
     Goal::RegExp,
-    // State(4198)
+    // State(4207)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4199)
+    // State(4208)
     //   [AsyncMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::Div,
-    // State(4200)
+    // State(4209)
     //   [GeneratorMethod_Yield_Await -> MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::Div,
-    // State(4201)
+    // State(4210)
     //   [MethodDefinition_Yield_Await -> SET ClassElementName_Yield_Await LPAREN PropertySetParameterList RPAREN LBRACE FunctionBody RBRACE .]*
     Goal::Div,
-    // State(4202)
+    // State(4211)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE . AsyncGeneratorBody RBRACE]*
     //   [FunctionStatementList_Yield_Await -> (empty) .]*
     Goal::RegExp,
-    // State(4203)
+    // State(4212)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody . RBRACE]*
     Goal::Div,
-    // State(4204)
+    // State(4213)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ . SEMICOLON]*
+    Goal::Div,
+    // State(4214)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4205)
+    // State(4215)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN ForDeclaration_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4206)
+    // State(4216)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN (?![LET]) LeftHandSideExpression_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4207)
+    // State(4217)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4208)
+    // State(4218)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await IN Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4209)
+    // State(4219)
     //   [ForInOfStatement_Yield_Await_Return -> FOR LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4210)
+    // State(4220)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4211)
+    // State(4221)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4212)
+    // State(4222)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4213)
+    // State(4223)
     //   [Expression_In_Yield_Await -> Expression_In_Yield_Await . COMMA AssignmentExpression_In_Yield_Await]*
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await . RPAREN Statement_Yield_Await_Return]*
     Goal::Div,
-    // State(4214)
+    // State(4224)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4215)
+    // State(4225)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4216)
+    // State(4226)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4217)
+    // State(4227)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN LexicalDeclaration_Yield_Await Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4218)
+    // State(4228)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ . AssignmentExpression_Yield_Await]*
     Goal::RegExp,
-    // State(4219)
+    // State(4229)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4220)
+    // State(4230)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE . FunctionBody RBRACE]*
     //   [FunctionStatementList -> (empty) .]*
     Goal::RegExp,
-    // State(4221)
+    // State(4231)
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4222)
+    // State(4232)
     //   [CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON .]*
     //   [CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON . StatementList_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4223)
+    // State(4233)
     //   [DefaultClause_Yield_Await_Return -> DEFAULT COLON StatementList_Yield_Await_Return .]*
     //   [StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return . StatementListItem_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4224)
+    // State(4234)
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(4225)
+    // State(4235)
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return . RBRACE]*
     //   [CaseClauses_Yield_Await_Return -> CaseClauses_Yield_Await_Return . CaseClause_Yield_Await_Return]*
     Goal::Div,
-    // State(4226)
+    // State(4236)
     //   [CaseBlock_Yield_Await_Return -> LBRACE DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(4227)
+    // State(4237)
     //   [AsyncGeneratorMethod_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::Div,
-    // State(4228)
+    // State(4238)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4229)
+    // State(4239)
     //   [AsyncFunctionDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(4230)
+    // State(4240)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON .]*
+    Goal::RegExp,
+    // State(4241)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4231)
+    // State(4242)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4232)
+    // State(4243)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN . Statement_Yield_Return]*
     Goal::RegExp,
-    // State(4233)
+    // State(4244)
     //   [ForStatement_Yield_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4234)
+    // State(4245)
     //   [ConditionalExpression_Yield -> ShortCircuitExpression_Yield CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield COLON _ELSE_BLOCK_ AssignmentExpression_Yield .]*
     Goal::Div,
-    // State(4235)
+    // State(4246)
     //   [GeneratorDeclaration_Yield -> FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(4236)
+    // State(4247)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(4237)
+    // State(4248)
     //   [IfStatement_Yield_Return -> IF LPAREN Expression_In_Yield RPAREN _THEN_BLOCK_ Statement_Yield_Return ELSE _ELSE_BLOCK_ Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4238)
+    // State(4249)
     //   [CaseClause_Yield_Return -> CASE Expression_In_Yield COLON StatementList_Yield_Return .]*
     //   [StatementList_Yield_Return -> StatementList_Yield_Return . StatementListItem_Yield_Return]*
     Goal::RegExp,
-    // State(4239)
+    // State(4250)
     //   [CaseBlock_Yield_Return -> LBRACE CaseClauses_Yield_Return DefaultClause_Yield_Return CaseClauses_Yield_Return RBRACE .]*
     Goal::RegExp,
-    // State(4240)
+    // State(4251)
     //   [AsyncGeneratorMethod_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) MUL ClassElementName_Yield_Await LPAREN UniqueFormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::Div,
-    // State(4241)
+    // State(4252)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody . RBRACE]*
     Goal::Div,
-    // State(4242)
+    // State(4253)
     //   [AsyncFunctionDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION BindingIdentifier_Yield_Await LPAREN FormalParameters_Await RPAREN LBRACE AsyncFunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(4243)
+    // State(4254)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON .]*
+    Goal::RegExp,
+    // State(4255)
     //   [ForInOfStatement_Yield_Await_Return -> FOR AWAIT LPAREN VAR ForBinding_Yield_Await OF AssignmentExpression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4244)
+    // State(4256)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4245)
+    // State(4257)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4246)
+    // State(4258)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN . Statement_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4247)
+    // State(4259)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN (?![LET LBRACK]) Expression_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4248)
+    // State(4260)
     //   [ConditionalExpression_Yield_Await -> ShortCircuitExpression_Yield_Await CONDITIONAL _THEN_BLOCK_ AssignmentExpression_In_Yield_Await COLON _ELSE_BLOCK_ AssignmentExpression_Yield_Await .]*
     Goal::Div,
-    // State(4249)
+    // State(4261)
     //   [GeneratorDeclaration_Yield_Await -> FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield RPAREN LBRACE GeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(4250)
+    // State(4262)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody . RBRACE]*
     Goal::Div,
-    // State(4251)
+    // State(4263)
     //   [IfStatement_Yield_Await_Return -> IF LPAREN Expression_In_Yield_Await RPAREN _THEN_BLOCK_ Statement_Yield_Await_Return ELSE _ELSE_BLOCK_ Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4252)
+    // State(4264)
     //   [CaseClause_Yield_Await_Return -> CASE Expression_In_Yield_Await COLON StatementList_Yield_Await_Return .]*
     //   [StatementList_Yield_Await_Return -> StatementList_Yield_Await_Return . StatementListItem_Yield_Await_Return]*
     Goal::RegExp,
-    // State(4253)
+    // State(4265)
     //   [CaseBlock_Yield_Await_Return -> LBRACE CaseClauses_Yield_Await_Return DefaultClause_Yield_Await_Return CaseClauses_Yield_Await_Return RBRACE .]*
     Goal::RegExp,
-    // State(4254)
+    // State(4266)
     //   [AsyncGeneratorDeclaration_Yield -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(4255)
+    // State(4267)
     //   [ForStatement_Yield_Return -> FOR LPAREN VAR VariableDeclarationList_Yield SEMICOLON Expression_In_Yield SEMICOLON Expression_In_Yield RPAREN Statement_Yield_Return .]*
     Goal::RegExp,
-    // State(4256)
+    // State(4268)
     //   [FunctionDeclaration_Yield -> FUNCTION BindingIdentifier_Yield _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
-    // State(4257)
+    // State(4269)
     //   [AsyncGeneratorDeclaration_Yield_Await -> ASYNC (!LINE_TERMINATOR_SEQUENCE) FUNCTION MUL BindingIdentifier_Yield_Await LPAREN FormalParameters_Yield_Await RPAREN LBRACE AsyncGeneratorBody RBRACE .]*
     Goal::RegExp,
-    // State(4258)
+    // State(4270)
     //   [ForStatement_Yield_Await_Return -> FOR LPAREN VAR VariableDeclarationList_Yield_Await SEMICOLON Expression_In_Yield_Await SEMICOLON Expression_In_Yield_Await RPAREN Statement_Yield_Await_Return .]*
     Goal::RegExp,
-    // State(4259)
+    // State(4271)
     //   [FunctionDeclaration_Yield_Await -> FUNCTION BindingIdentifier_Yield_Await _FUNCTION_CONTEXT_ LPAREN FormalParameters RPAREN _FUNCTION_SIGNATURE_ LBRACE FunctionBody RBRACE .]*
     Goal::RegExp,
 ];

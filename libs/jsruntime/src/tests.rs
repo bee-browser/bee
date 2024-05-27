@@ -623,6 +623,11 @@ fn test_eval_iife() {
 }
 
 #[test]
+fn test_eval_do_while_statement() {
+    eval!("let i = 0; do { i++ } while (i < 2); print(i)", 2);
+}
+
+#[test]
 fn test_eval_while_statement() {
     eval!("let i = 0; while (i < 2) { i++ } print(i)", 2);
 }

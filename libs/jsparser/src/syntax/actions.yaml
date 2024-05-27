@@ -269,7 +269,7 @@
 - rule: _ELSE_BLOCK_ -> (empty)
   action: process_else_block
 - rule: IterationStatement -> DoWhileStatement
-  action: undefined
+  action: nop
 - rule: IterationStatement -> WhileStatement
   action: nop
 - rule: IterationStatement -> ForStatement
@@ -555,8 +555,10 @@
     AssignmentExpression_In -> LeftHandSideExpression NULLISH_ASSIGN
     _NULLISH_SHORT_CIRCUIT_ASSIGNMENT_ AssignmentExpression_In
   action: process_nullish_coalescing_assignment
-- rule: DoWhileStatement -> DO Statement WHILE LPAREN Expression_In RPAREN SEMICOLON
-  action: undefined
+- rule: >-
+    DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In
+    RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+  action: process_do_while_statement
 - rule: >-
     WhileStatement -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN
     _CONTINUE_IF_TRUTHY_ Statement
@@ -949,7 +951,7 @@
     AssignmentExpression_In_Await
   action: undefined
 - rule: IterationStatement_Await -> DoWhileStatement_Await
-  action: undefined
+  action: nop
 - rule: IterationStatement_Await -> WhileStatement_Await
   action: nop
 - rule: IterationStatement_Await -> ForStatement_Await
@@ -1235,9 +1237,9 @@
 - rule: StatementList_Await -> StatementList_Await StatementListItem_Await
   action: undefined
 - rule: >-
-    DoWhileStatement_Await -> DO Statement_Await WHILE LPAREN
-    Expression_In_Await RPAREN SEMICOLON
-  action: undefined
+    DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN
+    Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+  action: process_do_while_statement
 - rule: >-
     WhileStatement_Await -> WHILE _LOOP_START_ LPAREN Expression_In_Await RPAREN
     _CONTINUE_IF_TRUTHY_ Statement_Await
@@ -2786,7 +2788,7 @@
 - rule: Block_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Return RBRACE
   action: process_block
 - rule: IterationStatement_Return -> DoWhileStatement_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Return -> WhileStatement_Return
   action: nop
 - rule: IterationStatement_Return -> ForStatement_Return
@@ -3180,9 +3182,9 @@
 - rule: BitwiseXORExpression -> BitwiseXORExpression BIT_XOR BitwiseANDExpression
   action: process_bitwise_xor
 - rule: >-
-    DoWhileStatement_Return -> DO Statement_Return WHILE LPAREN Expression_In
-    RPAREN SEMICOLON
-  action: undefined
+    DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN
+    Expression_In RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+  action: process_do_while_statement
 - rule: >-
     WhileStatement_Return -> WHILE _LOOP_START_ LPAREN Expression_In RPAREN
     _CONTINUE_IF_TRUTHY_ Statement_Return
@@ -3354,7 +3356,7 @@
     AssignmentExpression_In_Yield
   action: undefined
 - rule: IterationStatement_Yield_Return -> DoWhileStatement_Yield_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Yield_Return -> WhileStatement_Yield_Return
   action: nop
 - rule: IterationStatement_Yield_Return -> ForStatement_Yield_Return
@@ -3417,7 +3419,7 @@
 - rule: Block_Await_Return -> LBRACE _BLOCK_SCOPE_ StatementList_Await_Return RBRACE
   action: process_block
 - rule: IterationStatement_Await_Return -> DoWhileStatement_Await_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Await_Return -> WhileStatement_Await_Return
   action: nop
 - rule: IterationStatement_Await_Return -> ForStatement_Await_Return
@@ -3522,7 +3524,7 @@
     AssignmentExpression_In_Yield_Await
   action: undefined
 - rule: IterationStatement_Yield_Await_Return -> DoWhileStatement_Yield_Await_Return
-  action: undefined
+  action: nop
 - rule: IterationStatement_Yield_Await_Return -> WhileStatement_Yield_Await_Return
   action: nop
 - rule: IterationStatement_Yield_Await_Return -> ForStatement_Yield_Await_Return
@@ -3742,9 +3744,9 @@
 - rule: VariableDeclaration_In_Yield -> BindingPattern_Yield Initializer_In_Yield
   action: undefined
 - rule: >-
-    DoWhileStatement_Yield_Return -> DO Statement_Yield_Return WHILE LPAREN
-    Expression_In_Yield RPAREN SEMICOLON
-  action: undefined
+    DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return
+    WHILE LPAREN Expression_In_Yield RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+  action: process_do_while_statement
 - rule: >-
     WhileStatement_Yield_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Yield
     RPAREN _CONTINUE_IF_TRUTHY_ Statement_Yield_Return
@@ -3876,9 +3878,9 @@
 - rule: LexicalBinding_In_Yield -> BindingPattern_Yield Initializer_In_Yield
   action: undefined
 - rule: >-
-    DoWhileStatement_Await_Return -> DO Statement_Await_Return WHILE LPAREN
-    Expression_In_Await RPAREN SEMICOLON
-  action: undefined
+    DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return
+    WHILE LPAREN Expression_In_Await RPAREN _CONTINUE_IF_TRUTHY_ SEMICOLON
+  action: process_do_while_statement
 - rule: >-
     WhileStatement_Await_Return -> WHILE _LOOP_START_ LPAREN Expression_In_Await
     RPAREN _CONTINUE_IF_TRUTHY_ Statement_Await_Return
@@ -4138,9 +4140,10 @@
     Initializer_In_Yield_Await
   action: undefined
 - rule: >-
-    DoWhileStatement_Yield_Await_Return -> DO Statement_Yield_Await_Return WHILE
-    LPAREN Expression_In_Yield_Await RPAREN SEMICOLON
-  action: undefined
+    DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_
+    Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN
+    _CONTINUE_IF_TRUTHY_ SEMICOLON
+  action: process_do_while_statement
 - rule: >-
     WhileStatement_Yield_Await_Return -> WHILE _LOOP_START_ LPAREN
     Expression_In_Yield_Await RPAREN _CONTINUE_IF_TRUTHY_
