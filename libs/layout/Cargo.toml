@@ -13,7 +13,7 @@ anyhow = "1.0.86"
 geometry = { path = "../geometry" }
 logging = { path = "../logging" }
 num-traits = "0.2.19"
-serde = { version = "1.0.202", features = ["derive", "rc"], optional = true }
+serde = { version = "1.0.203", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1.0.117", optional = true }
 
 [dev-dependencies]
