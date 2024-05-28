@@ -312,7 +312,7 @@ pub static DISALLOWED: Set<u16> = phf_set! {
     4155u16,
 };
 
-pub static DO_WHITES: Set<u16> = phf_set! {
+pub static DO_WHILES: Set<u16> = phf_set! {
     // State(2137)
     //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
     //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
