@@ -312,4 +312,29 @@ pub static DISALLOWED: Set<u16> = phf_set! {
     4155u16,
 };
 
-pub static DO_WHITES: Set<u16> = phf_set! {};
+pub static DO_WHITES: Set<u16> = phf_set! {
+    // State(2137)
+    //   [DoWhileStatement -> DO _LOOP_START_ Statement WHILE LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    2137u16,
+    // State(2229)
+    //   [DoWhileStatement_Await -> DO _LOOP_START_ Statement_Await WHILE LPAREN Expression_In_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    2229u16,
+    // State(3376)
+    //   [DoWhileStatement_Return -> DO _LOOP_START_ Statement_Return WHILE LPAREN Expression_In RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    3376u16,
+    // State(3406)
+    //   [DoWhileStatement_Await_Return -> DO _LOOP_START_ Statement_Await_Return WHILE LPAREN Expression_In_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    3406u16,
+    // State(4103)
+    //   [DoWhileStatement_Yield_Return -> DO _LOOP_START_ Statement_Yield_Return WHILE LPAREN Expression_In_Yield RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    4103u16,
+    // State(4144)
+    //   [DoWhileStatement_Yield_Await_Return -> DO _LOOP_START_ Statement_Yield_Await_Return WHILE LPAREN Expression_In_Yield_Await RPAREN . _CONTINUE_IF_TRUTHY_ SEMICOLON]*
+    //   [_CONTINUE_IF_TRUTHY_ -> (empty) .]*
+    4144u16,
+};

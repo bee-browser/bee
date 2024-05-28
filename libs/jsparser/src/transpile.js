@@ -763,6 +763,8 @@ function modifyFunctionExpression(rules) {
   return rules;
 }
 
+// CAUTION: You MUST update `isAutoSemicolonDoWhile()` in parser/lalr.js when you change the
+// production rule of `DoWhileStatement`.
 function modifyDoWhileStatement(rules) {
   const TARGETS = [
     {
