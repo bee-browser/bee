@@ -108,6 +108,11 @@ class Compiler {
   void Block();
   void IfElseStatement();
   void IfStatement();
+  void LoopStart();
+  void LoopInit();
+  void LoopTest();
+  void LoopNext();
+  void LoopEnd();
   void StartFunction(const char* name);
   void EndFunction(bool optimize = true);
   void AllocateBindings(uint16_t n, bool prologue);

@@ -347,6 +347,21 @@ impl<'a> Compiler<'a> {
             CompileCommand::IfStatement => unsafe {
                 bridge::compiler_peer_if_statement(self.peer);
             },
+            CompileCommand::LoopStart => unsafe {
+                bridge::compiler_peer_loop_start(self.peer);
+            },
+            CompileCommand::LoopInit => unsafe {
+                bridge::compiler_peer_loop_init(self.peer);
+            },
+            CompileCommand::LoopTest => unsafe {
+                bridge::compiler_peer_loop_test(self.peer);
+            },
+            CompileCommand::LoopNext => unsafe {
+                bridge::compiler_peer_loop_next(self.peer);
+            },
+            CompileCommand::LoopEnd => unsafe {
+                bridge::compiler_peer_loop_end(self.peer);
+            },
             CompileCommand::Return(n) => unsafe {
                 bridge::compiler_peer_return(self.peer, *n as usize);
             },

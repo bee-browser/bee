@@ -18,7 +18,7 @@ pub static DISALLOWED: Set<u16> = phf_set! {
     {{/each}}
 };
 
-pub static DO_WHITES: Set<u16> = phf_set! {
+pub static DO_WHILES: Set<u16> = phf_set! {
     {{#each states}}
     {{#if isAutoSemicolonDoWhile}}
     // State({{@index}})

@@ -73,7 +73,7 @@ impl State {
 
     #[inline(always)]
     pub fn is_auto_semicolon_do_while_statement(&self) -> bool {
-        auto_semicolon::DO_WHITES.contains(&self.0)
+        auto_semicolon::DO_WHILES.contains(&self.0)
     }
 
     #[inline(always)]
