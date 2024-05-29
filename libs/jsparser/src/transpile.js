@@ -916,6 +916,10 @@ function modifyForStatement(rules) {
       action: '_LOOP_INIT_',
       insertBefore: false,
     },
+    // NOTE: Inserting _BLOCK_SCOPE_ before LexicalDeclaration[~In, ?Yield, ?Await] in order to
+    // create a new lexical scope causes shift/reduce conflicts.  Other similar methods also cause
+    // conflicts.  Eventually, we decided to always create a new lexical scope in the action for
+    // _LOOP_START_.  See also comments in `jsruntime::semantics::Analyzer::handle_loop_start()`.
     {
       term: '`(`',
       action: '_LOOP_START_',
